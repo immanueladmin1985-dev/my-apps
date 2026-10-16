@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DICEBOUND · 운명의 주사위</title>
+<meta name="description" content="주사위를 굴려 족보를 완성하고, 분기형 던전을 지나 최종 보스를 물리치는 다크 판타지 로그라이크">
+<meta name="theme-color" content="#07080d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="다이스바운드">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-view="menu">
+<div id="bg" class="bg"></div>
+<div id="app">
+  <header id="hud" class="hud hidden"></header>
+  <main id="screen"></main>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<div id="modalRoot"></div>
+<noscript><p style="color:#fff;padding:20px">이 게임은 JavaScript가 필요합니다.</p></noscript>
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/pwa.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
