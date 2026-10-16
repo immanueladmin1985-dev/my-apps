@@ -237,6 +237,29 @@ p { margin: 0; }
 .die-face .die-img { width: 100%; height: 100%; }
 .die-face.special::before { content: ''; position: absolute; inset: 6%; border-radius: 22%; box-shadow: 0 0 0 3px var(--dc), 0 0 14px var(--dc); }
 .die-face .die-badge { position: absolute; right: -6%; bottom: -6%; width: 46%; height: 46%; object-fit: contain; filter: drop-shadow(0 1px 2px #000); }
+.die.locked { cursor: help; }
+.die.focus .die-face { outline: 2px solid rgba(255, 255, 255, .7); outline-offset: 2px; border-radius: 18%; }
+/* 지금 효과가 나는 특수 주사위는 반짝인다 */
+.die.fx-on .die-face.special::before { animation: dieGlow 1.4s ease-in-out infinite; }
+@keyframes dieGlow { 50% { box-shadow: 0 0 0 3px var(--dc), 0 0 24px 4px var(--dc); } }
+/* 주사위 특성 정보 */
+.die-info { min-height: 52px; }
+.di-hint { margin: 0; padding: 8px 4px; font-size: 13px; color: var(--muted); text-align: center; }
+.di-hint span { color: var(--teal); }
+.di-card { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(0, 0, 0, .35); border: 1px solid color-mix(in srgb, var(--dc, #5b6478) 60%, transparent); animation: fade .2s; }
+.di-card .die-face { width: 40px; }
+.di-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.di-text b { font-size: 14px; }
+.di-text b small { color: var(--muted); font-weight: 400; margin-left: 4px; }
+.di-text > small { font-size: 12px; color: #d8d2c4; line-height: 1.35; }
+.di-on, .di-off { font-size: 12px; font-weight: 700; }
+.di-on { color: #7ff0a8; }
+.di-off { color: var(--muted); font-weight: 400; }
+.di-tags { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
+.di-tags i { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 99px; background: rgba(255, 255, 255, .08); color: var(--muted); white-space: nowrap; }
+.di-tags i.in { color: #ffd98a; background: rgba(255, 207, 90, .14); }
+.di-tags i.re { color: var(--teal); background: rgba(69, 212, 220, .14); }
+.di-tags i.lock { color: #ffb0a0; background: rgba(224, 74, 92, .16); }
 .tray-info { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; color: var(--muted); }
 .tray-info b { color: var(--teal); font-size: 15px; }
 .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

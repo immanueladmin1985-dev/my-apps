@@ -60,7 +60,33 @@ eq('격투가: 체력이 많으면 보너스 없음', R.computeAttack(Object.ass
 eq('비치발리볼: 스트레이트 피해 +8', R.computeAttack(Object.assign({}, base, { hero: 'volley', dice: dice([1, 2, 3, 4, 5]) })).atk, 24);
 eq('비치발리볼: 다른 족보는 그대로', R.computeAttack(Object.assign({}, base, { hero: 'volley', dice: dice([2, 2, 4, 5, 6]) })).atk, 8);
 
+// 새 특수 주사위 (2-2-4-5-6 원 페어 기본 피해 8)
+const one = (kind, value, rest) => [{ kind, value }].concat(dice(rest));
+const atkOf = x => R.computeAttack(Object.assign({}, base, x));
+eq('번개 주사위 5 이상 피해 +3', atkOf({ dice: one('thunder', 5, [2, 2, 4, 6]) }).atk, 11);
+eq('번개 주사위 4 는 효과 없음', atkOf({ dice: one('thunder', 4, [2, 2, 5, 6]) }).atk, 8);
+eq('독 주사위 짝수면 출혈 +1', atkOf({ dice: one('venom', 4, [2, 2, 5, 6]) }).apply.bleed, 1);
+eq('수호 주사위 족보 밖이면 방어 +4', atkOf({ dice: one('shield', 4, [2, 2, 5, 6]) }).block, 4);
+eq('수호 주사위 족보 안이면 방어 없음', atkOf({ dice: one('shield', 2, [2, 4, 5, 6]) }).block, 0);
+eq('거울 주사위 같은 눈이 있으면 피해 +4', atkOf({ dice: one('mirror', 2, [2, 4, 5, 6]) }).atk, 12);
+eq('관통 주사위 6 이면 방어 무시', atkOf({ dice: one('pierce', 6, [2, 2, 4, 5]) }).pierce, true);
+eq('흡혈 주사위 족보 안이면 눈 절반 회복', atkOf({ dice: one('vampire', 5, [5, 2, 4, 6]) }).heal, 2);
+eq('흡혈 주사위 족보 밖이면 회복 없음', atkOf({ dice: one('vampire', 5, [2, 2, 4, 6]) }).heal, 0);
+eq('주사위별 효과 표시', atkOf({ dice: one('thunder', 6, [2, 2, 4, 5]) }).dice.map(d => d.on), [true, false, false, false, false]);
+
+// 새 유물
+const pair = dice([2, 2, 4, 5, 6]);
+eq('화염의 정수: 화상 걸린 적에게 +4', atkOf({ relics: ['ember'], foeStatus: { burn: 1 }, dice: pair }).atk, 12);
+eq('화염의 정수: 화상이 없으면 그대로', atkOf({ relics: ['ember'], foeStatus: { burn: 0 }, dice: pair }).atk, 8);
+eq('바람의 칼날: 원 페어 +4', atkOf({ relics: ['gale'], dice: pair }).atk, 12);
+eq('번개 룬: 스트레이트 +6', atkOf({ relics: ['stormrune'], dice: dice([1, 2, 3, 4, 5]) }).atk, 22);
+eq('소용돌이 부적: 남은 재굴림 2회 방어 +6', atkOf({ relics: ['vortex'], rerollsLeft: 2, dice: pair }).block, 6);
+eq('공허의 구슬: 첫 공격 방어 무시', [atkOf({ relics: ['voidorb'], firstAttack: true, dice: pair }).pierce, atkOf({ relics: ['voidorb'], firstAttack: false, dice: pair }).pierce], [true, false]);
+eq('축복의 성표: 피해 +10', atkOf({ bonusAtk: 10, dice: pair }).atk, 18);
+
 // 방어 처리
+const tp = { hp: 20, status: { block: 5 } };
+eq('관통 공격은 방어를 무시하고 방어는 남는다', [R.applyDamage(tp, 8, true), tp.hp, tp.status.block], [{ absorbed: 0, lost: 8 }, 12, 5]);
 const t = { hp: 20, status: { block: 5 } };
 eq('방어 먼저 차감', R.applyDamage(t, 8), { absorbed: 5, lost: 3 });
 eq('방어 차감 후 상태', [t.hp, t.status.block], [17, 0]);

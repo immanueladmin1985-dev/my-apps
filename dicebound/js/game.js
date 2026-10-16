@@ -186,6 +186,7 @@
     if (r.hero === 'knight') b.status.block += 8;
     b.bg = kind === 'boss' ? DB.IMG.bg2('hell') : G.regionBg(r.floor, r.pos);
     if (r.relics.indexOf('lucky') >= 0) r.hp = Math.min(r.maxHp, r.hp + 4);
+    if (r.relics.indexOf('froststar') >= 0) e.status.freeze += 1;
     log(`${e.name}이(가) 나타났다!`);
     G.events = [{ type: 'battleStart', snap: snap() }];
     startPlayerTurn(true);
@@ -211,17 +212,35 @@
     G.events[G.events.length - 1].snap = snap();
   }
 
+  // 주사위 하나 굴리기: 행운 주사위는 1이면 한 번 더, 바위 주사위는 4~6만 나온다
+  function rollDie(kind) {
+    if (kind === 'heavy') return RNG.range(4, 6);
+    const v = RNG.die();
+    return kind === 'clover' && v === 1 ? RNG.die() : v;
+  }
+  G.canSelectDie = i => { const r = G.run; return !!(r && r.dice[i] && r.dice[i].kind !== 'heavy'); };
+  // 별의 파편: 여정마다 한 번, 체력이 0이 되면 되살아난다
+  function tryRevive() {
+    const r = G.run;
+    if (r.hp > 0 || r.relics.indexOf('star') < 0 || r.starUsed) return false;
+    r.starUsed = true;
+    r.hp = Math.max(1, Math.round(r.maxHp * 0.3));
+    log(`별의 파편이 빛나며 체력 ${r.hp}(으)로 되살아났다!`);
+    G.events.push({ type: 'revive', amount: r.hp, snap: snap() });
+    return true;
+  }
+
   function startPlayerTurn(first) {
     const r = G.run, b = r.battle;
     b.turn++; r.stats.turns++;
     if (!first) b.status.block = 0;
     if (r.relics.indexOf('amulet') >= 0) b.status.block += 2;
     tickStatus('player');
-    if (r.hp <= 0) { lose(); return; }
-    b.rerollsMax = C.rerolls + (r.relics.indexOf('scepter') >= 0 ? 1 : 0) + (r.hero === 'archer' || r.hero === 'volley' ? 1 : 0);
+    if (r.hp <= 0 && !tryRevive()) { lose(); return; }
+    b.rerollsMax = C.rerolls + (r.relics.indexOf('scepter') >= 0 ? 1 : 0) + (r.hero === 'archer' || r.hero === 'volley' ? 1 : 0) + (first && r.relics.indexOf('circle') >= 0 ? 2 : 0);
     b.rerollsLeft = b.rerollsMax;
     b.selected = [];
-    b.values = r.dice.map(() => RNG.die());
+    b.values = r.dice.map(d => rollDie(d.kind));
     if (r.relics.indexOf('fate') >= 0) {
       let lo = 0; b.values.forEach((v, i) => { if (v < b.values[lo]) lo = i; });
       b.values[lo] = Math.min(6, b.values[lo] + 2);
@@ -237,7 +256,8 @@
     return R.computeAttack({
       dice: r.dice.map((d, i) => ({ kind: d.kind, value: b.values[i] })),
       relics: r.relics, gold: r.gold, hp: r.hp, maxHp: r.maxHp,
-      rerollsLeft: b.rerollsLeft, enemyType: b.enemy.type, status: b.status, hero: r.hero
+      rerollsLeft: b.rerollsLeft, enemyType: b.enemy.type, status: b.status, hero: r.hero,
+      foeStatus: b.enemy.status, firstAttack: !b.attacked, bonusAtk: b.bonusAtk || 0
     });
   };
   function canAct() { const b = G.run && G.run.battle; return !!(b && G.run.screen === 'battle' && b.phase === 'player' && !G.run.pendingDice); }
@@ -245,7 +265,7 @@
   G.toggleDie = function (i) {
     if (!canAct()) return false;
     const b = G.run.battle;
-    if (b.rerollsLeft <= 0 || i < 0 || i >= b.values.length) return false;
+    if (b.rerollsLeft <= 0 || i < 0 || i >= b.values.length || !G.canSelectDie(i)) return false;
     const k = b.selected.indexOf(i);
     if (k >= 0) b.selected.splice(k, 1); else b.selected.push(i);
     G.events = [];
@@ -257,7 +277,7 @@
     const b = G.run.battle;
     if (b.rerollsLeft <= 0 || !b.selected.length) return false;
     const idx = b.selected.slice();
-    idx.forEach(i => { b.values[i] = RNG.die(); });
+    idx.forEach(i => { b.values[i] = rollDie(G.run.dice[i].kind); });
     b.rerollsLeft--;
     b.selected = [];
     b.rollId++;
@@ -295,14 +315,15 @@
     if (res.block) b.status.block += res.block;
     if (res.gold) { r.gold += res.gold; r.stats.gold += res.gold; }
     if (b.status.freeze > 0) b.status.freeze--;
-    const hit = R.applyDamage(e, res.atk);
+    const hit = R.applyDamage(e, res.atk, res.pierce);
+    b.attacked = true; b.bonusAtk = 0;
     r.stats.dealt += hit.lost; r.stats.maxHit = Math.max(r.stats.maxHit, res.atk);
     ['bleed', 'burn', 'freeze'].forEach(s => { if (res.apply[s]) e.status[s] += res.apply[s]; });
     if (res.hand.id === 'straight') G.unlock('straight');
     if (res.hand.id === 'five') G.unlock('five');
     if (res.atk >= 40) G.unlock('bigHit');
-    log(`${res.hand.name}! ${res.atk} 피해${hit.absorbed ? ` (방어 ${hit.absorbed} 막힘)` : ''}${res.block ? `, 방어 +${res.block}` : ''}${res.heal ? `, 회복 +${res.heal}` : ''}.`);
-    G.events.push({ type: 'playerAttack', hand: res.hand, atk: res.atk, absorbed: hit.absorbed, block: res.block, heal: res.heal, gold: res.gold, apply: res.apply, snap: snap() });
+    log(`${res.hand.name}! ${res.atk} 피해${res.pierce && e.status.block ? ' (방어 무시)' : ''}${hit.absorbed ? ` (방어 ${hit.absorbed} 막힘)` : ''}${res.block ? `, 방어 +${res.block}` : ''}${res.heal ? `, 회복 +${res.heal}` : ''}.`);
+    G.events.push({ type: 'playerAttack', hand: res.hand, atk: res.atk, absorbed: hit.absorbed, pierce: res.pierce, block: res.block, heal: res.heal, gold: res.gold, apply: res.apply, snap: snap() });
     if (e.hp <= 0) { win(); commit(); return true; }
     // 2) 적의 차례
     enemyTurn();
@@ -320,20 +341,23 @@
     if (mv.block) e.status.block += mv.block;
     if (mv.heal) e.hp = Math.min(e.maxHp, e.hp + mv.heal);
     if (mv.buff) e.status.str += mv.buff;
-    let dealt = 0, absorbed = 0;
+    let dealt = 0, absorbed = 0, thorns = 0;
     if (mv.atk) {
       const per = R.enemyHit(mv, e.status);
       const hits = mv.hits || 1;
       const P = playerTarget();
       for (let k = 0; k < hits; k++) { const h = R.applyDamage(P, per); dealt += h.lost; absorbed += h.absorbed; }
       r.hp = P.hp;
+      // 번개 갑주: 맞을 때마다 적에게 피해 2 (방어 무시)
+      if (r.relics.indexOf('stormmail') >= 0) { thorns = Math.min(e.hp, 2 * hits); e.hp -= thorns; r.stats.dealt += thorns; }
       if (e.status.freeze > 0) e.status.freeze--;
       b.taken += dealt; r.stats.taken += dealt;
     }
     if (mv.apply) Object.keys(mv.apply).forEach(s => { b.status[s] += mv.apply[s]; });
-    log(`${e.name}의 ${mv.name}!${mv.atk ? ` ${dealt} 피해${absorbed ? ` (방어 ${absorbed} 막음)` : ''}.` : ''}`);
-    G.events.push({ type: 'enemyMove', move: mv, dealt, absorbed, snap: snap() });
-    if (r.hp <= 0) { lose(); return; }
+    log(`${e.name}의 ${mv.name}!${mv.atk ? ` ${dealt} 피해${absorbed ? ` (방어 ${absorbed} 막음)` : ''}.` : ''}${thorns ? ` 번개 갑주가 ${thorns} 피해를 돌려줬다.` : ''}`);
+    G.events.push({ type: 'enemyMove', move: mv, dealt, absorbed, thorns, snap: snap() });
+    if (r.hp <= 0 && !tryRevive()) { lose(); return; }
+    if (e.hp <= 0) { win(); return; }
     R.nextIntent(e, RNG);
     startPlayerTurn(false);
   }
@@ -359,6 +383,8 @@
     }
     const elite = e.type === 'elite';
     let gold = (elite ? RNG.range(22, 28) : RNG.range(10, 15)) + (r.relics.indexOf('pack') >= 0 ? 6 : 0) + b.bounty;
+    if (r.relics.indexOf('eye') >= 0) gold = Math.round(gold * 1.4);
+    if (r.relics.indexOf('cross') >= 0) r.hp = Math.min(r.maxHp, r.hp + 5);
     r.gold += gold; r.stats.gold += gold;
     const potion = RNG.next() < (elite ? 0.65 : 0.4) ? RNG.pick(Object.keys(DB.POTIONS)) : null;
     r.reward = {
@@ -408,7 +434,8 @@
     if (id === 'fate' && !(fateDie >= 0 && fateDie < r.dice.length && fateValue >= 1 && fateValue <= 6)) return false;
     r.potions.splice(idx, 1);
     G.events = [];
-    const msg = { heal: '체력 15 회복', ward: '방어 12 획득', cure: '상태 이상 제거, 체력 5 회복', reroll: '재굴림 +2', fate: '주사위 눈 변경', might: '힘 +3', bomb: '적에게 피해 14', frost: '적에게 빙결 3' }[id];
+    const msg = { heal: '체력 15 회복', ward: '방어 12 획득', cure: '상태 이상 제거, 체력 5 회복', reroll: '재굴림 +2', fate: '주사위 눈 변경', might: '힘 +3', bomb: '적에게 피해 14', frost: '적에게 빙결 3',
+      blade: '적에게 피해 6씩 2번', venom: '적에게 출혈 5', brand: '적에게 화상 3', holy: b ? '체력 10 회복, 방어 6' : '체력 10 회복', bless: '이번 턴 공격 피해 +10' }[id];
     if (id === 'heal') r.hp = Math.min(r.maxHp, r.hp + 15);
     if (id === 'cure') { r.hp = Math.min(r.maxHp, r.hp + 5); if (b) { b.status.bleed = 0; b.status.burn = 0; b.status.freeze = 0; } }
     if (id === 'ward') b.status.block += 12;
@@ -417,6 +444,11 @@
     if (id === 'might') b.status.str += 3;
     if (id === 'frost') b.enemy.status.freeze += 3;
     if (id === 'bomb') { const lost = Math.min(b.enemy.hp, 14); b.enemy.hp -= lost; r.stats.dealt += lost; }
+    if (id === 'blade') { const lost = Math.min(b.enemy.hp, 12); b.enemy.hp -= lost; r.stats.dealt += lost; }
+    if (id === 'venom') b.enemy.status.bleed += 5;
+    if (id === 'brand') b.enemy.status.burn += 3;
+    if (id === 'holy') { r.hp = Math.min(r.maxHp, r.hp + 10); if (b) b.status.block += 6; }
+    if (id === 'bless') b.bonusAtk = (b.bonusAtk || 0) + 10;
     if (b) { log(`${DB.POTIONS[id].name} 사용: ${msg}.`); G.events.push({ type: 'potion', id, snap: snap() }); }
     else G.toasts.push({ kind: 'info', text: `${DB.POTIONS[id].name}: ${msg}` });
     if (b && b.enemy.hp <= 0) win();

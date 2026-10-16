@@ -51,7 +51,7 @@
         const potIdx = r.potions.findIndex((p, i) => G.canUsePotion(i) && p !== 'fate' && (p !== 'heal' || r.hp < r.maxHp * 0.5) && (p !== 'cure' || b.status.bleed + b.status.burn > 2));
         if (potIdx >= 0) return { kind: 'potion', idx: potIdx };
         if (b.rerollsLeft > 0) {
-          const sel = chooseReroll(b.values);
+          const sel = chooseReroll(b.values).filter(i => G.canSelectDie(i)); // 바위 주사위는 다시 굴릴 수 없다
           if (sel.length) return { kind: 'reroll', sel };
         }
         return { kind: 'attack' };

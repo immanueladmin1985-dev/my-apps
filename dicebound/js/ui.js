@@ -268,7 +268,7 @@
       title: '게임 방법', cls: 'wide',
       html: `<ol class="how">
         <li><b>맵</b>: 빛나는 노드만 선택할 수 있습니다. 길을 따라 위로 올라가 10층을 지나면 최종 보스가 기다립니다.</li>
-        <li><b>전투</b>: 내 차례가 되면 주사위 5개가 자동으로 굴러갑니다. 다시 굴릴 주사위를 눌러 고른 뒤 <b>재굴림</b>을 누르세요. 고르지 않은 주사위는 그대로 남습니다. 재굴림은 한 턴에 2번입니다.</li>
+        <li><b>전투</b>: 내 차례가 되면 주사위 5개가 자동으로 굴러갑니다. 다시 굴릴 주사위를 눌러 고른 뒤 <b>재굴림</b>을 누르세요. 고르지 않은 주사위는 그대로 남습니다. 재굴림은 한 턴에 2번입니다. 주사위를 누르면 아래에 그 주사위의 특성과 지금 효과가 나는지가 나옵니다.</li>
         <li><b>공격</b>: 주사위 5개로 만든 가장 강한 족보가 공격·방어·회복 효과를 냅니다. 적은 다음 행동을 미리 보여 줍니다.</li>
         <li><b>성장</b>: 전투 보상으로 특수 주사위·유물·소모품을 얻고, 상점·휴식·이벤트에서 여정을 준비합니다.</li>
       </ol><h3 class="sub">족보</h3>${handsTable()}`
@@ -419,6 +419,27 @@
     if (!rg.dead) rg.setImage(src);
     else { const im = m.querySelector('img'); if (im && im.getAttribute('src') !== src) im.setAttribute('src', src); }
   }
+  // 주사위를 누르면 보여 주는 특성 정보: 이름·설명·지금 눈에서 효과가 나는지·족보 포함 여부·재굴림 가능 여부
+  function dieInfoHTML(i, p) {
+    const r = G.run, b = r.battle;
+    if (!(i >= 0 && i < b.values.length)) {
+      const sp = r.dice.filter(d => d.kind).length;
+      return `<p class="di-hint">주사위를 누르면 특성을 볼 수 있습니다.${sp ? ` <span>특수 주사위 ${sp}개 장착</span>` : ''}</p>`;
+    }
+    const kind = r.dice[i].kind, k = kind && DB.DICE[kind], v = b.values[i];
+    const info = p && p.dice && p.dice[i];
+    const inHand = p && p.hand.used.indexOf(i) >= 0;
+    let state;
+    if (!k) state = '<span class="di-off">특수 효과가 없는 기본 주사위입니다.</span>';
+    else if (kind === 'transmute') state = G.canTransmute() ? '<span class="di-on">아래 버튼으로 눈을 바꿀 수 있습니다.</span>' : '<span class="di-off">이번 전투에서 이미 썼습니다.</span>';
+    else if (kind === 'clover' || kind === 'heavy') state = '<span class="di-on">굴릴 때마다 적용됩니다.</span>';
+    else if (info && info.on) state = `<span class="di-on">지금 발동: ${esc(info.text)}</span>`;
+    else state = '<span class="di-off">지금 눈에서는 효과가 없습니다.</span>';
+    const tags = [inHand ? `<i class="in">족보 포함</i>` : '<i>족보 제외</i>'];
+    if (kind === 'heavy') tags.push('<i class="lock">재굴림 불가</i>');
+    else if (b.selected.indexOf(i) >= 0) tags.push('<i class="re">다시 굴림</i>');
+    return `<div class="di-card" ${k ? `style="--dc:${k.color}"` : ''}>${dieFace(v, kind)}<div class="di-text"><b>${i + 1}번 · ${k ? esc(k.name) : '기본 주사위'} <small>눈 ${v}</small></b><small>${k ? esc(k.desc) : '1~6이 고르게 나온다.'}</small>${state}</div><div class="di-tags">${tags.join('')}</div></div>`;
+  }
   function renderBattle(s) {
     const r = G.run, b = r.battle, e = b.enemy, H = G.hero();
     const boss = e.type === 'boss', elite = e.type === 'elite';
@@ -443,7 +464,7 @@
         </div>
         <div class="control panel" id="ctrl"></div>
       </section>`;
-      UI.stageOf = b;
+      UI.stageOf = b; UI.dieFocus = -1;
       // 관절 리그: 적은 왼쪽(dir -1), 주인공은 오른쪽(dir 1)을 향해 움직인다. 초상화 보스는 그림 전체만 흔든다
       if (look.sprite) DB.rig.attach($('#foeCard', s), Object.assign({}, look.rig, { flip: look.flip, dir: -1 })).play('enter');
       DB.rig.attach($('#meCard', s), Object.assign({ kind: 'human' }, H.rig, { dir: 1 })).play('enter');
@@ -463,8 +484,12 @@
           const sel = b.selected.indexOf(i) >= 0;
           const roll = rolled && (rolled.all || (rolled.idx || []).indexOf(i) >= 0);
           const kd = r.dice[i].kind;
-          return `<button class="die ${sel ? 'sel' : ''} ${roll ? 'rolling' : ''}" data-die="${i}" ${can && b.rerollsLeft > 0 ? '' : 'disabled'} aria-pressed="${sel}" aria-label="${i + 1}번 주사위 ${v} 눈${kd ? ' ' + DB.DICE[kd].name : ''}${sel ? ', 다시 굴릴 주사위' : ''}">${dieFace(v, kd)}${sel ? '<span class="re-mark">↻</span>' : ''}</button>`;
+          // 재굴림을 못 해도 누를 수는 있다 (특성 보기). 고를 수 없는 주사위는 locked
+          const pickable = can && b.rerollsLeft > 0 && G.canSelectDie(i);
+          const on = p && p.dice[i] && p.dice[i].on;
+          return `<button class="die ${sel ? 'sel' : ''} ${roll ? 'rolling' : ''} ${pickable ? '' : 'locked'} ${on ? 'fx-on' : ''} ${UI.dieFocus === i ? 'focus' : ''}" data-die="${i}" aria-pressed="${sel}" aria-label="${i + 1}번 주사위 ${v} 눈${kd ? ' ' + DB.DICE[kd].name : ''}${sel ? ', 다시 굴릴 주사위' : ''}">${dieFace(v, kd)}${sel ? '<span class="re-mark">↻</span>' : ''}</button>`;
         }).join('')}</div>
+        <div class="die-info" id="dieInfo">${dieInfoHTML(UI.dieFocus, p)}</div>
         <div class="tray-info"><span>재굴림 <b>${b.rerollsLeft}</b> / ${b.rerollsMax}</span><span>${b.rerollsLeft > 0 ? `다시 굴릴 주사위 <b>${b.selected.length}</b>개 선택` : '재굴림을 모두 사용했습니다'}</span><span>턴 ${b.turn}</span></div>
         <div class="acts">
           <button class="btn dark" data-act="reroll" ${can && b.rerollsLeft > 0 && b.selected.length ? '' : 'disabled'}>재굴림</button>
@@ -473,7 +498,14 @@
         ${G.canTransmute() ? '<button class="btn dark sm wide" data-act="transmute">변환 주사위 사용 (전투당 1회)</button>' : ''}
         <div class="blog" id="blog">${b.log.slice(-2).map(t => `<p>${esc(t)}</p>`).join('')}</div>`;
     setMonImg('meCard', G.heroImg('back'));
-    $$('[data-die]', s).forEach(d => { d.onclick = () => { if (!UI.busy) G.toggleDie(+d.dataset.die); }; });
+    // 누르면 특성을 보여 주고, 고를 수 있으면 다시 굴릴 주사위로 고른다
+    $$('[data-die]', s).forEach(d => {
+      d.onclick = () => {
+        const i = +d.dataset.die;
+        UI.dieFocus = i;
+        if (UI.busy || !G.toggleDie(i)) UI.render();
+      };
+    });
     $$('.sts [data-tip], .blk', s).forEach(x => { x.onclick = () => statusModal(x.dataset.tip || 'block'); });
   }
   function transmuteModal() {
@@ -561,7 +593,7 @@
     const H = G.hero();
     if (H && H.hurtBack) setMonImg('meCard', sn.pHp > 0 && sn.pHp <= sn.pMax * 0.4 ? H.hurtBack : H.back);
   }
-  const ANIM = ['playerAttack', 'tick', 'enemyMove', 'victory', 'defeat', 'potion'];
+  const ANIM = ['playerAttack', 'tick', 'enemyMove', 'victory', 'defeat', 'potion', 'revive'];
   // 관절 동작: attack(휘두르기) / cast(지팡이·활 들기) / hurt(맞고 젖혀짐) / buff(기합) / die(쓰러짐)
   const pose = (id, name, opts) => { if (!slow()) DB.rig.get(id).play(name, opts); };
   async function play(events) {
@@ -586,6 +618,7 @@
         flash(ev.hand.rank >= 4 ? 'rgba(255,190,90,.4)' : 'rgba(255,255,255,.28)');
         const dealt = ev.atk - ev.absorbed;
         floatText('fxFoe', ev.absorbed && !dealt ? '막힘' : `-${dealt}`, 'dmg' + (ev.hand.rank >= 4 ? ' crit' : ''));
+        if (ev.pierce) { fx('fxFoe', I.icon2('fire-arrow'), 'small'); floatText('fxFoe', '관통', 'blk'); }
         if (ev.apply.bleed) fx('fxFoe', 'px-bleed', 'small');
         if (ev.apply.freeze) fx('fxFoe', 'px-freeze', 'small');
         if (ev.apply.burn) fx('fxFoe', 'px-burn', 'small');
@@ -623,15 +656,25 @@
         if (mv.block) fx('fxFoe', 'rune', 'small');
         if (mv.heal) { fx('fxFoe', 'heal-burst', 'small'); floatText('fxFoe', `+${mv.heal}`, 'heal'); }
         if (mv.buff) fx('fxFoe', 'px-burn', 'small');
+        if (ev.thorns) { fx('fxFoe', I.icon2('lightning'), 'small'); floatText('fxFoe', `-${ev.thorns}`, 'dmg'); pose('foeCard', 'hurt', { dur: 360 }); }
         applySnap(ev.snap);
         await wait(700);
       } else if (ev.type === 'potion') {
-        const toFoe = ev.id === 'bomb' || ev.id === 'frost';
-        fx(toFoe ? 'fxFoe' : 'fxMe', { bomb: 'combustion', frost: 'frostbite', heal: 'heal-burst', cure: 'px-heal', ward: 'rune', might: 'px-burn', reroll: 'rune-orb', fate: 'px-missile' }[ev.id] || 'rune');
+        const toFoe = !!(DB.POTIONS[ev.id] && DB.POTIONS[ev.id].foe);
+        fx(toFoe ? 'fxFoe' : 'fxMe', { bomb: 'combustion', frost: 'frostbite', heal: 'heal-burst', cure: 'px-heal', ward: 'rune', might: 'px-burn', reroll: 'rune-orb', fate: 'px-missile',
+          blade: I.icon2('gold-slash'), venom: 'poison', brand: 'combustion', holy: I.icon2('holy-water'), bless: I.icon2('gold-cross') }[ev.id] || 'rune');
         if (toFoe) { pose('foeCard', 'hurt'); anim('foeCard', 'hurt', 400); flash('rgba(255,190,90,.3)'); }
         else pose('meCard', 'buff');
         applySnap(ev.snap);
         await wait(450);
+      } else if (ev.type === 'revive') {
+        const c = $('#meCard'); if (c) c.classList.remove('dying');
+        fx('fxMe', 'heal-burst', 'big'); fx('fxMe', I.icon2('orb-star'));
+        flash('rgba(255,240,180,.45)');
+        floatText('fxMe', `부활! ${ev.amount}`, 'heal');
+        pose('meCard', 'buff');
+        applySnap(ev.snap);
+        await wait(900);
       } else if (ev.type === 'victory') {
         const c = $('#foeCard'); if (c) c.classList.add('dying');
         pose('foeCard', 'die'); pose('meCard', 'buff');

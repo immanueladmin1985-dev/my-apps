@@ -16,6 +16,7 @@
     fx2: n => `${A}fx2/${n}.webp`,
     node: t => `${A}nodes/${t}.webp`,
     icon: n => `${A}icons/${n}.webp`,
+    icon2: n => `${A}icons2/${n}.webp`, // 새 아이콘 (tools/cut_icons2.py)
     fx: n => `${A}fx/${n}.jpg`,
     emblem: c => `${A}emblems/${c}.webp`,
     ui: n => `${A}ui/${n}`,
@@ -45,7 +46,7 @@
       perk: '매 턴 재굴림 +1, 적에게 출혈을 줄 때 +2'
     }),
     mage: Object.assign(H('mage'), {
-      name: '마법사', title: '자수정 마녀', hp: 48, die: 'flame', color: '#b07cff', ranged: true, hit: ['px-missile', 'combustion'], rig: { arms: 0.8 },
+      name: '마법사', title: '자수정 마녀', hp: 50, die: 'flame', color: '#b07cff', ranged: true, hit: ['px-missile', 'combustion'], rig: { arms: 0.8 },
       desc: '자수정 지팡이와 마도서를 든 마녀. 상처를 치유하고 적을 불태운다.',
       perk: '회복 효과 +2, 원 페어 이상으로 공격하면 적에게 화상 1'
     }),
@@ -94,7 +95,15 @@
     steel: { name: '강철 주사위', badge: A + 'icons/block.webp', color: '#9fb0c4', rarity: 'common', desc: '트리플 이상 족보에 포함되면 피해 +4' },
     blood: { name: '피의 주사위', badge: A + 'icons/bleed.webp', color: '#e0475b', rarity: 'common', desc: '5 이상이면 적에게 출혈 2' },
     flame: { name: '불꽃 주사위', badge: A + 'icons/burn.webp', color: '#f08a3c', rarity: 'rare', desc: '6이 나오면 적에게 화상 2' },
-    life: { name: '생명 주사위', badge: A + 'icons/heal.webp', color: '#ff6f8a', rarity: 'common', desc: '1 또는 2면 체력 2 회복' }
+    life: { name: '생명 주사위', badge: A + 'icons/heal.webp', color: '#ff6f8a', rarity: 'common', desc: '1 또는 2면 체력 2 회복' },
+    thunder: { name: '번개 주사위', badge: A + 'icons2/lightning.webp', color: '#b48cff', rarity: 'common', desc: '5 이상이면 피해 +3' },
+    venom: { name: '독 주사위', badge: A + 'icons2/poison.webp', color: '#7fd34a', rarity: 'common', desc: '짝수(2·4·6)가 나오면 적에게 출혈 1' },
+    shield: { name: '수호 주사위', badge: A + 'icons2/holy-water.webp', color: '#8fd0ff', rarity: 'common', desc: '족보에 들어가지 않으면 방어 +4' },
+    clover: { name: '행운 주사위', badge: A + 'icons2/leaf.webp', color: '#6fe08a', rarity: 'common', desc: '굴려서 1이 나오면 한 번 더 굴린다' },
+    mirror: { name: '거울 주사위', badge: A + 'icons2/orb-spark.webp', color: '#d6c8ff', rarity: 'rare', desc: '다른 주사위와 눈이 같으면 피해 +4' },
+    pierce: { name: '관통 주사위', badge: A + 'icons2/fire-arrow.webp', color: '#ffb35c', rarity: 'rare', desc: '6이 나오면 이번 공격은 적의 방어를 무시한다' },
+    vampire: { name: '흡혈 주사위', badge: A + 'icons2/blood-splat.webp', color: '#d0304a', rarity: 'rare', desc: '족보에 들어가면 체력을 눈의 절반만큼 회복 (최소 1)' },
+    heavy: { name: '바위 주사위', badge: A + 'icons2/rock.webp', color: '#b9a07a', rarity: 'rare', desc: '4~6만 나온다. 대신 다시 굴릴 수 없다' }
   };
 
   // 유물: tier 는 common / rare. 효과는 rules.js·game.js 에서 id 로 처리한다
@@ -121,10 +130,25 @@
     wisdom: { name: '지식의 서', icon: A + 'relics/blue-book.webp', tier: 'common', desc: '보상 주사위 선택지 +1' },
     coffer: { name: '상인의 보물함', icon: A + 'relics/chest.webp', tier: 'common', desc: '상점 가격 20% 할인' },
     cursed: { name: '저주받은 상자', icon: A + 'relics/purple-chest.webp', tier: 'rare', desc: '얻을 때 최대 체력 -6. 모든 공격 피해 +4' },
-    heart: { name: '깨진 심장', icon: A + 'relics/broken-heart.webp', tier: 'rare', desc: '체력이 절반 이하이면 공격 피해 +5' }
+    heart: { name: '깨진 심장', icon: A + 'relics/broken-heart.webp', tier: 'rare', desc: '체력이 절반 이하이면 공격 피해 +5' },
+    // 새 유물: 마법 구슬 아이콘 (assets/icons2)
+    ember: { name: '화염의 정수', icon: A + 'icons2/orb-fire.webp', tier: 'common', desc: '화상에 걸린 적에게 공격 피해 +4' },
+    glacier: { name: '빙하의 파편', icon: A + 'icons2/orb-ice.webp', tier: 'common', desc: '빙결에 걸린 적에게 공격 피해 +4' },
+    thirst: { name: '피의 갈증', icon: A + 'icons2/orb-burst.webp', tier: 'common', desc: '출혈에 걸린 적에게 공격 피해 +3' },
+    gale: { name: '바람의 칼날', icon: A + 'icons2/orb-slash.webp', tier: 'common', desc: '하이 카드·원 페어 피해 +4' },
+    vortex: { name: '소용돌이 부적', icon: A + 'icons2/orb-vortex.webp', tier: 'common', desc: '공격할 때 남은 재굴림 1회마다 방어 +3' },
+    cross: { name: '생명의 십자가', icon: A + 'icons2/orb-cross.webp', tier: 'common', desc: '전투에서 이기면 체력 5 회복' },
+    circle: { name: '마법진', icon: A + 'icons2/orb-rune.webp', tier: 'common', desc: '전투 첫 턴 재굴림 +2' },
+    froststar: { name: '서리 별', icon: A + 'icons2/orb-frost.webp', tier: 'common', desc: '전투가 시작되면 적에게 빙결 1' },
+    eye: { name: '탐욕의 눈', icon: A + 'icons2/dark-eye.webp', tier: 'common', desc: '전투 승리 골드 +40%' },
+    stormrune: { name: '번개 룬', icon: A + 'icons2/orb-bolt.webp', tier: 'rare', desc: '스트레이트 이상 족보 피해 +6' },
+    voidorb: { name: '공허의 구슬', icon: A + 'icons2/orb-void.webp', tier: 'rare', desc: '전투마다 첫 공격은 적의 방어를 무시한다' },
+    stormmail: { name: '번개 갑주', icon: A + 'icons2/lightning.webp', tier: 'rare', desc: '적에게 공격받을 때마다 적에게 피해 2 (방어 무시)' },
+    star: { name: '별의 파편', icon: A + 'icons2/orb-star.webp', tier: 'rare', desc: '여정마다 한 번, 쓰러지면 최대 체력 30%로 되살아난다' }
   };
 
   // 소모품: battle 이 true 면 전투 중에만 쓸 수 있다
+  // foe: 적에게 쓰는 소모품 (연출에서 적 쪽에 이펙트가 나온다)
   DB.POTIONS = {
     heal: { name: '치유 물약', icon: A + 'potions/red.webp', price: 18, battle: false, desc: '체력 15 회복' },
     ward: { name: '방어 물약', icon: A + 'potions/blue.webp', price: 16, battle: true, desc: '방어 12 획득' },
@@ -132,8 +156,13 @@
     reroll: { name: '재굴림 두루마리', icon: A + 'potions/scroll-roll.webp', price: 16, battle: true, desc: '이번 턴 재굴림 +2' },
     fate: { name: '변환의 두루마리', icon: A + 'potions/scroll-open.webp', price: 22, battle: true, desc: '주사위 하나의 눈을 원하는 숫자로 바꾼다' },
     might: { name: '힘의 물약', icon: A + 'potions/vial.webp', price: 20, battle: true, desc: '이번 전투 동안 힘 +3' },
-    bomb: { name: '화약 폭탄', icon: A + 'potions/bomb.webp', price: 20, battle: true, desc: '적에게 피해 14 (방어 무시)' },
-    frost: { name: '서리 결정', icon: A + 'potions/crystal.webp', price: 16, battle: true, desc: '적에게 빙결 3' }
+    bomb: { name: '화약 폭탄', icon: A + 'potions/bomb.webp', price: 20, battle: true, foe: true, desc: '적에게 피해 14 (방어 무시)' },
+    frost: { name: '서리 결정', icon: A + 'potions/crystal.webp', price: 16, battle: true, foe: true, desc: '적에게 빙결 3' },
+    blade: { name: '검기 두루마리', icon: A + 'icons2/gold-slash.webp', price: 20, battle: true, foe: true, desc: '적에게 피해 6씩 2번 (방어 무시)' },
+    venom: { name: '독 플라스크', icon: A + 'icons2/poison.webp', price: 16, battle: true, foe: true, desc: '적에게 출혈 5' },
+    brand: { name: '화염 성표', icon: A + 'icons2/fire-cross.webp', price: 16, battle: true, foe: true, desc: '적에게 화상 3' },
+    holy: { name: '성수', icon: A + 'icons2/holy-water.webp', price: 18, battle: false, desc: '체력 10 회복. 전투 중이면 방어 6도 얻는다' },
+    bless: { name: '축복의 성표', icon: A + 'icons2/gold-cross.webp', price: 18, battle: true, desc: '이번 턴 공격 피해 +10' }
   };
 
   // 적 행동: atk(피해), hits(횟수), block, heal, buff(힘), apply(플레이어에게 거는 상태)
@@ -160,20 +189,20 @@
       moves: [{ name: '어깨 갑옷 세우기', block: 14 }, { name: '망치 내려찍기', atk: 15 }, { name: '돌 던지기', atk: 9 }]
     },
     necromancer: {
-      name: '네크로맨서', img: A + 'bosses/necromancer.jpg', marker: A + 'bossicons/skull.webp', type: 'boss', hp: 200, desc: '죽은 자들을 지배하는 마법사.',
+      name: '네크로맨서', img: A + 'mobs/boss-necromancer.webp', sprite: true, ranged: true, marker: A + 'bossicons/skull.webp', type: 'boss', hp: 200, desc: '떠도는 해골 영혼을 거느리고 죽은 자들을 지배하는 마녀.',
       moves: [{ name: '뼈의 장벽', block: 14, atk: 6 }, { name: '생명 흡수', atk: 11, heal: 10 }, { name: '죽음의 저주', atk: 6, apply: { freeze: 2, bleed: 2 } }, { name: '죽음의 파동', atk: 17 }]
     },
     hellLord: {
-      name: '지옥의 군주', img: A + 'bosses/hell-lord.jpg', marker: A + 'bossicons/demon.webp', type: 'boss', hp: 185, desc: '모든 것을 불태우는 존재.',
+      name: '지옥의 군주', img: A + 'mobs/boss-hell-lord.webp', sprite: true, marker: A + 'bossicons/demon.webp', type: 'boss', hp: 185, desc: '붉은 날개로 지옥불을 일으키는 악마의 군주.',
       moves: [{ name: '지옥불', atk: 8, apply: { burn: 3 } }, { name: '분노', buff: 2, block: 10 }, { name: '파멸의 일격', atk: 20 }, { name: '화염 폭풍', atk: 5, hits: 3 }]
     },
     fallenKnight: {
-      name: '타락한 성기사', img: A + 'bosses/fallen-knight.jpg', marker: A + 'bossicons/crystal.webp', type: 'boss', hp: 165, desc: '신성한 힘을 악으로 뒤틀었다.',
+      name: '타락한 성기사', img: A + 'mobs/boss-fallen-knight.webp', sprite: true, marker: A + 'bossicons/crystal.webp', type: 'boss', hp: 165, desc: '신성한 검을 보랏빛 저주로 뒤튼 기사.',
       moves: [{ name: '타락한 맹세', block: 15, heal: 10 }, { name: '심판의 연격', atk: 6, hits: 3 }, { name: '붉은 성검', atk: 14, apply: { bleed: 3 } }, { name: '신성 모독', atk: 9, apply: { freeze: 2 } }]
     },
     abyssDragon: {
-      name: '심연의 드래곤', img: A + 'bosses/abyss-dragon.jpg', marker: A + 'bossicons/dragon.webp', type: 'boss', hp: 165, desc: '끝없는 욕망의 화신.',
-      moves: [{ name: '날개 치기', atk: 10 }, { name: '심연 응축', block: 16, charge: true }, { name: '심연의 숨결', atk: 25, apply: { burn: 2 } }, { name: '꼬리 휩쓸기', atk: 7, apply: { bleed: 2 } }]
+      name: '심연의 용녀', img: A + 'mobs/boss-abyss.webp', sprite: true, ranged: true, marker: A + 'bossicons/dragon.webp', type: 'boss', hp: 165, desc: '용의 피를 이은 심연의 여왕. 끝없는 욕망의 화신.',
+      moves: [{ name: '용의 발톱', atk: 10 }, { name: '심연 응축', block: 16, charge: true }, { name: '심연의 숨결', atk: 25, apply: { burn: 2 } }, { name: '꼬리 휩쓸기', atk: 7, apply: { bleed: 2 } }]
     }
   };
 
@@ -216,6 +245,26 @@
     rivalArcher: M('엘프 사냥꾼', 'rival-archer', 'normal', 22, 'archer', '덩굴 활로 침입자를 노리는 엘프.'),
     rivalKnight: M('검은 숲의 검사', 'rival-knight', 'normal', 28, 'blade', '장검과 단검을 쓰는 숲의 검사.'),
     rivalWarrior: M('방패 투사', 'rival-warrior', 'elite', 56, 'brute', '방패와 검으로 수많은 전장을 버틴 투사.'),
+    // 보스 시트에서 나온 정예 6명
+    wolfMistress: M('늑대 군주', 'wolf-mistress', 'elite', 52, 'beast', '거대한 회색 늑대를 거느린 엘프 사냥꾼.', {
+      rig: { still: [[0.55, 0.5, 1, 1]] }, // 오른쪽 아래 늑대는 움직이지 않는다
+      moves: [{ name: '늑대 돌격', atk: 5, hits: 2 }, { name: '사냥의 화살', atk: 9, apply: { bleed: 2 } }, { name: '무리의 울부짖음', buff: 2, block: 6 }]
+    }),
+    thornWitch: M('가시덤불 마녀', 'thorn-witch', 'elite', 58, 'nature', '독이 오른 초록 불꽃으로 숲을 썩게 한다.', {
+      moves: [{ name: '가시 감옥', atk: 5, apply: { bleed: 3 } }, { name: '독 이끼', atk: 4, hits: 2, apply: { bleed: 1 } }, { name: '숲의 회복', heal: 10, block: 6 }]
+    }),
+    crimsonWarden: M('진홍의 창기사', 'crimson-warden', 'elite', 66, 'blade', '모피 망토를 두르고 붉은 창을 휘두른다.', {
+      moves: [{ name: '진홍의 찌르기', atk: 14 }, { name: '창 휘두르기', atk: 6, hits: 2, apply: { bleed: 1 } }, { name: '모피 망토', block: 12, buff: 1 }]
+    }),
+    iceQueen: M('서리 여왕', 'ice-queen', 'elite', 62, 'frost', '얼음 홀로 설산의 눈보라를 다스리는 여왕.', {
+      moves: [{ name: '서리 폭풍', atk: 4, hits: 2 }, { name: '얼음 거울', block: 10, heal: 4 }, { name: '영원한 겨울', atk: 11, apply: { freeze: 1 } }]
+    }),
+    flameDancer: M('불꽃 무희', 'flame-dancer', 'elite', 70, 'fire', '손끝의 불꽃으로 춤추듯 적을 태운다.', {
+      moves: [{ name: '불꽃 춤', atk: 4, hits: 3 }, { name: '화염 손길', atk: 7, apply: { burn: 2 } }, { name: '불씨 장막', block: 10, buff: 1 }]
+    }),
+    bloodDuchess: M('피의 공작부인', 'blood-duchess', 'elite', 78, 'void', '붉은 잔에 담긴 피로 젊음을 유지하는 귀부인.', {
+      moves: [{ name: '피의 잔', heal: 10, block: 8 }, { name: '흡혈 입맞춤', atk: 10, heal: 6 }, { name: '진홍의 저주', atk: 6, apply: { bleed: 3, freeze: 1 } }]
+    }),
     elfArcher: M('엘프 저격수', 'elf-archer', 'normal', 22, 'archer', '나무 위에서 화살을 퍼붓는 숲의 저격수.'),
     dryadWitch: M('드라이어드 마녀', 'dryad-witch', 'normal', 24, 'nature', '두 개의 지팡이로 숲의 힘을 끌어 쓴다.'),
     shaman: M('늪지 주술사', 'shaman', 'normal', 23, 'nature', '버섯 지팡이로 저주를 퍼뜨린다.'),
@@ -264,11 +313,11 @@
 
   // 지역별 몬스터 목록 (층 → 지역 → 일반·정예)
   DB.POOLS = {
-    forest: { normal: ['goblin', 'goblinArcher', 'goblinShaman', 'skeleton', 'slime', 'elfArcher', 'dryadWitch', 'shaman', 'rivalDruid', 'rivalArcher'], elite: ['werewolf', 'golem', 'barbarian'] },
-    mushroom: { normal: ['bandit', 'banditArcher', 'banditMage', 'spider', 'jungleBlade', 'thunderHuntress', 'sporeMystic', 'cursedDryad', 'rivalKnight'], elite: ['leopardSeraph', 'mossReaper', 'orcBrute', 'rivalWarrior'] },
-    coast: { normal: ['sharkRaider', 'shellWitch', 'tideCaller', 'pearlMystic', 'siren', 'seaWitch'], elite: ['anchorBrute', 'coralReaper', 'gorgon'] },
-    snow: { normal: ['frostKnight', 'stormCaller', 'harpyQueen', 'valkyrie'], elite: ['gildedValkyrie', 'seraph'] },
-    cave: { normal: ['mage', 'skeletonArcher', 'voidSorceress', 'crystalMystic', 'shadowAssassin', 'basiliskTamer', 'scorpionBlade', 'demonWarrior', 'ashRevenant'], elite: ['boneKnight', 'steamGolem', 'driderQueen'] }
+    forest: { normal: ['goblin', 'goblinArcher', 'goblinShaman', 'skeleton', 'slime', 'elfArcher', 'dryadWitch', 'shaman', 'rivalDruid', 'rivalArcher'], elite: ['werewolf', 'golem', 'barbarian', 'wolfMistress'] },
+    mushroom: { normal: ['bandit', 'banditArcher', 'banditMage', 'spider', 'jungleBlade', 'thunderHuntress', 'sporeMystic', 'cursedDryad', 'rivalKnight'], elite: ['leopardSeraph', 'mossReaper', 'orcBrute', 'rivalWarrior', 'thornWitch'] },
+    coast: { normal: ['sharkRaider', 'shellWitch', 'tideCaller', 'pearlMystic', 'siren', 'seaWitch'], elite: ['anchorBrute', 'coralReaper', 'gorgon', 'crimsonWarden'] },
+    snow: { normal: ['frostKnight', 'stormCaller', 'harpyQueen', 'valkyrie'], elite: ['gildedValkyrie', 'seraph', 'iceQueen'] },
+    cave: { normal: ['mage', 'skeletonArcher', 'voidSorceress', 'crystalMystic', 'shadowAssassin', 'basiliskTamer', 'scorpionBlade', 'demonWarrior', 'ashRevenant'], elite: ['boneKnight', 'steamGolem', 'driderQueen', 'flameDancer', 'bloodDuchess'] }
   };
 
   DB.NPC = {

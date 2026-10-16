@@ -4,7 +4,7 @@
  * 공격 효과 처리 순서 (computeAttack):
  *  1. 족보 기본 효과 (공격·방어·회복·상태)
  *  2. 특수 주사위 효과 (주사위 순서대로)
- *  3. 유물의 고정 피해 보너스 → 힘
+ *  3. 유물의 고정 피해 보너스(적 상태 연계·축복의 성표 포함) → 힘
  *  4. 배율: 왕의 왕관(×1.25) → 플레이어 빙결(×0.7), 소수점 버림
  *  5. 상태 부여 보너스 (서리 병, 피의 제단): 해당 상태를 이미 줄 때만 +1
  */
@@ -38,7 +38,9 @@
     return { id, name: NAMES[id], rank: RANK[id], atk, block, heal, apply, used: used.sort((a, b) => a - b) };
   }
 
-  /* ctx = { dice:[{kind,value}], relics:[id], gold, hp, maxHp, rerollsLeft, enemyType, status:{str,freeze}, hero }
+  /* ctx = { dice:[{kind,value}], relics:[id], gold, hp, maxHp, rerollsLeft, enemyType, status:{str,freeze}, hero,
+   *         foeStatus:{bleed,burn,freeze}, firstAttack, bonusAtk }
+   * pierce 가 참이면 적의 방어를 무시한다. dice[i] = { on, text } 는 주사위별 효과 (화면 표시용)
    * 반환값은 미리보기와 실제 공격에서 똑같이 쓴다. */
   function computeAttack(ctx) {
     const vals = ctx.dice.map(d => d.value);
@@ -50,22 +52,32 @@
     const notes = [];
     const add = (n, why) => { atk += n; notes.push(`${why} +${n}`); };
 
+    // 주사위마다 효과가 났는지(on)와 그 내용(text)을 남긴다. 화면에서 주사위를 누르면 보여 준다
+    const dice = ctx.dice.map(() => ({ on: false, text: '' }));
+    let pierce = false;
     ctx.dice.forEach((d, i) => {
-      const v = d.value;
+      const v = d.value, inHand = h.used.indexOf(i) >= 0;
+      const on = text => { dice[i].on = true; dice[i].text = text; };
       switch (d.kind) {
-        case 'gold': if (v === 6) { gold += 3; notes.push('황금 주사위 골드 +3'); } break;
-        case 'curse': if (v === 1) { add(9, '저주 주사위'); selfDmg += 2; } break;
-        case 'ice': if (v >= 4) { apply.freeze += 1; notes.push('빙결 주사위 빙결 +1'); } break;
-        case 'alchemy': if (v === 2 || v === 3) { block += 3; notes.push('연금 주사위 방어 +3'); } break;
-        case 'steel': if (h.rank >= RANK.triple && h.used.indexOf(i) >= 0) add(4, '강철 주사위'); break;
-        case 'blood': if (v >= 5) { apply.bleed += 2; notes.push('피의 주사위 출혈 +2'); } break;
-        case 'flame': if (v === 6) { apply.burn += 2; notes.push('불꽃 주사위 화상 +2'); } break;
-        case 'life': if (v <= 2) { heal += 2; notes.push('생명 주사위 회복 +2'); } break;
+        case 'gold': if (v === 6) { gold += 3; notes.push('황금 주사위 골드 +3'); on('골드 +3'); } break;
+        case 'curse': if (v === 1) { add(9, '저주 주사위'); selfDmg += 2; on('피해 +9, 자신 체력 -2'); } break;
+        case 'ice': if (v >= 4) { apply.freeze += 1; notes.push('빙결 주사위 빙결 +1'); on('적에게 빙결 +1'); } break;
+        case 'alchemy': if (v === 2 || v === 3) { block += 3; notes.push('연금 주사위 방어 +3'); on('방어 +3'); } break;
+        case 'steel': if (h.rank >= RANK.triple && inHand) { add(4, '강철 주사위'); on('피해 +4'); } break;
+        case 'blood': if (v >= 5) { apply.bleed += 2; notes.push('피의 주사위 출혈 +2'); on('적에게 출혈 +2'); } break;
+        case 'flame': if (v === 6) { apply.burn += 2; notes.push('불꽃 주사위 화상 +2'); on('적에게 화상 +2'); } break;
+        case 'life': if (v <= 2) { heal += 2; notes.push('생명 주사위 회복 +2'); on('체력 회복 +2'); } break;
+        case 'thunder': if (v >= 5) { add(3, '번개 주사위'); on('피해 +3'); } break;
+        case 'venom': if (v % 2 === 0) { apply.bleed += 1; notes.push('독 주사위 출혈 +1'); on('적에게 출혈 +1'); } break;
+        case 'shield': if (!inHand) { block += 4; notes.push('수호 주사위 방어 +4'); on('방어 +4'); } break;
+        case 'mirror': if (vals.some((w, j) => j !== i && w === v)) { add(4, '거울 주사위'); on('피해 +4'); } break;
+        case 'pierce': if (v === 6) { pierce = true; notes.push('관통 주사위 방어 무시'); on('적의 방어를 무시한다'); } break;
+        case 'vampire': if (inHand) { const n = Math.max(1, Math.floor(v / 2)); heal += n; notes.push(`흡혈 주사위 회복 +${n}`); on(`체력 회복 +${n}`); } break;
         default: break;
       }
     });
 
-    if (has('edge')) add(2, '날 선 화살촉');
+        if (has('edge')) add(2, '날 선 화살촉');
     if (has('twins') && (h.id === 'pair' || h.id === 'twopair')) add(3, '쌍둥이 반지');
     if (has('leather') && h.id === 'twopair') { block += 5; notes.push('가죽 갑옷 방어 +5'); }
     if (has('torch') && h.id === 'straight') { apply.burn += 2; notes.push('불씨 횃불 화상 +2'); }
@@ -76,6 +88,15 @@
     if (has('cursed')) add(4, '저주받은 상자');
     if (has('heart') && ctx.hp * 2 <= ctx.maxHp) add(5, '깨진 심장');
     if (has('life') && (h.id === 'fullhouse' || h.id === 'five')) { heal += 5; notes.push('생명의 서 회복 +5'); }
+    const foe = ctx.foeStatus || {};
+    if (has('ember') && foe.burn > 0) add(4, '화염의 정수');
+    if (has('glacier') && foe.freeze > 0) add(4, '빙하의 파편');
+    if (has('thirst') && foe.bleed > 0) add(3, '피의 갈증');
+    if (has('gale') && (h.id === 'high' || h.id === 'pair')) add(4, '바람의 칼날');
+    if (has('stormrune') && h.rank >= RANK.straight) add(6, '번개 룬');
+    if (has('vortex') && ctx.rerollsLeft > 0) { block += 3 * ctx.rerollsLeft; notes.push(`소용돌이 부적 방어 +${3 * ctx.rerollsLeft}`); }
+    if (has('voidorb') && ctx.firstAttack) { pierce = true; notes.push('공허의 구슬 방어 무시'); }
+    if (ctx.bonusAtk) add(ctx.bonusAtk, '축복의 성표');
     // 주인공 능력 (재굴림 +1·전투 시작 방어는 game.js)
     if (ctx.hero === 'mage') {
       if (h.rank >= RANK.pair) { apply.burn += 1; notes.push('마법사 화상 +1'); }
@@ -93,7 +114,7 @@
     if (has('frost') && apply.freeze > 0) { apply.freeze += 1; notes.push('서리 병 빙결 +1'); }
     if (has('altar') && apply.bleed > 0) { apply.bleed += 1; notes.push('피의 제단 출혈 +1'); }
 
-    return { hand: h, atk: Math.max(0, atk), block, heal, gold, selfDmg, apply, notes };
+    return { hand: h, atk: Math.max(0, atk), block, heal, gold, selfDmg, apply, notes, pierce, dice };
   }
 
   // 적 행동의 한 번 피해량 (힘·빙결 반영). 실제 적용과 예고 표시에 같이 쓴다.
@@ -105,8 +126,9 @@
   }
 
   // 방어를 먼저 깎고 남은 피해를 체력에 준다. 실제로 잃은 체력을 돌려준다.
-  function applyDamage(target, dmg) {
-    const absorbed = Math.min(target.status.block || 0, dmg);
+  // pierce: 방어를 무시하고 바로 체력을 깎는다 (방어는 그대로 남는다)
+  function applyDamage(target, dmg, pierce) {
+    const absorbed = pierce ? 0 : Math.min(target.status.block || 0, dmg);
     target.status.block = (target.status.block || 0) - absorbed;
     const lost = Math.min(target.hp, dmg - absorbed);
     target.hp -= lost;

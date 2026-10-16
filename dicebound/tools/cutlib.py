@@ -107,3 +107,48 @@ def save_rgb(a, box, path, quality=86, max_side=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     im.save(path, 'JPEG', quality=quality, optimize=True, progressive=True)
     return im.size
+
+
+def despill(rgb, al, fg, hm):
+    """가장자리 근처의 분홍(배경색) 번짐을 회색 쪽으로 뺀다"""
+    h, s, v = hsv(rgb)
+    near = fg & (ndimage.distance_transform_edt(fg) < 8)
+    dh = np.abs(((h - hm) + 180) % 360 - 180)
+    tint = near & (dh < 30) & (s > 0.3)
+    spill = np.minimum(rgb[..., 0], rgb[..., 2]) - rgb[..., 1]
+    k = np.where(tint, np.clip(spill, 0, None) * 0.85, 0)
+    rgb[..., 0] -= k; rgb[..., 2] -= k
+
+
+def key_sheet(a, kind):
+    """채도 높은 단색(마젠타·분홍) 바탕이나 바둑판무늬(checker) 바탕을 지운다. 바탕색은 왼쪽 위·오른쪽 위 모서리에서 잰다"""
+    h, s, v = hsv(a)
+    if kind == 'checker':
+        cand, hole = (s < 0.045) & (v > 0.86), 400
+        strict = cand
+    else:
+        corner = np.concatenate([a[:8, :8].reshape(-1, 3), a[:8, -8:].reshape(-1, 3)])
+        hm = float(np.median(hsv(corner[None])[0]))
+        cand = (np.abs(h - hm) < 10) & (s > 0.75) & (v > 0.6)
+        strict, hole = (np.abs(h - hm) < 6) & (s > 0.85) & (v > 0.75), 4
+    lab, n = ndimage.label(cand)
+    keep = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
+    bg = np.isin(lab, list(keep))
+    # 팔과 몸 사이처럼 테두리와 떨어진 배경 구멍
+    lab2, n2 = ndimage.label(strict & ~bg)
+    sizes = ndimage.sum(np.ones_like(lab2), lab2, index=np.arange(1, n2 + 1))
+    bg |= np.isin(lab2, [i + 1 for i, z in enumerate(sizes) if z >= hole])
+    fg = ndimage.binary_opening(~bg, iterations=1)
+    if kind != 'checker':
+        fringe = (np.abs(h - hm) < 22) & (s > 0.45) & (v > 0.35)
+        for _ in range(2):
+            fg &= ~(fringe & (ndimage.distance_transform_edt(fg) < 3))
+    al = np.array(Image.fromarray((fg * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.8))).astype(float) / 255
+    rgb = a.copy()
+    if kind != 'checker':
+        edge = (al > 0) & (al < 0.98)
+        cap = rgb[..., 1] + 40
+        rgb[..., 0] = np.where(edge, np.minimum(rgb[..., 0], np.maximum(cap, rgb[..., 0] * 0.8)), rgb[..., 0])
+        rgb[..., 2] = np.where(edge, np.minimum(rgb[..., 2], np.maximum(cap, rgb[..., 2] * 0.85)), rgb[..., 2])
+        despill(rgb, al, fg, hm)
+    return rgb, al, fg
