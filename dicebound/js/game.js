@@ -169,7 +169,7 @@
   function startBattle(kind, opts) {
     const r = G.run;
     const pool = DB.POOLS[G.region(r.floor).key] || DB.POOLS.forest;
-    const normals = r.floor <= 1 ? ['goblin', 'skeleton', 'elfArcher'] : pool.normal;
+    const normals = r.floor <= 1 ? ['goblin', 'goblinArcher', 'skeleton', 'slime'] : pool.normal;
     const key = kind === 'boss' ? r.bossKey : kind === 'elite' ? RNG.pick(pool.elite) : RNG.pick(normals);
     const e = R.scaleEnemy(key, DB.ENEMIES[key], Math.max(1, r.floor), RNG);
     R.nextIntent(e, RNG);
@@ -218,7 +218,7 @@
     if (r.relics.indexOf('amulet') >= 0) b.status.block += 2;
     tickStatus('player');
     if (r.hp <= 0) { lose(); return; }
-    b.rerollsMax = C.rerolls + (r.relics.indexOf('scepter') >= 0 ? 1 : 0) + (r.hero === 'archer' ? 1 : 0);
+    b.rerollsMax = C.rerolls + (r.relics.indexOf('scepter') >= 0 ? 1 : 0) + (r.hero === 'archer' || r.hero === 'volley' ? 1 : 0);
     b.rerollsLeft = b.rerollsMax;
     b.selected = [];
     b.values = r.dice.map(() => RNG.die());

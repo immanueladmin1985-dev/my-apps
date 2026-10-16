@@ -8,7 +8,7 @@ const N = +process.argv[2] || 300;
 G.load();
 let wins = 0, errors = 0, floors = [], hpLeft = [], byBoss = {}, deaths = {}, byHero = {};
 for (let s = 1; s <= N; s++) {
-  const hero = ['druid', 'archer', 'knight', 'warrior'][s % 4];
+  const hero = ['knight', 'hunter', 'archer', 'mage', 'fighter', 'volley'][s % 6];
   G.newRun(hero, 1000 + s);
   let steps = 0, lastKey = '';
   while (G.run.screen !== 'end' && steps < 3000) {

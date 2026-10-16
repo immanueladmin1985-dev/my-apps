@@ -136,6 +136,11 @@ p { margin: 0; }
 .menu-art { position: absolute; inset: 30% -10% -20%; opacity: .55; -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%); mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%); }
 .menu-art img { width: 100%; height: 100%; object-fit: cover; }
 .logo { position: relative; width: min(92%, 520px); margin: 0 auto; filter: drop-shadow(0 0 22px rgba(154, 107, 255, .55)); animation: logoIn 1.2s ease both; }
+/* 제목은 버튼이다: 빠르게 다섯 번 누르면 히든 캐릭터 (겉으로는 티 나지 않게) */
+.logo-btn { display: block; width: 100%; padding: 0; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+.logo-btn .logo { display: block; }
+.logo.tap { animation: logoTap .22s ease-out; }
+@keyframes logoTap { 50% { transform: scale(.96); filter: drop-shadow(0 0 30px rgba(255, 207, 90, .9)); } }
 .tagline { position: relative; margin-top: 4px; font-family: var(--f-head); color: #cbbcf0; letter-spacing: .08em; font-size: 15px; text-shadow: 0 2px 6px #000; }
 .menu-btns { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -274,8 +279,13 @@ p { margin: 0; }
 .foe-spot.portrait .mon img { height: 100%; width: auto; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 18%; -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 55%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 55%, transparent 100%); }
 .is-boss .foe-spot { right: 2%; top: 12%; width: 58%; height: 66%; }
 .is-boss .foe-spot.portrait .mon img { aspect-ratio: 5 / 4; }
-.is-boss .foe-spot .mon img { filter: drop-shadow(0 0 16px rgba(224, 74, 92, .75)) drop-shadow(0 0 30px rgba(154, 107, 255, .5)); }
-.is-elite .foe-spot .mon img { filter: drop-shadow(0 0 12px rgba(154, 107, 255, .7)); }
+.is-boss .foe-spot .mon img, .is-boss .foe-spot .mon canvas.rig { filter: drop-shadow(0 0 16px rgba(224, 74, 92, .75)) drop-shadow(0 0 30px rgba(154, 107, 255, .5)); }
+.is-elite .foe-spot .mon img, .is-elite .foe-spot .mon canvas.rig { filter: drop-shadow(0 0 12px rgba(154, 107, 255, .7)); }
+/* 오른쪽을 보는 적 그림은 좌우로 뒤집어 주인공 쪽을 보게 한다 (리그가 없을 때) */
+.foe-spot .mon img.flip { transform: scaleX(-1); animation-name: idleFlip; }
+/* 관절 리그(js/rig.js): 캔버스가 그림을 휘어서 그리고, 원래 <img> 는 자리만 잡는다 */
+.mon canvas.rig { position: absolute; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .7)); }
+.mon.rigged > img { visibility: hidden; animation: none; }
 .fx-anchor { position: absolute; inset: 0; pointer-events: none; display: grid; place-items: center; overflow: visible; z-index: 4; }
 .fx { position: absolute; width: 90%; max-width: 230px; animation: fxPop .75s ease-out both; }
 .fx.big { width: 120%; max-width: 300px; }
@@ -297,6 +307,7 @@ p { margin: 0; }
 @keyframes enter { from { opacity: 0; transform: translateX(30px) scale(.94); } }
 @keyframes enterMe { from { opacity: 0; transform: translateX(-30px); } }
 @keyframes idle { 50% { transform: translateY(-5px); } }
+@keyframes idleFlip { 0%, 100% { transform: scaleX(-1); } 50% { transform: scaleX(-1) translateY(-5px); } }
 @keyframes breathe { 50% { transform: scaleY(1.012); } }
 @keyframes lungeMe { 40% { transform: translate(14%, -10%) scale(1.04); } }
 @keyframes lungeFoe { 40% { transform: translate(-16%, 10%) scale(1.06); } }
@@ -310,6 +321,8 @@ p { margin: 0; }
 
 /* ---------- 주인공 선택 ---------- */
 .hero-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.hero-pick.n2 { grid-template-columns: repeat(2, minmax(0, 200px)); justify-content: center; }
+.select.secret .page-head h2 { color: #ffcf5a; text-shadow: 0 0 14px rgba(255, 207, 90, .5); }
 .hero-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 8px; border-radius: 8px; border: 1px solid #3c4559; background: linear-gradient(180deg, #161c2b, #0b0f18); overflow: hidden; }
 .hero-card .hc-img { height: 110px; width: 100%; object-fit: contain; object-position: 50% 0; filter: drop-shadow(0 4px 6px #000); }
 .hero-card b { font-family: var(--f-head); font-size: 14px; }
@@ -411,6 +424,9 @@ p { margin: 0; }
 /* ---------- 엔딩 ---------- */
 .end { text-align: center; }
 .end-art { position: relative; display: flex; justify-content: center; align-items: flex-end; gap: 12px; height: 200px; }
+.end-art.illus { height: auto; }
+.end-illust { padding: 0; border: 2px solid var(--gold); border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 10px 30px #000, 0 0 24px rgba(255, 207, 90, .35); width: min(100%, 460px); }
+.end-illust img { display: block; width: 100%; max-height: 46dvh; object-fit: cover; object-position: 50% 30%; }
 .end-emblem { position: absolute; width: 80px; bottom: -20px; left: 50%; margin-left: -40px; filter: drop-shadow(0 0 16px rgba(236, 190, 90, .9)); animation: logoIn 1s .3s both; }
 .end-text h1 { font-size: 28px; color: var(--gold-2); text-shadow: 0 0 16px rgba(201, 164, 92, .5); }
 .lost .end-text h1 { color: #ff9aa8; text-shadow: 0 0 16px rgba(224, 74, 92, .5); }
@@ -574,3 +590,14 @@ body.busy .control { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+/* 주인공 일러스트(비치발리볼): 화면 가득 띄우고, 누르거나 시간이 지나면 닫힌다 */
+.illust-ov { position: fixed; inset: 0; z-index: 70; background: #000; display: grid; place-items: center; overflow: hidden; animation: fade .35s ease both; cursor: pointer; }
+.illust-ov.out { animation: illOut .32s ease forwards; }
+.illust-ov .ill-bg { position: absolute; inset: -20px; width: calc(100% + 40px); height: calc(100% + 40px); object-fit: cover; filter: blur(18px) brightness(.55); }
+.illust-ov .ill-img { position: relative; max-width: 100%; max-height: 100%; object-fit: contain; }
+.illust-ov .ill-cap { position: absolute; left: 50%; top: calc(14% + var(--safe-t)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 18px; border-radius: 8px; background: rgba(7, 8, 13, .72); border: 1px solid var(--gold); text-align: center; animation: pop .5s .2s ease both; white-space: nowrap; }
+.illust-ov .ill-cap b { font-family: var(--f-head); font-size: 20px; color: #ffcf5a; }
+.illust-ov .ill-cap span { font-size: 13px; color: #e8e2d4; }
+.illust-ov .ill-hint { position: absolute; left: 50%; bottom: calc(14px + var(--safe-b)); transform: translateX(-50%); padding: 3px 10px; border-radius: 99px; background: rgba(0, 0, 0, .5); color: #ddd; font-size: 12px; }
+@keyframes illOut { to { opacity: 0; } }
+.proj.ball { width: 54px; filter: drop-shadow(0 0 8px rgba(255, 255, 255, .8)); }

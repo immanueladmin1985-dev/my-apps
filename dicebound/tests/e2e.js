@@ -67,7 +67,7 @@ async function act(page, a) {
     await page.addScriptTag({ path: path.join(__dirname, 'bot.js') });
     await page.evaluate(() => DB.RNG.seed(7));
     await page.click('[data-act="newRun"]');
-    await page.click('[data-hero="archer"]');
+    await page.click('[data-hero="hunter"]');
     await page.screenshot({ path: path.join(OUT, `${v.name}-1b-select.png`) });
     await page.click('[data-act="pickHero"]');
     await page.screenshot({ path: path.join(OUT, `${v.name}-2-map.png`) });
@@ -126,9 +126,16 @@ async function act(page, a) {
     await page.goto(BASE, { waitUntil: 'networkidle' });
     await page.addScriptTag({ path: path.join(__dirname, 'bot.js') });
     await page.evaluate(s => { DB.game.settings.reduceMotion = true; DB.game.settings.autoFS = false; DB.RNG.seed(s); }, 100 + k);
-    await page.click('[data-act="newRun"]');
-    await page.click(`[data-hero="${['druid', 'archer', 'knight', 'warrior'][k % 4]}"]`);
+    // 여섯 명을 돌아가며 고른다. 히든 캐릭터는 메인 메뉴 제목을 다섯 번 눌러서 고른다
+    const hero = ['knight', 'hunter', 'archer', 'mage', 'volley', 'fighter'][k % 6];
+    if (await page.evaluate(h => !!DB.HEROES[h].hidden, hero)) {
+      for (let t = 0; t < 5; t++) await page.click('.logo-btn');
+      await page.click('.illust-ov');
+      await page.waitForSelector('.select.secret');
+    } else await page.click('[data-act="newRun"]');
+    await page.click(`[data-hero="${hero}"]`);
     await page.click('[data-act="pickHero"]');
+    if (await page.$('.illust-ov')) await page.click('.illust-ov'); // 비치발리볼은 출발할 때 일러스트가 뜬다
     let steps = 0, shotEnd = false, reloaded = false;
     while (steps < 1500) {
       await idle(page);

@@ -76,12 +76,15 @@
     if (has('cursed')) add(4, '저주받은 상자');
     if (has('heart') && ctx.hp * 2 <= ctx.maxHp) add(5, '깨진 심장');
     if (has('life') && (h.id === 'fullhouse' || h.id === 'five')) { heal += 5; notes.push('생명의 서 회복 +5'); }
-    if (ctx.hero === 'druid') {
-      if (h.rank >= RANK.pair) { apply.bleed += 1; notes.push('드루이드 출혈 +1'); }
-      if (heal > 0) { heal += 2; notes.push('드루이드 회복 +2'); }
+    // 주인공 능력 (재굴림 +1·전투 시작 방어는 game.js)
+    if (ctx.hero === 'mage') {
+      if (h.rank >= RANK.pair) { apply.burn += 1; notes.push('마법사 화상 +1'); }
+      if (heal > 0) { heal += 2; notes.push('마법사 회복 +2'); }
     }
     if (ctx.hero === 'archer' && apply.bleed > 0) { apply.bleed += 2; notes.push('궁수 출혈 +2'); }
-    if (ctx.hero === 'warrior' && ctx.hp * 2 <= ctx.maxHp) add(5, '전사의 분노');
+    if (ctx.hero === 'hunter') add(3, '늑대 동료');
+    if (ctx.hero === 'fighter' && ctx.hp * 2 <= ctx.maxHp) add(5, '격투가의 투지');
+    if (ctx.hero === 'volley' && h.id === 'straight') add(8, '강스파이크');
     if (st.str) add(st.str, '힘');
 
     if (has('crown') && h.rank >= RANK.triple) { const before = atk; atk = Math.floor(atk * 1.25); notes.push(`왕의 왕관 ×1.25 (+${atk - before})`); }

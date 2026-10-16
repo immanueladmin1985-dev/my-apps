@@ -51,11 +51,14 @@ R.computeAttack(ctx); R.computeAttack(ctx);
 eq('미리보기 계산은 상태를 바꾸지 않는다', JSON.stringify(ctx), before);
 
 // 주인공 능력
-eq('드루이드: 회복 +2, 출혈 +1', (x => [x.heal, x.apply.bleed])(R.computeAttack(Object.assign({}, base, { hero: 'druid', dice: dice([3, 3, 3, 6, 6]) }))), [8, 1]);
-eq('드루이드: 하이 카드는 출혈 없음', R.computeAttack(Object.assign({}, base, { hero: 'druid', dice: dice([1, 3, 4, 5, 6]) })).apply.bleed, 0);
+eq('마법사: 회복 +2, 화상 +1', (x => [x.heal, x.apply.burn])(R.computeAttack(Object.assign({}, base, { hero: 'mage', dice: dice([3, 3, 3, 6, 6]) }))), [8, 1]);
+eq('마법사: 하이 카드는 화상 없음', R.computeAttack(Object.assign({}, base, { hero: 'mage', dice: dice([1, 3, 4, 5, 6]) })).apply.burn, 0);
 eq('궁수: 출혈 +2', R.computeAttack(Object.assign({}, base, { hero: 'archer', dice: dice([4, 4, 4, 1, 6]) })).apply.bleed, 4);
-eq('전사: 체력 절반 이하면 피해 +5', R.computeAttack(Object.assign({}, base, { hero: 'warrior', hp: 25, dice: dice([2, 2, 4, 5, 6]) })).atk, 13);
-eq('전사: 체력이 많으면 보너스 없음', R.computeAttack(Object.assign({}, base, { hero: 'warrior', hp: 26, dice: dice([2, 2, 4, 5, 6]) })).atk, 8);
+eq('사냥꾼: 늑대 피해 +3', R.computeAttack(Object.assign({}, base, { hero: 'hunter', dice: dice([2, 2, 4, 5, 6]) })).atk, 11);
+eq('격투가: 체력 절반 이하면 피해 +5', R.computeAttack(Object.assign({}, base, { hero: 'fighter', hp: 25, dice: dice([2, 2, 4, 5, 6]) })).atk, 13);
+eq('격투가: 체력이 많으면 보너스 없음', R.computeAttack(Object.assign({}, base, { hero: 'fighter', hp: 26, dice: dice([2, 2, 4, 5, 6]) })).atk, 8);
+eq('비치발리볼: 스트레이트 피해 +8', R.computeAttack(Object.assign({}, base, { hero: 'volley', dice: dice([1, 2, 3, 4, 5]) })).atk, 24);
+eq('비치발리볼: 다른 족보는 그대로', R.computeAttack(Object.assign({}, base, { hero: 'volley', dice: dice([2, 2, 4, 5, 6]) })).atk, 8);
 
 // 방어 처리
 const t = { hp: 20, status: { block: 5 } };

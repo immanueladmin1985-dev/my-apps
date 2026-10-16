@@ -22,29 +22,43 @@
     treasure: A + 'ui/treasure-glow.jpg'
   };
 
-  // 주인공: 고르거나 정보를 볼 때는 앞모습(front), 전투에서는 뒷모습(back)
-  // perk 는 game.js·rules.js 에서 id 로 처리한다. hurt 가 있으면 체력이 40% 이하일 때 그 모습으로 바뀐다.
+  // 주인공: 고르거나 정보를 볼 때는 앞모습(front), 전투에서는 뒷모습(back), 상단 표시줄에는 얼굴(face)
+  // perk 는 game.js·rules.js 에서 id 로 처리한다. hurtBack·hurtFront 가 있으면 체력이 40% 이하일 때 그 모습으로 바뀐다.
+  // hit: [투사체 또는 첫 이펙트, 맞은 자리 이펙트] (assets/fx2 이름 또는 그림 경로). ranged 면 투사체가 날아간다.
+  // hidden: 메인 메뉴 제목을 다섯 번 눌러야 고를 수 있는 히든 캐릭터. rig: 관절 움직임 설정 (js/rig.js)
   const H = n => ({ front: `${A}heroes/${n}-front.webp`, back: `${A}heroes/${n}-back.webp`, face: `${A}heroes/${n}-face.jpg` });
   DB.HEROES = {
-    druid: Object.assign(H('druid'), {
-      name: '드루이드', title: '숲의 수호자', hp: 50, die: 'life', fx: 'spore', color: '#59d17f',
-      desc: '숲의 정령과 교감하는 치유사. 버섯 지팡이로 상대를 독과 덩굴로 묶는다.',
-      perk: '회복 효과 +2, 원 페어 이상으로 공격하면 적에게 출혈 1'
-    }),
-    archer: Object.assign(H('archer'), {
-      name: '궁수', title: '바람의 사냥꾼', hp: 46, die: 'blood', fx: 'arrow', color: '#9fd36a',
-      desc: '숲을 누비는 엘프 사냥꾼. 빠른 손놀림으로 주사위를 여러 번 다시 굴린다.',
-      perk: '매 턴 재굴림 +1, 적에게 출혈을 줄 때 +2'
-    }),
     knight: Object.assign(H('knight'), {
-      name: '기사', title: '검은 숲의 검', hp: 56, die: 'steel', fx: 'slash', color: '#9fb0c4',
-      desc: '장검과 단검을 쓰는 숲의 기사. 단단한 갑옷으로 전투를 시작한다.',
+      name: '기사', title: '푸른 방패의 기사', hp: 56, die: 'steel', color: '#7fa2e8', hit: ['px-slash', 'slash-green'], rig: { arms: 0.9 },
+      desc: '장검과 문장 방패를 든 성기사. 단단한 갑옷으로 전투를 시작한다.',
       perk: '전투 시작 시 방어 8'
     }),
-    warrior: Object.assign(H('warrior'), {
-      name: '전사', title: '방패의 투사', hp: 60, die: 'flame', fx: 'punch', color: '#e5b94e',
-      hurtFront: `${A}heroes/warrior-front-hurt.webp`, hurtBack: `${A}heroes/warrior-back-hurt.webp`,
-      desc: '수많은 전장을 버텨 낸 투사. 상처를 입을수록 더 거세게 싸운다.',
+    hunter: Object.assign(H('hunter'), {
+      name: '사냥꾼', title: '늑대와 함께하는 사수', hp: 50, die: 'ice', color: '#c9a36a', ranged: true, hit: ['fire-arrow', 'px-impact'],
+      rig: { arms: 0.8, still: [[0.6, 0.5, 1, 1]] }, // 오른쪽 아래 늑대는 사냥꾼 관절을 따라가지 않는다
+      desc: '오래된 장총을 든 현상금 사냥꾼. 충직한 늑대가 함께 싸운다.',
+      perk: '공격할 때 늑대가 함께 물어 피해 +3'
+    }),
+    archer: Object.assign(H('archer'), {
+      name: '궁수', title: '숲의 정령 궁수', hp: 46, die: 'blood', color: '#9fd36a', ranged: true, hit: ['px-arrow', 'px-impact'], rig: { arms: 0.8 },
+      desc: '정령 여우와 함께 숲을 누비는 엘프 궁수. 빠른 손놀림으로 주사위를 여러 번 다시 굴린다.',
+      perk: '매 턴 재굴림 +1, 적에게 출혈을 줄 때 +2'
+    }),
+    mage: Object.assign(H('mage'), {
+      name: '마법사', title: '자수정 마녀', hp: 48, die: 'flame', color: '#b07cff', ranged: true, hit: ['px-missile', 'combustion'], rig: { arms: 0.8 },
+      desc: '자수정 지팡이와 마도서를 든 마녀. 상처를 치유하고 적을 불태운다.',
+      perk: '회복 효과 +2, 원 페어 이상으로 공격하면 적에게 화상 1'
+    }),
+    volley: Object.assign(H('volley'), {
+      name: '비치발리볼', title: '해변의 스파이커', hp: 50, die: 'life', color: '#4f8df0', hidden: true, ranged: true, hit: [`${A}heroes/volley-ball.webp`, 'px-impact'], rig: { arms: 0 }, // 두 손이 허벅지에 붙어 있어 팔은 움직이지 않고 허리·몸 전체만 쓴다
+      // 일러스트: 여정을 시작할 때(로딩), 히든 캐릭터를 찾았을 때, 승리 엔딩에 띄운다
+      illust: { wide: `${A}illust/volley-wide.jpg`, tall: [`${A}illust/volley-tall-a.jpg`, `${A}illust/volley-tall-b.jpg`] },
+      desc: '모래사장에서 온 비치발리볼 선수. 스트레이트를 만들면 강스파이크를 꽂는다.',
+      perk: '매 턴 재굴림 +1, 스트레이트 공격 피해 +8'
+    }),
+    fighter: Object.assign(H('fighter'), {
+      name: '격투가', title: '맨주먹 투사', hp: 60, die: 'curse', color: '#f08a3c', hidden: true, hit: ['punch', 'px-impact'], rig: { arms: 0.6 },
+      desc: '글러브 하나로 싸우는 격투가. 몰릴수록 주먹이 무거워진다.',
       perk: '체력이 절반 이하이면 공격 피해 +5'
     })
   };
@@ -124,25 +138,26 @@
 
   // 적 행동: atk(피해), hits(횟수), block, heal, buff(힘), apply(플레이어에게 거는 상태)
   DB.ENEMIES = {
+    // 아래 다섯은 예전에 초상화였던 적이다. 저장된 여정과 도감 기록이 이어지도록 키는 그대로 두고 그림만 전신으로 바꿨다
     goblin: {
-      name: '고블린', img: A + 'monsters/goblin.jpg', type: 'normal', hp: 22, desc: '가장 기본적인 몬스터. 빠르고 교활하다.',
+      name: '고블린 전사', img: A + 'mobs/goblin-warrior.webp', sprite: true, type: 'normal', hp: 22, desc: '녹슨 칼과 둥근 방패를 든 고블린. 빠르고 교활하다.',
       moves: [{ name: '단검 찌르기', atk: 6 }, { name: '독 묻은 칼날', atk: 4, apply: { bleed: 2 } }, { name: '난도질', atk: 3, hits: 2 }]
     },
     skeleton: {
-      name: '해골 전사', img: A + 'monsters/skeleton.jpg', type: 'normal', hp: 27, desc: '무겁고 강한 공격을 한다.',
+      name: '해골 병사', img: A + 'mobs/skeleton-soldier.webp', sprite: true, type: 'normal', hp: 27, desc: '검과 방패를 든 해골. 무겁고 강한 공격을 한다.',
       moves: [{ name: '방패 들기', block: 6, atk: 4 }, { name: '무거운 일격', atk: 10 }, { name: '뼈 베기', atk: 6 }]
     },
     mage: {
-      name: '어둠 마도사', img: A + 'monsters/mage.jpg', type: 'normal', hp: 19, desc: '원거리 마법 공격을 한다.',
+      name: '해골 마법사', img: A + 'mobs/skeleton-mage.webp', sprite: true, ranged: true, type: 'normal', hp: 19, desc: '보랏빛 지팡이로 저주를 퍼붓는 해골.',
       moves: [{ name: '서리 저주', atk: 3, apply: { freeze: 2 } }, { name: '마력 탄', atk: 9 }, { name: '불꽃 화살', atk: 4, apply: { burn: 2 } }]
     },
     werewolf: {
-      name: '늑대인간', img: A + 'monsters/werewolf.jpg', type: 'elite', hp: 48, desc: '빠르고 치명적인 공격을 한다.',
+      name: '늑대 우두머리', img: A + 'mobs/wolf.webp', sprite: true, rig: { kind: 'beast', headSide: -1 }, type: 'elite', hp: 48, desc: '무리를 이끄는 거대한 늑대. 빠르고 치명적이다.',
       moves: [{ name: '포효', buff: 2, block: 5 }, { name: '연속 할퀴기', atk: 4, hits: 3 }, { name: '물어뜯기', atk: 8, apply: { bleed: 3 } }]
     },
     golem: {
-      name: '바위 골렘', img: A + 'monsters/golem.jpg', type: 'elite', hp: 60, desc: '높은 방어력과 체력을 가졌다.',
-      moves: [{ name: '바위 껍질', block: 14 }, { name: '내려찍기', atk: 15 }, { name: '돌 던지기', atk: 9 }]
+      name: '고블린 브루트', img: A + 'mobs/goblin-brute.webp', sprite: true, type: 'elite', hp: 60, desc: '거대한 망치를 휘두르는 고블린 우두머리. 체력이 높고 단단하다.',
+      moves: [{ name: '어깨 갑옷 세우기', block: 14 }, { name: '망치 내려찍기', atk: 15 }, { name: '돌 던지기', atk: 9 }]
     },
     necromancer: {
       name: '네크로맨서', img: A + 'bosses/necromancer.jpg', marker: A + 'bossicons/skull.webp', type: 'boss', hp: 200, desc: '죽은 자들을 지배하는 마법사.',
@@ -176,8 +191,31 @@
     beast: [{ name: '할퀴기', atk: 4, hits: 2 }, { name: '물어뜯기', atk: 7, apply: { bleed: 2 } }, { name: '날개 치기', atk: 9 }],
     holy: [{ name: '심판의 검', atk: 10 }, { name: '빛의 방패', block: 10, heal: 5 }, { name: '천상의 연격', atk: 5, hits: 2 }]
   };
-  const M = (name, file, type, hp, set, desc) => ({ name, img: `${A}mobs/${file}.webp`, sprite: true, type, hp, moves: MOVESET[set], desc });
+  // ranged: 원거리 행동 묶음이면 공격할 때 지팡이·활을 드는 동작(cast)을 쓴다
+  // flip: 그림이 오른쪽을 보고 있어서 전투에서 좌우로 뒤집어 주인공(왼쪽 아래)을 보게 한다
+  // rig: 관절 움직임 종류 (js/rig.js). 사람형이면 적지 않는다
+  const RANGED = ['archer', 'nature', 'void', 'tide', 'storm'];
+  const M = (name, file, type, hp, set, desc, more) => Object.assign({ name, img: `${A}mobs/${file}.webp`, sprite: true, ranged: RANGED.indexOf(set) >= 0, type, hp, moves: MOVESET[set], desc }, more);
   Object.assign(DB.ENEMIES, {
+    goblinArcher: M('고블린 궁수', 'goblin-archer', 'normal', 20, 'archer', '덤불 뒤에서 활을 쏘는 고블린.', { flip: true }),
+    goblinShaman: M('고블린 주술사', 'goblin-shaman', 'normal', 21, 'nature', '짐승 두개골 지팡이로 초록 독불을 피운다.'),
+    slime: M('슬라임', 'slime', 'normal', 24, 'nature', '닿는 것을 녹이는 보랏빛 점액 덩어리.', {
+      rig: { kind: 'blob' }, ranged: false,
+      moves: [{ name: '몸통 박치기', atk: 7 }, { name: '산성 점액', atk: 3, apply: { burn: 2 } }, { name: '분열 재생', heal: 7, block: 4 }]
+    }),
+    bandit: M('산적', 'bandit', 'normal', 26, 'blade', '쌍단검을 든 숲길의 산적.'),
+    banditArcher: M('산적 궁수', 'bandit-archer', 'normal', 24, 'archer', '복면을 쓴 산적 사수.'),
+    banditMage: M('산적 마법사', 'bandit-mage', 'normal', 23, 'void', '훔친 마법 지팡이로 어둠을 부른다.'),
+    spider: M('독거미', 'spider', 'normal', 25, 'beast', '버섯 숲 동굴에 숨어 사는 거대한 거미.', {
+      rig: { kind: 'crawler' },
+      moves: [{ name: '독니', atk: 5, apply: { bleed: 2 } }, { name: '거미줄', atk: 3, apply: { freeze: 2 } }, { name: '덮치기', atk: 9 }]
+    }),
+    skeletonArcher: M('해골 궁수', 'skeleton-archer', 'normal', 30, 'archer', '썩은 활로 쉬지 않고 화살을 쏜다.', { flip: true }),
+    // 예전 주인공 4명은 숲과 버섯 숲의 적이 되었다
+    rivalDruid: M('타락한 드루이드', 'rival-druid', 'normal', 24, 'nature', '버섯 지팡이로 숲을 병들게 하는 드루이드.'),
+    rivalArcher: M('엘프 사냥꾼', 'rival-archer', 'normal', 22, 'archer', '덩굴 활로 침입자를 노리는 엘프.'),
+    rivalKnight: M('검은 숲의 검사', 'rival-knight', 'normal', 28, 'blade', '장검과 단검을 쓰는 숲의 검사.'),
+    rivalWarrior: M('방패 투사', 'rival-warrior', 'elite', 56, 'brute', '방패와 검으로 수많은 전장을 버틴 투사.'),
     elfArcher: M('엘프 저격수', 'elf-archer', 'normal', 22, 'archer', '나무 위에서 화살을 퍼붓는 숲의 저격수.'),
     dryadWitch: M('드라이어드 마녀', 'dryad-witch', 'normal', 24, 'nature', '두 개의 지팡이로 숲의 힘을 끌어 쓴다.'),
     shaman: M('늪지 주술사', 'shaman', 'normal', 23, 'nature', '버섯 지팡이로 저주를 퍼뜨린다.'),
@@ -193,14 +231,14 @@
     shellWitch: M('조개 마녀', 'shell-witch', 'normal', 27, 'tide', '조개 지팡이로 파도를 부른다.'),
     tideCaller: M('파도 술사', 'tide-caller', 'normal', 28, 'storm', '번개 사슬로 바다를 다스린다.'),
     pearlMystic: M('진주 무희', 'pearl-mystic', 'normal', 26, 'tide', '보석을 띄워 마력을 모은다.'),
-    siren: M('세이렌 예언자', 'siren', 'normal', 29, 'tide', '노랫소리로 선원을 홀린다.'),
+    siren: M('세이렌 예언자', 'siren', 'normal', 29, 'tide', '노랫소리로 선원을 홀린다.', { flip: true }),
     seaWitch: M('심해 마녀', 'sea-witch', 'normal', 31, 'tide', '삼지창을 든 심해의 마녀.'),
     anchorBrute: M('닻 거인', 'anchor-brute', 'elite', 68, 'brute', '거대한 닻을 끌고 다니는 해적 거인.'),
     coralReaper: M('산호 사신', 'coral-reaper', 'elite', 60, 'beast', '산호 갑각을 두른 네 팔의 사냥꾼.'),
     gorgon: M('고르곤 파수꾼', 'gorgon', 'elite', 64, 'blade', '뱀 머리칼을 지닌 방패 전사.'),
     frostKnight: M('서리 기사', 'frost-knight', 'normal', 34, 'frost', '얼음 창과 방패를 든 기사.'),
     stormCaller: M('폭풍 소환사', 'storm-caller', 'normal', 32, 'storm', '번개 사슬을 두른 폭풍의 소환사.'),
-    harpyQueen: M('하피 여왕', 'harpy-queen', 'normal', 33, 'beast', '설산 하늘을 지배하는 하피.'),
+    harpyQueen: M('하피 여왕', 'harpy-queen', 'normal', 33, 'beast', '설산 하늘을 지배하는 하피.', { flip: true }),
     valkyrie: M('죽음의 발키리', 'valkyrie', 'normal', 35, 'holy', '전사자의 영혼을 거두는 발키리.'),
     gildedValkyrie: M('황금 발키리', 'gilded-valkyrie', 'elite', 72, 'holy', '불타는 성검을 든 천상의 전사.'),
     seraph: M('세라프', 'seraph', 'elite', 70, 'holy', '심판을 내리는 천사.'),
@@ -213,8 +251,8 @@
     ashRevenant: M('잿빛 망령', 'ash-revenant', 'normal', 38, 'fire', '불타는 검을 든 망령.'),
     boneKnight: M('해골 기사', 'bone-knight', 'elite', 74, 'blade', '뼈 갑옷을 입은 망자의 기사.'),
     steamGolem: M('증기 골렘', 'steam-golem', 'elite', 82, 'brute', '증기를 뿜는 강철 거인.'),
-    driderQueen: M('드라이더 여왕', 'drider-queen', 'elite', 76, 'void', '거미 몸을 가진 동굴의 여왕.'),
-    voidHerald: Object.assign(M('공허의 전령', 'void-herald', 'boss', 185, 'void', '여섯 팔로 공허를 부르는 존재.'), {
+    driderQueen: M('드라이더 여왕', 'drider-queen', 'elite', 76, 'void', '거미 몸을 가진 동굴의 여왕.', { flip: true, rig: { kind: 'crawler' } }),
+    voidHerald: Object.assign(M('공허의 전령', 'void-herald', 'boss', 185, 'void', '여섯 팔로 공허를 부르는 존재.', { rig: { float: true } }), {
       marker: A + 'bossicons/beast.webp',
       moves: [{ name: '공허의 문', block: 16, heal: 8 }, { name: '여섯 팔의 연격', atk: 5, hits: 4 }, { name: '시간 정지', atk: 8, apply: { freeze: 3 } }, { name: '공허 폭발', atk: 22 }]
     }),
@@ -226,11 +264,11 @@
 
   // 지역별 몬스터 목록 (층 → 지역 → 일반·정예)
   DB.POOLS = {
-    forest: { normal: ['goblin', 'skeleton', 'elfArcher', 'dryadWitch', 'shaman'], elite: ['werewolf', 'barbarian'] },
-    mushroom: { normal: ['mage', 'jungleBlade', 'thunderHuntress', 'sporeMystic', 'cursedDryad'], elite: ['golem', 'leopardSeraph', 'mossReaper', 'orcBrute'] },
+    forest: { normal: ['goblin', 'goblinArcher', 'goblinShaman', 'skeleton', 'slime', 'elfArcher', 'dryadWitch', 'shaman', 'rivalDruid', 'rivalArcher'], elite: ['werewolf', 'golem', 'barbarian'] },
+    mushroom: { normal: ['bandit', 'banditArcher', 'banditMage', 'spider', 'jungleBlade', 'thunderHuntress', 'sporeMystic', 'cursedDryad', 'rivalKnight'], elite: ['leopardSeraph', 'mossReaper', 'orcBrute', 'rivalWarrior'] },
     coast: { normal: ['sharkRaider', 'shellWitch', 'tideCaller', 'pearlMystic', 'siren', 'seaWitch'], elite: ['anchorBrute', 'coralReaper', 'gorgon'] },
     snow: { normal: ['frostKnight', 'stormCaller', 'harpyQueen', 'valkyrie'], elite: ['gildedValkyrie', 'seraph'] },
-    cave: { normal: ['voidSorceress', 'crystalMystic', 'shadowAssassin', 'basiliskTamer', 'scorpionBlade', 'demonWarrior', 'ashRevenant'], elite: ['boneKnight', 'steamGolem', 'driderQueen'] }
+    cave: { normal: ['mage', 'skeletonArcher', 'voidSorceress', 'crystalMystic', 'shadowAssassin', 'basiliskTamer', 'scorpionBlade', 'demonWarrior', 'ashRevenant'], elite: ['boneKnight', 'steamGolem', 'driderQueen'] }
   };
 
   DB.NPC = {

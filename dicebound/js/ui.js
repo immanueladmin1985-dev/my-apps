@@ -198,6 +198,8 @@
     installLater() { G.settings.installDismissed = true; G.saveSettings(); UI.render(); },
     menu() { UI.view = 'menu'; UI.closeAll(); UI.render(); },
     retry() { openSelect(); },
+    logoTap(b) { logoTap(b); },
+    illust() { illustOverlay(G.hero()); },
     toMenu() { G.run = null; UI.view = 'menu'; UI.render(); },
     leave() { G.leave(); },
     go() { if (UI.mapSel) G.chooseNode(UI.mapSel); },
@@ -210,8 +212,56 @@
     restHeal() { G.restHeal(); },
     restMeditate() { G.restMeditate(); }
   };
-  function openSelect() { UI.closeAll(); G.run = null; UI.view = 'select'; UI.heroSel = UI.heroSel || 'druid'; UI.render(); }
-  function startNew(heroId) { UI.closeAll(); G.newRun(heroId); UI.view = 'game'; UI.mapSel = null; UI.render(); }
+  // hidden 이면 히든 캐릭터만 보여 준다. 히든 선택은 저장하지 않으므로 매번 제목을 다섯 번 눌러야 한다
+  function openSelect(hidden) {
+    UI.closeAll(); G.run = null; UI.view = 'select'; UI.hiddenSel = hidden === true;
+    const cur = DB.HEROES[UI.heroSel];
+    if (!cur || !!cur.hidden !== UI.hiddenSel) UI.heroSel = Object.keys(DB.HEROES).find(k => !!DB.HEROES[k].hidden === UI.hiddenSel);
+    UI.render();
+  }
+  function startNew(heroId) {
+    UI.closeAll(); G.newRun(heroId); UI.view = 'game'; UI.mapSel = null; UI.hiddenSel = false; UI.render();
+    const H = G.hero();
+    if (H && H.illust) illustOverlay(H, { ms: 2600 }); // 일러스트가 있는 주인공은 출발할 때 로딩 화면처럼 띄운다
+  }
+  // 메인 메뉴 제목을 빠르게 다섯 번 누르면 히든 캐릭터를 고를 수 있다
+  function logoTap(el) {
+    const now = Date.now();
+    UI.taps = now - (UI.tapAt || 0) < 1500 ? (UI.taps || 0) + 1 : 1;
+    UI.tapAt = now;
+    el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap');
+    if (UI.taps < 5) return;
+    UI.taps = 0;
+    const go = () => {
+      if (G.savedRun) UI.modal({ title: '숨겨진 주인공', html: '<p>진행 중인 여정이 있습니다. 새로 시작하면 지금 여정은 사라집니다.</p>', buttons: [{ label: '취소', cls: 'dark' }, { label: '새로 시작', cls: 'teal', action: () => openSelect(true) }] });
+      else openSelect(true);
+    };
+    illustOverlay(DB.HEROES.volley, { caption: '<b>숨겨진 주인공을 찾았다!</b><span>비치발리볼 · 격투가</span>', onClose: go });
+  }
+  // 주인공 일러스트를 화면 가득 띄운다. 가로 화면은 가로 그림, 세로 화면은 세로 그림. 누르거나 ms 가 지나면 닫힌다
+  function illustOverlay(H, opts) {
+    const ill = H && H.illust;
+    opts = opts || {};
+    if (!ill) { if (opts.onClose) opts.onClose(); return; }
+    const wide = root.innerWidth > root.innerHeight;
+    const src = wide ? ill.wide : ill.tall[Math.floor(Math.random() * ill.tall.length)];
+    const el = document.createElement('div');
+    el.className = 'illust-ov';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', `${H.name} 일러스트`);
+    el.innerHTML = `${img(src, 'ill-bg', '')}${img(src, 'ill-img', H.name + ' 일러스트')}${opts.caption ? `<div class="ill-cap">${opts.caption}</div>` : ''}<small class="ill-hint">화면을 누르면 넘어갑니다</small>`;
+    let done = false;
+    const close = () => {
+      if (done) return;
+      done = true;
+      el.classList.add('out');
+      setTimeout(() => el.remove(), 320);
+      if (opts.onClose) opts.onClose();
+    };
+    el.onclick = close;
+    document.body.appendChild(el);
+    if (opts.ms) setTimeout(close, opts.ms);
+  }
 
   function howModal() {
     UI.modal({
@@ -234,7 +284,7 @@
       ${showBanner ? `<div class="install-banner panel"><div><b>홈 화면에 설치하기</b><span>설치하면 주소창 없이 전체 화면으로 즐길 수 있습니다.</span></div><div class="ib-btns"><button class="btn teal sm" data-act="install">설치하기</button><button class="btn dark sm" data-act="fs">전체화면</button><button class="btn dark sm" data-act="installLater">다음에</button></div></div>` : ''}
       <div class="menu-hero">
         <div class="menu-art">${img(I.bg.menuWide, '', '')}</div>
-        ${img(I.logo, 'logo', 'DICEBOUND')}
+        <button class="logo-btn" data-act="logoTap" aria-label="DICEBOUND">${img(I.logo, 'logo', 'DICEBOUND')}</button>
         <p class="tagline">주사위가 향하는 곳에, 운명이 있다.</p>
       </div>
       <div class="menu-btns">
@@ -260,9 +310,10 @@
     setBg(I.bg2('forest'), 'dim');
     const id = UI.heroSel, H = DB.HEROES[id], rec = (G.meta.heroes || {})[id];
     const die = DB.DICE[H.die];
-    s.innerHTML = `<section class="page select">
-      <div class="page-head"><small class="eyebrow">CHOOSE YOUR HERO</small><h2>주인공 선택</h2></div>
-      <div class="hero-pick">${Object.keys(DB.HEROES).map(k => { const x = DB.HEROES[k]; return `<button class="hero-card ${k === id ? 'on' : ''}" data-hero="${k}" style="--hc:${x.color}">${img(x.front, 'hc-img', x.name)}<b>${esc(x.name)}</b></button>`; }).join('')}</div>
+    const keys = Object.keys(DB.HEROES).filter(k => !!DB.HEROES[k].hidden === !!UI.hiddenSel);
+    s.innerHTML = `<section class="page select ${UI.hiddenSel ? 'secret' : ''}">
+      <div class="page-head"><small class="eyebrow">${UI.hiddenSel ? 'SECRET HEROES' : 'CHOOSE YOUR HERO'}</small><h2>${UI.hiddenSel ? '숨겨진 주인공' : '주인공 선택'}</h2></div>
+      <div class="hero-pick n${keys.length}">${keys.map(k => { const x = DB.HEROES[k]; return `<button class="hero-card ${k === id ? 'on' : ''}" data-hero="${k}" style="--hc:${x.color}">${img(x.front, 'hc-img', x.name)}<b>${esc(x.name)}</b></button>`; }).join('')}</div>
       <div class="hero-detail panel" style="--hc:${H.color}">
         <div class="hd-art">${img(H.front, 'hd-img', H.name)}</div>
         <div class="hd-text">
@@ -275,7 +326,7 @@
           ${rec ? `<p class="muted small">기록: 여정 ${rec.runs}회 · 정복 ${rec.wins}회</p>` : ''}
         </div>
       </div>
-      <div class="page-foot two"><button class="btn dark" data-act="toMenu">메인 메뉴</button><button class="btn teal" data-act="pickHero">${esc(H.name)}(으)로 출발</button></div>
+      <div class="page-foot two"><button class="btn dark" data-act="toMenu">메인 메뉴</button><button class="btn teal" data-act="pickHero">${H.name.length > 3 ? '이 주인공으로 출발' : esc(H.name) + '(으)로 출발'}</button></div>
     </section>`;
     $$('[data-hero]', s).forEach(b => { b.onclick = () => { UI.heroSel = b.dataset.hero; UI.render(); }; });
   }
@@ -355,6 +406,19 @@
     if (p.selfDmg) chips.push(`<span class="chip bad">자신 -${p.selfDmg}</span>`);
     return `<div class="preview"><button class="hand-name" data-act="hands" aria-label="족보표 보기"><small>현재 족보</small><b>${p.hand.name}</b></button><div class="chips">${chips.join('')}</div></div>`;
   }
+  // 적 그림·방향·관절 종류는 data.js 정의를 우선한다 (예전 저장 기록의 초상화도 새 전신 그림으로 보인다)
+  function enemyLook(e) {
+    const def = DB.ENEMIES[e.key] || {};
+    return { src: def.img || e.img, sprite: def.sprite != null ? !!def.sprite : !!e.sprite, flip: !!def.flip, ranged: !!def.ranged, rig: Object.assign({ kind: 'human' }, def.rig) };
+  }
+  // 캐릭터 그림 바꾸기: 관절 리그가 있으면 리그에, 없으면 <img> 에 직접
+  function setMonImg(id, src) {
+    const m = document.getElementById(id);
+    if (!m || !src) return;
+    const rg = DB.rig.get(m);
+    if (!rg.dead) rg.setImage(src);
+    else { const im = m.querySelector('img'); if (im && im.getAttribute('src') !== src) im.setAttribute('src', src); }
+  }
   function renderBattle(s) {
     const r = G.run, b = r.battle, e = b.enemy, H = G.hero();
     const boss = e.type === 'boss', elite = e.type === 'elite';
@@ -365,24 +429,35 @@
     const rolled = (UI.lastRoll && UI.lastRoll.id === b.rollId && UI.lastRoll.key === r.stats.turns) ? null : (G.events.find(ev => ev.type === 'roll') || null);
     UI.lastRoll = { id: b.rollId, key: r.stats.turns };
     // 포켓몬 배틀 배치: 적은 오른쪽 위(정면), 주인공은 왼쪽 아래(뒷모습), 정보 상자는 서로 반대쪽
-    s.innerHTML = `<section class="battle ${boss ? 'is-boss' : ''} ${elite ? 'is-elite' : ''}">
-      <div class="stage" id="stage" style="background-image:url('${b.bg || I.bg.battle}')">
-        <div class="infobox foe-box">
+    // 무대(배경·캐릭터)는 전투가 시작될 때 한 번만 만든다. 주사위를 누를 때마다 다시 만들면 등장 연출이 되풀이된다
+    const sec = s.firstElementChild;
+    if (!(sec && sec.classList.contains('battle') && UI.stageOf === b)) {
+      const look = enemyLook(e);
+      s.innerHTML = `<section class="battle ${boss ? 'is-boss' : ''} ${elite ? 'is-elite' : ''}">
+        <div class="stage" id="stage" style="background-image:url('${b.bg || I.bg.battle}')">
+          <div class="infobox foe-box" id="foeBox"></div>
+          <div class="spot foe-spot ${look.sprite ? 'sprite' : 'portrait'}"><div class="platform"></div><div class="mon" id="foeCard">${img(look.src, 'foe-img' + (look.flip ? ' flip' : ''), e.name)}<div class="fx-anchor" id="fxFoe"></div></div></div>
+          <div class="spot me-spot"><div class="platform"></div><div class="mon" id="meCard">${img(G.heroImg('back'), 'me-img', H.name)}<div class="fx-anchor" id="fxMe"></div></div></div>
+          <div class="infobox me-box" id="meBox"></div>
+          <div class="flash" id="flash"></div>
+        </div>
+        <div class="control panel" id="ctrl"></div>
+      </section>`;
+      UI.stageOf = b;
+      // 관절 리그: 적은 왼쪽(dir -1), 주인공은 오른쪽(dir 1)을 향해 움직인다. 초상화 보스는 그림 전체만 흔든다
+      if (look.sprite) DB.rig.attach($('#foeCard', s), Object.assign({}, look.rig, { flip: look.flip, dir: -1 })).play('enter');
+      DB.rig.attach($('#meCard', s), Object.assign({ kind: 'human' }, H.rig, { dir: 1 })).play('enter');
+    }
+    $('#foeBox', s).innerHTML = `
           <div class="ib-name"><span class="tag ${e.type}">${typeName}</span><b>${esc(e.name)}</b></div>
           <div class="hpline">${bar(e.hp, e.maxHp, 'enemy')}${e.status.block ? `<span class="blk" data-st="block">${img(DB.STATUS.block.icon, '', '방어')}<b>${e.status.block}</b></span>` : ''}</div>
           <div class="sts" id="eSts">${statusRow(e.status, true)}</div>
-          ${intentHTML(e)}
-        </div>
-        <div class="spot foe-spot ${e.sprite ? 'sprite' : 'portrait'}"><div class="platform"></div><div class="mon" id="foeCard">${img(e.img, 'foe-img', e.name)}<div class="fx-anchor" id="fxFoe"></div></div></div>
-        <div class="spot me-spot"><div class="platform"></div><div class="mon" id="meCard">${img(G.heroImg('back'), 'me-img', H.name)}<div class="fx-anchor" id="fxMe"></div></div></div>
-        <div class="infobox me-box">
+          ${intentHTML(e)}`;
+    $('#meBox', s).innerHTML = `
           <div class="ib-name"><b>${esc(H.name)}</b><small>${esc(H.title)}</small></div>
           <div class="hpline">${bar(r.hp, r.maxHp, 'hp')}${b.status.block ? `<span class="blk">${img(DB.STATUS.block.icon, '', '방어')}<b>${b.status.block}</b></span>` : ''}</div>
-          <div class="sts" id="pSts">${statusRow(b.status, true)}</div>
-        </div>
-        <div class="flash" id="flash"></div>
-      </div>
-      <div class="control panel">
+          <div class="sts" id="pSts">${statusRow(b.status, true)}</div>`;
+    $('#ctrl', s).innerHTML = `
         ${previewHTML(p)}
         <div class="tray" id="tray">${b.values.map((v, i) => {
           const sel = b.selected.indexOf(i) >= 0;
@@ -396,9 +471,8 @@
           <button class="btn red" data-act="attack" ${can ? '' : 'disabled'}>공격</button>
         </div>
         ${G.canTransmute() ? '<button class="btn dark sm wide" data-act="transmute">변환 주사위 사용 (전투당 1회)</button>' : ''}
-        <div class="blog" id="blog">${b.log.slice(-2).map(t => `<p>${esc(t)}</p>`).join('')}</div>
-      </div>
-    </section>`;
+        <div class="blog" id="blog">${b.log.slice(-2).map(t => `<p>${esc(t)}</p>`).join('')}</div>`;
+    setMonImg('meCard', G.heroImg('back'));
     $$('[data-die]', s).forEach(d => { d.onclick = () => { if (!UI.busy) G.toggleDie(+d.dataset.die); }; });
     $$('.sts [data-tip], .blk', s).forEach(x => { x.onclick = () => statusModal(x.dataset.tip || 'block'); });
   }
@@ -414,12 +488,16 @@
    * 공격: 공격자가 앞으로 돌진 → (궁수·드루이드는 투사체가 날아감) → 맞은 쪽에 타격 이펙트, 흔들림, 번쩍임, 피해 숫자
    * 이펙트 이미지는 assets/fx2 (투명 배경), 방어막만 기존 fx(rune, 화면 합성)를 쓴다. */
   const slow = () => G.settings.reduceMotion;
+  // 연출 줄이기를 켜거나 기기에서 움직임 줄이기를 켜면 관절 리그도 숨쉬기를 멈춘다
+  DB.rig.reduced = () => G.settings.reduceMotion || !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const wait = ms => new Promise(res => setTimeout(res, slow() ? Math.min(ms, 120) : ms));
+  // 이펙트 이름은 assets/fx2 의 파일 이름이거나, '/' 가 들어간 그림 경로다 (예: 비치발리볼 공)
+  const fxSrc = name => (name.indexOf('/') >= 0 ? name : I.fx2(name));
   function fx(anchorId, name, cls) {
     const a = document.getElementById(anchorId);
     if (!a || slow()) return;
     const el = document.createElement('img');
-    el.src = name === 'rune' ? I.fx('rune') : I.fx2(name);
+    el.src = name === 'rune' ? I.fx('rune') : fxSrc(name);
     el.className = 'fx ' + (name === 'rune' ? 'screen ' : '') + (cls || '');
     el.alt = '';
     a.appendChild(el);
@@ -454,16 +532,16 @@
     const x0 = A.left + A.width * 0.6 - S.left, y0 = A.top + A.height * 0.35 - S.top;
     const x1 = B.left + B.width / 2 - S.left, y1 = B.top + B.height * 0.45 - S.top;
     const ang = Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI + 45; // 화살 이미지는 오른쪽 위(45°)를 향한다
+    const spin = name.indexOf('/') >= 0 ? 540 : 0; // 공처럼 방향이 없는 그림은 돌면서 날아간다
     const el = document.createElement('img');
-    el.src = I.fx2(name); el.className = 'proj'; el.alt = '';
+    el.src = fxSrc(name); el.className = 'proj' + (spin ? ' ball' : ''); el.alt = '';
     st.appendChild(el);
     const an = el.animate([
       { transform: `translate(${x0}px, ${y0}px) translate(-50%, -50%) rotate(${ang}deg) scale(.7)`, opacity: .2 },
-      { transform: `translate(${x1}px, ${y1}px) translate(-50%, -50%) rotate(${ang}deg) scale(1)`, opacity: 1 }
+      { transform: `translate(${x1}px, ${y1}px) translate(-50%, -50%) rotate(${ang + spin}deg) scale(1)`, opacity: 1 }
     ], { duration: ms || 320, easing: 'ease-in' });
     return new Promise(res => { an.onfinish = () => { el.remove(); res(); }; });
   }
-  const HERO_HIT = { druid: ['px-missile', 'poison'], archer: ['px-arrow', 'px-impact'], knight: ['px-slash', 'slash-green'], warrior: ['punch', 'px-impact'] };
   function moveFx(mv) {
     if (mv.apply && mv.apply.burn) return 'combustion';
     if (mv.apply && mv.apply.freeze) return 'frostbite';
@@ -480,26 +558,29 @@
     if (es) es.innerHTML = statusRow(sn.eSt);
     if (ps) ps.innerHTML = statusRow(sn.pSt);
     // 전사는 체력이 낮아지면 그 자리에서 부상 모습으로 바뀐다
-    const me = $('#meCard .me-img'), H = G.hero();
-    if (me && H && H.hurtBack) {
-      const want = sn.pHp > 0 && sn.pHp <= sn.pMax * 0.4 ? H.hurtBack : H.back;
-      if (me.getAttribute('src') !== want) me.setAttribute('src', want);
-    }
+    const H = G.hero();
+    if (H && H.hurtBack) setMonImg('meCard', sn.pHp > 0 && sn.pHp <= sn.pMax * 0.4 ? H.hurtBack : H.back);
   }
   const ANIM = ['playerAttack', 'tick', 'enemyMove', 'victory', 'defeat', 'potion'];
+  // 관절 동작: attack(휘두르기) / cast(지팡이·활 들기) / hurt(맞고 젖혀짐) / buff(기합) / die(쓰러짐)
+  const pose = (id, name, opts) => { if (!slow()) DB.rig.get(id).play(name, opts); };
   async function play(events) {
     UI.busy = true;
     document.body.classList.add('busy');
     $$('.control button, .hud button.pot').forEach(b => { b.disabled = true; });
-    const hero = G.run.hero;
+    const H = G.hero() || {};
+    const heroMove = H.ranged ? 'cast' : 'attack';
+    const foeMove = G.run.battle && enemyLook(G.run.battle.enemy).ranged ? 'cast' : 'attack';
     for (const ev of events) {
       if (ev.type === 'playerAttack') {
-        const [p, hit] = HERO_HIT[hero] || HERO_HIT.knight;
+        const [p, hit] = H.hit || ['px-slash', 'slash-green'];
+        pose('meCard', heroMove);
         anim('meCard', 'lunge-me', 500);
         await wait(160);
-        if (hero === 'archer' || hero === 'druid') await projectile('meCard', 'foeCard', p, 300);
+        if (H.ranged) await projectile('meCard', 'foeCard', p, 300);
         else fx('fxFoe', p, 'big');
         fx('fxFoe', ev.hand.rank >= 6 ? 'shock' : ev.hand.rank >= 4 ? 'combustion' : hit, ev.hand.rank >= 4 ? 'big' : '');
+        pose('foeCard', 'hurt');
         anim('foeCard', 'hurt', 500);
         if (ev.hand.rank >= 4) anim('stage', 'quake', 450);
         flash(ev.hand.rank >= 4 ? 'rgba(255,190,90,.4)' : 'rgba(255,255,255,.28)');
@@ -515,6 +596,7 @@
       } else if (ev.type === 'tick') {
         const anchor = ev.who === 'player' ? 'fxMe' : 'fxFoe';
         fx(anchor, ev.status === 'bleed' ? 'px-bleed' : 'px-burn', 'small');
+        pose(ev.who === 'player' ? 'meCard' : 'foeCard', 'hurt', { dur: 380 });
         anim(ev.who === 'player' ? 'meCard' : 'foeCard', 'hurt', 400);
         floatText(anchor, `-${ev.amount}`, 'dmg');
         applySnap(ev.snap);
@@ -523,18 +605,21 @@
         const mv = ev.move;
         const it = $('.intent'); if (it) it.classList.add('acting');
         if (mv.atk) {
+          pose('foeCard', foeMove);
           anim('foeCard', 'lunge-foe', 500);
           await wait(180);
           const n = Math.min(mv.hits || 1, 4);
           for (let k = 0; k < n; k++) {
+            if (k) pose('foeCard', foeMove, { dur: 300 });
             fx('fxMe', moveFx(mv), k ? 'small' : 'big');
+            pose('meCard', 'hurt', { dur: k < n - 1 ? 300 : 480 });
             anim('meCard', 'hurt', 400);
             if (k < n - 1) await wait(150);
           }
           anim('stage', 'quake', 450);
           flash(G.run.battle && G.run.battle.enemy.type === 'boss' ? 'rgba(150,40,200,.38)' : 'rgba(224,40,60,.34)');
           floatText('fxMe', ev.dealt ? `-${ev.dealt}` : '막음', 'dmg');
-        }
+        } else if (mv.block || mv.heal || mv.buff) pose('foeCard', 'buff');
         if (mv.block) fx('fxFoe', 'rune', 'small');
         if (mv.heal) { fx('fxFoe', 'heal-burst', 'small'); floatText('fxFoe', `+${mv.heal}`, 'heal'); }
         if (mv.buff) fx('fxFoe', 'px-burn', 'small');
@@ -543,15 +628,18 @@
       } else if (ev.type === 'potion') {
         const toFoe = ev.id === 'bomb' || ev.id === 'frost';
         fx(toFoe ? 'fxFoe' : 'fxMe', { bomb: 'combustion', frost: 'frostbite', heal: 'heal-burst', cure: 'px-heal', ward: 'rune', might: 'px-burn', reroll: 'rune-orb', fate: 'px-missile' }[ev.id] || 'rune');
-        if (toFoe) { anim('foeCard', 'hurt', 400); flash('rgba(255,190,90,.3)'); }
+        if (toFoe) { pose('foeCard', 'hurt'); anim('foeCard', 'hurt', 400); flash('rgba(255,190,90,.3)'); }
+        else pose('meCard', 'buff');
         applySnap(ev.snap);
         await wait(450);
       } else if (ev.type === 'victory') {
         const c = $('#foeCard'); if (c) c.classList.add('dying');
+        pose('foeCard', 'die'); pose('meCard', 'buff');
         applySnap(ev.snap);
         await wait(850);
       } else if (ev.type === 'defeat') {
         const c = $('#meCard'); if (c) c.classList.add('dying');
+        pose('meCard', 'die');
         applySnap(ev.snap);
         await wait(950);
       }
@@ -699,8 +787,11 @@
     setBg(I.bg2(res.won ? 'throne' : 'hell'), 'dim');
     const killer = res.enemy && DB.ENEMIES[res.enemy];
     const mins = Math.max(1, Math.round(res.time / 60000));
+    const ill = res.won && H.illust;
+    if (ill && UI.endShown !== res) { UI.endShown = res; setTimeout(() => illustOverlay(H), 450); }
+    const illSrc = ill && (root.innerWidth > root.innerHeight ? ill.wide : ill.tall[0]);
     s.innerHTML = `<section class="page end ${res.won ? 'won' : 'lost'}">
-      <div class="end-art">${img(res.won ? H.front : (H.hurtFront || H.front), 'end-hero', H.name)}${res.won ? img(I.emblem('gold'), 'end-emblem', '') : ''}${killer ? img(killer.img, 'end-foe ' + (killer.sprite ? 'sprite' : 'portrait'), killer.name) : ''}</div>
+      <div class="end-art ${ill ? 'illus' : ''}">${ill ? `<button class="end-illust" data-act="illust" aria-label="일러스트 크게 보기">${img(illSrc, '', H.name + ' 일러스트')}</button>` : img(res.won ? H.front : (H.hurtFront || H.front), 'end-hero', H.name)}${res.won ? img(I.emblem('gold'), 'end-emblem', '') : ''}${killer ? img(killer.img, 'end-foe ' + (killer.sprite ? 'sprite' : 'portrait'), killer.name) : ''}</div>
       <div class="frame end-text"><small class="eyebrow">${res.won ? 'VICTORY' : 'GAME OVER'}</small><h1>${res.won ? '운명을 정복했다' : '여정이 끝났다'}</h1>
         <p>${res.won ? `${esc(boss.name)}을(를) 쓰러뜨리고 주사위의 운명을 손에 넣었습니다.` : `${res.floor}층에서 ${killer ? esc(killer.name) + '에게 ' : ''}쓰러졌습니다. 다른 길과 조합으로 다시 도전하세요.`}</p></div>
       <div class="panel stats">
@@ -768,7 +859,7 @@
       const cats = [['heroes', '주인공'], ['enemies', '몬스터'], ['relics', '유물'], ['dice', '주사위'], ['potions', '소모품']];
       let list = '';
       const hm = m.heroes || {};
-      if (codexTab === 'heroes') list = Object.keys(DB.HEROES).map(k => { const x = DB.HEROES[k], c = hm[k]; return `<div class="cx hero">${img(x.front, 'cx-img sprite', x.name)}<b>${esc(x.name)}</b><small>${esc(x.perk)}</small><small class="muted">여정 ${c ? c.runs : 0} · 정복 ${c ? c.wins : 0}</small></div>`; }).join('');
+      if (codexTab === 'heroes') list = Object.keys(DB.HEROES).filter(k => !DB.HEROES[k].hidden || (hm[k] && hm[k].runs)).map(k => { const x = DB.HEROES[k], c = hm[k]; return `<div class="cx hero">${img(x.front, 'cx-img sprite', x.name)}<b>${esc(x.name)}</b><small>${esc(x.perk)}</small><small class="muted">여정 ${c ? c.runs : 0} · 정복 ${c ? c.wins : 0}</small></div>`; }).join('');
       if (codexTab === 'enemies') list = Object.keys(DB.ENEMIES).map(k => { const e = DB.ENEMIES[k], c = m.codex.enemies[k]; return c ? `<div class="cx ${e.type}">${img(e.img, 'cx-img' + (e.sprite ? ' sprite' : ''), e.name)}<b>${esc(e.name)}</b><small>${esc(e.desc)}</small><small class="muted">만남 ${c.seen} · 처치 ${c.kills}</small></div>` : '<div class="cx locked"><div class="cx-img q">?</div><b>???</b><small>아직 만나지 못했다.</small></div>'; }).join('');
       if (codexTab === 'relics') list = Object.keys(DB.RELICS).map(k => m.codex.relics[k] ? `<button class="cx small" data-relic="${k}">${img(DB.RELICS[k].icon, 'cx-ico', '')}<b>${esc(DB.RELICS[k].name)}</b></button>` : '<div class="cx small locked"><div class="cx-ico q">?</div><b>???</b></div>').join('');
       if (codexTab === 'dice') list = Object.keys(DB.DICE).map(k => m.codex.dice[k] ? `<div class="cx small">${dieFace(6, k)}<b>${esc(DB.DICE[k].name)}</b><small>${esc(DB.DICE[k].desc)}</small></div>` : '<div class="cx small locked"><div class="cx-ico q">?</div><b>???</b></div>').join('');
