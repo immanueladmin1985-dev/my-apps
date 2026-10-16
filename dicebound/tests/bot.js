@@ -31,6 +31,7 @@
   function step() {
     const G = DB.game, r = G.run;
     if (!r) return { kind: 'none' };
+    if (r.pendingUpgrade) return { kind: 'upgradeDie', slot: G.upgradable()[0] };
     if (r.pendingDice) {
       let slot = r.dice.findIndex(d => !d.kind);
       if (slot < 0) slot = 0;
@@ -65,7 +66,7 @@
         return { kind: 'leave' };
       }
       case 'shop': {
-        const it = r.shop.items.findIndex(x => !x.sold && x.price <= r.gold && (x.cat === 'relic' || (x.cat === 'potion' && r.potions.length < 3) || (x.cat === 'service' && r.hp < r.maxHp * 0.6) || (x.cat === 'dice' && r.dice.some(d => !d.kind))));
+        const it = r.shop.items.findIndex(x => !x.sold && x.price <= r.gold && (x.cat === 'relic' || (x.cat === 'potion' && r.potions.length < 3) || (x.cat === 'service' && x.id === 'heal' && r.hp < r.maxHp * 0.6) || (x.cat === 'service' && x.id === 'upgrade' && G.upgradable().length > 0) || (x.cat === 'dice' && r.dice.some(d => !d.kind))));
         if (it >= 0) return { kind: 'buy', idx: it };
         return { kind: 'leave' };
       }
@@ -74,6 +75,7 @@
         if (s.done) return { kind: 'leave' };
         if (r.hp < r.maxHp * 0.75) return { kind: 'restHeal' };
         if (r.dice.some(d => !d.kind)) return { kind: 'restTrain', id: s.train[0] };
+        if (G.upgradable().length) return { kind: 'restUpgrade' };
         return { kind: 'restMeditate' };
       }
       case 'event': {
@@ -93,6 +95,8 @@
     const G = DB.game;
     switch (a.kind) {
       case 'replaceDie': return G.replaceDie(a.slot);
+      case 'upgradeDie': return G.upgradeDie(a.slot);
+      case 'restUpgrade': return G.restUpgrade();
       case 'node': return G.chooseNode(a.id);
       case 'potion': return G.usePotion(a.idx);
       case 'reroll': a.sel.forEach(i => G.toggleDie(i)); return G.reroll();

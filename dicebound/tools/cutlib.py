@@ -152,3 +152,24 @@ def key_sheet(a, kind):
         rgb[..., 2] = np.where(edge, np.minimum(rgb[..., 2], np.maximum(cap, rgb[..., 2] * 0.85)), rgb[..., 2])
         despill(rgb, al, fg, hm)
     return rgb, al, fg
+
+
+def cut_grid(src, out, names, max_side=640):
+    """인물이 줄·칸으로 놓인 시트를 자른다. names 는 줄마다 이름 목록(왼쪽부터).
+    떠 있는 조각(해골·불꽃·검 등)은 무게중심이 들어 있는 칸의 인물에 붙인다."""
+    a = load(src)
+    H, W = a.shape[:2]
+    rows, cols = len(names), max(len(r) for r in names)
+    rgb, al, fg = key_sheet(a, 'magenta')
+    lab, cs = components(al, 120)
+    masks = {n: np.zeros(al.shape, bool) for row in names for n in row}
+    for c in cs:
+        m = lab == c['id']
+        ys, xs = np.where(m)
+        row = min(rows - 1, int(ys.mean() / (H / rows)))
+        col = min(len(names[row]) - 1, int(xs.mean() / (W / cols)))
+        masks[names[row][col]] |= m
+    os.makedirs(out, exist_ok=True)
+    for n, m in masks.items():
+        ys, xs = np.where(m)
+        print(n, save_rgba(rgb, al, (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1), f'{out}/{n}.webp', keep_mask=m, max_side=max_side))

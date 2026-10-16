@@ -38,8 +38,8 @@
     return { id, name: NAMES[id], rank: RANK[id], atk, block, heal, apply, used: used.sort((a, b) => a - b) };
   }
 
-  /* ctx = { dice:[{kind,value}], relics:[id], gold, hp, maxHp, rerollsLeft, enemyType, status:{str,freeze}, hero,
-   *         foeStatus:{bleed,burn,freeze}, firstAttack, bonusAtk }
+  /* ctx = { dice:[{kind,value,up}], relics:[id], gold, hp, maxHp, rerollsLeft, enemyType, status:{str,freeze}, hero,
+   *         foeStatus:{bleed,burn,freeze}, firstAttack, bonusAtk, sharp }
    * pierce 가 참이면 적의 방어를 무시한다. dice[i] = { on, text } 는 주사위별 효과 (화면 표시용)
    * 반환값은 미리보기와 실제 공격에서 똑같이 쓴다. */
   function computeAttack(ctx) {
@@ -56,23 +56,23 @@
     const dice = ctx.dice.map(() => ({ on: false, text: '' }));
     let pierce = false;
     ctx.dice.forEach((d, i) => {
-      const v = d.value, inHand = h.used.indexOf(i) >= 0;
+      const v = d.value, inHand = h.used.indexOf(i) >= 0, U = !!d.up; // U: 강화된 주사위
       const on = text => { dice[i].on = true; dice[i].text = text; };
       switch (d.kind) {
-        case 'gold': if (v === 6) { gold += 3; notes.push('황금 주사위 골드 +3'); on('골드 +3'); } break;
-        case 'curse': if (v === 1) { add(9, '저주 주사위'); selfDmg += 2; on('피해 +9, 자신 체력 -2'); } break;
-        case 'ice': if (v >= 4) { apply.freeze += 1; notes.push('빙결 주사위 빙결 +1'); on('적에게 빙결 +1'); } break;
-        case 'alchemy': if (v === 2 || v === 3) { block += 3; notes.push('연금 주사위 방어 +3'); on('방어 +3'); } break;
-        case 'steel': if (h.rank >= RANK.triple && inHand) { add(4, '강철 주사위'); on('피해 +4'); } break;
-        case 'blood': if (v >= 5) { apply.bleed += 2; notes.push('피의 주사위 출혈 +2'); on('적에게 출혈 +2'); } break;
-        case 'flame': if (v === 6) { apply.burn += 2; notes.push('불꽃 주사위 화상 +2'); on('적에게 화상 +2'); } break;
-        case 'life': if (v <= 2) { heal += 2; notes.push('생명 주사위 회복 +2'); on('체력 회복 +2'); } break;
-        case 'thunder': if (v >= 5) { add(3, '번개 주사위'); on('피해 +3'); } break;
-        case 'venom': if (v % 2 === 0) { apply.bleed += 1; notes.push('독 주사위 출혈 +1'); on('적에게 출혈 +1'); } break;
-        case 'shield': if (!inHand) { block += 4; notes.push('수호 주사위 방어 +4'); on('방어 +4'); } break;
-        case 'mirror': if (vals.some((w, j) => j !== i && w === v)) { add(4, '거울 주사위'); on('피해 +4'); } break;
-        case 'pierce': if (v === 6) { pierce = true; notes.push('관통 주사위 방어 무시'); on('적의 방어를 무시한다'); } break;
-        case 'vampire': if (inHand) { const n = Math.max(1, Math.floor(v / 2)); heal += n; notes.push(`흡혈 주사위 회복 +${n}`); on(`체력 회복 +${n}`); } break;
+        case 'gold': if (v >= (U ? 5 : 6)) { const g = U ? 4 : 3; gold += g; notes.push(`황금 주사위 골드 +${g}`); on(`골드 +${g}`); } break;
+        case 'curse': if (v === 1) { const n = U ? 13 : 9; add(n, '저주 주사위'); selfDmg += 2; on(`피해 +${n}, 자신 체력 -2`); } break;
+        case 'ice': if (v >= 4) { const n = U ? 2 : 1; apply.freeze += n; notes.push(`빙결 주사위 빙결 +${n}`); on(`적에게 빙결 +${n}`); } break;
+        case 'alchemy': if (U ? v <= 3 : (v === 2 || v === 3)) { const n = U ? 4 : 3; block += n; notes.push(`연금 주사위 방어 +${n}`); on(`방어 +${n}`); } break;
+        case 'steel': if (h.rank >= RANK.triple && inHand) { const n = U ? 7 : 4; add(n, '강철 주사위'); on(`피해 +${n}`); } break;
+        case 'blood': if (v >= (U ? 4 : 5)) { apply.bleed += 2; notes.push('피의 주사위 출혈 +2'); on('적에게 출혈 +2'); } break;
+        case 'flame': if (v >= (U ? 5 : 6)) { apply.burn += 2; notes.push('불꽃 주사위 화상 +2'); on('적에게 화상 +2'); } break;
+        case 'life': if (v <= (U ? 3 : 2)) { const n = U ? 3 : 2; heal += n; notes.push(`생명 주사위 회복 +${n}`); on(`체력 회복 +${n}`); } break;
+        case 'thunder': if (v >= (U ? 4 : 5)) { const n = U ? 4 : 3; add(n, '번개 주사위'); on(`피해 +${n}`); } break;
+        case 'venom': if (v % 2 === 0) { const n = U ? 2 : 1; apply.bleed += n; notes.push(`독 주사위 출혈 +${n}`); on(`적에게 출혈 +${n}`); } break;
+        case 'shield': if (!inHand) { const n = U ? 7 : 4; block += n; notes.push(`수호 주사위 방어 +${n}`); on(`방어 +${n}`); } break;
+        case 'mirror': if (vals.some((w, j) => j !== i && w === v)) { const n = U ? 7 : 4; add(n, '거울 주사위'); on(`피해 +${n}`); } break;
+        case 'pierce': if (v >= (U ? 5 : 6)) { pierce = true; notes.push('관통 주사위 방어 무시'); on('적의 방어를 무시한다'); } break;
+        case 'vampire': if (inHand) { const n = U ? v : Math.max(1, Math.floor(v / 2)); heal += n; notes.push(`흡혈 주사위 회복 +${n}`); on(`체력 회복 +${n}`); } break;
         default: break;
       }
     });
@@ -97,6 +97,7 @@
     if (has('vortex') && ctx.rerollsLeft > 0) { block += 3 * ctx.rerollsLeft; notes.push(`소용돌이 부적 방어 +${3 * ctx.rerollsLeft}`); }
     if (has('voidorb') && ctx.firstAttack) { pierce = true; notes.push('공허의 구슬 방어 무시'); }
     if (ctx.bonusAtk) add(ctx.bonusAtk, '축복의 성표');
+    if (ctx.sharp) add(ctx.sharp, '손질한 무기');
     // 주인공 능력 (재굴림 +1·전투 시작 방어는 game.js)
     if (ctx.hero === 'mage') {
       if (h.rank >= RANK.pair) { apply.burn += 1; notes.push('마법사 화상 +1'); }
@@ -104,7 +105,7 @@
     }
     if (ctx.hero === 'archer' && apply.bleed > 0) { apply.bleed += 2; notes.push('궁수 출혈 +2'); }
     if (ctx.hero === 'hunter') add(3, '늑대 동료');
-    if (ctx.hero === 'fighter' && ctx.hp * 2 <= ctx.maxHp) add(5, '격투가의 투지');
+    if (ctx.hero === 'fighter') { add(2, '격투가의 주먹'); if (ctx.hp * 2 <= ctx.maxHp) add(5, '격투가의 투지'); }
     if (ctx.hero === 'volley' && h.id === 'straight') add(8, '강스파이크');
     if (st.str) add(st.str, '힘');
 
@@ -136,14 +137,23 @@
   }
 
   // 층에 맞춰 적 능력치를 정한다. 보스는 고정.
-  function scaleEnemy(key, def, floor, rng) {
-    const m = def.type === 'boss' ? 1 : 1 + 0.12 * (floor - 1);
-    const am = def.type === 'boss' ? 1 : 1 + 0.09 * (floor - 1);
-    const jitter = def.type === 'boss' ? 1 : 0.95 + rng.next() * 0.1;
+  // 행동 목록의 공격·방어 수치에 배율을 곱한다 (분노 행동에도 같은 배율을 쓴다)
+  function scaleMoves(moves, am) {
+    return moves.map(mv => Object.assign({}, mv, mv.atk ? { atk: Math.round(mv.atk * am) } : {}, mv.block ? { block: Math.round(mv.block * am) } : {}));
+  }
+
+  // asc: 난이도 단계 (DB.ASCENSION). 정예·보스(1), 공격 피해(2), 보스(4), 일반 적(5)
+  function scaleEnemy(key, def, floor, rng, asc) {
+    asc = asc || 0;
+    const boss = def.type === 'boss', elite = def.type === 'elite';
+    const ascHp = 1 + ((boss || elite) && asc >= 1 ? 0.12 : 0) + (boss && asc >= 4 ? 0.1 : 0) + (!boss && !elite && asc >= 5 ? 0.12 : 0);
+    const m = (boss ? 1 : 1 + 0.12 * (floor - 1)) * ascHp;
+    const am = (boss ? 1 : 1 + 0.09 * (floor - 1)) * (asc >= 2 ? 1.1 : 1);
+    const jitter = boss ? 1 : 0.95 + rng.next() * 0.1;
     const hp = Math.round(def.hp * m * jitter);
     return {
-      key, name: def.name, img: def.img, sprite: !!def.sprite, type: def.type, hp, maxHp: hp,
-      moves: def.moves.map(mv => Object.assign({}, mv, mv.atk ? { atk: Math.round(mv.atk * am) } : {}, mv.block ? { block: Math.round(mv.block * am) } : {})),
+      key, name: def.name, img: def.img, sprite: !!def.sprite, type: def.type, hp, maxHp: hp, atkMul: am,
+      moves: scaleMoves(def.moves, am),
       status: { block: 0, bleed: 0, burn: 0, freeze: 0, str: 0 },
       moveIdx: -1, intent: null
     };
@@ -238,7 +248,7 @@
       Object.values(map.nodes).every(n => n.id === 'boss' || reach(n.id)) && Object.keys(map.nodes).every(id => fromStart[id]);
   }
 
-  const api = { RANK, evalHand, computeAttack, enemyHit, applyDamage, scaleEnemy, nextIntent, genMap, validateMap };
+  const api = { RANK, evalHand, computeAttack, enemyHit, applyDamage, scaleEnemy, scaleMoves, nextIntent, genMap, validateMap };
   DB.rules = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

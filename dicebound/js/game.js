@@ -18,13 +18,13 @@
 
   /* ---------- 저장 ---------- */
   function defaultMeta() {
-    return { runs: 0, wins: 0, bestFloor: 0, codex: { enemies: {}, relics: {}, dice: {}, potions: {} }, ach: {}, bosses: {}, eliteKills: 0, heroes: {} };
+    return { runs: 0, wins: 0, bestFloor: 0, ascMax: 0, codex: { enemies: {}, relics: {}, dice: {}, potions: {} }, ach: {}, bosses: {}, eliteKills: 0, heroes: {} };
   }
   G.load = function () {
     const m = DB.store.get(KEY_META, null);
     G.meta = Object.assign(defaultMeta(), m || {});
     G.meta.codex = Object.assign(defaultMeta().codex, G.meta.codex || {});
-    G.settings = Object.assign({ autoFS: true, wakeLock: true, reduceMotion: false, installDismissed: false }, DB.store.get(KEY_SET, {}) || {});
+    G.settings = Object.assign({ autoFS: true, wakeLock: true, reduceMotion: false, sound: true, installDismissed: false }, DB.store.get(KEY_SET, {}) || {});
     const r = DB.store.get(KEY_RUN, null);
     // v2: 주인공 선택과 출발 지점이 생겼으므로 이전 형식의 저장은 이어하지 않는다
     G.savedRun = r && r.v === 2 && r.screen !== 'end' && DB.HEROES[r.hero] ? r : null;
@@ -56,16 +56,19 @@
     if (r.gold >= 150) G.unlock('rich');
     if (r.relics.length >= 6) G.unlock('collector');
     if (r.dice.every(d => d.kind)) G.unlock('diceMaster');
+    if ((r.stats.upgrades || 0) >= 3) G.unlock('smith');
   }
 
   /* ---------- 여정 시작·이어하기 ---------- */
-  G.newRun = function (heroId, seed) {
+  // asc: 난이도 단계. 열린 단계(meta.ascMax)보다 높게는 시작할 수 없다
+  G.newRun = function (heroId, seed, asc) {
     if (seed != null) RNG.seed(seed);
     const hero = DB.HEROES[heroId] ? heroId : 'knight';
     const H = DB.HEROES[hero];
+    asc = Math.max(0, Math.min(asc | 0, G.meta.ascMax | 0, DB.ASCENSION.length - 1));
     const bossKeys = Object.keys(DB.ENEMIES).filter(k => DB.ENEMIES[k].type === 'boss');
     G.run = {
-      v: 2, hero, hp: H.hp, maxHp: H.hp, gold: C.startGold, floor: 0, pos: 'start', visited: ['start'],
+      v: 2, hero, asc, hp: H.hp, maxHp: H.hp, gold: asc >= 3 ? 0 : C.startGold, floor: 0, pos: 'start', visited: ['start'],
       map: R.genMap(RNG, { floors: C.floors, lanes: C.lanes, paths: 5 }),
       bossKey: RNG.pick(bossKeys),
       // 주인공마다 특수 주사위 하나를 들고 시작한다
@@ -122,7 +125,7 @@
   };
   G.chooseNode = function (id) {
     const r = G.run;
-    if (!r || r.screen !== 'map' || r.pendingDice) return false;
+    if (!r || r.screen !== 'map' || r.pendingDice || r.pendingUpgrade) return false;
     if (G.available().indexOf(id) < 0) return false;
     const n = r.map.nodes[id];
     r.pos = id; r.visited.push(id); r.floor = n.f;
@@ -150,12 +153,12 @@
   }
   function finishNode() {
     const r = G.run;
-    r.screen = 'map'; r.node = null; r.battle = null; r.reward = null; r.shop = null; r.rest = null; r.event = null; r.pendingDice = null;
+    r.screen = 'map'; r.node = null; r.battle = null; r.reward = null; r.shop = null; r.rest = null; r.event = null; r.pendingDice = null; r.pendingUpgrade = null;
     checkPassiveAch();
   }
   G.leave = function () {
     const r = G.run;
-    if (!r || r.pendingDice) return false;
+    if (!r || r.pendingDice || r.pendingUpgrade) return false;
     if (['reward', 'shop', 'rest', 'event'].indexOf(r.screen) < 0) return false;
     if (r.screen === 'event' && r.event && !r.event.done) r.event.done = true;
     finishNode();
@@ -171,7 +174,7 @@
     const pool = DB.POOLS[G.region(r.floor).key] || DB.POOLS.forest;
     const normals = r.floor <= 1 ? ['goblin', 'goblinArcher', 'skeleton', 'slime'] : pool.normal;
     const key = kind === 'boss' ? r.bossKey : kind === 'elite' ? RNG.pick(pool.elite) : RNG.pick(normals);
-    const e = R.scaleEnemy(key, DB.ENEMIES[key], Math.max(1, r.floor), RNG);
+    const e = R.scaleEnemy(key, DB.ENEMIES[key], Math.max(1, r.floor), RNG, r.asc);
     R.nextIntent(e, RNG);
     seen('enemies', key);
     r.battle = {
@@ -188,6 +191,9 @@
     if (r.relics.indexOf('lucky') >= 0) r.hp = Math.min(r.maxHp, r.hp + 4);
     if (r.relics.indexOf('froststar') >= 0) e.status.freeze += 1;
     log(`${e.name}이(가) 나타났다!`);
+    // 이벤트에서 받은 지속 효과: 예배당 축복(다음 전투 방어), 찻집 케이크(전투 3번 동안 첫 턴 재굴림 +1)
+    if (r.blessing) { b.status.block += r.blessing; log(`예배당의 축복으로 방어 ${r.blessing}을(를) 얻었다.`); r.blessing = 0; }
+    if (r.tea > 0) { b.teaBonus = 1; r.tea--; }
     G.events = [{ type: 'battleStart', snap: snap() }];
     startPlayerTurn(true);
   }
@@ -213,12 +219,26 @@
   }
 
   // 주사위 하나 굴리기: 행운 주사위는 1이면 한 번 더, 바위 주사위는 4~6만 나온다
-  function rollDie(kind) {
-    if (kind === 'heavy') return RNG.range(4, 6);
+  function rollDie(d) {
+    if (d.kind === 'heavy') return RNG.range(4, 6);
     const v = RNG.die();
-    return kind === 'clover' && v === 1 ? RNG.die() : v;
+    return d.kind === 'clover' && (v === 1 || (d.up && v === 2)) ? RNG.die() : v;
   }
-  G.canSelectDie = i => { const r = G.run; return !!(r && r.dice[i] && r.dice[i].kind !== 'heavy'); };
+  // 바위 주사위는 강화하기 전까지 다시 굴릴 수 없다
+  G.canSelectDie = i => { const r = G.run, d = r && r.dice[i]; return !!(d && (d.kind !== 'heavy' || d.up)); };
+  // 보스 2단계: 체력이 절반 아래로 내려가면 분노한다. 힘이 오르고, 다음 행동부터 전용 행동 목록을 쓴다
+  function checkRage() {
+    const r = G.run, b = r.battle, e = b && b.enemy;
+    const def = e && DB.ENEMIES[e.key] && DB.ENEMIES[e.key].rage;
+    if (!def || e.raged || e.hp <= 0 || e.hp > e.maxHp * 0.5) return;
+    e.raged = true;
+    const str = (def.str || 0) + ((r.asc | 0) >= 4 ? 2 : 0);
+    e.status.str += str;
+    e.moves = R.scaleMoves(def.moves, e.atkMul || 1);
+    e.moveIdx = -1; // 이번 행동은 예고한 대로 하고, 다음 행동부터 분노 행동
+    log(`${e.name}이(가) 분노했다! ${def.say} (힘 +${str})`);
+    G.events.push({ type: 'rage', say: def.say, str, snap: snap() });
+  }
   // 별의 파편: 여정마다 한 번, 체력이 0이 되면 되살아난다
   function tryRevive() {
     const r = G.run;
@@ -237,10 +257,10 @@
     if (r.relics.indexOf('amulet') >= 0) b.status.block += 2;
     tickStatus('player');
     if (r.hp <= 0 && !tryRevive()) { lose(); return; }
-    b.rerollsMax = C.rerolls + (r.relics.indexOf('scepter') >= 0 ? 1 : 0) + (r.hero === 'archer' || r.hero === 'volley' ? 1 : 0) + (first && r.relics.indexOf('circle') >= 0 ? 2 : 0);
+    b.rerollsMax = C.rerolls + (r.relics.indexOf('scepter') >= 0 ? 1 : 0) + (r.hero === 'archer' || r.hero === 'volley' ? 1 : 0) + (first && r.relics.indexOf('circle') >= 0 ? 2 : 0) + (first && b.teaBonus ? 1 : 0);
     b.rerollsLeft = b.rerollsMax;
     b.selected = [];
-    b.values = r.dice.map(d => rollDie(d.kind));
+    b.values = r.dice.map(d => rollDie(d));
     if (r.relics.indexOf('fate') >= 0) {
       let lo = 0; b.values.forEach((v, i) => { if (v < b.values[lo]) lo = i; });
       b.values[lo] = Math.min(6, b.values[lo] + 2);
@@ -254,10 +274,10 @@
     const r = G.run, b = r && r.battle;
     if (!b || !b.values.length) return null;
     return R.computeAttack({
-      dice: r.dice.map((d, i) => ({ kind: d.kind, value: b.values[i] })),
+      dice: r.dice.map((d, i) => ({ kind: d.kind, value: b.values[i], up: !!d.up })),
       relics: r.relics, gold: r.gold, hp: r.hp, maxHp: r.maxHp,
       rerollsLeft: b.rerollsLeft, enemyType: b.enemy.type, status: b.status, hero: r.hero,
-      foeStatus: b.enemy.status, firstAttack: !b.attacked, bonusAtk: b.bonusAtk || 0
+      foeStatus: b.enemy.status, firstAttack: !b.attacked, bonusAtk: b.bonusAtk || 0, sharp: r.sharp || 0
     });
   };
   function canAct() { const b = G.run && G.run.battle; return !!(b && G.run.screen === 'battle' && b.phase === 'player' && !G.run.pendingDice); }
@@ -277,7 +297,7 @@
     const b = G.run.battle;
     if (b.rerollsLeft <= 0 || !b.selected.length) return false;
     const idx = b.selected.slice();
-    idx.forEach(i => { b.values[i] = rollDie(G.run.dice[i].kind); });
+    idx.forEach(i => { b.values[i] = rollDie(G.run.dice[i]); });
     b.rerollsLeft--;
     b.selected = [];
     b.rollId++;
@@ -286,16 +306,17 @@
     commit();
     return true;
   };
-  // 변환 주사위 능력: 전투마다 한 번
-  G.canTransmute = function () {
-    const r = G.run, b = r && r.battle;
-    return canAct() && !b.transmuteUsed && r.dice.some(d => d.kind === 'transmute');
+  // 변환 주사위 능력: 전투마다 한 번 (강화하면 두 번). transmuteUsed 는 쓴 횟수 (예전 저장의 true 는 1)
+  G.transmuteLeft = function () {
+    const r = G.run, b = r && r.battle, d = r && r.dice.find(x => x.kind === 'transmute');
+    return b && d ? Math.max(0, (d.up ? 2 : 1) - (b.transmuteUsed | 0)) : 0;
   };
+  G.canTransmute = function () { return canAct() && G.transmuteLeft() > 0; };
   G.transmute = function (value) {
     if (!G.canTransmute() || !(value >= 1 && value <= 6)) return false;
     const r = G.run, b = r.battle;
     const i = r.dice.findIndex(d => d.kind === 'transmute');
-    b.values[i] = value; b.transmuteUsed = true;
+    b.values[i] = value; b.transmuteUsed = (b.transmuteUsed | 0) + 1;
     b.selected = b.selected.filter(x => x !== i);
     log(`변환 주사위의 눈을 ${value}(으)로 바꿨다.`);
     G.events = [{ type: 'roll', idx: [i] }];
@@ -325,6 +346,7 @@
     log(`${res.hand.name}! ${res.atk} 피해${res.pierce && e.status.block ? ' (방어 무시)' : ''}${hit.absorbed ? ` (방어 ${hit.absorbed} 막힘)` : ''}${res.block ? `, 방어 +${res.block}` : ''}${res.heal ? `, 회복 +${res.heal}` : ''}.`);
     G.events.push({ type: 'playerAttack', hand: res.hand, atk: res.atk, absorbed: hit.absorbed, pierce: res.pierce, block: res.block, heal: res.heal, gold: res.gold, apply: res.apply, snap: snap() });
     if (e.hp <= 0) { win(); commit(); return true; }
+    checkRage();
     // 2) 적의 차례
     enemyTurn();
     commit();
@@ -337,6 +359,7 @@
     e.status.block = 0;
     tickStatus('enemy');
     if (e.hp <= 0) { win(); return; }
+    checkRage();
     const mv = e.intent;
     if (mv.block) e.status.block += mv.block;
     if (mv.heal) e.hp = Math.min(e.maxHp, e.hp + mv.heal);
@@ -358,6 +381,7 @@
     G.events.push({ type: 'enemyMove', move: mv, dealt, absorbed, thorns, snap: snap() });
     if (r.hp <= 0 && !tryRevive()) { lose(); return; }
     if (e.hp <= 0) { win(); return; }
+    checkRage();
     R.nextIntent(e, RNG);
     startPlayerTurn(false);
   }
@@ -377,6 +401,12 @@
     if (e.type === 'boss') {
       G.meta.bosses[e.key] = true;
       G.unlock('clear');
+      if (e.raged) G.unlock('rage');
+      const asc = r.asc | 0;
+      if (asc >= 3) G.unlock('asc3');
+      if (asc >= 6) G.unlock('asc6');
+      // 이 난이도를 정복하면 다음 난이도가 열린다
+      if (asc + 1 > (G.meta.ascMax | 0) && asc + 1 < DB.ASCENSION.length) { G.meta.ascMax = asc + 1; G.toasts.push({ kind: 'info', text: `난이도 ${asc + 1}이(가) 열렸다: ${DB.ASCENSION[asc + 1].name}` }); }
       if (Object.keys(DB.ENEMIES).filter(k => DB.ENEMIES[k].type === 'boss').every(k => G.meta.bosses[k])) G.unlock('allBosses');
       endRun(true);
       return;
@@ -452,6 +482,7 @@
     if (b) { log(`${DB.POTIONS[id].name} 사용: ${msg}.`); G.events.push({ type: 'potion', id, snap: snap() }); }
     else G.toasts.push({ kind: 'info', text: `${DB.POTIONS[id].name}: ${msg}` });
     if (b && b.enemy.hp <= 0) win();
+    else if (b) checkRage();
     commit();
     return true;
   };
@@ -479,6 +510,42 @@
     checkPassiveAch();
     return true;
   };
+  /* ---------- 주사위 강화 ----------
+   * 강화할 주사위를 고르는 창을 띄운 뒤(pendingUpgrade) upgradeDie 로 확정한다. 비용은 고른 순간에 한 번만 낸다. */
+  G.upgradable = function () { const r = G.run; return r ? r.dice.map((d, i) => (d.kind && !d.up ? i : -1)).filter(i => i >= 0) : []; };
+  function offerUpgrade(source) {
+    if (!G.upgradable().length) { G.toasts.push({ kind: 'warn', text: '강화할 수 있는 특수 주사위가 없다.' }); return false; }
+    G.run.pendingUpgrade = { source };
+    return true;
+  }
+  G.upgradeDie = function (slot) {
+    const r = G.run, p = r && r.pendingUpgrade;
+    if (!p || G.upgradable().indexOf(slot) < 0) return false;
+    const src = p.source;
+    if (src.type === 'shop') {
+      const item = r.shop.items[src.idx];
+      if (!item || item.sold || r.gold < item.price) { r.pendingUpgrade = null; commit(); return false; }
+      r.gold -= item.price; item.sold = true;
+    }
+    if (src.type === 'rest') { if (r.rest.done) { r.pendingUpgrade = null; commit(); return false; } r.rest.done = true; }
+    if (src.type === 'event') {
+      if (r.event.done || r.gold < (src.cost || 0)) { r.pendingUpgrade = null; commit(); return false; }
+      r.gold -= src.cost || 0; r.event.done = true;
+    }
+    const d = r.dice[slot];
+    d.up = true;
+    const text = `${DB.dieName(d.kind)}을(를) 강화했다: ${DB.dieDesc(d.kind, true)}`;
+    if (src.type === 'rest') r.rest.result = text;
+    if (src.type === 'event') r.event.result = { text };
+    r.pendingUpgrade = null;
+    r.stats.upgrades = (r.stats.upgrades || 0) + 1;
+    G.toasts.push({ kind: 'info', text: `${slot + 1}번 주사위 → ${DB.dieName(d.kind, true)}` });
+    checkPassiveAch();
+    commit();
+    return true;
+  };
+  G.cancelUpgrade = function () { const r = G.run; if (r && r.pendingUpgrade) { r.pendingUpgrade = null; commit(); } };
+
   // 특수 주사위는 어느 칸과 바꿀지 고른 뒤(replaceDie) 확정된다
   function offerDie(kind, source) { G.run.pendingDice = { kind, source }; }
   G.replaceDie = function (slot) {
@@ -538,7 +605,7 @@
   };
 
   /* ---------- 상점 ---------- */
-  function price(base) { return G.run.relics.indexOf('coffer') >= 0 ? Math.round(base * 0.8) : base; }
+  function price(base) { const r = G.run; return Math.round(base * (r.relics.indexOf('coffer') >= 0 ? 0.8 : 1) * ((r.asc | 0) >= 6 ? 1.2 : 1)); }
   function openShop() {
     const r = G.run;
     const items = [];
@@ -547,16 +614,18 @@
     pickRelics(1, 'rare').forEach(id => items.push({ cat: 'relic', id, price: price(85), sold: false }));
     RNG.shuffle(Object.keys(DB.POTIONS)).slice(0, 3).forEach(id => items.push({ cat: 'potion', id, price: price(DB.POTIONS[id].price), sold: false }));
     items.push({ cat: 'service', id: 'heal', price: price(30), sold: false });
+    items.push({ cat: 'service', id: 'upgrade', price: price(45), sold: false });
     r.shop = { npc: RNG.pick(['merchant', 'shopkeeper']), items };
     r.screen = 'shop';
   }
   G.buy = function (idx) {
     const r = G.run, s = r && r.shop;
-    if (!s || r.screen !== 'shop' || r.pendingDice) return false;
+    if (!s || r.screen !== 'shop' || r.pendingDice || r.pendingUpgrade) return false;
     const it = s.items[idx];
     if (!it || it.sold) return false;
     if (r.gold < it.price) { G.toasts.push({ kind: 'warn', text: '골드가 부족하다.' }); if (G.onChange) G.onChange(); return false; }
     if (it.cat === 'dice') { offerDie(it.id, { type: 'shop', idx }); commit(); return true; } // 칸을 고른 뒤 결제
+    if (it.cat === 'service' && it.id === 'upgrade') { const ok = offerUpgrade({ type: 'shop', idx }); commit(); return ok; } // 주사위를 고른 뒤 결제
     if (it.cat === 'potion') {
       if (!G.addPotion(it.id)) { G.toasts.push({ kind: 'warn', text: '가방이 가득 찼다.' }); if (G.onChange) G.onChange(); return false; }
     }
@@ -575,10 +644,11 @@
     G.run.rest = { done: false, result: '', train: pickDice(2) };
     G.run.screen = 'rest';
   }
+  G.restAmount = function () { const r = G.run; return Math.round(r.maxHp * ((r.asc | 0) >= 3 ? 0.24 : 0.3)) + (r.relics.indexOf('lantern') >= 0 ? 10 : 0); };
   G.restHeal = function () {
     const r = G.run, s = r.rest;
     if (!s || s.done) return false;
-    const amt = Math.round(r.maxHp * 0.3) + (r.relics.indexOf('lantern') >= 0 ? 10 : 0);
+    const amt = G.restAmount();
     const before = r.hp; r.hp = Math.min(r.maxHp, r.hp + amt);
     s.done = true; s.result = `모닥불 곁에서 쉬며 체력 ${r.hp - before}을(를) 회복했다.`;
     commit(); return true;
@@ -589,6 +659,11 @@
     r.maxHp += 5; r.hp += 5;
     s.done = true; s.result = '치유사의 기도로 최대 체력이 5 늘었다.';
     commit(); return true;
+  };
+  G.restUpgrade = function () {
+    const s = G.run.rest;
+    if (!s || s.done) return false;
+    const ok = offerUpgrade({ type: 'rest' }); commit(); return ok;
   };
   G.restTrain = function (kind) {
     const s = G.run.rest;
@@ -643,6 +718,42 @@
         { label: '지나친다', desc: '마음이 무겁지만 갈 길이 멀다.', run: () => ({ text: '주민의 뒷모습이 안개 속으로 사라졌다.' }) }
       ]
     },
+    forge: {
+      npc: 'blacksmith', title: '대장간', minFloor: 2,
+      text: '망치 소리가 울리는 대장간. "주사위도 결국 쇠붙이랑 같아. 두드리면 단단해지지."',
+      choices: [
+        { label: '주사위 강화 (25골드)', desc: '특수 주사위 하나를 골라 강화한다.', can: r => (r.gold >= 25 ? (G.upgradable().length > 0 || '강화할 특수 주사위가 없다.') : '골드가 부족하다.'), run: () => ({ upgrade: 25 }) },
+        { label: '무기 손질 (15골드)', desc: '이번 여정 동안 모든 공격 피해 +1', can: r => r.gold >= 15 || '골드가 부족하다.', run: r => { r.gold -= 15; r.sharp = (r.sharp || 0) + 1; return { text: `날을 세운 무기가 번쩍인다. 공격 피해 +${r.sharp}.` }; } },
+        { label: '구경만 한다', desc: '불꽃을 잠시 바라보다 떠난다.', run: () => ({ text: '"다음엔 골드를 두둑이 들고 와."' }) }
+      ]
+    },
+    rogue: {
+      npc: 'rogue', title: '뒷골목의 도적', minFloor: 1,
+      text: '"쉿, 좋은 물건이 있는데. 경비병 눈만 피하면 되거든."',
+      choices: [
+        { label: '훔친 유물을 산다 (35골드)', desc: '무작위 일반 유물을 얻는다.', can: r => (r.gold >= 35 ? (relicPool('common').length > 0 || '살 수 있는 유물이 없다.') : '골드가 부족하다.'), run: r => { r.gold -= 35; const id = pickRelics(1, 'common')[0]; G.addRelic(id); return { text: `"좋은 거래였어." ${DB.RELICS[id].name}을(를) 얻었다.`, relic: id }; } },
+        { label: '한탕 거든다', desc: '절반 확률로 골드 40, 실패하면 체력 10을 잃는다.', can: r => r.hp > 10 || '체력이 부족하다.', run: r => { if (RNG.next() < 0.5) { r.gold += 40; r.stats.gold += 40; return { text: '감쪽같이 성공했다! 골드 40을 나눠 받았다.' }; } r.hp -= 10; r.stats.taken += 10; return { text: '경비병에게 들켜 도망치다 다쳤다. 체력 10을 잃었다.' }; } },
+        { label: '쫓아낸다', desc: '수상한 사람과 엮이지 않는다.', run: () => ({ text: '도적이 혀를 차며 그림자 속으로 사라졌다.' }) }
+      ]
+    },
+    chapel: {
+      npc: 'nun', title: '작은 예배당', minFloor: 1,
+      text: '"지친 영혼에게 안식을. 신께서 당신의 길을 지켜 주실 거예요."',
+      choices: [
+        { label: '기도한다', desc: '체력 12를 회복한다.', run: r => { const b = r.hp; r.hp = Math.min(r.maxHp, r.hp + 12); return { text: `따뜻한 빛이 상처를 감싼다. 체력 ${r.hp - b} 회복.` }; } },
+        { label: '헌금한다 (20골드)', desc: '최대 체력 +6, 체력 6 회복', can: r => r.gold >= 20 || '골드가 부족하다.', run: r => { r.gold -= 20; r.maxHp += 6; r.hp = Math.min(r.maxHp, r.hp + 6); return { text: '"당신의 선의를 신께서 기억하실 거예요." 최대 체력 +6.' }; } },
+        { label: '축복을 받는다', desc: '다음 전투가 시작되면 방어 15', run: r => { r.blessing = 15; return { text: '수녀가 이마에 성호를 그어 주었다. 다음 전투에서 방어 15를 얻는다.' }; } }
+      ]
+    },
+    tea: {
+      npc: 'maid', title: '저택의 찻집', minFloor: 2,
+      text: '"어서 오세요, 주인님! 오늘의 홍차와 케이크가 준비되어 있어요."',
+      choices: [
+        { label: '홍차 (10골드)', desc: '체력 15 회복', can: r => r.gold >= 10 || '골드가 부족하다.', run: r => { r.gold -= 10; const b = r.hp; r.hp = Math.min(r.maxHp, r.hp + 15); return { text: `향긋한 홍차에 몸이 풀린다. 체력 ${r.hp - b} 회복.` }; } },
+        { label: '케이크 세트 (18골드)', desc: '다음 전투 3번 동안 첫 턴 재굴림 +1', can: r => r.gold >= 18 || '골드가 부족하다.', run: r => { r.gold -= 18; r.tea = 3; return { text: '달콤한 케이크로 기운이 난다. 다음 전투 3번 동안 첫 턴 재굴림 +1.' }; } },
+        { label: '일손을 돕는다', desc: '골드 25를 받고 체력 6을 잃는다.', can: r => r.hp > 6 || '체력이 부족하다.', run: r => { r.gold += 25; r.stats.gold += 25; r.hp -= 6; r.stats.taken += 6; return { text: '"수고하셨어요, 주인님!" 골드 25를 받았다.' }; } }
+      ]
+    },
     bounty: {
       npc: 'questgiver', title: '현상금 의뢰', minFloor: 3,
       text: '"근처에 정예 괴물이 숨어 있다. 처치해 준다면 넉넉히 보상하지."',
@@ -664,7 +775,7 @@
   }
   G.eventCan = function (i) {
     const r = G.run, ev = r.event && EVENTS[r.event.id];
-    if (!ev || r.event.done || r.event.pickDice) return false;
+    if (!ev || r.event.done || r.event.pickDice || r.pendingUpgrade) return false;
     const c = ev.choices[i];
     if (!c) return false;
     return c.can ? c.can(r) : true;
@@ -675,6 +786,7 @@
     const out = EVENTS[r.event.id].choices[i].run(r);
     if (out.battle) { r.event.done = true; startBattle(out.battle, { bounty: out.bounty }); commit(); return true; }
     if (out.pickDice) { r.event.pickDice = out.pickDice; commit(); return true; }
+    if (out.upgrade) { offerUpgrade({ type: 'event', cost: out.upgrade }); commit(); return true; }
     r.event.done = true; r.event.result = out;
     checkPassiveAch();
     commit();

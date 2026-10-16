@@ -5,13 +5,16 @@
   const DB = root.DB, G = DB.game, R = DB.rules, I = DB.IMG, $ = DB.$, $$ = DB.$$, esc = DB.esc;
 
   const UI = DB.ui = { view: 'menu', busy: false, mapSel: null, layers: [] };
+  const sfx = name => { if (DB.sfx) DB.sfx.play(name); };
 
   /* ---------- 작은 조각 ---------- */
   const img = (src, cls, alt) => `<img src="${src}" class="${cls || ''}" alt="${esc(alt || '')}" draggable="false">`;
-  function dieFace(value, kind, extra) {
+  // up: 강화된 주사위는 왼쪽 위에 + 표시
+  function dieFace(value, kind, extra, up) {
     const k = kind && DB.DICE[kind];
-    return `<span class="die-face${k ? ' special' : ''} ${extra || ''}"${k ? ` style="--dc:${k.color}"` : ''}>${img(I.dice(value || 6), 'die-img', `${value} 눈`)}${k ? img(k.badge, 'die-badge', k.name) : ''}</span>`;
+    return `<span class="die-face${k ? ' special' : ''}${k && up ? ' up' : ''} ${extra || ''}"${k ? ` style="--dc:${k.color}"` : ''}>${img(I.dice(value || 6), 'die-img', `${value} 눈`)}${k ? img(k.badge, 'die-badge', k.name) : ''}${k && up ? '<b class="die-up">+</b>' : ''}</span>`;
   }
+  const dieOf = (d, value, extra) => dieFace(value || 6, d.kind, extra, d.up);
   function bar(val, max, cls) {
     const p = Math.max(0, Math.min(100, (val / max) * 100));
     return `<div class="bar ${cls || ''}"><i style="width:${p}%"></i><span>${val} / ${max}</span></div>`;
@@ -22,6 +25,9 @@
   }
   const coin = n => `<span class="coin">${img(I.icon('px-bag'), '', '골드')}<b>${n}</b></span>`;
   function relicChip(id) { const r = DB.RELICS[id]; return `<button class="relic-chip" data-relic="${id}" title="${esc(r.name)}">${img(r.icon, '', r.name)}</button>`; }
+  // NPC 전신 그림: 머리부터 허벅지까지 보이는 틀에 넣고, 그려진 뒤 관절 리그로 숨쉬게 한다 (mountNpc)
+  const npcFig = (npc, cls) => `<div class="npc-fig ${cls || ''}">${img(npc.img, 'npc-img', npc.name)}</div>`;
+  function mountNpc(scope) { $$('.npc-fig', scope).forEach(f => DB.rig.attach(f, { kind: 'human', dir: 1 })); }
   function setBg(src, mode) {
     const bg = $('#bg');
     bg.style.backgroundImage = src ? `url("${src}")` : 'none';
@@ -115,7 +121,7 @@
         <button class="round fs-btn" data-act="fs" aria-label="전체화면">${fsIcon()}</button>
         <button class="round" data-act="sheet" data-tab="status" aria-label="메뉴">${img(I.ui('round-menu.webp'), '', '메뉴')}</button>
       </div>
-      <div class="hud-sub"><div class="hud-pots">${[0, 1, 2].map(i => r.potions[i] ? `<button class="pot" data-pot="${i}" aria-label="${esc(DB.POTIONS[r.potions[i]].name)}">${img(DB.POTIONS[r.potions[i]].icon, '', DB.POTIONS[r.potions[i]].name)}</button>` : '<span class="pot empty"></span>').join('')}</div><span class="hud-floor">${r.floor ? `${r.floor > DB.CONST.floors ? '최종' : r.floor + '층'} · ${reg.name}` : `${esc(H.name)} · 출발 지점`}</span><span class="hud-relics">${r.relics.map(relicChip).join('')}</span></div>`;
+      <div class="hud-sub"><div class="hud-pots">${[0, 1, 2].map(i => r.potions[i] ? `<button class="pot" data-pot="${i}" aria-label="${esc(DB.POTIONS[r.potions[i]].name)}">${img(DB.POTIONS[r.potions[i]].icon, '', DB.POTIONS[r.potions[i]].name)}</button>` : '<span class="pot empty"></span>').join('')}</div><span class="hud-floor">${r.asc ? `<em class="asc-chip">난이도 ${r.asc}</em>` : ''}${r.floor ? `${r.floor > DB.CONST.floors ? '최종' : r.floor + '층'} · ${reg.name}` : `${esc(H.name)} · 출발 지점`}</span><span class="hud-relics">${r.relics.map(relicChip).join('')}</span></div>`;
     $$('[data-pot]', hud).forEach(b => { b.onclick = () => potionModal(+b.dataset.pot); });
     $$('[data-relic]', hud).forEach(b => { b.onclick = () => relicModal(b.dataset.relic); });
     bindActs(hud);
@@ -168,7 +174,9 @@
       ({ map: renderMap, battle: renderBattle, reward: renderReward, shop: renderShop, rest: renderRest, event: renderEvent, end: renderEnd })[r.screen](s);
     }
     bindActs(s);
+    mountNpc(s);
     if (r && r.pendingDice && !$('.modal.dice-picker')) diceReplaceModal();
+    if (r && r.pendingUpgrade && !$('.modal.up-picker')) upgradeModal();
     flushToasts();
   };
 
@@ -179,6 +187,7 @@
         e.stopPropagation();
         if (UI.busy && b.dataset.act !== 'fs' && b.dataset.act !== 'sheet') return;
         const a = b.dataset.act;
+        if (a !== 'logoTap' && a !== 'openChest') sfx('click');
         ACTS[a] && ACTS[a](b);
       };
     });
@@ -207,10 +216,11 @@
     attack() { G.attack(); },
     transmute() { transmuteModal(); },
     hands() { UI.modal({ title: '족보와 효과', html: handsTable() }); },
-    openChest() { G.openChest(); },
+    openChest() { if (G.openChest()) sfx('open'); },
     takePotion() { G.takeRewardPotion(); },
     restHeal() { G.restHeal(); },
-    restMeditate() { G.restMeditate(); }
+    restMeditate() { G.restMeditate(); },
+    restUpgrade() { G.restUpgrade(); }
   };
   // hidden 이면 히든 캐릭터만 보여 준다. 히든 선택은 저장하지 않으므로 매번 제목을 다섯 번 눌러야 한다
   function openSelect(hidden) {
@@ -220,7 +230,7 @@
     UI.render();
   }
   function startNew(heroId) {
-    UI.closeAll(); G.newRun(heroId); UI.view = 'game'; UI.mapSel = null; UI.hiddenSel = false; UI.render();
+    UI.closeAll(); G.newRun(heroId, null, UI.ascSel | 0); UI.view = 'game'; UI.mapSel = null; UI.hiddenSel = false; UI.render();
     const H = G.hero();
     if (H && H.illust) illustOverlay(H, { ms: 2600 }); // 일러스트가 있는 주인공은 출발할 때 로딩 화면처럼 띄운다
   }
@@ -230,8 +240,9 @@
     UI.taps = now - (UI.tapAt || 0) < 1500 ? (UI.taps || 0) + 1 : 1;
     UI.tapAt = now;
     el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap');
-    if (UI.taps < 5) return;
+    if (UI.taps < 5) { sfx('click'); return; }
     UI.taps = 0;
+    sfx('secret');
     const go = () => {
       if (G.savedRun) UI.modal({ title: '숨겨진 주인공', html: '<p>진행 중인 여정이 있습니다. 새로 시작하면 지금 여정은 사라집니다.</p>', buttons: [{ label: '취소', cls: 'dark' }, { label: '새로 시작', cls: 'teal', action: () => openSelect(true) }] });
       else openSelect(true);
@@ -299,7 +310,7 @@
       </div>
       <div class="menu-foot">
         <div class="boss-row">${Object.keys(DB.ENEMIES).filter(k => DB.ENEMIES[k].type === 'boss').map(k => img(DB.ENEMIES[k].marker, G.meta.bosses[k] ? 'beaten' : '', DB.ENEMIES[k].name)).join('')}</div>
-        <small class="muted">여정 ${G.meta.runs}회 · 정복 ${G.meta.wins}회 · 최고 ${G.meta.bestFloor}층</small>
+        <small class="muted">여정 ${G.meta.runs}회 · 정복 ${G.meta.wins}회 · 최고 ${G.meta.bestFloor}층${G.meta.ascMax ? ` · 난이도 ${G.meta.ascMax}까지 열림` : ''}</small>
         ${standalone ? '' : '<button class="btn dark sm" data-act="install">홈 화면에 설치하기</button>'}
       </div>
     </section>`;
@@ -326,9 +337,20 @@
           ${rec ? `<p class="muted small">기록: 여정 ${rec.runs}회 · 정복 ${rec.wins}회</p>` : ''}
         </div>
       </div>
+      ${ascPicker()}
       <div class="page-foot two"><button class="btn dark" data-act="toMenu">메인 메뉴</button><button class="btn teal" data-act="pickHero">${H.name.length > 3 ? '이 주인공으로 출발' : esc(H.name) + '(으)로 출발'}</button></div>
     </section>`;
     $$('[data-hero]', s).forEach(b => { b.onclick = () => { UI.heroSel = b.dataset.hero; UI.render(); }; });
+    $$('[data-asc]', s).forEach(b => { b.onclick = () => { UI.ascSel = (UI.ascSel | 0) + +b.dataset.asc; UI.render(); }; });
+  }
+
+  // 난이도 단계 고르기 (한 번 이상 정복해서 열린 단계가 있을 때만 보인다)
+  function ascPicker() {
+    const max = G.meta.ascMax | 0;
+    if (!max) return '';
+    const a = UI.ascSel = Math.max(0, Math.min(UI.ascSel == null ? max : UI.ascSel, max));
+    const list = DB.ASCENSION.slice(1, a + 1).map((x, i) => `<li><b>${i + 1}. ${esc(x.name)}</b> ${esc(x.desc)}</li>`).join('');
+    return `<div class="asc panel"><div class="asc-row"><button class="round asc-btn" data-asc="-1" ${a <= 0 ? 'disabled' : ''} aria-label="난이도 낮추기">−</button><div class="asc-name"><small>난이도</small><b>${a ? `${a} · ${esc(DB.ASCENSION[a].name)}` : '기본'}</b></div><button class="round asc-btn" data-asc="1" ${a >= max ? 'disabled' : ''} aria-label="난이도 올리기">+</button></div>${a ? `<ul class="asc-list">${list}</ul>` : '<p class="muted small">조건이 없는 기본 난이도입니다. 최고 난이도를 정복하면 다음 단계가 열립니다.</p>'}</div>`;
   }
 
   /* ---------- 맵 ---------- */
@@ -426,19 +448,20 @@
       const sp = r.dice.filter(d => d.kind).length;
       return `<p class="di-hint">주사위를 누르면 특성을 볼 수 있습니다.${sp ? ` <span>특수 주사위 ${sp}개 장착</span>` : ''}</p>`;
     }
-    const kind = r.dice[i].kind, k = kind && DB.DICE[kind], v = b.values[i];
+    const kind = r.dice[i].kind, up = r.dice[i].up, k = kind && DB.DICE[kind], v = b.values[i];
     const info = p && p.dice && p.dice[i];
     const inHand = p && p.hand.used.indexOf(i) >= 0;
     let state;
     if (!k) state = '<span class="di-off">특수 효과가 없는 기본 주사위입니다.</span>';
-    else if (kind === 'transmute') state = G.canTransmute() ? '<span class="di-on">아래 버튼으로 눈을 바꿀 수 있습니다.</span>' : '<span class="di-off">이번 전투에서 이미 썼습니다.</span>';
+    else if (kind === 'transmute') state = G.canTransmute() ? `<span class="di-on">아래 버튼으로 눈을 바꿀 수 있습니다 (남은 ${G.transmuteLeft()}번).</span>` : '<span class="di-off">이번 전투에서 모두 썼습니다.</span>';
     else if (kind === 'clover' || kind === 'heavy') state = '<span class="di-on">굴릴 때마다 적용됩니다.</span>';
     else if (info && info.on) state = `<span class="di-on">지금 발동: ${esc(info.text)}</span>`;
     else state = '<span class="di-off">지금 눈에서는 효과가 없습니다.</span>';
     const tags = [inHand ? `<i class="in">족보 포함</i>` : '<i>족보 제외</i>'];
-    if (kind === 'heavy') tags.push('<i class="lock">재굴림 불가</i>');
+    if (kind === 'heavy' && !up) tags.push('<i class="lock">재굴림 불가</i>');
+    if (up) tags.push('<i class="upg">강화</i>');
     else if (b.selected.indexOf(i) >= 0) tags.push('<i class="re">다시 굴림</i>');
-    return `<div class="di-card" ${k ? `style="--dc:${k.color}"` : ''}>${dieFace(v, kind)}<div class="di-text"><b>${i + 1}번 · ${k ? esc(k.name) : '기본 주사위'} <small>눈 ${v}</small></b><small>${k ? esc(k.desc) : '1~6이 고르게 나온다.'}</small>${state}</div><div class="di-tags">${tags.join('')}</div></div>`;
+    return `<div class="di-card" ${k ? `style="--dc:${k.color}"` : ''}>${dieFace(v, kind, '', up)}<div class="di-text"><b>${i + 1}번 · ${esc(DB.dieName(kind, up))} <small>눈 ${v}</small></b><small>${esc(DB.dieDesc(kind, up))}</small>${state}</div><div class="di-tags">${tags.join('')}</div></div>`;
   }
   function renderBattle(s) {
     const r = G.run, b = r.battle, e = b.enemy, H = G.hero();
@@ -470,7 +493,7 @@
       DB.rig.attach($('#meCard', s), Object.assign({ kind: 'human' }, H.rig, { dir: 1 })).play('enter');
     }
     $('#foeBox', s).innerHTML = `
-          <div class="ib-name"><span class="tag ${e.type}">${typeName}</span><b>${esc(e.name)}</b></div>
+          <div class="ib-name"><span class="tag ${e.type}">${typeName}</span>${e.raged ? '<span class="tag rage">분노</span>' : ''}<b>${esc(e.name)}</b></div>
           <div class="hpline">${bar(e.hp, e.maxHp, 'enemy')}${e.status.block ? `<span class="blk" data-st="block">${img(DB.STATUS.block.icon, '', '방어')}<b>${e.status.block}</b></span>` : ''}</div>
           <div class="sts" id="eSts">${statusRow(e.status, true)}</div>
           ${intentHTML(e)}`;
@@ -483,11 +506,11 @@
         <div class="tray" id="tray">${b.values.map((v, i) => {
           const sel = b.selected.indexOf(i) >= 0;
           const roll = rolled && (rolled.all || (rolled.idx || []).indexOf(i) >= 0);
-          const kd = r.dice[i].kind;
+          const kd = r.dice[i].kind, upd = r.dice[i].up;
           // 재굴림을 못 해도 누를 수는 있다 (특성 보기). 고를 수 없는 주사위는 locked
           const pickable = can && b.rerollsLeft > 0 && G.canSelectDie(i);
           const on = p && p.dice[i] && p.dice[i].on;
-          return `<button class="die ${sel ? 'sel' : ''} ${roll ? 'rolling' : ''} ${pickable ? '' : 'locked'} ${on ? 'fx-on' : ''} ${UI.dieFocus === i ? 'focus' : ''}" data-die="${i}" aria-pressed="${sel}" aria-label="${i + 1}번 주사위 ${v} 눈${kd ? ' ' + DB.DICE[kd].name : ''}${sel ? ', 다시 굴릴 주사위' : ''}">${dieFace(v, kd)}${sel ? '<span class="re-mark">↻</span>' : ''}</button>`;
+          return `<button class="die ${sel ? 'sel' : ''} ${roll ? 'rolling' : ''} ${pickable ? '' : 'locked'} ${on ? 'fx-on' : ''} ${UI.dieFocus === i ? 'focus' : ''}" data-die="${i}" aria-pressed="${sel}" aria-label="${i + 1}번 주사위 ${v} 눈${kd ? ' ' + DB.dieName(kd, upd) : ''}${sel ? ', 다시 굴릴 주사위' : ''}">${dieFace(v, kd, '', upd)}${sel ? '<span class="re-mark">↻</span>' : ''}</button>`;
         }).join('')}</div>
         <div class="die-info" id="dieInfo">${dieInfoHTML(UI.dieFocus, p)}</div>
         <div class="tray-info"><span>재굴림 <b>${b.rerollsLeft}</b> / ${b.rerollsMax}</span><span>${b.rerollsLeft > 0 ? `다시 굴릴 주사위 <b>${b.selected.length}</b>개 선택` : '재굴림을 모두 사용했습니다'}</span><span>턴 ${b.turn}</span></div>
@@ -495,22 +518,25 @@
           <button class="btn dark" data-act="reroll" ${can && b.rerollsLeft > 0 && b.selected.length ? '' : 'disabled'}>재굴림</button>
           <button class="btn red" data-act="attack" ${can ? '' : 'disabled'}>공격</button>
         </div>
-        ${G.canTransmute() ? '<button class="btn dark sm wide" data-act="transmute">변환 주사위 사용 (전투당 1회)</button>' : ''}
+        ${G.canTransmute() ? `<button class="btn dark sm wide" data-act="transmute">변환 주사위 사용 (남은 ${G.transmuteLeft()}번)</button>` : ''}
         <div class="blog" id="blog">${b.log.slice(-2).map(t => `<p>${esc(t)}</p>`).join('')}</div>`;
     setMonImg('meCard', G.heroImg('back'));
+    const fs = $('.foe-spot', s); if (fs) fs.classList.toggle('raged', !!e.raged);
+    if (rolled) sfx('roll');
     // 누르면 특성을 보여 주고, 고를 수 있으면 다시 굴릴 주사위로 고른다
     $$('[data-die]', s).forEach(d => {
       d.onclick = () => {
         const i = +d.dataset.die;
         UI.dieFocus = i;
-        if (UI.busy || !G.toggleDie(i)) UI.render();
+        if (!UI.busy && G.toggleDie(i)) sfx('pick');
+        else { sfx('click'); UI.render(); }
       };
     });
     $$('.sts [data-tip], .blk', s).forEach(x => { x.onclick = () => statusModal(x.dataset.tip || 'block'); });
   }
   function transmuteModal() {
     UI.modal({
-      title: '변환 주사위', html: `<p class="muted">변환 주사위의 눈을 원하는 숫자로 바꿉니다. 전투마다 한 번만 쓸 수 있습니다.</p><div class="pick-row">${[1, 2, 3, 4, 5, 6].map(v => `<button class="pick-die" data-v="${v}">${dieFace(v, 'transmute')}</button>`).join('')}</div>`,
+      title: '변환 주사위', html: `<p class="muted">변환 주사위의 눈을 원하는 숫자로 바꿉니다. 이번 전투에서 ${G.transmuteLeft()}번 더 쓸 수 있습니다.</p><div class="pick-row">${[1, 2, 3, 4, 5, 6].map(v => `<button class="pick-die" data-v="${v}">${dieFace(v, 'transmute')}</button>`).join('')}</div>`,
       buttons: [{ label: '취소', cls: 'dark' }],
       mount(w, close) { $$('[data-v]', w).forEach(b => { b.onclick = () => { const v = +b.dataset.v; close(); setTimeout(() => G.transmute(v), 0); }; }); }
     });
@@ -593,7 +619,7 @@
     const H = G.hero();
     if (H && H.hurtBack) setMonImg('meCard', sn.pHp > 0 && sn.pHp <= sn.pMax * 0.4 ? H.hurtBack : H.back);
   }
-  const ANIM = ['playerAttack', 'tick', 'enemyMove', 'victory', 'defeat', 'potion', 'revive'];
+  const ANIM = ['playerAttack', 'tick', 'enemyMove', 'victory', 'defeat', 'potion', 'revive', 'rage'];
   // 관절 동작: attack(휘두르기) / cast(지팡이·활 들기) / hurt(맞고 젖혀짐) / buff(기합) / die(쓰러짐)
   const pose = (id, name, opts) => { if (!slow()) DB.rig.get(id).play(name, opts); };
   async function play(events) {
@@ -608,6 +634,7 @@
         const [p, hit] = H.hit || ['px-slash', 'slash-green'];
         pose('meCard', heroMove);
         anim('meCard', 'lunge-me', 500);
+        sfx(ev.hand.rank >= 4 ? 'crit' : 'hit');
         await wait(160);
         if (H.ranged) await projectile('meCard', 'foeCard', p, 300);
         else fx('fxFoe', p, 'big');
@@ -622,14 +649,15 @@
         if (ev.apply.bleed) fx('fxFoe', 'px-bleed', 'small');
         if (ev.apply.freeze) fx('fxFoe', 'px-freeze', 'small');
         if (ev.apply.burn) fx('fxFoe', 'px-burn', 'small');
-        if (ev.block) { fx('fxMe', 'rune'); floatText('fxMe', `방어 +${ev.block}`, 'blk'); }
-        if (ev.heal) { fx('fxMe', 'px-heal'); floatText('fxMe', `+${ev.heal}`, 'heal'); }
+        if (ev.block) { fx('fxMe', 'rune'); floatText('fxMe', `방어 +${ev.block}`, 'blk'); sfx('block'); }
+        if (ev.heal) { fx('fxMe', 'px-heal'); floatText('fxMe', `+${ev.heal}`, 'heal'); sfx('heal'); }
         applySnap(ev.snap);
         await wait(700);
       } else if (ev.type === 'tick') {
         const anchor = ev.who === 'player' ? 'fxMe' : 'fxFoe';
         fx(anchor, ev.status === 'bleed' ? 'px-bleed' : 'px-burn', 'small');
         pose(ev.who === 'player' ? 'meCard' : 'foeCard', 'hurt', { dur: 380 });
+        sfx('hurt');
         anim(ev.who === 'player' ? 'meCard' : 'foeCard', 'hurt', 400);
         floatText(anchor, `-${ev.amount}`, 'dmg');
         applySnap(ev.snap);
@@ -646,13 +674,14 @@
             if (k) pose('foeCard', foeMove, { dur: 300 });
             fx('fxMe', moveFx(mv), k ? 'small' : 'big');
             pose('meCard', 'hurt', { dur: k < n - 1 ? 300 : 480 });
+            sfx(ev.dealt ? 'hurt' : 'block');
             anim('meCard', 'hurt', 400);
             if (k < n - 1) await wait(150);
           }
           anim('stage', 'quake', 450);
           flash(G.run.battle && G.run.battle.enemy.type === 'boss' ? 'rgba(150,40,200,.38)' : 'rgba(224,40,60,.34)');
           floatText('fxMe', ev.dealt ? `-${ev.dealt}` : '막음', 'dmg');
-        } else if (mv.block || mv.heal || mv.buff) pose('foeCard', 'buff');
+        } else if (mv.block || mv.heal || mv.buff) { pose('foeCard', 'buff'); sfx(mv.heal ? 'heal' : 'block'); }
         if (mv.block) fx('fxFoe', 'rune', 'small');
         if (mv.heal) { fx('fxFoe', 'heal-burst', 'small'); floatText('fxFoe', `+${mv.heal}`, 'heal'); }
         if (mv.buff) fx('fxFoe', 'px-burn', 'small');
@@ -661,28 +690,45 @@
         await wait(700);
       } else if (ev.type === 'potion') {
         const toFoe = !!(DB.POTIONS[ev.id] && DB.POTIONS[ev.id].foe);
+        sfx(toFoe ? 'hit' : 'potion');
         fx(toFoe ? 'fxFoe' : 'fxMe', { bomb: 'combustion', frost: 'frostbite', heal: 'heal-burst', cure: 'px-heal', ward: 'rune', might: 'px-burn', reroll: 'rune-orb', fate: 'px-missile',
           blade: I.icon2('gold-slash'), venom: 'poison', brand: 'combustion', holy: I.icon2('holy-water'), bless: I.icon2('gold-cross') }[ev.id] || 'rune');
         if (toFoe) { pose('foeCard', 'hurt'); anim('foeCard', 'hurt', 400); flash('rgba(255,190,90,.3)'); }
         else pose('meCard', 'buff');
         applySnap(ev.snap);
         await wait(450);
+      } else if (ev.type === 'rage') {
+        // 보스 분노: 붉게 번쩍이고 흔들리며 대사가 뜬다
+        const fs = $('.foe-spot'); if (fs) fs.classList.add('raged');
+        sfx('rage');
+        anim('stage', 'quake', 600);
+        flash('rgba(224,40,60,.5)');
+        pose('foeCard', 'buff', { dur: 900 });
+        fx('fxFoe', 'combustion', 'big');
+        floatText('fxFoe', `분노! 힘 +${ev.str}`, 'dmg crit');
+        const st = $('#stage');
+        if (st) { const el = document.createElement('div'); el.className = 'rage-banner'; el.innerHTML = `<b>분노</b><span>${esc(ev.say)}</span>`; st.appendChild(el); setTimeout(() => el.remove(), slow() ? 300 : 1900); }
+        applySnap(ev.snap);
+        await wait(1300);
       } else if (ev.type === 'revive') {
         const c = $('#meCard'); if (c) c.classList.remove('dying');
         fx('fxMe', 'heal-burst', 'big'); fx('fxMe', I.icon2('orb-star'));
         flash('rgba(255,240,180,.45)');
         floatText('fxMe', `부활! ${ev.amount}`, 'heal');
+        sfx('revive');
         pose('meCard', 'buff');
         applySnap(ev.snap);
         await wait(900);
       } else if (ev.type === 'victory') {
         const c = $('#foeCard'); if (c) c.classList.add('dying');
         pose('foeCard', 'die'); pose('meCard', 'buff');
+        sfx('win');
         applySnap(ev.snap);
         await wait(850);
       } else if (ev.type === 'defeat') {
         const c = $('#meCard'); if (c) c.classList.add('dying');
         pose('meCard', 'die');
+        sfx('lose');
         applySnap(ev.snap);
         await wait(950);
       }
@@ -707,12 +753,27 @@
       title: '주사위 교체', cls: 'dice-picker', sticky: true,
       html: `<div class="new-die">${dieFace(6, p.kind, 'big')}<div><b>${esc(k.name)}</b><span>${esc(k.desc)}</span></div></div>${priceNote}
         <p>어느 주사위와 바꿀까요?</p>
-        <div class="pick-row">${r.dice.map((d, i) => `<button class="pick-die slot" data-slot="${i}">${dieFace(6, d.kind)}<small>${d.kind ? esc(DB.DICE[d.kind].name.replace(' 주사위', '')) : '기본'}</small></button>`).join('')}</div>`,
+        <div class="pick-row">${r.dice.map((d, i) => `<button class="pick-die slot" data-slot="${i}">${dieOf(d)}<small>${d.kind ? esc(DB.dieName(d.kind, d.up).replace(' 주사위', '')) : '기본'}</small></button>`).join('')}</div>`,
       buttons: [{ label: '취소', cls: 'dark' }],
       onClose: () => { if (chosen >= 0) G.replaceDie(chosen); else G.cancelDice(); },
       mount(w, close) {
         $$('[data-slot]', w).forEach(b => { b.onclick = () => { chosen = +b.dataset.slot; close(); }; });
       }
+    });
+  }
+
+  /* ---------- 주사위 강화 창 ---------- */
+  function upgradeModal() {
+    const r = G.run, p = r.pendingUpgrade, src = p.source;
+    let chosen = -1;
+    const cost = src.type === 'shop' ? r.shop.items[src.idx].price : src.type === 'event' ? src.cost : 0;
+    UI.modal({
+      title: '주사위 강화', cls: 'up-picker', sticky: true,
+      html: `<p class="muted">강화할 특수 주사위를 고르세요.${cost ? ` 고르면 ${cost}골드를 냅니다.` : ''}</p>
+        <div class="up-list">${G.upgradable().map(i => { const d = r.dice[i]; return `<button class="up-item" data-up="${i}">${dieOf(d)}<span><b>${i + 1}. ${esc(DB.dieName(d.kind))} → ${esc(DB.dieName(d.kind, true))}</b><small>지금: ${esc(DB.dieDesc(d.kind))}</small><small class="after">강화: ${esc(DB.dieDesc(d.kind, true))}</small></span></button>`; }).join('')}</div>`,
+      buttons: [{ label: '취소', cls: 'dark' }],
+      onClose: () => { if (chosen >= 0) { if (G.upgradeDie(chosen)) sfx('upgrade'); } else G.cancelUpgrade(); },
+      mount(w, close) { $$('[data-up]', w).forEach(b => { b.onclick = () => { chosen = +b.dataset.up; close(); }; }); }
     });
   }
 
@@ -761,6 +822,7 @@
       if (it.cat === 'dice') { const d = DB.DICE[it.id]; icon = dieFace(6, it.id, 'card-die'); name = d.name; desc = d.desc; tag = d.rarity === 'rare' ? '희귀' : '일반'; }
       else if (it.cat === 'relic') { const x = DB.RELICS[it.id]; icon = img(x.icon, 'card-ico'); name = x.name; desc = x.desc; tag = x.tier === 'rare' ? '희귀' : '일반'; }
       else if (it.cat === 'potion') { const x = DB.POTIONS[it.id]; icon = img(x.icon, 'card-ico'); name = x.name; desc = x.desc; }
+      else if (it.id === 'upgrade') { icon = img(I.icon2('orb-spark'), 'card-ico'); name = '주사위 강화'; desc = G.upgradable().length ? '특수 주사위 하나를 골라 강화한다. 고른 뒤 결제' : '강화할 수 있는 특수 주사위가 없다'; }
       else { icon = img(I.icon('heal'), 'card-ico'); name = '치유사의 손길'; desc = '체력 20 회복'; }
       const afford = r.gold >= it.price;
       return `<div class="shop-item ${it.sold ? 'sold' : ''}">${icon}<div class="si-text"><b>${esc(name)}${tag ? ` <em class="tier ${tag === '희귀' ? 'rare' : 'common'}">${tag}</em>` : ''}</b><small>${esc(desc)}</small></div>
@@ -768,11 +830,11 @@
     };
     const sec = (cat, title) => { const list = sh.items.map((it, i) => [it, i]).filter(x => x[0].cat === cat); return list.length ? `<h3 class="sub">${title}</h3><div class="shop-list">${list.map(x => item(x[0], x[1])).join('')}</div>` : ''; };
     s.innerHTML = `<section class="page shop">
-      <div class="npc-banner" style="background-image:url('${I.bg2('shop-in')}')">${img(npc.img, 'npc-img', npc.name)}<div class="npc-talk frame"><small>${esc(npc.name)}</small><p>"어서 오게, 여행자. 골드만 있다면 무엇이든 내주지."</p></div></div>
+      <div class="npc-banner" style="background-image:url('${I.bg2('shop-in')}')">${npcFig(npc)}<div class="npc-talk frame"><small>${esc(npc.name)}</small><p>"어서 오게, 여행자. 골드만 있다면 무엇이든 내주지."</p></div></div>
       <div class="panel page-body">${sec('dice', '특수 주사위')}${sec('relic', '유물')}${sec('potion', '소모품')}${sec('service', '서비스')}</div>
       <div class="page-foot"><button class="btn teal wide" data-act="leave">상점 떠나기</button></div>
     </section>`;
-    $$('[data-buy]', s).forEach(b => { b.onclick = () => G.buy(+b.dataset.buy); });
+    $$('[data-buy]', s).forEach(b => { b.onclick = () => { const it = G.run.shop.items[+b.dataset.buy]; if (G.buy(+b.dataset.buy) && it.cat !== 'dice' && it.id !== 'upgrade') sfx('coin'); }; });
   }
 
   /* ---------- 휴식 ---------- */
@@ -781,12 +843,13 @@
     setBg(I.bg2('spring'), 'dim');
     const amt = Math.round(r.maxHp * 0.3) + (r.relics.indexOf('lantern') >= 0 ? 10 : 0);
     s.innerHTML = `<section class="page rest">
-      <div class="npc-banner" style="background-image:url('${I.bg2('spring')}')">${img(npc.img, 'npc-img', npc.name)}<div class="npc-talk frame"><small>${npc.name}</small><p>"모닥불 곁에서 잠시 쉬어 가세요. 하나만 고를 수 있어요."</p></div></div>
+      <div class="npc-banner" style="background-image:url('${I.bg2('spring')}')">${npcFig(npc)}<div class="npc-talk frame"><small>${npc.name}</small><p>"모닥불 곁에서 잠시 쉬어 가세요. 하나만 고를 수 있어요."</p></div></div>
       <div class="panel page-body">
         ${st.done ? `<div class="result">${img(I.node('rest'), 'res-ico')}<p>${esc(st.result)}</p></div>` : `
         <div class="cards">
           ${choiceCard(img(I.icon('heal'), 'card-ico'), '휴식', `체력 ${amt} 회복 (현재 ${r.hp}/${r.maxHp})`, 'data-act="restHeal"')}
           ${choiceCard(img(I.emblem('blue'), 'card-ico'), '명상', '최대 체력 +5', 'data-act="restMeditate"')}
+          ${G.upgradable().length ? choiceCard(img(I.icon2('orb-spark'), 'card-ico'), '연마', '특수 주사위 하나를 골라 강화', 'data-act="restUpgrade"') : ''}
         </div>
         <h3 class="sub">단련 <small>특수 주사위 하나를 골라 장착</small></h3>
         <div class="cards">${st.train.map(k => choiceCard(dieFace(6, k, 'card-die'), esc(DB.DICE[k].name), esc(DB.DICE[k].desc), `data-train="${k}"`)).join('')}</div>`}
@@ -797,7 +860,7 @@
   }
 
   /* ---------- 이벤트 ---------- */
-  const EVENT_BG = { altar: 'crystal-cave', gamble: 'alley', library: 'throne', inn: 'tavern', villager: 'village', bounty: 'tavern' };
+  const EVENT_BG = { altar: 'crystal-cave', gamble: 'alley', library: 'throne', inn: 'tavern', villager: 'village', bounty: 'tavern', forge: 'village', rogue: 'alley', chapel: 'throne', tea: 'tavern' };
 
   function renderEvent(s) {
     const r = G.run, ev = r.event, def = G.EVENTS[ev.id], npc = def.npc && DB.NPC[def.npc];
@@ -813,7 +876,7 @@
       body = `<div class="choices">${def.choices.map((c, i) => { const ok = G.eventCan(i); return `<button class="choice" data-ev="${i}" ${ok === true ? '' : 'disabled'}><b>${esc(c.label)}</b><small>${esc(ok === true ? c.desc : ok || c.desc)}</small></button>`; }).join('')}</div>`;
     }
     s.innerHTML = `<section class="page event">
-      <div class="event-art">${img(evBg, 'ev-bg', '')}${npc ? img(npc.img, 'npc-img', npc.name) : ''}</div>
+      <div class="event-art">${img(evBg, 'ev-bg', '')}${npc ? npcFig(npc) : ''}</div>
       <div class="frame ev-text"><small class="eyebrow">${npc ? esc(npc.name) : 'EVENT'}</small><h2>${esc(def.title)}</h2><p>${esc(def.text)}</p></div>
       <div class="panel page-body">${body}</div>
       <div class="page-foot"><button class="btn ${ev.done ? 'teal' : 'dark'} wide" data-act="leave">${ev.done ? '맵으로 돌아가기' : '그냥 떠나기'}</button></div>
@@ -835,7 +898,7 @@
     const illSrc = ill && (root.innerWidth > root.innerHeight ? ill.wide : ill.tall[0]);
     s.innerHTML = `<section class="page end ${res.won ? 'won' : 'lost'}">
       <div class="end-art ${ill ? 'illus' : ''}">${ill ? `<button class="end-illust" data-act="illust" aria-label="일러스트 크게 보기">${img(illSrc, '', H.name + ' 일러스트')}</button>` : img(res.won ? H.front : (H.hurtFront || H.front), 'end-hero', H.name)}${res.won ? img(I.emblem('gold'), 'end-emblem', '') : ''}${killer ? img(killer.img, 'end-foe ' + (killer.sprite ? 'sprite' : 'portrait'), killer.name) : ''}</div>
-      <div class="frame end-text"><small class="eyebrow">${res.won ? 'VICTORY' : 'GAME OVER'}</small><h1>${res.won ? '운명을 정복했다' : '여정이 끝났다'}</h1>
+      <div class="frame end-text"><small class="eyebrow">${res.won ? 'VICTORY' : 'GAME OVER'}${r.asc ? ` · 난이도 ${r.asc}` : ''}</small><h1>${res.won ? '운명을 정복했다' : '여정이 끝났다'}</h1>
         <p>${res.won ? `${esc(boss.name)}을(를) 쓰러뜨리고 주사위의 운명을 손에 넣었습니다.` : `${res.floor}층에서 ${killer ? esc(killer.name) + '에게 ' : ''}쓰러졌습니다. 다른 길과 조합으로 다시 도전하세요.`}</p></div>
       <div class="panel stats">
         <div><small>도달 층</small><b>${res.floor > DB.CONST.floors ? '보스' : res.floor + '층'}</b></div>
@@ -847,7 +910,7 @@
         <div><small>턴 수</small><b>${st.turns}</b></div>
         <div><small>플레이 시간</small><b>${mins}분</b></div>
       </div>
-      <div class="panel end-build"><h3 class="sub">이번 여정의 빌드</h3><div class="pick-row">${r.dice.map(d => dieFace(6, d.kind)).join('')}</div><div class="relic-row">${r.relics.map(relicChip).join('') || '<small class="muted">유물 없음</small>'}</div></div>
+      <div class="panel end-build"><h3 class="sub">이번 여정의 빌드</h3><div class="pick-row">${r.dice.map(d => dieOf(d)).join('')}</div><div class="relic-row">${r.relics.map(relicChip).join('') || '<small class="muted">유물 없음</small>'}</div></div>
       <div class="page-foot two"><button class="btn dark" data-act="toMenu">메인 메뉴</button><button class="btn teal" data-act="retry">다시 도전</button></div>
     </section>`;
     $$('[data-relic]', s).forEach(b => { b.onclick = () => relicModal(b.dataset.relic); });
@@ -884,12 +947,22 @@
       }
     });
   }
+  // 이벤트에서 받은 지속 효과와 별의 파편 사용 여부
+  function buffsHTML(r) {
+    const list = [];
+    if (r.sharp) list.push(`손질한 무기: 공격 피해 +${r.sharp}`);
+    if (r.blessing) list.push(`예배당의 축복: 다음 전투 시작 시 방어 ${r.blessing}`);
+    if (r.tea > 0) list.push(`찻집 케이크: 다음 전투 ${r.tea}번 동안 첫 턴 재굴림 +1`);
+    if (r.relics.indexOf('star') >= 0) list.push(r.starUsed ? '별의 파편: 이번 여정에서 이미 썼다' : '별의 파편: 쓰러지면 한 번 되살아난다');
+    return list.length ? `<h3 class="sub">지속 효과</h3><ul class="buffs">${list.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+  }
   function sheetTab(tab, codexTab) {
     const r = G.run, m = G.meta;
     if (tab === 'status') {
       const H = G.hero();
       return `<div class="status-top"><div class="st-art">${img(G.heroImg('front'), 'st-full', H.name)}</div><div><small class="eyebrow">${esc(H.title)}</small><b>${esc(H.name)}</b>${bar(r.hp, r.maxHp, 'hp')}<div class="st-line">${coin(r.gold)}<span>${r.floor ? r.floor + '층' : '출발 지점'} · ${esc(G.region(r.floor).name)}</span></div><p class="perk small"><b>고유 능력</b> ${esc(H.perk)}</p></div></div>
-        <h3 class="sub">주사위</h3><div class="dice-list">${r.dice.map((d, i) => `<div class="dl">${dieFace(6, d.kind)}<div><b>${i + 1}. ${d.kind ? esc(DB.DICE[d.kind].name) : '기본 주사위'}</b><small>${d.kind ? esc(DB.DICE[d.kind].desc) : '특별한 효과가 없다.'}</small></div></div>`).join('')}</div>
+        <h3 class="sub">주사위</h3><div class="dice-list">${r.dice.map((d, i) => `<div class="dl">${dieOf(d)}<div><b>${i + 1}. ${esc(DB.dieName(d.kind, d.up))}</b><small>${d.kind ? esc(DB.dieDesc(d.kind, d.up)) : '특별한 효과가 없다.'}</small></div></div>`).join('')}</div>
+        ${buffsHTML(r)}
         <h3 class="sub">이번 여정</h3><div class="mini-stats"><span>처치 ${r.stats.kills}</span><span>정예 ${r.stats.elites}</span><span>준 피해 ${r.stats.dealt}</span><span>받은 피해 ${r.stats.taken}</span><span>최대 일격 ${r.stats.maxHit}</span></div>
         <button class="btn dark sm wide" id="sMenu">메인 메뉴로 (자동 저장)</button>`;
     }
@@ -920,6 +993,7 @@
       return `<div class="set-list">
         <label class="set"><span><b>자동 전체화면</b><small>화면을 처음 누를 때 전체화면으로 바꿉니다.</small></span><input type="checkbox" data-set="autoFS" ${s.autoFS ? 'checked' : ''}></label>
         <label class="set"><span><b>화면 꺼짐 방지</b><small>게임 중에는 화면이 꺼지지 않게 합니다.</small></span><input type="checkbox" data-set="wakeLock" ${s.wakeLock ? 'checked' : ''}></label>
+        <label class="set"><span><b>효과음</b><small>주사위·타격·회복 소리를 냅니다.</small></span><input type="checkbox" data-set="sound" ${s.sound !== false ? 'checked' : ''}></label>
         <label class="set"><span><b>연출 줄이기</b><small>전투 이펙트와 흔들림을 줄이고 빠르게 진행합니다.</small></span><input type="checkbox" data-set="reduceMotion" ${s.reduceMotion ? 'checked' : ''}></label>
         ${pw.standalone() ? '<p class="muted small">지금 홈 화면 앱으로 실행 중입니다.</p>' : `<button class="btn dark wide" id="sFs" data-fs-label>${pw.fsOn() ? '전체화면 끄기' : '전체화면 켜기'}</button><button class="btn teal wide" id="sInst">홈 화면에 설치하기</button>`}
         ${inRun ? '<button class="btn dark wide" id="sAbandon">이번 여정 포기하기</button>' : ''}

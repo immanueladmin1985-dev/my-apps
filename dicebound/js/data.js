@@ -60,7 +60,7 @@
     fighter: Object.assign(H('fighter'), {
       name: '격투가', title: '맨주먹 투사', hp: 60, die: 'curse', color: '#f08a3c', hidden: true, hit: ['punch', 'px-impact'], rig: { arms: 0.6 },
       desc: '글러브 하나로 싸우는 격투가. 몰릴수록 주먹이 무거워진다.',
-      perk: '체력이 절반 이하이면 공격 피해 +5'
+      perk: '공격 피해 +2, 체력이 절반 이하이면 +5 더'
     })
   };
 
@@ -86,25 +86,30 @@
   ];
 
   // 특수 주사위: 기본 주사위 하나와 교체한다
+  // up: 대장간·상점·휴식에서 강화했을 때의 효과 (rules.js computeAttack, game.js rollDie)
   DB.DICE = {
-    gold: { name: '황금 주사위', badge: A + 'icons/px-bag.webp', color: '#e5b94e', rarity: 'common', desc: '6이 나오면 골드 +3' },
-    curse: { name: '저주 주사위', badge: A + 'bossicons/skull.webp', color: '#b04ad8', rarity: 'rare', desc: '1이 나오면 피해 +9, 자신은 체력 -2' },
-    ice: { name: '빙결 주사위', badge: A + 'icons/freeze.webp', color: '#5cc8f0', rarity: 'common', desc: '4 이상이면 적에게 빙결 1' },
-    transmute: { name: '변환 주사위', badge: A + 'potions/crystal.webp', color: '#a77bff', rarity: 'rare', desc: '전투마다 한 번, 이 주사위의 눈을 원하는 숫자로 바꾼다' },
-    alchemy: { name: '연금 주사위', badge: A + 'potions/green.webp', color: '#59d17f', rarity: 'common', desc: '2 또는 3이면 방어 +3' },
-    steel: { name: '강철 주사위', badge: A + 'icons/block.webp', color: '#9fb0c4', rarity: 'common', desc: '트리플 이상 족보에 포함되면 피해 +4' },
-    blood: { name: '피의 주사위', badge: A + 'icons/bleed.webp', color: '#e0475b', rarity: 'common', desc: '5 이상이면 적에게 출혈 2' },
-    flame: { name: '불꽃 주사위', badge: A + 'icons/burn.webp', color: '#f08a3c', rarity: 'rare', desc: '6이 나오면 적에게 화상 2' },
-    life: { name: '생명 주사위', badge: A + 'icons/heal.webp', color: '#ff6f8a', rarity: 'common', desc: '1 또는 2면 체력 2 회복' },
-    thunder: { name: '번개 주사위', badge: A + 'icons2/lightning.webp', color: '#b48cff', rarity: 'common', desc: '5 이상이면 피해 +3' },
-    venom: { name: '독 주사위', badge: A + 'icons2/poison.webp', color: '#7fd34a', rarity: 'common', desc: '짝수(2·4·6)가 나오면 적에게 출혈 1' },
-    shield: { name: '수호 주사위', badge: A + 'icons2/holy-water.webp', color: '#8fd0ff', rarity: 'common', desc: '족보에 들어가지 않으면 방어 +4' },
-    clover: { name: '행운 주사위', badge: A + 'icons2/leaf.webp', color: '#6fe08a', rarity: 'common', desc: '굴려서 1이 나오면 한 번 더 굴린다' },
-    mirror: { name: '거울 주사위', badge: A + 'icons2/orb-spark.webp', color: '#d6c8ff', rarity: 'rare', desc: '다른 주사위와 눈이 같으면 피해 +4' },
-    pierce: { name: '관통 주사위', badge: A + 'icons2/fire-arrow.webp', color: '#ffb35c', rarity: 'rare', desc: '6이 나오면 이번 공격은 적의 방어를 무시한다' },
-    vampire: { name: '흡혈 주사위', badge: A + 'icons2/blood-splat.webp', color: '#d0304a', rarity: 'rare', desc: '족보에 들어가면 체력을 눈의 절반만큼 회복 (최소 1)' },
-    heavy: { name: '바위 주사위', badge: A + 'icons2/rock.webp', color: '#b9a07a', rarity: 'rare', desc: '4~6만 나온다. 대신 다시 굴릴 수 없다' }
+    gold: { name: '황금 주사위', badge: A + 'icons/px-bag.webp', color: '#e5b94e', rarity: 'common', desc: '6이 나오면 골드 +3', up: '5 이상이면 골드 +4' },
+    curse: { name: '저주 주사위', badge: A + 'bossicons/skull.webp', color: '#b04ad8', rarity: 'rare', desc: '1이 나오면 피해 +9, 자신은 체력 -2', up: '1이면 피해 +13, 자신은 체력 -2' },
+    ice: { name: '빙결 주사위', badge: A + 'icons/freeze.webp', color: '#5cc8f0', rarity: 'common', desc: '4 이상이면 적에게 빙결 1', up: '4 이상이면 적에게 빙결 2' },
+    transmute: { name: '변환 주사위', badge: A + 'potions/crystal.webp', color: '#a77bff', rarity: 'rare', desc: '전투마다 한 번, 이 주사위의 눈을 원하는 숫자로 바꾼다', up: '전투마다 두 번, 이 주사위의 눈을 원하는 숫자로 바꾼다' },
+    alchemy: { name: '연금 주사위', badge: A + 'potions/green.webp', color: '#59d17f', rarity: 'common', desc: '2 또는 3이면 방어 +3', up: '1~3이면 방어 +4' },
+    steel: { name: '강철 주사위', badge: A + 'icons/block.webp', color: '#9fb0c4', rarity: 'common', desc: '트리플 이상 족보에 포함되면 피해 +4', up: '트리플 이상 족보에 포함되면 피해 +7' },
+    blood: { name: '피의 주사위', badge: A + 'icons/bleed.webp', color: '#e0475b', rarity: 'common', desc: '5 이상이면 적에게 출혈 2', up: '4 이상이면 적에게 출혈 2' },
+    flame: { name: '불꽃 주사위', badge: A + 'icons/burn.webp', color: '#f08a3c', rarity: 'rare', desc: '6이 나오면 적에게 화상 2', up: '5 이상이면 적에게 화상 2' },
+    life: { name: '생명 주사위', badge: A + 'icons/heal.webp', color: '#ff6f8a', rarity: 'common', desc: '1 또는 2면 체력 2 회복', up: '1~3이면 체력 3 회복' },
+    thunder: { name: '번개 주사위', badge: A + 'icons2/lightning.webp', color: '#b48cff', rarity: 'common', desc: '5 이상이면 피해 +3', up: '4 이상이면 피해 +4' },
+    venom: { name: '독 주사위', badge: A + 'icons2/poison.webp', color: '#7fd34a', rarity: 'common', desc: '짝수(2·4·6)가 나오면 적에게 출혈 1', up: '짝수가 나오면 적에게 출혈 2' },
+    shield: { name: '수호 주사위', badge: A + 'icons2/holy-water.webp', color: '#8fd0ff', rarity: 'common', desc: '족보에 들어가지 않으면 방어 +4', up: '족보에 들어가지 않으면 방어 +7' },
+    clover: { name: '행운 주사위', badge: A + 'icons2/leaf.webp', color: '#6fe08a', rarity: 'common', desc: '굴려서 1이 나오면 한 번 더 굴린다', up: '굴려서 1이나 2가 나오면 한 번 더 굴린다' },
+    mirror: { name: '거울 주사위', badge: A + 'icons2/orb-spark.webp', color: '#d6c8ff', rarity: 'rare', desc: '다른 주사위와 눈이 같으면 피해 +4', up: '다른 주사위와 눈이 같으면 피해 +7' },
+    pierce: { name: '관통 주사위', badge: A + 'icons2/fire-arrow.webp', color: '#ffb35c', rarity: 'rare', desc: '6이 나오면 이번 공격은 적의 방어를 무시한다', up: '5 이상이면 이번 공격은 적의 방어를 무시한다' },
+    vampire: { name: '흡혈 주사위', badge: A + 'icons2/blood-splat.webp', color: '#d0304a', rarity: 'rare', desc: '족보에 들어가면 체력을 눈의 절반만큼 회복 (최소 1)', up: '족보에 들어가면 체력을 눈만큼 회복' },
+    heavy: { name: '바위 주사위', badge: A + 'icons2/rock.webp', color: '#b9a07a', rarity: 'rare', desc: '4~6만 나온다. 대신 다시 굴릴 수 없다', up: '4~6만 나온다. 강화해서 다시 굴릴 수도 있다' }
   };
+
+  // 특수 주사위 이름·설명 (강화된 주사위는 이름 뒤에 + 를 붙이고 강화 설명을 쓴다)
+  DB.dieName = (kind, up) => (kind ? DB.DICE[kind].name + (up ? '+' : '') : '기본 주사위');
+  DB.dieDesc = (kind, up) => (kind ? (up ? DB.DICE[kind].up : DB.DICE[kind].desc) : '1~6이 고르게 나온다.');
 
   // 유물: tier 는 common / rare. 효과는 rules.js·game.js 에서 id 로 처리한다
   DB.RELICS = {
@@ -193,7 +198,7 @@
       moves: [{ name: '뼈의 장벽', block: 14, atk: 6 }, { name: '생명 흡수', atk: 11, heal: 10 }, { name: '죽음의 저주', atk: 6, apply: { freeze: 2, bleed: 2 } }, { name: '죽음의 파동', atk: 17 }]
     },
     hellLord: {
-      name: '지옥의 군주', img: A + 'mobs/boss-hell-lord.webp', sprite: true, marker: A + 'bossicons/demon.webp', type: 'boss', hp: 185, desc: '붉은 날개로 지옥불을 일으키는 악마의 군주.',
+      name: '지옥의 군주', img: A + 'mobs/boss-hell-lord.webp', sprite: true, marker: A + 'bossicons/demon.webp', type: 'boss', hp: 172, desc: '붉은 날개로 지옥불을 일으키는 악마의 군주.',
       moves: [{ name: '지옥불', atk: 8, apply: { burn: 3 } }, { name: '분노', buff: 2, block: 10 }, { name: '파멸의 일격', atk: 20 }, { name: '화염 폭풍', atk: 5, hits: 3 }]
     },
     fallenKnight: {
@@ -311,6 +316,28 @@
     })
   });
 
+  // 보스 2단계(분노): 체력이 절반 아래로 내려가면 힘이 오르고 전용 행동 목록으로 바꾼다 (game.js checkRage)
+  const RAGE = {
+    necromancer: { say: '"죽은 자들이여, 일어나라!"', str: 1, moves: [{ name: '망자의 군단', atk: 4, hits: 3 }, { name: '영혼 수확', atk: 10, heal: 8 }, { name: '뼈의 감옥', block: 14, apply: { freeze: 1 } }, { name: '죽음의 파동', atk: 17 }] },
+    hellLord: { say: '"모든 것을 불태워 주마!"', str: 1, moves: [{ name: '지옥의 날개', atk: 5, hits: 3, apply: { burn: 1 } }, { name: '불꽃 왕관', block: 14, heal: 6 }, { name: '종말의 일격', atk: 18 }] },
+    fallenKnight: { say: '"맹세는 피로 갚는다."', str: 1, moves: [{ name: '저주받은 성검', atk: 7, hits: 2, apply: { bleed: 2 } }, { name: '검은 서약', block: 14, heal: 8 }, { name: '심판의 낙인', atk: 13, apply: { freeze: 1 } }] },
+    abyssDragon: { say: '"심연이 깨어난다…!"', str: 1, moves: [{ name: '용린 갑주', block: 16, heal: 8 }, { name: '심연의 숨결', atk: 18, apply: { burn: 2 } }, { name: '욕망의 발톱', atk: 6, hits: 2, apply: { bleed: 1 } }] },
+    voidHerald: { say: '"공허가 모든 것을 삼킨다."', str: 1, moves: [{ name: '시간 역행', heal: 12, block: 10 }, { name: '공허 붕괴', atk: 4, hits: 4 }, { name: '존재 소거', atk: 18 }] },
+    succubus: { say: '"이제 장난은 끝이야."', str: 1, moves: [{ name: '매혹의 춤', atk: 4, hits: 3, apply: { freeze: 1 } }, { name: '피의 입맞춤', atk: 11, heal: 10 }, { name: '지옥의 계약', buff: 2, block: 12 }] }
+  };
+  Object.keys(RAGE).forEach(k => { DB.ENEMIES[k].rage = RAGE[k]; });
+
+  // 난이도 단계(승천): 앞 단계의 조건이 모두 쌓인다. 한 단계를 정복하면 다음 단계가 열린다
+  DB.ASCENSION = [
+    { name: '기본', desc: '조건 없음' },
+    { name: '정예 강화', desc: '정예·보스 체력 +12%' },
+    { name: '날카로운 발톱', desc: '모든 적의 공격 피해 +10%' },
+    { name: '가난한 출발', desc: '시작 골드 0, 휴식 회복량 30% → 24%' },
+    { name: '분노한 군주', desc: '보스 체력 +10%, 분노할 때 힘 +2 더' },
+    { name: '험한 길', desc: '일반 적 체력 +12%' },
+    { name: '운명의 시련', desc: '상점 가격 +20%' }
+  ];
+
   // 지역별 몬스터 목록 (층 → 지역 → 일반·정예)
   DB.POOLS = {
     forest: { normal: ['goblin', 'goblinArcher', 'goblinShaman', 'skeleton', 'slime', 'elfArcher', 'dryadWitch', 'shaman', 'rivalDruid', 'rivalArcher'], elite: ['werewolf', 'golem', 'barbarian', 'wolfMistress'] },
@@ -320,15 +347,21 @@
     cave: { normal: ['mage', 'skeletonArcher', 'voidSorceress', 'crystalMystic', 'shadowAssassin', 'basiliskTamer', 'scorpionBlade', 'demonWarrior', 'ashRevenant'], elite: ['boneKnight', 'steamGolem', 'driderQueen', 'flameDancer', 'bloodDuchess'] }
   };
 
+  // NPC: 전신 그림 (assets/npc, tools/cut_npcs.py). 화면에서는 머리부터 허벅지까지 보이게 자른다
+  const NPC = (name, file) => ({ name, img: `${A}npc/${file}.webp` });
   DB.NPC = {
-    merchant: { name: '떠돌이 상인', img: A + 'chars/merchant.jpg' },
-    shopkeeper: { name: '아이템 상인', img: A + 'chars/shopkeeper.jpg' },
-    healer: { name: '치유사', img: A + 'chars/healer.jpg' },
-    innkeeper: { name: '여관 주인', img: A + 'chars/innkeeper.jpg' },
-    librarian: { name: '도서관 관리자', img: A + 'chars/librarian.jpg' },
-    questgiver: { name: '퀘스트 의뢰인', img: A + 'chars/questgiver.jpg' },
-    mystic: { name: '운명의 점술사', img: A + 'chars/mystic.jpg' },
-    villager: { name: '마을 주민', img: A + 'chars/villager.jpg' }
+    merchant: NPC('떠돌이 상인', 'merchant'),
+    shopkeeper: NPC('고양이 상인', 'shopkeeper'),
+    healer: NPC('숲의 치유사', 'healer'),
+    innkeeper: NPC('여관 주인', 'innkeeper'),
+    librarian: NPC('서고 관리인', 'librarian'),
+    questgiver: NPC('현상금 의뢰인', 'questgiver'),
+    mystic: NPC('운명의 점술사', 'mystic'),
+    villager: NPC('마을 주민', 'villager'),
+    blacksmith: NPC('대장장이', 'blacksmith'),
+    rogue: NPC('뒷골목 도적', 'rogue'),
+    nun: NPC('예배당 수녀', 'nun'),
+    maid: NPC('찻집 메이드', 'maid')
   };
 
   DB.NODE_TYPES = {
@@ -365,7 +398,11 @@
     flawless: { name: '무결점', desc: '피해를 받지 않고 정예 몬스터를 처치한다.', emblem: 'red' },
     clear: { name: '운명의 정복자', desc: '최종 보스를 처치한다.', emblem: 'red' },
     allBosses: { name: '왕관 수집가', desc: '모든 보스를 처치한다.', emblem: 'red' },
-    runs10: { name: '끈질긴 여행자', desc: '여정을 10번 시작한다.', emblem: 'blue' }
+    runs10: { name: '끈질긴 여행자', desc: '여정을 10번 시작한다.', emblem: 'blue' },
+    smith: { name: '대장장이의 친구', desc: '한 번의 여정에서 주사위를 3번 강화한다.', emblem: 'blue' },
+    rage: { name: '분노를 넘어서', desc: '분노한 보스를 처치한다.', emblem: 'red' },
+    asc3: { name: '시련의 길', desc: '난이도 3 이상에서 최종 보스를 처치한다.', emblem: 'purple' },
+    asc6: { name: '운명을 거스른 자', desc: '난이도 6에서 최종 보스를 처치한다.', emblem: 'gold' }
   };
 
   DB.CONST = {

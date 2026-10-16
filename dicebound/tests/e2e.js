@@ -21,7 +21,7 @@ const VIEWS = [
 ];
 
 async function idle(page) {
-  await page.waitForFunction(() => !window.DB.ui.busy && !document.querySelector('.modal-back:not(.dice-picker-back)') || document.querySelector('.modal.dice-picker'), null, { timeout: 15000 });
+  await page.waitForFunction(() => !window.DB.ui.busy && !document.querySelector('.modal-back:not(.dice-picker-back)') || document.querySelector('.modal.dice-picker') || document.querySelector('.modal.up-picker'), null, { timeout: 15000 });
 }
 
 // 봇 결정을 실제 DOM 클릭으로 실행한다
@@ -29,6 +29,8 @@ async function act(page, a) {
   const click = async sel => { const el = await page.$(sel); if (!el) throw new Error('버튼 없음: ' + sel + ' ' + JSON.stringify(a)); await el.click(); };
   switch (a.kind) {
     case 'replaceDie': return click(`.modal.dice-picker [data-slot="${a.slot}"]`);
+    case 'upgradeDie': return click(`.modal.up-picker [data-up="${a.slot}"]`);
+    case 'restUpgrade': return click('[data-act="restUpgrade"]');
     case 'node': await click(`[data-node="${a.id}"]`); return click('[data-act="go"]');
     case 'potion': await click(`.hud [data-pot="${a.idx}"]`); return click('.modal-actions .btn:last-child');
     case 'reroll': for (const i of a.sel) await click(`[data-die="${i}"]`); return click('[data-act="reroll"]');
