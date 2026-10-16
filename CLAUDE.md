@@ -37,3 +37,8 @@
 - `alert`/`confirm`/`prompt` 대신 페이지 안의 창(모달)을 쓴다.
 - 여러 기기로 하는 앱은 화면 버튼만 숨기지 말고, 상태를 바꾸는 요청마다 보낸 기기의 권한을 검사한다. 정답처럼 공개하면 안 되는 정보는 그 정보를 볼 수 있는 기기에만 보낸다.
 - 커밋하기 전에 Playwright(`/opt/pw-browsers/chromium`)로 휴대폰·태블릿 크기 화면을 확인하고, 게임이라면 컴퓨터끼리 끝까지 자동 진행해서 스크립트 오류가 없는지 확인한다.
+
+## 비공개 앱 (사용자 요청)
+- 사용자만 보는 앱은 이 공개 저장소에 올리지 않는다. Claude 비공개 페이지(Artifact)에 게시하고, 앱 목록(`index.html`)과 `README.md`에도 넣지 않는다.
+- 다이스바운드(DICEBOUND 운명의 주사위)가 여기에 해당한다. Artifact 목록에서 "DICEBOUND · 운명의 주사위"를 찾는다. 게임 파일과 함께 개발용 파일(README, tools, tests, 원래 index.html 은 `index.dev.html`)도 그 Artifact 에 들어 있다.
+- 고칠 때: Artifact 를 read 해서 파일을 작업 폴더에 받고, `index.dev.html` 을 `index.html` 로 되돌려 고치고 점검한 뒤, `python3 tools/make_artifact.py <출력 폴더>` 로 묶어 같은 Artifact URL 에 다시 게시한다(한 번에 255개까지라 두 번에 나눠 올린다). 이 저장소에는 커밋하지 않는다.

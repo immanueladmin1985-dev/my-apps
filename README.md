@@ -7,7 +7,6 @@ GitHub Pages로 배포되는 스마트폰 홈 화면용 HTML 앱 모음입니다
 - 앱 목록: https://immanueladmin1985-dev.github.io/my-apps/
 - 성경 부루마블: https://immanueladmin1985-dev.github.io/my-apps/bible-marble/
 - 난장이의 피아노 교실: https://immanueladmin1985-dev.github.io/my-apps/piano/
-- DICEBOUND 운명의 주사위: https://immanueladmin1985-dev.github.io/my-apps/dicebound/
 - 다과비 계산기: https://immanueladmin1985-dev.github.io/my-apps/snack-calc/
 
 각 앱은 따로 홈 화면에 설치해서 따로 실행할 수 있습니다. `main` 브랜치에 올린 내용이 몇 분 안에 사이트에 반영됩니다.
@@ -127,10 +126,6 @@ GitHub Pages로 배포되는 스마트폰 홈 화면용 HTML 앱 모음입니다
 - 가로 화면 우선 배치: 위쪽은 문제 카드와 단추, 아래쪽은 큰 건반. 보이는 흰 건반 수는 가로·세로 화면마다 따로 정할 수 있습니다 (기본: 가로 약 한 옥타브 반).
 - 지연 시간 보정: 듣는 장치(스피커, 블루투스 이어폰 등)마다 화면 터치 지연과 피아노(MIDI·마이크) 지연을 재서 ‘박자대로’ 판정에서 빼 줍니다.
 - 처음 열면 홈 화면 설치 방법을 안내합니다 (안드로이드 크롬은 바로 설치, 아이폰·삼성 인터넷은 순서 안내).
-
-## DICEBOUND 운명의 주사위 (`dicebound/`)
-
-주사위 5개를 굴리고 일부를 다시 굴려 족보를 완성하는 다크 판타지 로그라이크입니다. 자세한 규칙과 파일 구조, 점검 방법은 [`dicebound/README.md`](dicebound/README.md)에 있습니다.
 
 ## 다과비 계산기 (`snack-calc/`)
 
