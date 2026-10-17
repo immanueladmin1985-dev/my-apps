@@ -588,6 +588,16 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .bd-steps span.on{background:var(--peony-soft);color:var(--peony)}
 .bd-steps span.done{background:var(--jade-soft);color:var(--jade)}
 
+/* ---------- 소리 정보 줄 ---------- */
+.sinfo{display:grid;grid-template-columns:1.25fr 1fr 1.25fr .8fr;gap:4px;font-variant-numeric:tabular-nums;min-height:44px}
+.sinfo:empty{display:none}
+.sinfo>span{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:3px;padding:4px 7px;border-radius:10px;background:var(--surface);border:1px solid var(--line);line-height:1.2;min-width:0;overflow:hidden}
+.sinfo i{flex-basis:100%;font-style:normal;font-size:.62rem;font-weight:700;color:var(--ink-3)}
+.sinfo b{font-size:1rem}
+.sinfo small{font-size:.64rem;color:var(--ink-2);font-weight:700}
+.sinfo em{flex-basis:100%;font-style:normal;font-size:.7rem;font-weight:700;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sinfo .good{color:var(--jade)}.sinfo .high{color:var(--warm)}.sinfo .low{color:var(--cool)}
+
 /* ---------- 빠르기 숫자 입력·즐겨찾기 ---------- */
 .sctl b.tapnum,.stepper b.tapnum,.bpm-big.tapnum{cursor:pointer;text-decoration:underline dotted var(--ink-3);text-underline-offset:4px;border-radius:8px;padding:4px 2px}
 .sctl b.tapnum:active{background:var(--surface-2)}
@@ -868,6 +878,7 @@ function normalizeDB(d) {
   d.sessions = Array.isArray(d.sessions) ? d.sessions : [];
   d.longBest = d.longBest || {};
   d.habit = d.habit || {};
+  d.holdBest = isObj(d.holdBest) ? d.holdBest : {};
   d.mySongs = Array.isArray(d.mySongs) ? d.mySongs : [];
   d.songBest = d.songBest || {};
   if (!isObj(d.metro)) d.metro = {}; Object.entries({ bpm: 72, beats: 4, sub: 1 }).forEach(([k, v]) => { if (d.metro[k] === undefined) d.metro[k] = v; });
@@ -963,7 +974,7 @@ const TABS = [
 function leaveCurrent() {
   if (typeof curCleanup === 'function') { try { curCleanup(); } catch (e) { console.error(e); } }
   curCleanup = null;
-  sessionEnd(); Wake.off(); Mic.release();
+  SI.endHold(); sessionEnd(); Wake.off(); Mic.release(); TGT.m = 0;
   setDock('');
 }
 function go(id, params = {}, opt = {}) {
@@ -1055,7 +1066,7 @@ function applyViewK() {
   document.documentElement.style.setProperty('--k', k.toFixed(3));
 }
 function fitNow() {
-  applyViewK();
+  applyViewK(); SI.check();
   const el = $('#view > .screen.fit'); document.body.classList.toggle('fitmode', !!el);
   if (!el) { document.body.classList.remove('l2dock'); return; }
   const hdr = $('#hdr').getBoundingClientRect().height; const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height : 0;
@@ -1064,7 +1075,7 @@ function fitNow() {
   el.style.height = Math.max(220, Math.floor(window.innerHeight - hdr - (want ? 0 : dh) - nh - 10)) + 'px';
   layoutL2(el);
 }
-if (window.MutationObserver) { let mq = 0; new MutationObserver(() => { if (mq) return; mq = requestAnimationFrame(() => { mq = 0; if ($('#view > .screen.fit')) fitNow(); }); }).observe(document.getElementById('view') || document.body, { childList: true, subtree: true }); }
+if (window.MutationObserver) { let mq = 0; new MutationObserver(recs => { if (mq || recs.every(r => r.target.closest && r.target.closest('.sinfo,.cur-row,.fb,.t-sub,.t-hint,.t-note'))) return; mq = requestAnimationFrame(() => { mq = 0; if ($('#view > .screen.fit')) fitNow(); else SI.check(); }); }).observe(document.getElementById('view') || document.body, { childList: true, subtree: true }); }
 window.addEventListener('resize', () => requestAnimationFrame(fitNow));
 /* 이름 입력 창 (브라우저 prompt 대신). 취소하면 null, 확인하면 앞뒤 공백을 지운 글자 */
 function askText(title, value = '', ph = '') {
@@ -1532,9 +1543,50 @@ function adviceFor(c) {
 /* 가로 막대 음정 표시 (-50 ~ +50센트) */
 function meterHTML(slim) {
   const t = S().tol; const z0 = 50 - t, z1 = 50 + t;
-  return `<div class="meter${slim ? ' slim' : ''}"><div class="zone" style="left:${z0}%;width:${z1 - z0}%"></div><div class="mk" style="left:50%;opacity:.2"></div><span class="lab" style="left:8px">낮음</span><span class="lab" style="right:8px">높음</span></div>`;
+  return `<div class="meter${slim ? ' slim' : ''}"><div class="zone" style="left:${z0}%;width:${z1 - z0}%"></div><div class="mk" style="left:50%;opacity:.2"></div><span class="lab" style="left:8px">낮음</span><span class="lab" style="right:8px">높음</span></div>` + '<div class="sinfo"></div>';
 }
 function setMeter(el, cents, on) { const mk = $('.mk', el); if (!mk) return; mk.style.left = (50 + clamp(cents, -50, 50)) + '%'; mk.style.opacity = on ? 1 : .2; mk.style.background = !on ? 'var(--ink)' : Math.abs(cents) <= S().tol ? 'var(--jade)' : cents > 0 ? 'var(--warm)' : 'var(--cool)'; }
+
+/* ================= 소리 정보 줄: 지금 주파수·센트, 목표 주파수, 고르게 유지한 시간, 이 연습의 기록 =================
+   화면에 .sinfo 칸이 있으면 마이크 소리를 받아 채움. 목표 음은 TGT.m (판정기·화면이 정함, 0이면 가장 가까운 음 기준) */
+const TGT = { m: 0 };
+const SI = {
+  un: null, t0: 0, lastOk: 0, holdM: 0, hold: 0, sBest: 0, lastPaint: 0, lastMin: 0, minTxt: '', fr: null,
+  check() {
+    const has = !!$('#view .sinfo');
+    if (has && !this.un) { this.un = Mic.sub(fr => this.frame(fr)); this.t0 = 0; this.hold = 0; this.sBest = 0; this.lastMin = 0; this.paint(true); }
+    else if (!has && this.un) { this.un(); this.un = null; this.endHold(); }
+    else if (has) this.paint(true);
+  },
+  feat() { return curSession ? curSession.f : ''; },
+  endHold() {
+    if (!this.t0) return; const h = this.hold; this.t0 = 0;
+    if (h > this.sBest) this.sBest = h;
+    const f = this.feat(); if (f && h >= 1 && h > (DB.holdBest[f] || 0)) { DB.holdBest[f] = +h.toFixed(1); saveDB(); }
+  },
+  frame(fr) {
+    this.fr = fr;
+    const ref = TGT.m || (fr.voiced ? fr.midi : 0);
+    const c = fr.voiced && ref ? (fr.mf - ref) * 100 : null;
+    const ok = c !== null && Math.abs(c) <= S().tol;
+    if (ok) { if (!this.t0 || this.holdM !== ref) { this.endHold(); this.t0 = fr.pt; this.holdM = ref; } this.lastOk = fr.pt; this.hold = (fr.pt - this.t0) / 1000; }
+    else if (this.t0 && fr.pt - this.lastOk > 220) this.endHold();
+    if (fr.pt - this.lastPaint > 110) this.paint();
+  },
+  paint(force) {
+    const boxes = $$('#view .sinfo'); if (!boxes.length) return; const fr = this.fr; this.lastPaint = performance.now();
+    if (force || this.lastPaint - this.lastMin > 5000) { this.lastMin = this.lastPaint; const f = this.feat(), dk = dayKey(); let sec = DB.sessions.filter(x => x.d === dk && x.f === f).reduce((a, x) => a + x.sec, 0); if (curSession) sec += (Date.now() - curSession.t0) / 1000; this.minTxt = `${Math.floor(sec / 60)}분`; }
+    const v = fr && fr.voiced, tm = TGT.m;
+    const cc = v ? (tm && Math.abs(fr.mf - tm) < 1.5 ? (fr.mf - tm) * 100 : fr.cents) : 0;
+    const cls = !v ? '' : Math.abs(cc) <= S().tol ? 'good' : cc > 0 ? 'high' : 'low';
+    const best = DB.holdBest[this.feat()] || 0, cur = this.t0 ? this.hold : 0;
+    const html = `<span class="si-a"><i>지금</i><b>${v ? m2f(fr.mf).toFixed(1) : '—'}</b><small>Hz</small><em class="${cls}">${v ? `${esc(nFull(tm && Math.abs(fr.mf - tm) < 1.5 ? tm : fr.midi))} ${cc >= 0 ? '+' : '−'}${Math.abs(Math.round(cc))}¢` : '소리를 기다려요'}</em></span>`
+      + `<span class="si-b"><i>목표</i><b>${tm ? m2f(tm).toFixed(1) : '—'}</b><small>${tm ? 'Hz ' + esc(nFull(tm)) : ''}</small></span>`
+      + `<span class="si-c"><i>유지</i><b class="${cur ? 'good' : ''}">${cur.toFixed(1)}</b><small>초 · 오늘 최고 ${Math.max(this.sBest, cur).toFixed(1)} · 최고 ${Math.max(best, cur).toFixed(1)}</small></span>`
+      + `<span class="si-d"><i>오늘 이 연습</i><b>${this.minTxt}</b>${boxes[0].dataset.extra ? `<small>${esc(boxes[0].dataset.extra)}</small>` : ''}</span>`;
+    boxes.forEach(b => { if (b._h !== html) { b.innerHTML = html; b._h = html; } });
+  }
+};
 
 /* 음정 흐름 그래프 */
 function Trace(canvas, opt = {}) {
@@ -1661,7 +1713,7 @@ class WaitJudge {
   feed(fr) {
     const now = fr.pt; const dt = this.lastT ? Math.min(80, now - this.lastT) : 16; this.lastT = now;
     if (this.i >= this.targets.length) return;
-    const tgt = this.cur.m;
+    const tgt = this.cur.m; TGT.m = tgt;
     if (!fr.voiced) { this.silence += dt; if (this.silence > 70) this.fresh = true; this.hold = Math.max(0, this.hold - dt * 2); this.wrongMs = 0; return; }
     this.silence = 0;
     const prev = this.targets[this.i - 1];
@@ -2044,7 +2096,7 @@ function TempoRun(o) {
     if (!alive) return; raf = requestAnimationFrame(step);
     const b = (AudioEng.ctx.currentTime - AudioEng.outLat() - visDelay() - T0) / per; o.lane.setBeat(Math.max(-cb, b));
     let ci = -1; for (let i = 0; i < notes.length; i++) if (b >= starts[i] && b < starts[i] + notes[i].d) { ci = i; break; }
-    if (ci !== lastCur) { lastCur = ci; o.lane.setCur(ci); if (o.onCur) o.onCur(ci); }
+    if (ci !== lastCur) { lastCur = ci; o.lane.setCur(ci); TGT.m = ci >= 0 && !notes[ci].rest ? notes[ci].m : 0; if (o.onCur) o.onCur(ci); }
     if (b > total + 0.8) finish(false);
   };
   step();
@@ -2541,7 +2593,9 @@ defScreen('tuner', {
     const unMic = withMic(body, start);
     function start() {
       const target = pref('tunerTarget', 0);
+      TGT.m = target;
       body.innerHTML = `<div class="card tuner fx">${gaugeSVG()}<div class="t-oct" id="tOct">&nbsp;</div><div class="t-note" id="tNote">…</div><div class="t-sub" id="tSub">관을 불어 보세요</div><div class="t-hint" id="tHint">소리가 들리면 바늘이 움직여요</div></div>
+        <div class="sinfo"></div>
         <div class="card land-hide" style="padding:6px 8px"><canvas class="trace" id="tTrace" style="height:56px"></canvas></div>
         <div class="card pm-card land-hide"><div class="row between" style="padding:2px 8px 0;min-height:34px"><span class="small muted">${target ? '목표 음: <b>' + esc(nFull(target)) + '</b>' : '관을 누르면 목표 음으로 정해요'}</span>${target ? `<span class="row" style="gap:4px"><button class="btn sm" id="tHear">${ICONS.ear}듣기</button><button class="btn sm ghost" id="tClr">지우기</button></span>` : ''}</div><div id="tPm"></div></div>`;
       const g = $('svg.gauge', body), nEl = $('#tNote', body), oEl = $('#tOct', body), sEl = $('#tSub', body), hEl = $('#tHint', body);
@@ -2745,11 +2799,13 @@ function longMode(box) {
   const unMic = withMic(ui, build);
   function build() {
     const best = target ? DB.longBest[target] : null;
+    TGT.m = target;
     ui.innerHTML = `<div class="chips scroll" id="ltT"><button class="chip ${!target ? 'on' : ''}" data-m="0">아무 음</button>${noteChips(PIPES, target)}</div>
       ${segHTML('ltg', [[5, '5초'], [10, '10초'], [15, '15초'], [20, '20초'], [30, '30초']], goal)}
       <div class="card ring-box fx"><div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" stroke="var(--surface-2)" stroke-width="9" fill="none"/><circle id="ltArc" cx="60" cy="60" r="52" stroke="var(--peony)" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
         <div class="in"><b id="ltSec">0.0</b><span id="ltNote">${target ? esc(nFull(target)) : '아무 음이나'}</span></div></div>
         <div class="fb" id="ltFb">숨을 깊게 들이마신 뒤 한 음을 고르게 불어 보세요</div><div class="small muted">${best ? `이 음 최고 기록 ${best.toFixed(1)}초` : '&nbsp;'}</div></div>
+      <div class="sinfo"${best ? ` data-extra="이 음 롱톤 최고 ${best.toFixed(1)}초"` : ''}></div>
       <div class="card land-hide" style="padding:6px 8px"><canvas class="trace" id="ltTr" style="height:56px"></canvas></div>`;
     $('#ltT', ui).addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; target = +b.dataset.m; setPref('ltTarget', target); if (target) playTone(target, 1.2); rebuild(); });
     bindSeg(ui, 'ltg', v => { goal = +v; setPref('ltGoal', goal); });
@@ -3346,6 +3402,7 @@ defScreen('follow', {
     function build() {
       inner();
       const f = fitSongK(s); const notes = f.notes; const res = [];
+      const fbest = (DB.songBest[s.id] || {}).follow;
       el.innerHTML = `<div id="fwGate"></div>${songCtlHTML(s, 'fw')}
         <div class="cur-row"><b id="fwCur"></b><span class="s" id="fwP"></span><span class="fb" id="fwFb">${esc(fitNote(f))}</span></div>
         <div class="fx" id="fwLane"></div>
@@ -3353,6 +3410,7 @@ defScreen('follow', {
         <div class="card pm-card land-hide"><div id="fwPm"></div></div>
         <div class="ibtns"><button class="btn" id="fwRe">${ICONS.refresh}처음</button><button class="btn" id="fwBack">${ICONS.back}뒤로</button><button class="btn" id="fwHear">${ICONS.ear}이 음</button><button class="btn" id="fwSkip">${ICONS.chev}건너뛰기</button><button class="btn ${labels ? 'on' : ''}" id="fwLb">${ICONS.book}계이름</button></div>`;
       bindSongCtl(el, s, 'fw', build);
+      if (fbest) { const sib = $('.sinfo', el); if (sib) sib.dataset.extra = `이 곡 최고 ${fbest}%`; }
       lane = StaffLane($('#fwLane', el), notes, { ts: s.ts, pk: s.pk, tsd: s.tsd });
       const cur = $('#fwCur', el), pno = $('#fwP', el), fb = $('#fwFb', el), meter = $('.meter', el);
       const pm = PipeMap($('#fwPm', el), { mini: true, onTap: m => playTone(m, 0.8) });
@@ -3422,7 +3480,8 @@ defScreen('playalong', {
         <div class="presets land-hide">${[0.5, 0.65, 0.8, 1].map(x => `<button class="chip" data-x="${x}">${Math.round(x * 100)}%</button>`).join('')}</div>
         <div class="tgls land-hide"><button class="chip ${clickOn ? 'on' : ''}" id="paClk">박자 소리</button><button class="chip ${labels ? 'on' : ''}" id="paLb">계이름</button><button class="chip ${artOn ? 'on' : ''}" id="paArt">악상기호</button><button class="chip" id="paFirst">${ICONS.ear}첫 음</button></div>
         <div class="fx" id="paLane"></div>
-        <div class="small muted center" id="paInfo">${artOn ? '기호를 살려 불어 보세요 · ' : ''}원래 빠르기 ${s.bpm}${best ? ` · 최고 ${best}점` : ''}${fitNote(f) ? ' · ' + esc(fitNote(f)) : ''}</div>`;
+        <div class="small muted center" id="paInfo">${artOn ? '기호를 살려 불어 보세요 · ' : ''}원래 빠르기 ${s.bpm}${best ? ` · 최고 ${best}점` : ''}${fitNote(f) ? ' · ' + esc(fitNote(f)) : ''}</div>
+        <div class="sinfo"${best ? ` data-extra="이 곡 최고 ${best}점"` : ''}></div>`;
       const bc = bindSongCtl(el, s, 'pa', build);
       $$('.presets .chip', el).forEach(c => c.onclick = () => { setPref('sb_' + s.id, clamp(Math.round(s.bpm * +c.dataset.x), 30, 220)); if (bc) bc.refresh(); });
       lane = StaffLane($('#paLane', el), notes, { ts: s.ts, pk: s.pk, tsd: s.tsd, artic: plan }); lane.goTo(0, false); lane.setCur(-1);
@@ -3627,6 +3686,7 @@ defScreen('staccato', {
         <div class="land-hide">${segHTML('arm', [['one', '한 음'], ['scale', '음계 오르내리기']], mel)}</div>
         <div class="fx" id="arLane"></div>
         <div class="fb center" id="arFb" style="margin:0">${esc(ARTIC_TIP[kind])}</div>
+        <div class="sinfo"></div>
         <div class="kv tight land-hide" id="arKv"></div>`;
       keyCtl(el, 'arKey', build);
       bindStepCtl(el, 'arB', { get: () => bpm, set: v => { bpm = v; setPref('arBpm', v); }, min: 30, max: 160, fast: 5, fav: 'staccato' });
@@ -3699,6 +3759,7 @@ defScreen('dotted', {
           <div class="phase" id="dtPh" style="min-height:54px"><div class="zone" style="left:${(p2 - 0.06) * 100}%;width:12%"></div><div class="tick" style="left:${tri * 100}%;opacity:.5"></div>
             ${front ? '<span class="lbl" style="left:8%">박 시작</span><span class="lbl" style="left:55%">셋잇단 ⅔</span><span class="lbl" style="left:86%">목표 ¾</span>' : '<span class="lbl" style="left:12%">목표 ¼</span><span class="lbl" style="left:46%">셋잇단 ⅓</span><span class="lbl" style="left:88%">다음 박</span>'}</div>
           <div class="fb center" id="dtFb" style="margin:0">${front ? '‘따~안 따’ 길고 짧게' : '‘따 따~안’ 짧고 길게'} 불어 보세요</div></div>
+        <div class="sinfo"></div>
         <div class="kv tight land-hide sm-hide" id="dtKv"></div>`;
       keyCtl(el, 'dtKey', build);
       bindStepCtl(el, 'dtB', { get: () => bpm, set: v => { bpm = v; setPref('dtBpm', v); }, min: 30, max: 160, fast: 5, fav: 'dotted' });
@@ -4268,6 +4329,7 @@ defScreen('vibrato', {
     const unMic = withMic($('#vbGate', el), () => {
       $('#vbUI', el).innerHTML = `<div class="kv tight" style="grid-template-columns:1fr 1fr"><div><b id="vbR">-</b><span>빠르기 (1초에)</span></div><div><b id="vbD">-</b><span>폭 (센트)</span></div></div>
         <div class="fb center" id="vbFb" style="margin:0">한 음을 길게 불며 떨어 보세요</div>
+        <div class="sinfo"></div>
         <div class="card fx col" style="padding:8px"><canvas class="trace fx" id="vbTr" style="height:100%;min-height:70px"></canvas></div>
         <div class="card row land-hide" style="padding:8px 10px;gap:8px"><span class="tiny" style="line-height:1.25"><b>떨림<br>박자</b></span><div class="grow">${segHTML('vbp', [[0, '끄기'], [3, '3번'], [4, '4번'], [5, '5번'], [6, '6번']], pulse)}</div><div class="pulse sm" id="vbPu">${pulse || ''}</div></div>`;
       tr = Trace($('#vbTr', el), { range: 60, tol: 35, span: 4 });
@@ -4332,6 +4394,7 @@ defScreen('bend', {
         <div class="row"><button class="btn grow" id="bdH1">${ICONS.ear}${F} 소리</button><button class="btn grow" id="bdH2">${ICONS.ear}${Tn} 소리</button><button class="btn grow" id="bdH3">${ICONS.ear}이어서</button></div>`;
       $('#bdC', el).addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; selI = +b.dataset.i; setPref('bdSel', selI); count = 0; build(); });
       bindSeg(el, 'bdm', v => { mode = v; setPref('bdMode', v); build(); });
+      $('#bdUI', el).insertAdjacentHTML('beforeend', '<div class="sinfo"></div>'); TGT.m = T.to;
       $('#bdH1', el).onclick = () => playTone(T.from, 1.2); $('#bdH2', el).onclick = () => playTone(T.to, 1.2);
       $('#bdH3', el).onclick = () => { const c = AudioEng.ensure(); playTone(T.from, 0.9, c.currentTime + 0.05); playTone(T.to, 1.2, c.currentTime + 1.0); };
       const mk = $('#bdMk', el), fb = $('#bdFb', el), s1 = $('#bdS1', el), s2 = $('#bdS2', el);
