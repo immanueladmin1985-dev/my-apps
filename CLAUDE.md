@@ -42,3 +42,4 @@
 - 사용자만 보는 앱은 이 공개 저장소에 올리지 않는다. Claude 비공개 페이지(Artifact)에 게시하고, 앱 목록(`index.html`)과 `README.md`에도 넣지 않는다.
 - 다이스바운드(DICEBOUND 운명의 주사위)가 여기에 해당한다. Artifact 목록에서 "DICEBOUND · 운명의 주사위"를 찾는다. 게임 파일과 함께 개발용 파일(README, tools, tests, 원래 index.html 은 `index.dev.html`)도 그 Artifact 에 들어 있다.
 - 고칠 때: Artifact 를 read 해서 파일을 작업 폴더에 받고, `index.dev.html` 을 `index.html` 로 되돌려 고치고 점검한 뒤, `python3 tools/make_artifact.py <출력 폴더>` 로 묶어 같은 Artifact URL 에 다시 게시한다(한 번에 255개까지라 두 번에 나눠 올린다). 이 저장소에는 커밋하지 않는다.
+- 개인용 안드로이드 앱(APK)도 만든다: `cd tools/apk && python3 build_apk.py ../.. <출력.apk> --version-code <이전+1>`. 서명 키는 Artifact 의 `tools/apk/dicebound-release.jks.b64.txt` 와 `keystore.txt` 로 보관한다(같은 키라야 기존 앱 위에 업데이트되고 저장 기록이 남는다). APK 는 어디에도 올리지 않고 사용자에게 파일로만 준다.
