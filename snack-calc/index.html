@@ -3,41 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<meta name="theme-color" content="#f4f5f7">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="다과비 계산기">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>다과비 계산기</title>
+<!-- 홈 화면 앱 설정 -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>다과비 계산기</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="다과비">
+<meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101215" media="(prefers-color-scheme: dark)">
 <style>
 :root{
   --bg:#f4f5f7; --card:#ffffff; --field:#f1f3f6; --text:#16181d; --sub:#6b7280; --line:#e6e8ec;
-  --accent:#2f6fed; --accent-soft:#e8efff; --good:#12a150; --warn:#e5484d; --warn-soft:#fdecec;
+  --accent:#2f6fed; --accent-soft:#e8efff; --good:#12a150; --good-soft:#e5f6ec; --warn:#e5484d; --warn-soft:#fdecec;
+  --hold:#b7791f; --hold-soft:#fdf3e1;
   --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.06);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#101215; --card:#1a1d22; --field:#23272e; --text:#f1f2f4; --sub:#9aa1ad; --line:#2b3038;
-    --accent:#5b8cff; --accent-soft:#1e2a44; --good:#3ccf7e; --warn:#ff6b6f; --warn-soft:#3a1f22;
+    --accent:#5b8cff; --accent-soft:#1e2a44; --good:#3ccf7e; --good-soft:#16301f; --warn:#ff6b6f; --warn-soft:#3a1f22;
+    --hold:#e0a84a; --hold-soft:#33291a;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--text);height:100%;overflow:hidden}
 body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-  -webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%;word-break:keep-all}
+  -webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
 button,input{font:inherit;color:inherit}
 button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 input{border:0;outline:none;background:none;min-width:0}
 
 .app{max-width:520px;margin:0 auto;height:var(--appH,100dvh);display:flex;flex-direction:column}
 
-/* 요약 */
-.top{padding:12px 16px 8px;flex:none}
-.summary{background:var(--card);border-radius:20px;padding:14px 18px 16px;box-shadow:var(--shadow)}
+/* 요약 (항상 위에 고정) */
+.top{padding:calc(10px + env(safe-area-inset-top)) 16px 0;flex:none}
+.summary{background:var(--card);border-radius:20px;padding:12px 16px 14px;box-shadow:var(--shadow)}
 .budget-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .budget{display:flex;align-items:center;gap:6px;background:var(--field);border-radius:10px;padding:6px 10px}
 .budget span{font-size:13px;color:var(--sub)}
@@ -45,38 +48,65 @@ input{border:0;outline:none;background:none;min-width:0}
 .budget em{font-style:normal;font-size:14px;font-weight:600}
 .reset{font-size:13px;color:var(--sub);padding:8px 10px;border-radius:10px}
 .reset.armed{color:#fff;background:var(--warn)}
-.remain-label{margin-top:12px;font-size:13px;color:var(--sub)}
-.remain{font-size:38px;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:var(--good)}
-.remain small{font-size:20px;font-weight:700;margin-left:2px}
+.remain-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:10px}
+.remain-label{font-size:13px;color:var(--sub)}
+.remain{font-size:36px;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:var(--good)}
+.remain small{font-size:19px;font-weight:700;margin-left:2px}
 .over .remain{color:var(--warn)}
-.bar{margin-top:10px;height:8px;border-radius:99px;background:var(--field);overflow:hidden}
-.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .25s}
+.exact .remain{color:var(--accent)}
+.fit{flex:none;height:38px;padding:0 14px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;margin-bottom:4px}
+.fit:active{filter:brightness(.95)}
+.bar{margin-top:10px;height:8px;border-radius:99px;background:var(--field);overflow:hidden;display:flex}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.bar i+i{background:var(--hold);opacity:.55}
 .over .bar i{background:var(--warn)}
-.meta{display:flex;justify-content:space-between;margin-top:8px;font-size:13px;color:var(--sub)}
+.meta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px;color:var(--sub)}
 .meta b{color:var(--text);font-weight:700}
-/* 입력 중에는 요약을 작게 */
-.typing .summary{padding:10px 16px}
-.typing .remain-label{margin-top:8px;display:inline-block}
-.typing .remain{font-size:26px;display:inline-block;margin-left:6px}
-.typing .remain small{font-size:15px}
-.typing .bar,.typing .meta{display:none}
+.holdline{margin-top:6px;font-size:13px;color:var(--hold);display:none}
+.holdline b{font-weight:700}
+.hasHold .holdline{display:block}
+/* 입력 중에는 요약을 작게 (잔액은 계속 보임) */
+.typing .summary{padding:8px 14px}
+.typing .budget-row,.typing .bar,.typing .meta,.typing .holdline{display:none}
+.typing .remain-row{margin-top:0;align-items:center}
+.typing .remain-label{display:inline-block}
+.typing .remain{font-size:24px;display:inline-block;margin-left:6px}
+.typing .remain small{font-size:14px}
+.typing .fit{height:32px;margin:0}
+
+/* 정렬 */
+.sorts{display:flex;gap:6px;padding:10px 0 6px;overflow-x:auto;scrollbar-width:none}
+.sorts::-webkit-scrollbar{display:none}
+.sorts button{flex:1 0 auto;height:32px;padding:0 10px;border-radius:99px;font-size:13px;font-weight:600;color:var(--sub);background:var(--card);box-shadow:var(--shadow)}
+.sorts button.on{background:var(--text);color:var(--bg)}
 
 /* 목록 */
 .list{flex:1;overflow-y:auto;padding:4px 16px 12px;-webkit-overflow-scrolling:touch}
 .empty{text-align:center;color:var(--sub);font-size:14px;padding:36px 0;line-height:1.6}
 .item{background:var(--card);border-radius:14px;padding:10px 12px 10px 14px;margin-bottom:8px;box-shadow:var(--shadow);
-  display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px;border:2px solid transparent}
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px;border:2px solid transparent;transition:background .3s,opacity .2s}
 .item.editing{border-color:var(--accent);background:var(--accent-soft)}
+.item.flash{background:var(--accent-soft)}
+.item.held{background:var(--hold-soft);border:2px dashed var(--hold);box-shadow:none}
+.item.held .name,.item.held .unit{opacity:.7}
+.item.held .sub{color:var(--sub);text-decoration:line-through}
 .item .main{min-width:0;text-align:left;padding:2px 0}
 .item .name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item .name.noname{color:var(--sub);font-weight:500}
+.tag{display:inline-block;vertical-align:1px;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;margin-right:5px}
+.tag.minus{color:var(--warn);background:var(--warn-soft)}
+.tag.hold{color:#fff;background:var(--hold)}
 .item .unit{font-size:13px;color:var(--sub);margin-top:2px}
 .item .sub{font-size:17px;font-weight:700;text-align:right;white-space:nowrap}
-.item .ctrl{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.item .sub.neg{color:var(--warn)}
+.item .ctrl{grid-column:1/3;display:flex;align-items:center;gap:6px;margin-top:6px}
+.item .ctrl .sp{flex:1}
 .mini{display:flex;align-items:center;background:var(--field);border-radius:10px}
 .mini button{width:36px;height:32px;font-size:18px;font-weight:600}
 .mini button:disabled{opacity:.3}
 .mini b{min-width:28px;text-align:center;font-size:15px}
+.holdBtn{height:32px;padding:0 12px;font-size:13px;font-weight:700;color:var(--hold);background:var(--hold-soft);border-radius:10px}
+.held .holdBtn{color:#fff;background:var(--hold)}
 .del{height:32px;padding:0 10px;font-size:13px;color:var(--sub);border-radius:10px}
 .del:active{color:var(--warn);background:var(--warn-soft)}
 
@@ -88,37 +118,78 @@ input{border:0;outline:none;background:none;min-width:0}
 .preview .bad{color:var(--warn)}
 .row{display:flex;gap:8px}
 .row+.row{margin-top:8px}
+.sign{flex:none;width:54px;height:54px;border-radius:12px;background:var(--field);color:var(--sub);font-size:12px;font-weight:700;line-height:1.15}
+.sign i{display:block;font-style:normal;font-size:20px}
+.neg .sign{background:var(--warn);color:#fff}
 .price{flex:1;position:relative;background:var(--field);border-radius:12px;display:flex;align-items:center}
 .price input{width:100%;height:54px;padding:0 34px 0 14px;font-size:24px;font-weight:700}
 .price input::placeholder{color:var(--sub);font-weight:500;font-size:18px}
 .price span{position:absolute;right:14px;font-size:16px;color:var(--sub)}
+.price b{display:none;padding-left:12px;font-size:24px;font-weight:700;color:var(--warn)}
+.neg .price{background:var(--warn-soft)}
+.neg .price b{display:block}
+.neg .price input{padding-left:2px;color:var(--warn)}
 .price.shake{animation:shake .3s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .qty{flex:none;display:flex;align-items:center;background:var(--field);border-radius:12px}
-.qty button{width:40px;height:54px;font-size:22px;font-weight:600}
-.qty input{width:38px;text-align:center;font-size:20px;font-weight:700}
+.qty button{width:36px;height:54px;font-size:22px;font-weight:600}
+.qty input{width:34px;text-align:center;font-size:20px;font-weight:700}
 .nameIn{flex:1;height:48px;background:var(--field);border-radius:12px;padding:0 14px;font-size:15px}
 .nameIn::placeholder{color:var(--sub)}
-.add{flex:none;min-width:92px;height:48px;border-radius:12px;background:var(--accent);color:#fff;font-size:16px;font-weight:700}
+.add{flex:none;min-width:88px;height:48px;border-radius:12px;background:var(--accent);color:#fff;font-size:16px;font-weight:700}
 .add:active{filter:brightness(.92)}
 .cancel{flex:none;height:48px;padding:0 12px;border-radius:12px;color:var(--sub);background:var(--field);font-size:14px;display:none}
 .editmode .cancel{display:block}
 
+/* 잔액 맞추기 시트 */
+.dim{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+.sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;max-height:82%;overflow-y:auto;z-index:31;
+  background:var(--bg);border-radius:20px 20px 0 0;padding:8px 16px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(105%);transition:transform .25s}
+.sheetOpen .dim{opacity:1;pointer-events:auto}
+.sheetOpen .sheet{transform:none}
+.grip{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 10px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.sheet-head h2{font-size:18px}
+.sheet-head button{font-size:14px;color:var(--sub);padding:8px}
+.sheet-now{font-size:14px;color:var(--sub);margin-bottom:12px}
+.sheet-now b{color:var(--text)}
+.sec{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.sec h3{font-size:14px;margin-bottom:2px}
+.sec .desc{font-size:12px;color:var(--sub);margin-bottom:8px;line-height:1.5}
+.sug{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.sug:first-of-type{border-top:0}
+.sug .what{flex:1;min-width:0;font-size:14px;line-height:1.55}
+.sug .what div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sug .up{color:var(--good);font-weight:700}
+.sug .down{color:var(--warn);font-weight:700}
+.sug .res{font-size:12px;color:var(--sub)}
+.sug .res b{color:var(--good)}
+.sug .res b.zero{color:var(--accent)}
+.sug button{flex:none;height:34px;padding:0 14px;border-radius:10px;background:var(--accent);color:#fff;font-size:13px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;background:var(--field);border-radius:10px;padding:7px 10px;line-height:1.3}
+.chip b{font-weight:700}
+.chip small{display:block;font-size:11px;color:var(--sub)}
+.none{font-size:13px;color:var(--sub);padding:4px 0}
+
 /* 알림 */
-.toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-80px);transition:transform .25s,opacity .25s;opacity:0;pointer-events:none;z-index:20;
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-120px);transition:transform .25s,opacity .25s;opacity:0;pointer-events:none;z-index:40;
   background:#22252b;color:#fff;border-radius:12px;padding:10px 10px 10px 16px;font-size:14px;display:flex;align-items:center;gap:12px;
   box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
 .toast.show{transform:translate(-50%,0);opacity:1;pointer-events:auto}
-.toast button{color:#8fb3ff;font-weight:700;padding:4px 8px}
-
-/* 도구 버튼 · 품목 머리줄 */
+.toast span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast button{flex:none;color:#8fb3ff;font-weight:700;padding:4px 8px}
+/* 도구 버튼 */
 .hidden{display:none!important}
-.tools{display:flex;gap:2px}
+.tools{display:flex;align-items:center;gap:2px}
+.budget span,.reset{white-space:nowrap}
+.budget-row .reset{padding:8px 6px}
+.budget-row .icon-btn{width:34px}
+@media (max-width:360px){.budget input{width:76px}}
 .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--sub)}
 .icon-btn:active{background:var(--field)}
 .icon-btn svg{width:20px;height:20px}
-.listhead{flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px 2px 20px;font-size:13px;color:var(--sub)}
-.typing .listhead{display:none}
 
 /* 홈 화면 설치 안내 */
 .banner{background:var(--accent-soft);border-radius:16px;padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
@@ -127,18 +198,18 @@ input{border:0;outline:none;background:none;min-width:0}
 .banner p{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
 .banner .btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .typing .banner{display:none}
-.chip{height:32px;padding:0 12px;border-radius:9px;font-size:13px;font-weight:600;background:var(--card);color:var(--text)}
-.chip.primary{background:var(--accent);color:#fff}
-.chip.ghost{background:none;color:var(--sub)}
-.empty .chip{margin-top:16px;box-shadow:var(--shadow)}
+.ichip{height:32px;padding:0 12px;border-radius:9px;font-size:13px;font-weight:600;background:var(--card);color:var(--text)}
+.ichip.primary{background:var(--accent);color:#fff}
+.ichip.ghost{background:none;color:var(--sub)}
+.empty .ichip{margin-top:16px;box-shadow:var(--shadow)}
 
-/* 아래에서 올라오는 창 */
-.dim{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:30;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));max-height:85%;overflow-y:auto}
-.sheet h3{font-size:18px;margin-bottom:10px}
-.sheet p{font-size:14px;color:var(--sub);line-height:1.55}
-.sheet p+p{margin-top:8px}
-.sheet ol{margin:12px 0 0 20px;font-size:15px;line-height:1.9}
+/* 설치 안내 · 설정 창 */
+.idim{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.isheet{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));max-height:85%;overflow-y:auto}
+.isheet h3{font-size:18px;margin-bottom:10px}
+.isheet p{font-size:14px;color:var(--sub);line-height:1.55}
+.isheet p+p{margin-top:8px}
+.isheet ol{margin:12px 0 0 20px;font-size:15px;line-height:1.9}
 .kbd{display:inline-block;padding:0 6px;border-radius:6px;background:var(--field);font-weight:700}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 14px;border-bottom:1px solid var(--line)}
 .srow small{display:block;font-size:12px;color:var(--sub);margin-top:2px}
@@ -161,9 +232,9 @@ input{border:0;outline:none;background:none;min-width:0}
         <b>홈 화면에 설치해 두세요</b>
         <p>아이콘으로 바로 열리고, 인터넷이 잘 안 되는 마트 안에서도 열려요.</p>
         <div class="btns">
-          <button class="chip primary" id="bInst">설치하기</button>
-          <button class="chip" id="bFs">전체화면</button>
-          <button class="chip ghost" id="bLater">다음에</button>
+          <button class="ichip primary" id="bInst">설치하기</button>
+          <button class="ichip" id="bFs">전체화면</button>
+          <button class="ichip ghost" id="bLater">다음에</button>
         </div>
       </div>
     </div>
@@ -175,23 +246,31 @@ input{border:0;outline:none;background:none;min-width:0}
           <em>원</em>
         </label>
         <div class="tools">
+          <button class="reset" id="reset">새로 시작</button>
           <button class="icon-btn" id="hFS" aria-label="전체화면"></button>
           <button class="icon-btn" id="hSet" aria-label="설정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
         </div>
       </div>
-      <div class="remain-label" id="remainLabel">남은 금액</div>
-      <div class="remain" id="remain">0<small>원</small></div>
-      <div class="bar"><i id="bar"></i></div>
+      <div class="remain-row">
+        <div>
+          <div class="remain-label" id="remainLabel">남은 금액</div>
+          <div class="remain" id="remain">0<small>원</small></div>
+        </div>
+        <button class="fit" id="fit">잔액 맞추기</button>
+      </div>
+      <div class="bar"><i id="bar"></i><i id="barHold"></i></div>
       <div class="meta">
         <span>사용 <b id="used">0</b>원</span>
-        <span id="pct">예산의 0%</span>
+        <span id="count">0개 품목</span>
       </div>
+      <div class="holdline" id="holdline"></div>
     </section>
-  </div>
-
-  <div class="listhead">
-    <span id="count">담은 품목 0개</span>
-    <button class="reset" id="reset">새로 시작</button>
+    <nav class="sorts" id="sorts">
+      <button data-sort="input">입력순</button>
+      <button data-sort="name">가나다순</button>
+      <button data-sort="asc">금액 작은 순</button>
+      <button data-sort="desc">금액 큰 순</button>
+    </nav>
   </div>
 
   <main class="list" id="list"></main>
@@ -199,7 +278,9 @@ input{border:0;outline:none;background:none;min-width:0}
   <section class="panel" id="panel">
     <div class="preview" id="preview">가격과 개수를 넣고 추가하세요</div>
     <div class="row">
+      <button class="sign" id="sign" aria-label="할인(마이너스) 전환"><i>−</i>할인</button>
       <label class="price" id="priceBox">
+        <b>−</b>
         <input id="price" inputmode="numeric" enterkeyhint="done" placeholder="가격" autocomplete="off">
         <span>원</span>
       </label>
@@ -217,6 +298,14 @@ input{border:0;outline:none;background:none;min-width:0}
   </section>
 </div>
 
+<div class="dim" id="dim"></div>
+<section class="sheet" id="sheet" aria-label="잔액 맞추기">
+  <div class="grip"></div>
+  <div class="sheet-head"><h2>잔액 맞추기</h2><button id="sheetClose">닫기</button></div>
+  <div class="sheet-now" id="sheetNow"></div>
+  <div id="sheetBody"></div>
+</section>
+
 <div id="sheetRoot"></div>
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="undo">되돌리기</button></div>
 
@@ -224,68 +313,118 @@ input{border:0;outline:none;background:none;min-width:0}
 (function(){
   // 다른 곳에 게시되어 head 태그가 body로 들어간 경우 head로 옮김
   Array.prototype.forEach.call(document.querySelectorAll('body meta, body link[rel]'), function(n){ document.head.appendChild(n); });
+  // 브라우저의 전체화면(Fullscreen API)도 크롬은 display-mode: fullscreen 으로 알려 주므로, 처음 열렸을 때의 상태로 판단
+  var BOOT_STANDALONE = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches || navigator.standalone === true;
   function isStandalone(){
-    return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+    if (navigator.standalone === true || matchMedia('(display-mode: standalone)').matches) return true;
+    if (document.fullscreenElement || document.webkitFullscreenElement) return BOOT_STANDALONE;
+    return BOOT_STANDALONE || matchMedia('(display-mode: fullscreen)').matches;
   }
 
-  var KEY = 'snack-budget-calc-v1';
+  var KEY = 'snack-budget-calc-v2';
   var $ = function(id){ return document.getElementById(id); };
   var won = function(n){ return Number(n).toLocaleString('ko-KR'); };
+  var swon = function(n){ return (n < 0 ? '−' : '') + won(Math.abs(n)); };
   var digits = function(s){ var v = parseInt(String(s).replace(/[^\d]/g,''),10); return isNaN(v) ? 0 : v; };
   var esc = function(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+  var clone = function(o){ return JSON.parse(JSON.stringify(o)); };
 
-  var state = { budget:120000, items:[], seq:0 };
+  var state = { budget:120000, items:[], seq:0, sort:'input' };
   try{
-    var saved = JSON.parse(localStorage.getItem(KEY));
-    if(saved && Array.isArray(saved.items)) state = saved;
+    var saved = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('snack-budget-calc-v1'));
+    if(saved && Array.isArray(saved.items)){
+      state = saved;
+      state.items.forEach(function(it){ it.held = !!it.held; });
+      if(!state.sort) state.sort = 'input';
+    }
   }catch(e){}
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 
-  var typingInputs;
-  var editId = null, undoData = null, toastTimer = null, resetTimer = null;
+  var editId = null, neg = false, undoData = null, toastTimer = null, resetTimer = null;
 
   var el = {
     app:$('app'), summary:$('summary'), budget:$('budget'), reset:$('reset'), remainLabel:$('remainLabel'),
-    remain:$('remain'), bar:$('bar'), used:$('used'), count:$('count'), list:$('list'), panel:$('panel'),
-    preview:$('preview'), priceBox:$('priceBox'), price:$('price'), qty:$('qty'), qMinus:$('qMinus'),
-    qPlus:$('qPlus'), name:$('name'), add:$('add'), cancel:$('cancel'), toast:$('toast'), toastMsg:$('toastMsg'), undo:$('undo')
+    remain:$('remain'), fit:$('fit'), bar:$('bar'), barHold:$('barHold'), used:$('used'), count:$('count'), holdline:$('holdline'),
+    sorts:$('sorts'), list:$('list'), panel:$('panel'), preview:$('preview'), sign:$('sign'), priceBox:$('priceBox'),
+    price:$('price'), qty:$('qty'), qMinus:$('qMinus'), qPlus:$('qPlus'), name:$('name'), add:$('add'), cancel:$('cancel'),
+    sheet:$('sheet'), dim:$('dim'), sheetNow:$('sheetNow'), sheetBody:$('sheetBody'), sheetClose:$('sheetClose'),
+    toast:$('toast'), toastMsg:$('toastMsg'), undo:$('undo')
   };
 
+  function label(it){ return it.name || '품목 ' + it.no; }
+  function find(id){ return state.items.find(function(x){ return x.id === id; }); }
+
+  // 보류 품목은 합계에서 빠진다
   function total(exceptId){
     var t = 0;
-    state.items.forEach(function(it){ if(it.id !== exceptId) t += it.price * it.qty; });
+    state.items.forEach(function(it){ if(it.id !== exceptId && !it.held) t += it.price * it.qty; });
     return t;
+  }
+  function heldTotal(){
+    return state.items.reduce(function(a,it){ return a + (it.held ? it.price * it.qty : 0); }, 0);
+  }
+  function remainNow(){ return state.budget - total(null); }
+
+  function sorted(){
+    var arr = state.items.slice();
+    var s = state.sort;
+    if(s === 'name'){
+      arr.sort(function(a,b){
+        if(!a.name !== !b.name) return a.name ? -1 : 1;          // 이름 없는 품목은 뒤로
+        return a.name ? a.name.localeCompare(b.name, 'ko') : a.no - b.no;
+      });
+    }else if(s === 'asc' || s === 'desc'){
+      var k = s === 'asc' ? 1 : -1;
+      arr.sort(function(a,b){ return k * (a.price * a.qty - b.price * b.qty) || a.no - b.no; });
+    }
+    return arr;   // 'input': 넣은 순서 그대로 (먼저 넣은 게 위)
   }
 
   function render(){
-    var used = total(null), remain = state.budget - used;
-    var over = remain < 0;
-    el.summary.classList.toggle('over', over);
-    el.remainLabel.textContent = over ? '예산 초과' : '남은 금액';
+    var used = total(null), remain = state.budget - used, held = heldTotal();
+    var heldItems = state.items.filter(function(it){ return it.held; });
+    el.summary.classList.toggle('over', remain < 0);
+    el.summary.classList.toggle('exact', remain === 0 && state.items.length > 0);
+    el.summary.classList.toggle('hasHold', heldItems.length > 0);
+    el.remainLabel.textContent = remain < 0 ? '예산 초과' : '남은 금액';
     el.remain.innerHTML = won(Math.abs(remain)) + '<small>원</small>';
-    el.used.textContent = won(used);
-    var pct = state.budget > 0 ? Math.min(100, used / state.budget * 100) : (used > 0 ? 100 : 0);
+    el.used.textContent = swon(used);
+    var b = state.budget;
+    var pct = b > 0 ? Math.min(100, Math.max(0, used / b * 100)) : (used > 0 ? 100 : 0);
+    var hpct = b > 0 && held > 0 ? Math.min(100 - pct, held / b * 100) : 0;
     el.bar.style.width = pct + '%';
-    var qsum = state.items.reduce(function(a,it){ return a + it.qty; }, 0);
-    el.count.textContent = '담은 품목 ' + state.items.length + '개 · 총 ' + qsum + '개';
-    $('pct').textContent = '예산의 ' + (state.budget > 0 ? Math.round(used / state.budget * 100) : 0) + '%';
+    el.barHold.style.width = hpct + '%';
+    var active = state.items.filter(function(it){ return !it.held; });
+    var qsum = active.reduce(function(a,it){ return a + it.qty; }, 0);
+    el.count.textContent = active.length + '개 품목 · 총 ' + qsum + '개';
+    if(heldItems.length){
+      var after = remain - held;
+      el.holdline.innerHTML = '보류 ' + heldItems.length + '개 <b>' + swon(held) + '원</b> · 다 넣으면 ' +
+        (after >= 0 ? '잔액 <b>' + won(after) + '원</b>' : '<b>' + won(-after) + '원 초과</b>');
+    }
     if(document.activeElement !== el.budget) el.budget.value = won(state.budget);
 
+    [].forEach.call(el.sorts.children, function(btn){ btn.classList.toggle('on', btn.getAttribute('data-sort') === state.sort); });
+
     if(!state.items.length){
-      el.list.innerHTML = '<div class="empty">아래에 가격과 개수를 넣고<br><b>추가</b>를 누르면 여기에 쌓입니다' +
-        (isStandalone() ? '' : '<br><button class="chip" data-install>홈 화면에 설치하기</button>') + '</div>';
+      el.list.innerHTML = '<div class="empty">아래에 가격과 개수를 넣고<br><b>추가</b>를 누르면 여기에 쌓입니다<br><br>' +
+        '할인은 <b>− 할인</b> 버튼을 켜고 넣으세요' +
+        (isStandalone() ? '' : '<br><button class="ichip" data-install>홈 화면에 설치하기</button>') + '</div>';
     }else{
-      // 최근에 넣은 품목이 맨 위
-      el.list.innerHTML = state.items.slice().reverse().map(function(it){
-        var nm = it.name ? esc(it.name) : '품목 ' + it.no;
-        return '<div class="item' + (it.id === editId ? ' editing' : '') + '" data-id="' + it.id + '">' +
-          '<button class="main" data-act="edit"><div class="name' + (it.name ? '' : ' noname') + '">' + nm + '</div>' +
-          '<div class="unit">' + won(it.price) + '원 × ' + it.qty + '</div></button>' +
-          '<div class="sub">' + won(it.price * it.qty) + '원</div>' +
+      el.list.innerHTML = sorted().map(function(it){
+        var sub = it.price * it.qty, minus = it.price < 0;
+        return '<div class="item' + (it.id === editId ? ' editing' : '') + (it.held ? ' held' : '') + '" data-id="' + it.id + '">' +
+          '<button class="main" data-act="edit"><div class="name' + (it.name ? '' : ' noname') + '">' +
+            (it.held ? '<span class="tag hold">보류</span>' : '') + (minus ? '<span class="tag minus">할인</span>' : '') +
+            esc(label(it)) + '</div>' +
+          '<div class="unit">' + swon(it.price) + '원 × ' + it.qty + '</div></button>' +
+          '<div class="sub' + (minus ? ' neg' : '') + '">' + swon(sub) + '원</div>' +
           '<div class="ctrl"><div class="mini">' +
             '<button data-act="minus"' + (it.qty <= 1 ? ' disabled' : '') + ' aria-label="개수 줄이기">−</button>' +
             '<b>' + it.qty + '</b>' +
             '<button data-act="plus" aria-label="개수 늘리기">+</button></div>' +
+          '<span class="sp"></span>' +
+          '<button class="holdBtn" data-act="hold">' + (it.held ? '보류 풀기' : '보류') + '</button>' +
           '<button class="del" data-act="del">삭제</button></div></div>';
       }).join('');
     }
@@ -293,20 +432,31 @@ input{border:0;outline:none;background:none;min-width:0}
   }
 
   function formQty(){ return Math.max(1, digits(el.qty.value) || 1); }
+  function formPrice(){ var p = digits(el.price.value); return neg ? -p : p; }
 
   function updatePreview(){
-    var price = digits(el.price.value), q = formQty();
-    var base = state.budget - total(editId);   // 지금 입력 중인 품목을 빼고 남는 돈
+    var price = formPrice(), q = formQty();
+    var editing = editId && find(editId);
+    // 지금 입력 중인 품목을 빼고 남는 돈 (보류 중인 품목을 고치는 중이면 보류 상태 그대로)
+    var base = state.budget - total(editId);
     if(!price){
       el.preview.innerHTML = editId ? '수정할 가격과 개수를 넣으세요' :
-        (base >= 0 ? '남은 <b>' + won(base) + '원</b> 안에서 고르세요' : '<span class="bad">이미 예산을 넘었어요</span>');
+        (base >= 0 ? '남은 <b>' + won(base) + '원</b> 안에서 고르세요' : '<span class="bad">이미 예산을 ' + won(-base) + '원 넘었어요</span>');
       return;
     }
-    var sub = price * q, after = base - sub, maxQ = Math.floor(base / price);
-    var html = '<b>' + won(sub) + '원</b> → ';
+    if(editing && editing.held){ el.preview.innerHTML = '보류 중인 품목이에요 · <b>' + swon(price * q) + '원</b>'; return; }
+    var sub = price * q, after = base - sub;
+    var html = '<b>' + swon(sub) + '원</b> → ';
     html += after >= 0 ? '잔액 <b>' + won(after) + '원</b>' : '<span class="bad">' + won(-after) + '원 초과</span>';
-    html += ' · 최대 <b>' + Math.max(0, maxQ) + '개</b>';
+    if(price > 0) html += ' · 최대 <b>' + Math.max(0, Math.floor(base / price)) + '개</b>';
     el.preview.innerHTML = html;
+  }
+
+  function setNeg(on){
+    neg = on;
+    el.panel.classList.toggle('neg', on);
+    el.price.placeholder = on ? '할인 금액' : '가격';
+    updatePreview();
   }
 
   function resetForm(){
@@ -314,64 +464,75 @@ input{border:0;outline:none;background:none;min-width:0}
     el.price.value = ''; el.qty.value = '1'; el.name.value = '';
     el.add.textContent = '추가';
     el.panel.classList.remove('editmode');
+    setNeg(false);
+  }
+
+  function reveal(id){
+    var card = el.list.querySelector('[data-id="' + id + '"]');
+    if(!card) return;
+    card.scrollIntoView({ block:'nearest' });
+    card.classList.add('flash');
+    setTimeout(function(){ card.classList.remove('flash'); }, 700);
   }
 
   function submit(){
-    var price = digits(el.price.value);
+    var price = formPrice();
     if(!price){
       el.priceBox.classList.remove('shake'); void el.priceBox.offsetWidth; el.priceBox.classList.add('shake');
       el.price.focus(); return;
     }
-    var q = formQty(), nm = el.name.value.trim();
+    var q = formQty(), nm = el.name.value.trim(), id = editId;
     if(editId){
-      var it = state.items.find(function(x){ return x.id === editId; });
+      var it = find(editId);
       if(it){ it.price = price; it.qty = q; it.name = nm; }
     }else{
       state.seq = (state.seq || 0) + 1;
-      state.items.push({ id: 'i' + Date.now() + Math.random().toString(36).slice(2,6), no: state.seq, name: nm, price: price, qty: q });
+      id = 'i' + Date.now() + Math.random().toString(36).slice(2,6);
+      state.items.push({ id: id, no: state.seq, name: nm, price: price, qty: q, held: false });
     }
     resetForm(); save(); render();
-    el.list.scrollTop = 0;
+    reveal(id);
     el.price.focus();
   }
 
   function startEdit(id){
-    var it = state.items.find(function(x){ return x.id === id; });
+    var it = find(id);
     if(!it) return;
     editId = id;
-    el.price.value = won(it.price); el.qty.value = it.qty; el.name.value = it.name || '';
+    setNeg(it.price < 0);
+    el.price.value = won(Math.abs(it.price)); el.qty.value = it.qty; el.name.value = it.name || '';
     el.add.textContent = '수정';
     el.panel.classList.add('editmode');
     render();
     el.price.focus();
   }
 
-  function showToast(msg, data){
-    undoData = data || null;
-    el.undo.style.display = data ? '' : 'none';
+  function showToast(msg, snapshot){
+    undoData = snapshot;
     el.toastMsg.textContent = msg;
+    el.undo.style.display = snapshot ? '' : 'none';
     el.toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ el.toast.classList.remove('show'); undoData = null; }, 4500);
   }
 
-  typingInputs = [el.price, el.qty, el.name];
-
   // 목록 버튼
   el.list.addEventListener('click', function(e){
     if(e.target.closest('[data-install]')){ installSheet(); return; }
     var btn = e.target.closest('[data-act]'); if(!btn) return;
-    var card = btn.closest('.item'); var id = card.getAttribute('data-id');
+    var id = btn.closest('.item').getAttribute('data-id');
     var idx = state.items.findIndex(function(x){ return x.id === id; });
     var it = state.items[idx]; if(!it) return;
     var act = btn.getAttribute('data-act');
     if(act === 'edit'){ editId === id ? (resetForm(), render()) : startEdit(id); return; }
-    if(act === 'plus'){ it.qty++; }
+    if(act === 'plus' && it.qty < 999){ it.qty++; }
     if(act === 'minus' && it.qty > 1){ it.qty--; }
+    if(act === 'hold'){ it.held = !it.held; }
     if(act === 'del'){
+      var snap = clone(state.items);
       state.items.splice(idx, 1);
       if(editId === id) resetForm();
-      showToast('“' + (it.name || '품목 ' + it.no) + '” 삭제', { type:'one', item: it, idx: idx });
+      showToast('“' + label(it) + '” 삭제', snap);
     }
     if(editId === id && act !== 'del'){ el.qty.value = it.qty; }
     save(); render();
@@ -379,10 +540,18 @@ input{border:0;outline:none;background:none;min-width:0}
 
   el.undo.addEventListener('click', function(){
     if(!undoData) return;
-    if(undoData.type === 'one') state.items.splice(undoData.idx, 0, undoData.item);
-    if(undoData.type === 'all') state.items = undoData.items;
+    state.items = undoData;
+    state.seq = state.items.reduce(function(a,it){ return Math.max(a, it.no); }, state.seq || 0);
+    if(editId && !find(editId)) resetForm();
     undoData = null; el.toast.classList.remove('show');
     save(); render();
+  });
+
+  el.sorts.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-sort]'); if(!btn) return;
+    state.sort = btn.getAttribute('data-sort');
+    save(); render();
+    el.list.scrollTop = 0;
   });
 
   // 전체 삭제: 두 번 눌러야 지워짐
@@ -396,19 +565,167 @@ input{border:0;outline:none;background:none;min-width:0}
     }
     clearTimeout(resetTimer);
     el.reset.classList.remove('armed'); el.reset.textContent = '새로 시작';
-    showToast('목록을 모두 지웠어요', { type:'all', items: state.items });
+    showToast('목록을 모두 지웠어요', state.items);
     state.items = []; state.seq = 0; resetForm(); save(); render();
   });
 
-  // 입력 칸
-  function moneyInput(input){
+  /* ---------- 잔액 맞추기 ---------- */
+
+  // 지금 목록에서 개수를 늘리거나 줄이고, 보류를 넣고 빼서 잔액을 0에 가깝게 만드는 조합을 찾는다
+  function findCombos(R){
+    var cand = state.items.filter(function(it){ return it.price > 0; });
+    var n = cand.length;
+    if(!n) return [];
+    var K = n <= 12 ? 4 : n <= 40 ? 3 : 2;   // 한 번에 바꾸는 개수 (많을수록 정확하지만 느려짐)
+    var results = [], changes = [], steps = 0, LIMIT = 400000;
+    var eff = cand.map(function(it){ return it.held ? 0 : it.qty; });
+
+    function consider(delta){
+      var r = R - delta;
+      if(r < 0 || delta === 0) return;
+      if(R >= 0 && r >= R) return;
+      var moves = changes.reduce(function(a,c){ return a + Math.abs(c.d); }, 0);
+      var downs = changes.filter(function(c){ return c.d < 0; }).length;
+      results.push({ r:r, moves:moves, downs:downs, changes:changes.map(function(c){ return { it:c.it, d:c.d, e:c.e }; }) });
+    }
+    function rec(start, left, delta){
+      if(changes.length) consider(delta);
+      if(!left || ++steps > LIMIT) return;
+      for(var j = start; j < n; j++){
+        var it = cand[j], e = eff[j];
+        for(var d = 1; d <= left; d++){
+          changes.push({ it:it, d:d, e:e }); rec(j + 1, left - d, delta + d * it.price); changes.pop();
+        }
+        for(d = 1; d <= Math.min(left, e); d++){
+          changes.push({ it:it, d:-d, e:e }); rec(j + 1, left - d, delta - d * it.price); changes.pop();
+        }
+      }
+    }
+    rec(0, K, 0);
+
+    // 남는 돈이 적은 순 → 손이 덜 가는 순 → (예산 안이면) 빼는 것보다 담는 것 우선
+    results.sort(function(a,b){ return a.r - b.r || a.moves - b.moves || a.changes.length - b.changes.length || a.downs - b.downs; });
+    // 같은 잔액이 너무 많이 겹치지 않게 골라 담기
+    var out = [], perR = {};
+    for(var i = 0; i < results.length && out.length < 5; i++){
+      var x = results[i];
+      perR[x.r] = (perR[x.r] || 0) + 1;
+      if(perR[x.r] > 2) continue;
+      out.push(x);
+    }
+    return out;
+  }
+
+  function describe(c){
+    var it = c.it, nm = esc(label(it)), next = c.e + c.d;
+    if(c.d > 0){
+      if(c.e === 0) return '<span class="up">' + (it.held ? '보류 풀고 ' : '') + next + '개</span> ' + nm + ' <span class="res">(' + won(it.price) + '원)</span>';
+      return '<span class="up">+' + c.d + '개</span> ' + nm + ' <span class="res">(' + won(it.price) + '원 → ' + next + '개)</span>';
+    }
+    if(next === 0) return '<span class="down">보류</span> ' + nm + ' <span class="res">(' + won(it.price * c.e) + '원)</span>';
+    return '<span class="down">−' + (-c.d) + '개</span> ' + nm + ' <span class="res">(' + won(it.price) + '원 → ' + next + '개)</span>';
+  }
+
+  // 남은 돈을 같은 가격 n개로 나누기 (예: 3,040원 → 1,520원 × 2)
+  function splits(R){
+    var out = [];
+    for(var k = 1; k <= 12 && out.length < 6; k++){
+      if(R % k === 0 && (R / k) % 10 === 0 && R / k >= 100) out.push({ k:k, p:R / k });
+    }
+    return out;
+  }
+
+  // 끝자리 맞추기 (예: 40원이 남으면 20원으로 끝나는 물건 2개, 80원으로 끝나는 물건 3개 …)
+  function endings(R){
+    var t = R % 100;
+    if(t === 0 || t % 10) return null;
+    var byK = {};
+    for(var e = 10; e <= 90; e += 10){
+      for(var k = 1; k <= 5; k++){
+        if((k * e) % 100 === t){ (byK[k] = byK[k] || []).push(e); break; }
+      }
+    }
+    return { t:t, byK:byK };
+  }
+
+  var combos = [];
+  function openSheet(){
+    var R = remainNow();
+    var html = '';
+    el.sheetNow.innerHTML = R > 0 ? '지금 <b>' + won(R) + '원</b> 남았어요' :
+      R === 0 ? '<b>딱 맞아요!</b> 남은 돈이 없어요' : '<b style="color:var(--warn)">' + won(-R) + '원</b> 넘었어요 · 줄일 방법을 찾아볼게요';
+
+    if(R !== 0){
+      combos = findCombos(R);
+      html += '<div class="sec"><h3>' + (R > 0 ? '지금 목록으로 채우기' : '지금 목록에서 줄이기') + '</h3>' +
+        '<div class="desc">담은 물건의 개수를 바꾸거나 보류한 물건을 넣고 빼서 ' + (R > 0 ? '남는 돈을 최대한 줄이는' : '예산 안으로 들어오는') + ' 방법이에요.</div>';
+      if(combos.length){
+        html += combos.map(function(x, i){
+          return '<div class="sug"><div class="what">' + x.changes.map(function(c){ return '<div>' + describe(c) + '</div>'; }).join('') +
+            '<div class="res">→ 잔액 <b class="' + (x.r === 0 ? 'zero' : '') + '">' + (x.r === 0 ? '0원 딱 맞음' : won(x.r) + '원') + '</b></div></div>' +
+            '<button data-apply="' + i + '">적용</button></div>';
+        }).join('');
+      }else{
+        html += '<div class="none">' + (state.items.some(function(it){ return it.price > 0; }) ? '지금 목록으로는 더 줄일 방법이 없어요' : '먼저 물건을 담아 주세요') + '</div>';
+      }
+      html += '</div>';
+    }
+
+    if(R > 0){
+      var sp = splits(R);
+      html += '<div class="sec"><h3>같은 가격으로 나눠 사기</h3><div class="desc">이 가격의 물건을 이만큼 사면 딱 맞아요.</div>';
+      html += sp.length ? '<div class="chips">' + sp.map(function(s){
+        return '<div class="chip"><b>' + won(s.p) + '원</b> × ' + s.k + '개</div>';
+      }).join('') + '</div>' : '<div class="none">깔끔하게 나눠지지 않는 금액이에요</div>';
+      html += '</div>';
+
+      var en = endings(R);
+      if(en){
+        html += '<div class="sec"><h3>끝자리 ' + en.t + '원 맞추기</h3>' +
+          '<div class="desc">' + en.t + '원으로 끝나는 물건이 없을 때, 이렇게 담으면 끝자리가 ' + en.t + '원이 돼요.</div><div class="chips">';
+        Object.keys(en.byK).forEach(function(k){
+          html += '<div class="chip"><b>' + en.byK[k].map(function(e){ return '○' + e + '원'; }).join(', ') + '</b> 으로 끝나는 물건 <b>' + k + '개</b>' +
+            '<small>' + en.byK[k].map(function(e){ return e + '×' + k + '=' + (e * k); }).join(' · ') + '</small></div>';
+        });
+        html += '</div></div>';
+      }
+    }
+    el.sheetBody.innerHTML = html;
+    el.sheet.scrollTop = 0;
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    document.body.classList.add('sheetOpen');
+  }
+  function closeSheet(){ document.body.classList.remove('sheetOpen'); }
+
+  el.fit.addEventListener('click', openSheet);
+  el.dim.addEventListener('click', closeSheet);
+  el.sheetClose.addEventListener('click', closeSheet);
+  el.sheetBody.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-apply]'); if(!btn) return;
+    var x = combos[+btn.getAttribute('data-apply')]; if(!x) return;
+    var snap = clone(state.items);
+    x.changes.forEach(function(c){
+      var it = find(c.it.id); if(!it) return;
+      var next = c.e + c.d;
+      if(next <= 0){ it.held = true; }
+      else{ it.held = false; it.qty = next; }
+    });
+    if(editId) resetForm();
+    save(); render(); closeSheet();
+    showToast('적용했어요 · 잔액 ' + won(remainNow()) + '원', snap);
+  });
+
+  /* ---------- 입력 칸 ---------- */
+  function moneyInput(input, allowNeg){
     input.addEventListener('input', function(){
+      if(allowNeg && input.value.indexOf('-') >= 0) setNeg(!neg);   // 키보드에 − 가 있으면 그걸로도 전환
       var v = digits(input.value); if(v > 999999999) v = 999999999;
       input.value = v ? won(v) : '';
     });
   }
-  moneyInput(el.price); moneyInput(el.budget);
+  moneyInput(el.price, true); moneyInput(el.budget, false);
   el.price.addEventListener('input', updatePreview);
+  el.sign.addEventListener('click', function(){ setNeg(!neg); el.price.focus(); });
   el.budget.addEventListener('input', function(){ state.budget = digits(el.budget.value); save(); render(); });
   el.budget.addEventListener('focus', function(){ el.budget.select(); });
   el.budget.addEventListener('blur', function(){ el.budget.value = won(state.budget); });
@@ -427,17 +744,21 @@ input{border:0;outline:none;background:none;min-width:0}
   el.add.addEventListener('click', submit);
   el.cancel.addEventListener('click', function(){ resetForm(); render(); });
 
+  var typingInputs = [el.price, el.qty, el.name];
+
   // 패널 버튼을 눌러도 키보드가 내려가지 않게
-  [el.add, el.qMinus, el.qPlus, el.cancel].forEach(function(b){
+  [el.add, el.qMinus, el.qPlus, el.cancel, el.sign].forEach(function(b){
     b.addEventListener('mousedown', function(e){ if(document.activeElement && document.activeElement !== document.body) e.preventDefault(); });
   });
 
-  // 입력 중에 목록 버튼을 눌러도 키보드와 화면 배치가 흔들리지 않게
-  el.list.addEventListener('mousedown', function(e){
-    if(e.target.closest('[data-act]') && typingInputs.indexOf(document.activeElement) >= 0) e.preventDefault();
+  // 입력 중에 목록·정렬 버튼을 눌러도 키보드와 화면 배치가 흔들리지 않게
+  [el.list, el.sorts].forEach(function(box){
+    box.addEventListener('mousedown', function(e){
+      if(e.target.closest('[data-act],[data-sort]') && typingInputs.indexOf(document.activeElement) >= 0) e.preventDefault();
+    });
   });
 
-  // 입력 중에는 요약을 작게 접어서 목록이 보이게
+  // 입력 중에는 요약을 작게 접어서 목록이 보이게 (잔액은 그대로 보임)
   function setTyping(){
     var on = typingInputs.indexOf(document.activeElement) >= 0;
     document.body.classList.toggle('typing', on);
@@ -496,10 +817,10 @@ input{border:0;outline:none;background:none;min-width:0}
     h.setAttribute('aria-label', FS.on() ? '전체화면 끝내기' : '전체화면');
   }
 
-  function openSheet(html){
+  function openModal(html){
     var dim = document.createElement('div');
-    dim.className = 'dim';
-    dim.innerHTML = '<div class="sheet" role="dialog">' + html + '</div>';
+    dim.className = 'idim';
+    dim.innerHTML = '<div class="isheet" role="dialog">' + html + '</div>';
     dim.addEventListener('click', function(e){ if(e.target === dim || e.target.closest('[data-close]')) dim.remove(); });
     $('sheetRoot').appendChild(dim);
     return dim.firstChild;
@@ -528,7 +849,7 @@ input{border:0;outline:none;background:none;min-width:0}
     else if(samsung) how = '<ol><li>아래 ' + kbd('≡') + ' 메뉴를 누르세요</li><li><b>현재 페이지 추가</b> → <b>홈 화면</b>을 누르세요</li></ol>';
     else if(mobile) how = '<ol><li>오른쪽 위 ' + kbd('⋮') + ' 메뉴를 누르세요</li><li><b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 누르세요</li><li>뜨는 창에서 <b>설치</b>를 누르세요</li></ol>';
     else how = '<ol><li>크롬·엣지 주소창 오른쪽의 ' + kbd('설치 ⊕') + ' 아이콘을 누르세요</li><li>없으면 ' + kbd('⋮') + ' 메뉴 → <b>앱 설치</b>(또는 <b>앱</b> → <b>이 사이트를 앱으로 설치</b>)를 누르세요</li></ol>';
-    openSheet('<h3>홈 화면에 설치하기</h3><p>설치하면 아이콘으로 바로 열리고, 주소창 없이 화면을 넓게 쓸 수 있어요. 인터넷이 잘 안 되는 곳에서도 열려요.</p>' + how +
+    openModal('<h3>홈 화면에 설치하기</h3><p>설치하면 아이콘으로 바로 열리고, 주소창 없이 화면을 넓게 쓸 수 있어요. 인터넷이 잘 안 되는 곳에서도 열려요.</p>' + how +
       '<button class="sbtn primary" data-close>알겠어요</button>');
   }
 
@@ -541,7 +862,7 @@ input{border:0;outline:none;background:none;min-width:0}
     }
     if(!isStandalone()) h += '<button class="sbtn" data-a="inst">홈 화면에 설치하기</button>';
     h += '<button class="sbtn primary" data-close>닫기</button>';
-    var sh = openSheet(h);
+    var sh = openModal(h);
     var sw = sh.querySelector('#stFs');
     if(sw) sw.addEventListener('change', function(){ ui.autoFS = sw.checked; saveUI(); });
     sh.addEventListener('click', function(e){
@@ -564,7 +885,7 @@ input{border:0;outline:none;background:none;min-width:0}
   // 자동 전체화면: 화면을 처음 누를 때 (버튼으로 직접 끈 뒤에는 다시 켜지 않음)
   document.addEventListener('click', function(e){
     if(!ui.autoFS || FS.userExit || FS.on() || !FS.supported()) return;
-    if(e.target.closest && e.target.closest('#hFS, #hSet, #banner, .dim')) return;
+    if(e.target.closest && e.target.closest('#hFS, #hSet, #banner, .idim')) return;
     FS.enter();
   }, true);
   document.addEventListener('fullscreenchange', function(){ paintInstall(); fit(); });
