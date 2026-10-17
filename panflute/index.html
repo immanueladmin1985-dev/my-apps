@@ -673,6 +673,31 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .screen.fit.l2 .cur-row{flex-wrap:wrap}
 body.l2dock .dock{left:var(--dockL,50%);right:max(0px,env(safe-area-inset-right,0px));padding-left:0;padding-right:12px;background:linear-gradient(to top,var(--bg) 75%,transparent)}
 body.l2dock .dock>*{max-width:none}
+/* 가로 휴대폰 악보 화면: 머리줄·조절 버튼을 접고 악보를 화면 가득 */
+:root{--fpw:min(360px,46vw)}
+#fbar{position:fixed;top:calc(4px + env(safe-area-inset-top,0px));right:max(8px,env(safe-area-inset-right,0px));z-index:40;display:none;gap:5px}
+body.focusmode #fbar{display:flex}
+#fbar button{height:38px;min-width:38px;border-radius:99px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 10px;font-weight:700;font-size:.8rem;color:var(--ink)}
+#fbar button svg{width:18px;height:18px}
+#fbar .fo{display:none}
+body.fopen #fbar .fo:not(.hidden){display:inline-flex}
+body.focusmode #hdr{display:none}
+body.focusmode #view{padding-top:calc(4px + env(safe-area-inset-top,0px))}
+body.focusmode .screen.fit.l2{grid-template-columns:minmax(0,1fr) var(--fpw)}
+body.focusmode .screen.fit.l2 .lmain{grid-column:1/-1}
+body.focusmode:not(.fopen) .screen.fit.l2 [data-l2="side"]:not(.sinfo){display:none!important}
+body.focusmode .screen.fit.l2 [data-l2="side"]{position:relative;z-index:3}
+body.fopen::after{content:'';position:fixed;top:0;right:0;bottom:0;width:var(--fpw);background:var(--bg);box-shadow:-10px 0 28px rgba(40,25,10,.16);z-index:2}
+body.focusmode .screen.fit.l2 .sinfo{position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:calc(4px + env(safe-area-inset-bottom,0px));right:calc(var(--dockw,150px) + 22px);z-index:26;height:40px;min-height:0;display:flex;gap:4px}
+body.focusmode.fopen .screen.fit.l2 .sinfo{right:calc(var(--fpw) + 10px)}
+body.focusmode .sinfo>span{flex:1 1 0;flex-wrap:nowrap;align-items:center;padding:2px 7px;white-space:nowrap}
+body.focusmode .sinfo i{flex-basis:auto;margin-right:3px}
+body.focusmode .sinfo em,body.focusmode .sinfo .si-c small{display:none}
+body.focusmode .dock{left:auto!important;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(4px + env(safe-area-inset-bottom,0px));padding:0!important;background:none!important;gap:6px;z-index:30}
+body.focusmode .dock>*{max-width:none}
+body.focusmode .dock .btn{min-height:40px!important;height:40px;padding:0 14px;font-size:.85rem;border-radius:99px;width:auto;flex:none!important;box-shadow:var(--shadow)}
+body.focusmode .dock .btn svg{width:18px;height:18px}
+
 /* 가로 휴대폰: 아래 메뉴를 왼쪽 세로 메뉴로 옮겨 위아래 공간을 넓힘 */
 @media (orientation:landscape) and (max-height:600px){
   :root{--rail:calc(76px + env(safe-area-inset-left,0px))}
@@ -730,6 +755,7 @@ body.l2dock .dock>*{max-width:none}
   <main id="view"></main>
   <nav id="nav" class="hidden" aria-label="주요 메뉴"></nav>
 </div>
+<div id="fbar" aria-label="연습 메뉴"><button type="button" class="fo" id="fBack" aria-label="뒤로 가기"></button><button type="button" class="fo" id="fHelp" aria-label="도움말"></button><button type="button" class="fo" id="fFs" aria-label="전체화면"></button><button type="button" id="fMenu" aria-expanded="false"></button></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <script>
 /* Artifact 등에서 head 태그가 body로 들어가면 홈 화면 설치용 태그를 head로 옮김 */
@@ -1065,16 +1091,31 @@ function applyViewK() {
   const k = clamp(land && innerHeight < 600 ? innerHeight / 420 : sh / 410, 0.84, 1.15);
   document.documentElement.style.setProperty('--k', k.toFixed(3));
 }
+/* 가로 휴대폰에서 악보를 보는 화면: 머리줄과 조절 버튼을 접고 악보를 화면 가득 (오른쪽 위 메뉴로 펴고 접음) */
+function isFocusMain(m) { return !!m && (m.matches('.ln-lane,.stf-lane') || !!m.querySelector('.ln-lane,.stf-lane')) && !m.matches('.stf-edit') && !m.querySelector('.stf-edit'); }
+let safeB = null;
+function safeBottom() { if (safeB === null) { const p = document.createElement('div'); p.style.cssText = 'position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);visibility:hidden'; document.body.appendChild(p); safeB = p.offsetHeight || 0; p.remove(); } return safeB; }
 function fitNow() {
   applyViewK(); SI.check();
   const el = $('#view > .screen.fit'); document.body.classList.toggle('fitmode', !!el);
-  if (!el) { document.body.classList.remove('l2dock'); return; }
-  const hdr = $('#hdr').getBoundingClientRect().height; const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height : 0;
+  const B = document.body;
+  if (!el) { B.classList.remove('l2dock', 'focusmode', 'fopen'); return; }
+  const r = l2Main(el); const focus = !!r && isRail() && isFocusMain(r.main);
+  if (focus !== B.classList.contains('focusmode')) { B.classList.toggle('focusmode', focus); if (!focus) B.classList.remove('fopen'); else focusHint(); }
+  const hdr = focus ? 0 : $('#hdr').getBoundingClientRect().height; const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height : 0;
   const nav = $('#nav'); const nh = nav.classList.contains('hidden') || isRail() ? 0 : nav.getBoundingClientRect().height;
-  const want = !!l2Main(el);
-  el.style.height = Math.max(220, Math.floor(window.innerHeight - hdr - (want ? 0 : dh) - nh - 10)) + 'px';
-  layoutL2(el);
+  const bottom = focus ? ((d || $('.sinfo', el)) ? 48 : 6) + safeBottom() : 10;
+  el.style.height = Math.max(200, Math.floor(window.innerHeight - hdr - (r ? 0 : dh) - nh - bottom)) + 'px';
+  layoutL2(el, r, focus);
 }
+function focusHint() { if (pref('focusHint', false)) return; setPref('focusHint', true); setTimeout(() => toast('키·빠르기 같은 조절은 오른쪽 위 ‘메뉴’를 누르면 펼쳐져요', 4200), 600); }
+function toggleFocusPanel(open) { const B = document.body; B.classList.toggle('fopen', open === undefined ? !B.classList.contains('fopen') : !!open); paintFbar(); requestAnimationFrame(fitNow); }
+function paintFbar() { const m = $('#fMenu'); if (!m) return; const o = document.body.classList.contains('fopen'); m.innerHTML = o ? ICONS.x + '<span>접기</span>' : ICONS.sliders + '<span>메뉴</span>'; m.setAttribute('aria-expanded', o); const top = stack[stack.length - 1]; const def = top && SCREENS[top.id]; $('#fHelp').classList.toggle('hidden', !(def && def.help)); $('#fFs').classList.toggle('hidden', FS.standalone()); }
+document.addEventListener('click', e => {
+  const B = document.body; if (!B.classList.contains('fopen')) return;
+  if (e.target.closest && e.target.closest('.lmain')) toggleFocusPanel(false);
+  else if (e.target.closest && e.target.closest('#dock')) setTimeout(() => toggleFocusPanel(false), 0);
+});
 if (window.MutationObserver) { let mq = 0; new MutationObserver(recs => { if (mq || recs.every(r => r.target.closest && r.target.closest('.sinfo,.cur-row,.fb,.t-sub,.t-hint,.t-note'))) return; mq = requestAnimationFrame(() => { mq = 0; if ($('#view > .screen.fit')) fitNow(); else SI.check(); }); }).observe(document.getElementById('view') || document.body, { childList: true, subtree: true }); }
 window.addEventListener('resize', () => requestAnimationFrame(fitNow));
 /* 이름 입력 창 (브라우저 prompt 대신). 취소하면 null, 확인하면 앞뒤 공백을 지운 글자 */
@@ -1953,6 +1994,7 @@ function LineLane(host, notes, o = {}) {
   };
 }
 function FlowLane(host, notes, o = {}) {
+  host.classList.toggle('stf-edit', !!o.edit);
   const st = buildStaff(notes, o);
   host.classList.add('stf-lane'); host.classList.toggle('nolabel', o.labels === false || (o.labels === undefined && !pref('stfLabels', true)));
   host.innerHTML = `<div class="stf-scroll"><svg class="stf-svg">${st.svg}</svg></div><div class="stf-fade"></div><svg class="stf-fix"></svg><div class="stf-line"></div><div class="stf-live"></div>${notes.length ? '' : `<div class="stf-empty">${esc(o.empty || '음이 없어요')}</div>`}`;
@@ -2312,33 +2354,38 @@ function l2Items(el) {
   const walk = p => [...p.children].forEach(c => {
     if (c.classList.contains('hidden') || c.id === 'dock') return;
     if (c.classList.contains('col') && c.classList.contains('fx') && !c.classList.contains('l-row') && !c.classList.contains('card')) { walk(c); return; }
-    if (c.classList.contains('land-hide') || getComputedStyle(c).display !== 'none') items.push(c);
+    if (c.classList.contains('land-hide') || c.hasAttribute('data-l2') || getComputedStyle(c).display !== 'none') items.push(c);
   });
   walk(el); return items;
 }
 function l2Main(el) {
   if (!el || !isWide2()) return null;
-  const items = l2Items(el).filter(c => c.offsetHeight > 0 || c.classList.contains('land-hide') || c.classList.contains('lmain'));
+  const items = l2Items(el).filter(c => c.offsetHeight > 0 || c.classList.contains('land-hide') || c.classList.contains('lmain') || c.hasAttribute('data-l2'));
   const main = items.find(c => c.classList.contains('fx'));
   return main && items.length >= 2 ? { main, items } : null;
 }
-function layoutL2(el) {
+function layoutL2(el, r, focus) {
   if (!el) return;
-  const r = l2Main(el);
+  if (r === undefined) r = l2Main(el);
   const prev = $$('[data-l2]', el);
   if (!r) {
-    el.classList.remove('l2'); prev.forEach(c => c.removeAttribute('data-l2')); $$('.lmain', el).forEach(c => c.classList.remove('lmain'));
+    el.classList.remove('l2', 'focus'); prev.forEach(c => { c.removeAttribute('data-l2'); c.style.marginTop = ''; c.style.gridRowStart = ''; }); $$('.lmain', el).forEach(c => c.classList.remove('lmain'));
     document.body.classList.remove('l2dock'); return;
   }
-  prev.forEach(c => { if (!r.items.includes(c)) c.removeAttribute('data-l2'); });
+  prev.forEach(c => { if (!r.items.includes(c)) { c.removeAttribute('data-l2'); c.style.marginTop = ''; c.style.gridRowStart = ''; } });
   $$('.lmain', el).forEach(c => { if (c !== r.main) c.classList.remove('lmain'); });
-  let n = 0; r.items.forEach(c => { if (c === r.main) { c.classList.add('lmain'); c.removeAttribute('data-l2'); } else { n++; if (c.getAttribute('data-l2') !== 'side') c.setAttribute('data-l2', 'side'); } });
+  let n = 0, first = null; r.items.forEach(c => { if (c === r.main) { c.classList.add('lmain'); c.removeAttribute('data-l2'); } else { n++; if (c.getAttribute('data-l2') !== 'side') c.setAttribute('data-l2', 'side'); c.style.marginTop = ''; if (!first && !c.classList.contains('sinfo')) first = c; } });
+  // 메뉴를 편 가로 화면: 맨 위는 메뉴 버튼 자리로 비워 둠
+  if (focus && first) first.style.marginTop = '46px';
+  // 메뉴 칸은 악보 위에 겹쳐 놓이므로 줄 번호를 직접 정해 줌
+  let k = 0; r.items.forEach(c => { if (c === r.main) return; c.style.gridRowStart = focus && !c.classList.contains('sinfo') ? String(++k) : ''; });
   const rows = `repeat(${n + 1}, min-content) 1fr`; if (el.style.gridTemplateRows !== rows) el.style.gridTemplateRows = rows;
-  el.classList.add('l2');
+  el.classList.add('l2'); el.classList.toggle('focus', !!focus);
   const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height + 6 : 0;
   el.style.setProperty('--l2h', el.clientHeight + 'px'); el.style.setProperty('--dockh', dh + 'px');
-  document.body.classList.toggle('l2dock', !!d);
-  if (d) document.body.style.setProperty('--dockL', Math.round(r.main.getBoundingClientRect().right + 14) + 'px');
+  document.body.classList.toggle('l2dock', !!d && !focus);
+  if (d && !focus) document.body.style.setProperty('--dockL', Math.round(r.main.getBoundingClientRect().right + 14) + 'px');
+  if (d && focus) document.body.style.setProperty('--dockw', Math.round(d.getBoundingClientRect().width) + 'px');
 }
 
 /* ================= 시작 화면 (리졸브 효과) ================= */
@@ -4616,6 +4663,10 @@ function initShell() {
   $('#hHelp').innerHTML = ICONS.info; $('#hHelp').onclick = () => { const top = stack[stack.length - 1]; const def = top && SCREENS[top.id]; if (def && def.help) openSheet(`<h3>${esc(typeof def.title === 'function' ? def.title(top.params || {}) : def.title)} 도움말</h3><div class="helpbody">${def.help}</div><button class="btn primary wide mt2" data-x="1">알겠어요</button>`).addEventListener('click', e => { if (e.target.closest('[data-x]')) sheetDone(); }); };
   $('#hSet').innerHTML = ICONS.gear; $('#hSet').onclick = () => go('settings');
   $('#hFS').onclick = () => toggleFS();
+  $('#fBack').innerHTML = ICONS.back; $('#fBack').onclick = () => { toggleFocusPanel(false); back(); };
+  $('#fHelp').innerHTML = ICONS.info; $('#fHelp').onclick = () => $('#hHelp').click();
+  $('#fFs').innerHTML = ICONS.fsOn; $('#fFs').onclick = () => toggleFS();
+  $('#fMenu').onclick = () => toggleFocusPanel(); paintFbar();
   $('#nav').innerHTML = TABS.map(t => `<button data-id="${t.id}">${ICONS[t.icon]}<span>${t.label}</span></button>`).join('');
   $('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.id); });
   FS.paint();
