@@ -509,6 +509,24 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .slur{fill:none;stroke:var(--ink-2);stroke-width:1.5}
 .stf-lane .count{z-index:6}
 
+/* ---------- 한 줄씩 보는 악보 (노래방 자막처럼) ---------- */
+.ln-lane{position:relative;overflow:hidden;border-radius:16px;background:var(--paper);border:1px solid var(--line);min-height:118px}
+.ln-rows{position:absolute;inset:0}
+.ln-row{position:absolute;left:0;right:0;display:flex;align-items:center;padding-left:4px;transition:opacity .35s ease,background-color .3s}
+.ln-row.off{opacity:0;pointer-events:none}
+.ln-row.act{background:color-mix(in srgb,var(--peony-soft) 55%,transparent)}
+.ln-row svg{display:block;flex:none}
+.ln-bar{position:absolute;width:4px;margin-left:-2px;border-radius:2px;background:var(--peony);z-index:3;opacity:0;pointer-events:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--peony) 16%,transparent)}
+.ln-lane .n.past{opacity:1}
+.ln-lane .n.past:not(.ok):not(.mid):not(.miss) .hd:not(.ho),.ln-lane .n.past:not(.ok):not(.mid):not(.miss) .fl,.ln-lane .n.past:not(.ok):not(.mid):not(.miss) .dt{fill:var(--cool)}
+.ln-lane .n.past:not(.ok):not(.mid):not(.miss) .hd,.ln-lane .n.past:not(.ok):not(.mid):not(.miss) .st{stroke:var(--cool)}
+.ln-lane .n.past:not(.ok):not(.mid):not(.miss) .lb{fill:var(--cool)}
+.ln-lane .n.cur .hd{filter:drop-shadow(0 0 3px var(--peony))}
+.ln-lane .n.cur .lb{font-size:16px}
+.ln-lane .count{z-index:6}
+.ln-lane.nolabel .lb{display:none}
+.ln-lane .stf-live{z-index:4}
+
 /* ---------- 가로 화면: 꼭 필요한 것만 ---------- */
 @media (orientation:landscape) and (max-height:560px){
   .land-hide{display:none!important}
@@ -529,10 +547,10 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
   .l-side{justify-content:center}
   .lrow{flex-direction:row!important;align-items:center}
   .lrow>*{flex:1 1 0;min-width:0}
-  .stf-lane{min-height:96px}
+  .stf-lane,.ln-lane{min-height:96px}
 }
-@media (max-height:700px){.stf-lane{min-height:104px}.sm-hide{display:none!important}}
-@media (orientation:landscape) and (max-height:560px){.phase{min-height:52px}#dtPh{min-height:40px!important}.stf-lane{min-height:88px}}
+@media (max-height:700px){.stf-lane,.ln-lane{min-height:104px}.sm-hide{display:none!important}}
+@media (orientation:landscape) and (max-height:560px){.phase{min-height:52px}#dtPh{min-height:40px!important}.stf-lane,.ln-lane{min-height:88px}}
 
 /* ---------- 키·빠르기 조절 ---------- */
 .ctl-row{display:flex;gap:6px}
@@ -749,27 +767,59 @@ const DEFAULTS = {
   synthVol: 0.75, metroVol: 0.8,
   noise: 0.004, latency: null, onboarded: false, installDismissed: false
 };
+const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+let lastRaw = null; // 이 창이 마지막으로 읽거나 쓴 저장 내용 (다른 창이 덮어쓴 것을 알아채는 데 씀)
 let DB = loadDB();
 function loadDB() {
   let d = {};
-  try { const raw = localStorage.getItem(STORE_KEY); if (raw) d = JSON.parse(raw) || {}; } catch (e) { d = {}; }
+  try { const raw = localStorage.getItem(STORE_KEY); lastRaw = raw; if (raw) d = JSON.parse(raw) || {}; } catch (e) { d = {}; }
   return normalizeDB(d);
 }
+/* 같은 앱이 두 곳(홈 화면 앱과 브라우저 탭 등)에 열려 있을 때, 오래된 창이 저장하면서
+   다른 창에서 바꾼 설정(마이크·소음값 등)을 옛값으로 덮어쓰지 않도록 세 갈래로 합침.
+   이 창에서 바꾼 값만 이 창 것을 쓰고, 나머지는 저장소의 새 값을 씀. 객체는 그 자리에서 고침. */
+function merge3(mine, base, theirs) {
+  const keys = new Set([...Object.keys(mine), ...Object.keys(theirs || {})]);
+  keys.forEach(k => {
+    const m = mine[k], b = base ? base[k] : undefined, t = theirs ? theirs[k] : undefined;
+    if (isObj(m) && isObj(t)) { merge3(m, isObj(b) ? b : {}, t); return; }
+    if (same(m, b)) { if (t === undefined) delete mine[k]; else mine[k] = t; return; }
+    if (same(t, b)) return;
+    if (k === 'sessions' && Array.isArray(m) && Array.isArray(t)) { const seen = new Set(m.map(x => x.t + x.f)); mine[k] = m.concat(t.filter(x => !seen.has(x.t + x.f))).sort((x, y) => x.t - y.t); }
+  });
+  return mine;
+}
+function syncDB() { // 저장소가 다른 창 때문에 바뀌었으면 이 창의 DB에 합침
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw || raw === lastRaw) return false;
+    const base = lastRaw ? JSON.parse(lastRaw) : {};
+    merge3(DB, base, JSON.parse(raw)); normalizeDB(DB); lastRaw = raw; refreshPipes && refreshPipes();
+    return true;
+  } catch (e) { return false; }
+}
+window.addEventListener('storage', e => { if (e.key === STORE_KEY) syncDB(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncDB(); });
+window.addEventListener('pageshow', () => syncDB());
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => { if (!p) navigator.storage.persist(); }).catch(() => { }); } catch (e) { }
 function normalizeDB(d) {
-  const s = d.settings || {};
-  d.settings = Object.assign({}, DEFAULTS, s);
-  d.settings.flute = Object.assign({}, DEFAULTS.flute, s.flute || {});
+  if (!isObj(d.settings)) d.settings = {};
+  const s = d.settings; // 있는 객체를 그대로 두고 빠진 값만 채움 (화면이 들고 있는 참조가 끊기지 않게)
+  Object.keys(DEFAULTS).forEach(k => { if (s[k] === undefined) s[k] = isObj(DEFAULTS[k]) ? Object.assign({}, DEFAULTS[k]) : DEFAULTS[k]; });
+  if (!isObj(s.flute)) s.flute = {};
+  Object.keys(DEFAULTS.flute).forEach(k => { if (s.flute[k] === undefined) s.flute[k] = DEFAULTS.flute[k]; });
   d.sessions = Array.isArray(d.sessions) ? d.sessions : [];
   d.longBest = d.longBest || {};
   d.habit = d.habit || {};
   d.mySongs = Array.isArray(d.mySongs) ? d.mySongs : [];
   d.songBest = d.songBest || {};
-  d.metro = Object.assign({ bpm: 72, beats: 4, sub: 1 }, d.metro || {});
+  if (!isObj(d.metro)) d.metro = {}; Object.entries({ bpm: 72, beats: 4, sub: 1 }).forEach(([k, v]) => { if (d.metro[k] === undefined) d.metro[k] = v; });
   d.metroSaved = Array.isArray(d.metroSaved) ? d.metroSaved : [];
   d.prefs = d.prefs || {};
   return d;
 }
-function saveDB() { try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) { } }
+function saveDB() { try { syncDB(); const raw = JSON.stringify(DB); localStorage.setItem(STORE_KEY, raw); lastRaw = raw; } catch (e) { } }
 const S = () => DB.settings;
 const pref = (k, def) => (DB.prefs[k] !== undefined ? DB.prefs[k] : def);
 const setPref = (k, v) => { DB.prefs[k] = v; saveDB(); };
@@ -1166,6 +1216,14 @@ const Mic = {
         const cons = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 };
         if (S().micDev) { try { this.stream = await navigator.mediaDevices.getUserMedia({ audio: Object.assign({ deviceId: { exact: S().micDev } }, cons) }); } catch (e1) { this.stream = null; } }
         if (!this.stream) this.stream = await navigator.mediaDevices.getUserMedia({ audio: cons });
+        // 고른 마이크의 장치 번호가 바뀌었으면(폰·브라우저가 번호를 새로 매긴 경우) 이름으로 다시 찾아 연결
+        if (S().micDev && S().micLabel) {
+          const tr0 = this.stream.getAudioTracks()[0];
+          if (tr0 && tr0.label !== S().micLabel) {
+            const hit = (await this.list()).find(d => d.label === S().micLabel && d.deviceId);
+            if (hit) { try { const st2 = await navigator.mediaDevices.getUserMedia({ audio: Object.assign({ deviceId: { exact: hit.deviceId } }, cons) }); this.stream.getTracks().forEach(t => t.stop()); this.stream = st2; if (S().micDev !== hit.deviceId) { S().micDev = hit.deviceId; saveDB(); } } catch (e2) { } }
+          }
+        }
       } catch (e) {
         const n = e && e.name; this.stream = null;
         if (n === 'NotAllowedError' || n === 'PermissionDeniedError') { const q = await this.query(); this.setState(q === 'denied' ? 'denied' : 'dismissed'); }
@@ -1183,6 +1241,7 @@ const Mic = {
         this.src.connect(this.an);
         await this.setupWorklet(ctx);
         const tr = this.stream.getAudioTracks()[0]; this.label = tr ? tr.label : '';
+        try { if (tr && S().micDev && tr.label && S().micLabel !== tr.label && tr.getSettings && tr.getSettings().deviceId === S().micDev) { S().micLabel = tr.label; saveDB(); } } catch (e3) { }
         if (tr) tr.onended = () => { this.teardown(); this.setState('ended'); };
         setTimeout(() => autoOut(), 300);
         this.zeroSince = performance.now(); this.hist = [];
@@ -1587,23 +1646,24 @@ function restGlyph(x, t) {
 const CLEF_SVG = `<g transform="translate(6 ${STF.top - 22})"><path class="clef" d="M17 55 C 13 55 12 49 16 47 C 23 45 26 54 22 60 C 18 66 7 64 6 55 C 5 45 13 39 18 33 C 23 27 26 17 24 9 C 23 3 18 3 17 10 C 16 20 17 52 19 78 C 20 86 13 89 10 84"/><circle class="clef-dot" cx="11.5" cy="82" r="3"/></g>`;
 function buildStaff(notes, o = {}) {
   const ts = o.ts || 4, pk = o.pk || 0, PX = STF.PX, X0 = STF.X0;
-  let b = 0, body = ''; const xs = [], beats = [];
+  const X = o.xOf || (bt => X0 + bt * PX), BX = o.barX || (bt => X0 + bt * PX - 14), LB = o.lbY || STF.LB;
+  let b = 0, body = ''; const xs = [], beats = [], parts = [];
   notes.forEach((n, i) => {
-    const x = X0 + b * PX; xs.push(x); beats.push(b);
+    const x = X(b); xs.push(x); beats.push(b);
     let g = `<g class="n" data-i="${i}">`;
-    if (n.rest) { let bb = 0; splitDur(n.d).forEach(t => { g += restGlyph(X0 + (b + bb) * PX, t); bb += t; }); }
+    if (n.rest) { let bb = 0; splitDur(n.d).forEach(t => { g += restGlyph(X(b + bb), t); bb += t; }); }
     else {
       let bb = 0, prev = null;
-      splitDur(n.d).forEach(t => { const xx = X0 + (b + bb) * PX; const hg = headGlyph(xx, n.m, t); g += hg.svg; if (prev) g += `<path class="tie" d="M${prev.x + 5} ${prev.y + 7} Q ${(prev.x + xx) / 2} ${prev.y + 16} ${xx - 5} ${hg.y + 7}"/>`; prev = { x: xx, y: hg.y }; bb += t; });
-      g += `<text class="lb" x="${x}" y="${STF.LB}">${esc(S().noteStyle === 'en' ? EN[pc(n.m)] : KO[pc(n.m)])}</text>`;
+      splitDur(n.d).forEach(t => { const xx = X(b + bb); const hg = headGlyph(xx, n.m, t); g += hg.svg; if (prev) g += `<path class="tie" d="M${prev.x + 5} ${prev.y + 7} Q ${(prev.x + xx) / 2} ${prev.y + 16} ${xx - 5} ${hg.y + 7}"/>`; prev = { x: xx, y: hg.y }; bb += t; });
+      g += `<text class="lb" x="${x}" y="${LB}">${esc(S().noteStyle === 'en' ? EN[pc(n.m)] : KO[pc(n.m)])}</text>`;
       if (o.artic && o.artic.marks[i]) g += artGlyph(x, n.m, splitDur(n.d)[0], o.artic.marks[i]);
     }
-    body += g + '</g>'; b += n.d;
+    parts.push(g + '</g>'); body += g + '</g>'; b += n.d;
   });
-  const total = X0 + b * PX + 70;
+  const total = o.total || X0 + b * PX + 70; const nb = body.length;
   let deco = '';
   for (let k = 0; k < 5; k++) { const y = ySt(30 + k * 2); deco += `<line class="sl" x1="0" x2="${total - 30}" y1="${y}" y2="${y}"/>`; }
-  for (let bb = pk > 0 ? pk : ts; bb < b - 0.01; bb += ts) { const x = X0 + bb * PX - 14; deco += `<line class="bar" x1="${x}" x2="${x}" y1="${ySt(38)}" y2="${ySt(30)}"/>`; }
+  for (let bb = pk > 0 ? pk : ts; bb < b - 0.01; bb += ts) { const x = BX(bb); deco += `<line class="bar" x1="${x}" x2="${x}" y1="${ySt(38)}" y2="${ySt(30)}"/>`; }
   const xe = total - 30; if (notes.length) deco += `<line class="bar" x1="${xe - 6}" x2="${xe - 6}" y1="${ySt(38)}" y2="${ySt(30)}"/><line class="bar end" x1="${xe}" x2="${xe}" y1="${ySt(38)}" y2="${ySt(30)}"/>`;
   if (o.slur && xs.length > 1) {
     const ys = notes.filter(n => !n.rest).map(n => { let st = stepOf(n.m - WOFF()).step; if (st > 44) st -= 7; return ySt(st); });
@@ -1615,9 +1675,120 @@ function buildStaff(notes, o = {}) {
     o.artic.slurs.forEach(([a, z], k) => { if (z <= a || xs[z] === undefined) return; const ys = notes.slice(a, z + 1).filter(n => !n.rest).map(n => { let st = stepOf(n.m - WOFF()).step; if (st > 44) st -= 7; return ySt(st); }); const yt = Math.max(16, Math.min(...ys) - 30); body += `<path class="slur" data-k="${k}" d="M${xs[a] - 2} ${yt + 8} Q ${(xs[a] + xs[z]) / 2} ${yt - 8} ${xs[z] + 2} ${yt + 8}"/>`; });
     o.artic.nls.forEach(([a, z], k) => { if (xs[z] === undefined) return; body += `<g class="nlg" data-k="${k}"><text class="nlt" x="${xs[a] - 6}" y="9">non leg.</text><line class="nlb" x1="${xs[a] - 4}" x2="${xs[z] + 4}" y1="13" y2="13"/></g>`; });
   }
-  return { svg: deco + body, total, xs, beats, X0, tsd: o.tsd || `${ts}/4` };
+  return { svg: deco + body, deco, parts, extra: body.slice(nb), total, xs, beats, X0, tsd: o.tsd || `${ts}/4` };
 }
-function StaffLane(host, notes, o = {}) {
+// 악보 보기 방식: 'line' 한 줄씩(기본) / 'flow' 흐르는 악보(리듬게임처럼). 악보를 고치는 화면은 늘 흐르는 악보.
+function scoreMode() { return pref('scoreMode', 'line') === 'flow' ? 'flow' : 'line'; }
+function StaffLane(host, notes, o = {}) { return !o.edit && scoreMode() === 'line' ? LineLane(host, notes, o) : FlowLane(host, notes, o); }
+/* ================= 한 줄씩 보는 악보 (노래방 자막처럼) =================
+   마디 단위로 줄을 나눠 두 줄씩 보여 줌. 지금 줄을 다 불면 다 분 줄 자리에 다음다음 줄이 나타나서,
+   지금 보고 있는 줄은 움직이지 않음. 기다려 주는 연습은 음표 색이 바뀌고, 박자대로 연습은 진행바가 지나감. */
+function lineSpacing(notes, ts, pk) {
+  const pts = [], bars = []; let x = STF.X0 - 6, b = 0;
+  const first = pk > 0 ? pk : ts;
+  const isBar = bt => bt >= first - 1e-6 && Math.abs((bt - first) / ts - Math.round((bt - first) / ts)) < 1e-6;
+  const w = t => 18 + 20 * Math.sqrt(t);
+  notes.forEach(n => {
+    let bb = 0;
+    splitDur(n.d).forEach(t => {
+      const bt = b + bb;
+      if (bt > 1e-6 && isBar(bt)) { x += 4; bars.push({ b: bt, x }); x += 14; }
+      if (!n.rest && stepOf(n.m - WOFF()).sharp) x += 9;
+      pts.push({ b: bt, x }); x += w(t) + (durShape(t).dot ? 6 : 0); bb += t;
+    });
+    b += n.d;
+  });
+  const endX = x + 2; pts.push({ b, x: endX });
+  const xOf = bt => {
+    if (pts.length < 2) return STF.X0;
+    if (bt <= pts[0].b) return pts[0].x - 12;
+    for (let k = 1; k < pts.length; k++) { const p = pts[k - 1], q = pts[k]; if (bt <= q.b) return q.b > p.b ? p.x + (q.x - p.x) * (bt - p.b) / (q.b - p.b) : q.x; }
+    return endX;
+  };
+  const bm = new Map(bars.map(o => [o.b.toFixed(3), o.x]));
+  return { xOf, barX: bt => { const v = bm.get(bt.toFixed(3)); return v === undefined ? xOf(bt) - 12 : v; }, bars, total: endX + 34 };
+}
+function LineLane(host, notes, o = {}) {
+  const ts = o.ts || 4, pk = o.pk || 0;
+  const sp = lineSpacing(notes, ts, pk);
+  const stepY = m => { let st = stepOf(m - WOFF()).step; if (st > 44) st -= 7; return ySt(st); };
+  let minY = ySt(38), maxY = ySt(30);
+  notes.forEach(n => { if (!n.rest) { const y = stepY(n.m); minY = Math.min(minY, y); maxY = Math.max(maxY, y); } });
+  const lbY = Math.max(ySt(30) + 22, maxY + 19);
+  const arcs = !!(o.slur || (o.slurs && o.slurs.length) || (o.artic && o.artic.slurs.length));
+  const cropTop = o.artic && o.artic.nls.length ? 0 : Math.max(0, Math.min(ySt(38) - 10, minY - 37, arcs ? minY - 47 : 1e9));
+  const cropH = lbY + 7 - cropTop;
+  const st = buildStaff(notes, Object.assign({}, o, { xOf: sp.xOf, barX: sp.barX, total: sp.total, lbY }));
+  const segs = []; { let px = 0, pb = 0; sp.bars.forEach(br => { segs.push({ x0: px, x1: br.x, b0: pb, b1: br.b }); px = br.x; pb = br.b; }); segs.push({ x0: px, x1: st.total - 26, b0: pb, b1: Infinity }); }
+  const [tt, tb] = st.tsd.split('/');
+  host.classList.add('ln-lane'); host.classList.toggle('nolabel', o.labels === false || (o.labels === undefined && !pref('stfLabels', true)));
+  host.innerHTML = `<div class="ln-rows"></div><div class="ln-bar"></div><div class="stf-live"></div>${notes.length ? '' : `<div class="stf-empty">${esc(o.empty || '음이 없어요')}</div>`}`;
+  const rowsEl = $('.ln-rows', host), bar = $('.ln-bar', host), live = $('.stf-live', host);
+  const S_ = { cur: -1, past: -1, marks: {}, art: {}, slur: {}, nl: {}, mode: 'goto', beat: 0, j: 0 };
+  let lines = [], k = 1, lineH = 100, nl = 2, rows = [], groups = [], lineOf = [], offY = 0;
+  function layout() {
+    const W = Math.max(120, host.clientWidth || 360), H = Math.max(60, host.clientHeight || 150);
+    nl = o.lines || (H >= cropH * 1.45 ? 2 : 1); lineH = H / nl;
+    const sw = segs.map(g => g.x1 - g.x0), maxSeg = Math.max(...sw), medSeg = median(sw);
+    k = Math.min(lineH / cropH, 1.7, Math.max(W / (40 + 2 * medSeg + 6), 0.95));
+    k = Math.max(0.4, Math.min(k, (W - 6) / (68 + maxSeg)));
+    const avail = W / k - 6;
+    lines = []; let L = null;
+    segs.forEach(g => { if (L && L.fw + (g.x1 - L.x0) <= avail) { L.x1 = g.x1; L.b1 = g.b1; } else { L = { x0: lines.length ? g.x0 + 3 : 0, x1: g.x1, b0: g.b0, b1: g.b1, fw: lines.length ? 40 : 68 }; lines.push(L); } });
+    lines.forEach(l => { l.x1 += 2; });
+    lineOf = st.beats.map(bt => Math.max(0, lines.findIndex(l => bt >= l.b0 - 1e-6 && bt < l.b1 - 1e-6)));
+    offY = (lineH - cropH * k) / 2;
+    let staffL = ''; for (let q = 0; q < 5; q++) { const y = ySt(30 + q * 2); staffL += `<line class="sl" x1="0" x2="FW" y1="${y}" y2="${y}"/>`; }
+    rowsEl.innerHTML = lines.map((l, j) => {
+      const ids = []; lineOf.forEach((lj, i) => { if (lj === j) ids.push(i); });
+      const fix = `<rect x="0" y="${cropTop}" width="${l.fw}" height="${cropH}" fill="var(--paper)"/>${staffL.replace(/FW/g, l.fw)}${CLEF_SVG}${j === 0 ? `<text class="tsg" x="${l.fw - 13}" y="${ySt(36) + 7}">${tt}</text><text class="tsg" x="${l.fw - 13}" y="${ySt(32) + 7}">${tb}</text>` : ''}`;
+      return `<div class="ln-row" data-j="${j}" style="height:${lineH}px"><svg class="ln-fix" viewBox="0 ${cropTop} ${l.fw} ${cropH}" style="width:${l.fw * k}px;height:${cropH * k}px">${fix}</svg><svg class="ln-svg" viewBox="${l.x0} ${cropTop} ${l.x1 - l.x0} ${cropH}" style="width:${(l.x1 - l.x0) * k}px;height:${cropH * k}px">${st.deco}${ids.map(i => st.parts[i]).join('')}${st.extra}</svg></div>`;
+    }).join('');
+    rows = $$('.ln-row', rowsEl); groups = []; $$('.n', rowsEl).forEach(g => { groups[+g.dataset.i] = g; });
+    bar.style.height = ((lbY - ySt(38) + 8) * k) + 'px';
+    restore();
+  }
+  function restore() {
+    groups.forEach((g, i) => { if (!g) return; g.classList.remove('ok', 'mid', 'miss', 'cur', 'past', 'aok', 'abad'); if (S_.marks[i]) g.classList.add(S_.marks[i]); if (i === S_.cur) g.classList.add('cur'); if (i < S_.past) g.classList.add('past'); if (S_.art[i] !== undefined) g.classList.add(S_.art[i] ? 'aok' : 'abad'); });
+    $$('.slur[data-k],.nlg[data-k]', rowsEl).forEach(e => { const m = e.classList.contains('slur') ? S_.slur : S_.nl; const v = m[e.dataset.k]; e.classList.toggle('aok', v === true); e.classList.toggle('abad', v === false); });
+    showLine(S_.j, true); if (S_.mode === 'beat') placeBar(S_.beat); else bar.style.opacity = 0;
+  }
+  function slotOf(j) { return lines.length <= nl ? j : nl === 1 ? 0 : j % 2; }
+  function showLine(j, now) {
+    j = clamp(j, 0, Math.max(0, lines.length - 1)); S_.j = j;
+    let vis;
+    if (lines.length <= nl) vis = lines.map((_, q) => q);
+    else if (nl === 1) vis = [j];
+    else vis = j + 1 < lines.length ? [j, j + 1] : [j - 1, j];
+    rows.forEach((r, q) => { const on = vis.includes(q); r.style.top = (slotOf(q) * lineH) + 'px'; r.classList.toggle('off', !on); r.classList.toggle('act', q === j && lines.length > 1); if (now) { r.style.transition = 'none'; void r.offsetWidth; r.style.transition = ''; } });
+  }
+  function xPix(j, x) { const l = lines[j]; return 4 + l.fw * k + (x - l.x0) * k; }
+  function placeBar(b) {
+    const bt = Math.max(0, b); let j = lines.findIndex(l => bt >= l.b0 - 1e-6 && bt < l.b1 - 1e-6); if (j < 0) j = lines.length - 1;
+    if (j !== S_.j) showLine(j);
+    const l = lines[j]; if (!l) return; const x = b < 0 ? l.x0 + (j === 0 ? STF.X0 - 14 : 0) : clamp(sp.xOf(bt), l.x0, l.x1);
+    bar.style.left = xPix(j, x) + 'px'; bar.style.top = (slotOf(j) * lineH + offY + (ySt(38) - 4 - cropTop) * k) + 'px'; bar.style.opacity = b < 0 ? 0.35 : 1;
+    S_.liveX = x;
+  }
+  const ro = window.ResizeObserver ? new ResizeObserver(() => layout()) : null; if (ro) ro.observe(host);
+  layout();
+  return {
+    host, xs: st.xs, beats: st.beats,
+    goTo(i, anim = true) { if (st.xs[i] === undefined) return; S_.mode = 'goto'; S_.cur = i; S_.past = i; bar.style.opacity = 0; showLine(lineOf[i], !anim); S_.liveX = st.xs[i]; groups.forEach((g, q) => { if (!g) return; g.classList.toggle('cur', q === i); g.classList.toggle('past', q < i); }); },
+    setBeat(b) { S_.mode = 'beat'; S_.beat = b; placeBar(b); },
+    mark(i, cls) { if (cls) S_.marks[i] = cls; else delete S_.marks[i]; if (i === S_.cur && !cls) S_.cur = -1; const g = groups[i]; if (!g) return; g.classList.remove('ok', 'mid', 'miss', 'cur'); if (cls) g.classList.add(cls); },
+    setCur(i) { S_.cur = i; groups.forEach((g, j) => g && g.classList.toggle('cur', j === i)); if (i < 0 && S_.mode === 'goto') showLine(0); },
+    setPast(i) { S_.past = i; groups.forEach((g, j) => g && g.classList.toggle('past', j < i)); },
+    clearMarks() { S_.marks = {}; S_.art = {}; S_.slur = {}; S_.nl = {}; S_.past = -1; groups.forEach(g => g && g.classList.remove('ok', 'mid', 'miss', 'cur', 'past', 'aok', 'abad')); $$('.aok,.abad', rowsEl).forEach(e => e.classList.remove('aok', 'abad')); },
+    markArt(i, ok) { S_.art[i] = ok; const g = groups[i]; if (g) { g.classList.toggle('aok', ok); g.classList.toggle('abad', !ok); } },
+    markSlur(q, ok) { S_.slur[q] = ok; $$(`.slur[data-k="${q}"]`, rowsEl).forEach(e => { e.classList.toggle('aok', ok); e.classList.toggle('abad', !ok); }); },
+    markNl(q, ok) { S_.nl[q] = ok; $$(`.nlg[data-k="${q}"]`, rowsEl).forEach(e => { e.classList.toggle('aok', ok); e.classList.toggle('abad', !ok); }); },
+    live(m, c) { const j = S_.j, l = lines[j]; if (!m || !l || S_.liveX === undefined) { live.style.opacity = 0; return; } live.style.left = xPix(j, S_.liveX) + 'px'; live.style.top = (slotOf(j) * lineH + offY + (clamp(stepY(m), cropTop + 4, lbY - 12) - cropTop) * k) + 'px'; live.style.opacity = 1; live.style.borderColor = Math.abs(c) <= S().tol ? 'var(--jade)' : c > 0 ? 'var(--warm)' : 'var(--cool)'; },
+    labels(on) { host.classList.toggle('nolabel', !on); },
+    destroy() { if (ro) ro.disconnect(); }
+  };
+}
+function FlowLane(host, notes, o = {}) {
   const st = buildStaff(notes, o);
   host.classList.add('stf-lane'); host.classList.toggle('nolabel', o.labels === false || (o.labels === undefined && !pref('stfLabels', true)));
   host.innerHTML = `<div class="stf-scroll"><svg class="stf-svg">${st.svg}</svg></div><div class="stf-fade"></div><svg class="stf-fix"></svg><div class="stf-line"></div><div class="stf-live"></div>${notes.length ? '' : `<div class="stf-empty">${esc(o.empty || '음이 없어요')}</div>`}`;
@@ -1913,9 +2084,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) navigator
 /* 입력 마이크 고르기 */
 function micSelHTML() { return `<select class="sel" data-micsel style="min-height:46px;width:100%"><option value="">자동 (폰이 정함)</option></select>`; }
 async function fillMicSel(sel) {
-  if (!sel) return; const L = await Mic.list(); const cur = S().micDev || '';
-  sel.innerHTML = `<option value="">자동 (폰이 정함)</option>` + L.filter(d => d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications').map((d, i) => `<option value="${esc(d.deviceId)}" ${d.deviceId === cur ? 'selected' : ''}>${esc(d.label || `마이크 ${i + 1}`)}</option>`).join('');
-  sel.onchange = async () => { S().micDev = sel.value || null; saveDB(); const had = Mic.running() || Mic.subs.size; Mic.teardown(); if (had) await Mic.acquire(); toast('입력 마이크를 바꿨어요'); };
+  if (!sel) return; const L = (await Mic.list()).filter(d => d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications');
+  let cur = S().micDev || '';
+  // 장치 번호가 바뀌었어도 같은 이름의 마이크가 있으면 그것을 고른 것으로 봄
+  if (cur && !L.some(d => d.deviceId === cur) && S().micLabel) { const hit = L.find(d => d.label === S().micLabel); if (hit) { cur = S().micDev = hit.deviceId; saveDB(); } }
+  const known = L.some(d => d.deviceId === cur);
+  sel.innerHTML = `<option value="">자동 (폰이 정함)</option>` + L.map((d, i) => `<option value="${esc(d.deviceId)}" ${d.deviceId === cur ? 'selected' : ''}>${esc(d.label || `마이크 ${i + 1}`)}</option>`).join('')
+    + (cur && !known ? `<option value="${esc(cur)}" selected>${esc(S().micLabel || '고른 마이크')} (마이크를 켜면 확인해요)</option>` : '');
+  sel.onchange = async () => { const d = L.find(x => x.deviceId === sel.value); S().micDev = sel.value || null; S().micLabel = sel.value ? (d && d.label) || S().micLabel || '' : ''; saveDB(); const had = Mic.running() || Mic.subs.size; Mic.teardown(); if (had) await Mic.acquire(); toast('입력 마이크를 바꿨어요. 다음에 열어도 이 마이크를 써요'); };
 }
 /* 가로 화면: 큰 화면(악보·음 표시)은 왼쪽, 나머지는 오른쪽 2단 배치 */
 function layoutL2(el) {
@@ -2026,7 +2202,7 @@ defScreen('onboard', {
             if (performance.now() - t0 > 3000) {
               phase = 'try';
               const nz = clamp(median(samples) * 1.2 + sd(samples) * 0.5, 0.0015, 0.03);
-              S().noise = +nz.toFixed(4); saveDB(); Mic.setGate();
+              S().noise = +nz.toFixed(4); S().noiseAt = Date.now(); saveDB(); Mic.setGate();
               $('#obMsg', el).textContent = nz > 0.015 ? '주변이 조금 시끄러워요. 그래도 연습은 할 수 있어요. 조용한 곳이면 더 정확해요.' : '좋아요, 조용한 환경이에요.';
               $('#obTry', el).classList.remove('hidden'); $('#obDone').disabled = false;
             }
@@ -2559,7 +2735,7 @@ function scaleSeq(t, lo, hi, pat, dir) {
 }
 defScreen('scale', {
   title: '음계 오르내리기', practice: 'scale', wake: true, fit: true,
-  help: `<p>악보를 보며 음계를 차례로 붑니다. 빨간 기준선에 온 음을 불면 악보가 왼쪽으로 흘러가요.</p><ul><li><b>범위</b>: 가온 도~높은 도, 낮은 솔~솔(1~8번 관), 낮은 솔~높은 솔(1~15번 관) 중에서 고르고, 올라가기만·내려가기만·오르내리기도 고를 수 있어요.</li><li><b>맞을 때까지</b>: 음이 맞아야 다음 음으로 넘어가요. <b>박자에 맞춰</b>: ‘틱’ 소리 4번 뒤 악보가 정한 빠르기로 흘러가요.</li><li><b>키</b>를 바꾸면 음계 전체가 옮겨져요. 관에 없는 음은 관을 꺾어서 내요.</li></ul>`,
+  help: `<p>악보를 보며 음계를 차례로 붑니다. 빛나는 음표를 맞게 불면 다음 음으로 넘어가요.</p><ul><li><b>범위</b>: 가온 도~높은 도, 낮은 솔~솔(1~8번 관), 낮은 솔~높은 솔(1~15번 관) 중에서 고르고, 올라가기만·내려가기만·오르내리기도 고를 수 있어요.</li><li><b>맞을 때까지</b>: 음이 맞아야 다음 음으로 넘어가요. <b>박자에 맞춰</b>: ‘틱’ 소리 4번 뒤 악보가 정한 빠르기로 흘러가요.</li><li><b>키</b>를 바꾸면 음계 전체가 옮겨져요. 관에 없는 음은 관을 꺾어서 내요.</li></ul>`,
   render(el) {
     let rg = pref('scRange', 'ref'), dir = pref('scDir', 'ud'), pat = pref('scPat', 'step'), way = pref('scWay', 'wait'), bpm = clamp(pref('scBpm', 60), 30, 200);
     let unMic = null, unSub = null, unOn = null, judge = null, run = null, lane = null;
@@ -2974,7 +3150,7 @@ function bindSongCtl(root, s, pfx, onKey, onBpm) {
 function fitNote(f) { const t = []; if (f.shift) t.push(f.shift > 0 ? '한 옥타브 올려서' : '한 옥타브 내려서'); if (f.bends) t.push(`꺾는 음 ${f.bends}개`); if (f.unplayable) t.push(`낼 수 없는 음 ${f.unplayable}개`); return t.join(' · '); }
 defScreen('follow', {
   title: p => (getSong(p.id) || {}).t || '곡 따라 불기', practice: 'follow', wake: true, fit: true,
-  help: `<p>악보가 왼쪽 빨간 기준선으로 흘러와요. 기준선에 온 음을 불어서 맞으면 악보가 다음 음으로 넘어가요.</p><ul><li>초록은 딱 맞은 음, 주황은 조금 어긋난 음, 빨강은 건너뛴 음이에요.</li><li><b>키</b>로 곡 전체를 반음씩 올리거나 내릴 수 있어요. 꺾는 음이 적은 키를 찾아 보세요.</li><li><b>빠르기</b>는 시범 듣기와 ‘이 음’ 듣기에 쓰여요. 곡마다 따로 기억해요.</li><li><b>계이름</b> 버튼으로 악보 아래 계이름을 끄면 악보만 보고 연습할 수 있어요.</li></ul>`,
+  help: `<p>악보를 두 줄씩 보여 드려요. 빛나는 음표를 불어서 맞으면 다음 음으로 넘어가고, 부른 음표는 색이 바뀌어요. 한 줄을 다 불면 다 분 줄 자리에 다음 줄이 나타나요.</p><ul><li>초록은 딱 맞은 음, 주황은 조금 어긋난 음, 빨강은 건너뛴 음이에요.</li><li>설정의 <b>악보 보기</b>에서 예전처럼 흐르는 악보로 바꿀 수 있어요.</li><li><b>키</b>로 곡 전체를 반음씩 올리거나 내릴 수 있어요. 꺾는 음이 적은 키를 찾아 보세요.</li><li><b>빠르기</b>는 시범 듣기와 ‘이 음’ 듣기에 쓰여요. 곡마다 따로 기억해요.</li><li><b>계이름</b> 버튼으로 악보 아래 계이름을 끄면 악보만 보고 연습할 수 있어요.</li></ul>`,
   render(el, p) {
     const s = getSong(p.id); if (!s) { el.innerHTML = '<div class="card">곡을 찾지 못했어요.</div>'; return; }
     let judge = null, unMic = null, unSub = null, unOn = null, demo = null, t0 = 0, labels = pref('stfLabels', true), lane = null;
@@ -3046,7 +3222,7 @@ defScreen('follow', {
 /* ================= 곡 박자대로 불기 (악상기호를 살려 불고 표현 점수 받기) ================= */
 defScreen('playalong', {
   title: p => (getSong(p.id) || {}).t || '곡 박자대로 불기', practice: 'playalong', wake: true, fit: true,
-  help: `<p>‘틱’ 소리로 한 마디를 세어 준 뒤 악보가 정한 빠르기로 흘러가요. 음이 빨간 기준선에 닿을 때 불기 시작해서 그 길이만큼 불어 주세요.</p><ul><li><b>악상기호</b>를 켜면 곡의 흐름에 맞춘 연습용 기호(스타카토 점, 테누토 가로줄, 악센트 >, 레가토 이음줄, non leg.)가 악보에 나와요. 기호대로 불었는지 음마다 초록·빨강으로 표시하고, 끝나면 표현 점수를 알려 드려요.</li><li><b>빠르기</b>는 − + 로 1씩, 길게 누르면 5씩 바뀌어요. 50%~100% 버튼은 원래 빠르기를 기준으로 맞춰 줘요.</li><li><b>키</b>로 곡 전체를 반음씩 올리거나 내릴 수 있어요.</li></ul>`,
+  help: `<p>‘틱’ 소리로 한 마디를 세어 준 뒤, 진행바가 정한 빠르기로 악보 위를 지나가요. 진행바가 음표에 닿을 때 불기 시작해서 다음 음표에 닿을 때까지 불어 주세요. 한 줄을 다 불면 다 분 줄 자리에 다음 줄이 나타나요.</p><ul><li><b>악상기호</b>를 켜면 곡의 흐름에 맞춘 연습용 기호(스타카토 점, 테누토 가로줄, 악센트 >, 레가토 이음줄, non leg.)가 악보에 나와요. 기호대로 불었는지 음마다 초록·빨강으로 표시하고, 끝나면 표현 점수를 알려 드려요.</li><li><b>빠르기</b>는 − + 로 1씩, 길게 누르면 5씩 바뀌어요. 50%~100% 버튼은 원래 빠르기를 기준으로 맞춰 줘요.</li><li><b>키</b>로 곡 전체를 반음씩 올리거나 내릴 수 있어요.</li></ul>`,
   render(el, p) {
     const s = getSong(p.id); if (!s) { el.innerHTML = '<div class="card">곡을 찾지 못했어요.</div>'; return; }
     let clickOn = pref('paClick', true), labels = pref('stfLabels', true), artOn = pref('paArt', true), unMic = null, run = null, lane = null, notes = null, plan = null;
@@ -4041,6 +4217,12 @@ defScreen('records', {
   }
 });
 
+/* 마이크 감도: 소음 기준값(0.0015~0.03)을 0~100 눈금으로 (오른쪽일수록 예민) */
+const NZ_LO = 0.0015, NZ_HI = 0.03;
+function sensOf(nz) { return Math.round(100 * (1 - Math.log(clamp(nz, NZ_LO, NZ_HI) / NZ_LO) / Math.log(NZ_HI / NZ_LO))); }
+function noiseOf(v) { return +(NZ_LO * Math.pow(NZ_HI / NZ_LO, 1 - clamp(v, 0, 100) / 100)).toFixed(4); }
+function noiseTxt() { const n = S().noise, at = S().noiseAt; const d = at ? new Date(at) : null; return `${n > 0.015 ? '시끄러운 곳' : n > 0.006 ? '보통' : '조용한 곳'} · 감도 ${sensOf(n)}${d ? ` (${d.getMonth() + 1}/${d.getDate()} 맞춤)` : ''}`; }
+
 /* ================= 주변 소음 다시 재기 ================= */
 defScreen('noise', {
   title: '주변 소음 재기',
@@ -4051,7 +4233,7 @@ defScreen('noise', {
       $('#nzBox', el).classList.remove('hidden'); const s = []; const t0 = performance.now();
       unSub = Mic.sub(fr => {
         $('#nzLv', el).style.width = Math.min(100, fr.rms * 900) + '%'; if (s === null) return; s.push(fr.rms);
-        if (performance.now() - t0 > 3000 && unSub) { const nz = clamp(median(s) * 1.2 + sd(s) * 0.5, 0.0015, 0.03); S().noise = +nz.toFixed(4); saveDB(); Mic.setGate(); unSub(); unSub = null; $('#nzMsg', el).className = 'fb good'; $('#nzMsg', el).textContent = nz > 0.015 ? '다 됐어요. 주변이 조금 시끄러운 편이에요.' : '다 됐어요. 조용한 환경이에요.'; setDock(`<button class="btn primary big wide" id="nzOk">확인</button>`).querySelector('#nzOk').onclick = back; }
+        if (performance.now() - t0 > 3000 && unSub) { const nz = clamp(median(s) * 1.2 + sd(s) * 0.5, 0.0015, 0.03); S().noise = +nz.toFixed(4); S().noiseAt = Date.now(); saveDB(); Mic.setGate(); unSub(); unSub = null; $('#nzMsg', el).className = 'fb good'; $('#nzMsg', el).textContent = nz > 0.015 ? '다 됐어요. 주변이 조금 시끄러운 편이에요.' : '다 됐어요. 조용한 환경이에요.'; setDock(`<button class="btn primary big wide" id="nzOk">확인</button>`).querySelector('#nzOk').onclick = back; }
       });
     });
     return () => { unMic(); if (unSub) unSub(); };
@@ -4084,6 +4266,7 @@ defScreen('settings', {
       <div class="card stack">
         <div><span class="label">글자 크기</span>${segHTML('fs', [[1, '보통'], [1.12, '크게'], [1.25, '아주 크게']], s.fontScale)}</div>
         <div><span class="label">화면 색</span>${segHTML('th', [['light', '밝게'], ['dark', '어둡게'], ['auto', '폰 설정 따라']], s.theme)}</div>
+        <div><span class="label">악보 보기</span>${segHTML('smode', [['line', '한 줄씩 (노래방처럼)'], ['flow', '흐르는 악보']], scoreMode())}<div class="tiny muted" style="margin-top:6px">한 줄씩: 두 줄씩 보여 주고, 부른 음표 색이 바뀌거나 진행바가 지나가요. 흐르는 악보: 악보가 왼쪽 기준선으로 흘러와요(리듬게임처럼).</div></div>
         <div><span class="label">음 이름</span>${segHTML('ns', [['ko', '도레미'], ['en', 'CDE'], ['both', '둘 다']], s.noteStyle)}</div>
         <div class="row"><span class="grow"><b>관 번호 보이기</b></span><label class="switch"><input type="checkbox" id="stNo" ${s.showPipeNo ? 'checked' : ''}><span></span></label></div>
       </div>
@@ -4104,7 +4287,8 @@ defScreen('settings', {
       <div class="list">
         <div class="li"><span class="grow"><span class="t">마이크 상태</span></span><span class="status-pill" id="stMic"><i></i>확인 중</span></div>
         <button class="li" data-go="micguide"><span class="grow"><span class="t">마이크 문제 해결</span><br><span class="d">허용 창이 안 뜨거나 막혔을 때</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
-        <button class="li" data-go="noise"><span class="grow"><span class="t">주변 소음 다시 재기</span><br><span class="d">연습 장소가 바뀌었을 때</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
+        <button class="li" data-go="noise"><span class="grow"><span class="t">주변 소음 다시 재기</span><br><span class="d">지금 값: ${noiseTxt()}</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
+        <div class="li" style="display:block"><span class="t">마이크 감도</span><div class="row mt" style="gap:8px"><span class="tiny muted">둔하게</span><input type="range" min="0" max="100" step="1" value="${sensOf(s.noise)}" id="stSens"><span class="tiny muted">예민하게</span></div><div class="tiny muted">작은 소리도 잘 못 알아들으면 예민하게, 주변 소리까지 음으로 잡히면 둔하게 옮겨 보세요. 이 값은 이 폰에 저장돼요.</div></div>
         <div class="li" style="display:block"><span class="t">입력 마이크</span><div class="mt">${micSelHTML()}</div><div class="row mt" style="gap:8px"><div class="lvl grow" id="stLv"><i></i></div><button class="btn sm" id="stMk">마이크 확인</button></div><div class="tiny muted" id="stMkT" style="margin-top:6px">마이크 확인을 누르고 팬플룻을 불어 보세요</div></div>
         <button class="li" data-go="micguide" data-tab="ear"><span class="grow"><span class="t">이어폰 쓸 때 마이크 안내</span><br><span class="d">이어폰 마이크·블루투스 지연·소리 나오는 곳</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
         <button class="li" data-go="onboard"><span class="grow"><span class="t">처음 안내 다시 보기</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
@@ -4151,6 +4335,7 @@ defScreen('settings', {
       bindSeg(el, 'fs', v => { s.fontScale = +v; saveDB(); applyTheme(); });
       bindSeg(el, 'th', v => { s.theme = v; saveDB(); applyTheme(); });
       bindSeg(el, 'ns', v => { s.noteStyle = v; saveDB(); render(); });
+      bindSeg(el, 'smode', v => { setPref('scoreMode', v); toast(v === 'line' ? '악보를 한 줄씩 보여 드려요' : '악보가 흘러가게 보여 드려요'); });
       $('#stNo', el).onchange = e => { s.showPipeNo = e.target.checked; saveDB(); render(); };
       $('#stSv', el).oninput = e => { s.synthVol = +e.target.value; saveDB(); };
       $('#stSt', el).onclick = () => playTone(PIPES.includes(72) ? 72 : PIPES[3], 1);
@@ -4158,6 +4343,8 @@ defScreen('settings', {
       $('#stMt', el).onclick = () => { const c = AudioEng.ensure(); tick(c.currentTime + 0.05, true); tick(c.currentTime + 0.55, false); };
       $('#stFs', el).onchange = e => { s.autoFS = e.target.checked; saveDB(); if (!s.autoFS && FS.on()) FS.exit(); };
       $('#stWl', el).onchange = e => { s.wakeLock = e.target.checked; saveDB(); };
+      $('#stSens', el).oninput = e => { s.noise = noiseOf(+e.target.value); s.noiseAt = Date.now(); saveDB(); Mic.setGate(); };
+      $('#stSens', el).onchange = () => render();
       el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go, b.dataset.tab ? { tab: b.dataset.tab } : {}); });
       const inst = $('#stInst', el);
       if (FS.standalone()) inst.innerHTML = '<div class="small muted">지금 홈 화면 앱으로 실행 중이에요.</div>';
