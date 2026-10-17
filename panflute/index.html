@@ -197,6 +197,17 @@ img.fart{display:block;width:100%;height:auto}
 @media (orientation:landscape) and (max-height:600px){
   .hero.pic{min-height:clamp(140px,40vh,210px);padding:16px 20px}
   .hero.pic .greet{max-width:48%}
+  #view .ob{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:28px;align-items:center;align-content:center;min-height:auto;padding:4px 8px}
+  #view .ob>*{grid-column:2}
+  #view .ob-art{grid-column:1;grid-row:1/span 6;width:min(170px,34vh);margin:0}
+  #view #obOpts{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+  #view .ob .micgate .mg-ic{display:none}
+  #view .ob .micgate .card{padding:14px 16px}
+  #view .ob .micgate .btn.big{min-height:50px}
+  #view .ob h2{font-size:1.5rem}
+  #view .ob .lead{margin-top:6px}
+  #view .ob .tipbox.mt2{margin-top:10px}
+  #view .ob-dots{margin:8px 0;justify-content:flex-start}
   .sp-emblem{width:min(150px,30vh);margin-bottom:6px}
   .sp-big{font-size:clamp(32px,11vh,56px)}
   .sp-small{font-size:clamp(16px,5vh,24px)}
@@ -683,13 +694,13 @@ body.focusmode #rtbar{position:fixed;left:max(8px,env(safe-area-inset-left,0px))
 body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:calc(50% - 40px)}
 
 /* ---------- 소리 정보 줄 ---------- */
-.sinfo{display:grid;grid-template-columns:1.25fr 1fr 1.25fr .8fr;gap:4px;font-variant-numeric:tabular-nums;min-height:44px}
+.sinfo{display:grid;grid-template-columns:1.3fr 1fr 1.1fr .8fr;gap:4px;font-variant-numeric:tabular-nums;min-height:44px}
 .sinfo:empty{display:none}
 .sinfo>span{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:3px;padding:4px 7px;border-radius:10px;background:var(--surface);border:1px solid var(--line);line-height:1.2;min-width:0;overflow:hidden}
-.sinfo i{flex-basis:100%;font-style:normal;font-size:.62rem;font-weight:700;color:var(--ink-3)}
-.sinfo b{font-size:1rem}
-.sinfo small{font-size:.64rem;color:var(--ink-2);font-weight:700}
-.sinfo em{flex-basis:100%;font-style:normal;font-size:.7rem;font-weight:700;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sinfo i{flex-basis:100%;font-style:normal;font-size:.7rem;font-weight:700;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sinfo b{font-size:1.08rem}
+.sinfo small{font-size:.72rem;color:var(--ink-2);font-weight:700}
+.sinfo em{flex-basis:100%;font-style:normal;font-size:.74rem;font-weight:700;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sinfo .good{color:var(--jade)}.sinfo .high{color:var(--warm)}.sinfo .low{color:var(--cool)}
 
 /* ---------- 빠르기 숫자 입력·즐겨찾기 ---------- */
@@ -786,7 +797,10 @@ body.focusmode .screen.fit.l2 .sinfo{position:fixed;left:max(10px,env(safe-area-
 body.focusmode.fopen .screen.fit.l2 .sinfo{right:calc(var(--fpw) + 10px)}
 body.focusmode .sinfo>span{flex:1 1 0;flex-wrap:nowrap;align-items:center;padding:2px 7px;white-space:nowrap}
 body.focusmode .sinfo i{flex-basis:auto;margin-right:3px}
-body.focusmode .sinfo em,body.focusmode .sinfo .si-c small{display:none}
+body.focusmode .sinfo em{display:none}
+body.focusmode .micgate .card{padding:12px 14px}
+body.focusmode .micgate .mg-ic{display:none}
+body.focusmode .micgate .btn.big{min-height:48px}
 body.focusmode .dock{left:auto!important;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(4px + env(safe-area-inset-bottom,0px));padding:0!important;background:none!important;gap:6px;z-index:30}
 body.focusmode .dock>*{max-width:none}
 body.focusmode .dock .btn{min-height:40px!important;height:40px;padding:0 14px;font-size:.85rem;border-radius:99px;width:auto;flex:none!important;box-shadow:var(--shadow)}
@@ -1219,6 +1233,10 @@ function fitNow() {
   if (!el) { B.classList.remove('l2dock', 'focusmode', 'fopen'); return; }
   const r = l2Main(el); const focus = !!r && isRail() && isFocusMain(r.main);
   if (focus !== B.classList.contains('focusmode')) { B.classList.toggle('focusmode', focus); if (!focus) B.classList.remove('fopen'); else focusHint(); }
+  // 마이크 허용 안내가 떠 있으면 접힌 메뉴를 자동으로 펼쳐서 보이게 함 (허용되면 다시 접음)
+  const gate = focus && !!$('.micgate', el);
+  if (gate && !B.classList.contains('fopen')) { B.classList.add('fopen'); B._gateOpen = true; paintFbar(); }
+  else if (!gate && B._gateOpen) { B._gateOpen = false; B.classList.remove('fopen'); paintFbar(); }
   const hdr = focus ? 0 : $('#hdr').getBoundingClientRect().height; const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height : 0;
   const nav = $('#nav'); const nh = nav.classList.contains('hidden') || isRail() ? 0 : nav.getBoundingClientRect().height;
   const bottom = focus ? ((d || $('.sinfo', el)) ? 48 : 6) + safeBottom() : 10;
@@ -1226,7 +1244,7 @@ function fitNow() {
   layoutL2(el, r, focus);
 }
 function focusHint() { if (pref('focusHint', false)) return; setPref('focusHint', true); setTimeout(() => toast('키·빠르기 같은 조절은 오른쪽 위 ‘메뉴’를 누르면 펼쳐져요', 4200), 600); }
-function toggleFocusPanel(open) { const B = document.body; B.classList.toggle('fopen', open === undefined ? !B.classList.contains('fopen') : !!open); paintFbar(); requestAnimationFrame(fitNow); }
+function toggleFocusPanel(open) { const B = document.body; B._gateOpen = false; B.classList.toggle('fopen', open === undefined ? !B.classList.contains('fopen') : !!open); paintFbar(); requestAnimationFrame(fitNow); }
 function paintFbar() { const m = $('#fMenu'); if (!m) return; const o = document.body.classList.contains('fopen'); m.innerHTML = o ? ICONS.x + '<span>접기</span>' : ICONS.sliders + '<span>메뉴</span>'; m.setAttribute('aria-expanded', o); const top = stack[stack.length - 1]; const def = top && SCREENS[top.id]; $('#fHelp').classList.toggle('hidden', !(def && def.help)); $('#fFs').classList.toggle('hidden', FS.standalone()); }
 document.addEventListener('click', e => {
   const B = document.body; if (!B.classList.contains('fopen')) return;
@@ -1749,8 +1767,8 @@ const SI = {
     const best = DB.holdBest[this.feat()] || 0, cur = this.t0 ? this.hold : 0;
     const html = `<span class="si-a"><i>지금</i><b>${v ? m2f(fr.mf).toFixed(1) : '—'}</b><small>Hz</small><em class="${cls}">${v ? `${esc(nFull(tm && Math.abs(fr.mf - tm) < 1.5 ? tm : fr.midi))} ${cc >= 0 ? '+' : '−'}${Math.abs(Math.round(cc))}¢` : '소리를 기다려요'}</em></span>`
       + `<span class="si-b"><i>목표</i><b>${tm ? m2f(tm).toFixed(1) : '—'}</b><small>${tm ? 'Hz ' + esc(nFull(tm)) : ''}</small></span>`
-      + `<span class="si-c"><i>유지</i><b class="${cur ? 'good' : ''}">${cur.toFixed(1)}</b><small>초 · 오늘 최고 ${Math.max(this.sBest, cur).toFixed(1)} · 최고 ${Math.max(best, cur).toFixed(1)}</small></span>`
-      + `<span class="si-d"><i>오늘 이 연습</i><b>${this.minTxt}</b>${boxes[0].dataset.extra ? `<small>${esc(boxes[0].dataset.extra)}</small>` : ''}</span>`;
+      + `<span class="si-c"><i>고르게 유지</i><b class="${cur ? 'good' : ''}">${cur.toFixed(1)}</b><small>초</small><em>최고 ${Math.max(best, cur).toFixed(1)}초</em></span>`
+      + `<span class="si-d"><i>오늘</i><b>${this.minTxt}</b>${boxes[0].dataset.extra ? `<em>${esc(boxes[0].dataset.extra)}</em>` : ''}</span>`;
     boxes.forEach(b => { if (b._h !== html) { b.innerHTML = html; b._h = html; } });
   }
 };
