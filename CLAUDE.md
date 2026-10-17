@@ -23,7 +23,7 @@
 - `<head>`에 manifest, icon, apple-touch-icon, `mobile-web-app-capable`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-title` 태그를 넣는다. Artifact로 게시하면 태그가 body로 들어가므로, 스크립트에서 이 태그들을 `document.head`로 옮긴다.
 - 첫 화면(처음 실행 화면) 위쪽에 "홈 화면에 설치" 안내 배너를 띄운다. 버튼: 설치하기 / 전체화면 / 다음에. "다음에"를 누르면 기억해서 다시 띄우지 않고, 첫 화면 아래와 설정 메뉴에는 "홈 화면에 설치하기" 버튼을 계속 둔다.
 - `beforeinstallprompt`를 받았으면 바로 설치 창을 띄우고, 없으면 기기별 설치 방법(아이패드·아이폰 Safari 공유 버튼, 안드로이드 크롬 ⋮ 메뉴, 삼성 인터넷 ≡ 메뉴, PC 크롬·엣지 설치 아이콘)을 안내한다.
-- 홈 화면 앱으로 열렸을 때(`display-mode: standalone/fullscreen`, `navigator.standalone`)는 설치 안내와 전체화면 버튼을 숨긴다.
+- 홈 화면 앱으로 열렸을 때(`display-mode: standalone/fullscreen`, `navigator.standalone`)는 설치 안내와 전체화면 버튼을 숨긴다. 단, 크롬은 브라우저에서 전체화면 버튼(Fullscreen API)으로 전체화면이 되어도 `display-mode: fullscreen`을 맞다고 하므로, 처음 열렸을 때의 값을 저장해 두고 `document.fullscreenElement`가 있는 동안에는 그 저장한 값으로 판단한다(안 그러면 설치하지 않았는데 ‘홈 화면 앱으로 실행 중’이라고 나옴).
 
 ### 2. 전체화면
 - 헤더에 전체화면 버튼(켜기/끄기 아이콘 전환, `fullscreenchange`·`webkitfullscreenchange` 처리)을 둔다. 게임처럼 화면을 최대한 넓게 써야 하는 화면에서는 헤더를 숨기고 전체화면 켜기·끄기를 설정 메뉴(화면)에 둔다(사용자 요청).

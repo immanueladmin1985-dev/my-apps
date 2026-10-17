@@ -50,7 +50,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.class
 const EMB=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const ANDROID=/Android/i.test(navigator.userAgent),SAMSUNG=/SamsungBrowser/i.test(navigator.userAgent);
-const STANDALONE=()=>{try{return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true}catch(e){return false}};
+// 브라우저의 전체화면(Fullscreen API)도 크롬은 display-mode: fullscreen 으로 알려 주므로, 처음 열렸을 때의 상태로 판단
+const BOOT_STANDALONE=(()=>{try{return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: minimal-ui)').matches||navigator.standalone===true}catch(e){return false}})();
+const STANDALONE=()=>{try{if(navigator.standalone===true||matchMedia('(display-mode: standalone)').matches)return true;if(document.fullscreenElement||document.webkitFullscreenElement)return BOOT_STANDALONE;return BOOT_STANDALONE||matchMedia('(display-mode: fullscreen)').matches}catch(e){return false}};
 let installEvt=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e});
 addEventListener('appinstalled',()=>{installEvt=null;PREF.installHide=true;savePref();UI.toast('📲 홈 화면에 설치했어요!');if(!document.body.classList.contains('ingame'))Home.show()});

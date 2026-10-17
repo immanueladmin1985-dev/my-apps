@@ -1029,7 +1029,9 @@ function bindChips(root, name, fn) {
 /* ================= 전체화면·화면 켜짐 ================= */
 const FS = {
   userExit: false,
-  standalone() { return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true; },
+  // 브라우저의 전체화면(Fullscreen API)도 크롬은 display-mode: fullscreen 으로 알려 주므로, 처음 열렸을 때의 상태로 판단
+  boot: (() => { try { return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches || navigator.standalone === true; } catch (e) { return false; } })(),
+  standalone() { if (navigator.standalone === true || matchMedia('(display-mode: standalone)').matches) return true; if (document.fullscreenElement || document.webkitFullscreenElement) return this.boot; return this.boot || matchMedia('(display-mode: fullscreen)').matches; },
   supported() { const d = document.documentElement; return !!(d.requestFullscreen || d.webkitRequestFullscreen) && !this.standalone(); },
   on() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
   async enter() { const d = document.documentElement; try { if (d.requestFullscreen) await d.requestFullscreen({ navigationUI: 'hide' }); else if (d.webkitRequestFullscreen) d.webkitRequestFullscreen(); } catch (e) { } },

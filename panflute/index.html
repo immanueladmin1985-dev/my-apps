@@ -1284,7 +1284,14 @@ function confirmSheet(msg, okText = '확인', danger = false) {
 /* ================= 전체화면·화면 켜짐 ================= */
 const FS = {
   userExit: false,
-  standalone() { return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true; },
+  // 홈 화면 앱으로 열렸는지: 브라우저에서 전체화면 버튼(Fullscreen API)으로 전체화면이 되어도
+  // 크롬은 display-mode: fullscreen 으로 알려 주므로, 그때는 홈 화면 앱으로 보지 않음
+  boot: (() => { try { return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches || navigator.standalone === true; } catch (e) { return false; } })(),
+  standalone() {
+    if (navigator.standalone === true || matchMedia('(display-mode: standalone)').matches) return true;
+    if (this.on()) return this.boot; // 전체화면 API를 쓰는 중이면 처음 열렸을 때의 상태로 판단
+    return this.boot || matchMedia('(display-mode: fullscreen)').matches;
+  },
   supported() { const d = document.documentElement; return !!(d.requestFullscreen || d.webkitRequestFullscreen) && !this.standalone(); },
   on() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
   async enter() { const d = document.documentElement; try { if (d.requestFullscreen) await d.requestFullscreen({ navigationUI: 'hide' }); else if (d.webkitRequestFullscreen) d.webkitRequestFullscreen(); } catch (e) { } },
