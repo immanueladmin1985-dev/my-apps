@@ -396,10 +396,9 @@ canvas.trace{width:100%;height:120px;display:block;border-radius:14px;background
 .ed-notes .en.sel{border-color:var(--peony);background:var(--peony-soft)}
 
 /* ---------- Landscape ---------- */
-@media (orientation:landscape) and (max-height:560px){
+@media (orientation:landscape) and (max-height:600px){
   :root{--nav-h:56px;--hdr-h:50px}
-  #nav button{flex-direction:row;gap:6px;font-size:.8rem}
-  #view{max-width:1100px}
+  #view{max-width:none;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
   .split{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
   .t-note{font-size:4rem}
   .target .big{font-size:3.4rem}
@@ -408,8 +407,6 @@ canvas.trace{width:100%;height:120px;display:block;border-radius:14px;background
 @media (min-width:900px){ .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start} #view{max-width:1000px} }
 
 /* ---------- 한 화면 맞춤 ---------- */
-@media (max-height:700px){:root{--k:.93}}
-@media (max-height:620px){:root{--k:.88}}
 body.fitmode #view{padding-bottom:0;padding-top:4px}
 .screen.fit{display:flex;flex-direction:column;gap:9px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
 .screen.fit::-webkit-scrollbar{display:none}
@@ -528,8 +525,8 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .ln-lane .stf-live{z-index:4}
 
 /* ---------- 가로 화면: 꼭 필요한 것만 ---------- */
-@media (orientation:landscape) and (max-height:560px){
-  .land-hide{display:none!important}
+@media (orientation:landscape) and (max-height:600px){
+  .screen:not(.l2) .land-hide{display:none!important}
   #hdr{min-height:calc(46px + env(safe-area-inset-top,0px))}
   #hdr .icon-btn{width:42px;height:42px}
   .dock{padding:6px 12px calc(6px + env(safe-area-inset-bottom,0px))}
@@ -550,7 +547,7 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
   .stf-lane,.ln-lane{min-height:96px}
 }
 @media (max-height:700px){.stf-lane,.ln-lane{min-height:104px}.sm-hide{display:none!important}}
-@media (orientation:landscape) and (max-height:560px){.phase{min-height:52px}#dtPh{min-height:40px!important}.stf-lane,.ln-lane{min-height:88px}}
+@media (orientation:landscape) and (max-height:600px){.phase{min-height:52px}#dtPh{min-height:40px!important}.stf-lane,.ln-lane{min-height:88px}}
 
 /* ---------- 키·빠르기 조절 ---------- */
 .ctl-row{display:flex;gap:6px}
@@ -609,17 +606,45 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .sylane b{position:absolute;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--peony);left:10%}
 .sydot{display:grid;place-items:center}
 .sydot i{width:64px;height:64px;border-radius:50%;background:var(--peony);opacity:.15;transition:opacity .05s}
-/* ---------- 가로 화면 2단 ---------- */
-@media (orientation:landscape) and (max-height:560px){
-  .screen.fit > .col.fx:not(.l-row):not(.card), .screen.fit > .col.fx:not(.l-row):not(.card) > .col.fx:not(.l-row):not(.card){display:contents}
-  .screen.fit.l2{flex-wrap:wrap;align-content:flex-start;column-gap:14px;overflow:hidden}
-  .screen.fit.l2 > *, .screen.fit.l2 > .col.fx:not(.card) > *, .screen.fit.l2 > .col.fx:not(.card) > .col.fx:not(.card) > *{width:calc(42% - 7px)}
-  .screen.fit.l2 .lmain{order:-1;width:calc(58% - 7px)!important;height:100%!important;flex:0 0 100%!important;max-height:none!important}
-  .screen.fit.l2 .lrow{flex-direction:column!important;align-items:stretch!important}
-  .screen.fit.l2 .lrow>*{flex:none}
-  .screen:not(.fit){column-count:2;column-gap:14px}
-  .screen:not(.fit) > *{break-inside:avoid}
+/* ---------- 가로 화면 2단: 왼쪽은 큰 화면(악보·음 표시), 오른쪽은 조절 버튼과 시작 버튼 ---------- */
+.screen.fit.l2{display:grid;grid-template-columns:minmax(0,61fr) minmax(0,39fr);column-gap:14px;row-gap:8px;align-content:start;overflow-y:auto;overflow-x:hidden}
+.screen.fit.l2 .col.fx:not(.l-row):not(.card){display:contents}
+.screen.fit.l2 [data-l2="side"]{grid-column:2;min-width:0}
+.screen.fit.l2 .lmain{grid-column:1;grid-row:1/-1;position:sticky;top:0;height:var(--l2h,100%)!important;max-height:none!important;min-height:0;align-self:start}
+.screen.fit.l2::after{content:'';grid-column:2;height:var(--dockh,0px);order:2}
+.screen.fit.l2 .land-hide{order:1}
+.screen.fit.l2 .lrow{flex-direction:column!important;align-items:stretch!important}
+.screen.fit.l2 .lrow>*{flex:none}
+.screen.fit.l2 .ctl-row,.screen.fit.l2 .presets,.screen.fit.l2 .tgls{flex-wrap:wrap}
+.screen.fit.l2 .ibtns{flex-wrap:wrap}
+.screen.fit.l2 .ibtns .btn{flex:1 1 30%}
+.screen.fit.l2 .cur-row{flex-wrap:wrap}
+body.l2dock .dock{left:var(--dockL,50%);right:max(0px,env(safe-area-inset-right,0px));padding-left:0;padding-right:12px;background:linear-gradient(to top,var(--bg) 75%,transparent)}
+body.l2dock .dock>*{max-width:none}
+/* 가로 휴대폰: 아래 메뉴를 왼쪽 세로 메뉴로 옮겨 위아래 공간을 넓힘 */
+@media (orientation:landscape) and (max-height:600px){
+  :root{--rail:calc(76px + env(safe-area-inset-left,0px))}
+  #nav{top:0;bottom:0;right:auto;width:var(--rail);flex-direction:column;justify-content:center;gap:2px;border-top:0;border-right:1px solid var(--line);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);box-shadow:4px 0 16px rgba(0,0,0,.04)}
+  #nav button{flex:0 0 auto;height:auto;min-height:58px;flex-direction:column;gap:1px;font-size:.7rem}
+  #nav button svg{width:24px;height:24px}
+  body.has-nav #app{padding-left:var(--rail)}
+  body.has-nav #view{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+  body.has-nav.has-dock #view{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  body.has-nav .dock{bottom:0;left:var(--rail);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+  body.has-nav.l2dock .dock{left:var(--dockL,50%)}
+  #toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 }
+/* 가로로 넓은 화면의 목록 화면: 위에서 아래로 읽히게 두 칸 격자 */
+@media (orientation:landscape) and (max-height:600px),(min-width:900px){
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 16px;align-items:start}
+  .grid2>.blk>.sec-title:first-child{margin-top:14px}
+  .list.grid2{gap:0}
+  .list.grid2>*:nth-child(2){border-top:0}
+  .list.grid2>*:nth-child(even){border-left:1px solid var(--line)}
+  .stages{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 16px;align-items:start}
+  .screen:not(.fit) .acc,.screen:not(.fit)>p{max-width:820px;margin-left:auto;margin-right:auto}
+}
+@media (min-width:900px) and (min-height:601px){ #view{max-width:1100px} }
 
 /* ---------- 반주 재생 ---------- */
 .bp-time{display:flex;align-items:baseline;justify-content:center;gap:6px}
@@ -646,8 +671,6 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
   <header id="hdr">
     <button class="icon-btn hidden" id="hBack" aria-label="뒤로 가기"></button>
     <h1 id="hTitle"></h1>
-    <button class="icon-btn hidden" id="hHelp" aria-label="도움말"></button>
-    <button class="icon-btn hidden" id="hOpt" aria-label="조절"></button>
     <button class="icon-btn hidden" id="hHelp" aria-label="도움말"></button>
     <button class="icon-btn" id="hFS" aria-label="전체화면"></button>
     <button class="icon-btn" id="hSet" aria-label="설정"></button>
@@ -936,7 +959,7 @@ function show() {
   const view = $('#view');
   view.innerHTML = '';
   const el = document.createElement('div'); el.className = 'screen' + (def.fit ? ' fit' : ''); view.appendChild(el);
-  $('#hHelp').classList.toggle('hidden', !def.help); el._noL2 = false;
+  $('#hHelp').classList.toggle('hidden', !def.help);
   // 머리줄
   const title = typeof def.title === 'function' ? def.title(top.params) : def.title;
   const h = $('#hTitle'); h.textContent = title || ''; h.classList.toggle('brand', !!def.brand);
@@ -990,14 +1013,25 @@ function resultSheet(title, html, actions, onAct) {
   return sh;
 }
 /* 기능 화면을 폰 한 화면 높이에 맞춤 */
+const isRail = () => matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
+const isWide2 = () => innerWidth >= innerHeight * 1.2 && innerWidth >= 600;
+/* 화면 크기에 맞춘 글자 비율: 짧은 쪽 길이를 기준으로 (가로 휴대폰은 높이 기준) */
+function applyViewK() {
+  const land = innerWidth > innerHeight, sh = Math.min(innerWidth, innerHeight);
+  const k = clamp(land && innerHeight < 600 ? innerHeight / 420 : sh / 410, 0.84, 1.15);
+  document.documentElement.style.setProperty('--k', k.toFixed(3));
+}
 function fitNow() {
-  const el = $('#view > .screen.fit'); document.body.classList.toggle('fitmode', !!el); if (!el) return;
+  applyViewK();
+  const el = $('#view > .screen.fit'); document.body.classList.toggle('fitmode', !!el);
+  if (!el) { document.body.classList.remove('l2dock'); return; }
   const hdr = $('#hdr').getBoundingClientRect().height; const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height : 0;
-  const nav = $('#nav'); const nh = nav.classList.contains('hidden') ? 0 : nav.getBoundingClientRect().height;
-  el.style.height = Math.max(240, Math.floor(window.innerHeight - hdr - dh - nh - 10)) + 'px';
+  const nav = $('#nav'); const nh = nav.classList.contains('hidden') || isRail() ? 0 : nav.getBoundingClientRect().height;
+  const want = !!l2Main(el);
+  el.style.height = Math.max(220, Math.floor(window.innerHeight - hdr - (want ? 0 : dh) - nh - 10)) + 'px';
   layoutL2(el);
 }
-if (window.MutationObserver) { let mq = 0; new MutationObserver(() => { if (mq) return; mq = requestAnimationFrame(() => { mq = 0; const el = $('#view > .screen.fit'); if (el) layoutL2(el); }); }).observe(document.getElementById('view') || document.body, { childList: true, subtree: true }); }
+if (window.MutationObserver) { let mq = 0; new MutationObserver(() => { if (mq) return; mq = requestAnimationFrame(() => { mq = 0; if ($('#view > .screen.fit')) fitNow(); }); }).observe(document.getElementById('view') || document.body, { childList: true, subtree: true }); }
 window.addEventListener('resize', () => requestAnimationFrame(fitNow));
 function confirmSheet(msg, okText = '확인', danger = false) {
   return new Promise(res => {
@@ -1015,8 +1049,33 @@ const FS = {
   on() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
   async enter() { const d = document.documentElement; try { if (d.requestFullscreen) await d.requestFullscreen({ navigationUI: 'hide' }); else if (d.webkitRequestFullscreen) d.webkitRequestFullscreen(); } catch (e) { } },
   async exit() { try { if (document.exitFullscreen) await document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); } catch (e) { } },
-  paint() { const b = $('#hFS'); if (!b) return; b.classList.toggle('hidden', !this.supported()); b.innerHTML = this.on() ? ICONS.fsOff : ICONS.fsOn; b.setAttribute('aria-label', this.on() ? '전체화면 끝내기' : '전체화면'); }
+  paint() { const b = $('#hFS'); if (!b) return; b.classList.toggle('hidden', this.standalone()); b.innerHTML = this.on() ? ICONS.fsOff : ICONS.fsOn; b.setAttribute('aria-label', this.on() ? '전체화면 끝내기' : '전체화면'); }
 };
+const inFrame = () => { try { return window.self !== window.top; } catch (e) { return true; } };
+const isIOS = () => /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+async function toggleFS() {
+  if (FS.on()) { FS.userExit = true; await FS.exit(); FS.paint(); return; }
+  if (!FS.supported() || inFrame()) { installGuide('전체화면이 안 되는 화면이에요', '이 기기(또는 미리보기 화면)에서는 전체화면을 쓸 수 없어요. 홈 화면에 앱으로 설치하면 주소창 없이 화면 전체를 써요.'); return; }
+  FS.userExit = false; await FS.enter(); FS.paint();
+  if (!FS.on()) installGuide('전체화면으로 바꾸지 못했어요', '홈 화면에 앱으로 설치하면 주소창 없이 화면 전체를 써요.');
+}
+/* 홈 화면 설치: 설치 창을 띄울 수 있으면 바로 띄우고, 아니면 기기별 방법을 안내 */
+async function startInstall() { if (FS.standalone()) { toast('이미 홈 화면 앱으로 열려 있어요'); return; } if (installEvt) { await doInstall(); return; } installGuide(); }
+function installGuide(title, lead) {
+  const ua = navigator.userAgent, ios = isIOS(), sam = /SamsungBrowser/i.test(ua), and = /Android/i.test(ua);
+  const K = t => `<span class="kbd">${t}</span>`;
+  const ways = [
+    { k: 'ios', t: '아이폰·아이패드 (Safari)', b: `<ol class="steps"><li>Safari로 이 주소를 여세요. (카카오톡 안에서 열렸다면 오른쪽 아래 ${K('⋯')} → ${K('Safari로 열기')})</li><li>아래(아이패드는 위) 가운데의 ${K('공유 □↑')} 버튼을 누르세요.</li><li>목록을 올려 ${K('홈 화면에 추가')}를 누르고 ${K('추가')}를 누르세요.</li></ol>` },
+    { k: 'and', t: '안드로이드 크롬', b: `<ol class="steps"><li>크롬 오른쪽 위 ${K('⋮')}를 누르세요.</li><li>${K('홈 화면에 추가')} 또는 ${K('앱 설치')}를 누르세요.</li><li>${K('설치')}를 누르면 홈 화면에 아이콘이 생겨요.</li></ol>` },
+    { k: 'sam', t: '삼성 인터넷', b: `<ol class="steps"><li>아래쪽 ${K('≡')} 메뉴를 누르세요.</li><li>${K('현재 페이지 추가')} → ${K('홈 화면')}을 누르세요.</li></ol>` },
+    { k: 'pc', t: 'PC 크롬·엣지', b: `<ol class="steps"><li>주소창 오른쪽 끝의 ${K('설치 ⊕')} 아이콘을 누르세요.</li><li>아이콘이 없으면 ${K('⋮')} 메뉴 → ${K('앱')}(또는 ${K('저장 및 공유')}) → ${K('설치')}를 누르세요.</li></ol>` }];
+  const mine = ios ? 'ios' : sam ? 'sam' : and ? 'and' : 'pc';
+  ways.sort((a, b) => (b.k === mine) - (a.k === mine));
+  const sh = openSheet(`<h3>${esc(title || '홈 화면에 설치하기')}</h3><p class="small muted" style="margin:0 0 8px">${esc(lead || '홈 화면 아이콘으로 열면 주소창 없이 화면 전체를 쓰고, 설정과 기록도 그대로 남아요.')}</p>
+    ${ways.map((w, i) => `<details class="acc" ${i === 0 ? 'open' : ''}><summary>${esc(w.t)}${i === 0 ? ' <span class="tag">지금 기기</span>' : ''}</summary><div class="body">${w.b}</div></details>`).join('')}
+    <button class="btn primary wide mt2" data-x="1">알겠어요</button>`);
+  sh.addEventListener('click', e => { if (e.target.closest('[data-x]')) sheetDone(); });
+}
 document.addEventListener('fullscreenchange', () => FS.paint());
 document.addEventListener('webkitfullscreenchange', () => FS.paint());
 let splashDone = false;
@@ -1037,7 +1096,8 @@ function applyTheme() {
   const t = S().theme; const dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   document.documentElement.style.setProperty('--fs', (18 * (S().fontScale || 1)).toFixed(1) + 'px');
-  const mt = $('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', dark ? '#111518' : '#E9F0ED');
+  const mt = $('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', dark ? '#1D1814' : '#F2ECE3');
+  applyViewK();
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener && matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 
@@ -1730,19 +1790,27 @@ function LineLane(host, notes, o = {}) {
     const W = Math.max(120, host.clientWidth || 360), H = Math.max(60, host.clientHeight || 150);
     nl = o.lines || (H >= cropH * 1.45 ? 2 : 1); lineH = H / nl;
     const sw = segs.map(g => g.x1 - g.x0), maxSeg = Math.max(...sw), medSeg = median(sw);
-    k = Math.min(lineH / cropH, 1.7, Math.max(W / (40 + 2 * medSeg + 6), 0.95));
-    k = Math.max(0.4, Math.min(k, (W - 6) / (68 + maxSeg)));
+    const pack = kk => { const av = W / kk - 6, out = []; let L = null; segs.forEach(g => { if (L && L.fw + (g.x1 - L.x0) <= av) { L.x1 = g.x1; L.b1 = g.b1; L.n++; } else { L = { x0: out.length ? g.x0 + 3 : 0, x1: g.x1, b0: g.b0, b1: g.b1, fw: out.length ? 40 : 68, n: 1 }; out.push(L); } }); return out; };
+    k = Math.max(0.4, Math.min(lineH / cropH, 1.7, (W - 6) / (68 + maxSeg)));
+    lines = pack(k);
+    // 한 줄에 한 마디씩만 들어가면, 음표를 조금씩 줄여 가며 두 마디씩 들어가는 크기를 찾음
+    if (segs.length > 2 && segs.length / lines.length < 1.8) {
+      const kMin = Math.max(0.85, k * 0.62);
+      for (let kk = k * 0.94; kk >= kMin; kk *= 0.94) { const l2 = pack(kk); if (segs.length / l2.length >= 1.8) { k = kk; lines = l2; break; } }
+    }
     const avail = W / k - 6;
-    lines = []; let L = null;
-    segs.forEach(g => { if (L && L.fw + (g.x1 - L.x0) <= avail) { L.x1 = g.x1; L.b1 = g.b1; } else { L = { x0: lines.length ? g.x0 + 3 : 0, x1: g.x1, b0: g.b0, b1: g.b1, fw: lines.length ? 40 : 68 }; lines.push(L); } });
-    lines.forEach(l => { l.x1 += 2; });
+    // 줄마다 음 사이를 넓혀 오른쪽 끝까지 고르게 채움 (음표 크기는 그대로)
+    lines.forEach((l, j) => { l.x1 += 2; const want = (avail - l.fw) / (l.x1 - l.x0); l.s = clamp(want, 1, j === lines.length - 1 && lines.length > 1 ? 1.3 : 1.8); });
     lineOf = st.beats.map(bt => Math.max(0, lines.findIndex(l => bt >= l.b0 - 1e-6 && bt < l.b1 - 1e-6)));
     offY = (lineH - cropH * k) / 2;
     let staffL = ''; for (let q = 0; q < 5; q++) { const y = ySt(30 + q * 2); staffL += `<line class="sl" x1="0" x2="FW" y1="${y}" y2="${y}"/>`; }
     rowsEl.innerHTML = lines.map((l, j) => {
       const ids = []; lineOf.forEach((lj, i) => { if (lj === j) ids.push(i); });
-      const fix = `<rect x="0" y="${cropTop}" width="${l.fw}" height="${cropH}" fill="var(--paper)"/>${staffL.replace(/FW/g, l.fw)}${CLEF_SVG}${j === 0 ? `<text class="tsg" x="${l.fw - 13}" y="${ySt(36) + 7}">${tt}</text><text class="tsg" x="${l.fw - 13}" y="${ySt(32) + 7}">${tb}</text>` : ''}`;
-      return `<div class="ln-row" data-j="${j}" style="height:${lineH}px"><svg class="ln-fix" viewBox="0 ${cropTop} ${l.fw} ${cropH}" style="width:${l.fw * k}px;height:${cropH * k}px">${fix}</svg><svg class="ln-svg" viewBox="${l.x0} ${cropTop} ${l.x1 - l.x0} ${cropH}" style="width:${(l.x1 - l.x0) * k}px;height:${cropH * k}px">${st.deco}${ids.map(i => st.parts[i]).join('')}${st.extra}</svg></div>`;
+      const fix = `${staffL.replace(/FW/g, l.fw)}${CLEF_SVG}${j === 0 ? `<text class="tsg" x="${l.fw - 13}" y="${ySt(36) + 7}">${tt}</text><text class="tsg" x="${l.fw - 13}" y="${ySt(32) + 7}">${tb}</text>` : ''}`;
+      const lx = bt => l.x0 + (sp.xOf(bt) - l.x0) * l.s;
+      const sj = l.s === 1 ? st : buildStaff(notes, Object.assign({}, o, { xOf: lx, barX: bt => l.x0 + (sp.barX(bt) - l.x0) * l.s, total: l.x0 + (st.total - l.x0) * l.s, lbY }));
+      const vw = (l.x1 - l.x0) * l.s;
+      return `<div class="ln-row" data-j="${j}" style="height:${lineH}px"><svg class="ln-fix" viewBox="0 ${cropTop} ${l.fw} ${cropH}" style="width:${l.fw * k}px;height:${cropH * k}px">${fix}</svg><svg class="ln-svg" viewBox="${l.x0} ${cropTop} ${vw} ${cropH}" style="width:${vw * k}px;height:${cropH * k}px">${sj.deco}${ids.map(i => sj.parts[i]).join('')}${sj.extra}</svg></div>`;
     }).join('');
     rows = $$('.ln-row', rowsEl); groups = []; $$('.n', rowsEl).forEach(g => { groups[+g.dataset.i] = g; });
     bar.style.height = ((lbY - ySt(38) + 8) * k) + 'px';
@@ -1762,7 +1830,7 @@ function LineLane(host, notes, o = {}) {
     else vis = j + 1 < lines.length ? [j, j + 1] : [j - 1, j];
     rows.forEach((r, q) => { const on = vis.includes(q); r.style.top = (slotOf(q) * lineH) + 'px'; r.classList.toggle('off', !on); r.classList.toggle('act', q === j && lines.length > 1); if (now) { r.style.transition = 'none'; void r.offsetWidth; r.style.transition = ''; } });
   }
-  function xPix(j, x) { const l = lines[j]; return 4 + l.fw * k + (x - l.x0) * k; }
+  function xPix(j, x) { const l = lines[j]; return 4 + l.fw * k + (x - l.x0) * l.s * k; }
   function placeBar(b) {
     const bt = Math.max(0, b); let j = lines.findIndex(l => bt >= l.b0 - 1e-6 && bt < l.b1 - 1e-6); if (j < 0) j = lines.length - 1;
     if (j !== S_.j) showLine(j);
@@ -2093,19 +2161,39 @@ async function fillMicSel(sel) {
     + (cur && !known ? `<option value="${esc(cur)}" selected>${esc(S().micLabel || '고른 마이크')} (마이크를 켜면 확인해요)</option>` : '');
   sel.onchange = async () => { const d = L.find(x => x.deviceId === sel.value); S().micDev = sel.value || null; S().micLabel = sel.value ? (d && d.label) || S().micLabel || '' : ''; saveDB(); const had = Mic.running() || Mic.subs.size; Mic.teardown(); if (had) await Mic.acquire(); toast('입력 마이크를 바꿨어요. 다음에 열어도 이 마이크를 써요'); };
 }
-/* 가로 화면: 큰 화면(악보·음 표시)은 왼쪽, 나머지는 오른쪽 2단 배치 */
+/* 가로로 넓은 화면: 큰 화면(악보·음 표시)은 왼쪽, 나머지와 시작 버튼은 오른쪽 */
+function l2Items(el) {
+  const items = [];
+  const walk = p => [...p.children].forEach(c => {
+    if (c.classList.contains('hidden') || c.id === 'dock') return;
+    if (c.classList.contains('col') && c.classList.contains('fx') && !c.classList.contains('l-row') && !c.classList.contains('card')) { walk(c); return; }
+    if (c.classList.contains('land-hide') || getComputedStyle(c).display !== 'none') items.push(c);
+  });
+  walk(el); return items;
+}
+function l2Main(el) {
+  if (!el || !isWide2()) return null;
+  const items = l2Items(el).filter(c => c.offsetHeight > 0 || c.classList.contains('land-hide') || c.classList.contains('lmain'));
+  const main = items.find(c => c.classList.contains('fx'));
+  return main && items.length >= 2 ? { main, items } : null;
+}
 function layoutL2(el) {
   if (!el) return;
-  const land = matchMedia('(orientation: landscape) and (max-height: 560px)').matches;
-  const prevMain = $('.lmain', el);
-  if (!land || el._noL2) { el.classList.remove('l2'); if (prevMain) prevMain.classList.remove('lmain'); return; }
-  const items = []; const walk = p => [...p.children].forEach(c => { const d = getComputedStyle(c).display; if (d === 'contents') walk(c); else if (d !== 'none' && c.offsetHeight > 0) items.push(c); });
-  walk(el);
-  const main = items.find(c => c.classList.contains('fx'));
-  if (items.length < 2 || !main) { el.classList.remove('l2'); if (prevMain) prevMain.classList.remove('lmain'); return; }
-  if (prevMain && prevMain !== main) prevMain.classList.remove('lmain');
-  main.classList.add('lmain'); el.classList.add('l2');
-  requestAnimationFrame(() => { if (el.classList.contains('l2') && (el.scrollWidth > el.clientWidth + 4 || el.scrollHeight > el.clientHeight + 4)) { el._noL2 = true; el.classList.remove('l2'); main.classList.remove('lmain'); } });
+  const r = l2Main(el);
+  const prev = $$('[data-l2]', el);
+  if (!r) {
+    el.classList.remove('l2'); prev.forEach(c => c.removeAttribute('data-l2')); $$('.lmain', el).forEach(c => c.classList.remove('lmain'));
+    document.body.classList.remove('l2dock'); return;
+  }
+  prev.forEach(c => { if (!r.items.includes(c)) c.removeAttribute('data-l2'); });
+  $$('.lmain', el).forEach(c => { if (c !== r.main) c.classList.remove('lmain'); });
+  let n = 0; r.items.forEach(c => { if (c === r.main) { c.classList.add('lmain'); c.removeAttribute('data-l2'); } else { n++; if (c.getAttribute('data-l2') !== 'side') c.setAttribute('data-l2', 'side'); } });
+  const rows = `repeat(${n + 1}, auto) 1fr`; if (el.style.gridTemplateRows !== rows) el.style.gridTemplateRows = rows;
+  el.classList.add('l2');
+  const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height + 6 : 0;
+  el.style.setProperty('--l2h', el.clientHeight + 'px'); el.style.setProperty('--dockh', dh + 'px');
+  document.body.classList.toggle('l2dock', !!d);
+  if (d) document.body.style.setProperty('--dockL', Math.round(r.main.getBoundingClientRect().right + 14) + 'px');
 }
 
 /* ================= 시작 화면 (리졸브 효과) ================= */
@@ -2249,40 +2337,48 @@ const STAGES = [
 defScreen('home', {
   tab: true, brand: true, title: '난장이의 팬플룻 교실',
   render(el) {
+    // 첫 화면에는 연습 시간·연속 기록을 띄우지 않음 (기록은 ‘기록’ 탭에서만)
     const h = new Date().getHours();
     const greet = h < 11 ? '좋은 아침이에요.<br>오늘도 고운 숨으로 시작해요' : h < 18 ? '반가워요.<br>오늘은 어떤 소리를 낼까요' : '편안한 저녁이에요.<br>천천히 한 곡 불어 볼까요';
-    const today = minutesOn(dayKey()), st = streakDays();
-    const stat = today ? `오늘 ${today}분 연습했어요${st > 1 ? ` · ${st}일째 이어서 연습 중` : ''}` : st ? `어제까지 ${st}일 연속으로 연습했어요` : '오늘 첫 연습을 시작해 볼까요?';
     const sug = suggestToday();
     el.innerHTML = `
+      <div id="instBan"></div>
       <section class="hero">
         <div class="art">${fluteArt()}</div>
-        <div class="hstats"><div><b>${today}<small>분</small></b><span>오늘 연습</span></div><div><b>${st}<small>일</small></b><span>연속 연습</span></div></div>
-        <div class="greet sm">${greet.replace('<br>', ' ')}</div>
+        <div class="greet">${greet}</div>
         <button class="btn" id="sugBtn">${ICONS.play}${esc(sug.t)}</button>
       </section>
-      <div class="outrow" style="margin-top:12px"><span>듣는 장치 · 소리 지연 ${Math.round(latencySec() * 1000)}ms</span>${outBtnHTML(1)}</div>
       <div id="banners"></div>
-      ${STAGES.map(sg => `<section class="stage">
+      <div class="stages">${STAGES.map(sg => `<section class="stage">
         <div class="stage-h">${pipIcon(sg.n, `var(--s${sg.n}i)`)}<div><div class="n">${sg.n}단계</div><h2>${sg.name}</h2></div></div>
         <div class="list">${sg.items.map(it => `<button class="li" data-go="${it.id}" data-p='${it.p ? JSON.stringify(it.p) : ''}'><span class="li-ic" style="background:var(--s${sg.n});color:var(--s${sg.n}i)">${ICONS[it.ic]}</span><span class="grow"><span class="t">${it.t}</span><br><span class="d">${it.d}</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>`).join('')}</div>
-      </section>`).join('')}
+      </section>`).join('')}</div>
+      ${FS.standalone() ? '' : `<div class="center mt2"><button class="btn" id="hInst">${ICONS.install}홈 화면에 설치하기</button></div>`}
       <p class="center mt2" style="font-family:var(--hand);font-size:1.7rem;color:var(--peony)">Made by 장작&amp;난로</p>`;
     $('#sugBtn', el).onclick = () => go(sug.id, sug.p || {});
+    const hi = $('#hInst', el); if (hi) hi.onclick = () => startInstall();
     el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; const p = b.dataset.p ? JSON.parse(b.dataset.p) : {}; go(b.dataset.go, p); });
+    const paintInst = () => {
+      const box = $('#instBan', el); if (!box) return;
+      if (FS.standalone() || S().installDismissed) { box.innerHTML = ''; return; }
+      box.innerHTML = `<div class="banner info" style="margin:0 0 14px">${ICONS.install}<div class="grow"><b>홈 화면에 앱으로 설치하세요</b><span class="small">아이콘으로 열면 주소창 없이 화면 전체를 쓰고, 설정도 그대로 남아요.</span>
+        <div class="row wrap mt" style="gap:6px"><button class="btn sm primary" data-ib="inst">설치하기</button><button class="btn sm" data-ib="fs">전체화면</button><button class="btn sm ghost" data-ib="later">다음에</button></div></div></div>`;
+      box.onclick = async e => { const b = e.target.closest('[data-ib]'); if (!b) return; const a = b.dataset.ib;
+        if (a === 'inst') { await startInstall(); paintInst(); }
+        else if (a === 'fs') toggleFS();
+        else { S().installDismissed = true; saveDB(); paintInst(); toast('아래 ‘홈 화면에 설치하기’ 버튼이나 설정에서 언제든 설치할 수 있어요', 3500); } };
+    };
+    paintInst();
     const paintBanners = async () => {
       const box = $('#banners', el); if (!box) return; let html = '';
-      if (Mic.secure() && Mic.embeddedBlocked()) html += `<div class="banner">${ICONS.lock}<div class="grow"><b>미리보기 링크로 열려 있어요</b><span class="small">여기서는 음정 듣기(마이크)가 막혀 있어요. 관 소리, 메트로놈, 곡 시범 듣기는 쓸 수 있어요.</span><div class="mt"><button class="btn sm" data-guide="insecure">마이크까지 쓰는 방법</button></div></div></div>`;
+      if (Mic.secure() && Mic.embeddedBlocked()) html += `<div class="banner">${ICONS.lock}<div class="grow"><b>미리보기 화면으로 열려 있어요</b><span class="small">여기서는 음정 듣기(마이크)가 막혀 있어요. 관 소리, 메트로놈, 곡 시범 듣기는 쓸 수 있어요.</span><div class="mt"><button class="btn sm" data-guide="insecure">마이크까지 쓰는 방법</button></div></div></div>`;
       if (!Mic.secure()) html += `<div class="banner">${ICONS.lock}<div class="grow"><b>지금은 마이크를 쓸 수 없어요</b><span class="small">파일로 열려 있어서 음정 듣기 기능이 꺼져 있어요.</span><div class="mt"><button class="btn sm" data-guide="insecure">해결 방법 보기</button></div></div></div>`;
-      else { const q = await Mic.query(); if (q === 'denied') html += `<div class="banner">${ICONS.micOff}<div class="grow"><b>마이크가 막혀 있어요</b><span class="small">음정 듣기를 하려면 마이크를 허용해 주세요.</span><div class="mt"><button class="btn sm" data-guide="chrome">허용하는 방법</button></div></div></div>`; }
-      if (installEvt && !FS.standalone() && !S().installDismissed) html += `<div class="banner info">${ICONS.install}<div class="grow"><b>홈 화면에 앱으로 설치하세요</b><span class="small">아이콘으로 열면 주소창 없이 화면 전체를 써요.</span><div class="row mt"><button class="btn sm primary" id="bInst">설치하기</button><button class="btn sm ghost" id="bInstX">닫기</button></div></div></div>`;
+      else { const q = await Mic.query(); if (q === 'denied') html += `<div class="banner">${ICONS.micOff}<div class="grow"><b>마이크가 막혀 있어요</b><span class="small">음정 듣기를 하려면 마이크를 허용해 주세요.</span><div class="mt"><button class="btn sm" data-guide="${isIOS() ? 'iphone' : 'chrome'}">허용하는 방법</button></div></div></div>`; }
       box.innerHTML = html;
       $$('[data-guide]', box).forEach(b => b.onclick = () => go('micguide', { tab: b.dataset.guide }));
-      const bi = $('#bInst', box); if (bi) bi.onclick = async () => { await doInstall(); paintBanners(); };
-      const bx = $('#bInstX', box); if (bx) bx.onclick = () => { S().installDismissed = true; saveDB(); paintBanners(); };
     };
     paintBanners();
-    const onInst = () => paintBanners(); document.addEventListener('installready', onInst);
+    const onInst = () => paintInst(); document.addEventListener('installready', onInst);
     return () => document.removeEventListener('installready', onInst);
   }
 });
@@ -3112,7 +3208,7 @@ defScreen('songs', {
       const list = allSongs().filter(s => cat === 'all' || s.c === cat);
       el.innerHTML = `${mode ? `<div class="banner info" style="margin-top:0">${ICONS[mode === 'follow' ? 'follow' : 'roll']}<div class="grow"><b>${mode === 'follow' ? '곡 따라 불기' : '곡 박자대로 불기'}</b><span class="small">${mode === 'follow' ? '곡을 고르면 한 음씩, 맞을 때까지 기다려 드려요.' : '곡을 고르면 박자에 맞춰 불고 점수를 받아요.'}</span></div></div>` : ''}
         <div class="chips scroll mt" id="sgCat">${SONG_CATS.map(([k, l]) => `<button class="chip ${k === cat ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div>
-        <div class="list mt" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); return `<button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${esc(s.t)}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button>`; }).join('') : `<div class="li"><span class="grow muted">${cat === 'mine' ? '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.' : '곡이 없어요.'}</span></div>`}</div>
+        <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); return `<button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${esc(s.t)}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button>`; }).join('') : `<div class="li"><span class="grow muted">${cat === 'mine' ? '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.' : '곡이 없어요.'}</span></div>`}</div>
         <button class="btn wide mt" id="sgNew">${ICONS.pen}계이름으로 내 곡 만들기</button>
         <p class="tiny muted mt">기본 곡은 저작권이 끝난 민요·찬송가·명곡·동요의 가락만 담았어요. 막대 개수는 난이도예요.</p>`;
       $('#sgCat', el).addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; cat = b.dataset.k; setPref('songCat', cat); render(); });
@@ -4196,20 +4292,20 @@ defScreen('records', {
     const recent = DB.sessions.slice(-12).reverse();
     const lb = Object.entries(DB.longBest).map(([m, s]) => ({ m: +m, s })).sort((a, b) => a.m - b.m);
     const sb = Object.entries(DB.songBest).map(([id, b]) => ({ s: getSong(id), b })).filter(x => x.s);
-    el.innerHTML = `<div class="card"><div class="kv" style="margin-top:0"><div><b>${today}분</b><span>오늘</span></div><div><b>${week}분</b><span>최근 7일</span></div><div><b>${st}일</b><span>연속 연습</span></div></div>
-      <div class="bars mt">${days.map(d => `<div class="b ${d.lbl === '오늘' ? 'today' : ''}"><i style="height:${(d.m / maxM * 100).toFixed(0)}%"></i><span>${d.lbl}</span></div>`).join('')}</div><div class="tiny muted center">최근 14일 연습 시간</div></div>
-      <div class="sec-title">내 음정 습관</div>
+    el.innerHTML = `<div class="grid2"><div class="blk"><div class="card"><div class="kv" style="margin-top:0"><div><b>${today}분</b><span>오늘</span></div><div><b>${week}분</b><span>최근 7일</span></div><div><b>${st}일</b><span>연속 연습</span></div></div>
+      <div class="bars mt">${days.map(d => `<div class="b ${d.lbl === '오늘' ? 'today' : ''}"><i style="height:${(d.m / maxM * 100).toFixed(0)}%"></i><span>${d.lbl}</span></div>`).join('')}</div><div class="tiny muted center">최근 14일 연습 시간</div></div></div>
+      <div class="blk"><div class="sec-title">내 음정 습관</div>
       <div class="card">${hab.length ? `<p class="small muted" style="margin-top:0">음정 보기와 롱톤에서 길게 분 음을 모아, 음마다 평소에 높게 부는지 낮게 부는지 보여 드려요.</p>
         ${hab.map(x => { const w = clamp(Math.abs(x.c) / 50 * 50, 2, 50); const col = Math.abs(x.c) <= S().tol ? 'var(--jade)' : x.c > 0 ? 'var(--warm)' : 'var(--cool)'; return `<div class="habit"><span class="nm">${esc(nFull(x.m))}</span><span class="tr"><i style="background:${col};${x.c >= 0 ? `left:50%;width:${w}%` : `left:${50 - w}%;width:${w}%`}"></i></span><span class="v">${x.c >= 0 ? '+' : ''}${Math.round(x.c)}</span></div>`; }).join('')}
         <div class="tipbox">${highs.length ? `자주 높게 부는 음: <b style="color:var(--warm)">${highs.map(x => nFull(x.m)).join(', ')}</b> · 바람을 조금 약하게 해 보세요.<br>` : ''}${lows.length ? `자주 낮게 부는 음: <b style="color:var(--cool)">${lows.map(x => nFull(x.m)).join(', ')}</b> · 바람을 조금 빠르게 해 보세요.` : ''}${!highs.length && !lows.length ? '대부분의 음을 고르게 잘 맞추고 계세요!' : ''}</div>` : '<p class="muted small" style="margin:0">아직 자료가 없어요. ‘음정 보기’나 ‘롱톤’에서 여러 음을 길게 불어 보세요.</p>'}</div>
-      <div class="sec-title">최고 기록</div>
+      </div><div class="blk"><div class="sec-title">최고 기록</div>
       <div class="list">${lb.length ? lb.map(x => `<div class="li"><span class="grow"><span class="t">롱톤 ${esc(nFull(x.m))}</span></span><b>${(+x.s).toFixed(1)}초</b></div>`).join('') : ''}${sb.map(x => `<div class="li"><span class="grow"><span class="t">${esc(x.s.t)}</span></span><span class="small">${x.b.follow ? `따라 불기 ${x.b.follow}%` : ''}${x.b.follow && x.b.play ? ' · ' : ''}${x.b.play ? `박자 ${x.b.play}점` : ''}</span></div>`).join('')}${!lb.length && !sb.length ? '<div class="li muted small">롱톤이나 곡 연습을 하면 여기에 최고 기록이 쌓여요.</div>' : ''}</div>
-      <div class="sec-title">최근 연습</div>
+      </div><div class="blk"><div class="sec-title">최근 연습</div>
       <div class="list">${recent.length ? recent.map(x => { const d = new Date(x.t); return `<div class="li"><span class="grow"><span class="t">${esc(FEAT[x.f] || x.f)}</span><br><span class="d">${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}${x.s ? ' · ' + esc(x.s) : ''}</span></span><span class="small muted">${Math.max(1, Math.round(x.sec / 60))}분</span></div>`; }).join('') : '<div class="li muted small">15초 넘게 연습한 기록이 여기에 쌓여요.</div>'}</div>
-      <div class="sec-title">기록 보관</div>
+      </div><div class="blk"><div class="sec-title">기록 보관</div>
       <div class="card"><p class="small muted" style="margin-top:0">기록은 이 폰의 크롬 안에 저장돼요. 폰을 바꾸거나 크롬 데이터를 지우기 전에 파일로 보관해 두세요. (녹음 파일은 녹음 화면에서 따로 저장해요)</p>
         <div class="row wrap"><button class="btn grow" id="rdExp">${ICONS.download}파일로 보관</button><button class="btn grow" id="rdImp">${ICONS.upload}보관 파일 불러오기</button></div>
-        <input type="file" id="rdFile" accept=".json,application/json" class="hidden"><button class="btn ghost wide mt" id="rdClr">연습 기록만 지우기</button></div>`;
+        <input type="file" id="rdFile" accept=".json,application/json" class="hidden"><button class="btn ghost wide mt" id="rdClr">연습 기록만 지우기</button></div></div></div>`;
     $('#rdExp', el).onclick = () => { const blob = new Blob([JSON.stringify({ app: 'nanjang_panflute', v: 1, at: new Date().toISOString(), db: DB })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `팬플룻교실_기록_${dayKey()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('보관 파일을 내려받았어요'); };
     $('#rdImp', el).onclick = () => $('#rdFile', el).click();
     $('#rdFile', el).onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const o = JSON.parse(await f.text()); if (!o || o.app !== 'nanjang_panflute' || !o.db) throw new Error(); if (!(await confirmSheet('지금 기록을 보관 파일 내용으로 바꿀까요?', '바꾸기'))) return; DB = normalizeDB(o.db); saveDB(); applyTheme(); refreshPipes(); toast('기록을 불러왔어요'); go('records'); } catch (err) { toast('이 앱의 보관 파일이 아니에요'); } };
@@ -4248,6 +4344,7 @@ defScreen('settings', {
     function lowOpts() { const out = []; for (let m = 52; m <= 74; m++) if (inKey(m, s.flute.key)) out.push(m); return out; }
     function render() {
       el.innerHTML = `
+<div class="grid2"><div class="blk">
       <div class="sec-title" style="margin-top:8px">내 팬플룻</div>
       <div class="card stack">
         <div class="row"><span class="grow"><b>관 수</b></span><div class="stepper"><button id="stPm">−</button><div class="val" style="min-width:60px"><b style="font-size:1.6rem">${s.flute.pipes}</b></div><button id="stPp">+</button></div></div>
@@ -4257,12 +4354,12 @@ defScreen('settings', {
         <div><span class="label">악보 높이</span>${segHTML('stfr', [['0', '가온 도 기준'], ['1', '실제 소리 높이']], s.staffReal ? '1' : '0')}<div class="tiny muted" style="margin-top:6px">가온 도 기준: ${pipeNo(REF()) || 4}번 관 ‘도’를 오선 아래 덧줄의 가온 도로 적어요. 음 이름도 이 도를 ‘가온 도’로 불러요.</div></div>
         <div id="stPrev"></div><div class="tiny muted">${esc(fluteName())} · ${esc(nFull(PIPES[0]))}부터 ${esc(nFull(PIPES[PIPES.length - 1]))}까지</div>
       </div>
-      <div class="sec-title">음정</div>
+      </div><div class="blk"><div class="sec-title">음정</div>
       <div class="card stack">
         <div><span class="label">맞았다고 볼 범위</span>${segHTML('tol', [[30, '너그럽게'], [20, '보통'], [10, '꼼꼼하게']], s.tol)}<div class="tiny muted mt">처음에는 ‘너그럽게’나 ‘보통’을 추천해요</div></div>
         <div class="row"><span class="grow"><b>기준음 (라)</b><div class="tiny muted">보통 440Hz예요. 악기가 전체적으로 높거나 낮으면 바꿔 보세요</div></span><div class="stepper"><button id="stAm">−</button><div class="val" style="min-width:70px"><b style="font-size:1.4rem">${s.a4}</b><small>Hz</small></div><button id="stAp">+</button></div></div>
       </div>
-      <div class="sec-title">보기</div>
+      </div><div class="blk"><div class="sec-title">보기</div>
       <div class="card stack">
         <div><span class="label">글자 크기</span>${segHTML('fs', [[1, '보통'], [1.12, '크게'], [1.25, '아주 크게']], s.fontScale)}</div>
         <div><span class="label">화면 색</span>${segHTML('th', [['light', '밝게'], ['dark', '어둡게'], ['auto', '폰 설정 따라']], s.theme)}</div>
@@ -4270,20 +4367,20 @@ defScreen('settings', {
         <div><span class="label">음 이름</span>${segHTML('ns', [['ko', '도레미'], ['en', 'CDE'], ['both', '둘 다']], s.noteStyle)}</div>
         <div class="row"><span class="grow"><b>관 번호 보이기</b></span><label class="switch"><input type="checkbox" id="stNo" ${s.showPipeNo ? 'checked' : ''}><span></span></label></div>
       </div>
-      <div class="sec-title">소리</div>
+      </div><div class="blk"><div class="sec-title">소리</div>
       <div class="card stack">
         <div><span class="label">시범 소리 크기</span><div class="row"><input type="range" min="0.1" max="1.5" step="0.05" value="${s.synthVol}" id="stSv"><button class="btn sm" id="stSt">${ICONS.ear}</button></div></div>
         <div><span class="label">박자 소리 크기</span><div class="row"><input type="range" min="0" max="1.5" step="0.05" value="${s.metroVol}" id="stMv"><button class="btn sm" id="stMt">${ICONS.metro}</button></div></div>
       </div>
-      <div class="sec-title">화면</div>
+      </div><div class="blk"><div class="sec-title">화면</div>
       <div class="card stack">
         <div class="row"><span class="grow"><b>자동 전체화면</b><div class="tiny muted">화면을 누르면 주소창 없이 전체화면으로 바뀌어요 (브라우저로 열었을 때)</div></span><label class="switch"><input type="checkbox" id="stFs" ${s.autoFS ? 'checked' : ''}><span></span></label></div>
         <div class="row"><span class="grow"><b>연습 중 화면 켜 두기</b><div class="tiny muted">연습 화면에서 폰 화면이 꺼지지 않아요</div></span><label class="switch"><input type="checkbox" id="stWl" ${s.wakeLock ? 'checked' : ''}><span></span></label></div>
         <div id="stInst"></div>
       </div>
-      <div class="sec-title">듣는 장치 · 소리 지연</div>
+      </div><div class="blk"><div class="sec-title">듣는 장치 · 소리 지연</div>
       <div class="card stack" id="stOut"></div>
-      <div class="sec-title">마이크</div>
+      </div><div class="blk"><div class="sec-title">마이크</div>
       <div class="list">
         <div class="li"><span class="grow"><span class="t">마이크 상태</span></span><span class="status-pill" id="stMic"><i></i>확인 중</span></div>
         <button class="li" data-go="micguide"><span class="grow"><span class="t">마이크 문제 해결</span><br><span class="d">허용 창이 안 뜨거나 막혔을 때</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
@@ -4293,8 +4390,9 @@ defScreen('settings', {
         <button class="li" data-go="micguide" data-tab="ear"><span class="grow"><span class="t">이어폰 쓸 때 마이크 안내</span><br><span class="d">이어폰 마이크·블루투스 지연·소리 나오는 곳</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
         <button class="li" data-go="onboard"><span class="grow"><span class="t">처음 안내 다시 보기</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
       </div>
+      </div></div>
       <p class="center mt2" style="font-family:var(--hand);font-size:1.9rem;margin-bottom:0;color:var(--peony)">Made by 장작&amp;난로</p>
-      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.0</p>`;
+      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.1</p>`;
       PipeMap($('#stPrev', el), { compact: true, onTap: m => playTone(m, 0.8) });
       fillMicSel($('[data-micsel]', el));
       const oc = $('#stOut', el);
@@ -4348,8 +4446,7 @@ defScreen('settings', {
       el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go, b.dataset.tab ? { tab: b.dataset.tab } : {}); });
       const inst = $('#stInst', el);
       if (FS.standalone()) inst.innerHTML = '<div class="small muted">지금 홈 화면 앱으로 실행 중이에요.</div>';
-      else if (installEvt) { inst.innerHTML = `<button class="btn primary wide" id="stI">${ICONS.install}홈 화면에 앱으로 설치</button>`; $('#stI', el).onclick = async () => { await doInstall(); render(); }; }
-      else inst.innerHTML = `<div class="small muted">${Mic.secure() ? '크롬 오른쪽 위 ⋮ 메뉴에서 ‘홈 화면에 추가’를 누르면 앱처럼 설치돼요.' : '웹 주소(https)로 열면 홈 화면에 앱으로 설치할 수 있어요.'}</div>`;
+      else { inst.innerHTML = `<div class="row wrap" style="gap:8px"><button class="btn primary grow" id="stI">${ICONS.install}홈 화면에 설치하기</button><button class="btn grow" id="stF">${FS.on() ? ICONS.fsOff + '전체화면 끄기' : ICONS.fsOn + '전체화면'}</button></div>`; $('#stI', el).onclick = async () => { await startInstall(); render(); }; $('#stF', el).onclick = async () => { await toggleFS(); render(); }; }
       micStatusText().then(r => { const p = $('#stMic', el); if (p) { p.className = 'status-pill ' + r.cls; p.innerHTML = `<i></i>${r.t}`; } });
     }
     render();
@@ -4361,7 +4458,7 @@ function initShell() {
   $('#hBack').innerHTML = ICONS.back; $('#hBack').onclick = back;
   $('#hHelp').innerHTML = ICONS.info; $('#hHelp').onclick = () => { const top = stack[stack.length - 1]; const def = top && SCREENS[top.id]; if (def && def.help) openSheet(`<h3>${esc(typeof def.title === 'function' ? def.title(top.params || {}) : def.title)} 도움말</h3><div class="helpbody">${def.help}</div><button class="btn primary wide mt2" data-x="1">알겠어요</button>`).addEventListener('click', e => { if (e.target.closest('[data-x]')) sheetDone(); }); };
   $('#hSet').innerHTML = ICONS.gear; $('#hSet').onclick = () => go('settings');
-  $('#hFS').onclick = async () => { if (FS.on()) { FS.userExit = true; await FS.exit(); } else { FS.userExit = false; await FS.enter(); } FS.paint(); };
+  $('#hFS').onclick = () => toggleFS();
   $('#nav').innerHTML = TABS.map(t => `<button data-id="${t.id}">${ICONS[t.icon]}<span>${t.label}</span></button>`).join('');
   $('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.id); });
   FS.paint();
