@@ -190,6 +190,7 @@ img.fart{display:block;width:100%;height:auto}
 /* 첫 화면 그림: 왼쪽 빈 곳에 인사말, 오른쪽에 팬플룻 */
 .hero.pic{background:url(hero.webp) 72% 60%/cover no-repeat,var(--surface);min-height:clamp(170px,46vw,260px);display:flex;flex-direction:column;justify-content:space-between;padding:20px}
 .hero.pic .greet{padding-right:0;max-width:56%;text-shadow:0 1px 0 rgba(255,250,240,.6)}
+.hero.pic .row{align-self:flex-start}
 .hero.pic .btn{align-self:flex-start;box-shadow:0 4px 12px rgba(80,50,20,.18)}
 :root[data-theme="dark"] .hero.pic{background:linear-gradient(90deg,rgba(29,24,20,.88) 0%,rgba(29,24,20,.6) 48%,rgba(29,24,20,.15) 80%),url(hero.webp) 72% 60%/cover no-repeat}
 :root[data-theme="dark"] .hero.pic .greet{text-shadow:none}
@@ -237,6 +238,11 @@ details.stage:not([open])>summary{background:var(--surface);border:1px solid var
 .pin svg{width:22px;height:22px}
 .pin.on{color:var(--bamboo)}
 .pin.on svg{fill:currentColor}
+/* 홈: 단계별 탭 */
+.stg-tabs{margin-top:16px}
+.stg-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;min-height:54px;font-size:.92rem}
+.stg-tabs button small{font-size:.66rem;color:var(--ink-3)}
+.stg-tabs button.on small{color:var(--peony)}
 /* 연습곡 찾기 */
 .sg-search{display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;min-height:50px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line)}
 .sg-search svg{width:20px;height:20px;color:var(--ink-3);flex:none}
@@ -617,6 +623,32 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .bd-steps span{padding:6px 12px;border-radius:12px;background:var(--surface-2);font-weight:700;font-size:.86rem;color:var(--ink-3)}
 .bd-steps span.on{background:var(--peony-soft);color:var(--peony)}
 .bd-steps span.done{background:var(--jade-soft);color:var(--jade)}
+
+/* ---------- 오늘의 연습 순서 막대 (머리줄 안) ---------- */
+#rtbar{display:flex;align-items:center;gap:4px;flex:none;max-width:58vw;padding:3px 4px 3px 10px;border-radius:99px;background:var(--peony-soft);color:var(--peony);font-size:.78rem;font-weight:700;white-space:nowrap}
+#rtbar.due{background:var(--peony);color:var(--peony-ink);animation:okPulse 1.6s infinite}
+#rtbar .rt-t{overflow:hidden;text-overflow:ellipsis;max-width:9em}
+#rtbar button{min-height:32px;padding:0 9px;border-radius:99px;background:var(--surface);color:var(--ink);font-weight:700;font-size:.76rem}
+#rtbar button[data-rt="stop"]{width:30px;padding:0;background:transparent;color:inherit;font-size:1.1rem}
+@media (max-width:560px){#hdr:has(#rtbar) #hTitle{display:none}#hdr #rtbar{flex:1;max-width:none;justify-content:flex-start}#rtbar .rt-t{flex:1;max-width:none}}
+body.focusmode #rtbar{position:fixed;left:max(8px,env(safe-area-inset-left,0px));top:calc(4px + env(safe-area-inset-top,0px));z-index:41;box-shadow:var(--shadow)}
+.rt-li{gap:6px;padding:8px 8px 8px 14px;min-height:56px}
+.rt-li .icon-btn{width:38px;height:38px;font-size:1.1rem}
+/* ---------- 연습 달력 ---------- */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
+.cal i{font-style:normal;text-align:center;font-size:.8rem;font-weight:700;aspect-ratio:1;display:grid;place-items:center;border-radius:10px;position:relative;color:var(--ink-2)}
+.cal .cal-w{aspect-ratio:auto;font-size:.68rem;color:var(--ink-3)}
+.cal .cal-d{background:var(--surface-2)}
+.cal .l1{background:color-mix(in srgb,var(--jade) 22%,var(--surface))}
+.cal .l2{background:color-mix(in srgb,var(--jade) 45%,var(--surface))}
+.cal .l3{background:var(--jade);color:#fff}
+.cal .today{outline:2px solid var(--peony);outline-offset:-2px}
+.cal em{position:absolute;right:3px;top:1px;font-style:normal;font-size:.6rem}
+
+/* ---------- 설정 탭 ---------- */
+.st-tabs{position:sticky;top:calc(var(--hdr-h) + env(safe-area-inset-top,0px));z-index:15;background:var(--bg);padding:6px 0 8px;margin:0 -2px}
+.st-tabs .chip{min-height:40px}
+.sec-title.st-h{margin-top:10px}
 
 /* ---------- 설정 요약 줄 ---------- */
 .optbar{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:6px 12px;border-radius:12px;background:var(--surface);border:1px dashed var(--ink-3);font-size:.8rem;color:var(--ink-2);text-align:left;font-weight:700}
@@ -1094,6 +1126,7 @@ function show() {
   if (def.practice) sessionStart(def.practice);
   if (def.wake) Wake.on();
   requestAnimationFrame(fitNow);
+  Routine.paint();
   try { curCleanup = def.render(el, top.params || {}) || null; } catch (e) { console.error(e); el.innerHTML = `<div class="card mt">화면을 여는 중 문제가 생겼어요. 뒤로 갔다가 다시 열어 주세요.<br><small class="muted">${esc(e.message)}</small></div>`; }
 }
 function setDock(html) {
@@ -2005,13 +2038,14 @@ function LineLane(host, notes, o = {}) {
   let lines = [], k = 1, lineH = 100, nl = 2, rows = [], groups = [], lineOf = [], offY = 0;
   function layout() {
     const W = Math.max(120, host.clientWidth || 360), H = Math.max(60, host.clientHeight || 150);
-    nl = o.lines || (H >= cropH * 1.45 ? 2 : 1); lineH = H / nl;
+    const big = scoreSize();
+    nl = o.lines || (big === 'xl' ? 1 : H >= cropH * 1.45 ? 2 : 1); lineH = H / nl;
     const sw = segs.map(g => g.x1 - g.x0), maxSeg = Math.max(...sw), medSeg = median(sw);
     const pack = kk => { const av = W / kk - 6, out = []; let L = null; segs.forEach(g => { if (L && L.fw + (g.x1 - L.x0) <= av) { L.x1 = g.x1; L.b1 = g.b1; L.n++; } else { L = { x0: out.length ? g.x0 + 3 : 0, x1: g.x1, b0: g.b0, b1: g.b1, fw: out.length ? 40 : 68, n: 1 }; out.push(L); } }); return out; };
-    k = Math.max(0.4, Math.min(lineH / cropH, 1.7, (W - 6) / (68 + maxSeg)));
+    k = Math.max(0.4, Math.min(lineH / cropH, big === 'n' ? 1.7 : 2.2, (W - 6) / (68 + maxSeg)));
     lines = pack(k);
     // 한 줄에 한 마디씩만 들어가면, 음표를 조금씩 줄여 가며 두 마디씩 들어가는 크기를 찾음
-    if (segs.length > 2 && segs.length / lines.length < 1.8) {
+    if (big === 'n' && segs.length > 2 && segs.length / lines.length < 1.8) {
       const kMin = Math.max(0.85, k * 0.62);
       for (let kk = k * 0.94; kk >= kMin; kk *= 0.94) { const l2 = pack(kk); if (segs.length / l2.length >= 1.8) { k = kk; lines = l2; break; } }
     }
@@ -2084,7 +2118,7 @@ function FlowLane(host, notes, o = {}) {
   function apply(anim) { scroll.classList.toggle('anim', !!anim); scroll.style.transform = `translateX(${(L - pos * k).toFixed(1)}px)`; }
   function layout() {
     const H = host.clientHeight || 150, W = host.clientWidth || 360; const FW = STF.FIX;
-    k = Math.min(H / STF.H, o.kMax || 1.15); offY = Math.max(0, (H - STF.H * k) / 2); const sh = STF.H * k;
+    k = Math.min(H / STF.H, o.kMax || { n: 1.15, l: 1.4, xl: 1.7 }[scoreSize()]); offY = Math.max(0, (H - STF.H * k) / 2); const sh = STF.H * k;
     svg.setAttribute('viewBox', `0 0 ${st.total} ${STF.H}`); svg.style.width = (st.total * k) + 'px'; svg.style.height = sh + 'px';
     scroll.style.top = offY + 'px'; scroll.style.height = sh + 'px';
     fix.setAttribute('viewBox', `0 0 ${FW} ${STF.H}`); fix.style.width = (FW * k) + 'px'; fix.style.height = sh + 'px'; fix.style.top = offY + 'px';
@@ -2618,14 +2652,14 @@ defScreen('home', {
       <div id="instBan"></div>
       <section class="hero pic">
         <div class="greet">${greet}</div>
-        <button class="btn" id="sugBtn">${ICONS.play}${esc(sug.t)}</button>
+        <div class="row wrap" style="gap:8px"><button class="btn" id="sugBtn">${ICONS.play}${esc(sug.t)}</button>${featOn('routine') ? `<button class="btn" id="rtGo" style="background:var(--surface);color:var(--ink);border:1.5px solid var(--line)">${ICONS.stairs}${Routine.on ? '연습 순서 이어 하기' : '오늘의 연습 순서'}</button>` : ''}</div>
       </section>
       <div id="banners"></div>
       <div id="pinBox"></div>
-      <div class="stages">${STAGES.map(sg => `<details class="stage" data-sg="${sg.n}" ${stageOpen(sg.n) ? 'open' : ''}>
+      ${pref('homeStyle', 'fold') === 'tabs' ? `<div class="seg stg-tabs" data-seg="htab">${STAGES.map(sg => `<button data-v="${sg.n}" class="${sg.n === homeTab() ? 'on' : ''}"><small>${sg.n}단계</small>${sg.name}</button>`).join('')}</div><div id="stgOne"></div>` : `<div class="stages">${STAGES.map(sg => `<details class="stage" data-sg="${sg.n}" ${stageOpen(sg.n) ? 'open' : ''}>
         <summary class="stage-h">${pipIcon(sg.n, `var(--s${sg.n}i)`)}<div class="grow"><div class="n">${sg.n}단계 · ${sg.items.length}가지</div><h2>${sg.name}</h2></div>${ICONS.chev.replace('<svg', '<svg class="sg-chev"')}</summary>
         <div class="list">${sg.items.map(it => homeItemHTML(it, sg.n)).join('')}</div>
-      </details>`).join('')}</div>
+      </details>`).join('')}</div>`}
       ${FS.standalone() ? '' : `<div class="center mt2"><button class="btn" id="hInst">${ICONS.install}홈 화면에 설치하기</button></div>`}
       <p class="center mt2" style="font-family:var(--hand);font-size:1.7rem;color:var(--peony)">Made by 장작&amp;난로</p>`;
     const paintPins = () => {
@@ -2636,10 +2670,13 @@ defScreen('home', {
         : `<p class="tiny muted pin-hint">${ICONS.star} 연습 오른쪽의 별표를 누르면 여기 맨 위에 모아 둬요.</p>`;
       $$('[data-pin]', el).forEach(b => { const on = P.includes(b.dataset.pin); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     };
+    const paintOne = () => { const box = $('#stgOne', el); if (!box) return; const sg = STAGES.find(x => x.n === homeTab()) || STAGES[0]; box.innerHTML = `<section class="stage" style="margin-top:12px"><p class="small muted" style="margin:0 4px 8px">${esc(sg.desc)}</p><div class="list">${sg.items.map(it => homeItemHTML(it, sg.n)).join('')}</div></section>`; };
+    paintOne(); bindSeg(el, 'htab', v => { setPref('homeTab', +v); paintOne(); paintPins(); });
     paintPins();
     el.addEventListener('click', e => { const b = e.target.closest('[data-pin]'); if (!b) return; e.stopPropagation(); const k = b.dataset.pin; const P = pinnedList(); const i = P.indexOf(k); if (i >= 0) P.splice(i, 1); else P.push(k); setPref('pinned', P); paintPins(); toast(i >= 0 ? '자주 하는 연습에서 뺐어요' : '맨 위 ‘자주 하는 연습’에 넣었어요'); }, true);
     $$('details.stage', el).forEach(d => d.addEventListener('toggle', () => { const o = Object.assign({}, pref('stageOpen', { 1: true })); o[d.dataset.sg] = d.open; setPref('stageOpen', o); }));
     $('#sugBtn', el).onclick = () => go(sug.id, sug.p || {});
+    const rg = $('#rtGo', el); if (rg) rg.onclick = () => Routine.on ? Routine.begin() : Routine.start();
     const hi = $('#hInst', el); if (hi) hi.onclick = () => startInstall();
     el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; const p = b.dataset.p ? JSON.parse(b.dataset.p) : {}; go(b.dataset.go, p); });
     const paintInst = () => {
@@ -2668,6 +2705,7 @@ defScreen('home', {
 });
 const itemKey = it => it.id + (it.p ? ':' + it.p.mode : '');
 function pinnedList() { const v = pref('pinned', []); return Array.isArray(v) ? v.slice() : []; }
+function homeTab() { return clamp(+pref('homeTab', 1) || 1, 1, STAGES.length); }
 function stageOpen(n) { const o = pref('stageOpen', { 1: true }); return !!(o && o[n]); }
 function homeItemHTML(it, n) { const k = itemKey(it); return `<div class="li li-pin"><button class="li-main" data-go="${it.id}" data-p='${it.p ? JSON.stringify(it.p) : ''}'><span class="li-ic" style="background:var(--s${n});color:var(--s${n}i)">${ICONS[it.ic]}</span><span class="grow"><span class="t">${it.t}</span><br><span class="d">${it.d}</span></span></button><button type="button" class="pin" data-pin="${k}" aria-label="${esc(it.t)} 자주 하는 연습에 넣기" aria-pressed="false">${ICONS.star}</button></div>`; }
 function suggestToday() {
@@ -3550,6 +3588,32 @@ function bindSongCtl(root, s, pfx, onKey, onBpm) {
   bindStepCtl(root, pfx + 'Key', { get: () => songKey(s.id), set: v => setPref('sk_' + s.id, v), min: -6, max: 6, fmt: keyTxt, noRepeat: true, done: onKey });
   return bindStepCtl(root, pfx + 'Bpm', { get: () => songBpm(s), set: v => setPref('sb_' + s.id, v), min: 30, max: 220, fast: 5, live: onBpm, fav: 'song_' + s.id });
 }
+/* ================= 곡 구간 반복 (설정 → 추가 기능에서 켤 때) ================= */
+function measureStarts(notes, ts, pk) { const total = notes.reduce((a, n) => a + n.d, 0); const out = [0]; for (let b = pk > 0 ? pk : ts; b < total - 1e-6; b += ts) out.push(b); return out; }
+function songSec(s) { if (!featOn('loop')) return null; const v = pref('sec_' + s.id, null); return v && Number.isFinite(v.a) && Number.isFinite(v.z) ? v : null; }
+function sliceSec(notes, ts, pk, sec) {
+  if (!sec) return { notes, pk, a: 0, z: 0 };
+  const ms = measureStarts(notes, ts, pk); const a = clamp(sec.a, 0, ms.length - 1), z = clamp(sec.z, a, ms.length - 1);
+  const b0 = ms[a], b1 = z + 1 < ms.length ? ms[z + 1] : Infinity; let b = 0; const out = [];
+  notes.forEach(n => { if (b >= b0 - 1e-6 && b < b1 - 1e-6) out.push(n); b += n.d; });
+  return { notes: out.length ? out : notes, pk: a === 0 ? pk : 0, a, z };
+}
+function secSheet(s, notes, withAuto, onApply) {
+  const ms = measureStarts(notes, s.ts || 4, s.pk || 0), M = ms.length; const cur = pref('sec_' + s.id, null) || {};
+  let a = clamp(Number.isFinite(cur.a) ? cur.a : 0, 0, M - 1), z = clamp(Number.isFinite(cur.z) ? cur.z : Math.min(M - 1, a + 1), a, M - 1), auto = cur.auto !== false;
+  const preview = () => { const x = sliceSec(notes, s.ts || 4, s.pk || 0, { a, z }); return x.notes.filter(n => !n.rest).map(n => KO[pc(n.m)]).join(' '); };
+  const sh = openSheet(`<h3>구간 반복</h3><p class="small muted" style="margin:0 0 8px">어려운 마디만 골라 되풀이해요. 이 곡은 모두 ${M}마디예요.</p>
+    <div class="ctl-row">${stepCtlHTML('secA', '처음 마디', a + 1)}${stepCtlHTML('secZ', '끝 마디', z + 1)}</div>
+    <div class="tipbox" id="secPv" style="min-height:2.6em"></div>
+    ${withAuto ? `<div class="row mt"><span class="grow"><b>잘 불면 빠르기 올리기</b><div class="tiny muted">한 번 불 때마다 85점이 넘으면 5씩 올려요 (원래 빠르기까지)</div></span><label class="switch"><input type="checkbox" id="secAuto" ${auto ? 'checked' : ''}><span></span></label></div>` : ''}
+    <div class="row mt2"><button type="button" class="btn grow" data-sx="off">구간 반복 끄기</button><button type="button" class="btn primary grow" data-sx="on">${ICONS.refresh}이 구간 반복</button></div>`);
+  const pv = () => { $('#secPv', sh).textContent = `${a + 1}~${z + 1}마디: ${preview()}`; };
+  const ca = bindStepCtl(sh, 'secA', { get: () => a, set: v => { a = v; if (z < a) { z = a; cz.refresh(); } pv(); }, min: 0, max: M - 1, fmt: v => v + 1, noRepeat: false, fast: 1 });
+  const cz = bindStepCtl(sh, 'secZ', { get: () => z, set: v => { z = Math.max(v, a); pv(); }, min: 0, max: M - 1, fmt: v => v + 1, fast: 1 }); void ca;
+  pv();
+  const au = $('#secAuto', sh); if (au) au.onchange = () => { auto = au.checked; };
+  sh.addEventListener('click', e => { const b = e.target.closest('[data-sx]'); if (!b) return; if (b.dataset.sx === 'off') setPref('sec_' + s.id, null); else setPref('sec_' + s.id, { a, z, auto }); sheetDone(onApply); });
+}
 function fitNote(f) { const t = []; if (f.shift) t.push(f.shift > 0 ? '한 옥타브 올려서' : '한 옥타브 내려서'); if (f.bends) t.push(`꺾는 음 ${f.bends}개`); if (f.unplayable) t.push(`낼 수 없는 음 ${f.unplayable}개`); return t.join(' · '); }
 defScreen('follow', {
   title: p => (getSong(p.id) || {}).t || '곡 따라 불기', practice: 'follow', wake: true, fit: true,
@@ -3559,17 +3623,18 @@ defScreen('follow', {
     let judge = null, unMic = null, unSub = null, unOn = null, demo = null, t0 = 0, labels = pref('stfLabels', true), lane = null;
     function build() {
       inner();
-      const f = fitSongK(s); const notes = f.notes; const res = [];
+      const f = fitSongK(s); const sec = songSec(s); const sl = sliceSec(f.notes, s.ts || 4, s.pk || 0, sec); const notes = sl.notes; const res = []; let reps = 0;
       const fbest = (DB.songBest[s.id] || {}).follow;
       el.innerHTML = `<div id="fwGate"></div>${songCtlHTML(s, 'fw')}
         <div class="cur-row"><b id="fwCur"></b><span class="s" id="fwP"></span><span class="fb" id="fwFb">${esc(fitNote(f))}</span></div>
         <div class="fx" id="fwLane"></div>
         ${meterHTML(true)}
         <div class="card pm-card land-hide"><div id="fwPm"></div></div>
-        <div class="ibtns"><button class="btn" id="fwRe">${ICONS.refresh}처음</button><button class="btn" id="fwBack">${ICONS.back}뒤로</button><button class="btn" id="fwHear">${ICONS.ear}이 음</button><button class="btn" id="fwSkip">${ICONS.chev}건너뛰기</button><button class="btn ${labels ? 'on' : ''}" id="fwLb">${ICONS.book}계이름</button></div>`;
+        <div class="ibtns"><button class="btn" id="fwRe">${ICONS.refresh}처음</button><button class="btn" id="fwBack">${ICONS.back}뒤로</button><button class="btn" id="fwHear">${ICONS.ear}이 음</button><button class="btn" id="fwSkip">${ICONS.chev}건너뛰기</button><button class="btn ${labels ? 'on' : ''}" id="fwLb">${ICONS.book}계이름</button>${featOn('loop') ? `<button class="btn ${sec ? 'on' : ''}" id="fwSec">${ICONS.refresh}${sec ? `${sl.a + 1}~${sl.z + 1}마디` : '구간'}</button>` : ''}</div>`;
       bindSongCtl(el, s, 'fw', build);
+      const fsb = $('#fwSec', el); if (fsb) fsb.onclick = () => secSheet(s, f.notes, false, build);
       if (fbest) { const sib = $('.sinfo', el); if (sib) sib.dataset.extra = `이 곡 최고 ${fbest}%`; }
-      lane = StaffLane($('#fwLane', el), notes, { ts: s.ts, pk: s.pk, tsd: s.tsd });
+      lane = StaffLane($('#fwLane', el), notes, { ts: s.ts, pk: sl.pk, tsd: s.tsd });
       const cur = $('#fwCur', el), pno = $('#fwP', el), fb = $('#fwFb', el), meter = $('.meter', el);
       const pm = PipeMap($('#fwPm', el), { mini: true, onTap: m => playTone(m, 0.8) });
       function focus(i, anim = true) {
@@ -3609,6 +3674,7 @@ defScreen('follow', {
         });
       });
       function finish() {
+        if (sec) { reps++; chime(); toast(`${sl.a + 1}~${sl.z + 1}마디 ${reps}번째 끝! 처음부터 다시 해요`, 2200); setTimeout(() => { if (lane && el.isConnected) { res.length = 0; startJudge(0); } }, 1400); return; }
         const played = notes.map((n, i) => n.rest ? undefined : res[i]).filter(v => v !== undefined);
         const good = played.filter(c => c !== null && Math.abs(c) <= S().tol).length; const pct = played.length ? Math.round(good / played.length * 100) : 0;
         const secs = (performance.now() - t0) / 1000;
@@ -3630,23 +3696,24 @@ defScreen('playalong', {
   help: `<p>‘틱’ 소리로 한 마디를 세어 준 뒤, 진행바가 정한 빠르기로 악보 위를 지나가요. 진행바가 음표에 닿을 때 불기 시작해서 다음 음표에 닿을 때까지 불어 주세요. 한 줄을 다 불면 다 분 줄 자리에 다음 줄이 나타나요.</p><ul><li><b>악상기호</b>를 켜면 곡의 흐름에 맞춘 연습용 기호(스타카토 점, 테누토 가로줄, 악센트 >, 레가토 이음줄, non leg.)가 악보에 나와요. 기호대로 불었는지 음마다 초록·빨강으로 표시하고, 끝나면 표현 점수를 알려 드려요.</li><li><b>빠르기</b>는 − + 로 1씩, 길게 누르면 5씩 바뀌어요. 50%~100% 버튼은 원래 빠르기를 기준으로 맞춰 줘요.</li><li><b>키</b>로 곡 전체를 반음씩 올리거나 내릴 수 있어요.</li></ul>`,
   render(el, p) {
     const s = getSong(p.id); if (!s) { el.innerHTML = '<div class="card">곡을 찾지 못했어요.</div>'; return; }
-    let clickOn = pref('paClick', true), labels = pref('stfLabels', true), artOn = pref('paArt', true), unMic = null, run = null, lane = null, notes = null, plan = null;
+    let clickOn = pref('paClick', true), labels = pref('stfLabels', true), artOn = pref('paArt', true), unMic = null, run = null, lane = null, notes = null, plan = null, sec = null, sl = null, fullNotes = null, loopT = 0;
     function build() {
       kill(); if (lane) lane.destroy();
-      const f = fitSongK(s); notes = f.notes; plan = artOn ? articPlan(notes, s.c) : null; const best = (DB.songBest[s.id] || {}).play;
+      const f = fitSongK(s); sec = songSec(s); sl = sliceSec(f.notes, s.ts || 4, s.pk || 0, sec); notes = sl.notes; plan = artOn ? articPlan(notes, s.c) : null; const best = (DB.songBest[s.id] || {}).play; fullNotes = f.notes;
       el.innerHTML = `<div id="paGate"></div>${songCtlHTML(s, 'pa')}
         <div class="presets land-hide">${[0.5, 0.65, 0.8, 1].map(x => `<button class="chip" data-x="${x}">${Math.round(x * 100)}%</button>`).join('')}</div>
-        <div class="tgls land-hide"><button class="chip ${clickOn ? 'on' : ''}" id="paClk">박자 소리</button><button class="chip ${labels ? 'on' : ''}" id="paLb">계이름</button><button class="chip ${artOn ? 'on' : ''}" id="paArt">악상기호</button><button class="chip" id="paFirst">${ICONS.ear}첫 음</button></div>
+        <div class="tgls land-hide"><button class="chip ${clickOn ? 'on' : ''}" id="paClk">박자 소리</button><button class="chip ${labels ? 'on' : ''}" id="paLb">계이름</button><button class="chip ${artOn ? 'on' : ''}" id="paArt">악상기호</button><button class="chip" id="paFirst">${ICONS.ear}첫 음</button>${featOn('loop') ? `<button class="chip ${sec ? 'on' : ''}" id="paSec">${sec ? `${sl.a + 1}~${sl.z + 1}마디` : '구간'}</button>` : ''}</div>
         <div class="fx" id="paLane"></div>
         <div class="small muted center" id="paInfo">${artOn ? '기호를 살려 불어 보세요 · ' : ''}원래 빠르기 ${s.bpm}${best ? ` · 최고 ${best}점` : ''}${fitNote(f) ? ' · ' + esc(fitNote(f)) : ''}</div>
         <div class="sinfo"${best ? ` data-extra="이 곡 최고 ${best}점"` : ''}></div>`;
       const bc = bindSongCtl(el, s, 'pa', build);
       $$('.presets .chip', el).forEach(c => c.onclick = () => { setPref('sb_' + s.id, clamp(Math.round(s.bpm * +c.dataset.x), 30, 220)); if (bc) bc.refresh(); });
-      lane = StaffLane($('#paLane', el), notes, { ts: s.ts, pk: s.pk, tsd: s.tsd, artic: plan }); lane.goTo(0, false); lane.setCur(-1);
+      lane = StaffLane($('#paLane', el), notes, { ts: s.ts, pk: sl.pk, tsd: s.tsd, artic: plan }); lane.goTo(0, false); lane.setCur(-1);
       $('#paClk', el).onclick = e => { clickOn = !clickOn; setPref('paClick', clickOn); e.currentTarget.classList.toggle('on', clickOn); };
       $('#paLb', el).onclick = e => { labels = !labels; setPref('stfLabels', labels); lane.labels(labels); e.currentTarget.classList.toggle('on', labels); };
       $('#paArt', el).onclick = () => { artOn = !artOn; setPref('paArt', artOn); build(); };
       $('#paFirst', el).onclick = () => { const n = notes.find(x => !x.rest); if (n) playTone(n.m, 1.2); };
+      const psb = $('#paSec', el); if (psb) psb.onclick = () => secSheet(s, fullNotes, true, build);
       idle();
     }
     function idle() { setDock(`<button class="btn primary big wide" id="paGo">${ICONS.play}시작</button>`).querySelector('#paGo').onclick = () => { if (Mic.running()) go1(); else { if (unMic) unMic(); unMic = withMic($('#paGate', el), () => { unMic = null; go1(); }); } }; }
@@ -3659,6 +3726,13 @@ defScreen('playalong', {
         onOnset: judge ? (t, b) => judge.onset(b) : undefined,
         onDone: r => {
           run = null; if (judge) judge.finish(); let isBest = false;
+          if (sec && !r.stopped) { // 구간 반복: 점수만 알려 주고 이어서 다시 (잘 불면 빠르기를 조금 올림)
+            let up = ''; if (sec.auto !== false && r.score >= 85 && bpm < s.bpm) { const nb = Math.min(s.bpm, bpm + 5); setPref('sb_' + s.id, nb); up = ` · 빠르기 ${nb}로 올려요`; }
+            sessionNote(`${s.t} ${sl.a + 1}~${sl.z + 1}마디 ${r.score}점 (빠르기 ${bpm})`); chime();
+            toast(`${sl.a + 1}~${sl.z + 1}마디 ${r.score}점${up} · 다시 시작해요`, 2400);
+            clearTimeout(loopT); loopT = setTimeout(() => { if (el.isConnected && !run) { const bc = $('#paBpm b', el); if (bc) bc.textContent = songBpm(s); go1(); } }, 1700);
+            idle(); return;
+          }
           if (!r.stopped) { const bb = DB.songBest[s.id] || {}; if (r.score > (bb.play || 0)) { bb.play = r.score; DB.songBest[s.id] = bb; isBest = true; saveDB(); } chime(); }
           const ex = judge ? judge.total() : null;
           sessionNote(`${s.t} ${r.score}점${ex !== null ? ` · 표현 ${ex}%` : ''} (빠르기 ${bpm})`); idle();
@@ -3669,7 +3743,7 @@ defScreen('playalong', {
             [{ id: 'close', label: '닫기' }, { id: 'again', label: '한 번 더', primary: true }], id => { if (id === 'again') go1(); else { lane.goTo(0, true); lane.setCur(-1); } });
         } });
     }
-    function kill() { if (run) run.kill(); run = null; }
+    function kill() { clearTimeout(loopT); if (run) run.kill(); run = null; }
     build();
     return () => { kill(); if (unMic) unMic(); if (lane) lane.destroy(); };
   }
@@ -4607,7 +4681,10 @@ defScreen('records', {
     const recent = DB.sessions.slice(-12).reverse();
     const lb = Object.entries(DB.longBest).map(([m, s]) => ({ m: +m, s })).sort((a, b) => a.m - b.m);
     const sb = Object.entries(DB.songBest).map(([id, b]) => ({ s: getSong(id), b })).filter(x => x.s);
-    el.innerHTML = `<div class="grid2"><div class="blk"><div class="card"><div class="kv" style="margin-top:0"><div><b>${today}분</b><span>오늘</span></div><div><b>${week}분</b><span>최근 7일</span></div><div><b>${st}일</b><span>연속 연습</span></div></div>
+    let cy = new Date().getFullYear(), cm = new Date().getMonth();
+    const goalHTML = featOn('goal') ? `<div class="blk"><div class="card"><div class="row between"><b>오늘 목표</b><span class="small muted">${today}분 / ${goalMin()}분</span></div><div class="level"><i style="width:${Math.min(100, today / goalMin() * 100)}%"></i></div>
+      <div class="row between mt"><button type="button" class="icon-btn" id="calP" aria-label="이전 달">${ICONS.back}</button><b id="calT"></b><button type="button" class="icon-btn" id="calN" aria-label="다음 달">${ICONS.chev}</button></div><div class="cal" id="cal"></div><div class="tiny muted center" id="calS"></div></div></div>` : '';
+    el.innerHTML = `<div class="grid2">${goalHTML}<div class="blk"><div class="card"><div class="kv" style="margin-top:0"><div><b>${today}분</b><span>오늘</span></div><div><b>${week}분</b><span>최근 7일</span></div><div><b>${st}일</b><span>연속 연습</span></div></div>
       <div class="bars mt">${days.map(d => `<div class="b ${d.lbl === '오늘' ? 'today' : ''}"><i style="height:${(d.m / maxM * 100).toFixed(0)}%"></i><span>${d.lbl}</span></div>`).join('')}</div><div class="tiny muted center">최근 14일 연습 시간</div></div></div>
       <div class="blk"><div class="sec-title">내 음정 습관</div>
       <div class="card">${hab.length ? `<p class="small muted" style="margin-top:0">음정 보기와 롱톤에서 길게 분 음을 모아, 음마다 평소에 높게 부는지 낮게 부는지 보여 드려요.</p>
@@ -4624,6 +4701,8 @@ defScreen('records', {
     $('#rdExp', el).onclick = () => { const blob = new Blob([JSON.stringify({ app: 'nanjang_panflute', v: 1, at: new Date().toISOString(), db: DB })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `팬플룻교실_기록_${dayKey()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('보관 파일을 내려받았어요'); };
     $('#rdImp', el).onclick = () => $('#rdFile', el).click();
     $('#rdFile', el).onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const o = JSON.parse(await f.text()); if (!o || o.app !== 'nanjang_panflute' || !o.db) throw new Error(); if (!(await confirmSheet('지금 기록을 보관 파일 내용으로 바꿀까요?', '바꾸기'))) return; DB = normalizeDB(o.db); saveDB(); applyTheme(); refreshPipes(); toast('기록을 불러왔어요'); go('records'); } catch (err) { toast('이 앱의 보관 파일이 아니에요'); } };
+    const paintCal = () => { const c = $('#cal', el); if (!c) return; const r = calendarHTML(cy, cm); c.innerHTML = r.html; $('#calT', el).textContent = `${cy}년 ${cm + 1}월`; $('#calS', el).textContent = `연습한 날 ${r.any}일 · 목표를 채운 날 ${r.done}일 (✓)`; };
+    if ($('#cal', el)) { paintCal(); $('#calP', el).onclick = () => { cm--; if (cm < 0) { cm = 11; cy--; } paintCal(); }; $('#calN', el).onclick = () => { cm++; if (cm > 11) { cm = 0; cy++; } paintCal(); }; }
     $('#rdClr', el).onclick = async () => { if (await confirmSheet('연습 시간·최고 기록·음정 습관을 모두 지울까요? (설정과 내 곡은 남아요)', '지우기', true)) { DB.sessions = []; DB.longBest = {}; DB.habit = {}; DB.songBest = {}; saveDB(); go('records'); toast('연습 기록을 지웠어요'); } };
   }
 });
@@ -4651,14 +4730,74 @@ defScreen('noise', {
   }
 });
 
+/* ================= 오늘의 연습 순서 (설정 → 추가 기능에서 켤 때만) =================
+   정해 둔 연습을 차례로 열어 주고, 시간이 되면 알려 주기만 함 (넘어갈지는 사용자가 정함) */
+const ROUTINE_DEF = [{ k: 'longtone', m: 3 }, { k: 'scale', m: 3 }, { k: 'match', m: 3 }, { k: 'songs:follow', m: 5 }];
+const allItems = () => STAGES.flatMap(sg => sg.items);
+const itemByKey = k => allItems().find(it => itemKey(it) === k);
+function routineList() { const v = pref('routine', null); const L = Array.isArray(v) ? v.filter(x => x && itemByKey(x.k)) : []; return L.length ? L : ROUTINE_DEF; }
+function routineTxt() { return routineList().map(x => `${itemByKey(x.k).t} ${x.m}분`).join(' → '); }
+const Routine = {
+  on: false, i: 0, t0: 0, timer: 0, rang: false,
+  start() { this.on = true; this.i = 0; this.begin(); },
+  begin() { const L = routineList(); if (this.i >= L.length) { this.finish(); return; } const it = itemByKey(L[this.i].k); this.t0 = Date.now(); this.rang = false; go(it.id, it.p || {}); clearInterval(this.timer); this.timer = setInterval(() => this.tick(), 1000); this.paint(); },
+  left() { const st = routineList()[this.i]; return st ? st.m * 60 - (Date.now() - this.t0) / 1000 : 0; },
+  tick() { if (!this.on) return; if (this.left() <= 0 && !this.rang) { this.rang = true; chime(true); const nx = routineList()[this.i + 1]; toast(nx ? `${routineList()[this.i].m}분이 지났어요. 다음은 ‘${itemByKey(nx.k).t}’예요. 위의 ‘다음’을 누르면 넘어가요` : '마지막 연습 시간이 다 됐어요. 수고하셨어요!', 4500); } this.paint(); },
+  next() { this.i++; this.begin(); },
+  finish() { this.stop(); chime(true); toast('오늘의 연습 순서를 모두 마쳤어요. 수고하셨어요!', 4000); },
+  stop() { this.on = false; clearInterval(this.timer); this.paint(); },
+  paint() {
+    let b = $('#rtbar');
+    if (!this.on || !featOn('routine')) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('div'); b.id = 'rtbar'; b.addEventListener('click', e => { const x = e.target.closest('[data-rt]'); if (!x) return; if (x.dataset.rt === 'next') this.next(); else if (x.dataset.rt === 'go') this.begin(); else this.stop(); }); $('#hdr').insertBefore(b, $('#hHelp')); }
+    const L = routineList(), st = L[this.i]; if (!st) { b.remove(); return; }
+    const top = stack[stack.length - 1], it = itemByKey(st.k), here = top && top.id === it.id;
+    const lf = this.left(), mm = Math.max(0, Math.ceil(lf));
+    b.className = this.rang ? 'due' : '';
+    b.innerHTML = `<span class="rt-n">${this.i + 1}/${L.length}</span><span class="rt-t">${here ? (lf > 0 ? `${Math.floor(mm / 60)}:${pad2(mm % 60)}` : '시간 됐어요') : esc(it.t)}</span>${here ? '' : `<button type="button" data-rt="go">돌아가기</button>`}<button type="button" data-rt="next">${this.i + 1 < L.length ? '다음 ▶' : '끝내기'}</button><button type="button" data-rt="stop" aria-label="연습 순서 그만하기">×</button>`;
+  }
+};
+function routineSheet(after) {
+  let L = routineList().map(x => Object.assign({}, x));
+  const items = allItems().filter(it => it.id !== 'basics');
+  const sh = openSheet(`<h3>오늘의 연습 순서</h3><p class="small muted" style="margin:0 0 6px">위에서부터 차례로 열어 드려요. 시간은 알려 드리기만 해요.</p><div class="list" id="rtL"></div>
+    <div class="row mt" style="gap:6px"><select class="sel grow" id="rtAdd">${items.map(it => `<option value="${itemKey(it)}">${esc(it.t)}</option>`).join('')}</select><button type="button" class="btn" id="rtPlus" style="min-height:52px">${ICONS.plus}넣기</button></div>
+    <div class="row mt2"><button type="button" class="btn grow" data-rs="reset">처음 순서로</button><button type="button" class="btn primary grow" data-rs="ok">저장</button></div>`);
+  const paint = () => { $('#rtL', sh).innerHTML = L.map((x, i) => `<div class="li rt-li" data-i="${i}"><span class="grow"><b>${i + 1}. ${esc(itemByKey(x.k).t)}</b></span><span class="stepper sm"><button type="button" data-d="-1">−</button><span class="val"><b>${x.m}</b><small>분</small></span><button type="button" data-d="1">+</button></span><button type="button" class="icon-btn" data-up="${i}" aria-label="위로">↑</button><button type="button" class="icon-btn" data-del="${i}" aria-label="빼기">×</button></div>`).join('') || '<div class="li muted small">연습을 넣어 주세요</div>'; };
+  paint();
+  sh.addEventListener('click', e => {
+    const d = e.target.closest('[data-d]'); if (d) { const i = +d.closest('[data-i]').dataset.i; L[i].m = clamp(L[i].m + +d.dataset.d, 1, 60); paint(); return; }
+    const u = e.target.closest('[data-up]'); if (u) { const i = +u.dataset.up; if (i > 0) [L[i - 1], L[i]] = [L[i], L[i - 1]]; paint(); return; }
+    const x = e.target.closest('[data-del]'); if (x) { L.splice(+x.dataset.del, 1); paint(); return; }
+    if (e.target.closest('#rtPlus')) { L.push({ k: $('#rtAdd', sh).value, m: 3 }); paint(); return; }
+    const r = e.target.closest('[data-rs]'); if (!r) return;
+    if (r.dataset.rs === 'reset') { L = ROUTINE_DEF.map(x => Object.assign({}, x)); paint(); return; }
+    setPref('routine', L); sheetDone(after);
+  });
+}
+/* 연습 달력 (설정 → 추가 기능의 ‘연습 목표와 달력’을 켤 때만 기록 화면에 나옴) */
+function calendarHTML(y, mo) {
+  const first = new Date(y, mo, 1), days = new Date(y, mo + 1, 0).getDate(), g = goalMin(), tk = dayKey();
+  let h = ['일', '월', '화', '수', '목', '금', '토'].map(d => `<i class="cal-w">${d}</i>`).join('');
+  for (let i = 0; i < first.getDay(); i++) h += '<i></i>';
+  let done = 0, any = 0;
+  for (let d = 1; d <= days; d++) { const k = dayKey(new Date(y, mo, d)), m = minutesOn(k); if (m) any++; if (m >= g) done++; const lv = !m ? 0 : m >= g ? 3 : m >= g / 2 ? 2 : 1; h += `<i class="cal-d l${lv}${k === tk ? ' today' : ''}" title="${m}분">${d}${m >= g ? '<em>✓</em>' : ''}</i>`; }
+  return { html: h, done, any };
+}
+
 /* ================= 설정 ================= */
+const SET_TABS = [['flute', '내 팬플룻', ['내 팬플룻']], ['pitch', '음정·마이크', ['음정', '마이크']], ['view', '보기', ['보기']], ['sound', '소리·이어폰', ['소리', '듣는 장치 · 소리 지연']], ['screen', '화면·설치', ['화면']], ['extra', '추가 기능', ['추가 기능']]];
+const featOn = k => !!pref('feat_' + k, k === 'loop');
+const goalMin = () => clamp(+pref('goalMin', 20) || 20, 5, 180);
+const scoreSize = () => { const v = pref('scoreSize', 'n'); return ['n', 'l', 'xl'].includes(v) ? v : 'n'; };
 defScreen('settings', {
   title: '설정',
-  render(el) {
-    const s = S();
+  render(el, p) {
+    const s = S(); let tab = p.tab && SET_TABS.some(x => x[0] === p.tab) ? p.tab : pref('setTab', 'flute');
+    el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go, b.dataset.tab ? { tab: b.dataset.tab } : {}); });
     function lowOpts() { const out = []; for (let m = 52; m <= 74; m++) if (inKey(m, s.flute.key)) out.push(m); return out; }
     function render() {
-      el.innerHTML = `
+      el.innerHTML = `<div class="chips scroll st-tabs" id="stTabs" role="tablist">${SET_TABS.map(([k, l]) => `<button class="chip ${k === tab ? 'on' : ''}" role="tab" data-st="${k}">${l}</button>`).join('')}</div>
 <div class="grid2"><div class="blk">
       <div class="sec-title" style="margin-top:8px">내 팬플룻</div>
       <div class="card stack">
@@ -4679,6 +4818,8 @@ defScreen('settings', {
         <div><span class="label">글자 크기</span>${segHTML('fs', [[1, '보통'], [1.12, '크게'], [1.25, '아주 크게']], s.fontScale)}</div>
         <div><span class="label">화면 색</span>${segHTML('th', [['light', '밝게'], ['dark', '어둡게'], ['auto', '폰 설정 따라']], s.theme)}</div>
         <div><span class="label">악보 보기</span>${segHTML('smode', [['line', '한 줄씩 (노래방처럼)'], ['flow', '흐르는 악보']], scoreMode())}<div class="tiny muted" style="margin-top:6px">한 줄씩: 두 줄씩 보여 주고, 부른 음표 색이 바뀌거나 진행바가 지나가요. 흐르는 악보: 악보가 왼쪽 기준선으로 흘러와요(리듬게임처럼).</div></div>
+        <div><span class="label">악보 크기</span>${segHTML('ssz', [['n', '보통'], ['l', '크게'], ['xl', '아주 크게']], scoreSize())}<div class="tiny muted" style="margin-top:6px">크게: 한 줄에 마디를 적게 넣어 음표를 크게 보여요. 아주 크게: 한 번에 한 줄만 보여요.</div></div>
+        <div><span class="label">홈 연습 목록</span>${segHTML('hst', [['fold', '단계별로 접기'], ['tabs', '단계별 탭']], pref('homeStyle', 'fold'))}</div>
         <div><span class="label">음 이름</span>${segHTML('ns', [['ko', '도레미'], ['en', 'CDE'], ['both', '둘 다']], s.noteStyle)}</div>
         <div class="row"><span class="grow"><b>관 번호 보이기</b></span><label class="switch"><input type="checkbox" id="stNo" ${s.showPipeNo ? 'checked' : ''}><span></span></label></div>
       </div>
@@ -4705,9 +4846,28 @@ defScreen('settings', {
         <button class="li" data-go="micguide" data-tab="ear"><span class="grow"><span class="t">이어폰 쓸 때 마이크 안내</span><br><span class="d">이어폰 마이크·블루투스 지연·소리 나오는 곳</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
         <button class="li" data-go="onboard"><span class="grow"><span class="t">처음 안내 다시 보기</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
       </div>
+      </div><div class="blk"><div class="sec-title">추가 기능</div>
+      <div class="card stack">
+        <p class="small muted" style="margin:0">필요한 것만 켜서 쓰세요. 꺼 두면 화면에 나타나지 않아요.</p>
+        <div class="row"><span class="grow"><b>곡 구간 반복</b><div class="tiny muted">곡 연습 화면에 ‘구간’ 버튼이 생겨요. 어려운 마디만 골라 되풀이하고, 잘 불면 빠르기를 조금씩 올릴 수 있어요.</div></span><label class="switch"><input type="checkbox" data-feat="loop" ${featOn('loop') ? 'checked' : ''}><span></span></label></div>
+        <div class="row"><span class="grow"><b>연습 목표와 달력</b><div class="tiny muted">하루 목표 시간을 정하고, ‘기록’에서 달력으로 연습한 날을 봐요. 홈에는 나타나지 않아요.</div></span><label class="switch"><input type="checkbox" data-feat="goal" ${featOn('goal') ? 'checked' : ''}><span></span></label></div>
+        <div class="${featOn('goal') ? '' : 'hidden'}"><span class="label">하루 목표</span>${segHTML('goal', [[10, '10분'], [15, '15분'], [20, '20분'], [30, '30분'], [60, '1시간']], goalMin())}</div>
+        <div class="row"><span class="grow"><b>오늘의 연습 순서</b><div class="tiny muted">정해 둔 순서대로 연습을 이어서 해요. 시간이 되면 다음 연습을 알려 주기만 하고, 넘어갈지는 직접 정해요.</div></span><label class="switch"><input type="checkbox" data-feat="routine" ${featOn('routine') ? 'checked' : ''}><span></span></label></div>
+        <div class="${featOn('routine') ? '' : 'hidden'}"><div class="tiny muted" style="margin-bottom:6px">${esc(routineTxt())}</div><button class="btn wide" id="stRt">${ICONS.pen}연습 순서 정하기</button></div>
+      </div>
       </div></div>
       <p class="center mt2" style="font-family:var(--hand);font-size:1.9rem;margin-bottom:0;color:var(--peony)">Made by 장작&amp;난로</p>
       <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.2</p>`;
+      // 카테고리 탭: 제목으로 묶어 고른 탭의 칸만 보여 줌
+      const paintTab = () => { $$('.blk', el).forEach(b => { const t = $('.sec-title', b).textContent.trim(); const k = (SET_TABS.find(x => x[2].includes(t)) || SET_TABS[0])[0]; b.classList.toggle('hidden', k !== tab); }); $$('#stTabs .chip', el).forEach(c => c.classList.toggle('on', c.dataset.st === tab)); };
+      paintTab();
+      $('#stTabs', el).onclick = e => { const c = e.target.closest('[data-st]'); if (!c) return; tab = c.dataset.st; setPref('setTab', tab); paintTab(); window.scrollTo(0, 0); };
+      $$('.sec-title', el).forEach(t => t.classList.add('st-h'));
+      bindSeg(el, 'ssz', v => { setPref('scoreSize', v); });
+      bindSeg(el, 'hst', v => { setPref('homeStyle', v); toast(v === 'tabs' ? '홈 연습 목록을 단계별 탭으로 보여 드려요' : '홈 연습 목록을 단계별로 접어서 보여 드려요'); });
+      $$('[data-feat]', el).forEach(c => c.onchange = () => { setPref('feat_' + c.dataset.feat, c.checked); if (c.dataset.feat === 'routine' && !c.checked) Routine.stop(); render(); });
+      bindSeg(el, 'goal', v => setPref('goalMin', +v));
+      const rt = $('#stRt', el); if (rt) rt.onclick = () => routineSheet(() => render());
       PipeMap($('#stPrev', el), { compact: true, onTap: m => playTone(m, 0.8) });
       fillMicSel($('[data-micsel]', el));
       const oc = $('#stOut', el);
@@ -4758,7 +4918,6 @@ defScreen('settings', {
       $('#stWl', el).onchange = e => { s.wakeLock = e.target.checked; saveDB(); };
       $('#stSens', el).oninput = e => { s.noise = noiseOf(+e.target.value); s.noiseAt = Date.now(); saveDB(); Mic.setGate(); };
       $('#stSens', el).onchange = () => render();
-      el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go, b.dataset.tab ? { tab: b.dataset.tab } : {}); });
       const inst = $('#stInst', el);
       if (FS.standalone()) inst.innerHTML = '<div class="small muted">지금 홈 화면 앱으로 실행 중이에요.</div>';
       else { inst.innerHTML = `<div class="row wrap" style="gap:8px"><button class="btn primary grow" id="stI">${ICONS.install}홈 화면에 설치하기</button><button class="btn grow" id="stF">${FS.on() ? ICONS.fsOff + '전체화면 끄기' : ICONS.fsOn + '전체화면'}</button></div>`; $('#stI', el).onclick = async () => { await startInstall(); render(); }; $('#stF', el).onclick = async () => { await toggleFS(); render(); }; }
