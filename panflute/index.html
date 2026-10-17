@@ -290,7 +290,7 @@ canvas.trace{width:100%;height:120px;display:block;border-radius:14px;background
 .beats i{width:30px;height:30px;border-radius:50%;background:var(--line);transition:transform .06s,background .06s}
 .beats i.acc{width:38px;height:38px;margin-top:-4px}
 .beats i.on{background:var(--btn);transform:scale(1.18)}
-.bpm-big{font-family:var(--serif);font-size:4.8rem;line-height:1;text-align:center;font-variant-numeric:tabular-nums}
+.bpm-big{display:block;margin:0 auto;font-family:var(--serif);font-size:4.8rem;line-height:1;text-align:center;font-variant-numeric:tabular-nums}
 .bpm-name{text-align:center;color:var(--ink-2);font-weight:700}
 .tap{width:100%;min-height:72px;border-radius:20px;background:var(--surface-2);border:2px dashed var(--line);font-weight:700;font-size:1.05rem;color:var(--ink-2)}
 .tap:active{background:var(--peony-soft)}
@@ -522,6 +522,11 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .stf-lane.nolabel .lb{display:none}
 .slur{fill:none;stroke:var(--ink-2);stroke-width:1.5}
 .stf-lane .count{z-index:6}
+.bigcount{position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.bigcount b{font-family:var(--serif);font-weight:400;font-size:min(42vmin,260px);line-height:1;color:var(--peony);text-shadow:0 4px 18px color-mix(in srgb,var(--peony) 25%,transparent)}
+.bigcount b.beat{animation:cntBeat calc(60s / 120) ease-out}
+.bigcount span{font-weight:700;color:var(--ink-2);background:var(--surface);padding:6px 14px;border-radius:99px;box-shadow:var(--shadow)}
+@keyframes cntBeat{0%{transform:scale(1.25);opacity:.4}100%{transform:scale(1);opacity:1}}
 
 /* ---------- 한 줄씩 보는 악보 (노래방 자막처럼) ---------- */
 .ln-lane{position:relative;overflow:hidden;border-radius:16px;background:var(--paper);border:1px solid var(--line);min-height:118px}
@@ -582,6 +587,24 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 .bd-steps span{padding:6px 12px;border-radius:12px;background:var(--surface-2);font-weight:700;font-size:.86rem;color:var(--ink-3)}
 .bd-steps span.on{background:var(--peony-soft);color:var(--peony)}
 .bd-steps span.done{background:var(--jade-soft);color:var(--jade)}
+
+/* ---------- 빠르기 숫자 입력·즐겨찾기 ---------- */
+.sctl b.tapnum,.stepper b.tapnum,.bpm-big.tapnum{cursor:pointer;text-decoration:underline dotted var(--ink-3);text-underline-offset:4px;border-radius:8px;padding:4px 2px}
+.sctl b.tapnum:active{background:var(--surface-2)}
+.favrow{display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;min-height:34px;padding:1px 0}
+.favrow::-webkit-scrollbar{display:none}
+.favrow button,.favedit .fv{flex:none;min-height:32px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:.8rem;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.favrow .fv.on,.favedit .fv.on{border-color:var(--peony);color:var(--peony);background:var(--peony-soft)}
+.favrow .fv-add{display:inline-flex;align-items:center;gap:3px;color:var(--peony)}
+.favrow .fv-add svg{width:15px;height:15px}
+.fv-empty{font-size:.74rem;color:var(--ink-3);white-space:nowrap}
+.favedit{display:flex;flex-wrap:wrap;gap:6px}
+.favedit .fv{display:inline-flex;align-items:center;padding:0 2px 0 12px;gap:2px}
+.favedit .fv button{font:inherit;color:inherit;min-height:36px}
+.favedit .fx-x{width:32px;font-size:1.1rem;color:var(--ink-3)}
+.tmp-in{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:8px}
+.tmp-in button{width:52px;height:56px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);font-weight:700;font-size:1rem}
+.tmp-in input{width:120px;height:64px;border-radius:16px;border:2px solid var(--peony);background:var(--surface);text-align:center;font-family:var(--serif);font-size:2.2rem}
 
 /* ---------- 악상기호 ---------- */
 .am{fill:var(--ink)}
@@ -1955,18 +1978,67 @@ function bindStepCtl(root, id, o) {
     btn.addEventListener('pointerdown', e => { e.preventDefault(); apply(d); if (o.noRepeat) return; t1 = setTimeout(() => { t2 = setInterval(() => apply(d * (o.fast || 1)), 140); }, 450); });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, () => { clearTimeout(t1); clearInterval(t2); t1 = t2 = 0; if (dirty && o.done) { dirty = false; o.done(o.get()); } }));
   });
-  return { refresh() { b.textContent = fmt(o.get()); } };
+  // 빠르기처럼 숫자로 정하는 값: 숫자를 누르면 직접 입력, 아래에 연습마다 즐겨찾기 줄
+  let favBox = null;
+  const setTo = v => { v = clamp(Math.round(v), o.min, o.max); if (v !== o.get()) { o.set(v); if (o.live) o.live(v); if (o.done) o.done(v); } b.textContent = fmt(o.get()); if (favBox) paintFav(favBox, o); };
+  if (o.fav) {
+    b.classList.add('tapnum'); b.setAttribute('role', 'button'); b.setAttribute('aria-label', (o.label || '빠르기') + ' 숫자로 적기');
+    b.addEventListener('click', () => tempoSheet(Object.assign({}, o, { set: setTo })));
+    const host = box.closest('.ctl-row') || box;
+    favBox = document.createElement('div'); favBox.className = 'favrow' + (host.classList.contains('land-hide') ? ' land-hide' : ''); host.after(favBox);
+    paintFav(favBox, Object.assign({}, o, { set: setTo }));
+  }
+  return { refresh() { b.textContent = fmt(o.get()); if (favBox) paintFav(favBox, Object.assign({}, o, { set: setTo })); }, set: setTo };
+}
+/* 빠르기 즐겨찾기 (연습마다 따로 저장). 항목은 숫자 또는 {v, n(이름)} */
+const favVal = x => (x && typeof x === 'object' ? x.v : x);
+const favLbl = x => (x && typeof x === 'object' && x.n ? `${x.n} ${x.v}` : String(favVal(x)));
+function favList(key) { const v = pref('fav_' + key, []); return Array.isArray(v) ? v.filter(x => Number.isFinite(+favVal(x))) : []; }
+function favPut(key, list) { setPref('fav_' + key, list.slice(0, 12)); }
+function favAdd(key, v, n) { const L = favList(key); if (L.some(x => favVal(x) === v)) { toast(`${v}는 이미 즐겨찾기에 있어요`); return false; } L.push(n ? { v, n } : v); L.sort((a, b) => favVal(a) - favVal(b)); favPut(key, L); toast(`빠르기 ${v}${eul(String(v))} 즐겨찾기에 넣었어요`); return true; }
+function paintFav(box, o) {
+  const L = favList(o.fav), cur = o.get();
+  box.innerHTML = `<button type="button" class="fv-add" data-fa="1" aria-label="지금 빠르기를 즐겨찾기에 저장">${ICONS.star}<span>저장</span></button>`
+    + (L.length ? L.map((x, i) => `<button type="button" class="fv${favVal(x) === cur ? ' on' : ''}" data-fi="${i}">${esc(favLbl(x))}</button>`).join('') : `<span class="fv-empty">자주 쓰는 빠르기를 저장해 두세요</span>`);
+  box.onclick = e => {
+    if (e.target.closest('[data-fa]')) { if (favAdd(o.fav, o.get())) paintFav(box, o); return; }
+    const c = e.target.closest('[data-fi]'); if (c) { const x = L[+c.dataset.fi]; o.set(favVal(x)); if (o.onFav) o.onFav(x); paintFav(box, o); }
+  };
+}
+/* 숫자 직접 입력 창 (길게 누르기 대신) */
+function tempoSheet(o) {
+  const unit = o.unit || '';
+  const sh = openSheet(`<h3>${esc(o.label || '빠르기')} 정하기</h3>
+    <div class="tmp-in"><button type="button" data-d="-5">−5</button><button type="button" data-d="-1">−1</button><input type="number" inputmode="numeric" min="${o.min}" max="${o.max}" value="${o.get()}" aria-label="${esc(o.label || '빠르기')}"><button type="button" data-d="1">+1</button><button type="button" data-d="5">+5</button></div>
+    <p class="tiny muted center" style="margin:6px 0 0">숫자를 눌러 바로 적을 수 있어요 (${o.min}~${o.max}${unit})</p>
+    ${o.fav ? `<div class="label mt2">즐겨찾기 <span class="tiny muted">눌러서 불러오기 · × 눌러서 지우기</span></div><div class="favedit"></div>` : ''}
+    <div class="row mt2">${o.fav ? `<button type="button" class="btn grow" data-x="fav">${ICONS.star}지금 값 저장</button>` : ''}<button type="button" class="btn primary grow" data-x="ok">확인</button></div>`);
+  const inp = $('input', sh);
+  const commit = () => { const v = parseInt(inp.value, 10); if (Number.isFinite(v)) o.set(v); inp.value = o.get(); paint(); };
+  const paint = () => { const fe = $('.favedit', sh); if (!fe) return; const L = favList(o.fav); fe.innerHTML = L.length ? L.map((x, i) => `<span class="fv${favVal(x) === o.get() ? ' on' : ''}"><button type="button" data-fi="${i}">${esc(favLbl(x))}</button><button type="button" class="fx-x" data-fd="${i}" aria-label="${esc(favLbl(x))} 지우기">×</button></span>`).join('') : '<span class="fv-empty">아직 저장한 빠르기가 없어요</span>'; };
+  paint();
+  inp.addEventListener('change', commit); inp.addEventListener('keydown', e => { if (e.key === 'Enter') { commit(); inp.blur(); } });
+  sh.addEventListener('click', e => {
+    const d = e.target.closest('[data-d]'); if (d) { inp.value = clamp((parseInt(inp.value, 10) || o.get()) + +d.dataset.d, o.min, o.max); commit(); return; }
+    const fi = e.target.closest('[data-fi]'); if (fi) { const x = favList(o.fav)[+fi.dataset.fi]; o.set(favVal(x)); if (o.onFav) o.onFav(x); inp.value = o.get(); paint(); return; }
+    const fd = e.target.closest('[data-fd]'); if (fd) { const L = favList(o.fav); L.splice(+fd.dataset.fd, 1); favPut(o.fav, L); paint(); if (o.repaint) o.repaint(); return; }
+    const x = e.target.closest('[data-x]'); if (!x) return;
+    if (x.dataset.x === 'fav') { commit(); favAdd(o.fav, o.get()); paint(); return; }
+    commit(); sheetDone(o.after);
+  });
 }
 /* 박자대로 악보가 흐르며 음마다 채점하는 공통 진행기 */
 function TempoRun(o) {
   const per = 60 / o.bpm, lat = latencySec(), ctx = AudioEng.ensure();
-  const cb = o.countBeats || 4; const T0 = ctx.currentTime + 0.3 + cb * per;
+  // 시작 전 카운트: 정한 빠르기로 한 마디(2박자 곡은 두 마디)를 크게 세어 줌
+  let cb = o.countBeats || 4; if (cb < 3) cb *= 2; const T0 = ctx.currentTime + 0.3 + cb * per;
   const notes = o.notes, starts = o.lane.beats, total = notes.reduce((a, n) => a + n.d, 0);
   const acc = notes.map(() => ({ g: 0, n: 0, grade: null }));
-  const cnt = document.createElement('div'); cnt.className = 'count'; o.lane.host.appendChild(cnt);
+  const old = $('#bigCount'); if (old) old.remove();
+  const cnt = document.createElement('div'); cnt.id = 'bigCount'; cnt.className = 'bigcount'; cnt.innerHTML = `<b>준비</b><span>빠르기 ${Math.round(o.bpm)} · ${cb}박 세고 시작해요</span>`; document.body.appendChild(cnt);
   let alive = true, raf = 0, j = 0, lastCur = -2;
   o.lane.clearMarks();
-  const tk = new Ticker({ bpm: o.bpm, beats: cb, onSched: ev => { if ((o.click === false && ev.idx >= cb - 1) || ev.idx >= cb + Math.ceil(total)) tk.sound = false; }, onBeat: ev => { if (ev.idx < cb) cnt.textContent = cb - ev.idx; else if (cnt.parentNode) cnt.remove(); if (o.onTick) o.onTick(ev); } });
+  const tk = new Ticker({ bpm: o.bpm, beats: cb, onSched: ev => { if ((o.click === false && ev.idx >= cb - 1) || ev.idx >= cb + Math.ceil(total)) tk.sound = false; }, onBeat: ev => { if (ev.idx < cb) { const b = $('b', cnt); if (b) { b.textContent = cb - ev.idx; b.classList.remove('beat'); void b.offsetWidth; b.classList.add('beat'); } } else if (cnt.parentNode) cnt.remove(); if (o.onTick) o.onTick(ev); } });
   tk.start(ctx.currentTime + 0.3);
   const step = () => {
     if (!alive) return; raf = requestAnimationFrame(step);
@@ -2871,7 +2943,7 @@ defScreen('scale', {
         ${segHTML('sw', [['wait', '맞을 때까지'], ['tempo', '박자에 맞춰']], way)}
         <div class="fx land-hide" id="scPrev"></div>`;
       keyCtl(el, 'scKey', setup);
-      bindStepCtl(el, 'scB', { get: () => bpm, set: v => { bpm = v; setPref('scBpm', v); }, min: 30, max: 200, fast: 5 });
+      bindStepCtl(el, 'scB', { get: () => bpm, set: v => { bpm = v; setPref('scBpm', v); }, min: 30, max: 200, fast: 5, fav: 'scale' });
       $('#scR', el).onchange = e => { rg = e.target.value; setPref('scRange', rg); setup(); };
       $('#scD', el).onchange = e => { dir = e.target.value; setPref('scDir', dir); setup(); };
       bindSeg(el, 'sp', v => { pat = v; setPref('scPat', v); setup(); });
@@ -2935,7 +3007,7 @@ defScreen('tongue', {
     let tk = null, unMic = null, unSub = null, unOn = null, unAtk = null, running = false;
     let st = { ex: 0, good: 0, early: 0, late: 0, n: 0, atkOk: 0, atkSum: [], recs: [] };
     el.innerHTML = `<div id="tgGate"></div>
-      <div class="card col lrow" style="gap:8px;padding:10px 12px"><div class="row between"><span class="small"><b>빠르기</b> <span class="muted">1분에 박 수</span></span><div class="stepper sm"><button id="tgM">−</button><div class="val"><b id="tgB">${bpm}</b></div><button id="tgP">+</button></div></div>${segHTML('tgs', SUB_OPTS, sub)}${segHTML('tgy', SYL_OPTS, syl)}</div>
+      <div class="card col lrow" style="gap:8px;padding:10px 12px"><div class="ctl-row">${stepCtlHTML('tgBc', '빠르기', bpm)}</div>${segHTML('tgs', SUB_OPTS, sub)}${segHTML('tgy', SYL_OPTS, syl)}</div>
       <div class="small center land-hide sm-hide" id="tgDesc" style="min-height:1.3em"></div>
       <div class="beats land-hide" id="tgBeats"><i class="acc"></i><i></i><i></i><i></i></div>
       <div class="lane fx" id="tgLane"><div class="band" id="tgBand"></div><div class="ctr"></div><span class="lb" style="left:8px">빨라요</span><span class="lb" style="right:8px">늦어요</span></div>
@@ -2952,8 +3024,8 @@ defScreen('tongue', {
     };
     paintBand(); paintDesc(); paintKv();
     const reset = () => { st = { ex: 0, good: 0, early: 0, late: 0, n: 0, atkOk: 0, atkSum: [], recs: [] }; $$('.hit', lane).forEach(d => d.remove()); paintKv(); };
-    const setB = v => { bpm = clamp(v, 30, 180); setPref('tgBpm', bpm); $('#tgB', el).textContent = bpm; paintBand(); if (tk) tk.setBpm(bpm); };
-    $('#tgM', el).onclick = () => setB(bpm - 2); $('#tgP', el).onclick = () => setB(bpm + 2);
+    const setB = v => { bpm = clamp(v, 30, 180); setPref('tgBpm', bpm); paintBand(); if (tk) tk.setBpm(bpm); };
+    bindStepCtl(el, 'tgBc', { get: () => bpm, set: setB, min: 30, max: 180, fast: 5, fav: 'tongue' });
     bindSeg(el, 'tgs', v => { sub = +v; setPref('tgSub', sub); paintBand(); if (running) { stop(); start(); } });
     bindSeg(el, 'tgy', v => { syl = v; setPref('tgSyl', v); paintDesc(); reset(); });
     $('#tgLat', el).onclick = () => go('latency');
@@ -3081,22 +3153,24 @@ defScreen('leap', {
 function tempoName(b) { return b <= 60 ? '아주 느리게' : b <= 76 ? '느리게' : b <= 108 ? '보통 빠르기' : b <= 132 ? '조금 빠르게' : '빠르게'; }
 defScreen('metro', {
   tab: true, title: '메트로놈', practice: 'metro', wake: true, fit: true,
-  help: `<p>빠르기는 1분에 치는 박 수예요. − + 를 길게 누르면 5씩 바뀌어요.</p><p><b>박을 나누기</b>에서 8분음표, 셋잇단, 16분음표를 고르면 한 박 안에 작은 소리가 더 들어가요.</p><p>탭 버튼을 박자에 맞춰 3번 이상 두드리면 그 빠르기로 맞춰요. 자주 쓰는 빠르기는 ‘저장한 빠르기’에 모아 둘 수 있어요.</p>`,
+  help: `<p>빠르기는 1분에 치는 박 수예요. − + 를 길게 누르면 5씩 바뀌어요.</p><p><b>박을 나누기</b>에서 8분음표, 셋잇단, 16분음표를 고르면 한 박 안에 작은 소리가 더 들어가요.</p><p>큰 숫자를 누르면 빠르기를 숫자로 바로 적을 수 있어요. 탭 버튼을 박자에 맞춰 3번 이상 두드리면 그 빠르기로 맞춰요. 자주 쓰는 빠르기는 아래 ☆ 저장을 눌러 즐겨찾기에 모아 두고, 눌러서 바로 불러와요.</p>`,
   render(el) {
     const M = DB.metro; if (![1, 2, 3, 4].includes(M.sub)) M.sub = 1;
+    if (DB.metroSaved.length && DB.prefs.fav_metro === undefined) { setPref('fav_metro', DB.metroSaved.map(x => ({ v: x.bpm, n: x.name, b: x.beats })).sort((a, b) => a.v - b.v)); }
     let tk = null, taps = [], holdT = 0, holdI = 0;
     function render() {
       el.innerHTML = `<div class="col fx l-row"><div class="card center fx cq" style="display:flex;flex-direction:column;justify-content:center;gap:4px">
         <div class="beats" id="mtBeats">${Array.from({ length: M.beats }, (_, i) => `<i class="${i === 0 ? 'acc' : ''}"></i>`).join('')}</div>
-        <div class="bpm-big" id="mtB" style="font-size:clamp(3rem,26cqh,4.8rem)">${M.bpm}</div><div class="bpm-name" id="mtN">${tempoName(M.bpm)}</div>
+        <button type="button" class="bpm-big tapnum" id="mtB" aria-label="빠르기 숫자로 적기" style="font-size:clamp(3rem,26cqh,4.8rem)">${M.bpm}</button><div class="bpm-name" id="mtN">${tempoName(M.bpm)}</div>
         <div class="stepper" style="justify-content:center;margin-top:6px"><button id="mtM">−</button><input type="range" min="30" max="200" value="${M.bpm}" id="mtR" style="flex:1"><button id="mtP">+</button></div></div>
       <div class="col l-side">${segHTML('mb', [[2, '2박'], [3, '3박'], [4, '4박'], [6, '6박']], M.beats)}
       ${segHTML('ms', SUB_OPTS, M.sub)}
-      <div class="row"><button class="tap sm grow" id="mtTap">박자에 맞춰 두드리기</button><button class="btn" id="mtList" style="min-height:52px">저장한<br>빠르기</button></div>
+      <button class="tap sm" id="mtTap">박자에 맞춰 두드리기</button>
+      <div class="favrow" id="mtFav"></div>
       <div class="row land-hide"><span class="small muted" style="white-space:nowrap">소리 크기</span><input type="range" min="0" max="1.5" step="0.05" value="${S().metroVol}" id="mtV"></div></div></div>`;
       bind();
     }
-    function setB(v) { M.bpm = clamp(Math.round(v), 30, 200); saveDB(); $('#mtB', el).textContent = M.bpm; $('#mtN', el).textContent = tempoName(M.bpm); $('#mtR', el).value = M.bpm; if (tk) tk.setBpm(M.bpm); }
+    function setB(v) { M.bpm = clamp(Math.round(v), 30, 200); saveDB(); $$('#mtFav .fv', el).forEach((c, i) => c.classList.toggle('on', favVal(favList('metro')[i]) === M.bpm)); $('#mtB', el).textContent = M.bpm; $('#mtN', el).textContent = tempoName(M.bpm); $('#mtR', el).value = M.bpm; if (tk) tk.setBpm(M.bpm); }
     function bind() {
       const rep = d => { setB(M.bpm + d); holdT = setTimeout(() => { holdI = setInterval(() => setB(M.bpm + d * 5), 160); }, 450); };
       const end = () => { clearTimeout(holdT); clearInterval(holdI); };
@@ -3106,16 +3180,9 @@ defScreen('metro', {
       bindSeg(el, 'ms', v => { M.sub = +v; saveDB(); if (tk) { stop(); start(); } });
       $('#mtTap', el).addEventListener('pointerdown', () => { const t = performance.now(); taps = taps.filter(x => t - x < 2500); taps.push(t); if (taps.length >= 3) { const iv = []; for (let i = 1; i < taps.length; i++) iv.push(taps[i] - taps[i - 1]); setB(60000 / median(iv)); } });
       $('#mtV', el).oninput = e => { S().metroVol = +e.target.value; saveDB(); };
-      $('#mtList', el).onclick = listSheet;
-    }
-    function listSheet() {
-      const sh = openSheet(`<h3>저장한 빠르기</h3><div class="list mt">${DB.metroSaved.length ? DB.metroSaved.map((x, i) => `<div class="li"><button class="grow" style="text-align:left" data-i="${i}"><span class="t">${esc(x.name)}</span><br><span class="d">${x.bpm} · ${x.beats}박</span></button><button class="icon-btn" data-del="${i}" aria-label="지우기">${ICONS.trash}</button></div>`).join('') : '<div class="li muted small">저장한 빠르기가 없어요. 곡마다 빠르기를 저장해 두면 편해요.</div>'}</div>
-        <button class="btn primary wide mt" data-save="1">${ICONS.plus}지금 빠르기(${M.bpm}) 저장</button>`);
-      sh.addEventListener('click', e => {
-        if (e.target.closest('[data-save]')) { sheetDone(async () => { const name = await askText('저장할 이름', `빠르기 ${M.bpm}`, '예: 아리랑'); if (name !== null) { DB.metroSaved.push({ name: name || `빠르기 ${M.bpm}`, bpm: M.bpm, beats: M.beats }); saveDB(); } listSheet(); }); return; }
-        const d = e.target.closest('[data-del]'); if (d) { DB.metroSaved.splice(+d.dataset.del, 1); saveDB(); sheetDone(listSheet); return; }
-        const b = e.target.closest('[data-i]'); if (b) { const x = DB.metroSaved[+b.dataset.i]; M.bpm = x.bpm; M.beats = x.beats; saveDB(); sheetDone(() => { const was = !!tk; stop(); render(); if (was) start(); toast(`${x.name} 빠르기로 맞췄어요`); }); }
-      });
+      const fo = { fav: 'metro', label: '빠르기', min: 30, max: 200, get: () => M.bpm, set: v => setB(v), onFav: x => { if (x && x.b && x.b !== M.beats) { M.beats = x.b; saveDB(); const was = !!tk; stop(); render(); if (was) start(); } }, repaint: () => paintFav($('#mtFav', el), fo) };
+      paintFav($('#mtFav', el), fo);
+      $('#mtB', el).onclick = () => tempoSheet(Object.assign({}, fo, { set: v => { setB(v); paintFav($('#mtFav', el), fo); } }));
     }
     const dock = setDock(`<button class="btn primary big wide" id="mtGo">${ICONS.play}시작</button>`);
     const btn = $('#mtGo', dock);
@@ -3267,7 +3334,7 @@ function fitSongK(s, k) { if (k === undefined) k = songKey(s.id); return fitSong
 function songCtlHTML(s, pfx) { return `<div class="ctl-row land-hide">${stepCtlHTML(pfx + 'Key', '키', keyTxt(songKey(s.id)))}${stepCtlHTML(pfx + 'Bpm', '빠르기', songBpm(s))}</div>`; }
 function bindSongCtl(root, s, pfx, onKey, onBpm) {
   bindStepCtl(root, pfx + 'Key', { get: () => songKey(s.id), set: v => setPref('sk_' + s.id, v), min: -6, max: 6, fmt: keyTxt, noRepeat: true, done: onKey });
-  return bindStepCtl(root, pfx + 'Bpm', { get: () => songBpm(s), set: v => setPref('sb_' + s.id, v), min: 30, max: 220, fast: 5, live: onBpm });
+  return bindStepCtl(root, pfx + 'Bpm', { get: () => songBpm(s), set: v => setPref('sb_' + s.id, v), min: 30, max: 220, fast: 5, live: onBpm, fav: 'song_' + s.id });
 }
 function fitNote(f) { const t = []; if (f.shift) t.push(f.shift > 0 ? '한 옥타브 올려서' : '한 옥타브 내려서'); if (f.bends) t.push(`꺾는 음 ${f.bends}개`); if (f.unplayable) t.push(`낼 수 없는 음 ${f.unplayable}개`); return t.join(' · '); }
 defScreen('follow', {
@@ -3428,6 +3495,7 @@ defScreen('editor', {
     $('#edPlay', el).onclick = () => { if (demo) { demo.stop(); demo = null; return; } if (!song.notes.length) return; demo = playSongDemo(song.notes, song.bpm, i => { if (i < 0) { demo = null; if (song.notes.length) lane.goTo(clamp(sel, 0, song.notes.length - 1)); return; } lane.goTo(i); }); };
     const setB = v => { song.bpm = clamp(v, 30, 200); $('#edB', el).textContent = song.bpm; };
     $('#edBm', el).onclick = () => setB(song.bpm - 4); $('#edBp', el).onclick = () => setB(song.bpm + 4);
+    $('#edB', el).classList.add('tapnum'); $('#edB', el).onclick = () => tempoSheet({ label: '빠르기', min: 30, max: 200, get: () => song.bpm, set: setB });
     bindSeg(el, 'edts', v => { song.ts = +v; paint(); });
     paint();
     setDock(`<button class="btn primary big wide" id="edSave">${ICONS.check}저장하기</button>`).querySelector('#edSave').onclick = () => {
@@ -3473,7 +3541,7 @@ defScreen('legato', {
         ${meterHTML(true)}
         <div class="card pm-card land-hide sm-hide"><div id="lgPm"></div></div>`;
       keyCtl(el, 'lgKey', build);
-      bindStepCtl(el, 'lgB', { get: () => bpm, set: v => { bpm = v; setPref('lgBpm', v); }, min: 30, max: 200, fast: 5 });
+      bindStepCtl(el, 'lgB', { get: () => bpm, set: v => { bpm = v; setPref('lgBpm', v); }, min: 30, max: 200, fast: 5, fav: 'legato' });
       $('#lgR', el).onchange = e => { rg = e.target.value; setPref('lgRange', rg); build(); };
       $('#lgD', el).onchange = e => { dir = e.target.value; setPref('lgDir', dir); build(); };
       bindSeg(el, 'lgs', v => { size = +v; setPref('lgSize', size); build(); });
@@ -3561,7 +3629,7 @@ defScreen('staccato', {
         <div class="fb center" id="arFb" style="margin:0">${esc(ARTIC_TIP[kind])}</div>
         <div class="kv tight land-hide" id="arKv"></div>`;
       keyCtl(el, 'arKey', build);
-      bindStepCtl(el, 'arB', { get: () => bpm, set: v => { bpm = v; setPref('arBpm', v); }, min: 30, max: 160, fast: 5 });
+      bindStepCtl(el, 'arB', { get: () => bpm, set: v => { bpm = v; setPref('arBpm', v); }, min: 30, max: 160, fast: 5, fav: 'staccato' });
       $('#arK', el).addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; kind = b.dataset.k; setPref('arKind', kind); build(); });
       bindSeg(el, 'arm', v => { mel = v; setPref('arMel', v); build(); });
       lane = StaffLane($('#arLane', el), drill.notes, { artic: drill.plan, ts: 4 }); lane.goTo(0, false); lane.setCur(-1);
@@ -3633,7 +3701,7 @@ defScreen('dotted', {
           <div class="fb center" id="dtFb" style="margin:0">${front ? '‘따~안 따’ 길고 짧게' : '‘따 따~안’ 짧고 길게'} 불어 보세요</div></div>
         <div class="kv tight land-hide sm-hide" id="dtKv"></div>`;
       keyCtl(el, 'dtKey', build);
-      bindStepCtl(el, 'dtB', { get: () => bpm, set: v => { bpm = v; setPref('dtBpm', v); }, min: 30, max: 160, fast: 5 });
+      bindStepCtl(el, 'dtB', { get: () => bpm, set: v => { bpm = v; setPref('dtBpm', v); }, min: 30, max: 160, fast: 5, fav: 'dotted' });
       bindSeg(el, 'dtr', v => { rh = v; setPref('dtRh', v); build(); });
       bindSeg(el, 'dtm', v => { mel = v; setPref('dtMel', v); build(); });
       lane = StaffLane($('#dtLane', el), notes, { ts: 4 }); lane.goTo(0, false); lane.setCur(-1);
@@ -3694,7 +3762,7 @@ defScreen('transcribe', {
         ${segHTML('trg', [[0.5, '8분음표까지'], [0.25, '16분음표까지']], grid)}
         <div class="tgls"><button class="chip ${clickOn ? 'on' : ''}" id="trClk">박자 소리 들으며 불기</button></div>
         <div class="card fx center land-hide" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px"><div style="width:110px">${fluteArt()}</div><p class="small muted">한 마디를 세어 준 뒤 녹음을 시작해요.<br>‘틱’ 소리에 맞춰 또박또박 불어 보세요.</p></div>`;
-      bindStepCtl(el, 'trB', { get: () => bpm, set: v => { bpm = v; setPref('trBpm', v); }, min: 40, max: 160, fast: 5 });
+      bindStepCtl(el, 'trB', { get: () => bpm, set: v => { bpm = v; setPref('trBpm', v); }, min: 40, max: 160, fast: 5, fav: 'transcribe' });
       bindSeg(el, 'trts', v => { ts = +v; setPref('trTs', ts); });
       bindSeg(el, 'trg', v => { grid = +v; setPref('trGrid', grid); });
       $('#trClk', el).onclick = e => { clickOn = !clickOn; setPref('trClick', clickOn); e.currentTarget.classList.toggle('on', clickOn); };
