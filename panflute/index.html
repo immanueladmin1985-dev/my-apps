@@ -442,6 +442,8 @@ canvas.trace{width:100%;height:120px;display:block;border-radius:14px;background
 .keys{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 8px}
 .keys button{flex:none;width:50px;height:64px;border-radius:10px;background:linear-gradient(90deg,#9A7642,#EBD8AC 30%,#CFAA6E 62%,#8E6B3A);color:#3A2812;font-weight:700;font-size:1.15rem;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
 .keys button small{font-size:.62rem;opacity:.75}
+.keys.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;overflow:visible;padding:2px 0}
+.keys.grid button{width:auto;height:46px;font-size:1.05rem}
 .keys button:active{transform:translateY(2px)}
 .ed-notes{display:flex;flex-wrap:wrap;gap:6px;min-height:70px;padding:10px;border-radius:16px;background:var(--surface-2)}
 .ed-notes .en{min-width:46px;height:52px;padding:0 6px;border-radius:12px;background:var(--surface);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem}
@@ -644,6 +646,16 @@ body.focusmode #rtbar{position:fixed;left:max(8px,env(safe-area-inset-left,0px))
 .cal .l3{background:var(--jade);color:#fff}
 .cal .today{outline:2px solid var(--peony);outline-offset:-2px}
 .cal em{position:absolute;right:3px;top:1px;font-style:normal;font-size:.6rem}
+
+/* ---------- 반주 녹음 단계 안내 ---------- */
+.bk-steps{list-style:none;margin:0;padding:0;counter-reset:bk;display:flex;flex-direction:column;gap:6px}
+.bk-steps li{position:relative;padding:6px 8px 6px 42px;border-radius:12px;line-height:1.3}
+.bk-steps li::before{counter-increment:bk;content:counter(bk);position:absolute;left:8px;top:7px;width:26px;height:26px;border-radius:50%;background:var(--surface-2);color:var(--ink-2);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.bk-steps li b{display:block;font-size:.95rem}
+.bk-steps li span{font-size:.78rem;color:var(--ink-2)}
+.bk-steps li.on{background:var(--peony-soft)}
+.bk-steps li.on::before{background:var(--peony);color:var(--peony-ink)}
+.bk-steps li.done::before{content:'✓';background:var(--jade);color:#fff}
 
 /* ---------- 설정 탭 ---------- */
 .st-tabs{position:sticky;top:calc(var(--hdr-h) + env(safe-area-inset-top,0px));z-index:15;background:var(--bg);padding:6px 0 8px;margin:0 -2px}
@@ -3750,6 +3762,11 @@ defScreen('playalong', {
 });
 
 /* ================= 내 곡 만들기 (악보로 보면서 적기) ================= */
+// 관 버튼: 옆으로 밀지 않아도 되게 옥타브마다 한 줄(높은 음이 위), 도레미 자리를 세로로 맞춤
+function editorKeysHTML() {
+  const t = KEY_PC[S().flute.key] || 0; const octs = PIPES.map(m => Math.floor((m - t) / 12)); const top = Math.max(...octs);
+  return PIPES.map((m, i) => { const deg = MAJOR.indexOf(pc(m - t)); const tag = octTag(m); return `<button data-m="${m}" style="grid-row:${top - octs[i] + 1};grid-column:${deg + 1}">${esc(KO[pc(m)])}<small>${tag && tag !== '가온' ? tag.replace('아주 ', '↑↑').replace('높은', '↑').replace('낮은', '↓') : ''} ${pipeNo(m)}</small></button>`; }).join('');
+}
 defScreen('editor', {
   title: p => p.id ? '내 곡 고치기' : '내 곡 만들기', practice: 'editor', fit: true,
   help: `<ul><li>먼저 <b>음 길이</b>를 고르고 아래 대나무 관 버튼을 누르면 악보에 음이 적혀요.</li><li>빨간 기준선에 있는 음이 지금 고른 음이에요. 악보의 음을 누르거나 ◀ ▶ 버튼으로 고를 수 있고, 새 음은 고른 음 뒤에 들어가요.</li><li><b>반음 꺾기</b>를 켜고 관을 누르면 그 관보다 반음 낮은 음(예: 솔 관 → 파#)이 적혀요.</li><li><b>악상</b> 버튼을 누를 때마다 고른 음에 스타카토 → 테누토 → 악센트 → 없음 순서로 기호가 붙어요. 내 곡은 박자대로 불기에서 이 기호로 판정해요.</li><li><b>불어서 적기</b>를 누르면 팬플룻으로 분 소리를 악보로 받아 적을 수 있어요.</li><li>저장한 곡은 ‘연습곡’의 ‘내 곡’에서 따라 불기와 박자대로 불기로 연습할 수 있어요.</li></ul>`,
@@ -3762,7 +3779,7 @@ defScreen('editor', {
       ${segHTML('edts', [[2, '2박자'], [3, '3박자'], [4, '4박자'], [6, '6박자']], song.ts)}
       <div class="chips scroll" id="edD">${DURS.map(([v, l]) => `<button class="chip ${v === dur ? 'on' : ''}" data-d="${v}">${l}</button>`).join('')}</div>
       <div class="row between" style="flex-wrap:nowrap"><label class="row small" style="gap:6px;white-space:nowrap"><span class="switch"><input type="checkbox" id="edF"><span></span></span><b>반음 꺾기</b></label><span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm" id="edMic" style="white-space:nowrap">${ICONS.mic}불어서</button><button class="btn sm" id="edR" style="white-space:nowrap">쉼표</button></span></div>
-      <div class="keys" id="edK">${PIPES.map(m => `<button data-m="${m}">${esc(KO[pc(m)])}<small>${octTag(m) && octTag(m) !== '가온' ? octTag(m).replace('아주 ', '↑↑').replace('높은', '↑').replace('낮은', '↓') : ''} ${pipeNo(m)}</small></button>`).join('')}</div>
+      <div class="keys grid" id="edK">${editorKeysHTML()}</div>
       <div class="fx" id="edLane"></div>
       <div class="ibtns"><button class="btn" id="edPrev">${ICONS.back}앞 음</button><button class="btn" id="edNext">${ICONS.chev}뒤 음</button><button class="btn" id="edDel">${ICONS.x}지우기</button><button class="btn" id="edLen">${ICONS.refresh}길이 바꾸기</button><button class="btn" id="edArt">${ICONS.staccato}악상</button><button class="btn" id="edPlay">${ICONS.ear}들어 보기</button></div>`;
     const laneHost = $('#edLane', el);
@@ -4192,11 +4209,13 @@ defScreen('backing', {
     function render() {
       const list = B.tracks.filter(t => fsel === 'all' || t.folder === fsel).sort((a, b) => b.t - a.t);
       const fo = B.folders.find(f => f.id === fsel);
-      el.innerHTML = `<div class="card"><p class="small" style="margin:0">폰에 있는 반주 파일을 불러와서 <b>이어폰</b>으로 들으며 녹음해요. 녹음 뒤에는 반주와 내 소리의 비율을 바꿔 들을 수 있어요.</p>
+      const multi = B.folders.length > 1;
+      el.innerHTML = `<div class="card"><ol class="bk-steps"><li class="${B.tracks.length ? 'done' : 'on'}"><b>반주 파일 불러오기</b><span>아래 버튼으로 폰에 있는 MP3 등을 골라요</span></li><li class="${B.tracks.length ? 'on' : ''}"><b>이어폰을 끼고 ‘반주 맞춰 녹음’</b><span>반주를 누르면 바로 녹음 화면이 열려요</span></li><li class="${B.takes.length ? 'done' : ''}"><b>섞어 듣기</b><span>녹음이 끝나면 반주와 내 소리를 섞어 들어요</span></li></ol>
           <div class="outrow" style="margin-top:10px"><span>소리 지연 ${Math.round(latencySec() * 1000)}ms</span>${outBtnHTML(1)}</div></div>
-        <div class="chips scroll mt" id="bkF"><button class="chip ${fsel === 'all' ? 'on' : ''}" data-f="all">전체</button>${B.folders.map(f => `<button class="chip ${fsel === f.id ? 'on' : ''}" data-f="${f.id}">${esc(f.name)}</button>`).join('')}<button class="chip" data-f="+">${ICONS.plus}폴더</button></div>
+        <div class="chips scroll mt ${multi ? '' : 'hidden'}" id="bkF"><button class="chip ${fsel === 'all' ? 'on' : ''}" data-f="all">전체</button>${B.folders.map(f => `<button class="chip ${fsel === f.id ? 'on' : ''}" data-f="${f.id}">${esc(f.name)}</button>`).join('')}<button class="chip" data-f="+">${ICONS.plus}폴더</button></div>
         ${fo && fo.id !== 'f0' ? `<div class="row mt" style="gap:6px"><button class="btn sm" id="bkFR">폴더 이름 바꾸기</button><button class="btn sm ghost" id="bkFD">폴더 지우기</button></div>` : ''}
         <div class="list mt">${list.length ? list.map(t => `<div class="li"><button class="grow" style="text-align:left;background:none;border:0;font:inherit;color:inherit;padding:0" data-open="${t.id}"><span class="t">${esc(t.name)}</span><br><span class="d">${fmtSec(t.dur)} · 속도 ${Math.round((t.speed || 1) * 100)}%${t.a != null && t.b != null ? ' · A-B' : ''} · 녹음 ${B.takes.filter(k => k.trackId === t.id).length}개</span></button><button class="icon-btn" data-more="${t.id}" aria-label="더 보기" style="font-size:1.4rem">⋯</button></div>`).join('') : `<div class="li muted small">${B.tracks.length ? '이 폴더에는 반주가 없어요.' : '아직 불러온 반주가 없어요. 아래 버튼으로 불러와 주세요.'}</div>`}</div>
+        ${!multi && B.tracks.length >= 2 ? `<button type="button" class="btn ghost wide mt" id="bkFolder">${ICONS.plus}폴더를 만들어 나눠 두기</button>` : ''}
         <input type="file" id="bkFile" accept="audio/*" multiple hidden>`;
       $('#bkF', el).onclick = async e => {
         const b = e.target.closest('[data-f]'); if (!b) return;
@@ -4204,6 +4223,7 @@ defScreen('backing', {
         else fsel = b.dataset.f;
         B.cur = fsel; saveDB(); render();
       };
+      const bf = $('#bkFolder', el); if (bf) bf.onclick = async () => { const n = await askText('새 폴더 이름', '', '예: 찬양 반주'); if (!n) return; B.folders.push({ id: 'f' + uid(), name: n }); saveDB(); render(); toast('반주 오른쪽 ⋯ 버튼으로 폴더를 옮길 수 있어요', 3500); };
       const fr = $('#bkFR', el); if (fr) fr.onclick = async () => { const n = await askText('폴더 이름', fo.name); if (!n) return; fo.name = n; saveDB(); render(); };
       const fd = $('#bkFD', el); if (fd) fd.onclick = async () => { if (!(await confirmSheet(`‘${fo.name}’ 폴더를 지울까요? 안의 반주는 ‘기본’ 폴더로 옮겨져요.`, '지우기', true))) return; B.tracks.forEach(t => { if (t.folder === fo.id) t.folder = 'f0'; }); B.folders = B.folders.filter(f => f.id !== fo.id); fsel = 'all'; B.cur = 'all'; saveDB(); render(); };
       $('.list', el).onclick = e => { const o = e.target.closest('[data-open]'); if (o) { go('bkplay', { id: o.dataset.open }); return; } const m = e.target.closest('[data-more]'); if (m) moreSheet(B.tracks.find(t => t.id === m.dataset.more)); };
@@ -4220,15 +4240,16 @@ defScreen('backing', {
       }
       try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
       render(); toast(bad.length ? `${ok}개를 불러왔어요. 열지 못한 파일: ${bad.join(', ')}` : `반주 ${ok}개를 불러왔어요`, 3500);
+      if (ok === 1 && !bad.length) { const last = B.tracks[B.tracks.length - 1]; if (last) go('bkplay', { id: last.id }); } // 하나만 불러오면 바로 녹음 화면으로
     }
     function moreSheet(tr) {
       if (!tr) return;
       const sh = openSheet(`<h3>${esc(tr.name)}</h3><div class="list">
         <button class="li" data-a="ren"><span class="grow">이름 바꾸기</span></button>
-        <div class="li" style="display:block"><span class="t">폴더 옮기기</span><div class="chips mt" style="flex-wrap:wrap">${B.folders.map(f => `<button class="chip ${tr.folder === f.id ? 'on' : ''}" data-mv="${f.id}">${esc(f.name)}</button>`).join('')}</div></div>
+        <div class="li" style="display:block"><span class="t">폴더 옮기기</span><div class="chips mt" style="flex-wrap:wrap">${B.folders.map(f => `<button class="chip ${tr.folder === f.id ? 'on' : ''}" data-mv="${f.id}">${esc(f.name)}</button>`).join('')}<button class="chip" data-mv="+">${ICONS.plus}새 폴더</button></div></div>
         <button class="li" data-a="del"><span class="grow" style="color:var(--bad)">지우기 (이 반주로 한 녹음도 지워져요)</span></button></div>`);
       sh.addEventListener('click', e => {
-        const mv = e.target.closest('[data-mv]'); if (mv) { tr.folder = mv.dataset.mv; saveDB(); sheetDone(render); return; }
+        const mv = e.target.closest('[data-mv]'); if (mv) { if (mv.dataset.mv === '+') { sheetDone(async () => { const n = await askText('새 폴더 이름', ''); if (!n) return; const f = { id: 'f' + uid(), name: n }; B.folders.push(f); tr.folder = f.id; saveDB(); render(); }); return; } tr.folder = mv.dataset.mv; saveDB(); sheetDone(render); return; }
         const a = e.target.closest('[data-a]'); if (!a) return;
         if (a.dataset.a === 'ren') sheetDone(async () => { const n = await askText('반주 이름', tr.name); if (n) { tr.name = n; saveDB(); render(); } });
         else sheetDone(async () => {
