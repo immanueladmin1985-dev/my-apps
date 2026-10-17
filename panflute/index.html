@@ -12,7 +12,7 @@
 <meta name="description" content="음정을 듣고 알려 주는 팬플룻 단계별 연습실">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Great+Vibes&family=Nanum+Pen+Script&family=Noto+Music&family=Song+Myung&display=swap" rel="stylesheet">
@@ -185,8 +185,23 @@ input.txt,textarea.txt{width:100%;min-height:52px;border-radius:14px;border:1.5p
 :root[data-theme="dark"] .hero{color:#F6EFE8}
 .hero .greet{position:relative;font-family:var(--serif);font-size:1.45rem;line-height:1.3;padding-right:96px}
 .hero .stat{margin-top:6px;font-size:.95rem;opacity:.85;padding-right:80px}
-.hero .art{position:absolute;right:-6px;top:2px;width:118px;pointer-events:none}
-.hero .art svg{width:100%;height:auto;display:block}
+img.fart{display:block;width:100%;height:auto}
+.sp-emblem img.fart{filter:drop-shadow(0 6px 14px rgba(90,60,30,.18))}
+/* 첫 화면 그림: 왼쪽 빈 곳에 인사말, 오른쪽에 팬플룻 */
+.hero.pic{background:url(hero.webp) 72% 60%/cover no-repeat,var(--surface);min-height:clamp(170px,46vw,260px);display:flex;flex-direction:column;justify-content:space-between;padding:20px}
+.hero.pic .greet{padding-right:0;max-width:56%;text-shadow:0 1px 0 rgba(255,250,240,.6)}
+.hero.pic .btn{align-self:flex-start;box-shadow:0 4px 12px rgba(80,50,20,.18)}
+:root[data-theme="dark"] .hero.pic{background:linear-gradient(90deg,rgba(29,24,20,.88) 0%,rgba(29,24,20,.6) 48%,rgba(29,24,20,.15) 80%),url(hero.webp) 72% 60%/cover no-repeat}
+:root[data-theme="dark"] .hero.pic .greet{text-shadow:none}
+@media (orientation:landscape) and (max-height:600px){
+  .hero.pic{min-height:clamp(140px,40vh,210px);padding:16px 20px}
+  .hero.pic .greet{max-width:48%}
+  .sp-emblem{width:min(150px,30vh);margin-bottom:6px}
+  .sp-big{font-size:clamp(32px,11vh,56px)}
+  .sp-small{font-size:clamp(16px,5vh,24px)}
+  .sp-line{margin:10px auto 6px}
+  .sp-credit{font-size:clamp(26px,8vh,38px)}
+}
 .hero .btn{margin-top:14px;background:var(--btn);border:0;color:var(--peony-ink)}
 
 .banner{display:flex;gap:12px;align-items:flex-start;border-radius:18px;padding:14px 14px;margin-top:14px;background:var(--warm-soft)}
@@ -771,23 +786,7 @@ const pipIcon = (n, color) => { // 단계 표시용 작은 팬플룻 (관 개수
 
 /* ================= 파스텔 색·팬플룻 그림 ================= */
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const f = c => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k)); return '#' + [f(r), f(g), f(b)].map(v => clamp(v, 0, 255).toString(16).padStart(2, '0')).join(''); }
-function fluteArt() {
-  const p = 'fa' + (fluteArt.n = (fluteArt.n || 0) + 1);
-  const n = 8, pw = 16, gap = 3, x0 = 30, top = 24;
-  const defs = `<linearGradient id="${p}b" x1="0" x2="1"><stop offset="0" stop-color="#94703E"/><stop offset=".28" stop-color="#EEDDB3"/><stop offset=".6" stop-color="#D1AE72"/><stop offset="1" stop-color="#8A6736"/></linearGradient><linearGradient id="${p}c" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6B4628"/><stop offset="1" stop-color="#4A2F1A"/></linearGradient>`;
-  let body = '';
-  for (let i = 0; i < n; i++) {
-    const h = 110 - i * 9.5, x = x0 + i * (pw + gap);
-    body += `<rect x="${x}" y="${top}" width="${pw}" height="${h}" rx="3" fill="url(#${p}b)"/>`
-      + `<rect x="${x + 3.2}" y="${top + 6}" width="2.2" height="${h - 12}" rx="1.1" fill="#FFF8E6" opacity=".5"/>`
-      + `<ellipse cx="${x + pw / 2}" cy="${top + 3.2}" rx="${pw / 2 - 2.2}" ry="2.2" fill="#3E2812" opacity=".55"/>`
-      + `<rect x="${x}" y="${top + h * 0.72}" width="${pw}" height="1.5" fill="#6B4A22" opacity=".45"/>`;
-  }
-  const xe = x0 + n * (pw + gap) - gap;
-  const cord = y => { let c = `<rect x="${x0 - 4}" y="${y}" width="${xe - x0 + 8}" height="6" rx="3" fill="url(#${p}c)"/>`; for (let x = x0 - 1; x < xe; x += 4.5) c += `<path d="M${x} ${y + .8} l3 4.4" stroke="#9A7046" stroke-width=".9" opacity=".75"/>`; return c; };
-  body += cord(top + 20) + cord(top + 46);
-  return `<svg viewBox="0 0 200 150" aria-hidden="true"><defs>${defs}</defs><ellipse cx="${(x0 + xe) / 2 - 10}" cy="${top + 120}" rx="70" ry="4.5" fill="#5A3E22" opacity=".12"/>${body}</svg>`;
-}
+function fluteArt() { return '<img class="fart" src="art-flute.webp" alt="" decoding="async">'; } // 팬플룻 그림 (둥근 수채화)
 
 /* ================= 저장 ================= */
 const STORE_KEY = 'nanjang_panflute_v1';
@@ -2365,8 +2364,7 @@ defScreen('home', {
     const sug = suggestToday();
     el.innerHTML = `
       <div id="instBan"></div>
-      <section class="hero">
-        <div class="art">${fluteArt()}</div>
+      <section class="hero pic">
         <div class="greet">${greet}</div>
         <button class="btn" id="sugBtn">${ICONS.play}${esc(sug.t)}</button>
       </section>
