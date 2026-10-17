@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>난장이의 팬플룻 교실</title>
-<meta name="theme-color" content="#F3EDE3">
+<meta name="theme-color" content="#F2ECE3">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="팬플룻 교실">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="음정을 듣고 알려 주는 팬플룻 단계별 연습실">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -609,13 +611,15 @@ body.fitmode #view{padding-bottom:0;padding-top:4px}
 /* ---------- 가로 화면 2단: 왼쪽은 큰 화면(악보·음 표시), 오른쪽은 조절 버튼과 시작 버튼 ---------- */
 .screen.fit.l2{display:grid;grid-template-columns:minmax(0,61fr) minmax(0,39fr);column-gap:14px;row-gap:8px;align-content:start;overflow-y:auto;overflow-x:hidden}
 .screen.fit.l2 .col.fx:not(.l-row):not(.card){display:contents}
-.screen.fit.l2 [data-l2="side"]{grid-column:2;min-width:0}
+.screen.fit.l2 [data-l2="side"]{grid-column:2;min-width:0;min-height:min-content!important;max-height:none!important}
+.screen.fit.l2 [data-l2="side"] .row{flex-wrap:wrap}
 .screen.fit.l2 .lmain{grid-column:1;grid-row:1/-1;position:sticky;top:0;height:var(--l2h,100%)!important;max-height:none!important;min-height:0;align-self:start}
 .screen.fit.l2::after{content:'';grid-column:2;height:var(--dockh,0px);order:2}
 .screen.fit.l2 .land-hide{order:1}
 .screen.fit.l2 .lrow{flex-direction:column!important;align-items:stretch!important}
 .screen.fit.l2 .lrow>*{flex:none}
 .screen.fit.l2 .ctl-row,.screen.fit.l2 .presets,.screen.fit.l2 .tgls{flex-wrap:wrap}
+.screen.fit.l2 .ctl-row .sctl{min-width:150px}
 .screen.fit.l2 .ibtns{flex-wrap:wrap}
 .screen.fit.l2 .ibtns .btn{flex:1 1 30%}
 .screen.fit.l2 .cur-row{flex-wrap:wrap}
@@ -679,6 +683,10 @@ body.l2dock .dock>*{max-width:none}
   <nav id="nav" class="hidden" aria-label="주요 메뉴"></nav>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* Artifact 등에서 head 태그가 body로 들어가면 홈 화면 설치용 태그를 head로 옮김 */
+(function () { try { document.querySelectorAll('body link[rel="manifest"],body link[rel="icon"],body link[rel="apple-touch-icon"],body meta[name="mobile-web-app-capable"],body meta[name="apple-mobile-web-app-capable"],body meta[name="apple-mobile-web-app-title"],body meta[name="theme-color"]').forEach(n => document.head.appendChild(n)); } catch (e) { } })();
+</script>
 <script>
 'use strict';
 /* ================= 기본 도구 ================= */
@@ -796,8 +804,11 @@ let lastRaw = null; // 이 창이 마지막으로 읽거나 쓴 저장 내용 (�
 let DB = loadDB();
 function loadDB() {
   let d = {};
-  try { const raw = localStorage.getItem(STORE_KEY); lastRaw = raw; if (raw) d = JSON.parse(raw) || {}; } catch (e) { d = {}; }
-  return normalizeDB(d);
+  let raw = null;
+  try { raw = localStorage.getItem(STORE_KEY); if (raw) d = JSON.parse(raw) || {}; } catch (e) { d = {}; }
+  d = normalizeDB(d);
+  lastRaw = raw || JSON.stringify(d); // 저장된 것이 없으면 처음 값(기본값)을 기준으로 삼음
+  return d;
 }
 /* 같은 앱이 두 곳(홈 화면 앱과 브라우저 탭 등)에 열려 있을 때, 오래된 창이 저장하면서
    다른 창에서 바꾼 설정(마이크·소음값 등)을 옛값으로 덮어쓰지 않도록 세 갈래로 합침.
@@ -1033,6 +1044,17 @@ function fitNow() {
 }
 if (window.MutationObserver) { let mq = 0; new MutationObserver(() => { if (mq) return; mq = requestAnimationFrame(() => { mq = 0; if ($('#view > .screen.fit')) fitNow(); }); }).observe(document.getElementById('view') || document.body, { childList: true, subtree: true }); }
 window.addEventListener('resize', () => requestAnimationFrame(fitNow));
+/* 이름 입력 창 (브라우저 prompt 대신). 취소하면 null, 확인하면 앞뒤 공백을 지운 글자 */
+function askText(title, value = '', ph = '') {
+  return new Promise(res => {
+    let answered = false;
+    const sh = openSheet(`<h3>${esc(title)}</h3><input class="txt mt" maxlength="40" value="${esc(value)}" placeholder="${esc(ph)}" data-in><div class="row mt2"><button class="btn grow" data-a="no">취소</button><button class="btn primary grow" data-a="yes">확인</button></div>`, () => { if (!answered) res(null); });
+    const inp = $('[data-in]', sh); setTimeout(() => { try { inp.focus(); inp.select(); } catch (e) { } }, 120);
+    const ok = () => { answered = true; const v = inp.value.trim(); sheetDone(() => res(v)); };
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+    sh.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; if (b.dataset.a === 'yes') ok(); else { answered = true; sheetDone(() => res(null)); } });
+  });
+}
 function confirmSheet(msg, okText = '확인', danger = false) {
   return new Promise(res => {
     let answered = false;
@@ -1322,7 +1344,7 @@ const Mic = {
     } catch (e) { this.wk = null; }
   },
   setGate() { if (this.wk) this.wk.port.postMessage({ gate: Math.max(S().noise * 3, 0.006) }); },
-  release(delay = 1500) { clearTimeout(this.relT); this.relT = setTimeout(() => { if (!this.subs.size) this.teardown(); }, delay); },
+  release(delay = 4000) { clearTimeout(this.relT); this.relT = setTimeout(() => { if (!this.subs.size) this.teardown(); }, delay); },
   teardown() {
     cancelAnimationFrame(this.raf); this.raf = 0;
     if (this.stream) this.stream.getTracks().forEach(t => { t.onended = null; t.stop(); });
@@ -1574,8 +1596,8 @@ function gateHTML(st) {
     <p>폰에 저장된 파일로 열면 크롬이 마이크를 막아 둡니다. 웹 주소(https)로 열거나 홈 화면에 설치한 앱으로 열면 마이크를 쓸 수 있어요.</p>
     <button class="btn primary wide mt2" data-mg="guide" data-tab="insecure">여는 방법 보기</button></div>`;
   if (st === 'embedded') return `<div class="card">${ic(1, 'lock')}<h3>미리보기 링크에서는<br>마이크를 쓸 수 없어요</h3>
-    <p>지금 화면은 다른 페이지 안에 들어 있는 미리보기라서 마이크가 막혀 있어요. 관 소리 듣기, 메트로놈, 곡 시범 듣기는 그대로 쓸 수 있어요. 음정 듣기는 Netlify에 올린 주소나 홈 화면에 설치한 앱에서 돼요.</p>
-    <button class="btn primary wide mt2" data-mg="guide" data-tab="insecure">올리는 방법 보기</button></div>`;
+    <p>지금 화면은 다른 페이지 안에 들어 있는 미리보기라서 마이크가 막혀 있어요. 관 소리 듣기, 메트로놈, 곡 시범 듣기는 그대로 쓸 수 있어요. 음정 듣기는 앱 주소로 열거나 홈 화면에 설치한 앱에서 돼요.</p>
+    <button class="btn primary wide mt2" data-mg="guide" data-tab="insecure">여는 방법 보기</button></div>`;
   if (st === 'denied') return `<div class="card">${ic(1, 'micOff')}<h3>마이크가 막혀 있어요</h3>
     <p>예전에 ‘허용 안 함’을 눌러서 크롬이 마이크를 막고 있어요. 아래 순서대로 허용으로 바꾸고 이 화면으로 돌아오시면 자동으로 이어집니다.</p>
     <ol class="steps"><li>주소창 왼쪽의 <span class="kbd">${ICONS.sliders.replace('<svg', '<svg style="width:16px;height:16px"')} 아이콘</span>을 누르세요</li><li><b>권한</b>(또는 사이트 설정)을 누르세요</li><li><b>마이크</b>를 <b>허용</b>으로 바꾸세요</li></ol>
@@ -2188,7 +2210,7 @@ function layoutL2(el) {
   prev.forEach(c => { if (!r.items.includes(c)) c.removeAttribute('data-l2'); });
   $$('.lmain', el).forEach(c => { if (c !== r.main) c.classList.remove('lmain'); });
   let n = 0; r.items.forEach(c => { if (c === r.main) { c.classList.add('lmain'); c.removeAttribute('data-l2'); } else { n++; if (c.getAttribute('data-l2') !== 'side') c.setAttribute('data-l2', 'side'); } });
-  const rows = `repeat(${n + 1}, auto) 1fr`; if (el.style.gridTemplateRows !== rows) el.style.gridTemplateRows = rows;
+  const rows = `repeat(${n + 1}, min-content) 1fr`; if (el.style.gridTemplateRows !== rows) el.style.gridTemplateRows = rows;
   el.classList.add('l2');
   const d = $('#dock'); const dh = d ? d.getBoundingClientRect().height + 6 : 0;
   el.style.setProperty('--l2h', el.clientHeight + 'px'); el.style.setProperty('--dockh', dh + 'px');
@@ -2489,10 +2511,16 @@ defScreen('tuner', {
 defScreen('micguide', {
   title: '마이크 문제 해결',
   render(el, p) {
-    const tabs = [['chrome', '크롬에서 막힘'], ['app', '앱으로 열었을 때'], ['phone', '폰 설정'], ['ear', '이어폰 쓸 때'], ['insecure', '파일로 열었을 때']];
-    let cur = p.tab || 'chrome';
+    const tabs = [['chrome', '크롬에서 막힘'], ['app', '앱으로 열었을 때'], ['phone', '폰 설정'], ['iphone', '아이폰·아이패드'], ['ear', '이어폰 쓸 때'], ['insecure', '파일로 열었을 때']];
+    if (isIOS()) tabs.unshift(tabs.splice(3, 1)[0]);
+    let cur = p.tab || (isIOS() ? 'iphone' : 'chrome');
     const K = (t, ic) => `<span class="kbd">${ic ? ICONS[ic].replace('<svg', '<svg style="width:16px;height:16px"') : ''}${t}</span>`;
     const content = {
+      iphone: `<p>아이폰·아이패드는 웹 앱을 열 때마다 마이크 허용을 다시 묻는 경우가 많아요. 아래처럼 ‘허용’으로 정해 두면 덜 물어요.</p>
+        <ol class="steps"><li>Safari로 이 앱을 연 상태에서 주소창 왼쪽의 ${K('가가')} (또는 ${K('aA')}) 버튼을 누르세요.</li><li>${K('웹 사이트 설정')}을 누르세요.</li><li>${K('마이크')}를 ${K('허용')}으로 바꾸세요.</li></ol>
+        <p class="mt"><b>모든 사이트에 한 번에 정하려면</b></p>
+        <ol class="steps"><li>아이폰 ${K('설정')} 앱 → ${K('앱')} → ${K('Safari')}로 들어가세요.</li><li>아래쪽 ${K('마이크')}를 눌러 ${K('허용')}을 고르세요.</li></ol>
+        <div class="tipbox">홈 화면에 추가한 앱은 처음 열 때 한 번씩 물을 수 있어요. 그때 ‘허용’을 누르면 그동안은 다시 묻지 않아요. 고른 마이크와 감도 같은 설정은 이 기기에 그대로 저장돼요.</div>`,
       ear: `<p>이어폰을 끼고 반주나 박자 소리를 들으며 연습할 때 알아 두면 좋은 점이에요.</p>
         <ol class="steps"><li><b>유선 이어폰 마이크</b>는 통화용이라 팬플룻 소리를 작게 잡을 수 있어요. 소리가 잘 안 잡히면 설정의 ${K('입력 마이크')}에서 폰 마이크를 고르세요.</li><li><b>블루투스 이어폰</b>은 소리가 0.1~0.3초 늦게 들려요. 설정의 ${K('듣는 장치')}에서 블루투스 이어폰을 고르고 ‘불어서 재기’로 지연을 재 두세요.</li><li>폰에 따라 마이크를 바꾸면 소리가 폰 스피커로 나오기도 해요. 그럴 때는 마이크가 없는 유선 이어폰이 가장 확실해요.</li><li>반주 녹음은 꼭 이어폰으로 들어 주세요. 스피커로 들으면 반주가 녹음에 섞여요.</li></ol>`,
       chrome: `<p>크롬 브라우저 화면(위에 주소창이 보이는 상태)에서 마이크를 허용하는 방법이에요.</p>
@@ -2507,7 +2535,7 @@ defScreen('micguide', {
         <ol class="steps"><li>화면 맨 위에서 아래로 두 번 쓸어내려 빠른 설정 창을 여세요.</li><li>${K('마이크 접근')}(또는 ‘마이크 액세스’) 버튼이 꺼져 있으면 눌러서 켜세요.</li></ol>
         <div class="tipbox">통화 중이거나 녹음 앱이 켜져 있으면 마이크를 함께 쓸 수 없어요. 다른 앱을 닫고 다시 시도해 주세요.</div>`,
       insecure: `<p>폰에 저장된 HTML 파일을 눌러서 열면, 크롬은 안전을 위해 마이크를 아예 막아 둡니다. 이때는 허용 창도 뜨지 않아요.</p>
-        <ol class="steps"><li>크롬에서 <b>app.netlify.com</b>에 들어가 무료로 가입하고 로그인하세요. (구글 계정으로 가입할 수 있어요)</li><li><b>app.netlify.com/drop</b>에 들어가 상자를 누르고, 받아 둔 <b>팬플룻교실_올리기용.zip</b> 파일을 고르세요.</li><li>잠시 뒤 <b>https://</b>로 시작하는 주소가 생겨요. 그 주소를 여세요.</li><li>오른쪽 위 ${K('', 'dots')} → ${K('홈 화면에 추가')} 또는 ${K('앱 설치')}를 누르세요. 이제 아이콘으로 열면 주소창 없이 열리고 마이크도 쓸 수 있어요.</li></ol>
+        <ol class="steps"><li>크롬(아이폰은 Safari)에서 아래 주소를 여세요.<br><b style="word-break:break-all">https://immanueladmin1985-dev.github.io/my-apps/panflute/</b></li><li>오른쪽 위 ${K('', 'dots')} → ${K('홈 화면에 추가')} 또는 ${K('앱 설치')}를 누르세요. (아이폰은 공유 버튼 → 홈 화면에 추가)</li><li>이제 아이콘으로 열면 주소창 없이 열리고 마이크도 쓸 수 있어요. 주소가 늘 같아서 설정과 기록도 그대로 남아요.</li></ol>
         <div class="tipbox">지금 상태에서도 관 배치도, 메트로놈, 시범 소리 듣기, 기록 보기는 사용할 수 있어요.</div>`
     };
     function render() {
@@ -3086,7 +3114,7 @@ defScreen('metro', {
       const sh = openSheet(`<h3>저장한 빠르기</h3><div class="list mt">${DB.metroSaved.length ? DB.metroSaved.map((x, i) => `<div class="li"><button class="grow" style="text-align:left" data-i="${i}"><span class="t">${esc(x.name)}</span><br><span class="d">${x.bpm} · ${x.beats}박</span></button><button class="icon-btn" data-del="${i}" aria-label="지우기">${ICONS.trash}</button></div>`).join('') : '<div class="li muted small">저장한 빠르기가 없어요. 곡마다 빠르기를 저장해 두면 편해요.</div>'}</div>
         <button class="btn primary wide mt" data-save="1">${ICONS.plus}지금 빠르기(${M.bpm}) 저장</button>`);
       sh.addEventListener('click', e => {
-        if (e.target.closest('[data-save]')) { const name = prompt('이름을 적어 주세요 (예: 아리랑)', `빠르기 ${M.bpm}`); if (name === null) return; DB.metroSaved.push({ name: name.trim() || `빠르기 ${M.bpm}`, bpm: M.bpm, beats: M.beats }); saveDB(); sheetDone(listSheet); return; }
+        if (e.target.closest('[data-save]')) { sheetDone(async () => { const name = await askText('저장할 이름', `빠르기 ${M.bpm}`, '예: 아리랑'); if (name !== null) { DB.metroSaved.push({ name: name || `빠르기 ${M.bpm}`, bpm: M.bpm, beats: M.beats }); saveDB(); } listSheet(); }); return; }
         const d = e.target.closest('[data-del]'); if (d) { DB.metroSaved.splice(+d.dataset.del, 1); saveDB(); sheetDone(listSheet); return; }
         const b = e.target.closest('[data-i]'); if (b) { const x = DB.metroSaved[+b.dataset.i]; M.bpm = x.bpm; M.beats = x.beats; saveDB(); sheetDone(() => { const was = !!tk; stop(); render(); if (was) start(); toast(`${x.name} 빠르기로 맞췄어요`); }); }
       });
@@ -3811,13 +3839,13 @@ defScreen('backing', {
         ${fo && fo.id !== 'f0' ? `<div class="row mt" style="gap:6px"><button class="btn sm" id="bkFR">폴더 이름 바꾸기</button><button class="btn sm ghost" id="bkFD">폴더 지우기</button></div>` : ''}
         <div class="list mt">${list.length ? list.map(t => `<div class="li"><button class="grow" style="text-align:left;background:none;border:0;font:inherit;color:inherit;padding:0" data-open="${t.id}"><span class="t">${esc(t.name)}</span><br><span class="d">${fmtSec(t.dur)} · 속도 ${Math.round((t.speed || 1) * 100)}%${t.a != null && t.b != null ? ' · A-B' : ''} · 녹음 ${B.takes.filter(k => k.trackId === t.id).length}개</span></button><button class="icon-btn" data-more="${t.id}" aria-label="더 보기" style="font-size:1.4rem">⋯</button></div>`).join('') : `<div class="li muted small">${B.tracks.length ? '이 폴더에는 반주가 없어요.' : '아직 불러온 반주가 없어요. 아래 버튼으로 불러와 주세요.'}</div>`}</div>
         <input type="file" id="bkFile" accept="audio/*" multiple hidden>`;
-      $('#bkF', el).onclick = e => {
+      $('#bkF', el).onclick = async e => {
         const b = e.target.closest('[data-f]'); if (!b) return;
-        if (b.dataset.f === '+') { const n = prompt('새 폴더 이름', ''); if (!n || !n.trim()) return; const f = { id: 'f' + uid(), name: n.trim() }; B.folders.push(f); fsel = f.id; }
+        if (b.dataset.f === '+') { const n = await askText('새 폴더 이름', ''); if (!n) return; const f = { id: 'f' + uid(), name: n }; B.folders.push(f); fsel = f.id; }
         else fsel = b.dataset.f;
         B.cur = fsel; saveDB(); render();
       };
-      const fr = $('#bkFR', el); if (fr) fr.onclick = () => { const n = prompt('폴더 이름', fo.name); if (!n || !n.trim()) return; fo.name = n.trim(); saveDB(); render(); };
+      const fr = $('#bkFR', el); if (fr) fr.onclick = async () => { const n = await askText('폴더 이름', fo.name); if (!n) return; fo.name = n; saveDB(); render(); };
       const fd = $('#bkFD', el); if (fd) fd.onclick = async () => { if (!(await confirmSheet(`‘${fo.name}’ 폴더를 지울까요? 안의 반주는 ‘기본’ 폴더로 옮겨져요.`, '지우기', true))) return; B.tracks.forEach(t => { if (t.folder === fo.id) t.folder = 'f0'; }); B.folders = B.folders.filter(f => f.id !== fo.id); fsel = 'all'; B.cur = 'all'; saveDB(); render(); };
       $('.list', el).onclick = e => { const o = e.target.closest('[data-open]'); if (o) { go('bkplay', { id: o.dataset.open }); return; } const m = e.target.closest('[data-more]'); if (m) moreSheet(B.tracks.find(t => t.id === m.dataset.more)); };
       $('#bkFile', el).onchange = e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) importFiles(fs); };
@@ -3843,7 +3871,7 @@ defScreen('backing', {
       sh.addEventListener('click', e => {
         const mv = e.target.closest('[data-mv]'); if (mv) { tr.folder = mv.dataset.mv; saveDB(); sheetDone(render); return; }
         const a = e.target.closest('[data-a]'); if (!a) return;
-        if (a.dataset.a === 'ren') sheetDone(() => { const n = prompt('반주 이름', tr.name); if (n && n.trim()) { tr.name = n.trim(); saveDB(); render(); } });
+        if (a.dataset.a === 'ren') sheetDone(async () => { const n = await askText('반주 이름', tr.name); if (n) { tr.name = n; saveDB(); render(); } });
         else sheetDone(async () => {
           if (!(await confirmSheet(`‘${tr.name}’ 반주를 지울까요? 이 반주로 한 녹음도 지워져요.`, '지우기', true))) return;
           try { await BkDB.del('audio', tr.id); for (const k of B.takes.filter(x => x.trackId === tr.id)) await BkDB.del('takes', k.id); } catch (e) { }
@@ -4405,8 +4433,8 @@ defScreen('settings', {
           ${base ? '' : `<div class="row"><span class="grow"><b>블루투스 장치</b><div class="tiny muted">블루투스가 연결되면 이 장치로 바꿔요</div></span><label class="switch"><input type="checkbox" id="oBt" ${o.bt ? 'checked' : ''}><span></span></label></div>`}
           <div class="row"><span class="grow"><b>블루투스 연결 자동 감지</b><div class="tiny muted">마이크를 한 번 허용해야 동작해요</div></span><label class="switch"><input type="checkbox" id="oAu" ${S().autoOut ? 'checked' : ''}><span></span></label></div>`;
         $('.olist', oc).onclick = e => { const r = e.target.closest('[data-oid]'); if (!r) return; if (setOut(r.dataset.oid)) { drawOut(); needCal(); } };
-        $('#oAdd', oc).onclick = () => { const n = prompt('장치 이름을 적어 주세요 (예: 갤럭시 버즈)', ''); if (!n || !n.trim()) return; const x = { id: 'o' + uid(), name: n.trim(), bt: true, lat: null, rep: null, vis: null }; S().outs.push(x); saveDB(); setOut(x.id); drawOut(); needCal(); };
-        $('#oRen', oc).onclick = () => { const n = prompt('장치 이름', o.name); if (!n || !n.trim()) return; o.name = n.trim(); saveDB(); drawOut(); drawOutBtns(); };
+        $('#oAdd', oc).onclick = async () => { const n = await askText('장치 이름', '', '예: 갤럭시 버즈'); if (!n) return; const x = { id: 'o' + uid(), name: n, bt: true, lat: null, rep: null, vis: null }; S().outs.push(x); saveDB(); setOut(x.id); drawOut(); needCal(); };
+        $('#oRen', oc).onclick = async () => { const n = await askText('장치 이름', o.name); if (!n) return; o.name = n; saveDB(); drawOut(); drawOutBtns(); };
         const del = $('#oDel', oc); if (del) del.onclick = async () => { if (!(await confirmSheet(`‘${o.name}’ 장치를 지울까요?`, '지우기', true))) return; const id = o.id; setOut(S().outs[0].id); S().outs = S().outs.filter(x => x.id !== id); saveDB(); drawOut(); };
         const bt = $('#oBt', oc); if (bt) bt.onchange = e => { o.bt = e.target.checked; saveDB(); };
         $('#oAu', oc).onchange = e => { S().autoOut = e.target.checked; saveDB(); if (e.target.checked) autoOut(); };
