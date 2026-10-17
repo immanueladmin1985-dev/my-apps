@@ -216,6 +216,36 @@ img.fart{display:block;width:100%;height:auto}
 .stage-h h2{font-family:var(--serif);font-size:1.35rem;line-height:1.2}
 .stage-h p{margin:0;font-size:.84rem;color:var(--ink-2)}
 
+/* 홈: 단계 접기, 별표로 자주 하는 연습 고정 */
+details.stage{margin-top:14px}
+.stage-h .grow{flex:1;min-width:0}
+details.stage>summary{list-style:none;cursor:pointer;padding:8px 6px;border-radius:14px}
+details.stage>summary::-webkit-details-marker{display:none}
+details.stage>summary:active{background:var(--surface-2)}
+.stage-h .sg-chev{width:22px;height:22px;color:var(--ink-3);transition:transform .2s;transform:rotate(90deg);flex:none}
+details.stage:not([open]) .sg-chev{transform:none}
+details.stage:not([open])>summary{background:var(--surface);border:1px solid var(--line)}
+.stage.pinned{margin-top:16px}
+.pin-ic{width:40px;height:40px;display:grid;place-items:center;color:var(--bamboo)}
+.pin-ic svg{width:28px;height:28px;fill:currentColor}
+.pin-hint{margin:12px 4px 0;display:flex;align-items:center;gap:6px}
+.pin-hint svg{width:16px;height:16px;flex:none}
+.li.li-pin{padding:0;gap:0}
+.li-main{display:flex;align-items:center;gap:14px;flex:1;min-width:0;padding:13px 4px 13px 16px;min-height:64px;text-align:left}
+.li-main:active{background:var(--surface-2)}
+.pin{width:52px;align-self:stretch;display:grid;place-items:center;color:var(--line);flex:none}
+.pin svg{width:22px;height:22px}
+.pin.on{color:var(--bamboo)}
+.pin.on svg{fill:currentColor}
+/* 연습곡 찾기 */
+.sg-search{display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;min-height:50px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line)}
+.sg-search svg{width:20px;height:20px;color:var(--ink-3);flex:none}
+.sg-search input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:1rem;min-height:46px}
+.sg-search button{width:40px;height:40px;display:grid;place-items:center;color:var(--ink-3)}
+.song-w{display:flex;align-items:stretch;border-top:1px solid var(--line)}
+.song-w:first-child{border-top:0}
+.song-w .song{border-top:0;flex:1;min-width:0}
+
 /* ---------- Notes ---------- */
 .nt{position:relative;display:inline-block}
 .nt .od{position:absolute;left:50%;transform:translateX(-50%);font-size:max(5px,.12em);line-height:1;letter-spacing:.1em;white-space:nowrap}
@@ -851,6 +881,7 @@ const ICONS = {
   legato: IC('<path d="M3 15c4-8 14-8 18 0"/><circle cx="5" cy="18" r="1.6" fill="currentColor"/><circle cx="12" cy="18" r="1.6" fill="currentColor"/><circle cx="19" cy="18" r="1.6" fill="currentColor"/>'),
   staccato: IC('<path d="M6 4v11M14 4v11"/><circle cx="4" cy="16" r="2.4" fill="currentColor"/><circle cx="12" cy="16" r="2.4" fill="currentColor"/><circle cx="5" cy="21" r=".9" fill="currentColor"/><circle cx="13" cy="21" r=".9" fill="currentColor"/><path d="M18 9h3M18 13h3"/>'),
   dotted: IC('<path d="M7 4v12M17 4v12M17 4c1 3 4 3 4 6"/><circle cx="5" cy="17" r="2.4" fill="currentColor"/><circle cx="15" cy="17" r="2.4" fill="currentColor"/><circle cx="10" cy="17" r="1" fill="currentColor"/>'),
+  search: IC('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>'),
   star: IC('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>'),
 };
 const pipIcon = (n, color) => { // 단계 표시용 작은 팬플룻 (관 개수 = 단계)
@@ -2590,12 +2621,24 @@ defScreen('home', {
         <button class="btn" id="sugBtn">${ICONS.play}${esc(sug.t)}</button>
       </section>
       <div id="banners"></div>
-      <div class="stages">${STAGES.map(sg => `<section class="stage">
-        <div class="stage-h">${pipIcon(sg.n, `var(--s${sg.n}i)`)}<div><div class="n">${sg.n}단계</div><h2>${sg.name}</h2></div></div>
-        <div class="list">${sg.items.map(it => `<button class="li" data-go="${it.id}" data-p='${it.p ? JSON.stringify(it.p) : ''}'><span class="li-ic" style="background:var(--s${sg.n});color:var(--s${sg.n}i)">${ICONS[it.ic]}</span><span class="grow"><span class="t">${it.t}</span><br><span class="d">${it.d}</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>`).join('')}</div>
-      </section>`).join('')}</div>
+      <div id="pinBox"></div>
+      <div class="stages">${STAGES.map(sg => `<details class="stage" data-sg="${sg.n}" ${stageOpen(sg.n) ? 'open' : ''}>
+        <summary class="stage-h">${pipIcon(sg.n, `var(--s${sg.n}i)`)}<div class="grow"><div class="n">${sg.n}단계 · ${sg.items.length}가지</div><h2>${sg.name}</h2></div>${ICONS.chev.replace('<svg', '<svg class="sg-chev"')}</summary>
+        <div class="list">${sg.items.map(it => homeItemHTML(it, sg.n)).join('')}</div>
+      </details>`).join('')}</div>
       ${FS.standalone() ? '' : `<div class="center mt2"><button class="btn" id="hInst">${ICONS.install}홈 화면에 설치하기</button></div>`}
       <p class="center mt2" style="font-family:var(--hand);font-size:1.7rem;color:var(--peony)">Made by 장작&amp;난로</p>`;
+    const paintPins = () => {
+      const P = pinnedList(), box = $('#pinBox', el); if (!box) return;
+      const all = STAGES.flatMap(sg => sg.items.map(it => ({ it, n: sg.n })));
+      const L = P.map(k => all.find(x => itemKey(x.it) === k)).filter(Boolean);
+      box.innerHTML = L.length ? `<section class="stage pinned"><div class="stage-h"><span class="pin-ic">${ICONS.star}</span><div class="grow"><div class="n">별표를 누른 연습</div><h2>자주 하는 연습</h2></div></div><div class="list">${L.map(x => homeItemHTML(x.it, x.n)).join('')}</div></section>`
+        : `<p class="tiny muted pin-hint">${ICONS.star} 연습 오른쪽의 별표를 누르면 여기 맨 위에 모아 둬요.</p>`;
+      $$('[data-pin]', el).forEach(b => { const on = P.includes(b.dataset.pin); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    };
+    paintPins();
+    el.addEventListener('click', e => { const b = e.target.closest('[data-pin]'); if (!b) return; e.stopPropagation(); const k = b.dataset.pin; const P = pinnedList(); const i = P.indexOf(k); if (i >= 0) P.splice(i, 1); else P.push(k); setPref('pinned', P); paintPins(); toast(i >= 0 ? '자주 하는 연습에서 뺐어요' : '맨 위 ‘자주 하는 연습’에 넣었어요'); }, true);
+    $$('details.stage', el).forEach(d => d.addEventListener('toggle', () => { const o = Object.assign({}, pref('stageOpen', { 1: true })); o[d.dataset.sg] = d.open; setPref('stageOpen', o); }));
     $('#sugBtn', el).onclick = () => go(sug.id, sug.p || {});
     const hi = $('#hInst', el); if (hi) hi.onclick = () => startInstall();
     el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; const p = b.dataset.p ? JSON.parse(b.dataset.p) : {}; go(b.dataset.go, p); });
@@ -2623,6 +2666,10 @@ defScreen('home', {
     return () => document.removeEventListener('installready', onInst);
   }
 });
+const itemKey = it => it.id + (it.p ? ':' + it.p.mode : '');
+function pinnedList() { const v = pref('pinned', []); return Array.isArray(v) ? v.slice() : []; }
+function stageOpen(n) { const o = pref('stageOpen', { 1: true }); return !!(o && o[n]); }
+function homeItemHTML(it, n) { const k = itemKey(it); return `<div class="li li-pin"><button class="li-main" data-go="${it.id}" data-p='${it.p ? JSON.stringify(it.p) : ''}'><span class="li-ic" style="background:var(--s${n});color:var(--s${n}i)">${ICONS[it.ic]}</span><span class="grow"><span class="t">${it.t}</span><br><span class="d">${it.d}</span></span></button><button type="button" class="pin" data-pin="${k}" aria-label="${esc(it.t)} 자주 하는 연습에 넣기" aria-pressed="false">${ICONS.star}</button></div>`; }
 function suggestToday() {
   if (!DB.sessions.length) return { id: 'basics', t: '소리 내기 안내부터 보기' };
   const cycle = [{ id: 'longtone', t: '오늘의 추천: 롱톤 10초 도전' }, { id: 'scale', t: '오늘의 추천: 음계 오르내리기' }, { id: 'songs', p: { mode: 'follow' }, t: '오늘의 추천: 곡 따라 불기' }, { id: 'match', t: '오늘의 추천: 음 맞추기 10문제' }];
@@ -3393,6 +3440,8 @@ const SONGS_RAW = [
   { id: 'entchen', t: '오리들의 노래 (알레 마이네 엔첸)', c: 'kids', bpm: 100, ts: 4, n: 'C5/1 D5/1 E5/1 F5/1 G5/2 G5/2 A5/1 A5/1 A5/1 A5/1 G5/4 A5/1 A5/1 A5/1 A5/1 G5/4 F5/1 F5/1 F5/1 F5/1 E5/2 E5/2 D5/1 D5/1 D5/1 D5/1 C5/4' },
   { id: 'korobeiniki', t: '코로베이니키 (러시아 민요)', c: 'world', bpm: 120, ts: 4, n: 'E5/1 B4/.5 C5/.5 D5/1 C5/.5 B4/.5 A4/1 A4/.5 C5/.5 E5/1 D5/.5 C5/.5 B4/1.5 C5/.5 D5/1 E5/1 C5/1 A4/1 A4/2 R/.5 D5/1 F5/.5 A5/1 G5/.5 F5/.5 E5/1.5 C5/.5 E5/1 D5/.5 C5/.5 B4/1 B4/.5 C5/.5 D5/1 E5/1 C5/1 A4/1 A4/2' },
 ];
+const normQ = t => String(t).replace(/[\s()·,.]/g, '').toLowerCase();
+function songPins() { const v = pref('songPins', []); return Array.isArray(v) ? v.slice() : []; }
 function nameToMidi(nm) {
   const mm = /^([A-G])([#b]?)(-?\d)$/.exec(nm); if (!mm) return null;
   const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[mm[1]] + (mm[2] === '#' ? 1 : mm[2] === 'b' ? -1 : 0);
@@ -3453,17 +3502,24 @@ function durName(d) { const f = DURS.find(x => Math.abs(x[0] - d) < 0.01); retur
 defScreen('songs', {
   tab: true, title: '연습곡',
   render(el, p) {
-    let cat = pref('songCat', 'all'); const mode = p.mode || null;
+    let cat = pref('songCat', 'all'), q = ''; const mode = p.mode || null;
     let demo = null;
     function render() {
-      const list = allSongs().filter(s => cat === 'all' || s.c === cat);
+      const pins = songPins();
+      const list = allSongs().filter(s => cat === 'all' || (cat === 'fav' ? pins.includes(s.id) : s.c === cat)).sort((a, b) => pins.includes(b.id) - pins.includes(a.id));
       el.innerHTML = `${mode ? `<div class="banner info" style="margin-top:0">${ICONS[mode === 'follow' ? 'follow' : 'roll']}<div class="grow"><b>${mode === 'follow' ? '곡 따라 불기' : '곡 박자대로 불기'}</b><span class="small">${mode === 'follow' ? '곡을 고르면 한 음씩, 맞을 때까지 기다려 드려요.' : '곡을 고르면 박자에 맞춰 불고 점수를 받아요.'}</span></div></div>` : ''}
-        <div class="chips scroll mt" id="sgCat">${SONG_CATS.map(([k, l]) => `<button class="chip ${k === cat ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div>
-        <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); return `<button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${esc(s.t)}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button>`; }).join('') : `<div class="li"><span class="grow muted">${cat === 'mine' ? '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.' : '곡이 없어요.'}</span></div>`}</div>
+        <div class="sg-search mt">${ICONS.search}<input type="search" id="sgQ" placeholder="곡 이름으로 찾기 (예: 아리랑)" value="${esc(q)}" aria-label="곡 이름으로 찾기">${q ? `<button type="button" id="sgQx" aria-label="찾기 지우기">${ICONS.x}</button>` : ''}</div>
+        <div class="chips scroll mt" id="sgCat">${[['fav', '★ 즐겨찾기']].concat(SONG_CATS).map(([k, l]) => `<button class="chip ${k === cat ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div>
+        <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); const pn = pins.includes(s.id); return `<div class="song-w" data-t="${esc(normQ(s.t))}"><button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${esc(s.t)}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button><button type="button" class="pin${pn ? ' on' : ''}" data-spin="${esc(s.id)}" aria-pressed="${pn}" aria-label="${esc(s.t)} 즐겨찾기">${ICONS.star}</button></div>`; }).join('') : `<div class="li"><span class="grow muted">${cat === 'mine' ? '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.' : cat === 'fav' ? '곡 오른쪽의 별표를 누르면 여기에 모여요.' : '곡이 없어요.'}</span></div>`}</div>
+        <p class="small muted center hidden" id="sgNone">찾는 곡이 없어요.</p>
         <button class="btn wide mt" id="sgNew">${ICONS.pen}계이름으로 내 곡 만들기</button>
         <p class="tiny muted mt">기본 곡은 저작권이 끝난 민요·찬송가·명곡·동요의 가락만 담았어요. 막대 개수는 난이도예요.</p>`;
       $('#sgCat', el).addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; cat = b.dataset.k; setPref('songCat', cat); render(); });
-      $('#sgList', el).addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (!b) return; const id = b.dataset.id; if (mode === 'follow') go('follow', { id }); else if (mode === 'play') go('playalong', { id }); else songSheet(id); });
+      const qIn = $('#sgQ', el);
+      const filt = () => { const k = normQ(qIn.value); let n = 0; $$('#sgList .song-w', el).forEach(w => { const on = !k || w.dataset.t.includes(k); w.classList.toggle('hidden', !on); if (on) n++; }); $('#sgNone', el).classList.toggle('hidden', n > 0 || !k); };
+      qIn.addEventListener('input', () => { q = qIn.value; filt(); }); filt();
+      const qx = $('#sgQx', el); if (qx) qx.onclick = () => { q = ''; render(); };
+      $('#sgList', el).addEventListener('click', e => { const sp = e.target.closest('[data-spin]'); if (sp) { const P = songPins(); const id = sp.dataset.spin; const i = P.indexOf(id); if (i >= 0) P.splice(i, 1); else P.push(id); setPref('songPins', P); toast(i >= 0 ? '즐겨찾기에서 뺐어요' : '즐겨찾기에 넣었어요. 목록 맨 위에 보여요'); render(); return; } const b = e.target.closest('[data-id]'); if (!b) return; const id = b.dataset.id; if (mode === 'follow') go('follow', { id }); else if (mode === 'play') go('playalong', { id }); else songSheet(id); });
       $('#sgNew', el).onclick = () => go('editor', {});
     }
     function songSheet(id) {
@@ -4651,7 +4707,7 @@ defScreen('settings', {
       </div>
       </div></div>
       <p class="center mt2" style="font-family:var(--hand);font-size:1.9rem;margin-bottom:0;color:var(--peony)">Made by 장작&amp;난로</p>
-      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.1</p>`;
+      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.2</p>`;
       PipeMap($('#stPrev', el), { compact: true, onTap: m => playTone(m, 0.8) });
       fillMicSel($('[data-micsel]', el));
       const oc = $('#stOut', el);
