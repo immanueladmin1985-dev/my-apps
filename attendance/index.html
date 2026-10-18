@@ -38,54 +38,76 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 input,select,textarea{border:0;outline:none;background:var(--field);border-radius:10px;padding:9px 11px;min-width:0}
 
-.app{max-width:1200px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom))}
+html,body{height:100%;overflow:hidden}
+.app{height:100vh;height:100dvh;display:flex;flex-direction:column;
+  padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 
 /* 상단 */
-.head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.head h1{font-size:19px;font-weight:800;letter-spacing:-.02em;flex:1;white-space:nowrap}
+.head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;flex:none}
+.head h1{font-size:19px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;margin-right:auto}
 .year{display:flex;align-items:center;background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
-.year button{width:38px;height:38px;font-size:16px;color:var(--sub)}
-.year b{font-size:16px;min-width:64px;text-align:center}
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:4px;
-  background:var(--card);box-shadow:0 -4px 18px rgba(16,24,40,.08);padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
-.tabs button{flex:0 1 160px;height:44px;border-radius:12px;font-size:15px;font-weight:700;color:var(--sub)}
-.tabs button.on{background:var(--accent-soft);color:var(--accent)}
+.year button{width:36px;height:38px;font-size:14px;color:var(--sub)}
+.year b{font-size:16px;min-width:60px;text-align:center}
+.seg{display:flex;background:var(--field);border-radius:12px;padding:3px;gap:2px}
+.seg button{height:32px;padding:0 14px;border-radius:9px;font-size:14px;font-weight:700;color:var(--sub);white-space:nowrap}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tabs button{padding:0 18px}
 
-.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+#view{flex:1;min-height:0;display:flex;flex-direction:column}
+#view.scroll{overflow-y:auto;display:block}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;flex:none}
 .datebox{display:flex;align-items:center;background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:2px}
-.datebox button{width:36px;height:38px;color:var(--sub);font-size:16px}
+.datebox button{width:34px;height:36px;color:var(--sub);font-size:14px}
 .datebox input{background:none;padding:6px 2px;font-weight:700;font-size:15px;width:132px;text-align:center}
-.total{font-size:15px;color:var(--sub)}
-.total b{font-size:24px;color:var(--good);font-weight:800;margin-right:2px}
+.total{font-size:14px;color:var(--sub);white-space:nowrap}
+.total b{font-size:22px;color:var(--good);font-weight:800;margin-right:2px}
 .sp{flex:1}
 .btn{height:38px;padding:0 14px;border-radius:12px;font-size:14px;font-weight:700;background:var(--card);box-shadow:var(--shadow);white-space:nowrap}
 .btn.pri{background:var(--accent);color:#fff}
 .btn.warn{color:var(--warn)}
-.search{flex:1 1 160px;max-width:260px;background:var(--card);box-shadow:var(--shadow)}
+.search{flex:0 1 200px;background:var(--card);box-shadow:var(--shadow)}
+.hint{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
 
-/* 구분 카드 */
-.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-items:start}
-.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px}
-.card h2{font-size:15px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px}
-.card h2 small{font-size:13px;font-weight:600;color:var(--sub)}
-.card h2 .kind{font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--hold-soft);color:var(--hold)}
-.card h2 .sp{flex:1}
-.card h2 .fold{font-size:13px;color:var(--accent);font-weight:700;padding:2px 6px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;border-radius:10px}
-.chip{display:inline-flex;align-items:baseline;gap:3px;height:36px;line-height:36px;padding:0 10px;border-radius:10px;background:var(--field);
-  font-size:15px;font-weight:600;user-select:none;-webkit-user-select:none;cursor:pointer;white-space:nowrap}
-.chip small{font-size:11px;color:var(--sub);font-weight:600}
-.chip.on{background:var(--good);color:#fff}
-.chip.on small{color:rgba(255,255,255,.8)}
-.chip .memo{font-size:11px;color:var(--hold)}
-.chip.on .memo{color:#fff}
-.chip .dup{font-size:11px;color:var(--warn)}
-.edit .chip{cursor:grab}
-.chip.ghost{opacity:.35}
-.chip.drag{box-shadow:0 6px 18px rgba(0,0,0,.2)}
-.chips.empty::after{content:"여기로 끌어다 놓기";font-size:13px;color:var(--sub);line-height:36px;padding-left:4px}
-.hint{font-size:13px;color:var(--sub);margin:-4px 0 12px;line-height:1.5}
-.hit{outline:2px solid var(--accent)}
+/* 흐름 화면: 위→아래로 채우고 바닥에 닿으면 오른쪽 칸으로 */
+.board{flex:1;min-height:0;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:10px;overflow:hidden}
+.cols{height:100%;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:4px 6px;
+  overflow-x:auto;overflow-y:hidden;scroll-behavior:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px}
+.it,.fh{flex:none;width:var(--w,128px);height:34px;border-radius:8px;display:flex;align-items:center;gap:4px;padding:0 9px;
+  font-size:15px;white-space:nowrap;overflow:hidden;user-select:none;-webkit-user-select:none}
+.it{background:var(--field);font-weight:600;cursor:pointer}
+.it small{font-size:11px;color:var(--sub);font-weight:600}
+.it .memo{font-size:11px;color:var(--hold);overflow:hidden;text-overflow:ellipsis;min-width:0;margin-left:auto}
+.it .dup{width:6px;height:6px;border-radius:50%;background:var(--warn);flex:none;margin-left:auto}
+.it .memo+.dup{margin-left:0}
+.it.on{background:var(--good);color:#fff}
+.it.on small,.it.on .memo{color:rgba(255,255,255,.85)}
+.it.hit{outline:2px solid var(--accent);outline-offset:-2px}
+.it.dim{opacity:.3}
+.edit .it{cursor:grab}
+.it.ghost{opacity:.35;outline:2px dashed var(--accent)}
+.it.drag{box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.fh{background:var(--hc,var(--accent-soft));color:var(--ht,var(--accent));font-size:13px;font-weight:800;justify-content:space-between}
+.fh small{font-size:12px;font-weight:700;opacity:.85}
+.fh.sp-g{--hc:var(--hold-soft);--ht:var(--hold)}
+.fh.fold{cursor:pointer}
+.fh.fold::after{content:"▸";margin-left:2px}
+.fh.fold.open::after{content:"▾"}
+.brk{flex-basis:100%;width:1px;margin:0 3px;background:var(--line);border-radius:1px}
+@media (max-width:600px){
+  .app{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+  .head h1{display:none}
+  .head{justify-content:space-between}
+  .seg button{padding:0 11px}
+  .bar{gap:6px;margin:8px 0}
+  .datebox input{width:120px;font-size:14px}
+  .btn{padding:0 11px;height:36px}
+  .total b{font-size:20px}
+  .hint{display:none}
+  .search{flex:1 1 120px}
+  .board{padding:6px;border-radius:12px}
+}
+.empty-all{text-align:center;color:var(--sub);padding:40px 16px;line-height:1.7;font-size:15px}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px}
 
 /* 설정 */
 .set{display:grid;gap:12px;max-width:720px}
@@ -112,7 +134,7 @@ dialog h3{font-size:17px;font-weight:800;margin-bottom:12px}
 .dlg-btns{display:flex;gap:8px;margin-top:14px}
 .dlg-btns .sp{flex:1}
 
-.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);
   padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50;max-width:calc(100% - 32px)}
 .toast.show{opacity:1}
 .empty-all{text-align:center;color:var(--sub);padding:40px 16px;line-height:1.7;font-size:15px}
@@ -121,8 +143,8 @@ dialog h3{font-size:17px;font-weight:800;margin-bottom:12px}
 #print{display:none}
 @media print{
   @page{size:A4 portrait;margin:9mm}
-  html,body{background:#fff;color:#000}
-  .app,.tabs,.toast,dialog{display:none!important}
+  html,body{background:#fff;color:#000;height:auto;overflow:visible}
+  .app,.toast,dialog{display:none!important}
   #print{display:block}
   .page{break-after:page;page-break-after:always}
   .page:last-child{break-after:auto;page-break-after:auto}
@@ -143,15 +165,11 @@ dialog h3{font-size:17px;font-weight:800;margin-bottom:12px}
 <div class="app" id="app">
   <div class="head">
     <h1>청년부 출석부</h1>
+    <div class="seg tabs"><button data-tab="att">출석</button><button data-tab="roster">명단</button><button data-tab="set">설정</button></div>
     <div class="year"><button id="yPrev" aria-label="이전 연도">◀</button><b id="yLabel"></b><button id="yNext" aria-label="다음 연도">▶</button></div>
   </div>
   <div id="view"></div>
 </div>
-<nav class="tabs">
-  <button data-tab="att">출석</button>
-  <button data-tab="roster">명단</button>
-  <button data-tab="set">설정</button>
-</nav>
 <div id="print"></div>
 <div class="toast" id="toast"></div>
 
@@ -205,6 +223,7 @@ function defaults(){
     people:[],   // {id,name,by,approx,status,memo}
     att:{},      // {'2026-10-18':[id,...]}
     date:null,
+    viewMode:'flow',  // flow: 이어보기, group: 구분별
   };
 }
 let S;
@@ -262,58 +281,80 @@ function dupNames(){
 function render(){
   $('#yLabel').textContent=S.year+'년';
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  const sl=$('#cols')?$('#cols').scrollLeft:0;
+  $('#view').classList.toggle('scroll',tab==='set');
   if(tab==='att')renderAtt();else if(tab==='roster')renderRoster();else renderSet();
+  if($('#cols'))$('#cols').scrollLeft=sl;
 }
 
-function chipHtml(p,{on=false,dup=false}={}){
-  return `<span class="chip${on?' on':''}" data-id="${p.id}">${esc(p.name)}<small>${esc(ageText(p))}</small>`+
-    (p.memo?`<span class="memo">${esc(p.memo.length>6?p.memo.slice(0,6)+'…':p.memo)}</span>`:'')+
-    (dup?'<span class="dup" title="같은 이름이 있어요">●</span>':'')+`</span>`;
+function itemHtml(p,{on=false,dup=false,cls=''}={}){
+  return `<div class="it${on?' on':''}${cls}" data-id="${p.id}" title="${esc(p.name+' '+ageText(p)+(p.memo?' · '+p.memo:''))}">${esc(p.name)}<small>${esc(ageText(p))}</small>`+
+    (p.memo?`<span class="memo">${esc(p.memo)}</span>`:'')+(dup?'<span class="dup"></span>':'')+`</div>`;
 }
 function emptyAll(){
   return `<div class="card empty-all">아직 명단이 없어요.<br>
     <b>설정 → 엑셀 가져오기</b>로 명단 파일을 불러오거나,<br><b>명단</b> 탭에서 한 명씩 추가하세요.</div>`;
 }
+const viewSeg=()=>`<div class="seg" id="vSeg"><button data-v="flow" class="${S.viewMode!=='group'?'on':''}">이어보기</button><button data-v="group" class="${S.viewMode==='group'?'on':''}">구분별</button></div>`;
+function bindViewSeg(){
+  $('#vSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.viewMode=b.dataset.v;save();render();$('.cols')&&($('.cols').scrollLeft=0)});
+}
+// 구분 머리글과 이름을 한 줄로 이어서 배치. 구분별 보기면 구분마다 새 칸에서 시작
+function boardHtml(groups,{edit=false,set=null,dup={},q=''}={}){
+  let h=`<div class="board"><div class="cols${edit?' edit':''}" id="cols">`, first=true;
+  for(const g of groups){
+    const folded=g.sep&&!openSep[g.gid];
+    if(!first&&(S.viewMode==='group'||g.sep))h+='<div class="brk"></div>';
+    first=false;
+    const cnt=set?`${g.members.filter(p=>set.has(p.id)).length}/${g.members.length}`:`${g.members.length}명`;
+    h+=`<div class="fh${g.kind==='sp'?' sp-g':''}${g.sep?' fold'+(folded?'':' open'):''}" data-gid="${g.gid}"><span>${esc(g.name)}</span><small>${cnt}</small></div>`;
+    if(folded)continue;
+    h+=g.members.map(p=>itemHtml(p,{on:set&&set.has(p.id),dup:dup[p.name]>1,cls:q?(p.name.includes(q)?' hit':' dim'):''})).join('');
+  }
+  return h+'</div></div>';
+}
+// 가장 긴 이름에 맞춰 칸 너비 조절
+function fitWidth(){
+  const cols=$('#cols');if(!cols)return;
+  let max=0;cols.querySelectorAll('.it').forEach(el=>{max=Math.max(max,el.scrollWidth)});
+  cols.style.setProperty('--w',Math.max(112,Math.min(170,max+2))+'px');
+}
+function bindBoard(){
+  const cols=$('#cols');if(!cols)return;
+  // PC 마우스 휠은 가로로 넘기기
+  cols.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){cols.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
+  cols.querySelectorAll('.fh.fold').forEach(el=>el.onclick=()=>{openSep[el.dataset.gid]=!openSep[el.dataset.gid];render()});
+}
 
 function renderAtt(){
-  const groups=buildGroups();
-  const set=new Set(S.att[S.date]||[]);
-  const main=groups.filter(g=>!g.sep), sep=groups.filter(g=>g.sep);
-  const mainIds=main.flatMap(g=>g.members.map(p=>p.id));
-  const cnt=mainIds.filter(id=>set.has(id)).length + sep.flatMap(g=>g.members).filter(p=>set.has(p.id)).length;
+  const groups=buildGroups(), set=new Set(S.att[S.date]||[]);
+  const mainIds=groups.filter(g=>!g.sep).flatMap(g=>g.members.map(p=>p.id));
+  const cnt=S.people.filter(p=>set.has(p.id)).length;
   let h=`<div class="bar">
     <div class="datebox"><button id="dPrev" aria-label="이전 주">◀</button><input type="date" id="dIn" value="${S.date}"><button id="dNext" aria-label="다음 주">▶</button></div>
-    <span class="total"><b>${cnt}</b>명 출석 · 전체 ${mainIds.length}명</span><span class="sp"></span>
+    <span class="total"><b id="tot">${cnt}</b>명 출석 · 전체 ${mainIds.length}명</span>
+    ${viewSeg()}<span class="sp"></span>
     <button class="btn" id="bPrint">인쇄</button><button class="btn" id="bXls">엑셀 저장</button></div>`;
   if(!S.people.length){$('#view').innerHTML=h+emptyAll();bindAttBar();return}
-  h+=`<p class="hint">이름을 누르면 출석 표시가 켜지고 꺼져요.</p><div class="groups">`;
-  for(const g of main){
-    const n=g.members.filter(p=>set.has(p.id)).length;
-    h+=`<div class="card"><h2>${esc(g.name)}${g.kind==='sp'?'<span class="kind">특별</span>':''}<small>${n} / ${g.members.length}</small></h2>
-      <div class="chips">${g.members.map(p=>chipHtml(p,{on:set.has(p.id)})).join('')}</div></div>`;
-  }
-  h+=`</div>`;
-  for(const g of sep){
-    const n=g.members.filter(p=>set.has(p.id)).length, open=openSep[g.gid];
-    h+=`<div class="card" style="margin-top:12px"><h2>${esc(g.name)}<span class="kind">별도</span><small>${n} / ${g.members.length}</small><span class="sp"></span>
-      <button class="fold" data-fold="${g.gid}">${open?'접기':'펼치기'}</button></h2>
-      ${open?`<div class="chips">${g.members.map(p=>chipHtml(p,{on:set.has(p.id)})).join('')}</div>`:''}</div>`;
-  }
-  $('#view').innerHTML=h;
-  bindAttBar();
-  $('#view').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
-    const id=c.dataset.id, list=new Set(S.att[S.date]||[]);
+  $('#view').innerHTML=h+boardHtml(groups,{set});
+  bindAttBar();bindBoard();fitWidth();
+  // 누를 때마다 다시 그리지 않고 그 자리에서만 바꿈 (스크롤 위치 유지)
+  $('#cols').querySelectorAll('.it').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.id, list=new Set(S.att[S.date]||[]);
     list.has(id)?list.delete(id):list.add(id);
     if(list.size)S.att[S.date]=[...list];else delete S.att[S.date];
-    save();renderAtt();
+    save();el.classList.toggle('on',list.has(id));
+    $('#tot').textContent=S.people.filter(p=>list.has(p.id)).length;
+    const g=groups.find(g=>g.members.some(p=>p.id===id)), fh=$(`.fh[data-gid="${g.gid}"] small`);
+    if(fh)fh.textContent=`${g.members.filter(p=>list.has(p.id)).length}/${g.members.length}`;
   });
-  $('#view').querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{openSep[b.dataset.fold]=!openSep[b.dataset.fold];renderAtt()});
 }
 function bindAttBar(){
   const move=d=>{const x=parseYmd(S.date);x.setDate(x.getDate()+d);setDate(ymd(x))};
   $('#dPrev').onclick=()=>move(-7);$('#dNext').onclick=()=>move(7);
   $('#dIn').onchange=e=>e.target.value&&setDate(e.target.value);
   $('#bPrint').onclick=openPrint;$('#bXls').onclick=exportXlsx;
+  $('#vSeg')&&bindViewSeg();
 }
 function setDate(d){
   S.date=d;const y=+d.slice(0,4);
@@ -321,47 +362,52 @@ function setDate(d){
   save();render();
 }
 
-let sortables=[];
+let sortable=null, lastPt=null;
+// 끌기 중 손가락/마우스 위치 기억 (놓은 곳이 구분 머리글인지 확인용)
+const trackPt=e=>{if(!dragging)return;const t=e.touches?e.touches[0]:e;if(t)lastPt={clientX:t.clientX,clientY:t.clientY}};
+document.addEventListener('mousemove',trackPt,true);document.addEventListener('touchmove',trackPt,{capture:true,passive:true});
 function renderRoster(){
-  sortables.forEach(s=>s.destroy());sortables=[];
-  const groups=buildGroups(), dup=dupNames(), q=query.trim().replace(/\s/g,'');
-  let h=`<div class="bar"><input class="search" id="q" type="search" placeholder="이름 검색" value="${esc(query)}">
-    <span class="total">${S.people.length}명</span><span class="sp"></span>
-    <button class="btn pri" id="bAdd">+ 인원 추가</button></div>
-    <p class="hint">${S.year}년 기준 나이로 자동 배치돼요. 군대·유학·장기결석 등은 해당 칸으로 <b>끌어다 놓으세요</b>(휴대폰은 꾹 누른 뒤 끌기). 다시 나이 칸으로 끌면 자동 배치로 돌아가요. 이름을 누르면 수정할 수 있어요.</p>`;
+  if(sortable){sortable.destroy();sortable=null}
+  const groups=buildGroups(), q=query.trim().replace(/\s/g,'');
+  let h=`<div class="bar"><input class="search" id="q" type="search" placeholder="이름 찾기" value="${esc(query)}">
+    <span class="total">${S.people.length}명</span>${viewSeg()}
+    <span class="hint">다른 구분으로 끌어 옮기기(휴대폰은 꾹 누른 뒤) · 누르면 수정</span><span class="sp"></span>
+    <button class="btn pri" id="bAdd">+ 인원 추가</button></div>`;
   if(!S.people.length){$('#view').innerHTML=h+emptyAll();bindRosterBar();return}
-  h+=`<div class="groups edit">`;
-  for(const g of groups){
-    const mem=q?g.members.filter(p=>p.name.includes(q)):g.members;
-    h+=`<div class="card"><h2>${esc(g.name)}${g.kind==='sp'?`<span class="kind">${g.sep?'별도':'특별'}</span>`:''}<small>${g.members.length}명</small></h2>
-      <div class="chips${mem.length?'':' empty'}" data-gid="${g.gid}">${mem.map(p=>chipHtml(p,{dup:dup[p.name]>1})).join('')}</div></div>`;
-  }
-  h+=`</div>`;
-  $('#view').innerHTML=h;
-  bindRosterBar();
-  $('#view').querySelectorAll('.chips[data-gid]').forEach(el=>{
-    sortables.push(Sortable.create(el,{group:'people',sort:false,animation:150,delay:220,delayOnTouchOnly:true,
-      ghostClass:'ghost',dragClass:'drag',
-      onStart:()=>{dragging=true},
-      onEnd:e=>{
-        setTimeout(()=>dragging=false,50);
-        if(e.from===e.to)return;
-        const p=S.people.find(x=>x.id===e.item.dataset.id), to=e.to.dataset.gid;
-        if(!p)return;
-        if(to.startsWith('sp:')){p.status=to.slice(3);toast(`${p.name} → ${S.specials.find(s=>s.id===p.status).name}`)}
-        else{
-          p.status='';const g=ageGroupOf(p);
-          toast(to==='age:'+g.id?`${p.name} → ${g.name}`:`${p.name}: 나이(${ageText(p)})에 맞게 '${g.name}'에 배치했어요`);
-        }
-        save();renderRoster();
-      }}));
-  });
-  $('#view').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{if(!dragging)openPerson(c.dataset.id)});
+  if(q)groups.forEach(g=>{if(g.sep&&g.members.some(p=>p.name.includes(q)))openSep[g.gid]=true});
+  $('#view').innerHTML=h+boardHtml(groups,{edit:true,dup:dupNames(),q});
+  bindRosterBar();bindBoard();fitWidth();
+  const cols=$('#cols');
+  sortable=Sortable.create(cols,{draggable:'.it',animation:120,delay:220,delayOnTouchOnly:true,
+    ghostClass:'ghost',dragClass:'drag',forceFallback:true,fallbackOnBody:true,scroll:true,scrollSensitivity:60,
+    onStart:()=>{dragging=true;lastPt=null},
+    onEnd:e=>{
+      setTimeout(()=>dragging=false,50);
+      // 놓은 자리 바로 앞의 구분 머리글이 새 구분
+      // 단, 구분 머리글 위에 놓았으면 그 구분 (접혀 있는 장기결석 등)
+      const pt=lastPt;
+      let el=pt?document.elementsFromPoint(pt.clientX,pt.clientY).find(x=>x.classList&&x.classList.contains('fh')):null;
+      if(!el){el=e.item.previousElementSibling;while(el&&!el.classList.contains('fh'))el=el.previousElementSibling}
+      const p=S.people.find(x=>x.id===e.item.dataset.id), to=el?el.dataset.gid:'age:'+S.ageGroups[0].id;
+      if(!p)return;
+      const before=groupIdOf(p);
+      if(to.startsWith('sp:'))p.status=to.slice(3);else p.status='';
+      const now=groupIdOf(p);
+      if(before!==now||to!==now){
+        const name=now.startsWith('sp:')?S.specials.find(s=>s.id===p.status).name:ageGroupOf(p).name;
+        toast(to===now?`${p.name} → ${name}`:`${p.name}: 나이(${ageText(p)})에 맞게 '${name}'에 배치했어요`);
+        save();
+      }
+      render();
+    }});
+  cols.querySelectorAll('.it').forEach(el=>el.onclick=()=>{if(!dragging)openPerson(el.dataset.id)});
+  if(q){const hit=cols.querySelector('.it.hit');if(hit)cols.scrollLeft=hit.offsetLeft-cols.offsetLeft-40}
 }
 function bindRosterBar(){
   const q=$('#q');
   q.oninput=()=>{query=q.value;renderRoster();const n=$('#q');n.focus();n.setSelectionRange(n.value.length,n.value.length)};
   $('#bAdd').onclick=()=>openPerson(null);
+  $('#vSeg')&&bindViewSeg();
 }
 
 /* ---------- 인원 수정 ---------- */
@@ -637,7 +683,7 @@ $('#fileIn').onchange=async e=>{
 /* ---------- 기타 ---------- */
 let tt;
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400)}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();scrollTo(0,0)});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();if($("#cols"))$("#cols").scrollLeft=0});
 const shiftYear=d=>{S.year+=d;S.date=defaultDate(S.year);save();render();toast(`${S.year}년 기준으로 나이·구분을 다시 계산했어요`)};
 $('#yPrev').onclick=()=>shiftYear(-1);$('#yNext').onclick=()=>shiftYear(1);
 window.addEventListener('afterprint',()=>{$('#print').innerHTML=''});
