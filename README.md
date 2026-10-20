@@ -7,6 +7,7 @@ GitHub Pages로 배포되는 스마트폰 홈 화면용 HTML 앱 모음입니다
 - 앱 목록: https://immanueladmin1985-dev.github.io/my-apps/
 - 성경 부루마블: https://immanueladmin1985-dev.github.io/my-apps/bible-marble/
 - 난장이의 피아노 교실: https://immanueladmin1985-dev.github.io/my-apps/piano/
+- 난장이의 피아노 교실 2: https://immanueladmin1985-dev.github.io/my-apps/piano-v2/
 - 난장이의 팬플룻 교실: https://immanueladmin1985-dev.github.io/my-apps/panflute/
 - 다과비 계산기: https://immanueladmin1985-dev.github.io/my-apps/snack-calc/
 
@@ -127,6 +128,10 @@ GitHub Pages로 배포되는 스마트폰 홈 화면용 HTML 앱 모음입니다
 - 가로 화면 우선 배치: 위쪽은 문제 카드와 단추, 아래쪽은 큰 건반. 보이는 흰 건반 수는 가로·세로 화면마다 따로 정할 수 있습니다 (기본: 가로 약 한 옥타브 반).
 - 지연 시간 보정: 듣는 장치(스피커, 블루투스 이어폰 등)마다 화면 터치 지연과 피아노(MIDI·마이크) 지연을 재서 ‘박자대로’ 판정에서 빼 줍니다.
 - 처음 열면 홈 화면 설치 방법을 안내합니다 (안드로이드 크롬은 바로 설치, 아이폰·삼성 인터넷은 순서 안내).
+
+## 난장이의 피아노 교실 2 (`piano-v2/`)
+
+만들던 피아노 교실의 다른 판본을 따로 올린 앱입니다. `piano/`보다 앞선 판본을 바탕으로 하며, 설정에서 건반 크기(크게·보통·작게)를 고를 수 있습니다. 박자 지연 보정, 소리 출력 장치 선택처럼 `piano/`에만 있는 기능은 들어 있지 않습니다. 저장 기록은 `piano/`와 따로 보관됩니다.
 
 ## 난장이의 팬플룻 교실 (`panflute/`)
 
