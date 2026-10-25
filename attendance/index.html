@@ -13,8 +13,8 @@
 <meta name="apple-mobile-web-app-title" content="출석부">
 <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101215" media="(prefers-color-scheme: dark)">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="vendor/Sortable.min.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#f4f5f7; --card:#ffffff; --field:#f1f3f6; --text:#16181d; --sub:#6b7280; --line:#e6e8ec;
@@ -31,89 +31,109 @@
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--text)}
+html,body{background:var(--bg);color:var(--text);height:100%;overflow:hidden}
 body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
   -webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
 button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 input,select,textarea{border:0;outline:none;background:var(--field);border-radius:10px;padding:9px 11px;min-width:0}
+.hidden{display:none!important}
 
-html,body{height:100%;overflow:hidden}
 .app{height:100vh;height:100dvh;display:flex;flex-direction:column;
-  padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+  padding:calc(8px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
 
 /* 상단 */
-.head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;flex:none}
-.head h1{font-size:19px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;margin-right:auto}
-.year{display:flex;align-items:center;background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
-.year button{width:36px;height:38px;font-size:14px;color:var(--sub)}
-.year b{font-size:16px;min-width:60px;text-align:center}
-.seg{display:flex;background:var(--field);border-radius:12px;padding:3px;gap:2px}
-.seg button{height:32px;padding:0 14px;border-radius:9px;font-size:14px;font-weight:700;color:var(--sub);white-space:nowrap}
+.head{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;flex:none}
+.head h1{font-size:18px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;margin-right:auto}
+.year{display:flex;align-items:center;background:var(--card);border-radius:10px;box-shadow:var(--shadow)}
+.year button{width:32px;height:34px;font-size:13px;color:var(--sub)}
+.year b{font-size:15px;min-width:56px;text-align:center}
+.seg{display:flex;background:var(--field);border-radius:10px;padding:3px;gap:2px}
+.seg button{height:28px;padding:0 12px;border-radius:8px;font-size:13.5px;font-weight:700;color:var(--sub);white-space:nowrap}
 .seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.tabs button{padding:0 18px}
+.ibtn{width:34px;height:34px;border-radius:10px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--sub)}
+.ibtn svg{width:18px;height:18px}
+
+.banner{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--accent-soft);border-radius:12px;padding:6px 8px 6px 10px;margin-top:8px}
+.banner img{width:28px;height:28px;border-radius:7px}
+.banner span{font-size:13px;flex:1 1 180px}
+.banner .btn{height:30px;font-size:13px;padding:0 10px;box-shadow:none}
 
 #view{flex:1;min-height:0;display:flex;flex-direction:column}
 #view.scroll{overflow-y:auto;display:block}
-.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;flex:none}
-.datebox{display:flex;align-items:center;background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:2px}
-.datebox button{width:34px;height:36px;color:var(--sub);font-size:14px}
-.datebox input{background:none;padding:6px 2px;font-weight:700;font-size:15px;width:132px;text-align:center}
-.total{font-size:14px;color:var(--sub);white-space:nowrap}
-.total b{font-size:22px;color:var(--good);font-weight:800;margin-right:2px}
+.bar{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin:8px 0;flex:none}
+.datebox{display:flex;align-items:center;background:var(--card);border-radius:10px;box-shadow:var(--shadow);padding:1px}
+.datebox button{width:30px;height:34px;color:var(--sub);font-size:13px}
+.datebox input{background:none;padding:4px 2px;font-weight:700;font-size:14.5px;width:128px;text-align:center}
+.total{font-size:13.5px;color:var(--sub);white-space:nowrap}
+.total b{font-size:20px;color:var(--good);font-weight:800;margin-right:1px}
 .sp{flex:1}
-.btn{height:38px;padding:0 14px;border-radius:12px;font-size:14px;font-weight:700;background:var(--card);box-shadow:var(--shadow);white-space:nowrap}
+.btn{height:34px;padding:0 12px;border-radius:10px;font-size:13.5px;font-weight:700;background:var(--card);box-shadow:var(--shadow);white-space:nowrap}
 .btn.pri{background:var(--accent);color:#fff}
 .btn.warn{color:var(--warn)}
-.search{flex:0 1 200px;background:var(--card);box-shadow:var(--shadow)}
+.btn.warnbg{background:var(--warn);color:#fff}
+.tog{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--sub);white-space:nowrap;cursor:pointer}
+.tog input{width:16px;height:16px;accent-color:var(--good)}
+.search{flex:0 1 180px;background:var(--card);box-shadow:var(--shadow);padding:7px 10px}
 .hint{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
 
-/* 흐름 화면: 위→아래로 채우고 바닥에 닿으면 오른쪽 칸으로 */
-.board{flex:1;min-height:0;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:10px;overflow:hidden}
-.cols{height:100%;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:4px 6px;
-  overflow-x:auto;overflow-y:hidden;scroll-behavior:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px}
-.it,.fh{flex:none;width:var(--w,128px);height:34px;border-radius:8px;display:flex;align-items:center;gap:4px;padding:0 9px;
-  font-size:15px;white-space:nowrap;overflow:hidden;user-select:none;-webkit-user-select:none}
-.it{background:var(--field);font-weight:600;cursor:pointer}
-.it small{font-size:11px;color:var(--sub);font-weight:600}
-.it .memo{font-size:11px;color:var(--hold);overflow:hidden;text-overflow:ellipsis;min-width:0;margin-left:auto}
+/* 명단 판: 위→아래로 채우고 바닥에 닿으면 오른쪽 칸으로 */
+.board{flex:1;min-height:0;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:6px;overflow:hidden}
+.cols{height:100%;display:flex;align-items:flex-start;gap:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.grp{flex:none;display:flex;flex-direction:column;gap:4px}
+.grp .gh{width:0;min-width:100%}
+.grp+.grp{border-left:1px solid var(--line);padding-left:10px}
+.gl{display:grid;grid-auto-flow:column;grid-auto-columns:var(--w,96px);gap:4px 5px}
+.gh{height:30px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 8px;
+  background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;user-select:none;-webkit-user-select:none}
+.gh span{overflow:hidden;text-overflow:ellipsis}
+.gh small{font-size:12px;font-weight:700;opacity:.85;flex:none}
+.gh.sp-g{background:var(--hold-soft);color:var(--hold)}
+.gh.fold{cursor:pointer}
+.gh.fold span::after{content:" ▸"}
+.gh.fold.open span::after{content:" ▾"}
+.narrow .gh{flex-direction:column;align-items:flex-start;justify-content:center;gap:0;line-height:1.1;padding:0 6px;font-size:11.5px}
+.narrow .gh small{font-size:10.5px}
+/* 이어보기: 구분 머리글도 이름 칸 하나 크기 */
+.flow .gh{height:auto;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;line-height:1.15;padding:0 6px;font-size:11.5px}
+.flow .gh small{font-size:10.5px}
+.it{height:32px;border-radius:7px;display:flex;align-items:center;gap:3px;padding:0 7px;background:var(--field);
+  font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;cursor:pointer;user-select:none;-webkit-user-select:none}
+.it small{font-size:10.5px;color:var(--sub);font-weight:600}
+.it .memo{font-size:10.5px;color:var(--hold);overflow:hidden;text-overflow:ellipsis;min-width:0;margin-left:auto}
 .it .dup{width:6px;height:6px;border-radius:50%;background:var(--warn);flex:none;margin-left:auto}
 .it .memo+.dup{margin-left:0}
-.it.on{background:var(--good);color:#fff}
+.it.pw{box-shadow:inset 3px 0 0 var(--good)}
+.it.on{background:var(--good);color:#fff;box-shadow:none}
 .it.on small,.it.on .memo{color:rgba(255,255,255,.85)}
 .it.hit{outline:2px solid var(--accent);outline-offset:-2px}
 .it.dim{opacity:.3}
 .edit .it{cursor:grab}
 .it.ghost{opacity:.35;outline:2px dashed var(--accent)}
 .it.drag{box-shadow:0 6px 18px rgba(0,0,0,.25)}
-.fh{background:var(--hc,var(--accent-soft));color:var(--ht,var(--accent));font-size:13px;font-weight:800;justify-content:space-between}
-.fh small{font-size:12px;font-weight:700;opacity:.85}
-.fh.sp-g{--hc:var(--hold-soft);--ht:var(--hold)}
-.fh.fold{cursor:pointer}
-.fh.fold::after{content:"▸";margin-left:2px}
-.fh.fold.open::after{content:"▾"}
-.brk{flex-basis:100%;width:1px;margin:0 3px;background:var(--line);border-radius:1px}
+.fill{pointer-events:none}
+.empty-all{text-align:center;color:var(--sub);padding:40px 16px;line-height:1.7;font-size:15px}
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:14px}
+
 @media (max-width:600px){
-  .app{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
   .head h1{display:none}
   .head{justify-content:space-between}
-  .seg button{padding:0 11px}
-  .bar{gap:6px;margin:8px 0}
-  .datebox input{width:120px;font-size:14px}
-  .btn{padding:0 11px;height:36px}
-  .total b{font-size:20px}
+  .seg button{padding:0 8px}
+  .btn{padding:0 9px}
+  .head{gap:6px}
+  .year button{width:26px}
+  .year b{min-width:48px}
+  .banner small,.tog .lng{display:none}
   .hint{display:none}
-  .search{flex:1 1 120px}
-  .board{padding:6px;border-radius:12px}
+  .search{flex:1 1 110px}
+  .board{padding:5px;border-radius:12px}
 }
-.empty-all{text-align:center;color:var(--sub);padding:40px 16px;line-height:1.7;font-size:15px}
-.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px}
 
 /* 설정 */
-.set{display:grid;gap:12px;max-width:720px}
+.set{display:grid;gap:12px;max-width:760px;margin:8px 0 12px}
 .set h3{font-size:15px;font-weight:800;margin-bottom:8px}
 .set p{font-size:13px;color:var(--sub);line-height:1.55;margin-bottom:8px}
-.set label.row{display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0}
+.set label.row{display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0;flex-wrap:wrap}
 .set table{width:100%;border-collapse:collapse;font-size:14px}
 .set td,.set th{padding:4px;text-align:left}
 .set th{font-size:12px;color:var(--sub);font-weight:600}
@@ -122,25 +142,43 @@ html,body{height:100%;overflow:hidden}
 .x{width:32px;height:32px;border-radius:8px;color:var(--sub)}
 .x:hover{color:var(--warn);background:var(--warn-soft)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.url{flex:1 1 240px}
 
-/* 시트(대화상자) */
-dialog{margin:auto;border:0;border-radius:18px;background:var(--card);color:var(--text);padding:18px;width:min(420px,calc(100% - 32px));box-shadow:0 10px 40px rgba(0,0,0,.25)}
+/* 대화상자 */
+dialog{margin:auto;border:0;border-radius:18px;background:var(--card);color:var(--text);padding:18px;width:min(440px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.25)}
 dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog h3{font-size:17px;font-weight:800;margin-bottom:12px}
+dialog .msg{font-size:14px;line-height:1.6;color:var(--text);white-space:pre-line}
+dialog ol{font-size:14px;line-height:1.7;padding-left:20px;margin:8px 0}
+dialog .names{font-size:12.5px;color:var(--sub);line-height:1.6;max-height:140px;overflow:auto;background:var(--field);border-radius:10px;padding:8px 10px;margin:8px 0}
+.kbd{display:inline-block;padding:0 6px;border-radius:6px;background:var(--field);font-weight:700}
 .f{display:grid;gap:4px;margin-bottom:10px;font-size:13px;color:var(--sub)}
 .f input,.f select,.f textarea{color:var(--text);font-size:16px}
 .f .info{font-size:13px;color:var(--accent)}
 .chk{display:flex;align-items:center;gap:8px;font-size:14px;margin:8px 0}
+.chk input{width:17px;height:17px}
+.radio{display:grid;gap:6px;margin:4px 0 10px}
+.radio label{display:flex;gap:8px;align-items:flex-start;font-size:14px;background:var(--field);border-radius:10px;padding:9px 10px;cursor:pointer}
+.radio label small{display:block;font-size:12px;color:var(--sub);margin-top:2px}
 .dlg-btns{display:flex;gap:8px;margin-top:14px}
-.dlg-btns .sp{flex:1}
 
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);
   padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50;max-width:calc(100% - 32px)}
 .toast.show{opacity:1}
-.empty-all{text-align:center;color:var(--sub);padding:40px 16px;line-height:1.7;font-size:15px}
 
 /* 인쇄 */
 #print{display:none}
+.pt{width:100%;border-collapse:collapse;table-layout:fixed;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#000}
+.pt td,.pt th{border:1px solid #000;text-align:center;padding:0 1px;overflow:hidden;white-space:nowrap;height:var(--rh);font-size:var(--fs);line-height:1}
+.pt .ttl{font-size:15pt;font-weight:800;height:10mm;border:0}
+.pt .dt{font-size:10.5pt;height:6mm;border:0;text-align:right;padding-right:3mm}
+.pt th{background:#e9e9e9;font-weight:700;height:6mm}
+.pt .sub{background:#f1f1f1;font-weight:700}
+.pt .att{font-weight:800}
+.pt .memo{font-size:calc(var(--fs) * .85)}
+.pt .sum td{font-weight:700;height:6mm}
+.pt .gsum td{height:7mm;font-size:9pt;text-align:left;padding:0 3mm;white-space:normal}
+.pt .tot td{height:8mm;font-size:11.5pt;font-weight:700;text-align:right;padding-right:6mm}
 @media print{
   @page{size:A4 portrait;margin:9mm}
   html,body{background:#fff;color:#000;height:auto;overflow:visible}
@@ -148,16 +186,7 @@ dialog h3{font-size:17px;font-weight:800;margin-bottom:12px}
   #print{display:block}
   .page{break-after:page;page-break-after:always}
   .page:last-child{break-after:auto;page-break-after:auto}
-  .pt{width:100%;border-collapse:collapse;table-layout:fixed;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
-  .pt td,.pt th{border:1px solid #000;text-align:center;padding:0 1px;overflow:hidden;white-space:nowrap;height:var(--rh);font-size:var(--fs);line-height:1}
-  .pt .ttl{font-size:16pt;font-weight:800;height:11mm;border:0}
-  .pt .dt{font-size:11pt;height:7mm;border:0;text-align:right;padding-right:3mm}
-  .pt th{background:#e9e9e9;font-weight:700}
-  .pt .sub{background:#f3f3f3;font-weight:700}
-  .pt .att{font-weight:800}
-  .pt .memo{font-size:calc(var(--fs) * .8)}
-  .pt .sum td{font-weight:700;height:7mm}
-  .pt .tot td{height:9mm;font-size:12pt;font-weight:700;text-align:right;padding-right:6mm}
+  .pt th,.pt .sub{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
@@ -167,6 +196,13 @@ dialog h3{font-size:17px;font-weight:800;margin-bottom:12px}
     <h1>청년부 출석부</h1>
     <div class="seg tabs"><button data-tab="att">출석</button><button data-tab="roster">명단</button><button data-tab="set">설정</button></div>
     <div class="year"><button id="yPrev" aria-label="이전 연도">◀</button><b id="yLabel"></b><button id="yNext" aria-label="다음 연도">▶</button></div>
+    <button class="ibtn" id="hInst" aria-label="홈 화면에 설치" title="홈 화면에 설치"></button>
+    <button class="ibtn" id="hFS" aria-label="전체화면" title="전체화면"></button>
+  </div>
+  <div class="banner hidden" id="banner">
+    <img src="icon-192.png" alt="">
+    <span><b>홈 화면에 설치해 두세요.</b><small> 아이콘으로 바로 열리고 인터넷이 없어도 열려요.</small></span>
+    <button class="btn pri" id="bInst">설치하기</button><button class="btn" id="bFs">전체화면</button><button class="btn" id="bLater">다음에</button>
   </div>
   <div id="view"></div>
 </div>
@@ -185,16 +221,26 @@ dialog h3{font-size:17px;font-weight:800;margin-bottom:12px}
 
 <dialog id="dlgPrint">
   <h3>출석부 인쇄</h3>
-  <label class="chk"><input id="prDate" type="checkbox" checked> 날짜 넣기 (<span id="prDateLabel"></span>)</label>
+  <div class="radio">
+    <label><input type="radio" name="prForm" value="orig"><span>원래 양식 (구분별로 나눔)<small>구분마다 칸을 따로 씁니다. 예비청년 아래 1년차, 마지막 칸에 직업군인·군인·유학. 한 칸이 넘치면 옆 칸으로 이어집니다.</small></span></label>
+    <label><input type="radio" name="prForm" value="flow"><span>붙여서 (이어서)<small>구분 제목을 줄로 넣고 빈칸 없이 이어서 채웁니다. 종이 한 장에 더 많이 들어갑니다.</small></span></label>
+  </div>
+  <label class="chk"><input id="prDate" type="checkbox"> 날짜 넣기 (<span id="prDateLabel"></span>)</label>
   <label class="chk"><input id="prMarks" type="checkbox"> 출석 표시(O)와 인원 수 넣기</label>
-  <label class="chk"><input id="prSep" type="checkbox" checked> 별도 쪽 구분(장기결석자 등) 함께 인쇄</label>
+  <label class="chk"><input id="prPrev" type="checkbox"> 지난주 출석자를 구분 안에서 앞으로</label>
+  <label class="chk"><input id="prSep" type="checkbox"> 장기결석자 등 별도 쪽도 인쇄</label>
   <div class="dlg-btns"><span class="sp"></span><button class="btn" id="prCancel">취소</button><button class="btn pri" id="prGo">인쇄</button></div>
 </dialog>
 
-<input type="file" id="fileIn" accept=".xlsx,.xls" hidden>
+<dialog id="dlgMsg"></dialog>
+
+<input type="file" id="fileIn" accept=".xlsx,.xls,.xlsm" hidden>
 
 <script>
 'use strict';
+// 다른 곳에 게시되어 head 태그가 body로 들어간 경우 head로 옮김
+document.querySelectorAll('body meta, body link[rel]').forEach(n=>document.head.appendChild(n));
+
 const KEY='youthAttendance.v1';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -203,6 +249,7 @@ const ko=(a,b)=>a.localeCompare(b,'ko');
 
 function defaults(){
   return {
+    v:2,
     year:new Date().getFullYear(),
     firstAge:20,          // 1년차가 되는 나이 (한국식 나이)
     oldFirst:false,       // 정렬: 나이 많은 순
@@ -223,13 +270,18 @@ function defaults(){
     people:[],   // {id,name,by,approx,status,memo}
     att:{},      // {'2026-10-18':[id,...]}
     date:null,
-    viewMode:'flow',  // flow: 이어보기, group: 구분별
+    viewMode:'flow',   // flow: 이어보기, group: 구분별
+    prevFirst:false,   // 지난주 출석자 앞으로
+    print:{form:'orig',date:true,marks:false,prev:false,sep:true},
+    ui:{autoFS:true,installDismissed:false},
   };
 }
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 S=Object.assign(defaults(),S||{});
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('저장 공간에 저장하지 못했어요')}};
+S.print=Object.assign(defaults().print,S.print||{});S.ui=Object.assign(defaults().ui,S.ui||{});
+if(!(S.v>=2)){S.ageGroups.forEach(g=>g.stack=g.id==='g1');S.v=2}   // 예전 버전: 인쇄 칸 묶음 초기화
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('기기에 저장하지 못했어요')}};
 
 let tab='att', query='', openSep={}, dragging=false;
 
@@ -246,6 +298,8 @@ function defaultDate(year){
 }
 if(!S.date||!S.date.startsWith(S.year+'-'))S.date=defaultDate(S.year);
 const mdLabel=s=>{const d=parseYmd(s);return (d.getMonth()+1)+'월 '+d.getDate()+'일'};
+// 이 날짜 바로 전에 출석 기록이 있는 날 (보통 지난주)
+const prevDate=d=>Object.keys(S.att).filter(k=>k<d&&S.att[k].length).sort().pop()||null;
 
 /* ---------- 나이 / 구분 ---------- */
 const ageOf=p=>S.year-p.by+1;
@@ -256,13 +310,11 @@ function ageGroupOf(p){
   const y=yrOf(p);
   const g=S.ageGroups.find(g=>(g.from==null||y>=g.from)&&(g.to==null||y<=g.to));
   if(g)return g;
-  // 범위 밖이면 가장 가까운 끝 구분으로
   const first=S.ageGroups[0],last=S.ageGroups[S.ageGroups.length-1];
   return first&&first.from!=null&&y<first.from?first:last;
 }
 const groupIdOf=p=>specialOf(p)?'sp:'+p.status:'age:'+(ageGroupOf(p)||{}).id;
-const sortPeople=list=>list.sort((a,b)=>(S.oldFirst?a.by-b.by:b.by-a.by)||ko(a.name,b.name));
-function buildGroups(){
+function buildGroups({prev=false}={}){
   const map={};
   const groups=[
     ...S.ageGroups.map(g=>({gid:'age:'+g.id,name:g.name,kind:'age',stack:g.stack,members:[]})),
@@ -270,12 +322,25 @@ function buildGroups(){
   ];
   groups.forEach(g=>map[g.gid]=g);
   S.people.forEach(p=>{const g=map[groupIdOf(p)];if(g)g.members.push(p)});
-  groups.forEach(g=>sortPeople(g.members));
+  const pd=prev&&prevDate(S.date), ps=new Set(pd?S.att[pd]:[]);
+  groups.forEach(g=>g.members.sort((a,b)=>(ps.has(b.id)-ps.has(a.id))||(S.oldFirst?a.by-b.by:b.by-a.by)||ko(a.name,b.name)));
+  groups.prevSet=ps;
   return groups;
 }
-function dupNames(){
-  const c={};S.people.forEach(p=>c[p.name]=(c[p.name]||0)+1);return c;
+function dupNames(){const c={};S.people.forEach(p=>c[p.name]=(c[p.name]||0)+1);return c}
+
+/* ---------- 대화상자 (alert/confirm 대신) ---------- */
+function modal(html,buttons){
+  return new Promise(res=>{
+    const d=$('#dlgMsg');
+    d.innerHTML=html+`<div class="dlg-btns"><span class="sp"></span>${buttons.map((b,i)=>`<button class="btn ${b.cls||''}" data-i="${i}">${b.label}</button>`).join('')}</div>`;
+    let done=false;const fin=v=>{if(done)return;done=true;res(v)};
+    d.querySelectorAll('[data-i]').forEach(x=>x.onclick=()=>{d.close();fin(buttons[+x.dataset.i].val)});
+    d.addEventListener('close',()=>fin(false),{once:true});
+    d.showModal();
+  });
 }
+const ask=(title,msg,ok='확인',danger=false)=>modal(`<h3>${title}</h3><p class="msg">${msg}</p>`,[{label:'취소',val:false},{label:ok,val:true,cls:danger?'warnbg':'pri'}]);
 
 /* ---------- 화면 ---------- */
 function render(){
@@ -286,67 +351,115 @@ function render(){
   if(tab==='att')renderAtt();else if(tab==='roster')renderRoster();else renderSet();
   if($('#cols'))$('#cols').scrollLeft=sl;
 }
-
-function itemHtml(p,{on=false,dup=false,cls=''}={}){
-  return `<div class="it${on?' on':''}${cls}" data-id="${p.id}" title="${esc(p.name+' '+ageText(p)+(p.memo?' · '+p.memo:''))}">${esc(p.name)}<small>${esc(ageText(p))}</small>`+
-    (p.memo?`<span class="memo">${esc(p.memo)}</span>`:'')+(dup?'<span class="dup"></span>':'')+`</div>`;
-}
 function emptyAll(){
   return `<div class="card empty-all">아직 명단이 없어요.<br>
     <b>설정 → 엑셀 가져오기</b>로 명단 파일을 불러오거나,<br><b>명단</b> 탭에서 한 명씩 추가하세요.</div>`;
 }
 const viewSeg=()=>`<div class="seg" id="vSeg"><button data-v="flow" class="${S.viewMode!=='group'?'on':''}">이어보기</button><button data-v="group" class="${S.viewMode==='group'?'on':''}">구분별</button></div>`;
 function bindViewSeg(){
-  $('#vSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.viewMode=b.dataset.v;save();render();$('.cols')&&($('.cols').scrollLeft=0)});
-}
-// 구분 머리글과 이름을 한 줄로 이어서 배치. 구분별 보기면 구분마다 새 칸에서 시작
-function boardHtml(groups,{edit=false,set=null,dup={},q=''}={}){
-  let h=`<div class="board"><div class="cols${edit?' edit':''}" id="cols">`, first=true;
-  for(const g of groups){
-    const folded=g.sep&&!openSep[g.gid];
-    if(!first&&(S.viewMode==='group'||g.sep))h+='<div class="brk"></div>';
-    first=false;
-    const cnt=set?`${g.members.filter(p=>set.has(p.id)).length}/${g.members.length}`:`${g.members.length}명`;
-    h+=`<div class="fh${g.kind==='sp'?' sp-g':''}${g.sep?' fold'+(folded?'':' open'):''}" data-gid="${g.gid}"><span>${esc(g.name)}</span><small>${cnt}</small></div>`;
-    if(folded)continue;
-    h+=g.members.map(p=>itemHtml(p,{on:set&&set.has(p.id),dup:dup[p.name]>1,cls:q?(p.name.includes(q)?' hit':' dim'):''})).join('');
-  }
-  return h+'</div></div>';
-}
-// 가장 긴 이름에 맞춰 칸 너비 조절
-function fitWidth(){
-  const cols=$('#cols');if(!cols)return;
-  let max=0;cols.querySelectorAll('.it').forEach(el=>{max=Math.max(max,el.scrollWidth)});
-  cols.style.setProperty('--w',Math.max(112,Math.min(170,max+2))+'px');
-}
-function bindBoard(){
-  const cols=$('#cols');if(!cols)return;
-  // PC 마우스 휠은 가로로 넘기기
-  cols.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){cols.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
-  cols.querySelectorAll('.fh.fold').forEach(el=>el.onclick=()=>{openSep[el.dataset.gid]=!openSep[el.dataset.gid];render()});
+  $('#vSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.viewMode=b.dataset.v;save();render();$('#cols')&&($('#cols').scrollLeft=0)});
 }
 
+// 칸 너비: 그 칸에 들어갈 이름 중 가장 긴 것에 맞춤
+const mctx=document.createElement('canvas').getContext('2d');
+const FONT=getComputedStyle(document.body).fontFamily;
+function textW(t,f){mctx.font=f+' '+FONT;return mctx.measureText(t).width}
+function colW(list,dup){
+  let m=0;
+  for(const p of list){
+    let w=textW(p.name,'600 14.5px')+3+textW(ageText(p),'600 10.5px');
+    if(p.memo)w+=4+Math.min(30,textW(p.memo,'10.5px'));
+    if(dup&&dup[p.name]>1)w+=9;
+    m=Math.max(m,w);
+  }
+  return Math.ceil(Math.max(74,Math.min(170,m+16)));
+}
+const IH=32, GAP=4, GH=30;
+function itemHtml(p,o){
+  const cls=(o.set&&o.set.has(p.id)?' on':'')+(o.ps&&o.ps.has(p.id)?' pw':'')+(o.q?(p.name.includes(o.q)?' hit':' dim'):'');
+  return `<div class="it${cls}" data-id="${p.id}" title="${esc(p.name+' '+ageText(p)+(p.memo?' · '+p.memo:''))}">${esc(p.name)}<small>${esc(ageText(p))}</small>`+
+    (p.memo?`<span class="memo">${esc(p.memo)}</span>`:'')+(o.dup&&o.dup[p.name]>1?'<span class="dup"></span>':'')+`</div>`;
+}
+const cntText=(g,set)=>set?`${g.members.filter(p=>set.has(p.id)).length}/${g.members.length}`:`${g.members.length}명`;
+function headHtml(g,set){
+  const folded=g.sep&&!openSep[g.gid];
+  return `<div class="gh${g.kind==='sp'?' sp-g':''}${g.sep?' fold'+(folded?'':' open'):''}" data-gid="${g.gid}"><span>${esc(g.name)}</span><small>${cntText(g,set)}</small></div>`;
+}
+// 판 채우기: 판 높이에 들어가는 줄 수를 계산해서 위→아래, 다음 칸으로
+let boardOpts=null;
+function fillBoard(){
+  const board=$('#board');if(!board||!boardOpts)return;
+  const {groups,set,edit,dup,q}=boardOpts, ps=S.prevFirst&&!edit?groups.prevSet:null;
+  const H=board.clientHeight-12, o={set,dup,q,ps};
+  let h='';
+  if(S.viewMode==='group'){
+    const R=Math.max(2,Math.floor((H-GH)/(IH+GAP)));
+    for(const g of groups){
+      const mem=g.sep&&!openSep[g.gid]?[]:g.members, nc=Math.max(1,Math.ceil(mem.length/R));
+      h+=`<div class="grp${nc===1?' narrow':''}" style="--w:${colW(mem.length?mem:[{name:'가나다',by:S.year-20}],dup)}px">${headHtml(g,set)}
+        <div class="gl" data-gid="${g.gid}" style="grid-template-rows:repeat(${Math.min(R,Math.max(mem.length,1))},${IH}px)">${mem.map(p=>itemHtml(p,o)).join('')}</div></div>`;
+    }
+    h=`<div class="cols${edit?' edit':''}" id="cols">${h}</div>`;
+  }else{
+    const R=Math.max(2,Math.floor((H+GAP)/(IH+GAP)));
+    const cells=[];let all=[];
+    for(const g of groups){
+      if(g.sep&&cells.length%R)while(cells.length%R)cells.push('<div class="fill"></div>');   // 별도 구분은 새 칸에서
+      if(cells.length%R===R-1)cells.push('<div class="fill"></div>');                         // 머리글이 칸 맨 아래에 홀로 남지 않게
+      cells.push(headHtml(g,set));
+      const mem=g.sep&&!openSep[g.gid]?[]:g.members;all=all.concat(mem);
+      mem.forEach(p=>cells.push(itemHtml(p,o)));
+    }
+    h=`<div class="cols flow${edit?' edit':''}" id="cols"><div class="gl" style="--w:${colW(all,dup)}px;grid-template-rows:repeat(${R},${IH}px)">${cells.join('')}</div></div>`;
+  }
+  const sl=$('#cols')?$('#cols').scrollLeft:0;
+  board.innerHTML=h;
+  $('#cols').scrollLeft=sl;
+  bindBoard(edit);
+}
+function bindBoard(edit){
+  const cols=$('#cols');
+  cols.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){cols.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
+  cols.querySelectorAll('.gh.fold').forEach(el=>el.onclick=()=>{if(dragging)return;openSep[el.dataset.gid]=!openSep[el.dataset.gid];fillBoard()});
+  if(edit)bindRosterBoard();else bindAttBoard();
+}
+// 판 크기가 바뀌면(창 크기, 설치 안내 닫기, 전체화면 등) 다시 채움
+let rsT,boardH=0;
+const boardRO=typeof ResizeObserver!=='undefined'?new ResizeObserver(es=>{
+  const h=Math.round(es[0].contentRect.height);
+  if(h!==boardH){boardH=h;clearTimeout(rsT);rsT=setTimeout(fillBoard,80)}
+}):null;
+const watchBoard=()=>{if(boardRO&&$('#board')){boardRO.disconnect();boardH=$('#board').clientHeight;boardRO.observe($('#board'))}};
+window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(fillBoard,120)});
+
 function renderAtt(){
-  const groups=buildGroups(), set=new Set(S.att[S.date]||[]);
+  const groups=buildGroups({prev:S.prevFirst}), set=new Set(S.att[S.date]||[]);
   const mainIds=groups.filter(g=>!g.sep).flatMap(g=>g.members.map(p=>p.id));
-  const cnt=S.people.filter(p=>set.has(p.id)).length;
+  const cnt=S.people.filter(p=>set.has(p.id)).length, pd=prevDate(S.date);
   let h=`<div class="bar">
     <div class="datebox"><button id="dPrev" aria-label="이전 주">◀</button><input type="date" id="dIn" value="${S.date}"><button id="dNext" aria-label="다음 주">▶</button></div>
-    <span class="total"><b id="tot">${cnt}</b>명 출석 · 전체 ${mainIds.length}명</span>
-    ${viewSeg()}<span class="sp"></span>
-    <button class="btn" id="bPrint">인쇄</button><button class="btn" id="bXls">엑셀 저장</button></div>`;
+    <span class="total"><b id="tot">${cnt}</b>명 / ${mainIds.length}명</span>
+    ${viewSeg()}
+    <label class="tog" title="${pd?mdLabel(pd)+' 출석자를 구분 안에서 먼저 보여줘요':'이전 출석 기록이 없어요'}"><input type="checkbox" id="prevChk" ${S.prevFirst?'checked':''}>지난주<span class="lng"> 출석자</span> 먼저</label>
+    <span class="sp"></span>
+    <button class="btn" id="bPrint">인쇄</button><button class="btn" id="bXls">엑셀</button></div>`;
+  boardOpts=null;
   if(!S.people.length){$('#view').innerHTML=h+emptyAll();bindAttBar();return}
-  $('#view').innerHTML=h+boardHtml(groups,{set});
-  bindAttBar();bindBoard();fitWidth();
-  // 누를 때마다 다시 그리지 않고 그 자리에서만 바꿈 (스크롤 위치 유지)
+  $('#view').innerHTML=h+'<div class="board" id="board"></div>';
+  bindAttBar();
+  boardOpts={groups,set};fillBoard();watchBoard();
+}
+function bindAttBoard(){
+  const {groups}=boardOpts;
+  // 누를 때마다 다시 그리지 않고 그 자리에서만 바꿈
   $('#cols').querySelectorAll('.it').forEach(el=>el.onclick=()=>{
     const id=el.dataset.id, list=new Set(S.att[S.date]||[]);
     list.has(id)?list.delete(id):list.add(id);
     if(list.size)S.att[S.date]=[...list];else delete S.att[S.date];
-    save();el.classList.toggle('on',list.has(id));
+    save();boardOpts.set=list;el.classList.toggle('on',list.has(id));
     $('#tot').textContent=S.people.filter(p=>list.has(p.id)).length;
-    const g=groups.find(g=>g.members.some(p=>p.id===id)), fh=$(`.fh[data-gid="${g.gid}"] small`);
-    if(fh)fh.textContent=`${g.members.filter(p=>list.has(p.id)).length}/${g.members.length}`;
+    const g=groups.find(g=>g.members.some(p=>p.id===id)), fh=$(`.gh[data-gid="${g.gid}"] small`);
+    if(fh)fh.textContent=cntText(g,list);
   });
 }
 function bindAttBar(){
@@ -354,6 +467,7 @@ function bindAttBar(){
   $('#dPrev').onclick=()=>move(-7);$('#dNext').onclick=()=>move(7);
   $('#dIn').onchange=e=>e.target.value&&setDate(e.target.value);
   $('#bPrint').onclick=openPrint;$('#bXls').onclick=exportXlsx;
+  $('#prevChk').onchange=e=>{S.prevFirst=e.target.checked;save();render()};
   $('#vSeg')&&bindViewSeg();
 }
 function setDate(d){
@@ -362,36 +476,39 @@ function setDate(d){
   save();render();
 }
 
-let sortable=null, lastPt=null;
+let sortables=[], lastPt=null;
 // 끌기 중 손가락/마우스 위치 기억 (놓은 곳이 구분 머리글인지 확인용)
-const trackPt=e=>{if(!dragging)return;const t=e.touches?e.touches[0]:e;if(t)lastPt={clientX:t.clientX,clientY:t.clientY}};
+const trackPt=e=>{if(!dragging)return;const t=e.touches?e.touches[0]:e;if(t)lastPt={x:t.clientX,y:t.clientY}};
 document.addEventListener('mousemove',trackPt,true);document.addEventListener('touchmove',trackPt,{capture:true,passive:true});
 function renderRoster(){
-  if(sortable){sortable.destroy();sortable=null}
   const groups=buildGroups(), q=query.trim().replace(/\s/g,'');
   let h=`<div class="bar"><input class="search" id="q" type="search" placeholder="이름 찾기" value="${esc(query)}">
     <span class="total">${S.people.length}명</span>${viewSeg()}
-    <span class="hint">다른 구분으로 끌어 옮기기(휴대폰은 꾹 누른 뒤) · 누르면 수정</span><span class="sp"></span>
+    <span class="hint">다른 구분(머리글 위나 그 칸 안)으로 끌어 옮기기 · 휴대폰은 꾹 누른 뒤 · 누르면 수정</span><span class="sp"></span>
     <button class="btn pri" id="bAdd">+ 인원 추가</button></div>`;
+  boardOpts=null;
   if(!S.people.length){$('#view').innerHTML=h+emptyAll();bindRosterBar();return}
   if(q)groups.forEach(g=>{if(g.sep&&g.members.some(p=>p.name.includes(q)))openSep[g.gid]=true});
-  $('#view').innerHTML=h+boardHtml(groups,{edit:true,dup:dupNames(),q});
-  bindRosterBar();bindBoard();fitWidth();
-  const cols=$('#cols');
-  sortable=Sortable.create(cols,{draggable:'.it',animation:120,delay:220,delayOnTouchOnly:true,
+  $('#view').innerHTML=h+'<div class="board" id="board"></div>';
+  bindRosterBar();
+  boardOpts={groups,edit:true,dup:dupNames(),q};fillBoard();watchBoard();
+  if(q){const hit=$('#cols .it.hit');if(hit)hit.scrollIntoView({inline:'center',block:'nearest'})}
+}
+function bindRosterBoard(){
+  sortables.forEach(s=>s.destroy());sortables=[];
+  $('#cols').querySelectorAll('.gl').forEach(gl=>sortables.push(Sortable.create(gl,{group:'people',draggable:'.it',animation:120,delay:220,delayOnTouchOnly:true,
     ghostClass:'ghost',dragClass:'drag',forceFallback:true,fallbackOnBody:true,scroll:true,scrollSensitivity:60,
     onStart:()=>{dragging=true;lastPt=null},
     onEnd:e=>{
       setTimeout(()=>dragging=false,50);
-      // 놓은 자리 바로 앞의 구분 머리글이 새 구분
-      // 단, 구분 머리글 위에 놓았으면 그 구분 (접혀 있는 장기결석 등)
-      const pt=lastPt;
-      let el=pt?document.elementsFromPoint(pt.clientX,pt.clientY).find(x=>x.classList&&x.classList.contains('fh')):null;
-      if(!el){el=e.item.previousElementSibling;while(el&&!el.classList.contains('fh'))el=el.previousElementSibling}
-      const p=S.people.find(x=>x.id===e.item.dataset.id), to=el?el.dataset.gid:'age:'+S.ageGroups[0].id;
-      if(!p)return;
+      // 머리글 위에 놓았으면 그 구분, 아니면 놓은 칸(이어보기는 바로 앞 머리글)의 구분
+      let el=lastPt?document.elementsFromPoint(lastPt.x,lastPt.y).find(x=>x.classList&&x.classList.contains('gh')):null;
+      let to=el?el.dataset.gid:e.to.dataset.gid;
+      if(!to){el=e.item.previousElementSibling;while(el&&!el.classList.contains('gh'))el=el.previousElementSibling;to=el?el.dataset.gid:'age:'+S.ageGroups[0].id}
+      const p=S.people.find(x=>x.id===e.item.dataset.id);
+      if(!p){render();return}
       const before=groupIdOf(p);
-      if(to.startsWith('sp:'))p.status=to.slice(3);else p.status='';
+      p.status=to.startsWith('sp:')?to.slice(3):'';
       const now=groupIdOf(p);
       if(before!==now||to!==now){
         const name=now.startsWith('sp:')?S.specials.find(s=>s.id===p.status).name:ageGroupOf(p).name;
@@ -399,9 +516,8 @@ function renderRoster(){
         save();
       }
       render();
-    }});
-  cols.querySelectorAll('.it').forEach(el=>el.onclick=()=>{if(!dragging)openPerson(el.dataset.id)});
-  if(q){const hit=cols.querySelector('.it.hit');if(hit)cols.scrollLeft=hit.offsetLeft-cols.offsetLeft-40}
+    }})));
+  $('#cols').querySelectorAll('.it').forEach(el=>el.onclick=()=>{if(!dragging)openPerson(el.dataset.id)});
 }
 function bindRosterBar(){
   const q=$('#q');
@@ -439,25 +555,26 @@ $('#pSave').onclick=()=>{
   if(editId)Object.assign(S.people.find(x=>x.id===editId),data);else S.people.push({id:uid(),...data});
   save();$('#dlgPerson').close();render();toast(editId?'수정했어요':`${name} 추가했어요`);
 };
-$('#pDel').onclick=()=>{
-  const p=S.people.find(x=>x.id===editId);
-  if(!p||!confirm(`${p.name}을(를) 명단에서 삭제할까요?\n출석 기록에서도 빠집니다.`))return;
+$('#pDel').onclick=async()=>{
+  const p=S.people.find(x=>x.id===editId);if(!p)return;
+  $('#dlgPerson').close();
+  if(!await ask('인원 삭제',`${p.name}을(를) 명단에서 삭제할까요?\n출석 기록에서도 빠집니다.`,'삭제',true)){$('#dlgPerson').showModal();return}
   S.people=S.people.filter(x=>x!==p);
   for(const d in S.att){S.att[d]=S.att[d].filter(i=>i!==p.id);if(!S.att[d].length)delete S.att[d]}
-  save();$('#dlgPerson').close();render();toast('삭제했어요');
+  save();render();toast('삭제했어요');
 };
 
 /* ---------- 설정 ---------- */
 function renderSet(){
   const n=v=>v==null?'':v;
-  $('#view').innerHTML=`<div class="set" style="margin-top:12px">
+  $('#view').innerHTML=`<div class="set">
   <div class="card"><h3>나이 기준</h3>
     <p>각 사람은 <b>출생연도</b>로 저장되고, 위의 연도를 바꾸면 나이(한국식: 연도 − 출생연도 + 1)와 구분이 자동으로 바뀝니다.</p>
     <label class="row">1년차가 되는 나이 <input type="number" id="sFirst" value="${S.firstAge}" style="width:70px"> 세 <span style="color:var(--sub);font-size:13px">(년차 = 나이 − ${S.firstAge - 1})</span></label>
     <label class="row"><input type="checkbox" id="sOld" ${S.oldFirst?'checked':''}> 나이 많은 사람부터 정렬 (끄면 어린 순 · 같은 나이는 가나다순)</label>
   </div>
   <div class="card"><h3>나이 구분 (년차 범위)</h3>
-    <p>비워 두면 끝까지(이하/이상)입니다. '앞 칸에 이어서'를 켜면 인쇄할 때 앞 구분 아래에 이어 붙입니다(예: 예비청년 아래 1년차).</p>
+    <p>비워 두면 끝까지(이하/이상)입니다. '앞 칸에 이어서'를 켜면 원래 양식으로 인쇄할 때 앞 구분 아래에 붙입니다(예: 예비청년 아래 1년차).</p>
     <table><tr><th>이름</th><th>부터</th><th>까지</th><th>앞 칸에 이어서</th><th></th></tr>
     ${S.ageGroups.map((g,i)=>`<tr data-i="${i}"><td><input type="text" data-k="name" value="${esc(g.name)}"></td>
       <td><input type="number" data-k="from" value="${n(g.from)}"></td><td><input type="number" data-k="to" value="${n(g.to)}"></td>
@@ -471,12 +588,18 @@ function renderSet(){
       <td><input type="checkbox" data-k="sep" ${s.sep?'checked':''}></td><td><button class="x" data-sdel="${i}">✕</button></td></tr>`).join('')}
     </table><div class="btns"><button class="btn" id="addSp">+ 특별 구분 추가</button></div>
   </div>
-  <div class="card"><h3>엑셀</h3>
-    <p>내보내면 <b>명단</b>, <b>${S.year} 출석기록</b>(날짜별 O 표시), <b>출석부</b>(인쇄 모양) 시트가 들어 있는 파일이 저장됩니다.
-    엑셀에서 명단·출석을 고친 뒤 다시 가져올 수 있어요. 기록은 이 기기에만 저장되니 가끔 내보내 두세요.</p>
+  <div class="card"><h3>엑셀 · 통계</h3>
+    <p><b>엑셀로 내보내기</b>를 누르면 ${S.year}년 <b>통계</b>(날짜별·월별 인원), <b>개인별</b>(출석 횟수·출석률·연속 결석), 구글 시트와 같은 모양의 <b>월별 시트</b>(예: ${String(S.year).slice(2)}.10), <b>명단</b>이 든 파일이 저장됩니다.</p>
+    <p><b>엑셀 가져오기</b>는 두 가지를 읽습니다. ① 이 앱에서 내보낸 파일(명단까지 바뀜) ② 구글 드라이브의 월별 출석 시트(시트 이름 '26.10' 같은 모양, 동그라미 표시) — 명단은 그대로 두고 출석 기록만 더합니다. 이름에 '사본'이 들어간 시트는 건너뜁니다.</p>
     <div class="btns"><button class="btn pri" id="sExp">엑셀로 내보내기</button><button class="btn" id="sImp">엑셀 가져오기</button></div>
+    <p style="margin-top:12px">구글 시트를 엑셀 파일로 받기: 시트 주소를 붙여 넣고 누르면 .xlsx 파일이 내려받아집니다(구글에 로그인된 브라우저에서). 받은 파일을 위의 <b>엑셀 가져오기</b>로 불러오세요.</p>
+    <div class="btns"><input class="url" id="gUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(S.gUrl||'')}"><button class="btn" id="gGo">엑셀 파일로 받기</button></div>
   </div>
-  <div class="card"><h3>초기화</h3><div class="btns"><button class="btn warn" id="sReset">모든 명단·기록 지우기</button></div></div>
+  <div class="card"><h3>화면</h3>
+    <label class="row" id="rowAutoFS"><input type="checkbox" id="sAutoFS" ${S.ui.autoFS?'checked':''}> 자동 전체화면 (화면을 처음 누르면 주소창 없이 전체화면으로)</label>
+    <div class="btns"><button class="btn" id="sFS"></button><button class="btn" id="sInst">홈 화면에 설치하기</button></div>
+  </div>
+  <div class="card"><h3>초기화</h3><p>기록은 이 기기(브라우저)에만 저장됩니다. 지우기 전에 엑셀로 내보내 두세요.</p><div class="btns"><button class="btn warn" id="sReset">모든 명단·기록 지우기</button></div></div>
   </div>`;
   $('#sFirst').onchange=e=>{const v=parseInt(e.target.value,10);if(v>0){S.firstAge=v;save();renderSet()}};
   $('#sOld').onchange=e=>{S.oldFirst=e.target.checked;save()};
@@ -491,85 +614,131 @@ function renderSet(){
   });
   $('#view').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
     if(S.ageGroups.length<2)return;S.ageGroups.splice(+b.dataset.del,1);save();renderSet()});
-  $('#view').querySelectorAll('[data-sdel]').forEach(b=>b.onclick=()=>{
+  $('#view').querySelectorAll('[data-sdel]').forEach(b=>b.onclick=async()=>{
     const s=S.specials[+b.dataset.sdel],cnt=S.people.filter(p=>p.status===s.id).length;
-    if(cnt&&!confirm(`'${s.name}'에 ${cnt}명이 있어요. 지우면 나이대로 자동 배치됩니다. 지울까요?`))return;
+    if(cnt&&!await ask('특별 구분 삭제',`'${s.name}'에 ${cnt}명이 있어요. 지우면 나이대로 자동 배치됩니다. 지울까요?`,'지우기',true))return;
     S.people.forEach(p=>{if(p.status===s.id)p.status=''});S.specials.splice(+b.dataset.sdel,1);save();renderSet()});
   $('#addAge').onclick=()=>{S.ageGroups.push({id:'g'+uid(),name:'새 구분',from:null,to:null,stack:false});save();renderSet()};
   $('#addSp').onclick=()=>{S.specials.push({id:'s'+uid(),name:'새 구분',sep:false});save();renderSet()};
   $('#sExp').onclick=exportXlsx;
   $('#sImp').onclick=()=>$('#fileIn').click();
-  $('#sReset').onclick=()=>{
-    if(!confirm('명단과 모든 출석 기록을 지울까요? 되돌릴 수 없어요.'))return;
-    S=defaults();S.date=defaultDate(S.year);save();render();toast('초기화했어요');
+  $('#gGo').onclick=()=>{
+    const v=$('#gUrl').value.trim(), m=v.match(/\/spreadsheets\/d\/([\w-]+)/);
+    if(!m){toast('구글 시트 주소를 확인하세요');return}
+    S.gUrl=v;save();
+    window.open(`https://docs.google.com/spreadsheets/d/${m[1]}/export?format=xlsx`,'_blank');
   };
+  $('#sAutoFS').onchange=e=>{S.ui.autoFS=e.target.checked;save()};
+  $('#sFS').onclick=()=>{FS.toggle();setTimeout(renderSet,300)};
+  $('#sInst').onclick=installSheet;
+  $('#sReset').onclick=async()=>{
+    if(!await ask('모두 지우기','명단과 모든 출석 기록을 지울까요? 되돌릴 수 없어요.','모두 지우기',true))return;
+    const ui=S.ui;S=defaults();S.ui=ui;S.date=defaultDate(S.year);save();render();toast('초기화했어요');
+  };
+  paintInstall();
 }
 
-/* ---------- 인쇄 레이아웃 (인쇄·엑셀 공용) ---------- */
-// 1쪽: 나이 구분마다 한 칸(앞 칸에 이어서면 같은 칸), 마지막 칸에 특별 구분(별도 쪽 아닌 것)
-function sheetLayout(){
-  const groups=buildGroups(), cols=[];
-  for(const g of groups.filter(g=>g.kind==='age')){
-    if(g.stack&&cols.length)cols[cols.length-1].push(g);else cols.push([g]);
-  }
-  const sp=groups.filter(g=>g.kind==='sp'&&!g.sep);
-  if(sp.length)cols.push(sp);
-  // 각 칸을 줄 목록으로: 첫 구분 이름은 머리글, 나머지는 칸 안 소제목 줄
-  const lines=cols.map(col=>{
-    const out=[];col.forEach((g,i)=>{if(i>0)out.push({sub:g.name});g.members.forEach(p=>out.push({p}))});return out;
-  });
-  const rows=Math.max(25,...lines.map(l=>l.length));
-  return {cols,lines,rows,sep:groups.filter(g=>g.sep)};
-}
+/* ---------- 인쇄 ---------- */
 const personLabel=p=>`${p.name}(${ageText(p)})`;
-
-let prOpts={};
 function openPrint(){
+  const o=S.print;
+  document.querySelectorAll('input[name=prForm]').forEach(r=>r.checked=r.value===o.form);
+  $('#prDate').checked=o.date;$('#prMarks').checked=o.marks;$('#prPrev').checked=o.prev;$('#prSep').checked=o.sep;
   $('#prDateLabel').textContent=mdLabel(S.date);
   $('#dlgPrint').showModal();
 }
 $('#prCancel').onclick=()=>$('#dlgPrint').close();
 $('#prGo').onclick=()=>{
-  prOpts={date:$('#prDate').checked,marks:$('#prMarks').checked,sep:$('#prSep').checked};
-  $('#dlgPrint').close();
-  buildPrint(prOpts);
-  setTimeout(()=>window.print(),100);
+  S.print={form:(document.querySelector('input[name=prForm]:checked')||{}).value||'orig',
+    date:$('#prDate').checked,marks:$('#prMarks').checked,prev:$('#prPrev').checked,sep:$('#prSep').checked};
+  save();$('#dlgPrint').close();
+  buildPrint(S.print);
+  setTimeout(()=>window.print(),150);
 };
+const MAXR=46;          // A4 한 장에 넣을 최대 줄 수
+const PAGE_H=272, PAGE_W=192;   // A4에서 여백(9mm)을 뺀 크기(mm)
+// 원래 양식: 구분마다 칸(앞 칸에 이어서면 같은 칸), 마지막 칸에 특별 구분. 넘치면 옆 칸으로
+function origColumns(main){
+  const raw=[];
+  main.filter(g=>g.kind==='age').forEach(g=>{if(g.stack&&raw.length)raw[raw.length-1].push(g);else raw.push([g])});
+  const sp=main.filter(g=>g.kind==='sp');if(sp.length)raw.push(sp);
+  const cols=[];
+  for(const col of raw){
+    const lines=[];col.forEach((g,i)=>{if(i>0)lines.push({sub:g.name});g.members.forEach(p=>lines.push({p}))});
+    for(let s=0;s===0||s<lines.length;s+=MAXR){
+      const part=lines.slice(s,s+MAXR);
+      if(part.length&&part[part.length-1].sub&&s+MAXR<lines.length){part.pop();lines.splice(s+MAXR-1,0,{blank:true})}
+      cols.push({title:s?col[0].name+' (이어서)':col[0].name,lines:part});
+    }
+  }
+  return cols;
+}
+// 붙여서: 구분 제목 줄 + 이름을 빈칸 없이 이어서 채움
+function flowColumns(main){
+  const lines=[];main.forEach(g=>{lines.push({sub:g.name});g.members.forEach(p=>lines.push({p}))});
+  let n=6,R=Math.ceil(lines.length/n);
+  if(R>MAXR){n=Math.ceil(lines.length/MAXR);R=Math.ceil(lines.length/n)}
+  R=Math.max(R,20);
+  const cols=[];let cur=[];
+  for(const l of lines){
+    if(cur.length===R){cols.push({lines:cur});cur=[]}
+    if(l.sub&&cur.length===R-1){cur.push({blank:true});cols.push({lines:cur});cur=[]}   // 제목이 칸 맨 아래에 홀로 남지 않게
+    cur.push(l);
+  }
+  if(cur.length)cols.push({lines:cur});
+  return {cols,R};
+}
+function sizes(fixedMm,R,n){
+  const rh=Math.min(6.5,(PAGE_H-fixedMm)/R), nameMm=PAGE_W*(2/3)/n;
+  return {rh,fs:Math.min(10,rh*2.835*.62,nameMm*2.835/6.4)};
+}
 function buildPrint(o){
-  const L=sheetLayout(), set=new Set(S.att[S.date]||[]), n=L.cols.length;
-  const usable=279-11-7-7-7-9-4;   // A4 높이 - 여백 - 제목/날짜/머리글/출석인원/총계 줄
-  const rh=Math.min(7,usable/(L.rows+1)), fs=Math.min(10.5,rh*2.835*.62);
+  const groups=buildGroups({prev:o.prev}), set=new Set(S.att[S.date]||[]);
+  const main=groups.filter(g=>!g.sep);
   const mark=p=>o.marks&&set.has(p.id)?'O':'';
-  let h=`<div class="page"><table class="pt" style="--rh:${rh}mm;--fs:${fs}pt">
-    <colgroup>${'<col style="width:11%"><col style="width:5.6%">'.repeat(n)}</colgroup>
-    <tr><td class="ttl" colspan="${n*2}">${S.year} 청년부 주일예배 출석부</td></tr>
-    <tr><td class="dt" colspan="${n*2}">${o.date?mdLabel(S.date):'월&emsp;&emsp;일'}</td></tr>
-    <tr>${L.cols.map(c=>`<th colspan="2">${esc(c[0].name)}</th>`).join('')}</tr>
-    <tr>${'<th>이름</th><th>출석</th>'.repeat(n)}</tr>`;
-  for(let r=0;r<L.rows;r++){
-    h+='<tr>'+L.lines.map(l=>{const x=l[r];
-      if(!x)return '<td></td><td></td>';
+  const dateTxt=o.date?mdLabel(S.date):'월&emsp;&emsp;&emsp;일';
+  const title=`${S.year} 청년부 주일예배 출석부`;
+  let cols,R,h='';
+  const orig=o.form!=='flow';
+  if(orig){cols=origColumns(main);R=Math.max(30,...cols.map(c=>c.lines.length))}
+  else ({cols,R}=flowColumns(main));
+  const n=cols.length;
+  const fixed=10+6+(orig?12:6)+(orig?6:7)+8+2;
+  const {rh,fs}=sizes(fixed,R,n);
+  const cg='<colgroup>'+`<col style="width:${(200/3/n).toFixed(3)}%"><col style="width:${(100/3/n).toFixed(3)}%">`.repeat(n)+'</colgroup>';
+  h+=`<div class="page"><table class="pt" style="--rh:${rh.toFixed(2)}mm;--fs:${fs.toFixed(2)}pt">${cg}
+    <tr><td class="ttl" colspan="${n*2}">${title}</td></tr>
+    <tr><td class="dt" colspan="${n*2}">${dateTxt}</td></tr>`;
+  if(orig)h+=`<tr>${cols.map(c=>`<th colspan="2">${esc(c.title)}</th>`).join('')}</tr>`;
+  h+=`<tr>${'<th>이름</th><th>출석</th>'.repeat(n)}</tr>`;
+  for(let r=0;r<R;r++){
+    h+='<tr>'+cols.map(c=>{const x=c.lines[r];
+      if(!x||x.blank)return '<td></td><td></td>';
       if(x.sub)return `<td class="sub" colspan="2">${esc(x.sub)}</td>`;
       return `<td>${esc(personLabel(x.p))}</td><td class="att">${mark(x.p)}</td>`;}).join('')+'</tr>';
   }
-  const colCnt=L.cols.map(c=>c.flatMap(g=>g.members).filter(p=>set.has(p.id)).length);
-  h+=`<tr class="sum">${L.cols.map((c,i)=>`<td>출석인원</td><td>${o.marks?colCnt[i]:''}</td>`).join('')}</tr>
-    <tr class="tot"><td colspan="${n*2}">총 출석인원 ${o.marks?`&ensp;${colCnt.reduce((a,b)=>a+b,0)}`:'&emsp;&emsp;&emsp;&emsp;&emsp;'}&ensp;명</td></tr>
-    </table></div>`;
+  const tot=main.flatMap(g=>g.members).filter(p=>set.has(p.id)).length;
+  if(orig){
+    const cc=cols.map(c=>c.lines.filter(x=>x.p&&set.has(x.p.id)).length);
+    h+=`<tr class="sum">${cols.map((c,i)=>`<td>출석인원</td><td>${o.marks?cc[i]:''}</td>`).join('')}</tr>`;
+  }else{
+    h+=`<tr class="gsum"><td colspan="${n*2}">${main.map(g=>`${esc(g.name)} ${o.marks?g.members.filter(p=>set.has(p.id)).length:'&emsp;&ensp;'}명`).join('&emsp;·&emsp;')}</td></tr>`;
+  }
+  h+=`<tr class="tot"><td colspan="${n*2}">총 출석인원&ensp;${o.marks?tot:'______________'}&ensp;명</td></tr></table></div>`;
+  // 별도 쪽 (장기결석자 등): 5칸에 이어서
   if(o.sep){
-    for(const g of L.sep){
-      if(!g.members.length)continue;
-      const per=46, pageCols=5, perPage=per*pageCols;
+    for(const g of groups.filter(g=>g.sep&&g.members.length)){
+      const pc=5, perPage=MAXR*pc;
       for(let s=0;s<g.members.length;s+=perPage){
-        const chunk=g.members.slice(s,s+perPage), nc=Math.min(pageCols,Math.ceil(chunk.length/per)), rows=Math.ceil(chunk.length/nc);
-        const rh2=Math.min(7,(279-11-7-4)/(rows+1)), fs2=Math.min(10.5,rh2*2.835*.62);
-        h+=`<div class="page"><table class="pt" style="--rh:${rh2}mm;--fs:${fs2}pt">
-          <colgroup>${'<col style="width:12%"><col style="width:8%">'.repeat(pageCols)}</colgroup>
-          <tr><td class="ttl" colspan="${pageCols*2}">&lt;청년부예배 ${esc(g.name)}자&gt;</td></tr>
-          <tr>${'<th>이름</th><th>비고</th>'.repeat(pageCols)}</tr>`;
+        const chunk=g.members.slice(s,s+perPage), rows=Math.max(20,Math.ceil(chunk.length/pc));
+        const z=sizes(10+6+2,rows,pc);
+        h+=`<div class="page"><table class="pt" style="--rh:${z.rh.toFixed(2)}mm;--fs:${z.fs.toFixed(2)}pt">
+          <colgroup>${`<col style="width:${(200/3/pc).toFixed(3)}%"><col style="width:${(100/3/pc).toFixed(3)}%">`.repeat(pc)}</colgroup>
+          <tr><td class="ttl" colspan="${pc*2}">&lt;청년부예배 ${esc(g.name)}자&gt;</td></tr>
+          <tr>${'<th>이름</th><th>비고</th>'.repeat(pc)}</tr>`;
         for(let r=0;r<rows;r++){
           h+='<tr>';
-          for(let c=0;c<pageCols;c++){const p=c<nc?chunk[c*rows+r]:null;
+          for(let c=0;c<pc;c++){const p=chunk[c*rows+r];
             h+=p?`<td>${esc(personLabel(p))}</td><td class="memo">${o.marks&&set.has(p.id)?'O ':''}${esc(p.memo)}</td>`:'<td></td><td></td>';}
           h+='</tr>';
         }
@@ -579,116 +748,311 @@ function buildPrint(o){
   }
   $('#print').innerHTML=h;
 }
+window.addEventListener('beforeprint',()=>{if(!$('#print').innerHTML)buildPrint(S.print)});
+window.addEventListener('afterprint',()=>{$('#print').innerHTML=''});
 
-/* ---------- 엑셀 ---------- */
+/* ---------- 엑셀: 내보내기 (통계) ---------- */
+const XA=(r,c)=>XLSX.utils.encode_cell({r,c});
+function sundaysOf(y,m){const out=[],d=new Date(y,m-1,1);while(d.getMonth()===m-1){if(d.getDay()===0)out.push(ymd(d));d.setDate(d.getDate()+1)}return out}
+// 구글 시트와 같은 모양의 월별 시트: 구분마다 [이름 | 1주 2주 … | 출석률] 묶음을 옆으로
+function monthSheet(y,m,groups){
+  const mm=`${y}-${pad(m)}-`;
+  const dates=[...new Set([...sundaysOf(y,m),...Object.keys(S.att).filter(k=>k.startsWith(mm))])].sort();
+  const held=dates.filter(d=>(S.att[d]||[]).length), sets=dates.map(d=>new Set(S.att[d]||[]));
+  const ws={},merges=[];let c0=0,maxR=0;
+  const put=(r,c,v,z)=>{if(v==null||v==='')return;ws[XA(r,c)]=typeof v==='number'?{t:'n',v,...(z?{z}:{})}:{t:'s',v:String(v)};maxR=Math.max(maxR,r)};
+  for(const g of groups){
+    if(g.sep&&!g.members.some(p=>sets.some(s=>s.has(p.id))))continue;
+    const w=dates.length+2;
+    put(0,c0,g.name);merges.push({s:{r:0,c:c0},e:{r:0,c:c0+w-1}});
+    put(1,c0,'주 차');dates.forEach((d,i)=>put(1,c0+1+i,`${i+1}주`));
+    put(2,c0,'이 름');dates.forEach((d,i)=>put(2,c0+1+i,+d.slice(8)));put(2,c0+w-1,'출석률');
+    g.members.forEach((p,k)=>{
+      const r=3+k;put(r,c0,personLabel(p));
+      let n=0;sets.forEach((s,i)=>{if(s.has(p.id)){put(r,c0+1+i,'○');n++}});
+      put(r,c0+w-1,held.length?n/held.length:0,'0%');
+    });
+    const r=3+g.members.length;put(r,c0,'합계');
+    sets.forEach((s,i)=>put(r,c0+1+i,g.members.filter(p=>s.has(p.id)).length));
+    c0+=w+1;
+  }
+  ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(maxR,3),c:Math.max(c0-1,1)}});
+  ws['!merges']=merges;
+  return ws;
+}
 function exportXlsx(){
-  if(typeof XLSX==='undefined'){toast('엑셀 기능을 불러오지 못했어요 (인터넷 연결 확인)');return}
-  const groups=buildGroups(), wb=XLSX.utils.book_new();
-  // 1) 명단
-  const roster=[['ID','이름','출생연도',`나이(${S.year})`,'년차','구분','특별구분','출생연도추정','메모']];
-  groups.forEach(g=>g.members.forEach(p=>roster.push([p.id,p.name,p.by,ageOf(p),yrOf(p),g.name,specialOf(p)?specialOf(p).name:'',p.approx?'O':'',p.memo||''])));
-  const ws1=XLSX.utils.aoa_to_sheet(roster);
-  ws1['!cols']=[{wch:9},{wch:10},{wch:9},{wch:9},{wch:6},{wch:14},{wch:10},{wch:11},{wch:20}];
-  XLSX.utils.book_append_sheet(wb,ws1,'명단');
-  // 2) 연도 출석기록
-  const dates=Object.keys(S.att).filter(d=>d.startsWith(S.year+'-')).sort();
-  if(!dates.includes(S.date)&&S.date.startsWith(S.year+'-')){dates.push(S.date);dates.sort()}
-  const sets=dates.map(d=>new Set(S.att[d]||[]));
-  const rec=[['ID','이름','나이','구분',...dates,'출석횟수']];
+  if(typeof XLSX==='undefined'){toast('엑셀 기능을 불러오지 못했어요');return}
+  const groups=buildGroups(), wb=XLSX.utils.book_new(), Y=S.year;
+  const dates=Object.keys(S.att).filter(d=>d.startsWith(Y+'-')&&S.att[d].length).sort();
+  const sets=dates.map(d=>new Set(S.att[d]));
+  const pct={z:'0%'};
+  // 1) 통계: 날짜별 인원 + 월별 평균
+  const gs=groups.filter(g=>g.members.length);
+  const st=[[`${Y}년 날짜별 출석 인원`],['날짜','총 출석',...gs.map(g=>g.name)]];
+  dates.forEach((d,i)=>st.push([d,S.people.filter(p=>sets[i].has(p.id)).length,...gs.map(g=>g.members.filter(p=>sets[i].has(p.id)).length)]));
+  if(dates.length)st.push(['평균',...[null,...gs].map((g,j)=>{const v=st.slice(2).reduce((a,r)=>a+r[1+j],0)/dates.length;return Math.round(v*10)/10})]);
+  st.push([],[`${Y}년 월별 평균 출석`],['월','예배 수','평균 출석',...gs.map(g=>g.name)]);
+  for(let m=1;m<=12;m++){
+    const idx=dates.map((d,i)=>[d,i]).filter(([d])=>+d.slice(5,7)===m).map(x=>x[1]);
+    if(!idx.length)continue;
+    const avg=f=>Math.round(idx.reduce((a,i)=>a+f(sets[i]),0)/idx.length*10)/10;
+    st.push([`${m}월`,idx.length,avg(s=>S.people.filter(p=>s.has(p.id)).length),...gs.map(g=>avg(s=>g.members.filter(p=>s.has(p.id)).length))]);
+  }
+  const ws1=XLSX.utils.aoa_to_sheet(st);ws1['!cols']=[{wch:12},{wch:9},...gs.map(()=>({wch:12}))];
+  XLSX.utils.book_append_sheet(wb,ws1,'통계');
+  // 2) 개인별
+  const per=[['이름','나이','구분','출석','예배 수','출석률','최근 출석일','연속 결석(주)',...Array.from({length:12},(_,i)=>`${i+1}월`)]];
   groups.forEach(g=>g.members.forEach(p=>{
-    const marks=sets.map(s=>s.has(p.id)?'O':'');
-    rec.push([p.id,p.name,ageText(p),g.name,...marks,marks.filter(Boolean).length]);
+    let n=0,last='',streak=0;sets.forEach((s,i)=>{if(s.has(p.id)){n++;last=dates[i]}});
+    for(let i=sets.length-1;i>=0&&!sets[i].has(p.id);i--)streak++;
+    const months=Array.from({length:12},(_,m)=>dates.reduce((a,d,i)=>a+(+d.slice(5,7)===m+1&&sets[i].has(p.id)?1:0),0));
+    per.push([p.name,ageText(p),g.name,n,dates.length,dates.length?n/dates.length:0,last,streak,...months]);
   }));
-  rec.push(['','합계','','',...sets.map(s=>S.people.filter(p=>s.has(p.id)).length),'']);
-  const ws2=XLSX.utils.aoa_to_sheet(rec);
-  ws2['!cols']=[{wch:9},{wch:10},{wch:5},{wch:14},...dates.map(()=>({wch:11})),{wch:8}];
-  XLSX.utils.book_append_sheet(wb,ws2,S.year+' 출석기록');
-  // 3) 출석부 (인쇄 모양, 선택한 날짜의 출석 표시)
-  const L=sheetLayout(), set=new Set(S.att[S.date]||[]), n=L.cols.length, aoa=[], merges=[];
-  aoa.push([`${S.year} 청년부 주일예배 출석부`]);merges.push({s:{r:0,c:0},e:{r:0,c:n*2-1}});
-  aoa.push([mdLabel(S.date)]);merges.push({s:{r:1,c:0},e:{r:1,c:n*2-1}});
-  aoa.push(L.cols.flatMap(c=>[c[0].name,'']));L.cols.forEach((c,i)=>merges.push({s:{r:2,c:i*2},e:{r:2,c:i*2+1}}));
-  aoa.push(L.cols.flatMap(()=>['이름','출석']));
-  for(let r=0;r<L.rows;r++){
-    const row=[];L.lines.forEach((l,i)=>{const x=l[r];
-      if(!x)row.push('','');
-      else if(x.sub){row.push(x.sub,'');merges.push({s:{r:aoa.length,c:i*2},e:{r:aoa.length,c:i*2+1}})}
-      else row.push(personLabel(x.p),set.has(x.p.id)?'O':'');});
-    aoa.push(row);
-  }
-  const colCnt=L.cols.map(c=>c.flatMap(g=>g.members).filter(p=>set.has(p.id)).length);
-  aoa.push(L.cols.flatMap((c,i)=>['출석인원',colCnt[i]]));
-  aoa.push([`총 출석인원 ${colCnt.reduce((a,b)=>a+b,0)}명`]);merges.push({s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:n*2-1}});
-  const ws3=XLSX.utils.aoa_to_sheet(aoa);ws3['!merges']=merges;ws3['!cols']=L.cols.flatMap(()=>[{wch:12},{wch:5}]);
-  XLSX.utils.book_append_sheet(wb,ws3,'출석부 '+S.date.slice(5));
-  // 4) 별도 쪽 구분
-  for(const g of L.sep){
-    const a=[['이름','나이','메모']];g.members.forEach(p=>a.push([p.name,ageText(p),p.memo||'']));
-    const ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=[{wch:10},{wch:6},{wch:20}];
-    XLSX.utils.book_append_sheet(wb,ws,g.name.slice(0,28));
-  }
-  XLSX.writeFile(wb,`${S.year} 청년부 출석부 (${S.date.slice(5).replace('-','')}).xlsx`);
+  const ws2=XLSX.utils.aoa_to_sheet(per);
+  for(let r=1;r<per.length;r++){const a=XA(r,5);if(ws2[a])ws2[a].z='0%'}
+  ws2['!cols']=[{wch:10},{wch:5},{wch:13},{wch:6},{wch:7},{wch:7},{wch:12},{wch:12},...Array(12).fill({wch:5})];
+  XLSX.utils.book_append_sheet(wb,ws2,'개인별');
+  // 3) 월별 시트 (최근 달 먼저, 구글 시트와 같은 모양)
+  const months=[...new Set(Object.keys(S.att).filter(d=>d.startsWith(Y+'-')).map(d=>+d.slice(5,7)))];
+  if(S.date.startsWith(Y+'-'))months.push(+S.date.slice(5,7));
+  [...new Set(months)].sort((a,b)=>b-a).forEach(m=>XLSX.utils.book_append_sheet(wb,monthSheet(Y,m,groups),`${String(Y).slice(2)}.${pad(m)}`));
+  // 4) 명단 (다시 가져오기용)
+  const roster=[['ID','이름','출생연도',`나이(${Y})`,'년차','구분','특별구분','출생연도추정','메모']];
+  groups.forEach(g=>g.members.forEach(p=>roster.push([p.id,p.name,p.by,ageOf(p),yrOf(p),g.name,specialOf(p)?specialOf(p).name:'',p.approx?'O':'',p.memo||''])));
+  const ws4=XLSX.utils.aoa_to_sheet(roster);
+  ws4['!cols']=[{wch:9},{wch:10},{wch:9},{wch:9},{wch:6},{wch:14},{wch:10},{wch:11},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws4,'명단');
+  XLSX.writeFile(wb,`${Y} 청년부 출석 통계 (${S.date.slice(5).replace('-','')}).xlsx`);
   toast('엑셀 파일을 저장했어요');
 }
 
+/* ---------- 엑셀: 가져오기 ---------- */
+const norm=v=>String(v??'').replace(/\s+/g,'');
+function parseNameCell(v){
+  const t=String(v??'').trim().replace(/　/g,' ');
+  const m=t.match(/^([가-힣A-Za-z][가-힣A-Za-z\s]{0,8}?)\s*(?:\(\s*(\d{1,2})\s*(대)?\s*\))?\s*$/);
+  if(!m)return null;
+  const name=m[1].replace(/\s+/g,'');
+  if(name.length<2)return null;
+  return {name,age:m[2]?+m[2]:null,approx:!!m[3]};
+}
+// 구글 드라이브 월별 시트: '이 름' 칸 오른쪽의 날짜(일) 칸들, 아래로 '이름(나이)'와 ○ 표시
+function parseMonthSheet(ws,y,m,stopWords){
+  const ref=ws['!ref'];if(!ref)return [];
+  const rg=XLSX.utils.decode_range(ref), val=(r,c)=>{const x=ws[XA(r,c)];return x?(x.w!=null?x.w:x.v):''};
+  const out=[];
+  for(let r=rg.s.r;r<=rg.e.r;r++)for(let c=rg.s.c;c<=rg.e.c;c++){
+    if(norm(val(r,c))!=='이름')continue;
+    const dcols=[];
+    for(let j=c+1;j<=rg.e.c;j++){
+      const t=norm(val(r,j)).replace(/일$/,'');
+      if(!/^\d{1,2}$/.test(t)||+t<1||+t>31)break;
+      const d=new Date(y,m-1,+t);if(d.getMonth()!==m-1)break;
+      dcols.push({c:j,date:ymd(d)});
+    }
+    if(!dcols.length)continue;
+    for(let i=r+1;i<=rg.e.r;i++){
+      const raw=val(i,c), k=norm(raw);
+      if(!k)continue;
+      if(k==='합계'||k==='주차'||k==='이름'||k.startsWith('출석'))break;
+      if(stopWords.has(k))break;
+      const nm=parseNameCell(raw);if(!nm)continue;
+      const dates=dcols.filter(dc=>{const v=norm(val(i,dc.c));return v&&!/^(0|-|x|X|×|결)$/.test(v)}).map(dc=>dc.date);
+      out.push({...nm,y,dates,allDates:dcols.map(dc=>dc.date)});
+    }
+  }
+  return out;
+}
+function matchPerson(rec,people){
+  const c=people.filter(p=>p.name===rec.name);
+  if(!c.length)return null;
+  if(c.length===1||rec.age==null)return c[0];
+  const by=rec.y-rec.age+1;
+  return c.slice().sort((a,b)=>Math.abs(a.by-by)-Math.abs(b.by-by))[0];
+}
 $('#fileIn').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';
   if(!f)return;
-  if(typeof XLSX==='undefined'){toast('엑셀 기능을 불러오지 못했어요 (인터넷 연결 확인)');return}
+  if(typeof XLSX==='undefined'){toast('엑셀 기능을 불러오지 못했어요');return}
+  let wb;
+  try{wb=XLSX.read(await f.arrayBuffer(),{type:'array'})}catch(err){toast('파일을 읽지 못했어요');return}
   try{
-    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
-    const rsName=wb.SheetNames.find(n=>n.includes('명단'))||wb.SheetNames[0];
-    const rows=XLSX.utils.sheet_to_json(wb.Sheets[rsName],{defval:''});
-    const people=[];
-    for(const r of rows){
-      const name=String(r['이름']||'').replace(/\s+/g,''), by=parseInt(r['출생연도'],10);
-      if(!name||!(by>1900))continue;
-      const spName=String(r['특별구분']||'').trim();
-      let status='';
-      if(spName){
-        let sp=S.specials.find(s=>s.name===spName);
-        if(!sp){sp={id:'s'+uid(),name:spName,sep:false};S.specials.push(sp)}
-        status=sp.id;
-      }
-      people.push({id:String(r['ID']||'').trim()||uid(),name,by,approx:/^o$/i.test(String(r['출생연도추정']).trim()),status,memo:String(r['메모']||'').trim()});
-    }
-    if(!people.length){toast('명단 시트에서 이름·출생연도를 찾지 못했어요');return}
-    // 출석기록 시트들
-    const att={};let dCnt=0;
-    for(const sn of wb.SheetNames.filter(n=>n.includes('출석기록'))){
-      const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
-      const head=aoa[0]||[], idCol=head.indexOf('ID'), nameCol=head.indexOf('이름');
-      head.forEach((hd,c)=>{
-        const d=String(hd).trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return;dCnt++;
-        const ids=[];
-        for(const row of aoa.slice(1)){
-          if(!String(row[c]).trim())continue;
-          const id=String(row[idCol]||'').trim();
-          const p=people.find(x=>x.id===id)||people.find(x=>x.name===String(row[nameCol]).replace(/\s+/g,''));
-          if(p)ids.push(p.id);
-        }
-        att[d]=ids;
-      });
-    }
-    const msg=`${people.length}명${dCnt?`, 출석 기록 ${dCnt}회`:''}을(를) 불러올까요?\n지금 명단은 파일 내용으로 바뀝니다.`+(dCnt?'':'\n(출석 기록은 그대로 둡니다)');
-    if(!confirm(msg))return;
-    const keep=new Set(people.map(p=>p.id));
-    S.people=people;
-    for(const d in S.att){S.att[d]=S.att[d].filter(i=>keep.has(i));if(!S.att[d].length)delete S.att[d]}
-    for(const d in att){if(att[d].length)S.att[d]=att[d];else delete S.att[d]}
-    save();tab='roster';render();toast(`${people.length}명을 불러왔어요`);
-  }catch(err){console.error(err);toast('파일을 읽지 못했어요')}
+    if(wb.SheetNames.includes('명단'))await importAppFile(wb);
+    else await importMonthSheets(wb);
+  }catch(err){console.error(err);toast('가져오는 중 문제가 생겼어요')}
 };
+// ① 이 앱에서 내보낸 파일: 명단을 바꾸고, 월별 시트·출석기록 시트의 출석도 반영
+async function importAppFile(wb){
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets['명단'],{defval:''});
+  const people=[], newSp=[];
+  for(const r of rows){
+    const name=norm(r['이름']), by=parseInt(r['출생연도'],10);
+    if(!name||!(by>1900))continue;
+    const spName=String(r['특별구분']||'').trim();
+    let status='';
+    if(spName){
+      let sp=S.specials.find(s=>s.name===spName)||newSp.find(s=>s.name===spName);
+      if(!sp){sp={id:'s'+uid(),name:spName,sep:false};newSp.push(sp)}
+      status=sp.id;
+    }
+    people.push({id:String(r['ID']||'').trim()||uid(),name,by,approx:/^o$/i.test(String(r['출생연도추정']).trim()),status,memo:String(r['메모']||'').trim()});
+  }
+  if(!people.length){toast('명단 시트에서 이름·출생연도를 찾지 못했어요');return}
+  const att=collectMonthAtt(wb,people).att;
+  // 예전 형식(출석기록 시트)도 읽음
+  for(const sn of wb.SheetNames.filter(n=>n.includes('출석기록'))){
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
+    const head=aoa[0]||[], idCol=head.indexOf('ID'), nameCol=head.indexOf('이름');
+    head.forEach((hd,c)=>{
+      const d=String(hd).trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return;
+      const ids=new Set(att[d]||[]);
+      for(const row of aoa.slice(1)){
+        if(!String(row[c]).trim())continue;
+        const p=people.find(x=>x.id===String(row[idCol]||'').trim())||people.find(x=>x.name===norm(row[nameCol]));
+        if(p)ids.add(p.id);
+      }
+      att[d]=[...ids];
+    });
+  }
+  const dn=Object.keys(att).filter(d=>att[d].length).length;
+  if(!await ask('엑셀 가져오기',`${people.length}명${dn?`, 출석 기록 ${dn}회`:''}을(를) 불러올까요?\n지금 명단은 파일 내용으로 바뀝니다.`,'불러오기'))return;
+  S.specials.push(...newSp);
+  const keep=new Set(people.map(p=>p.id));
+  S.people=people;
+  for(const d in S.att){S.att[d]=S.att[d].filter(i=>keep.has(i));if(!S.att[d].length)delete S.att[d]}
+  for(const d in att){if(att[d].length)S.att[d]=att[d];else delete S.att[d]}
+  save();tab='roster';render();toast(`${people.length}명을 불러왔어요`);
+}
+// 월별 시트들을 읽어 날짜별 출석 모으기
+function collectMonthAtt(wb,people){
+  const stop=new Set(['합계','군인','직업군인','유학','장기결석','예비청년',...S.ageGroups.map(g=>norm(g.name)),...S.specials.map(s=>norm(s.name))]);
+  const att={}, unmatched=new Map(), used=[], skipped=[];let marks=0;
+  for(const sn of wb.SheetNames){
+    const m=sn.trim().match(/^(\d{2}|\d{4})[.\-_/ ](\d{1,2})(?!\d)/);
+    if(!m)continue;
+    if(sn.includes('사본')){skipped.push(sn);continue}
+    const y=m[1].length===2?2000+ +m[1]:+m[1], mo=+m[2];
+    if(mo<1||mo>12)continue;
+    const recs=parseMonthSheet(wb.Sheets[sn],y,mo,stop);
+    if(!recs.length)continue;
+    used.push(sn);
+    for(const r of recs){
+      r.allDates.forEach(d=>{att[d]=att[d]||new Set()});
+      if(!r.dates.length)continue;
+      let p=matchPerson(r,people);
+      if(!p){
+        const key=r.name+'|'+(r.age==null?'':r.y-r.age+1);
+        if(!unmatched.has(key))unmatched.set(key,{name:r.name,by:r.age==null?null:r.y-r.age+1,approx:r.approx,dates:new Set(),label:r.name+(r.age!=null?`(${r.age}${r.approx?'대':''})`:'')});
+        r.dates.forEach(d=>unmatched.get(key).dates.add(d));continue;
+      }
+      r.dates.forEach(d=>{att[d].add(p.id);marks++});
+    }
+  }
+  const out={};for(const d in att)out[d]=[...att[d]];
+  return {att:out,unmatched:[...unmatched.values()],used,skipped,marks};
+}
+// ② 구글 드라이브 월별 시트: 명단은 그대로, 출석 기록만 더함
+async function importMonthSheets(wb){
+  const r=collectMonthAtt(wb,S.people);
+  if(!r.used.length){
+    await modal(`<h3>가져올 시트가 없어요</h3><p class="msg">시트 이름이 '26.10'처럼 연도.월 모양이고, 안에 '이 름' 칸과 날짜(일) 칸이 있는 월별 출석 시트를 찾지 못했어요.${r.skipped.length?`\n(사본 시트 ${r.skipped.length}개는 건너뜀)`:''}</p>`,[{label:'확인',val:true,cls:'pri'}]);
+    return;
+  }
+  const dates=Object.keys(r.att).sort();
+  const um=r.unmatched;
+  const html=`<h3>월별 출석 시트 가져오기</h3>
+    <p class="msg">시트 ${r.used.length}개 (${esc(r.used.join(', '))})
+${dates.length}주 (${dates[0]} ~ ${dates[dates.length-1]}), 출석 표시 ${r.marks}개를 찾았어요.
+시트에 표시가 있는 날짜는 앱 기록이 시트 내용으로 바뀌고, 표시가 없는 날짜는 그대로 둡니다.${r.skipped.length?`\n사본 시트 ${r.skipped.length}개는 건너뜁니다.`:''}</p>
+    ${um.length?`<p class="msg" style="margin-top:8px">명단에 없는 이름 ${um.length}명:</p><div class="names">${um.map(u=>esc(u.label)).join(', ')}</div>
+    <label class="chk"><input type="checkbox" id="impAdd"> 이 사람들도 명단에 추가하기 (나이를 모르면 나중에 고쳐 주세요)</label>`:''}`;
+  if(!await modal(html,[{label:'취소',val:false},{label:'불러오기',val:true,cls:'pri'}]))return;
+  if(um.length&&$('#impAdd')&&$('#impAdd').checked){
+    for(const u of um){
+      const p={id:uid(),name:u.name,by:u.by||S.year-20+1,approx:u.approx||!u.by,status:'',memo:u.by?'':'출생연도 확인 필요'};
+      S.people.push(p);u.dates.forEach(d=>{(r.att[d]=r.att[d]||[]).push(p.id)});
+    }
+  }
+  // 시트에 표시가 하나도 없는 날짜(아직 안 적은 주)는 앱 기록을 그대로 둠
+  const filled=Object.keys(r.att).filter(d=>r.att[d].length);
+  filled.forEach(d=>S.att[d]=r.att[d]);
+  save();render();toast(`출석 기록 ${filled.length}주를 가져왔어요`);
+}
+
+/* ---------- 홈 화면 설치 · 전체화면 ---------- */
+// 크롬은 브라우저 전체화면(Fullscreen API)도 display-mode: fullscreen 으로 알려 주므로, 처음 열렸을 때 값으로 판단
+const BOOT_STANDALONE=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: minimal-ui)').matches||navigator.standalone===true;
+function isStandalone(){
+  if(navigator.standalone===true||matchMedia('(display-mode: standalone)').matches)return true;
+  if(document.fullscreenElement||document.webkitFullscreenElement)return BOOT_STANDALONE;
+  return BOOT_STANDALONE||matchMedia('(display-mode: fullscreen)').matches;
+}
+let inFrame=false;try{inFrame=window.self!==window.top}catch(e){inFrame=true}
+const SVG=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+const ICON={fsOn:SVG('M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'),fsOff:SVG('M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5'),inst:SVG('M12 4v11M7 10l5 5 5-5M5 20h14')};
+const FS={
+  userExit:false,
+  supported:()=>{const d=document.documentElement;return !!(d.requestFullscreen||d.webkitRequestFullscreen)&&!isStandalone()&&!inFrame},
+  on:()=>!!(document.fullscreenElement||document.webkitFullscreenElement),
+  enter(){const d=document.documentElement;try{const r=d.requestFullscreen?d.requestFullscreen({navigationUI:'hide'}):(d.webkitRequestFullscreen&&d.webkitRequestFullscreen());if(r&&r.catch)r.catch(()=>{})}catch(e){}},
+  exit(){try{const r=document.exitFullscreen?document.exitFullscreen():(document.webkitExitFullscreen&&document.webkitExitFullscreen());if(r&&r.catch)r.catch(()=>{})}catch(e){}},
+  toggle(){
+    if(!FS.supported()){installSheet();return}   // 아이폰처럼 전체화면이 막힌 곳은 설치 방법 안내
+    if(FS.on()){FS.userExit=true;FS.exit()}else{FS.userExit=false;FS.enter()}
+  }
+};
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;paintInstall()});
+window.addEventListener('appinstalled',()=>{installEvt=null;S.ui.installDismissed=true;save();paintInstall();toast('홈 화면에 설치했어요')});
+function paintInstall(){
+  const sa=isStandalone();
+  $('#banner').classList.toggle('hidden',sa||inFrame||S.ui.installDismissed);
+  $('#bFs').classList.toggle('hidden',!FS.supported());
+  $('#hInst').classList.toggle('hidden',sa);$('#hInst').innerHTML=ICON.inst;
+  const h=$('#hFS');h.classList.toggle('hidden',sa);h.innerHTML=FS.on()?ICON.fsOff:ICON.fsOn;
+  h.setAttribute('aria-label',FS.on()?'전체화면 끝내기':'전체화면');h.title=h.getAttribute('aria-label');
+  if($('#sFS')){$('#sFS').textContent=FS.on()?'전체화면 끝내기':'전체화면 켜기';$('#sFS').classList.toggle('hidden',!FS.supported());
+    $('#rowAutoFS').classList.toggle('hidden',!FS.supported());$('#sInst').classList.toggle('hidden',sa)}
+}
+function installSheet(){
+  if(isStandalone()){toast('이미 홈 화면 앱으로 실행 중이에요');return}
+  if(installEvt){   // 바로 설치 창 띄우기
+    const ev=installEvt;installEvt=null;
+    try{ev.prompt();ev.userChoice.then(r=>{if(r&&r.outcome==='accepted'){S.ui.installDismissed=true;save()}paintInstall()}).catch(()=>{})}catch(e){}
+    return;
+  }
+  const ua=navigator.userAgent, ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const samsung=/SamsungBrowser/i.test(ua), inapp=/KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(ua), mobile=/Android|Mobi/i.test(ua)||ios;
+  const kbd=t=>`<span class="kbd">${t}</span>`;
+  let how;
+  if(location.protocol==='file:')how='<p class="msg">지금은 파일로 열려 있어서 설치할 수 없어요. 아래 주소로 열어 주세요.\n<b>immanueladmin1985-dev.github.io/my-apps/attendance/</b></p>';
+  else if(inapp)how=`<ol><li>${kbd('⋮')} 메뉴를 누르세요</li><li><b>다른 브라우저로 열기</b>(크롬·사파리)를 누르세요</li><li>열린 화면에서 다시 <b>설치하기</b>를 누르세요</li></ol>`;
+  else if(ios)how=`<ol><li>사파리의 ${kbd('공유 ⬆')} 단추를 누르세요</li><li>메뉴를 올려 <b>홈 화면에 추가</b>를 누르세요</li><li>오른쪽 위 <b>추가</b>를 누르세요</li></ol>`;
+  else if(samsung)how=`<ol><li>아래 ${kbd('≡')} 메뉴를 누르세요</li><li><b>현재 페이지 추가</b> → <b>홈 화면</b>을 누르세요</li></ol>`;
+  else if(mobile)how=`<ol><li>오른쪽 위 ${kbd('⋮')} 메뉴를 누르세요</li><li><b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 누르세요</li><li>뜨는 창에서 <b>설치</b>를 누르세요</li></ol>`;
+  else how=`<ol><li>크롬·엣지 주소창 오른쪽의 ${kbd('설치 ⊕')} 아이콘을 누르세요</li><li>없으면 ${kbd('⋮')} 메뉴 → <b>앱 설치</b>(또는 <b>앱</b> → <b>이 사이트를 앱으로 설치</b>)를 누르세요</li></ol>`;
+  modal(`<h3>홈 화면에 설치하기</h3><p class="msg">설치하면 아이콘으로 바로 열리고, 주소창 없이 화면을 넓게 쓸 수 있어요. 인터넷이 안 되는 곳에서도 열려요.</p>${how}`,[{label:'알겠어요',val:true,cls:'pri'}]);
+}
+$('#hFS').onclick=FS.toggle;$('#hInst').onclick=installSheet;
+$('#bInst').onclick=installSheet;$('#bFs').onclick=FS.toggle;
+$('#bLater').onclick=()=>{S.ui.installDismissed=true;save();paintInstall();setTimeout(fillBoard,50);toast('위쪽 ⬇ 단추나 설정에서 언제든 설치할 수 있어요')};
+// 자동 전체화면: 화면을 처음 누를 때 (버튼으로 직접 끈 뒤에는 다시 켜지 않음)
+document.addEventListener('click',e=>{
+  if(!S.ui.autoFS||FS.userExit||FS.on()||!FS.supported())return;
+  if(e.target.closest&&e.target.closest('#hFS,#hInst,#banner,dialog,#sFS,#sAutoFS'))return;
+  FS.enter();
+},true);
+const onFs=()=>{paintInstall();setTimeout(fillBoard,100)};
+document.addEventListener('fullscreenchange',onFs);document.addEventListener('webkitfullscreenchange',onFs);
+if('serviceWorker' in navigator&&location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 
 /* ---------- 기타 ---------- */
 let tt;
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400)}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();if($("#cols"))$("#cols").scrollLeft=0});
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();if($('#cols'))$('#cols').scrollLeft=0});
 const shiftYear=d=>{S.year+=d;S.date=defaultDate(S.year);save();render();toast(`${S.year}년 기준으로 나이·구분을 다시 계산했어요`)};
 $('#yPrev').onclick=()=>shiftYear(-1);$('#yNext').onclick=()=>shiftYear(1);
-window.addEventListener('afterprint',()=>{$('#print').innerHTML=''});
-// Ctrl+P 로 바로 인쇄해도 출석부가 나오도록
-window.addEventListener('beforeprint',()=>{if(!$('#print').innerHTML)buildPrint({date:false,marks:false,sep:true})});
+paintInstall();
 render();
 </script>
 </body>
