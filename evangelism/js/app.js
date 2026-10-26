@@ -163,7 +163,7 @@
         const old = C.pass; C.pass = pass;
         err.textContent = '확인 중…';
         try { await S.call('hello', {}, 20000); }
-        catch (x) { C.pass = old; err.textContent = x.code === 'pass' ? '교회 암호가 맞지 않아요.' : '인터넷 연결을 확인해 주세요.'; return; }
+        catch (x) { C.pass = old; err.textContent = x.code === 'pass' ? '교회 암호가 맞지 않아요.' : x.message + ' 관리자에게 알려 주세요.'; return; }
         S.state.error = '';
       }
       C.name = name; S.saveCfg();
@@ -649,7 +649,7 @@
     $('#sFS').onclick = () => { FS.toggle(); };
     $('#sAuto').onchange = e => { C.autoFS = e.target.checked; S.saveCfg(); };
     $('#sInst').onclick = installSheet;
-    const sy = $('#sSync'); if (sy) sy.onclick = async () => { await S.sync(); render(); toast(S.state.error ? '연결하지 못했어요' : '최신 기록으로 맞췄어요'); };
+    const sy = $('#sSync'); if (sy) sy.onclick = async () => { await S.sync(); render(); toast(S.state.error ? '연결하지 못했어요: ' + S.state.error : '최신 기록으로 맞췄어요'); };
     $('#sXls').onclick = () => exportAll();
     $('#sLog').onclick = () => go({ name: 'log' });
     const sa = $('#sAdmin');
@@ -659,21 +659,26 @@
       if (!ok) return;
       const p = $('#adP').value.trim(), old = C.admin; C.admin = p;
       try { const j = await S.call('hello', {}, 20000); if (!j.admin) throw new Error('admin'); S.saveCfg(); adminOpen = true; render(); }
-      catch (e) { C.admin = old; toast(e.message === 'admin' ? '관리자 암호가 맞지 않아요' : '연결하지 못했어요'); }
+      catch (e) { C.admin = old; if (e.message === 'admin') toast('관리자 암호가 맞지 않아요'); else connectHelp(e.code, C.server); }
     };
     if (!adminOpen) return;
     $('#aSave').onclick = async () => {
-      const srv = $('#aSrv').value.trim(), pass = $('#aPass').value.trim(), adm = $('#aAdm').value.trim();
-      if (srv && !/^https:\/\/script\.google(usercontent)?\.com\//.test(srv)) { toast('주소는 https://script.google.com/… 로 시작해야 해요'); return; }
+      const pass = $('#aPass').value.trim(), adm = $('#aAdm').value.trim();
+      const n = normServer($('#aSrv').value);
+      if (n.err) { connectHelp(n.err, n.url); return; }
+      const srv = n.url;
+      if (srv) $('#aSrv').value = srv;
+      if (srv && !pass) { toast('교회 암호도 넣어 주세요 (구글 시트 ‘설정’ 탭 B2 칸)'); return; }
       const old = { server: C.server, pass: C.pass, admin: C.admin };
       Object.assign(C, { server: srv, pass, admin: adm });
       if (!srv) { S.saveCfg(); render(); return; }
+      toast('연결하는 중…');
       try {
-        const j = await S.call('hello', {}, 20000);
+        const j = await S.call('hello', {}, 25000);
         S.saveCfg(); S.state.error = '';
         toast(j.admin ? '연결했어요 (관리자 확인됨)' : '연결했어요 (관리자 암호는 맞지 않아요)');
         await S.sync(); render();
-      } catch (e) { Object.assign(C, old); toast(e.code === 'pass' ? '교회 암호가 맞지 않아요' : '연결하지 못했어요. 주소를 확인해 주세요'); }
+      } catch (e) { Object.assign(C, old); connectHelp(e.code, srv); }
     };
     $('#aHow').onclick = howToConnect;
     const off = $('#aOff'); if (off) off.onclick = async () => {
@@ -697,6 +702,36 @@
     try { navigator.clipboard.writeText(t).then(done, () => fallback()); } catch (e) { fallback(); }
     function fallback() { const i = $('#aJoin'); if (i) { i.select(); try { document.execCommand('copy'); done(); } catch (e) { toast('길게 눌러 복사해 주세요'); } } }
   }
+  // 붙여 넣은 주소 정리: 앞뒤 공백, 배포 ID만 넣은 경우, /dev·편집 화면 주소 등
+  function normServer(raw) {
+    let s = String(raw || '').trim().replace(/\s+/g, '').replace(/[?#].*$/, '');
+    if (!s) return { url: '' };
+    if (/^AKfy[\w-]{20,}$/.test(s)) s = 'https://script.google.com/macros/s/' + s + '/exec';
+    if (/^script\.google\.com/.test(s)) s = 'https://' + s;
+    if (/\/home\/projects\/|\/d\/[\w-]+\/edit/.test(s)) return { err: 'editurl', url: s };
+    if (/docs\.google\.com\/spreadsheets/.test(s)) return { err: 'sheeturl', url: s };
+    if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(s)) return { err: 'badurl', url: s };
+    if (/\/dev$/.test(s)) return { err: 'devurl', url: s };
+    if (/\/macros\/(a\/[^/]+\/)?s\/[\w-]+$/.test(s)) s += '/exec';
+    return { url: s };
+  }
+  function connectHelp(code, url) {
+    const T = {
+      editurl: ['편집 화면 주소예요', '붙여 넣은 주소는 Apps Script <b>편집 화면</b> 주소예요.\n<b>배포 → 배포 관리</b>에서 ‘웹 앱’ 아래의 <b>URL</b>(…/exec 로 끝남)을 복사해 주세요.'],
+      sheeturl: ['구글 시트 주소예요', '붙여 넣은 주소는 <b>구글 시트</b> 주소예요.\n시트의 <b>확장 프로그램 → Apps Script → 배포 → 배포 관리</b>에서 ‘웹 앱’ <b>URL</b>(…/exec 로 끝남)을 복사해 주세요.'],
+      badurl: ['주소가 달라요', '주소는 <b>https://script.google.com/macros/s/…/exec</b> 모양이어야 해요.'],
+      devurl: ['테스트용 주소예요', '…/dev 로 끝나는 주소는 만든 사람만 쓸 수 있어요.\n<b>배포 → 새 배포 → 웹 앱</b>으로 배포해서 나온 <b>…/exec</b> 주소를 넣어 주세요.'],
+      pass: ['교회 암호가 달라요', '구글 시트의 <b>설정</b> 탭 <b>B2 칸</b>에 적은 암호와 똑같이 넣어 주세요.\n암호가 0으로 시작하면 시트가 0을 지웠을 수 있어요. 그럴 땐 0으로 시작하지 않는 암호로 바꿔 주세요.'],
+      setup: ['setup 을 실행하지 않았어요', 'Apps Script 위쪽 함수 목록에서 <b>setup</b> 을 고르고 <b>▶ 실행</b>을 누른 뒤 권한을 허용해 주세요.\n그다음 <b>배포 → 배포 관리 → ✏️ → 버전: 새 버전 → 배포</b>를 해 주세요.'],
+      notjson: ['구글이 로그인 화면을 보냈어요', '웹 앱 배포 설정이 맞지 않아요. <b>배포 → 배포 관리 → ✏️(수정)</b>에서\n• 다음 사용자 인증 정보로 실행: <b>나</b>\n• 액세스 권한이 있는 사용자: <b>모든 사용자</b> (‘Google 계정이 있는 모든 사용자’가 아님)\n로 바꾸고 <b>버전: 새 버전 → 배포</b>를 눌러 주세요.'],
+      net: ['구글 시트 주소에 닿지 못했어요', '대부분 아래 둘 중 하나예요.\n① 배포 설정: <b>배포 → 배포 관리 → ✏️</b>에서 실행: <b>나</b>, 액세스: <b>모든 사용자</b> → <b>버전: 새 버전 → 배포</b>\n② 주소가 틀림: ‘웹 앱’ <b>URL</b>(…/exec)을 다시 복사\n\n아래 <b>주소 열어 보기</b>를 눌러 새 창에 “전도현황 서버가 작동 중입니다”가 나오면 주소와 배포는 맞는 거예요. 구글 로그인 화면이나 “찾을 수 없음”이 나오면 ①·②를 확인해 주세요.'],
+      offline: ['인터넷이 끊겼어요', '인터넷 연결을 확인한 뒤 다시 눌러 주세요.']
+    };
+    const t = T[code] || ['연결하지 못했어요', '알 수 없는 문제예요: ' + esc(code || '') + '\n주소와 배포 설정을 확인해 주세요.'];
+    modal(`<h3>${t[0]}</h3><p class="msg">${t[1]}</p>${url ? `<p class="small muted" style="word-break:break-all">${esc(url)}</p>` : ''}`,
+      [...(url && /^https:\/\/script\.google/.test(url) ? [{ label: '주소 열어 보기', val: 'open' }] : []), { label: '알겠어요', val: true, cls: 'pri' }])
+      .then(v => { if (v === 'open') window.open(url, '_blank', 'noopener'); });
+  }
   function howToConnect() {
     modal(`<h3>구글 시트 연결 방법</h3>
       <ol class="steps">
@@ -705,8 +740,8 @@
         <li>원래 있던 글을 모두 지우고, 아래 <b>서버 코드 복사</b>로 복사한 코드를 붙여 넣은 뒤 💾 저장합니다.</li>
         <li>위쪽 함수 목록에서 <code>setup</code> 을 고르고 <b>▶ 실행</b> → 권한 검토 → 계정 선택 → <b>고급 → 이동 → 허용</b>.</li>
         <li>시트로 돌아가 <b>설정</b> 탭의 B2(교회 암호)·B3(관리자 암호)를 원하는 값으로 바꿉니다.</li>
-        <li>Apps Script에서 <b>배포 → 새 배포 → 유형: 웹 앱</b>, 실행: <b>나</b>, 액세스: <b>모든 사용자</b> → 배포.</li>
-        <li>나온 <b>웹 앱 주소</b>(…/exec)를 복사해 이 화면의 ‘구글 시트 연결 주소’에 넣고, 두 암호를 넣어 <b>연결 저장·확인</b>.</li>
+        <li>Apps Script에서 <b>배포 → 새 배포 → 유형(⚙): 웹 앱</b>, 다음 사용자 인증 정보로 실행: <b>나</b>, 액세스 권한이 있는 사용자: <b>모든 사용자</b>(‘Google 계정이 있는 모든 사용자’ 아님) → 배포. 코드를 고친 뒤에는 <b>배포 관리 → ✏️ → 버전: 새 버전</b>으로 다시 배포해야 바뀌어요.</li>
+        <li>나온 <b>웹 앱 URL</b>(…/exec 로 끝남. 브라우저로 열면 “전도현황 서버가 작동 중입니다”가 나와야 해요)을 복사해 이 화면의 ‘구글 시트 연결 주소’에 넣고, 두 암호를 넣어 <b>연결 저장·확인</b>.</li>
         <li><b>원래 엑셀 불러오기</b>로 1단지·2단지 최신 파일을 넣고, <b>초대 링크</b>를 집사님·권사님께 보내면 끝!</li>
       </ol>`, [{ label: '서버 코드 복사', val: 'copy' }, { label: '닫기', val: true, cls: 'pri' }]).then(async v => {
       if (v !== 'copy') return;

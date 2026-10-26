@@ -16,9 +16,27 @@ var TABLES = {
 };
 var LOG_SHEET = '변경기록';
 
+// 시트에서 연 Apps Script 면 그 시트를, 따로 만든 프로젝트면 setup 때 새로 만든 시트를 씀
+function book() {
+  var ss = null;
+  try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch (e) {}
+  if (ss) return ss;
+  var id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  throw new Error('setup');
+}
+
 function setup() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var has = null;
+  try { has = SpreadsheetApp.getActiveSpreadsheet(); } catch (e) {}
+  if (!has && !PropertiesService.getScriptProperties().getProperty('SHEET_ID')) {
+    var made = SpreadsheetApp.create('전도현황');
+    PropertiesService.getScriptProperties().setProperty('SHEET_ID', made.getId());
+    Logger.log('새 구글 시트를 만들었어요: ' + made.getUrl());
+  }
+  var ss = book();
   var st = ss.getSheetByName('설정') || ss.insertSheet('설정', 0);
+  st.getRange('B2:B3').setNumberFormat('@');   // "0410" 같은 암호의 앞자리 0이 사라지지 않게
   if (!st.getRange('A1').getValue()) {
     st.getRange('A1:B4').setValues([
       ['전도현황 앱 설정', ''],
@@ -34,7 +52,7 @@ function setup() {
 }
 
 function sheetOf(t) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), d = TABLES[t];
+  var ss = book(), d = TABLES[t];
   var sh = ss.getSheetByName(d.sheet);
   if (!sh) {
     sh = ss.insertSheet(d.sheet);
@@ -46,9 +64,18 @@ function sheetOf(t) {
 }
 
 function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function setting(row) { return String(SpreadsheetApp.getActiveSpreadsheet().getSheetByName('설정').getRange(row, 2).getValue()).trim(); }
+function setting(row) {
+  var st = book().getSheetByName('설정');
+  if (!st) throw new Error('setup');
+  return String(st.getRange(row, 2).getDisplayValue()).trim();
+}
 
-function doGet(e) { return handle(e.parameter || {}); }
+// 주소를 브라우저에서 그냥 열면 서버가 작동하는지 보여 줌
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  if (!p.action) return json({ ok: true, app: '전도현황', msg: '전도현황 서버가 작동 중입니다. 이 주소를 앱의 구글 시트 연결 주소에 넣으세요.' });
+  return handle(p);
+}
 function doPost(e) {
   var p = {};
   try { p = JSON.parse(e.postData.contents); } catch (err) { return json({ ok: false, error: '잘못된 요청' }); }
@@ -120,7 +147,7 @@ function push(records, name) {
       if (appends.length) sh.getRange(sh.getLastRow() + 1, 1, appends.length, w).setNumberFormat('@').setValues(appends);
     });
     if (logs.length) {
-      var lg = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOG_SHEET);
+      var lg = book().getSheetByName(LOG_SHEET);
       lg.getRange(lg.getLastRow() + 1, 1, logs.length, 6).setValues(logs);
     }
     return saved;
@@ -128,7 +155,7 @@ function push(records, name) {
 }
 
 function readLog(limit) {
-  var lg = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOG_SHEET);
+  var lg = book().getSheetByName(LOG_SHEET);
   var n = lg.getLastRow() - 1; if (n <= 0) return [];
   var k = Math.min(limit, n);
   return lg.getRange(n - k + 2, 1, k, 6).getValues().reverse().map(function (r) {
@@ -153,7 +180,7 @@ function importAll(data, name, part) {
       }
       count += rows.length;
     });
-    var lg = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOG_SHEET);
+    var lg = book().getSheetByName(LOG_SHEET);
     lg.appendRow([new Date(), name, part, '엑셀 불러오기', '', count + '줄']);
     return count;
   } finally { lock.releaseLock(); }

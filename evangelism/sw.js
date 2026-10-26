@@ -1,4 +1,4 @@
-const CACHE = 'evangelism-v1';
+const CACHE = 'evangelism-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './css/app.css',
   './js/config.js', './js/parse.js', './js/store.js', './js/export.js', './js/app.js', './vendor/xlsx.full.min.js', './server/Code.gs'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });

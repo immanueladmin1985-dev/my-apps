@@ -94,9 +94,15 @@
     const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const tm = setTimeout(() => ctl && ctl.abort(), timeoutMs || 60000);
     try {
-      const r = await fetch(cfg.server, { method: 'POST', body: JSON.stringify(Object.assign({ action, pass: cfg.pass, admin: cfg.admin, name: cfg.name }, extra || {})), signal: ctl ? ctl.signal : undefined, redirect: 'follow' });
-      const j = await r.json();
-      if (!j.ok) { const e = new Error(j.error === 'pass' ? '교회 암호가 맞지 않아요' : j.error === 'admin' ? '관리자 암호가 맞지 않아요' : (j.error || '실패')); e.code = j.error; throw e; }
+      let r;
+      try { r = await fetch(cfg.server, { method: 'POST', body: JSON.stringify(Object.assign({ action, pass: cfg.pass, admin: cfg.admin, name: cfg.name }, extra || {})), signal: ctl ? ctl.signal : undefined, redirect: 'follow' }); }
+      catch (x) { const e = new Error(navigator.onLine === false ? '인터넷이 연결되어 있지 않아요' : '구글 시트 주소에 닿지 못했어요'); e.code = navigator.onLine === false ? 'offline' : 'net'; throw e; }
+      let j;
+      try { j = await r.json(); } catch (x) { const e = new Error('구글 시트가 앱 대신 다른 화면(로그인 등)을 보냈어요'); e.code = 'notjson'; throw e; }
+      if (!j.ok) {
+        const msg = { pass: '교회 암호가 맞지 않아요', admin: '관리자 암호가 맞지 않아요', setup: '구글 시트에서 setup 을 아직 실행하지 않았어요' }[j.error];
+        const e = new Error(msg || (j.error || '실패')); e.code = j.error; throw e;
+      }
       return j;
     } finally { clearTimeout(tm); }
   }
