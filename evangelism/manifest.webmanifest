@@ -1,0 +1,15 @@
+{
+ "name": "전도현황",
+ "short_name": "전도현황",
+ "description": "아파트 동·호수별 전도 기록을 쉽게 쓰고 보는 앱",
+ "scope": "./",
+ "display": "fullscreen",
+ "display_override": ["fullscreen", "standalone"],
+ "background_color": "#f3f4f2",
+ "theme_color": "#2f7d4f",
+ "lang": "ko",
+ "icons": [
+  { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+  { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+ ]
+}
