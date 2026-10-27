@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>반주 반복기</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="반주 반복기">
+<meta name="theme-color" content="#5b3fd6">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="hdr">
+  <button id="hBack" class="ib hidden" aria-label="목록으로" title="목록으로"></button>
+  <h1 id="hTitle">🎵 반주 반복기</h1>
+  <button id="hInst" class="ib" aria-label="홈 화면에 설치" title="홈 화면에 설치"></button>
+  <button id="hFS" class="ib" aria-label="전체화면" title="전체화면"></button>
+  <button id="hSet" class="ib" aria-label="설정" title="설정"></button>
+</header>
+
+<div id="banner" class="banner hidden">
+  <div><b>홈 화면에 설치</b>하면 앱처럼 아이콘으로 바로 열고, 화면을 넓게 쓸 수 있어요.</div>
+  <div class="row">
+    <button id="bInst" class="pri">설치하기</button>
+    <button id="bFs">전체화면</button>
+    <button id="bLater">다음에</button>
+  </div>
+</div>
+
+<main>
+  <!-- 첫 화면: 반주 열기 · 내 반주 목록 -->
+  <section id="home">
+    <label id="drop" class="drop">
+      <input id="file" type="file" accept="video/*,audio/*" hidden>
+      <span class="big">📂 반주 영상 열기</span>
+      <span class="sub">미가엘 반주 같은 MR 영상(mp4)이나 음악 파일을 고르세요.<br>전주와 후주를 찾아서, 끝나기 직전에 1절로 이어 계속 반복해요.</span>
+    </label>
+    <h2 id="libTitle" class="hidden">내 반주 목록</h2>
+    <ul id="lib" class="lib"></ul>
+    <p class="note">영상은 이 기기 안에만 저장돼요. 인터넷에 올리지 않아요.</p>
+    <button id="homeInst" class="wide ghost">⬇ 홈 화면에 설치하기</button>
+  </section>
+
+  <!-- 재생 화면 -->
+  <section id="player" class="hidden">
+    <div class="stage">
+      <div class="vbox"><video id="vid" playsinline muted preload="auto"></video><div id="busy" class="busy hidden"><div class="spin"></div><span id="busyMsg">소리 분석 중…</span></div></div>
+    </div>
+    <div class="ctrl">
+      <div id="songName" class="song"></div>
+      <div id="bar" class="bar" aria-label="재생 위치">
+        <div id="barLoop" class="loopzone"></div>
+        <div id="barHead" class="head"></div>
+      </div>
+      <div class="times"><span id="tNow">0:00</span><span id="tState"></span><span id="tDur">0:00</span></div>
+      <div class="btns">
+        <button id="bRestart" class="ctl" title="처음부터(전주부터)">⏮<small>전주부터</small></button>
+        <button id="bPlay" class="ctl play">▶</button>
+        <button id="bLoop" class="ctl on" title="반복 켜기/끄기">🔁<small>반복 중</small></button>
+      </div>
+      <button id="bFinish" class="wide finish">이번 절 끝나면 후주로 마치기</button>
+
+      <details id="adj">
+        <summary>반복 구간 맞추기</summary>
+        <p id="autoInfo" class="note"></p>
+        <div class="pt">
+          <span>시작 <b id="vS">0:00.0</b><small>(1절 시작)</small></span>
+          <div class="nudge"><button data-p="S" data-d="-0.1">−0.1</button><button data-p="S" data-d="0.1">+0.1</button><button data-p="S" data-now>지금 위치</button></div>
+        </div>
+        <div class="pt">
+          <span>끝 <b id="vE">0:00.0</b><small>(후주 직전)</small></span>
+          <div class="nudge"><button data-p="E" data-d="-0.1">−0.1</button><button data-p="E" data-d="0.1">+0.1</button><button data-p="E" data-now>지금 위치</button></div>
+        </div>
+        <div class="row">
+          <button id="bPreview">▶ 넘어가는 곳 들어 보기</button>
+          <button id="bReauto">자동으로 다시 찾기</button>
+        </div>
+        <label class="vol">🔊 <input id="vol" type="range" min="0" max="1.5" step="0.05" value="1"></label>
+      </details>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+<dialog id="dlg"><div id="dlgBody"></div><div id="dlgBtns" class="row"></div></dialog>
+
+<script src="js/analyze.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
