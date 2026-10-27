@@ -168,7 +168,7 @@
       const bounds = [S];
       for (let j = 1; j < k; j++) bounds.push(j === 1 ? S + D2 : S + localLag(on, S, 5, j * P0, 0.15));
       bounds.push(S + D2 + D1);
-      res = { mode: 'verses', period: D2, verses: k, bounds, introEnd: startA, loopStart: S, loopEnd: S + D2 + D1, score: pick.mean, runSec: pick.len * HOP };
+      res = { mode: 'verses', period: D2, verses: k, bounds, runEnd: endB, introEnd: startA, loopStart: S, loopEnd: S + D2 + D1, score: pick.mean, runSec: pick.len * HOP };
     }
     // 2단계: 한 절뿐이면 전주(처음)와 같은 부분을 뒤에서 찾기
     const introC = [];
@@ -188,5 +188,5 @@
     return res ? Object.assign(res, { info }) : { mode: 'none', info };
   }
 
-  window.HymnAnalyze = { analyze };
+  window.HymnAnalyze = { analyze, onsets, localLag };
 })();

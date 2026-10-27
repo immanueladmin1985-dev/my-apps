@@ -135,3 +135,24 @@ dialog .row { margin-top: 16px; }
 .kbd { display: inline-block; padding: 1px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font-weight: 600; }
 .set { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .set input[type=checkbox] { width: 24px; height: 24px; accent-color: var(--accent); }
+
+/* 마치기 예약: 탭(타이머 / 반복 횟수) 중 하나만 */
+.tabs2 { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 12px; margin-bottom: 4px; }
+.tabs2 button { flex: 1; border: 0; background: transparent; padding: 9px; border-radius: 9px; font-weight: 600; color: var(--muted); }
+.tabs2 button.on { background: var(--accent); color: #fff; }
+.pane .note { margin: 6px 0 10px; }
+.pick { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 10px; }
+.pick select, .pick input { font: inherit; font-size: 1.1rem; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+.pick input { width: 80px; text-align: center; }
+.pick .sq { width: 44px; padding: 8px 0; font-size: 1.2rem; }
+.pick .pri { margin-left: auto; padding: 10px 22px; font-weight: 700; }
+.endinfo .cd { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+
+/* 파형: 위는 끝 주변, 아래는 시작 주변. 가운데 선에서 넘어감 */
+.wavebox { position: relative; margin: 6px 0; border-radius: 12px; overflow: hidden; background: #120f1c; }
+#wave { display: block; width: 100%; height: 150px; touch-action: none; }
+.wl { position: absolute; left: 8px; font-size: .75rem; color: #d9d3ef; pointer-events: none; text-shadow: 0 1px 2px #000; }
+.wl.top { top: 4px; } .wl.bot { bottom: 4px; }
+.wl b { font-variant-numeric: tabular-nums; }
+.nudge button { min-width: 52px; }
+.endinfo button { white-space: nowrap; flex: none; }

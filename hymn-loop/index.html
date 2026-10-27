@@ -68,33 +68,53 @@
         <div id="vsel" class="keys"></div>
       </div>
       <button id="bFinish" class="wide finish">이번 절 끝나면 후주로 마치기</button>
-      <div id="endInfo" class="endinfo hidden"></div>
+      <div id="endInfo" class="endinfo hidden"><span class="cd"></span><button id="endCancel">예약 취소</button></div>
 
       <details id="endSet">
         <summary>⏰ 마치기 예약 (타이머 · 반복 횟수)</summary>
-        <div class="grp">
-          <div class="gl">타이머 <small>정한 시간이 지나면 그 절까지 하고 후주로 마쳐요</small></div>
-          <div id="tmChips" class="chips"></div>
+        <div class="tabs2" role="tablist">
+          <button id="tabTm" class="on" role="tab">⏰ 타이머</button>
+          <button id="tabCn" role="tab">🔢 반복 횟수</button>
         </div>
-        <div class="grp">
-          <div class="gl">반복 횟수 <small>정한 번만큼 돌고 후주로 마쳐요</small></div>
-          <div id="cnChips" class="chips"></div>
+        <div id="paneTm" class="pane">
+          <p class="note">정한 시간이 지나면 그 절까지 하고 후주로 마쳐요.</p>
+          <div class="pick">
+            <select id="tmH" aria-label="시간"></select><span>시간</span>
+            <select id="tmM" aria-label="분"></select><span>분</span>
+            <button id="tmGo" class="pri">시작</button>
+          </div>
+        </div>
+        <div id="paneCn" class="pane hidden">
+          <p class="note">지금 절부터 정한 번만큼 돌고 후주로 마쳐요.</p>
+          <div class="pick">
+            <button id="cnMinus" class="sq" aria-label="한 번 줄이기">−</button>
+            <input id="cnN" type="number" min="1" max="999" value="3" inputmode="numeric" aria-label="반복 횟수"><span>번</span>
+            <button id="cnPlus" class="sq" aria-label="한 번 늘리기">+</button>
+            <button id="cnGo" class="pri">시작</button>
+          </div>
         </div>
         <label class="set"><span>예약대로 마치면 앱도 닫기</span><input id="autoClose" type="checkbox"></label>
       </details>
 
       <details id="adj">
-        <summary>반복 구간 맞추기</summary>
+        <summary>반복 구간 맞추기 (파형)</summary>
         <p id="autoInfo" class="note"></p>
+        <div class="wavebox">
+          <canvas id="wave" height="150"></canvas>
+          <div class="wl top">▲ 끝 <b id="vE">0:00.0</b> 주변 (여기서 넘어가요)</div>
+          <div class="wl bot">▼ 시작 <b id="vS">0:00.0</b> 주변 (여기로 와요)</div>
+        </div>
+        <p class="note">가운데 빨간 선이 넘어가는 곳이에요. 위(끝)와 아래(시작)의 뾰족한 박자들이 위아래로 같은 자리에 오면 자연스럽게 이어져요.</p>
         <div class="pt">
-          <span>시작 <b id="vS">0:00.0</b><small>(1절 시작)</small></span>
-          <div class="nudge"><button data-p="S" data-d="-0.1">−0.1</button><button data-p="S" data-d="0.1">+0.1</button><button data-p="S" data-now>지금 위치</button></div>
+          <span>끝<small>(후주 직전)</small></span>
+          <div class="nudge"><button data-p="E" data-d="-0.1">−0.1</button><button data-p="E" data-d="-0.01">−0.01</button><button data-p="E" data-d="0.01">+0.01</button><button data-p="E" data-d="0.1">+0.1</button><button data-p="E" data-now>지금</button></div>
         </div>
         <div class="pt">
-          <span>끝 <b id="vE">0:00.0</b><small>(후주 직전)</small></span>
-          <div class="nudge"><button data-p="E" data-d="-0.1">−0.1</button><button data-p="E" data-d="0.1">+0.1</button><button data-p="E" data-now>지금 위치</button></div>
+          <span>시작<small>(1절 시작)</small></span>
+          <div class="nudge"><button data-p="S" data-d="-0.1">−0.1</button><button data-p="S" data-d="-0.01">−0.01</button><button data-p="S" data-d="0.01">+0.01</button><button data-p="S" data-d="0.1">+0.1</button><button data-p="S" data-now>지금</button></div>
         </div>
         <div class="row">
+          <button id="bSnap">🎯 시작을 끝 박자에 자동 맞추기</button>
           <button id="bPreview">▶ 넘어가는 곳 들어 보기</button>
           <button id="bReauto">자동으로 다시 찾기</button>
         </div>

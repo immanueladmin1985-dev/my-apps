@@ -41,7 +41,8 @@
   /* ---------- 공통 ---------- */
   const fmt = (t, dec) => {
     t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t - m * 60;
-    return m + ':' + (dec ? s.toFixed(1).padStart(4, '0') : String(Math.floor(s)).padStart(2, '0'));
+    const n = dec === true ? 1 : (dec || 0);
+    return m + ':' + (n ? s.toFixed(n).padStart(3 + n, '0') : String(Math.floor(s)).padStart(2, '0'));
   };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let tt;
@@ -58,7 +59,7 @@
   /* ---------- 소리 재생 ---------- */
   const XF = 0.03;              // 넘어갈 때 겹치는 시간(초) — 딸깍 소리 방지
   const A = { ctx: null, master: null, buf: null, vs: [], playing: false, pausedAt: 0, loop: true,
-    passes: 0, schedWraps: 0, limit: 0, deadline: 0, timerFired: false };
+    passes: 0, schedWraps: 0, limit: 0, cBase: 0, deadline: 0, timerFired: false };
   // B: 절 경계 [1절 시작, 2절 시작, …, 마지막 절 끝(=후주 시작)] / sel: 'all' 또는 고른 절 번호(0부터)
   const song = { id: null, name: '', B: [], sel: 'all', auto: null };
   const K = () => song.B.length - 1;
@@ -100,7 +101,7 @@
     if (!A.loop) return { to: k };
     const nx = L.find(j => j >= m);
     if (nx != null) return { to: nx };
-    if (A.limit && A.schedWraps >= A.limit - 1) return { to: k };   // 정한 횟수를 다 돌면 후주로
+    if (A.limit && A.schedWraps - A.cBase >= A.limit - 1) return { to: k };   // 정한 횟수를 다 돌면 후주로
     return { to: L[0], wrap: true };
   }
   // 앞으로 넘어갈 곳을 몇 개 미리 예약(화면이 꺼져 타이머가 느려져도 정확히 넘어가게)
@@ -150,7 +151,7 @@
   function setLoop(on) { A.loop = on; resched(); }
   function tick() {
     if (A.deadline && Date.now() >= A.deadline) {
-      A.deadline = 0; A.timerFired = true; paintChips();
+      A.deadline = 0; A.timerFired = true;
       if (A.playing) { A.loop = false; resched(); toast('타이머가 다 됐어요. 이번 절이 끝나면 후주로 마쳐요'); }
       else finishApp();
     }
@@ -164,10 +165,10 @@
   }
   setInterval(tick, 50);
   function ended() {
-    const auto = A.timerFired || (A.limit && A.loop && A.passes >= A.limit - 1);
+    const auto = A.timerFired || (A.limit && A.loop && A.passes - A.cBase >= A.limit - 1);
     stopAll(); A.playing = false; A.pausedAt = 0; vid.pause(); wake(false);
     A.loop = true; A.passes = 0; A.timerFired = false;
-    if (auto) { A.limit = 0; paintChips(); }
+    if (auto) A.limit = 0;
     paint();
     if (auto) finishApp(); else toast('끝났어요');
   }
@@ -223,7 +224,7 @@
     if (A.buf && k >= 1) {
       if (cv < 0) st = '전주';
       else if (cv >= k) st = '후주';
-      else st = (k > 1 ? (cv + 1) + '절 · ' : '') + (A.loop ? '🔁 ' + (A.passes + 1) + (A.limit ? '/' + A.limit : '') + '번째' : '마치고 후주로');
+      else st = (k > 1 ? (cv + 1) + '절 · ' : '') + (A.loop ? '🔁 ' + (A.limit ? (A.passes - A.cBase + 1) + '/' + A.limit : A.passes + 1) + '번째' : '마치고 후주로');
     }
     $('#tState').textContent = st;
     if (cv !== lastCur) { lastCur = cv; document.querySelectorAll('#segs .seg').forEach(s => s.classList.toggle('cur', +s.dataset.i === cv)); }
@@ -231,40 +232,157 @@
     const bl = $('#bLoop'); bl.classList.toggle('on', A.loop); bl.querySelector('small').textContent = A.loop ? '반복 중' : '반복 꺼짐';
     const f = $('#bFinish'); f.classList.toggle('done', !A.loop);
     f.textContent = A.loop ? '이번 절 끝나면 후주로 마치기' : (cv < k ? '후주로 마치는 중 · 누르면 다시 반복' : '다시 반복하기');
-    if (k >= 1) { $('#vS').textContent = fmt(song.B[0], 1); $('#vE').textContent = fmt(song.B[k], 1); }
+    if (k >= 1) { $('#vS').textContent = fmt(song.B[0], 2); $('#vE').textContent = fmt(song.B[k], 2); }
   }
   (function frame() { if (A.playing) { syncVideo(false); paint(); } requestAnimationFrame(frame); })();
 
-  /* ---------- 마치기 예약 (타이머 · 반복 횟수) ---------- */
-  const TM = [0, 5, 10, 15, 20, 30, 45, 60], CN = [0, 1, 2, 3, 4, 5, 7, 10];
-  let tmSel = 0;
-  function paintChips() {
-    const curT = A.deadline ? tmSel : 0;
-    $('#tmChips').innerHTML = TM.map(m => `<button data-m="${m}" class="${m === curT ? 'on' : ''}">${m ? (m >= 60 ? m / 60 + '시간' : m + '분') : '끔'}</button>`).join('') +
-      `<input id="tmIn" type="number" min="1" max="600" inputmode="numeric" placeholder="분" aria-label="타이머 직접(분)" value="${A.deadline && !TM.includes(tmSel) ? tmSel : ''}">`;
-    $('#cnChips').innerHTML = CN.map(n => `<button data-n="${n}" class="${n === A.limit ? 'on' : ''}">${n ? n + '번' : '끔(계속)'}</button>`).join('') +
-      `<input id="cnIn" type="number" min="1" max="999" inputmode="numeric" placeholder="번" aria-label="반복 횟수 직접" value="${A.limit && !CN.includes(A.limit) ? A.limit : ''}">`;
+  /* ---------- 마치기 예약 (타이머 · 반복 횟수 중 하나만) ---------- */
+  $('#tmH').innerHTML = [...Array(6).keys()].map(h => `<option value="${h}">${h}</option>`).join('');
+  $('#tmM').innerHTML = [...Array(60).keys()].map(m => `<option value="${m}">${String(m).padStart(2, '0')}</option>`).join('');
+  $('#tmM').value = String(ui.tmM != null ? ui.tmM : 30); $('#tmH').value = String(ui.tmH || 0);
+  $('#cnN').value = ui.cnN || 3;
+  function showTab(t) {
+    $('#tabTm').classList.toggle('on', t === 'tm'); $('#tabCn').classList.toggle('on', t === 'cn');
+    $('#paneTm').classList.toggle('hidden', t !== 'tm'); $('#paneCn').classList.toggle('hidden', t !== 'cn');
+  }
+  $('#tabTm').onclick = () => showTab('tm'); $('#tabCn').onclick = () => showTab('cn');
+  function setTimer(min) {
+    A.deadline = min ? Date.now() + min * 60000 : 0; A.timerFired = false;
+    if (min && A.limit) { A.limit = 0; resched(); }     // 둘 중 하나만
     paintEndInfo();
   }
-  function setTimer(m) { tmSel = m; A.deadline = m ? Date.now() + m * 60000 : 0; A.timerFired = false; paintChips(); if (m) toast(`${m}분 뒤에 후주로 마쳐요`); }
-  function setCount(n) { A.limit = n; paintChips(); resched(); if (n) toast(`${n}번 돌고 후주로 마쳐요`); }
-  $('#tmChips').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setTimer(+b.dataset.m); });
-  $('#cnChips').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setCount(+b.dataset.n); });
-  $('#tmChips').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v > 0) setTimer(v); });
-  $('#cnChips').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v > 0) setCount(v); });
+  function setCount(n) {
+    A.limit = n; A.cBase = A.passes;                     // 지금 돌고 있는 것이 1번째
+    if (n) A.deadline = 0;
+    resched(); paintEndInfo();
+  }
+  $('#tmGo').onclick = () => {
+    const h = +$('#tmH').value, m = +$('#tmM').value, min = h * 60 + m;
+    if (!min) { toast('시간을 정해 주세요'); return; }
+    ui.tmH = h; ui.tmM = m; saveUi(); setTimer(min);
+    toast(`${h ? h + '시간 ' : ''}${m ? m + '분 ' : ''}뒤에 후주로 마쳐요`);
+  };
+  const cnVal = d => { const v = Math.max(1, Math.min(999, Math.round(+$('#cnN').value || 1) + d)); $('#cnN').value = v; return v; };
+  $('#cnMinus').onclick = () => cnVal(-1); $('#cnPlus').onclick = () => cnVal(1);
+  $('#cnGo').onclick = () => { const n = cnVal(0); ui.cnN = n; saveUi(); setCount(n); toast(`${n}번 돌고 후주로 마쳐요`); };
   $('#autoClose').checked = ui.autoClose;
   $('#autoClose').onchange = e => { ui.autoClose = e.target.checked; saveUi(); paintEndInfo(); };
-  $('#endInfo').innerHTML = '<span></span><button>예약 취소</button>';
-  $('#endInfo button').onclick = () => { setTimer(0); setCount(0); toast('마치기 예약을 취소했어요'); };
+  $('#endCancel').onclick = () => { setTimer(0); setCount(0); toast('마치기 예약을 취소했어요'); };
   function paintEndInfo() {
     const on = A.deadline || A.limit, el = $('#endInfo');
     el.classList.toggle('hidden', !on); if (!on) return;
-    const parts = [];
-    if (A.deadline) { const r = Math.max(0, (A.deadline - Date.now()) / 1000); parts.push('⏰ ' + fmt(r) + ' 뒤 마침'); }
-    if (A.limit) parts.push('🔢 ' + A.limit + '번 중 ' + Math.min(A.limit, A.passes + 1) + '번째');
-    const t = parts.join(' · ') + (ui.autoClose ? ' → 후주 뒤 앱 닫기' : ' → 후주로 마침');
+    let t;
+    if (A.deadline) {
+      const r = Math.max(0, Math.ceil((A.deadline - Date.now()) / 1000)), h = Math.floor(r / 3600);
+      t = '⏰ ' + (h ? h + ':' + String(Math.floor(r % 3600 / 60)).padStart(2, '0') + ':' + String(r % 60).padStart(2, '0') : fmt(r)) + ' 남음';
+    } else {
+      const left = Math.max(0, A.limit - (A.passes - A.cBase + 1));
+      t = '🔢 ' + Math.min(A.limit, A.passes - A.cBase + 1) + '/' + A.limit + '번째 · ' + (left ? '남은 ' + left + '번' : '이번이 마지막');
+    }
+    t += ui.autoClose ? ' → 후주 뒤 앱 닫기' : ' → 후주로 마침';
     const s = el.firstChild; if (s.textContent !== t) s.textContent = t;
   }
+
+  /* ---------- 가사 화면에 맞추기 ----------
+     소리는 되풀이되는 구간 안 어디서 넘겨도 똑같이 이어지지만, 영상(가사)은 절이 바뀔 때 화면이 넘어간다.
+     1절→2절에서 화면이 크게 바뀌는 때를 찾아, 넘어가는 곳을 모두 그만큼 뒤로 옮긴다. */
+  async function alignToVideo(r, url) {
+    const B = r.bounds;
+    if (r.mode !== 'verses' || !B || B.length < 3 || !r.runEnd) return 0;
+    const maxD = r.runEnd - B[B.length - 1] - 0.3; if (maxD < 1) return 0;
+    const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = url;
+    try { await new Promise((ok, no) => { v.onloadeddata = ok; v.onerror = no; setTimeout(no, 8000); }); } catch (e) { return 0; }
+    if (!v.videoWidth) return 0;
+    const c = document.createElement('canvas'); c.width = 48; c.height = 27; const x = c.getContext('2d', { willReadFrequently: true });
+    const grab = async t => {
+      v.currentTime = t; await new Promise(ok => { v.onseeked = ok; setTimeout(ok, 1500); });
+      x.drawImage(v, 0, 0, 48, 27); const d = x.getImageData(0, 0, 48, 27).data, g = new Float32Array(48 * 27);
+      for (let i = 0; i < g.length; i++) g[i] = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3; return g;
+    };
+    const diff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; };
+    const T0 = B[1] - 0.5, n = Math.ceil((maxD + 0.5) / 0.25), ds = [];
+    let prev = await grab(T0);
+    for (let i = 1; i <= n; i++) { const t = T0 + i * 0.25, g = await grab(t); ds.push({ t, d: diff(g, prev) }); prev = g; }
+    const med = ds.map(o => o.d).sort((a, b) => a - b)[ds.length >> 1], best = ds.reduce((a, b) => b.d > a.d ? b : a, ds[0]);
+    if (!best || best.d < 6 || best.d < med * 4) return 0;      // 화면이 넘어가지 않는 영상(그림 한 장 등)
+    let flip = best.t, a = await grab(best.t - 0.25);           // 0.05초 단위로 정확히
+    for (let t = best.t - 0.2; t <= best.t + 1e-6; t += 0.05) { const g = await grab(t); if (diff(g, a) > best.d * 0.5) { flip = t; break; } a = g; }
+    v.removeAttribute('src'); v.load();
+    return Math.max(0, Math.min(maxD, flip - B[1]));
+  }
+
+  /* ---------- 파형으로 넘어가는 곳 맞추기 ----------
+     위: 끝(여기서 넘어감) 주변, 아래: 시작(여기로 옴) 주변을 같은 시간 눈금으로 마주 보게 그린다.
+     박자(뾰족한 곳)가 위아래로 같은 자리에 오면 자연스럽게 이어진다. 재생과 상관없이 맞출 수 있다. */
+  const WIN = 3;   // 가운데 선 앞뒤 3초
+  let wv = null;   // { env: 1/1000초마다 소리 크기, on: 박자, pe, po }
+  function waveData() {
+    if (wv && wv.buf === A.buf) return wv;
+    const b = A.buf, sr = b.sampleRate, f = Math.round(sr / 1000), n = Math.floor(b.length / f), env = new Float32Array(n), chs = [];
+    for (let c = 0; c < b.numberOfChannels; c++) chs.push(b.getChannelData(c));
+    for (let i = 0; i < n; i++) { let m = 0; for (const d of chs) for (let j = i * f, e = j + f; j < e; j++) { const v = d[j] < 0 ? -d[j] : d[j]; if (v > m) m = v; } env[i] = m; }
+    // 박자 그림용: 1/100초 소리 세기가 바로 앞 0.1초 평균보다 커지는 만큼(작은 떨림은 제곱으로 줄임)
+    const m10 = Math.floor(n / 10), e10 = new Float32Array(m10), on = new Float32Array(n);
+    for (let i = 0; i < m10; i++) { let q = 0; for (const d of chs) for (let j = i * 10 * f, e = j + 10 * f; j < e; j += 4) q += d[j] * d[j]; e10[i] = Math.sqrt(q); }
+    for (let i = 10; i < m10; i++) { let p = 0; for (let j = i - 10; j < i; j++) p += e10[j]; const r = Math.max(0, e10[i] - p / 10 * 1.15); for (let j = i * 10; j < i * 10 + 10; j++) on[j] = r; }
+    const q = (arr, p) => { const t = Array.from(arr.filter((_, i) => i % 7 === 0)).sort((x, y) => x - y); return t[Math.floor(t.length * p)] || 1; };
+    wv = { buf: b, env, on, beat: window.HymnAnalyze.onsets(b), pe: q(env, 0.99), po: q(on, 0.995) };
+    return wv;
+  }
+  function drawWave() {
+    const cv = $('#wave'); if (!A.buf || K() < 1 || !$('#adj').open) return;
+    const w = cv.clientWidth | 0, H = 150; if (!w) return;
+    const dpr = window.devicePixelRatio || 1; cv.width = w * dpr; cv.height = H * dpr;
+    const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, H);
+    const W = waveData(), mid = H / 2, h = mid - 16;
+    const strip = (c, dir, col, spike) => {
+      for (let px = 0; px < w; px++) {
+        const a = Math.floor((c - WIN + px / w * 2 * WIN) * 1000), b = Math.ceil((c - WIN + (px + 1) / w * 2 * WIN) * 1000);
+        let m = 0, o = 0;
+        for (let i = Math.max(0, a); i < Math.min(W.env.length, b); i++) { if (W.env[i] > m) m = W.env[i]; if (W.on[i] > o) o = W.on[i]; }
+        const he = Math.min(1, m / W.pe) * h * 0.5, ho = Math.pow(Math.min(1, o / W.po), 1.6) * h;
+        x.fillStyle = col + '33'; x.fillRect(px, dir < 0 ? mid - he : mid, 1, he);
+        x.fillStyle = spike; x.fillRect(px, dir < 0 ? mid - ho : mid, 1, ho);
+      }
+    };
+    strip(song.B[K()], -1, '#8f76ff', '#c9bbff');
+    strip(song.B[0], 1, '#ff9f43', '#ffd29c');
+    x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(0, mid, w, 1);
+    for (let s = -WIN; s <= WIN + 1e-6; s += 0.5) { const px = Math.round((s + WIN) / (2 * WIN) * w); x.fillRect(px, mid - (s % 1 ? 3 : 6), 1, s % 1 ? 6 : 12); }
+    x.fillStyle = '#ff4d4d'; x.fillRect(Math.round(w / 2) - 1, 0, 2, H);
+  }
+  // 파형을 손가락으로 끌어 옮기기: 위쪽은 끝, 아래쪽은 시작
+  (function () {
+    const cv = $('#wave'); let drag = null;
+    cv.addEventListener('pointerdown', e => {
+      if (!A.buf || K() < 1) return; const r = cv.getBoundingClientRect();
+      drag = { idx: e.clientY - r.top < r.height / 2 ? K() : 0, x: e.clientX, v: song.B[e.clientY - r.top < r.height / 2 ? K() : 0], w: r.width };
+      cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const v = drag.v - (e.clientX - drag.x) / drag.w * 2 * WIN;   // 파형을 오른쪽으로 끌면 넘어가는 곳이 앞으로
+      if (setPoint(drag.idx, v, true)) drawWave();
+    });
+    const end = () => { if (!drag) return; drag = null; pointChanged(); };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  })();
+  function setPoint(idx, v, quiet) {
+    const B = song.B, k = K();
+    v = Math.round(Math.max(0, Math.min(A.buf.duration - 0.1, v)) * 1000) / 1000;
+    if (idx === 0 && v > B[1] - 2) { if (!quiet) toast('시작은 다음 절보다 2초 이상 앞이어야 해요'); return false; }
+    if (idx === k && v < B[k - 1] + 2) { if (!quiet) toast('끝은 마지막 절 시작보다 2초 이상 뒤여야 해요'); return false; }
+    B[idx] = v; $('#vS').textContent = fmt(B[0], 2); $('#vE').textContent = fmt(B[k], 2); return true;
+  }
+  function pointChanged() { saveSong(); renderSegs(); lastCur = null; resched(); drawWave(); }
+  $('#adj').addEventListener('toggle', () => setTimeout(drawWave, 0));
+  window.addEventListener('resize', () => drawWave());
+  $('#bSnap').onclick = () => {
+    if (!A.buf || K() < 1) return;
+    const W = waveData(), S = song.B[0], E = song.B[K()];
+    const L = window.HymnAnalyze.localLag(W.beat, S - WIN, 2 * WIN, E - S, 0.4);
+    if (setPoint(0, E - L)) { pointChanged(); toast(`시작을 ${(E - L - S >= 0 ? '+' : '') + (E - L - S).toFixed(2)}초 옮겨 박자를 맞췄어요`); }
+  };
 
   function showHome() {
     if (A.playing) pause(); stopAll(); A.buf = null;
@@ -290,7 +408,7 @@
   });
 
   /* ---------- 반주 열기 ---------- */
-  function saveSong() { if (song.id) LS.set('hl.song.' + song.id, { B: song.B }); }
+  function saveSong() { if (song.id) LS.set('hl.song.' + song.id, { B: song.B, v: 2 }); }
   function autoBounds(r, dur) {
     const B = r.mode === 'none' ? [r.info.musicStart, r.info.musicEnd] : (r.bounds || [r.loopStart, r.loopEnd]).slice();
     B[B.length - 1] = Math.max(B[0] + 2, Math.min(dur - 0.1, B[B.length - 1]));   // 못 찾으면 곡 전체 반복
@@ -300,7 +418,8 @@
     const r = song.auto; if (!r) return '';
     if (r.mode === 'none') return '같은 반주가 되풀이되는 곳을 찾지 못해서 지금은 곡 전체를 반복해요(1절만 있는 반주에서 그럴 수 있어요).\n재생하면서 1절이 시작될 때 시작의 "지금 위치", 후주가 시작될 때 끝의 "지금 위치"를 누르면 돼요. 한 번 정하면 기억해요.';
     const intro = r.introEnd != null ? r.introEnd : r.loopStart;
-    return `자동 인식: 전주 ${fmt(intro, 1)}까지 · 한 절 ${r.period.toFixed(1)}초` + (r.verses > 1 ? ` × ${r.verses}절` : '') + ` · 후주 ${fmt(r.loopEnd, 1)}부터` +
+    return `자동 인식: 전주 ${fmt(intro, 1)}까지 · 한 절 ${r.period.toFixed(1)}초` + (r.verses > 1 ? ` × ${r.verses}절` : '') + ` · 후주 ${fmt(r.loopEnd, 1)}부터` + (r.videoShift ? `
+넘어가는 곳을 가사 화면이 바뀌는 때에 맞췄어요(${r.videoShift.toFixed(1)}초 뒤로).` : '') +
       `\n끝에서 시작으로 넘어가는 소리가 어색하면 0.1초씩 맞춰 보세요.`;
   }
   async function openSong(blob, id, name) {
@@ -309,7 +428,7 @@
     $('#songName').textContent = name.replace(/\.[^.]+$/, ''); paintInstall();
     $('#busy').classList.remove('hidden'); $('#busyMsg').textContent = '소리 불러오는 중…';
     A.buf = null; A.pausedAt = 0; A.loop = true; A.passes = 0; A.limit = 0; stopAll(); A.playing = false;
-    renderSegs(); paintChips();
+    A.cBase = 0; renderSegs(); paintEndInfo();
     vid.src = URL.createObjectURL(blob);
     try {
       const ab = await blob.arrayBuffer();
@@ -320,10 +439,13 @@
       await new Promise(r => setTimeout(r, 30));
       A.buf = buf;
       const r = window.HymnAnalyze.analyze(buf);
+      $('#busyMsg').textContent = '가사 화면 맞추는 중…';
+      const dv = await alignToVideo(r, vid.src);
+      if (song.id !== id) return;
+      if (dv > 0) { r.videoShift = dv; r.bounds = r.bounds.map(t => t + dv); r.introEnd = r.bounds[0]; r.loopStart += dv; r.loopEnd += dv; }
       song.auto = r; song.B = autoBounds(r, buf.duration);
-      const saved = LS.get('hl.song.' + id);
-      if (saved && saved.B && saved.B.length === song.B.length) song.B = saved.B.slice();
-      else if (saved && saved.E > saved.S) { song.B[0] = saved.S; song.B[song.B.length - 1] = saved.E; }   // 예전 저장 방식
+      const saved0 = LS.get('hl.song.' + id), saved = saved0 && saved0.v === 2 ? saved0 : null;
+      if (saved && saved.v === 2 && saved.B && saved.B.length === song.B.length) song.B = saved.B.slice();   // 예전 방식으로 저장한 구간은 버림
       $('#autoInfo').textContent = autoText();
       if (r.mode === 'none' && !saved) { $('#adj').open = true; toast('반복 구간을 자동으로 찾지 못했어요. 직접 정해 주세요'); }
       else toast(saved ? '저장해 둔 반복 구간으로 준비했어요' : '전주와 후주를 찾았어요. ▶을 누르세요');
@@ -333,7 +455,7 @@
       return;
     }
     $('#busy').classList.add('hidden');
-    lastCur = null; renderSegs(); paint();
+    lastCur = null; renderSegs(); paint(); drawWave();
   }
   function pickFile(f) {
     if (!f) return;
@@ -350,7 +472,7 @@
 
   /* ---------- 조작 ---------- */
   $('#bPlay').onclick = () => { if (!A.buf) return; A.playing ? pause() : play(); };
-  $('#bRestart').onclick = () => { if (!A.buf) return; A.loop = true; A.passes = 0; A.timerFired = false; play(0); };
+  $('#bRestart').onclick = () => { if (!A.buf) return; A.loop = true; A.passes = 0; A.cBase = 0; A.timerFired = false; play(0); };
   $('#bLoop').onclick = () => setLoop(!A.loop);
   $('#bFinish').onclick = () => {
     if (!A.loop) { setLoop(true); toast('다시 계속 반복해요'); }
@@ -378,15 +500,12 @@
   });
   document.querySelectorAll('.nudge button').forEach(b => b.onclick = () => {
     if (!A.buf || K() < 1) return;
-    const k = K(), idx = b.dataset.p === 'S' ? 0 : k, B = song.B;
-    let v = b.hasAttribute('data-now') ? heard() : B[idx] + parseFloat(b.dataset.d);
-    v = Math.max(0, Math.min(A.buf.duration - 0.1, v));
-    if (idx === 0 && v > B[1] - 2) { toast('시작은 다음 절보다 2초 이상 앞이어야 해요'); return; }
-    if (idx === k && v < B[k - 1] + 2) { toast('끝은 마지막 절 시작보다 2초 이상 뒤여야 해요'); return; }
-    B[idx] = v; saveSong(); renderSegs(); lastCur = null; resched();
+    const idx = b.dataset.p === 'S' ? 0 : K();
+    const v = b.hasAttribute('data-now') ? heard() : song.B[idx] + parseFloat(b.dataset.d);
+    if (setPoint(idx, v)) pointChanged();
   });
   $('#bPreview').onclick = () => { if (!A.buf || K() < 1) return; A.loop = true; play(Math.max(0, song.B[K()] - 4)); toast('끝 4초 전부터 들어 봐요'); };
-  $('#bReauto').onclick = () => { if (!A.buf || !song.auto) return; LS.del('hl.song.' + song.id); song.B = autoBounds(song.auto, A.buf.duration); $('#autoInfo').textContent = autoText(); renderSegs(); lastCur = null; resched(); toast('자동으로 찾은 구간으로 되돌렸어요'); };
+  $('#bReauto').onclick = () => { if (!A.buf || !song.auto) return; LS.del('hl.song.' + song.id); song.B = autoBounds(song.auto, A.buf.duration); $('#autoInfo').textContent = autoText(); renderSegs(); lastCur = null; resched(); drawWave(); toast('자동으로 찾은 구간으로 되돌렸어요'); };
   $('#vol').value = ui.vol;
   $('#vol').oninput = e => { ui.vol = +e.target.value; saveUi(); if (A.master) A.master.gain.value = ui.vol; };
   document.addEventListener('keydown', e => {
