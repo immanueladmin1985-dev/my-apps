@@ -3,7 +3,8 @@
   'use strict';
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const S = Store, D = S.data, C = S.cfg;
+  const S = Store, C = S.cfg;
+  const D = new Proxy({}, { get: (_, k) => S.data[k] });   // 사용법 둘러보기 때 연습 자료로 바뀌어도 따라감
   const alive = d => d && d.deleted !== '1';
 
   const STATUS = ['대상', '특별', '교인', '장결', '거부', '부재', '교회', '성당', '이사', '기타'];
@@ -72,6 +73,7 @@
   function go(v) {
     scrolls[vkey(view)] = window.scrollY;
     if (v.name === 'log') logRows = null;
+    if (v.name === 'devices') { devList = null; devErr = ''; }
     view = v; history.pushState({ v }, '');
     render(); window.scrollTo(0, 0);
   }
@@ -90,10 +92,10 @@
     fsOff: SVG('M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5'), close: SVG('M6 6l12 12M18 6L6 18'), font: SVG('M4 20l5-14h2l5 14M6.5 14h7M17 10h4M19 8v4')
   };
   function syncPill() {
+    if (S.sandboxed) return `<span class="sync">연습 중</span>`;
     if (!S.online()) return `<span class="sync" title="구글 시트와 연결되지 않아 이 기기에만 저장돼요">이 기기에만</span>`;
     const st = S.state, n = S.outbox.length;
     if (st.busy) return `<span class="sync">⟳ 맞추는 중</span>`;
-    if (st.error === 'pass') return `<span class="sync bad">암호 확인 필요</span>`;
     if (n) return `<span class="sync bad" title="인터넷이 되면 자동으로 보내요">못 보낸 기록 ${n}</span>`;
     if (st.error) return `<span class="sync bad">연결 안 됨</span>`;
     return `<span class="sync ok">✓ 저장됨</span>`;
@@ -113,13 +115,21 @@
     $('#tFS').onclick = FS.toggle;
     $('#tFont').onclick = () => { C.font = ((C.font || 0) + 1) % 3; S.saveCfg(); applyFont(); toast(['글자 보통', '글자 크게', '글자 아주 크게'][C.font]); };
   }
-  function applyFont() { document.documentElement.className = C.font ? 'fs-' + C.font : ''; }
+  // 글자 크기와 밝게·어둡게
+  function applyFont() {
+    const h = document.documentElement;
+    h.className = C.font ? 'fs-' + C.font : '';
+    if (C.theme === 'auto') h.removeAttribute('data-theme'); else h.setAttribute('data-theme', C.theme === 'dark' ? 'dark' : 'light');
+    const dark = C.theme === 'dark' || (C.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.removeAttribute('media'); m.setAttribute('content', dark ? '#111413' : '#f3f4f2'); });
+  }
   window.addEventListener('scroll', () => { const t = $('#top'); if (t) t.classList.toggle('scrolled', window.scrollY > 4); }, { passive: true });
 
   function render() {
     applyFont();
     const app = $('#app');
-    if (!C.name || (C.server && !C.pass) || S.state.error === 'pass') { app.innerHTML = loginHtml(); bindLogin(); return; }
+    const gate = authGate();
+    if (gate) { app.innerHTML = gate.html; gate.bind(); wake(false); return; }
     const V = VIEWS[view.name] || VIEWS.home;
     const r = V();
     app.innerHTML = top(r.title, view.name !== 'home') + `<main id="main">${r.html}</main>`;
@@ -129,47 +139,116 @@
   }
   let rq = 0;
   S.on(why => {
-    if (why === 'sync') { const p = $('#pill'); if (p) p.innerHTML = syncPill(); if (S.state.error === 'pass') render(); return; }
+    if (why === 'sync') { const p = $('#pill'); if (p) p.innerHTML = syncPill(); const w = $('#waitBar'); if (w) w.outerHTML = waitBar(); bindWaitBar(); return; }
+    if (why === 'auth') { closeSheet(true); render(); return; }
     if (why === 'put') return;   // 내가 고친 것은 그 자리에서 다시 그림
     cancelAnimationFrame(rq); rq = requestAnimationFrame(() => { const y = window.scrollY; if (!sheetOpen()) { render(); window.scrollTo(0, y); } else pendingRender = true; });
   });
   let pendingRender = false;
 
-  /* ---------- 로그인 ---------- */
-  function loginHtml() {
-    const names = ix().names;
-    const passErr = S.state.error === 'pass';
-    return `<div class="login"><form class="card" id="lg" autocomplete="off">
-      <img src="icon-192.png" alt="">
-      <h1>전도현황</h1>
-      <p>${C.server ? '교회 암호와 이름을 넣고 들어가세요.' : '이름을 넣고 들어가세요.'}</p>
-      ${C.server ? `<label class="field"><span>교회 암호</span><input id="lgPass" type="password" inputmode="numeric" value="${passErr ? '' : esc(C.pass)}" placeholder="교회 암호"></label>` : ''}
-      <label class="field"><span>내 이름</span><input id="lgName" list="lgNames" value="${esc(C.name)}" placeholder="예: 홍길동"></label>
-      <datalist id="lgNames">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
-      <div class="err" id="lgErr">${passErr ? '교회 암호가 바뀌었거나 맞지 않아요. 다시 넣어 주세요.' : ''}</div>
-      <button class="btn pri big" type="submit">들어가기</button>
-      ${C.server ? '' : '<p class="small">아직 구글 시트와 연결되지 않아 이 기기에만 저장돼요.<br>관리자는 들어간 뒤 설정에서 연결할 수 있어요.</p>'}
-    </form></div>`;
+  /* ---------- 로그인 (기기 승인) ---------- */
+  // 구글 시트와 연결되어 있으면 이 기기가 승인되어야 열림. 연결 전(이 기기에만 저장)에는 이름만 넣음
+  let pollTimer = null;
+  function authGate() {
+    clearInterval(pollTimer); pollTimer = null;
+    if (S.sandboxed) return null;
+    if (!C.server) return C.name ? null : { html: localLoginHtml(), bind: bindLocalLogin };
+    if (C.status === '승인' && C.name) return null;
+    if (C.status === '대기') return { html: waitHtml(), bind: bindWait };
+    return { html: joinHtml(), bind: bindJoin };
   }
-  function bindLogin() {
-    $('#lg').onsubmit = async e => {
+  const loginShell = inner => `<div class="login"><div class="card">
+      <img src="icon-192.png" alt=""><h1>전도현황</h1>${inner}</div></div>`;
+  function localLoginHtml() {
+    return loginShell(`<form id="lg" autocomplete="off" class="set">
+      <p>이름을 넣고 들어가세요.</p>
+      <label class="field"><span>내 이름</span><input id="lgName" value="${esc(C.name)}" placeholder="예: 홍길동"></label>
+      <div class="err" id="lgErr"></div>
+      <button class="btn pri big" type="submit">들어가기</button>
+      <p class="small">아직 구글 시트와 연결되지 않아 이 기기에만 저장돼요.<br>관리자는 들어간 뒤 설정에서 연결할 수 있어요.</p></form>`);
+  }
+  function bindLocalLogin() {
+    $('#lg').onsubmit = e => {
       e.preventDefault();
       const name = $('#lgName').value.trim().replace(/\s+/g, '');
-      const err = $('#lgErr');
-      if (name.length < 2) { err.textContent = '이름을 두 글자 이상 넣어 주세요.'; return; }
-      if (C.server) {
-        const pass = $('#lgPass').value.trim();
-        if (!pass) { err.textContent = '교회 암호를 넣어 주세요.'; return; }
-        const old = C.pass; C.pass = pass;
-        err.textContent = '확인 중…';
-        try { await S.call('hello', {}, 20000); }
-        catch (x) { C.pass = old; err.textContent = x.code === 'pass' ? '교회 암호가 맞지 않아요.' : x.message + ' 관리자에게 알려 주세요.'; return; }
-        S.state.error = '';
-      }
-      C.name = name; S.saveCfg();
-      render(); S.sync();
+      if (name.length < 2) { $('#lgErr').textContent = '이름을 두 글자 이상 넣어 주세요.'; return; }
+      C.name = name; S.saveCfg(); render(); offerTutorial();
     };
   }
+  function joinHtml() {
+    const why = { 거절: '이 휴대폰의 요청은 관리자가 거절했어요. 다시 요청할 수 있어요.', 끊김: '이 휴대폰은 관리자가 사용을 끊었어요. 다시 요청할 수 있어요.', 열쇠: '기기 정보가 맞지 않아요. 아래에서 다시 요청해 주세요.' }[C.status] || '';
+    return loginShell(`<form id="jn" autocomplete="off" class="set">
+      <p>처음 쓰는 휴대폰이에요.<br>이름을 넣고 <b>승인 요청</b>을 보내 주세요.<br>관리자가 승인하면 바로 열려요.</p>
+      ${why ? `<p class="err">${why}</p>` : ''}
+      <label class="field"><span>내 이름</span><input id="jnName" value="${esc(C.name)}" placeholder="예: 홍길동"></label>
+      <div class="err" id="jnErr"></div>
+      <button class="btn pri big" type="submit">승인 요청 보내기</button>
+      <button class="btn ghost" type="button" id="jnMaster">관리자(마스터)로 들어가기</button></form>`);
+  }
+  function bindJoin() {
+    $('#jn').onsubmit = async e => {
+      e.preventDefault();
+      const name = $('#jnName').value.trim().replace(/\s+/g, ''), err = $('#jnErr');
+      if (name.length < 2) { err.textContent = '이름을 두 글자 이상 넣어 주세요.'; return; }
+      err.textContent = '보내는 중…';
+      try {
+        if (C.status === '열쇠') { localStorage.removeItem('evangelism-device'); }
+        await S.call('join', { name, desc: await S.deviceDesc() }, 30000);
+        C.name = name; S.saveCfg(); render();
+      } catch (x) {
+        if (x.code === 'key') { err.textContent = '기기 정보가 맞지 않아요. 관리자에게 알려 주세요.'; return; }
+        err.textContent = x.message;
+      }
+    };
+    $('#jnMaster').onclick = masterLogin;
+  }
+  function waitHtml() {
+    return loginShell(`<div class="set" style="text-align:center">
+      <p><b>${esc(C.name)}</b> 님, 승인을 기다리는 중이에요.</p>
+      <div class="code">${esc(C.code || '----')}</div>
+      <p>관리자에게 이 <b>확인 번호</b>를 보여 주세요.<br>관리자가 승인하면 저절로 열려요.</p>
+      <p class="small muted" id="wtDesc"></p>
+      <div class="err" id="wtErr"></div>
+      <button class="btn" id="wtCheck">지금 확인하기</button>
+      <div class="line" style="justify-content:center"><button class="btn ghost sm" id="wtName">이름 다시 쓰기</button><button class="btn ghost sm" id="wtMaster">관리자(마스터)로 들어가기</button></div></div>`);
+  }
+  function bindWait() {
+    S.deviceDesc().then(d => { const el = $('#wtDesc'); if (el) el.textContent = '이 기기: ' + d; });
+    const check = async (manual) => {
+      try {
+        await S.call('hello', {}, 25000);
+        if (C.status === '승인') { clearInterval(pollTimer); toast('승인됐어요! 기록을 받는 중이에요'); C.since = 0; S.saveCfg(); render(); await S.fullReload(); offerTutorial(); }
+      } catch (x) {
+        if (S.authFail(x)) { if (C.status !== '대기') render(); else if (manual) $('#wtErr').textContent = '아직 승인 전이에요.'; return; }
+        if (manual) $('#wtErr').textContent = x.message;
+      }
+    };
+    $('#wtCheck').onclick = () => check(true);
+    $('#wtName').onclick = () => { C.status = ''; S.saveCfg(); render(); };
+    $('#wtMaster').onclick = masterLogin;
+    pollTimer = setInterval(() => { if (document.visibilityState === 'visible') check(false); }, 6000);
+  }
+  // 마스터 암호로 들어가기: 이 기기가 마스터로 저장됨(휴대폰을 바꿨을 때도 이렇게)
+  async function masterLogin() {
+    const ok = await modal(`<h3>관리자(마스터)로 들어가기</h3>
+      <p class="msg">구글 시트 <b>설정</b> 탭 B3 칸의 마스터 암호를 넣으세요.\n이 기기가 마스터 기기로 저장되어 다음부터는 저절로 마스터로 열려요.</p>
+      <label class="field"><span>이름</span><input id="mNm" value="${esc(C.name)}" placeholder="예: 홍길동"></label>
+      <label class="field"><span>마스터 암호</span><input id="mPw" type="password"></label>`,
+      [{ label: '취소', val: false }, { label: '들어가기', val: true, cls: 'pri' }]);
+    if (!ok) return false;
+    const name = $('#mNm').value.trim().replace(/\s+/g, ''), mpass = $('#mPw').value.trim();
+    if (name.length < 2) { toast('이름을 두 글자 이상 넣어 주세요'); return false; }
+    toast('확인하는 중…');
+    try {
+      await S.call('master', { name, mpass, desc: await S.deviceDesc() }, 30000);
+      toast('마스터로 들어왔어요'); C.since = 0; S.saveCfg(); render(); await S.fullReload(); render();
+      return true;
+    } catch (x) {
+      if (['mpass', 'locked'].includes(x.code)) toast(x.message); else connectHelp(x.code, C.server);
+      return false;
+    }
+  }
+  const isMaster = () => S.online() && C.role === '마스터';
 
   /* ---------- 첫 화면 ---------- */
   function dongCard(d) {
@@ -198,13 +277,14 @@
     const html = `
       <div class="banner hidden" id="banner"><img src="icon-192.png" alt=""><span>홈 화면에 설치하면 아이콘으로 바로 열 수 있어요.</span>
         <button class="btn pri" id="bInst">설치하기</button><button class="btn" id="bFs">전체화면</button><button class="btn ghost" id="bLater">다음에</button></div>
-      <p class="hello"><b>${esc(C.name)}</b> 님, 반가워요 🙂</p>
+      ${waitBar()}
+      <p class="hello"><b>${esc(C.name)}</b> 님, 반가워요 🙂 <button class="link" id="hTut">처음이세요? ▶ 사용법 보기</button></p>
       <form class="searchbox" id="sf"><input id="sq" type="search" placeholder="🔍 호수·이름·전화·내용 찾기 (예: 1807)" enterkeyhint="search"></form>
       <div class="quick">
         <button id="qList"><i>📋</i>구분별 보기</button>
         <button id="qSim"><i>🙏</i>심방대상</button>
         <button id="qRecent"><i>🕘</i>최근 기록</button>
-        <button id="qXls"><i>📥</i>엑셀 받기</button>
+        <button id="qRep"><i>🖨</i>목록·인쇄</button>
       </div>
       ${empty ? `<div class="empty">아직 자료가 없어요.<br>관리자가 <b>설정 → 관리자 → 원래 엑셀 불러오기</b>로<br>1단지·2단지 엑셀 파일을 넣어 주세요.<br><br><button class="btn pri" id="goSet">설정 열기</button></div>` : ''}
       ${keys.map(k => `<h2 class="sec">${esc(k)}단지 <small>${groups[k].length}개 동 · ${groups[k].reduce((a, d) => a + (X.unitsByDong.get(d.id) || []).length, 0)}세대</small></h2>
@@ -217,13 +297,21 @@
         $('#qList').onclick = () => go({ name: 'list' });
         $('#qSim').onclick = () => go({ name: 'simbang' });
         $('#qRecent').onclick = () => go({ name: 'recent' });
-        $('#qXls').onclick = exportAll;
+        $('#qRep').onclick = () => go({ name: 'report' });
+        $('#hTut').onclick = () => startTutorial();
+        bindWaitBar();
         const gs = $('#goSet'); if (gs) gs.onclick = () => go({ name: 'settings' });
         $('#bInst').onclick = installSheet; $('#bFs').onclick = FS.toggle; $('#hInst2').onclick = installSheet;
         $('#bLater').onclick = () => { C.installDismissed = true; S.saveCfg(); paintInstall(); toast('맨 아래나 설정에서 언제든 설치할 수 있어요'); };
       }
     };
   };
+
+  // 마스터에게: 승인을 기다리는 기기가 있으면 첫 화면 위에 알림
+  function waitBar() {
+    return isMaster() && C.waiting ? `<div id="waitBar" class="banner warnb"><span>📱 승인을 기다리는 휴대폰이 <b>${C.waiting}대</b> 있어요.</span><button class="btn pri" id="wbGo">승인하러 가기</button></div>` : '<div id="waitBar"></div>';
+  }
+  function bindWaitBar() { const b = $('#wbGo'); if (b) b.onclick = () => go({ name: 'devices' }); }
 
   /* ---------- 동 화면 ---------- */
   const DONG_FILTER = {};
@@ -232,10 +320,10 @@
     const cur = ar && vs.find(v => v.no === ar.no);
     const lines = vs.slice(0, 2).map(v => `<span class="ln">${visitHtml(v)}</span>`).join('');
     return `<button class="unit ${cur ? 'done' : ''}" data-u="${esc(u.id)}" style="border-left-color:${sCol(u.status)}">
-      <span class="h"><b>${esc(u.ho)}</b>${u.simbang === '1' ? '🙏' : ''}${sTag(u.status)}</span>
-      ${u.memo ? `<span class="who">${esc(firstLine(u.memo))}</span>` : ''}
-      ${cur ? `<span class="now">✓ 오늘 ${esc(RES_LABEL[cur.res] || cur.res)}</span>` : ''}
-      ${lines || '<span class="none">기록 없음</span>'}
+      <span class="l"><b>${esc(u.ho)}</b>${sTag(u.status)}${u.simbang === '1' ? '<span class="sim">🙏 심방</span>' : ''}</span>
+      <span class="r">${u.memo ? `<span class="who">${esc(firstLine(u.memo))}</span>` : ''}
+      ${cur ? `<span class="now">✓ 이번 기록: ${esc(RES_LABEL[cur.res] || cur.res)}${cur.text && cur.text !== cur.res ? ' · ' + esc(cur.text) : ''}</span>` : ''}
+      ${lines || '<span class="none">기록 없음</span>'}</span>
     </button>`;
   }
   function roundStats(r) {
@@ -279,7 +367,7 @@
     if (lastFloor !== null) body += '</div>';
     html += body || '<div class="empty">해당하는 집이 없어요.</div>';
     html += `<div class="noprint" style="display:flex;gap:.5rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap">
-      <button class="btn ghost" id="dXls">📥 ${esc(dong)}동 엑셀 받기</button><button class="btn ghost" id="dPrint">🖨 인쇄</button></div>`;
+      <button class="btn ghost" id="dXls">📥 ${esc(dong)}동 엑셀 받기</button><button class="btn ghost" id="dPrint">🖨 목록 뽑기·인쇄</button></div>`;
     return {
       title: dong + '동', html, bind() {
         document.querySelectorAll('.unit').forEach(b => b.onclick = () => openUnit(b.dataset.u));
@@ -289,7 +377,7 @@
         const e = $('#endR'); if (e) e.onclick = () => { delete C.active[dong]; S.saveCfg(); render(); toast('기록을 마쳤어요. 수고하셨어요!'); };
         const er = $('#editR'); if (er) er.onclick = () => editRound(ar);
         $('#dXls').onclick = () => exportAll([dong]);
-        $('#dPrint').onclick = () => window.print();
+        $('#dPrint').onclick = () => { REP.dongs = [dong]; saveRep(); go({ name: 'report' }); };
       }
     };
   };
@@ -348,7 +436,8 @@
   function autoText(r) { return `${dShort(r.date)}.${WD[new Date(r.date + 'T00:00').getDay()] || ''} ${r.gift || ''}${r.people ? ' (' + r.people + ')' : ''}`.replace(/\s+/g, ' ').trim(); }
 
   async function startRound(dong) {
-    if (S.online()) { toast('최신 기록을 확인하는 중…'); await S.sync(); }
+    // 구글 시트가 느릴 때(처음 깨어날 때 10초 넘게 걸리기도 함) 기다리지 않음: 최대 3초만 보고 바로 시작
+    if (S.online() && !S.sandboxed) { toast('최신 기록을 확인하는 중…'); await Promise.race([S.sync(), new Promise(r => setTimeout(r, 3000))]); }
     const rs = ix().roundsByDong.get(dong) || [];
     const t = rs.filter(r => r.date === today()).pop();
     if (t) {
@@ -601,102 +690,170 @@
   VIEWS.settings = () => {
     const sa = isStandalone();
     const st = S.state;
+    const chips = (list, cur, attr) => `<div class="chips">${list.map(([v, l]) => `<button class="chip ${cur === v ? 'on' : ''}" ${attr}="${v}">${l}</button>`).join('')}</div>`;
+    let admin;
+    if (isMaster()) admin = masterHtml();
+    else if (!C.server) admin = adminOpen ? localAdminHtml() : `<p>엑셀 불러오기, 구글 시트 연결은 관리자만 해요.</p><button class="btn sm" id="sAdmin">관리자 메뉴 열기</button>`;
+    else admin = `<p>기기 승인, 엑셀 불러오기, 담당자 고치기는 관리자(마스터)만 할 수 있어요.</p><button class="btn sm" id="sMaster">관리자(마스터)로 들어가기</button>`;
     const html = `<div class="set">
       <div class="card set"><h2 class="sec" style="margin:0">내 정보</h2>
-        <div class="line"><span>이름: ${esc(C.name)}</span><button class="btn sm" id="sName">이름 바꾸기</button></div>
-        <div class="line"><span>글자 크기</span><div class="chips">${['보통', '크게', '아주 크게'].map((l, i) => `<button class="chip ${(C.font || 0) === i ? 'on' : ''}" data-font="${i}">${l}</button>`).join('')}</div></div>
+        <div class="line"><span>이름: ${esc(C.name)}${isMaster() ? ' <span class="tag" style="background:var(--accent)">마스터</span>' : ''}</span>${C.server ? '' : '<button class="btn sm" id="sName">이름 바꾸기</button>'}</div>
+        ${C.server ? `<p>이 기기: <span id="sDesc">…</span>${C.code ? ` · 확인 번호 ${esc(C.code)}` : ''}<br>이름을 바꾸려면 관리자에게 말씀해 주세요.</p>` : ''}
       </div>
       <div class="card set"><h2 class="sec" style="margin:0">화면</h2>
+        <div class="line"><span>화면 색</span>${chips([['light', '☀️ 밝게'], ['dark', '🌙 어둡게'], ['auto', '기기 설정대로']], C.theme || 'light', 'data-theme-set')}</div>
+        <div class="line"><span>글자 크기</span>${chips([[0, '보통'], [1, '크게'], [2, '아주 크게']], C.font || 0, 'data-font')}</div>
         <div class="line ${FS.supported() ? '' : 'hidden'}"><span>전체화면</span><button class="btn sm" id="sFS">${FS.on() ? '전체화면 끝내기' : '전체화면 켜기'}</button></div>
         <label class="toggle ${FS.supported() ? '' : 'hidden'}"><input type="checkbox" id="sAuto" ${C.autoFS ? 'checked' : ''}> 자동 전체화면 (화면을 처음 누르면 전체화면)</label>
         <div class="line ${sa ? 'hidden' : ''}"><span>홈 화면에 설치</span><button class="btn sm pri" id="sInst">홈 화면에 설치하기</button></div>
         ${sa ? '<p>지금 홈 화면 앱으로 실행 중이에요.</p>' : ''}
+        <div class="line"><span>사용법</span><button class="btn sm" id="sTut">▶ 사용법 둘러보기</button></div>
       </div>
       <div class="card set"><h2 class="sec" style="margin:0">자료</h2>
-        <p>${S.online() ? `구글 시트와 연결됨 · ${st.lastOk ? '마지막으로 맞춘 때 ' + timeStr(st.lastOk) : '아직 맞추지 않음'}${S.outbox.length ? ` · <b style="color:var(--warn)">못 보낸 기록 ${S.outbox.length}개</b>` : ''}${st.error && st.error !== 'pass' ? '<br>연결 문제: ' + esc(st.error) : ''}` : '구글 시트와 연결되지 않아 이 기기에만 저장돼요.'}</p>
-        <div class="line">${S.online() ? '<button class="btn sm" id="sSync">지금 맞추기</button>' : ''}<button class="btn sm" id="sXls">📥 전체 엑셀 받기</button><button class="btn sm" id="sLog">🕘 고친 기록 보기</button></div>
+        <p>${S.online() ? `구글 시트와 연결됨 · ${st.lastOk ? '마지막으로 맞춘 때 ' + timeStr(st.lastOk) : '아직 맞추지 않음'}${S.outbox.length ? ` · <b style="color:var(--warn)">못 보낸 기록 ${S.outbox.length}개</b>` : ''}${st.error ? '<br>연결 문제: ' + esc(st.error) : ''}` : '구글 시트와 연결되지 않아 이 기기에만 저장돼요.'}</p>
+        <div class="line">${S.online() ? '<button class="btn sm" id="sSync">지금 맞추기</button>' : ''}<button class="btn sm" id="sRep">📄 목록 뽑기·인쇄</button><button class="btn sm" id="sXls">📥 전체 엑셀 받기</button><button class="btn sm" id="sLog">🕘 고친 기록 보기</button></div>
       </div>
-      <div class="card set"><h2 class="sec" style="margin:0">관리자 <small>교회 담당자만</small></h2>
-        ${adminOpen ? adminHtml() : `<p>엑셀 불러오기, 구글 시트 연결, 담당자 고치기는 관리자만 할 수 있어요.</p><button class="btn sm" id="sAdmin">관리자 메뉴 열기</button>`}
-      </div>
+      <div class="card set"><h2 class="sec" style="margin:0">관리자 <small>교회 담당자만</small></h2>${admin}</div>
       <p class="small muted" style="text-align:center">전도현황 · 자료는 교회 구글 시트에만 저장되고 이 앱 주소에는 남지 않아요.</p>
     </div>`;
     return { title: '설정', html, bind: bindSettings };
   };
-  function adminHtml() {
-    const X = ix();
-    const join = C.server ? location.origin + location.pathname + '#s=' + encodeURIComponent(C.server) : '';
-    return `
+  const connectHtml = () => `
       <div class="field"><span>구글 시트 연결 주소 (Apps Script 웹 앱 주소)</span><input id="aSrv" value="${esc(C.server)}" placeholder="https://script.google.com/macros/s/…/exec"></div>
-      <div class="two"><label class="field"><span>교회 암호</span><input id="aPass" value="${esc(C.pass)}"></label><label class="field"><span>관리자 암호</span><input id="aAdm" type="password" value="${esc(C.admin)}"></label></div>
-      <div class="line"><button class="btn sm pri" id="aSave">연결 저장·확인</button><button class="btn sm" id="aHow">연결 방법 보기</button>${C.server ? '<button class="btn sm" id="aOff">연결 끊기</button>' : ''}</div>
-      ${join ? `<div class="field"><span>초대 링크 (집사님·권사님께 보내 주세요. 여시면 교회 암호와 이름만 넣으면 돼요)</span><input id="aJoin" readonly value="${esc(join)}"><button class="btn sm" id="aCopy" style="align-self:flex-start">링크 복사</button></div>` : ''}
-      <hr style="border:0;border-top:1px solid var(--line)">
+      <div class="line"><button class="btn sm pri" id="aSave">연결하고 마스터로 들어가기</button><button class="btn sm" id="aHow">연결 방법 보기</button></div>`;
+  const toolsHtml = () => {
+    const X = ix();
+    return `<hr class="hr">
       <div class="field"><span>원래 엑셀 불러오기 (1단지·2단지 최신 파일을 함께 고르세요)</span>
         <input type="file" id="aFile" accept=".xlsx,.xls" multiple></div>
-      <hr style="border:0;border-top:1px solid var(--line)">
+      <hr class="hr">
       <div class="field"><span>동별 담당자</span>${X.dongs.map(d => `<div class="line"><span style="flex:0 0 4rem">${esc(d.id)}동</span><input data-mgr="${esc(d.id)}" value="${esc(d.managers || '')}" style="flex:1"></div>`).join('') || '<p>자료를 불러오면 나와요.</p>'}
         ${X.dongs.length ? '<button class="btn sm" id="aMgr" style="align-self:flex-start">담당자 저장</button>' : ''}</div>
-      <hr style="border:0;border-top:1px solid var(--line)">
-      <div class="line"><button class="btn sm" id="aReload">구글 시트에서 처음부터 다시 받기</button><button class="btn sm warn" id="aWipe">이 기기 자료 지우기</button></div>`;
+      <hr class="hr">
+      <div class="line">${S.online() ? '<button class="btn sm" id="aReload">구글 시트에서 처음부터 다시 받기</button>' : ''}<button class="btn sm warn" id="aWipe">이 기기 자료 지우기</button></div>`;
+  };
+  function localAdminHtml() { return connectHtml() + toolsHtml(); }
+  function masterHtml() {
+    const join = location.origin + location.pathname + '#s=' + encodeURIComponent(C.server);
+    return `<button class="btn pri" id="aDev">📱 기기 승인·관리${C.waiting ? ` <span class="badge">${C.waiting}</span>` : ''}</button>
+      <div class="field"><span>초대 링크 — 새 휴대폰에서 이 링크를 열고 이름을 넣어 승인 요청을 보내면, 여기 ‘기기 승인’에서 승인해 주세요.</span><input id="aJoin" readonly value="${esc(join)}">
+        <div class="line"><button class="btn sm" id="aCopy">링크 복사</button><button class="btn sm" id="aHow">연결 방법 보기</button><button class="btn sm" id="aOff">이 기기 연결 끊기</button></div></div>
+      ${toolsHtml()}`;
   }
   function bindSettings() {
-    $('#sName').onclick = async () => {
+    const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
+    if ($('#sDesc')) S.deviceDesc().then(d => { const el = $('#sDesc'); if (el) el.textContent = d; });
+    on('#sName', async () => {
       const ok = await modal(`<h3>이름 바꾸기</h3><input id="nNm" value="${esc(C.name)}">`, [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }]);
       if (ok) { const n = $('#nNm').value.trim().replace(/\s+/g, ''); if (n.length >= 2) { C.name = n; S.saveCfg(); render(); toast('이름을 바꿨어요'); } }
-    };
+    });
     document.querySelectorAll('[data-font]').forEach(b => b.onclick = () => { C.font = +b.dataset.font; S.saveCfg(); render(); });
-    $('#sFS').onclick = () => { FS.toggle(); };
-    $('#sAuto').onchange = e => { C.autoFS = e.target.checked; S.saveCfg(); };
-    $('#sInst').onclick = installSheet;
-    const sy = $('#sSync'); if (sy) sy.onclick = async () => { await S.sync(); render(); toast(S.state.error ? '연결하지 못했어요: ' + S.state.error : '최신 기록으로 맞췄어요'); };
-    $('#sXls').onclick = () => exportAll();
-    $('#sLog').onclick = () => go({ name: 'log' });
-    const sa = $('#sAdmin');
-    if (sa) sa.onclick = async () => {
-      if (!S.online()) { adminOpen = true; render(); return; }
-      const ok = await modal('<h3>관리자 암호</h3><input id="adP" type="password" placeholder="관리자 암호">', [{ label: '취소', val: false }, { label: '확인', val: true, cls: 'pri' }]);
-      if (!ok) return;
-      const p = $('#adP').value.trim(), old = C.admin; C.admin = p;
-      try { const j = await S.call('hello', {}, 20000); if (!j.admin) throw new Error('admin'); S.saveCfg(); adminOpen = true; render(); }
-      catch (e) { C.admin = old; if (e.message === 'admin') toast('관리자 암호가 맞지 않아요'); else connectHelp(e.code, C.server); }
-    };
-    if (!adminOpen) return;
-    $('#aSave').onclick = async () => {
-      const pass = $('#aPass').value.trim(), adm = $('#aAdm').value.trim();
+    document.querySelectorAll('[data-theme-set]').forEach(b => b.onclick = () => { C.theme = b.dataset.themeSet; S.saveCfg(); render(); });
+    on('#sFS', () => FS.toggle());
+    const au = $('#sAuto'); if (au) au.onchange = e => { C.autoFS = e.target.checked; S.saveCfg(); };
+    on('#sInst', installSheet);
+    on('#sTut', () => startTutorial());
+    on('#sSync', async () => { await S.sync(); render(); toast(S.state.error ? '연결하지 못했어요: ' + S.state.error : '최신 기록으로 맞췄어요'); });
+    on('#sRep', () => go({ name: 'report' }));
+    on('#sXls', () => exportAll());
+    on('#sLog', () => go({ name: 'log' }));
+    on('#sAdmin', () => { adminOpen = true; render(); });
+    on('#sMaster', async () => { if (await masterLogin()) render(); });
+    on('#aDev', () => go({ name: 'devices' }));
+    on('#aCopy', () => copyText($('#aJoin').value));
+    on('#aHow', howToConnect);
+    on('#aOff', async () => {
+      if (await modal('<h3>이 기기의 연결을 끊을까요?</h3><p class="msg">이 기기에서만 끊겨요. 구글 시트의 자료와 다른 휴대폰은 그대로예요.\n다시 연결하려면 마스터 암호가 필요해요.</p>', [{ label: '취소', val: false }, { label: '끊기', val: true, cls: 'warn' }])) {
+        C.server = ''; C.status = ''; C.role = ''; S.saveCfg(); render();
+      }
+    });
+    on('#aSave', async () => {
       const n = normServer($('#aSrv').value);
       if (n.err) { connectHelp(n.err, n.url); return; }
-      const srv = n.url;
-      if (srv) $('#aSrv').value = srv;
-      if (srv && !pass) { toast('교회 암호도 넣어 주세요 (구글 시트 ‘설정’ 탭 B2 칸)'); return; }
-      const old = { server: C.server, pass: C.pass, admin: C.admin };
-      Object.assign(C, { server: srv, pass, admin: adm });
-      if (!srv) { S.saveCfg(); render(); return; }
-      toast('연결하는 중…');
-      try {
-        const j = await S.call('hello', {}, 25000);
-        S.saveCfg(); S.state.error = '';
-        toast(j.admin ? '연결했어요 (관리자 확인됨)' : '연결했어요 (관리자 암호는 맞지 않아요)');
-        await S.sync(); render();
-      } catch (e) { Object.assign(C, old); connectHelp(e.code, srv); }
-    };
-    $('#aHow').onclick = howToConnect;
-    const off = $('#aOff'); if (off) off.onclick = async () => {
-      if (await modal('<h3>연결을 끊을까요?</h3><p class="msg">이 기기에서만 끊겨요. 구글 시트의 자료는 그대로 있어요.</p>', [{ label: '취소', val: false }, { label: '끊기', val: true, cls: 'warn' }])) { C.server = ''; C.pass = ''; S.saveCfg(); render(); }
-    };
-    const cp = $('#aCopy'); if (cp) cp.onclick = () => copyText($('#aJoin').value);
-    $('#aFile').onchange = e => importFiles([...e.target.files]);
-    const mg = $('#aMgr'); if (mg) mg.onclick = () => {
+      if (!n.url) { toast('구글 시트 연결 주소를 넣어 주세요'); return; }
+      const old = { server: C.server, status: C.status, role: C.role };
+      C.server = n.url; C.status = ''; S.saveCfg();
+      if (!(await masterLogin())) { Object.assign(C, old); S.saveCfg(); render(); }
+    });
+    const f = $('#aFile'); if (f) f.onchange = e => importFiles([...e.target.files]);
+    on('#aMgr', () => {
       let n = 0;
       document.querySelectorAll('[data-mgr]').forEach(i => { const d = D.dongs.get(i.dataset.mgr); const v = i.value.trim(); if (d && (d.managers || '') !== v) { S.put('dongs', { id: d.id, managers: v }); n++; } });
       toast(n ? `담당자 ${n}곳을 저장했어요` : '바뀐 것이 없어요'); render();
-    };
-    $('#aReload').onclick = async () => { if (!S.online()) { toast('구글 시트와 연결되어 있지 않아요'); return; } if (S.outbox.length) { toast('못 보낸 기록이 있어서 먼저 보내요'); } await S.sync(); await S.fullReload(); render(); toast('다시 받았어요'); };
-    $('#aWipe').onclick = async () => {
+    });
+    on('#aReload', async () => { if (S.outbox.length) toast('못 보낸 기록이 있어서 먼저 보내요'); await S.sync(); await S.fullReload(); render(); toast('다시 받았어요'); });
+    on('#aWipe', async () => {
       if (!(await modal('<h3>이 기기의 자료를 지울까요?</h3><p class="msg">이 휴대폰에 저장된 자료만 지워요.' + (S.online() ? '\n구글 시트의 자료는 그대로 있어서 다시 받을 수 있어요.' : '\n<b>구글 시트와 연결되어 있지 않아 되살릴 수 없어요.</b>') + '</p>', [{ label: '취소', val: false }, { label: '지우기', val: true, cls: 'warn' }]))) return;
       S.replaceAll({}); C.since = 0; C.active = {}; S.saveCfg(); render(); toast('지웠어요');
-    };
+    });
   }
+
+  /* ---------- 기기 승인·관리 (마스터) ---------- */
+  let devList = null, devErr = '';
+  async function loadDevices() {
+    try { const j = await S.call('devices', {}, 30000); devList = j.devices; devErr = ''; C.waiting = devList.filter(d => d.status === '대기').length; S.saveCfg(); }
+    catch (e) { devErr = e.message; }
+    if (view.name === 'devices') render();
+  }
+  function devRow(d) {
+    const me = S.device && d.id === S.device.id;
+    const st = { 대기: 'var(--s-대상)', 승인: 'var(--accent)', 거절: 'var(--warn)', 끊김: 'var(--s-부재)' }[d.status] || 'var(--s-기타)';
+    const btns = d.status === '대기'
+      ? `<button class="btn sm pri" data-ap="${esc(d.id)}">승인</button><button class="btn sm ghost" data-rj="${esc(d.id)}">거절</button>`
+      : d.status === '승인'
+        ? (me ? '<span class="small muted">지금 쓰는 기기</span>' : `<button class="btn sm ghost" data-rn="${esc(d.id)}">이름</button><button class="btn sm ghost" data-rl="${esc(d.id)}">${d.role === '마스터' ? '일반으로' : '마스터로'}</button><button class="btn sm ghost" data-rv="${esc(d.id)}">끊기</button>`)
+        : `<button class="btn sm ghost" data-ap="${esc(d.id)}">다시 승인</button>`;
+    return `<div class="devit"><div class="tx"><b>${esc(d.name)}</b> <span class="tag" style="background:${st}">${esc(d.status)}</span>${d.role === '마스터' ? ' <span class="tag" style="background:var(--s-특별)">마스터</span>' : ''}
+      <br><span class="small muted">${esc(d.desc || '')}</span>
+      <br><span class="small muted">확인 번호 <b>${esc(d.code || '-')}</b> · 요청 ${esc(timeStr(d.requested))}${d.lastSeen ? ' · 마지막 접속 ' + esc(timeStr(d.lastSeen)) : ''}${d.approvedBy ? ' · 승인 ' + esc(d.approvedBy) : ''}</span></div>
+      <div class="line">${btns}</div></div>`;
+  }
+  VIEWS.devices = () => {
+    if (!isMaster()) return { title: '기기 관리', html: '<div class="empty">관리자(마스터)만 볼 수 있어요.</div>' };
+    if (devList === null && !devErr) loadDevices();
+    const L = devList || [];
+    const wait = L.filter(d => d.status === '대기'), use = L.filter(d => d.status === '승인'), old = L.filter(d => d.status !== '대기' && d.status !== '승인');
+    const html = `<p class="muted small" style="margin:.3rem .2rem .7rem">새 휴대폰에서 이름을 넣고 승인 요청을 보내면 여기에 나와요. 그 휴대폰 화면의 <b>확인 번호</b>와 같은지 보고 승인하세요.</p>
+      <div class="line" style="margin-bottom:.6rem"><button class="btn sm" id="dvRe">새로 보기</button></div>
+      ${devErr ? `<p class="err">${esc(devErr)}</p>` : ''}${devList === null && !devErr ? '<p class="muted">불러오는 중…</p>' : ''}
+      <h2 class="sec">승인을 기다리는 기기 <small>${wait.length}</small></h2><div class="card">${wait.map(devRow).join('') || '<p class="muted">없어요.</p>'}</div>
+      <h2 class="sec">쓰고 있는 기기 <small>${use.length}</small></h2><div class="card">${use.map(devRow).join('') || '<p class="muted">없어요.</p>'}</div>
+      ${old.length ? `<h2 class="sec">거절·끊긴 기기 <small>${old.length}</small></h2><div class="card">${old.map(devRow).join('')}</div>` : ''}`;
+    return {
+      title: '기기 승인·관리', html, bind() {
+        $('#dvRe').onclick = () => { devList = null; render(); };
+        const act = async (action, extra, msg) => {
+          try { const j = await S.call(action, extra, 30000); devList = j.devices; C.waiting = devList.filter(d => d.status === '대기').length; S.saveCfg(); render(); toast(msg); }
+          catch (e) { toast(e.message); }
+        };
+        const find = id => L.find(d => d.id === id);
+        document.querySelectorAll('[data-ap]').forEach(b => b.onclick = async () => {
+          const d = find(b.dataset.ap);
+          const same = use.filter(x => x.name === d.name && x.id !== d.id && x.role !== '마스터');
+          const ok = await modal(`<h3>이 기기를 승인할까요?</h3>
+            <p class="msg">${esc(d.desc || '')}\n확인 번호 <b>${esc(d.code || '-')}</b> — 그 휴대폰 화면의 번호와 같은지 확인하세요.</p>
+            <label class="field"><span>이름 (바꿀 수 있어요)</span><input id="apNm" value="${esc(d.name)}"></label>
+            ${same.length ? `<label class="toggle"><input type="checkbox" id="apRep" checked> 같은 이름의 예전 기기 ${same.length}대는 끊기 (휴대폰을 바꾼 경우)</label>` : ''}`,
+            [{ label: '취소', val: false }, { label: '승인', val: true, cls: 'pri' }]);
+          if (!ok) return;
+          act('approve', { target: d.id, name: $('#apNm').value.trim(), replace: !!($('#apRep') && $('#apRep').checked) }, `${d.name} 님 기기를 승인했어요`);
+        });
+        document.querySelectorAll('[data-rj]').forEach(b => b.onclick = () => act('reject', { target: b.dataset.rj }, '거절했어요'));
+        document.querySelectorAll('[data-rv]').forEach(b => b.onclick = async () => {
+          const d = find(b.dataset.rv);
+          if (await modal(`<h3>${esc(d.name)} 님 기기를 끊을까요?</h3><p class="msg">${esc(d.desc || '')}\n이 기기에서는 더 이상 기록을 보거나 쓸 수 없어요. 다시 승인할 수 있어요.</p>`, [{ label: '취소', val: false }, { label: '끊기', val: true, cls: 'warn' }])) act('revoke', { target: d.id }, '끊었어요');
+        });
+        document.querySelectorAll('[data-rn]').forEach(b => b.onclick = async () => {
+          const d = find(b.dataset.rn);
+          if (await modal(`<h3>이름 바꾸기</h3><input id="rnNm" value="${esc(d.name)}">`, [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }])) act('rename', { target: d.id, name: $('#rnNm').value.trim() }, '이름을 바꿨어요');
+        });
+        document.querySelectorAll('[data-rl]').forEach(b => b.onclick = async () => {
+          const d = find(b.dataset.rl), to = d.role === '마스터' ? '일반' : '마스터';
+          if (await modal(`<h3>${esc(d.name)} 님을 ${to === '마스터' ? '마스터로' : '일반으로'} 바꿀까요?</h3><p class="msg">${to === '마스터' ? '마스터는 기기 승인, 엑셀 불러오기, 담당자 고치기를 할 수 있어요.' : '일반은 기록 보기·쓰기만 할 수 있어요.'}</p>`, [{ label: '취소', val: false }, { label: '바꾸기', val: true, cls: 'pri' }])) act('role', { target: d.id, role: to }, '바꿨어요');
+        });
+      }
+    };
+  };
   function copyText(t) {
     const done = () => toast('복사했어요. 카카오톡 등에 붙여 넣으세요');
     try { navigator.clipboard.writeText(t).then(done, () => fallback()); } catch (e) { fallback(); }
@@ -721,7 +878,8 @@
       sheeturl: ['구글 시트 주소예요', '붙여 넣은 주소는 <b>구글 시트</b> 주소예요.\n시트의 <b>확장 프로그램 → Apps Script → 배포 → 배포 관리</b>에서 ‘웹 앱’ <b>URL</b>(…/exec 로 끝남)을 복사해 주세요.'],
       badurl: ['주소가 달라요', '주소는 <b>https://script.google.com/macros/s/…/exec</b> 모양이어야 해요.'],
       devurl: ['테스트용 주소예요', '…/dev 로 끝나는 주소는 만든 사람만 쓸 수 있어요.\n<b>배포 → 새 배포 → 웹 앱</b>으로 배포해서 나온 <b>…/exec</b> 주소를 넣어 주세요.'],
-      pass: ['교회 암호가 달라요', '구글 시트의 <b>설정</b> 탭 <b>B2 칸</b>에 적은 암호와 똑같이 넣어 주세요.\n암호가 0으로 시작하면 시트가 0을 지웠을 수 있어요. 그럴 땐 0으로 시작하지 않는 암호로 바꿔 주세요.'],
+      pass: ['서버 코드가 예전 판이에요', 'Apps Script 코드가 예전 판이에요. 설정 → 관리자 → <b>연결 방법 보기 → 서버 코드 복사</b>로 새 코드를 붙여 넣고, <b>setup ▶ 실행</b> 뒤 <b>배포 관리 → ✏️ → 버전: 새 버전 → 배포</b>를 해 주세요.'],
+      device: ['서버 코드가 예전 판이거나 승인 전이에요', '새 서버 코드로 바꿨는지 확인해 주세요.\n(연결 방법 보기 → 서버 코드 복사 → setup 실행 → 새 버전으로 배포)'],
       setup: ['setup 을 실행하지 않았어요', 'Apps Script 위쪽 함수 목록에서 <b>setup</b> 을 고르고 <b>▶ 실행</b>을 누른 뒤 권한을 허용해 주세요.\n그다음 <b>배포 → 배포 관리 → ✏️ → 버전: 새 버전 → 배포</b>를 해 주세요.'],
       notjson: ['구글이 로그인 화면을 보냈어요', '웹 앱 배포 설정이 맞지 않아요. <b>배포 → 배포 관리 → ✏️(수정)</b>에서\n• 다음 사용자 인증 정보로 실행: <b>나</b>\n• 액세스 권한이 있는 사용자: <b>모든 사용자</b> (‘Google 계정이 있는 모든 사용자’가 아님)\n로 바꾸고 <b>버전: 새 버전 → 배포</b>를 눌러 주세요.'],
       net: ['구글 시트 주소에 닿지 못했어요', '대부분 아래 둘 중 하나예요.\n① 배포 설정: <b>배포 → 배포 관리 → ✏️</b>에서 실행: <b>나</b>, 액세스: <b>모든 사용자</b> → <b>버전: 새 버전 → 배포</b>\n② 주소가 틀림: ‘웹 앱’ <b>URL</b>(…/exec)을 다시 복사\n\n아래 <b>주소 열어 보기</b>를 눌러 새 창에 “전도현황 서버가 작동 중입니다”가 나오면 주소와 배포는 맞는 거예요. 구글 로그인 화면이나 “찾을 수 없음”이 나오면 ①·②를 확인해 주세요.'],
@@ -739,10 +897,11 @@
         <li>메뉴 <b>확장 프로그램 → Apps Script</b> 를 누릅니다.</li>
         <li>원래 있던 글을 모두 지우고, 아래 <b>서버 코드 복사</b>로 복사한 코드를 붙여 넣은 뒤 💾 저장합니다.</li>
         <li>위쪽 함수 목록에서 <code>setup</code> 을 고르고 <b>▶ 실행</b> → 권한 검토 → 계정 선택 → <b>고급 → 이동 → 허용</b>.</li>
-        <li>시트로 돌아가 <b>설정</b> 탭의 B2(교회 암호)·B3(관리자 암호)를 원하는 값으로 바꿉니다.</li>
+        <li>시트로 돌아가 <b>설정</b> 탭의 <b>B3(마스터 암호)</b>를 원하는 값으로 바꿉니다. (암호는 바꾸면 바로 적용돼요)</li>
         <li>Apps Script에서 <b>배포 → 새 배포 → 유형(⚙): 웹 앱</b>, 다음 사용자 인증 정보로 실행: <b>나</b>, 액세스 권한이 있는 사용자: <b>모든 사용자</b>(‘Google 계정이 있는 모든 사용자’ 아님) → 배포. 코드를 고친 뒤에는 <b>배포 관리 → ✏️ → 버전: 새 버전</b>으로 다시 배포해야 바뀌어요.</li>
-        <li>나온 <b>웹 앱 URL</b>(…/exec 로 끝남. 브라우저로 열면 “전도현황 서버가 작동 중입니다”가 나와야 해요)을 복사해 이 화면의 ‘구글 시트 연결 주소’에 넣고, 두 암호를 넣어 <b>연결 저장·확인</b>.</li>
-        <li><b>원래 엑셀 불러오기</b>로 1단지·2단지 최신 파일을 넣고, <b>초대 링크</b>를 집사님·권사님께 보내면 끝!</li>
+        <li>나온 <b>웹 앱 URL</b>(…/exec 로 끝남. 브라우저로 열면 “전도현황 서버가 작동 중입니다”가 나와야 해요)을 복사해 이 화면의 ‘구글 시트 연결 주소’에 넣고 <b>연결하고 마스터로 들어가기</b> → 마스터 암호를 넣습니다. 이 기기가 마스터 기기가 돼요.</li>
+        <li><b>원래 엑셀 불러오기</b>로 1단지·2단지 최신 파일을 넣습니다.</li>
+        <li>집사님·권사님 휴대폰에서 <b>초대 링크</b>를 열고 이름을 넣어 승인 요청 → 내 휴대폰의 <b>기기 승인</b>에서 확인 번호를 보고 승인하면 끝!</li>
       </ol>`, [{ label: '서버 코드 복사', val: 'copy' }, { label: '닫기', val: true, cls: 'pri' }]).then(async v => {
       if (v !== 'copy') return;
       try { const t = await (await fetch('server/Code.gs', { cache: 'no-store' })).text(); await navigator.clipboard.writeText(t); toast('서버 코드를 복사했어요'); }
@@ -824,6 +983,244 @@
   };
   const TABLE_OK = t => S.TABLES.includes(t);
 
+  /* ---------- 목록 뽑기·인쇄 ---------- */
+  // 원하는 동·구분·정보만 골라 한 줄씩 표로 보여 주고, 그대로 인쇄하거나 엑셀로 받음
+  const REP_DEF = { dongs: [], statuses: [], simOnly: false, lastRes: [], cols: { status: 1, sim: 1, memo: 1, recent: 2, last: 1, count: 1 }, sort: 'ho-desc', group: true, pageBreak: false };
+  const REP = Object.assign({}, REP_DEF, C.report || {}, { cols: Object.assign({}, REP_DEF.cols, (C.report || {}).cols || {}) });
+  function saveRep() { C.report = REP; S.saveCfg(); }
+  const SORTS = [['ho-desc', '동·호수 (높은 층부터)'], ['ho-asc', '동·호수 (낮은 층부터)'], ['status', '구분 순서 (대상·특별대상 먼저)'], ['last-old', '오래 안 간 집 먼저'], ['last-new', '최근에 다녀온 집 먼저'], ['count', '많이 다녀온 집 먼저'], ['res', '최근 결과 (만남→부재→거부)']];
+  const RES_ORDER = { 만남: 0, 문앞: 1, 부재: 2, 거부: 3, 이사: 4 };
+  function lastDate(vs) { for (const v of vs) { const r = roundOf(v); if (r && r.date) return r.date; } return ''; }
+  function repRows() {
+    const X = ix();
+    let out = [];
+    X.dongs.forEach(d => {
+      if (REP.dongs.length && !REP.dongs.includes(d.id)) return;
+      (X.unitsByDong.get(d.id) || []).forEach(u => {
+        if (REP.statuses.length && !REP.statuses.includes(u.status)) return;
+        if (REP.simOnly && u.simbang !== '1' && u.status !== '특별') return;
+        const vs = X.visitsByUnit.get(u.id) || [];
+        if (REP.lastRes.length && !(vs[0] && REP.lastRes.includes(vs[0].res))) return;
+        out.push({ u, d, vs, last: lastDate(vs) });
+      });
+    });
+    const byHo = (a, b, dir) => String(a.d.id).localeCompare(String(b.d.id)) || dir * (floorOf(a.u.ho) - floorOf(b.u.ho)) || (+a.u.ho % 100) - (+b.u.ho % 100);
+    const cmp = {
+      'ho-desc': (a, b) => byHo(a, b, -1), 'ho-asc': (a, b) => byHo(a, b, 1),
+      status: (a, b) => STATUS.indexOf(a.u.status) - STATUS.indexOf(b.u.status) || byHo(a, b, -1),
+      'last-old': (a, b) => (a.last || '0').localeCompare(b.last || '0') || byHo(a, b, -1),
+      'last-new': (a, b) => (b.last || '0').localeCompare(a.last || '0') || byHo(a, b, -1),
+      count: (a, b) => b.vs.length - a.vs.length || byHo(a, b, -1),
+      res: (a, b) => (a.vs[0] ? RES_ORDER[a.vs[0].res] ?? 5 : 9) - (b.vs[0] ? RES_ORDER[b.vs[0].res] ?? 5 : 9) || byHo(a, b, -1)
+    }[REP.sort] || ((a, b) => byHo(a, b, -1));
+    // 동별로 묶을 때는 동 순서를 먼저 지킴
+    out.sort(REP.group ? (a, b) => String(a.d.id).localeCompare(String(b.d.id)) || cmp(a, b) : cmp);
+    return out;
+  }
+  function repCols() {
+    const c = REP.cols, cols = [];
+    if (!REP.group) cols.push(['동', x => esc(x.d.id), 'c-dong']);
+    cols.push(['호수', x => `<b>${esc(x.u.ho)}</b>`, 'c-ho']);
+    if (c.status) cols.push(['구분', x => sTag(x.u.status), 'c-st']);
+    if (c.sim) cols.push(['심방', x => x.u.simbang === '1' ? '🙏' : '', 'c-sim']);
+    if (c.memo) cols.push(['기본 메모', x => esc(x.u.memo).replace(/\n/g, '<br>'), 'c-memo']);
+    if (c.last) cols.push(['마지막 방문', x => esc(dShort(x.last)), 'c-last']);
+    if (c.count) cols.push(['횟수', x => x.vs.length || '', 'c-cnt']);
+    if (c.recent) cols.push([c.recent >= 99 ? '전체 기록' : `최근 기록 ${c.recent}개`, x => x.vs.slice(0, c.recent).map(v => `<div class="rl">${visitHtml(v)}</div>`).join(''), 'c-rec']);
+    return cols;
+  }
+  function summaryChips(units) {
+    const c = {}; units.forEach(u => c[u.status] = (c[u.status] || 0) + 1);
+    return STATUS.filter(s => c[s]).map(s => `<span class="sc" style="--c:${sCol(s)}">${STATUS_LABEL[s]} <b>${c[s]}</b></span>`).join('');
+  }
+  VIEWS.report = () => {
+    const X = ix(), rows = repRows(), cols = repCols();
+    const chip = (on, attr, val, label) => `<button class="chip ${on ? 'on' : ''}" ${attr}="${esc(val)}">${label}</button>`;
+    const colOpt = [['status', '구분'], ['sim', '심방 표시'], ['memo', '기본 메모'], ['last', '마지막 방문 날'], ['count', '다녀간 횟수']];
+    const opts = `<details class="card noprint repopt" ${C.repOpen === false ? '' : 'open'} id="repDet"><summary><b>무엇을 뽑을지 고르기</b> <span class="muted small">(누르면 접혀요)</span></summary>
+      <div class="field"><span>동 <small class="muted">(아무것도 안 고르면 모든 동)</small></span><div class="chips">${X.dongs.map(d => chip(REP.dongs.includes(d.id), 'data-rd', d.id, esc(d.id) + '동')).join('')}</div></div>
+      <div class="field"><span>구분 <small class="muted">(아무것도 안 고르면 모두)</small></span><div class="chips">${STATUS.map(s => chip(REP.statuses.includes(s), 'data-rs', s, `<i class="dot" style="background:${sCol(s)}"></i>${STATUS_LABEL[s]}`)).join('')}
+        <button class="chip" id="rsTarget">전도 대상만</button></div></div>
+      <div class="field"><span>최근 결과 <small class="muted">(아무것도 안 고르면 모두)</small></span><div class="chips">${RES.map(([k, l]) => chip(REP.lastRes.includes(k), 'data-rr', k, l)).join('')}</div></div>
+      <label class="toggle"><input type="checkbox" id="rSim" ${REP.simOnly ? 'checked' : ''}> 🙏 심방대상만</label>
+      <div class="field"><span>보여 줄 정보</span><div class="chips">${colOpt.map(([k, l]) => chip(REP.cols[k], 'data-rc', k, l)).join('')}</div></div>
+      <div class="field"><span>최근 기록 몇 개</span><div class="chips">${[[0, '안 보임'], [1, '1개'], [2, '2개'], [3, '3개'], [5, '5개'], [99, '전부']].map(([v, l]) => chip(REP.cols.recent === v, 'data-rn', v, l)).join('')}</div></div>
+      <label class="field"><span>정렬</span><select id="rSort">${SORTS.map(([v, l]) => `<option value="${v}" ${REP.sort === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="toggle"><input type="checkbox" id="rGroup" ${REP.group ? 'checked' : ''}> 동별로 나눠서 보기 (동마다 요약 표시)</label>
+      <label class="toggle"><input type="checkbox" id="rPage" ${REP.pageBreak ? 'checked' : ''}> 인쇄할 때 동마다 새 장에</label>
+      <div class="line"><button class="btn sm ghost" id="rReset">처음대로</button></div>
+    </details>
+    <div class="line noprint" style="margin:.7rem 0"><span class="muted"><b>${rows.length}</b>세대</span><span style="flex:1"></span><button class="btn pri" id="rPrint">🖨 인쇄</button><button class="btn" id="rXls">📥 엑셀</button></div>`;
+    const thead = `<thead><tr>${cols.map(c => `<th class="${c[2]}">${c[0]}</th>`).join('')}</tr></thead>`;
+    const tr = x => `<tr style="--c:${sCol(x.u.status)}">${cols.map(c => `<td class="${c[2]}">${c[1](x)}</td>`).join('')}</tr>`;
+    let body = '';
+    if (REP.group) {
+      const byD = new Map(); rows.forEach(x => { if (!byD.has(x.d.id)) byD.set(x.d.id, []); byD.get(x.d.id).push(x); });
+      let first = true;
+      byD.forEach((list, id) => {
+        const d = D.dongs.get(id) || { managers: '' };
+        const rs = X.roundsByDong.get(id) || [], last = rs[rs.length - 1];
+        body += `<section class="repg ${REP.pageBreak && !first ? 'pb' : ''}"><h2 class="sec">${esc(id)}동 <small>담당 ${esc(d.managers || '-')} · ${list.length}세대${last ? ' · 최근 ' + esc(roundLabel(last)) : ''}</small></h2>
+          <div class="scs">${summaryChips(list.map(x => x.u))}</div>
+          <div class="tw"><table class="rep">${thead}<tbody>${list.map(tr).join('')}</tbody></table></div></section>`;
+        first = false;
+      });
+    } else body = `<div class="scs">${summaryChips(rows.map(x => x.u))}</div><div class="tw"><table class="rep">${thead}<tbody>${rows.map(tr).join('')}</tbody></table></div>`;
+    const filt = [REP.dongs.length ? REP.dongs.map(x => x + '동').join(', ') : '모든 동', REP.statuses.length ? REP.statuses.map(s => STATUS_LABEL[s]).join(', ') : '', REP.simOnly ? '심방대상만' : '', REP.lastRes.length ? '최근 결과: ' + REP.lastRes.map(r => RES_LABEL[r]).join(', ') : '', (SORTS.find(s => s[0] === REP.sort) || [, ''])[1]].filter(Boolean).join(' · ');
+    const html = opts + `<div class="printhead"><b>전도현황 목록</b> <span>${esc(dLong(today()))} · ${esc(filt)} · ${rows.length}세대</span></div>` + (rows.length ? body : '<div class="empty">고른 조건에 맞는 집이 없어요.</div>');
+    return {
+      title: '목록·인쇄', html, bind() {
+        const tgl = (arr, v) => { const i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); };
+        const re = () => { saveRep(); const y = window.scrollY; render(); window.scrollTo(0, y); };
+        document.querySelectorAll('[data-rd]').forEach(b => b.onclick = () => { tgl(REP.dongs, b.dataset.rd); re(); });
+        document.querySelectorAll('[data-rs]').forEach(b => b.onclick = () => { tgl(REP.statuses, b.dataset.rs); re(); });
+        document.querySelectorAll('[data-rr]').forEach(b => b.onclick = () => { tgl(REP.lastRes, b.dataset.rr); re(); });
+        document.querySelectorAll('[data-rc]').forEach(b => b.onclick = () => { REP.cols[b.dataset.rc] = REP.cols[b.dataset.rc] ? 0 : 1; re(); });
+        document.querySelectorAll('[data-rn]').forEach(b => b.onclick = () => { REP.cols.recent = +b.dataset.rn; re(); });
+        $('#rsTarget').onclick = () => { REP.statuses = ['대상', '특별', '부재', '거부', '장결', '기타']; re(); };
+        $('#rSim').onchange = e => { REP.simOnly = e.target.checked; re(); };
+        $('#rGroup').onchange = e => { REP.group = e.target.checked; re(); };
+        $('#rPage').onchange = e => { REP.pageBreak = e.target.checked; re(); };
+        $('#rSort').onchange = e => { REP.sort = e.target.value; re(); };
+        $('#rReset').onclick = () => { Object.assign(REP, JSON.parse(JSON.stringify(REP_DEF))); re(); };
+        $('#repDet').ontoggle = e => { C.repOpen = e.target.open; S.saveCfg(); };
+        $('#rPrint').onclick = () => window.print();
+        $('#rXls').onclick = () => {
+          const head = cols.map(c => c[0]); if (REP.group) head.unshift('동');
+          const plain = (c, x) => c[2] === 'c-st' ? STATUS_LABEL[x.u.status] : c[2] === 'c-sim' ? (x.u.simbang === '1' ? 'O' : '') : c[2] === 'c-rec' ? x.vs.slice(0, REP.cols.recent).map(visitLine).join('\n') : c[2] === 'c-memo' ? x.u.memo : c[2] === 'c-ho' ? x.u.ho : c[2] === 'c-last' ? x.last : c[2] === 'c-cnt' ? x.vs.length : c[2] === 'c-dong' ? x.d.id : '';
+          const aoa = [head, ...rows.map(x => (REP.group ? [x.d.id] : []).concat(cols.map(c => plain(c, x))))];
+          const ws = XLSX.utils.aoa_to_sheet(aoa);
+          ws['!cols'] = head.map(h => ({ wch: /메모/.test(h) ? 36 : /기록/.test(h) ? 60 : /방문/.test(h) ? 11 : 8 }));
+          const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '목록');
+          XLSX.writeFile(wb, `전도현황_목록_${today()}.xlsx`); toast('엑셀 파일을 받았어요');
+        };
+      }
+    };
+  };
+
+  /* ---------- 사용법 둘러보기 ---------- */
+  // 연습 자료로 처음부터 한 번 따라 해 봄. 눌러야 할 곳만 눌리고, 아무것도 저장되지 않음
+  const TUT = { on: false, i: 0, saved: null, raf: 0, focusDone: -1 };
+  function demoData() {
+    const dongs = [{ id: '901', complex: '연습', managers: C.name || '홍길동' }, { id: '902', complex: '연습', managers: '김영희' }];
+    const people = ['70대 할머니', '50대 아저씨', '30대 엄마·초등 아들', '60대 부부', '40대 아주머니', '80대 할아버지'];
+    const st = ['대상', '거부', '특별', '부재', '교회', '대상', '성당', '부재'];
+    const units = [], visits = [], rounds = [];
+    dongs.forEach(d => {
+      rounds.push({ id: d.id + '-1', dong: d.id, no: 1, date: '2026-04-05', gift: '꽃', event: '부활절', people: '홍길동, 김영희', text: '' });
+      rounds.push({ id: d.id + '-2', dong: d.id, no: 2, date: '2026-09-20', gift: '갈비', event: '추석', people: '홍길동', text: '' });
+      for (let f = 3; f >= 1; f--) for (let l = 1; l <= 3; l++) {
+        const ho = String(f * 100 + l), id = d.id + '-' + ho, k = (f * 3 + l) % 8;
+        units.push({ id, dong: d.id, ho, seq: 0, status: st[k], simbang: k === 2 ? '1' : '', memo: people[k % people.length], marks: '' });
+        visits.push({ id: id + '-r1', unit: id, dong: d.id, no: 1, res: k % 3 ? '부재' : '만남', text: k % 3 ? '부재' : '고맙다고 받으심' });
+        if (k % 2) visits.push({ id: id + '-r2', unit: id, dong: d.id, no: 2, res: k === 1 ? '거부' : '만남', text: k === 1 ? '필요 없다고 하심' : '예배 권함, 웃으며 받으심' });
+      }
+    });
+    return { dongs, rounds, units, visits };
+  }
+  const firstUnit = () => document.querySelector('.unit');
+  const TSTEPS = [
+    { text: '사용법을 처음부터 한 번 보여 드릴게요.<br><b>연습용 자료</b>라서 아무것도 저장되지 않아요.<br>밝게 빛나는 곳만 눌러지고, 언제든 <b>그만하기</b>를 누르면 끝나요.', next: '시작하기' },
+    { sel: '.dong[data-dong="901"]', text: '동 카드를 누르면 그 동의 집들이 나와요.<br><b>901동</b>을 눌러 보세요.', need: () => view.name === 'dong' && view.dong === '901' },
+    { sel: '.dhead .card', text: '맨 위에는 <b>최근 두 번의 전도</b>(날짜·선물·함께 간 사람·결과 수)가 보여요.', next: '다음' },
+    { sel: () => firstUnit(), text: '집마다 <b>구분</b>(대상·거부 등)과 <b>최근 기록 두 개</b>가 한 줄에 보여요.<br>왼쪽 색 띠로 구분을 바로 알 수 있어요.', next: '다음' },
+    { sel: '#startR', text: '전도를 나가면 먼저 <b>오늘 전도 기록 시작하기</b>를 눌러요.', need: () => dlgOpen() && !!$('#rfGifts') },
+    { sel: '#rfGifts .chip[data-v="꽃"]', text: '오늘 무엇을 드렸는지 고르세요.<br><b>꽃</b>을 눌러 보세요.', need: () => dlgOpen() && $('#rfGift') && $('#rfGift').value === '꽃' },
+    { sel: '#dlgIn .acts .btn.pri', text: '날짜·회차 번호·쓴 사람은 <b>저절로</b> 들어가요.<br><b>시작하기</b>를 누르세요.', need: () => !!activeRound('901') && !modalResolve },
+    { sel: '.active', text: '이제 <b>기록 중</b>이에요. 다녀온 집을 누르기만 하면 돼요.', next: '다음' },
+    { sel: () => firstUnit(), text: '첫 번째 집을 눌러 보세요.', need: () => sheetOpen() },
+    { sel: '[data-res="만남"]', text: '만났으면 <b>만나서 전달</b>, 안 계시면 <b>부재</b>, 거절하면 <b>거부</b>를 눌러요.<br><b>만나서 전달</b>을 눌러 보세요.', need: () => { const b = $('[data-res="만남"]'); return b && b.classList.contains('on'); } },
+    { sel: '#eText', text: '있었던 일을 짧게 써요. 예시를 넣어 두었어요.<br>직접 고쳐 써 봐도 돼요.', next: '다음', allowType: true, enter() { const t = $('#eText'); if (t && !t.value) t.value = '70대 할머니 고맙다고 하심. 예배 권함'; } },
+    { sel: '#eSave', text: '<b>저장하기</b>를 누르세요.<br>(연습이라 진짜로 저장되지는 않아요)', need: () => !sheetOpen() },
+    { sel: '.unit.done', text: '기록한 집에는 <b>초록 테두리</b>와 <b>✓ 이번 기록</b>이 생겨요.', next: '다음' },
+    { sel: '.chip[data-f="오늘안함"]', text: '<b>아직 안 간 집</b>을 누르면 남은 집만 볼 수 있어요.', next: '다음' },
+    { sel: '#endR', text: '다 돌았으면 <b>끝내기</b>를 눌러요.', need: () => !activeRound('901') },
+    { sel: '#tBack', text: '왼쪽 위 <b>‹</b> 를 누르면 첫 화면으로 돌아가요.', need: () => view.name === 'home' },
+    { sel: '.searchbox', text: '호수(예: 1807)나 이름·전화번호·내용으로 <b>찾을</b> 수 있어요.', next: '다음' },
+    { sel: '.quick', text: '<b>구분별 보기</b>(거부·대상 등만), <b>심방대상</b>, <b>최근 기록</b>, <b>목록·인쇄</b>는 여기에 있어요.', next: '다음' },
+    { sel: '#tFont', text: '글자가 작으면 이 단추로 <b>글자를 크게</b> 할 수 있어요.', next: '다음' },
+    { text: '다 봤어요! 👏<br>이제 진짜 기록을 써 보세요.<br>사용법은 <b>설정 → 사용법 둘러보기</b>에서 다시 볼 수 있어요.', next: '마치기' }
+  ];
+  function startTutorial() {
+    if (TUT.on) return;
+    closeSheet(true); if (modalResolve) closeModal(false);
+    TUT.on = true; TUT.i = 0; TUT.focusDone = -1;
+    $('#dlgIn').innerHTML = '';
+    TUT.saved = { view, active: C.active };
+    C.active = {};
+    S.sandbox(demoData());
+    view = { name: 'home' }; history.pushState({ v: view }, '');
+    render(); window.scrollTo(0, 0);
+    document.body.insertAdjacentHTML('beforeend', '<div id="tutHole"></div><div id="tutPanel" role="dialog" aria-live="polite"></div>');
+    drawTut(); loopTut();
+  }
+  function endTutorial() {
+    if (!TUT.on) return;
+    TUT.on = false; clearTimeout(TUT.raf);
+    ['#tutHole', '#tutPanel'].forEach(s => { const el = $(s); if (el) el.remove(); });
+    closeSheet(true); if (modalResolve) closeModal(false);
+    C.active = TUT.saved.active; S.saveCfg();
+    S.sandbox(null);
+    C.tutorialSeen = true; S.saveCfg();
+    view = { name: 'home' }; history.replaceState({ v: view }, '');
+    render(); window.scrollTo(0, 0);
+    toast('사용법 둘러보기를 마쳤어요');
+  }
+  const dlgOpen = () => $('#dlg').open;
+  function tutEl(st) {
+    if (!st || !st.sel) return null;
+    const el = typeof st.sel === 'function' ? st.sel() : $(st.sel);
+    if (el && !dlgOpen() && el.closest('#dlg')) return null;   // 닫힌 창 안의 것은 없는 것으로
+    return el;
+  }
+  function drawTut() {
+    const st = TSTEPS[TUT.i], p = $('#tutPanel'); if (!p) return;
+    p.innerHTML = `<div class="tp-n">${TUT.i + 1} / ${TSTEPS.length}</div><div class="tp-t">${st.text}</div>
+      <div class="tp-b"><button class="btn ghost sm" id="tpStop">그만하기</button>${st.next ? `<button class="btn pri" id="tpNext">${st.next}</button>` : '<span class="small muted">빛나는 곳을 눌러 보세요</span>'}</div>`;
+    $('#tpStop').onclick = endTutorial;
+    const n = $('#tpNext'); if (n) n.onclick = () => advanceTut();
+    if (st.enter) setTimeout(st.enter, 50);
+  }
+  function advanceTut() {
+    if (TUT.i >= TSTEPS.length - 1) { endTutorial(); return; }
+    TUT.i++; TUT.focusDone = -1; drawTut();
+  }
+  function loopTut() {
+    if (!TUT.on) return;
+    const st = TSTEPS[TUT.i], el = tutEl(st), hole = $('#tutHole'), p = $('#tutPanel');
+    if (st.need && st.need()) { advanceTut(); }
+    if (el && hole) {
+      if (TUT.focusDone !== TUT.i) { TUT.focusDone = TUT.i; try { const inDlg = !!el.closest('#dlg'); el.scrollIntoView(inDlg ? { block: 'nearest' } : { block: 'center', behavior: 'smooth' }); } catch (e) {} }
+      // 창 안에서 가려져 있으면 창 안쪽을 굴려서 보이게
+      const sc = el.closest('#dlgIn');
+      if (sc) { const a = el.getBoundingClientRect(), b = sc.getBoundingClientRect(); if (a.bottom > b.bottom - 4 || a.top < b.top + 4) sc.scrollTop += a.top - b.top - (b.height - a.height) / 2; }
+      const r = el.getBoundingClientRect(), pad = 6;
+      Object.assign(hole.style, { display: 'block', left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
+      if (p) p.classList.toggle('top', !!el.closest('#dlg') || r.top + r.height / 2 > window.innerHeight * 0.55);
+    } else if (hole) { hole.style.display = 'none'; if (p) p.classList.remove('top'); }
+    TUT.raf = setTimeout(loopTut, 120);   // 화면이 잠시 가려져도 멈추지 않게 타이머로 돎
+  }
+  // 둘러보기 중에는 빛나는 곳과 안내창만 눌림
+  ['click', 'keydown', 'submit', 'change'].forEach(type => document.addEventListener(type, e => {
+    if (!TUT.on) return;
+    const t = e.target;
+    if (t.closest && t.closest('#tutPanel')) return;
+    const st = TSTEPS[TUT.i], el = tutEl(st);
+    if (el && (el === t || el.contains(t))) {
+      if (type === 'keydown' && !st.allowType && e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); }
+      if (st.next && !st.allowType && type === 'click') { e.preventDefault(); e.stopPropagation(); }   // ‘다음’ 단계는 보기만
+      return;
+    }
+    if (type === 'keydown' && ['Tab', 'Shift'].includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation();
+  }, true));
+  function offerTutorial() {
+    if (C.tutorialSeen) return;
+    C.tutorialSeen = true; S.saveCfg();
+    setTimeout(() => modal('<h3>처음이세요?</h3><p class="msg">연습용 자료로 쓰는 법을 처음부터 한 번 보여 드릴게요.\n1~2분이면 끝나고, 아무것도 저장되지 않아요.</p>',
+      [{ label: '다음에', val: false }, { label: '▶ 사용법 보기', val: true, cls: 'pri' }]).then(v => { if (v) startTutorial(); }), 400);
+  }
+
   /* ---------- 모달 ---------- */
   let modalResolve = null;
   function modal(html, buttons, init) {
@@ -834,7 +1231,8 @@
       modalResolve = res;
       $('#dlgIn').querySelectorAll('.acts [data-i]').forEach(b => b.onclick = () => closeModal(buttons[+b.dataset.i].val));
       dlg.onclose = () => { if (modalResolve) { const r = modalResolve; modalResolve = null; r(false); } };
-      try { dlg.showModal(); } catch (e) { dlg.setAttribute('open', ''); }
+      try { if (TUT.on) dlg.show(); else dlg.showModal(); } catch (e) { dlg.setAttribute('open', ''); }
+      dlg.classList.toggle('tut', TUT.on);
       if (init) init($('#dlgIn'));
       const f = $('#dlgIn').querySelector('input:not([type=file]):not([type=checkbox]):not([type=date]),textarea');
       if (f && !/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) f.focus();
@@ -931,7 +1329,7 @@
     const m = location.hash.match(/[#&]s=([^&]+)/);
     if (m) {
       const srv = decodeURIComponent(m[1]);
-      if (/^https:\/\/script\.google(usercontent)?\.com\//.test(srv) && srv !== C.server) { C.server = srv; C.pass = ''; C.since = 0; S.saveCfg(); }
+      if (/^https:\/\/script\.google(usercontent)?\.com\//.test(srv) && srv !== C.server) { C.server = srv; C.status = ''; C.role = ''; C.since = 0; S.saveCfg(); }
       history.replaceState(null, '', location.pathname + location.search);
     }
   })();
