@@ -52,8 +52,9 @@
     </div>
     <div class="ctrl">
       <div id="songName" class="song"></div>
+      <div id="segs" class="segs"></div>
       <div id="bar" class="bar" aria-label="재생 위치">
-        <div id="barLoop" class="loopzone"></div>
+        <div class="track"><div id="barLoop" class="loopzone"></div><div id="barTicks"></div></div>
         <div id="barHead" class="head"></div>
       </div>
       <div class="times"><span id="tNow">0:00</span><span id="tState"></span><span id="tDur">0:00</span></div>
@@ -62,7 +63,25 @@
         <button id="bPlay" class="ctl play">▶</button>
         <button id="bLoop" class="ctl on" title="반복 켜기/끄기">🔁<small>반복 중</small></button>
       </div>
+      <div id="vselBox" class="vsel hidden">
+        <span class="lbl">재생할 절</span>
+        <div id="vsel" class="keys"></div>
+      </div>
       <button id="bFinish" class="wide finish">이번 절 끝나면 후주로 마치기</button>
+      <div id="endInfo" class="endinfo hidden"></div>
+
+      <details id="endSet">
+        <summary>⏰ 마치기 예약 (타이머 · 반복 횟수)</summary>
+        <div class="grp">
+          <div class="gl">타이머 <small>정한 시간이 지나면 그 절까지 하고 후주로 마쳐요</small></div>
+          <div id="tmChips" class="chips"></div>
+        </div>
+        <div class="grp">
+          <div class="gl">반복 횟수 <small>정한 번만큼 돌고 후주로 마쳐요</small></div>
+          <div id="cnChips" class="chips"></div>
+        </div>
+        <label class="set"><span>예약대로 마치면 앱도 닫기</span><input id="autoClose" type="checkbox"></label>
+      </details>
 
       <details id="adj">
         <summary>반복 구간 맞추기</summary>
@@ -85,6 +104,7 @@
   </section>
 </main>
 
+<div id="endOv" class="endov hidden"><div class="endbox"><div class="big">🙏 반주를 마쳤어요</div><p id="endMsg" class="note">앱을 닫는 중이에요…</p><button id="endStay" class="pri">닫지 않고 계속 쓰기</button></div></div>
 <div id="toast" class="toast"></div>
 <dialog id="dlg"><div id="dlgBody"></div><div id="dlgBtns" class="row"></div></dialog>
 

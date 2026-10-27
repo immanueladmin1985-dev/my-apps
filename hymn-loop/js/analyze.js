@@ -164,7 +164,11 @@
       //   D2 = 1절 시작과 2절 시작의 간격, D1 = 1절 끝과 마지막 절 끝의 간격 → 끝 = 시작 + D2 + D1
       const D2 = localLag(on, S, 5, P0, 0.15);
       const D1 = k > 1 ? localLag(on, S + D2 - 5, 5, (k - 1) * P0, 0.15) : 0;
-      res = { mode: 'verses', period: D2, verses: k, introEnd: startA, loopStart: S, loopEnd: S + D2 + D1, score: pick.mean, runSec: pick.len * HOP };
+      // 절마다 시작 시각(속도가 흔들리므로 1절 시작과 박자를 겹쳐서 하나씩): 어느 절로 건너뛰어도 자연스럽게
+      const bounds = [S];
+      for (let j = 1; j < k; j++) bounds.push(j === 1 ? S + D2 : S + localLag(on, S, 5, j * P0, 0.15));
+      bounds.push(S + D2 + D1);
+      res = { mode: 'verses', period: D2, verses: k, bounds, introEnd: startA, loopStart: S, loopEnd: S + D2 + D1, score: pick.mean, runSec: pick.len * HOP };
     }
     // 2단계: 한 절뿐이면 전주(처음)와 같은 부분을 뒤에서 찾기
     const introC = [];
@@ -177,7 +181,7 @@
       if (best) {
         // 전주 끝과 절 끝이 같은 소리이므로, 전주 끝 5초를 겹쳐 정확한 간격을 찾는다
         const P = localLag(onsets(buf), Math.max(0, best.b * HOP - 5), Math.min(5, best.b * HOP), best.L * HOP, 0.15);
-        res ={ mode: 'intro', period: P, verses: 1, introEnd: best.b * HOP, loopStart: best.b * HOP, loopEnd: best.b * HOP + P, score: best.mean, runSec: best.len * HOP };
+        res = { mode: 'intro', period: P, verses: 1, bounds: [best.b * HOP, best.b * HOP + P], introEnd: best.b * HOP, loopStart: best.b * HOP, loopEnd: best.b * HOP + P, score: best.mean, runSec: best.len * HOP };
       }
     }
     const info = { dur: F.dur, musicStart: s0 * HOP, musicEnd: e0 * HOP, introC: introC.map(c => [+(c.L * HOP).toFixed(1), +(c.len * HOP).toFixed(1), +c.mean.toFixed(2)]), cands: cands.slice(0, 12).map(c => ({ L: +(c.L * HOP).toFixed(2), a: +(c.a * HOP).toFixed(2), b: +(c.b * HOP).toFixed(2), len: +(c.len * HOP).toFixed(1), mean: +c.mean.toFixed(3) })) };
