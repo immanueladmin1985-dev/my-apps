@@ -1367,6 +1367,26 @@
 
   history.replaceState({ v: view }, '');
   applyFont();
-  S.load().then(() => { render(); if (C.name) S.sync(); });
+  // 카카오톡 등 앱 안 브라우저로 열리면 곧바로 기본 브라우저(크롬·삼성 인터넷·사파리)로 넘김
+  // 넘어가지 않을 때를 위해 안내 화면을 남기고, '그냥 여기서 쓰기'를 고르면 이번에는 다시 넘기지 않음
+  const STAY_KEY = 'evangelism-stay-inapp';
+  let stayInApp = false; try { stayInApp = sessionStorage.getItem(STAY_KEY) === '1'; } catch (e) {}
+  const autoOut = IN_APP && !stayInApp && (IN_KAKAO || IS_ANDROID);
+  function kickedHtml() {
+    const br = IS_IOS ? '사파리' : '크롬';
+    return `<div class="login"><div class="card set" style="text-align:center">
+      <img src="icon-192.png" alt=""><h1>전도현황</h1>
+      <p><b>${br}(기본 브라우저)</b>로 여는 중이에요…</p>
+      <p class="small muted">카카오톡 안에서는 홈 화면 설치가 안 되고, 크롬과 저장 공간도 따로라서 기본 브라우저로 열어요.</p>
+      <button class="btn pri big" id="kkOpen">${br}로 열기</button>
+      <p class="small muted">열리지 않으면 오른쪽 위 <b>⋮</b>(아이폰은 아래 <b>⋯</b>) 메뉴에서 <b>다른 브라우저로 열기</b>를 눌러 주세요.</p>
+      <button class="btn ghost sm" id="kkStay">그냥 카카오톡에서 쓰기</button></div></div>`;
+  }
+  if (autoOut) {
+    $('#app').innerHTML = kickedHtml();
+    $('#kkOpen').onclick = openExternal;
+    $('#kkStay').onclick = () => { try { sessionStorage.setItem(STAY_KEY, '1'); } catch (e) {} S.load().then(() => { render(); if (C.name) S.sync(); }); };
+    setTimeout(openExternal, 300);
+  } else S.load().then(() => { render(); if (C.name) S.sync(); });
   window.__ev = { ix, render, go: v => go(v), S };
 })();
