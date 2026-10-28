@@ -208,6 +208,9 @@ dialog .acts .btn{flex:1 1 auto}
   .quick button{font-size:.8rem}
 }
 /* 로그인·승인 */
+.qr{background:#fff;border-radius:14px;padding:.6rem;width:min(18rem,100%);margin:0 auto}
+.qr svg{display:block;width:100%;height:auto}
+.login .banner.inapp{margin:0 0 .4rem;text-align:left}
 .code{font-size:2.6rem;font-weight:800;letter-spacing:.35em;padding:.4rem 0 .4rem .35em;background:var(--field);border-radius:14px}
 .link{color:var(--accent);font-weight:700;font-size:.88rem;text-decoration:underline;margin-left:.3rem}
 .badge{display:inline-grid;place-items:center;min-width:1.4rem;height:1.4rem;padding:0 .35rem;border-radius:99px;background:var(--warn);color:#fff;font-size:.8rem;font-weight:800}

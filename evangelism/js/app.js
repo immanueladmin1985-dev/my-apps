@@ -129,7 +129,7 @@
     applyFont();
     const app = $('#app');
     const gate = authGate();
-    if (gate) { app.innerHTML = gate.html; gate.bind(); wake(false); return; }
+    if (gate) { app.innerHTML = gate.html; gate.bind(); bindInapp(); wake(false); return; }
     const V = VIEWS[view.name] || VIEWS.home;
     const r = V();
     app.innerHTML = top(r.title, view.name !== 'home') + `<main id="main">${r.html}</main>`;
@@ -146,6 +146,36 @@
   });
   let pendingRender = false;
 
+  /* ---------- 초대 링크 · 카카오톡 안 브라우저 ---------- */
+  // 서버 주소는 ?s= 로 붙임(#s= 는 '다른 브라우저로 열기' 때 빠지는 경우가 있음)
+  const appBase = () => location.origin + location.pathname;
+  const joinLink = () => appBase() + (C.server ? '?s=' + encodeURIComponent(C.server) : '');
+  const UA = navigator.userAgent;
+  const IN_KAKAO = /KAKAOTALK/i.test(UA), IN_APP = IN_KAKAO || /NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(UA);
+  const IS_ANDROID = /Android/i.test(UA), IS_IOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // 카카오톡 등 앱 안의 브라우저는 크롬과 저장 공간이 따로라서, 여기서 승인받으면 크롬에서 다시 승인받아야 함
+  function inappBar() {
+    if (!IN_APP) return '';
+    return `<div class="banner warnb inapp"><span>📌 지금 <b>${IN_KAKAO ? '카카오톡' : '앱'} 안</b>에서 열려 있어요. 홈 화면에 설치하려면 <b>${IS_IOS ? '사파리' : '크롬'}</b>로 열어 주세요.${C.status === '승인' ? '<br><small>(크롬에서는 승인을 한 번 더 받아야 해요)</small>' : ''}</span><button class="btn pri" id="openExt">${IS_IOS ? '사파리' : '크롬'}로 열기</button></div>`;
+  }
+  function bindInapp() { const b = $('#openExt'); if (b) b.onclick = openExternal; }
+  function openExternal() {
+    const url = joinLink();
+    if (IN_KAKAO) { location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url); return; }
+    if (IS_ANDROID) { location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end'; return; }
+    modal(`<h3>${IS_IOS ? '사파리' : '크롬'}로 열기</h3><p class="msg">오른쪽 아래(또는 위)의 <b>⋯</b> 메뉴에서 <b>${IS_IOS ? 'Safari로 열기' : '다른 브라우저로 열기'}</b>를 눌러 주세요.</p>`, [{ label: '알겠어요', val: true, cls: 'pri' }]);
+  }
+  function showJoinQR() {
+    const url = joinLink();
+    let svg = '';
+    try { const q = qrcode(0, 'M'); q.addData(url); q.make(); svg = q.createSvgTag({ cellSize: 6, margin: 3, scalable: true }); } catch (e) { svg = '<p class="err">QR을 만들지 못했어요</p>'; }
+    modal(`<h3>📷 초대 QR</h3><div class="qr">${svg}</div>
+      <p class="msg">새 휴대폰의 <b>카메라</b>로 이 QR을 비추고, 뜨는 주소를 누르세요.
+카카오톡을 거치지 않고 바로 <b>크롬·삼성 인터넷·사파리</b>로 열려서 홈 화면 설치까지 한 번에 돼요.
+열리면 이름을 넣고 <b>승인 요청</b> → 여기 <b>기기 승인</b>에서 승인해 주세요.</p>`,
+      [{ label: '닫기', val: true, cls: 'pri' }]);
+  }
+
   /* ---------- 로그인 (기기 승인) ---------- */
   // 구글 시트와 연결되어 있으면 이 기기가 승인되어야 열림. 연결 전(이 기기에만 저장)에는 이름만 넣음
   let pollTimer = null;
@@ -158,7 +188,7 @@
     return { html: joinHtml(), bind: bindJoin };
   }
   const loginShell = inner => `<div class="login"><div class="card">
-      <img src="icon-192.png" alt=""><h1>전도현황</h1>${inner}</div></div>`;
+      ${inappBar()}<img src="icon-192.png" alt=""><h1>전도현황</h1>${inner}</div></div>`;
   function localLoginHtml() {
     return loginShell(`<form id="lg" autocomplete="off" class="set">
       <p>이름을 넣고 들어가세요.</p>
@@ -277,7 +307,7 @@
     const html = `
       <div class="banner hidden" id="banner"><img src="icon-192.png" alt=""><span>홈 화면에 설치하면 아이콘으로 바로 열 수 있어요.</span>
         <button class="btn pri" id="bInst">설치하기</button><button class="btn" id="bFs">전체화면</button><button class="btn ghost" id="bLater">다음에</button></div>
-      ${waitBar()}
+      ${inappBar()}${waitBar()}
       <p class="hello"><b>${esc(C.name)}</b> 님, 반가워요 🙂 <button class="link" id="hTut">처음이세요? ▶ 사용법 보기</button></p>
       <form class="searchbox" id="sf"><input id="sq" type="search" placeholder="🔍 호수·이름·전화·내용 찾기 (예: 1807)" enterkeyhint="search"></form>
       <div class="quick">
@@ -299,7 +329,7 @@
         $('#qRecent').onclick = () => go({ name: 'recent' });
         $('#qRep').onclick = () => go({ name: 'report' });
         $('#hTut').onclick = () => startTutorial();
-        bindWaitBar();
+        bindWaitBar(); bindInapp();
         const gs = $('#goSet'); if (gs) gs.onclick = () => go({ name: 'settings' });
         $('#bInst').onclick = installSheet; $('#bFs').onclick = FS.toggle; $('#hInst2').onclick = installSheet;
         $('#bLater').onclick = () => { C.installDismissed = true; S.saveCfg(); paintInstall(); toast('맨 아래나 설정에서 언제든 설치할 수 있어요'); };
@@ -734,10 +764,10 @@
   };
   function localAdminHtml() { return connectHtml() + toolsHtml(); }
   function masterHtml() {
-    const join = location.origin + location.pathname + '#s=' + encodeURIComponent(C.server);
+    const join = joinLink();
     return `<button class="btn pri" id="aDev">📱 기기 승인·관리${C.waiting ? ` <span class="badge">${C.waiting}</span>` : ''}</button>
       <div class="field"><span>초대 링크 — 새 휴대폰에서 이 링크를 열고 이름을 넣어 승인 요청을 보내면, 여기 ‘기기 승인’에서 승인해 주세요.</span><input id="aJoin" readonly value="${esc(join)}">
-        <div class="line"><button class="btn sm" id="aCopy">링크 복사</button><button class="btn sm" id="aHow">연결 방법 보기</button><button class="btn sm" id="aOff">이 기기 연결 끊기</button></div></div>
+        <div class="line"><button class="btn sm pri" id="aQR">📷 초대 QR 보기</button><button class="btn sm" id="aCopy">링크 복사</button><button class="btn sm" id="aHow">연결 방법 보기</button><button class="btn sm" id="aOff">이 기기 연결 끊기</button></div></div>
       ${toolsHtml()}`;
   }
   function bindSettings() {
@@ -761,6 +791,7 @@
     on('#sMaster', async () => { if (await masterLogin()) render(); });
     on('#aDev', () => go({ name: 'devices' }));
     on('#aCopy', () => copyText($('#aJoin').value));
+    on('#aQR', showJoinQR);
     on('#aHow', howToConnect);
     on('#aOff', async () => {
       if (await modal('<h3>이 기기의 연결을 끊을까요?</h3><p class="msg">이 기기에서만 끊겨요. 구글 시트의 자료와 다른 휴대폰은 그대로예요.\n다시 연결하려면 마스터 암호가 필요해요.</p>', [{ label: '취소', val: false }, { label: '끊기', val: true, cls: 'warn' }])) {
@@ -1326,11 +1357,11 @@
 
   // 초대 링크(#s=주소)로 열면 연결 주소를 저장
   (function () {
-    const m = location.hash.match(/[#&]s=([^&]+)/);
+    const m = location.search.match(/[?&]s=([^&#]+)/) || location.hash.match(/[#&]s=([^&]+)/);
     if (m) {
       const srv = decodeURIComponent(m[1]);
       if (/^https:\/\/script\.google(usercontent)?\.com\//.test(srv) && srv !== C.server) { C.server = srv; C.status = ''; C.role = ''; C.since = 0; S.saveCfg(); }
-      history.replaceState(null, '', location.pathname + location.search);
+      history.replaceState(null, '', location.pathname);
     }
   })();
 
