@@ -43,3 +43,10 @@
 - 다이스바운드(DICEBOUND 운명의 주사위)가 여기에 해당한다. Artifact 목록에서 "DICEBOUND · 운명의 주사위"를 찾는다. 게임 파일과 함께 개발용 파일(README, tools, tests, 원래 index.html 은 `index.dev.html`)도 그 Artifact 에 들어 있다.
 - 고칠 때: Artifact 를 read 해서 파일을 작업 폴더에 받고, `index.dev.html` 을 `index.html` 로 되돌려 고치고 점검한 뒤, `python3 tools/make_artifact.py <출력 폴더>` 로 묶어 같은 Artifact URL 에 다시 게시한다(한 번에 255개까지라 두 번에 나눠 올린다). 이 저장소에는 커밋하지 않는다.
 - 개인용 안드로이드 앱(APK)도 만든다: `cd tools/apk && python3 build_apk.py ../.. <출력.apk> --version-code <이전+1>`. 서명 키는 Artifact 의 `tools/apk/dicebound-release.jks.b64.txt` 와 `keystore.txt` 로 보관한다(같은 키라야 기존 앱 위에 업데이트되고 저장 기록이 남는다). APK 는 어디에도 올리지 않고 사용자에게 파일로만 준다.
+
+## 야구 중계 알림 (`baseball-relay/`, 개인용 안드로이드 앱)
+- 사용자 요청으로 이 공개 저장소에 두되, 앱 목록(`index.html`)과 `README.md`에는 넣지 않는다.
+- 폰 앱(`app/`)과 갤럭시 워치 앱(`wear/`, 타일·컴플리케이션)은 applicationId `kr.immanuel.relay` 와 서명 키가 같아야 한다.
+- 빌드: `baseball-relay/**` 를 main 에 푸시하면 GitHub Actions(`baseball-relay-build.yml`)가 서명 전 APK 를 `baseball-relay-build` 브랜치에 올린다. 받기: `git fetch origin baseball-relay-build:refs/remotes/origin/baseball-relay-build && git archive origin/baseball-relay-build | tar -x -C <폴더>`.
+- 서명: Artifact "야구 중계 알림 서명 키"(https://claude.ai/artifact/F8xwtcNRALfnEpCGmzkgrK)에서 `relay.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> relay.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.
+- 네이버 중계 API(`api-gw.sports.naver.com`)는 해외 IP(GitHub, 작업 환경)를 막는다. 응답 구조 확인은 앱의 "진단 데이터 공유" 파일로 한다. JSON 구조 지식은 `Naver.kt`, 알림 판단은 `RelayEngine.kt`(단위 테스트 있음)에 모은다.
