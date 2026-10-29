@@ -17,7 +17,7 @@ jobs:
           UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
           REF='https://m.sports.naver.com/'
           GID='55551029SSHT02026'
-          get() { curl -sS -m 12 -A "$UA" -H "Referer: $REF" -H 'Accept: application/json' -o "out/$1.json" -w "%{http_code} %{size_download} %{time_total}" "$2" > code.txt 2>err.txt; echo "::notice title=$1::$(cat code.txt) $(head -c 150 err.txt)"; }
+          get() { curl -sS -m 12 -A "$UA" -H "Referer: $REF" -H 'Accept: application/json' -o "out/$1.json" -w "%{http_code} %{size_download} %{time_total}" "$2" > code.txt 2>err.txt || true; echo "::notice title=$1::$(cat code.txt) $(head -c 150 err.txt)"; }
           get schedule_oct "https://api-gw.sports.naver.com/schedule/games?fields=basic,baseball,schedule&upperCategoryId=kbaseball&categoryId=kbo&fromDate=2026-10-28&toDate=2026-11-01&size=500"
           get schedule_all "https://api-gw.sports.naver.com/schedule/games?fields=basic,baseball&upperCategoryId=kbaseball&fromDate=2026-10-29&toDate=2026-10-31&size=500"
           get game "https://api-gw.sports.naver.com/schedule/games/$GID"
