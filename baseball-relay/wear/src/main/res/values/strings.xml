@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">야구 중계</string>
+    <string name="tile_label">야구 중계</string>
+    <string name="tile_desc">응원 팀 경기 스코어</string>
+    <string name="comp_label">야구 스코어</string>
+</resources>
