@@ -109,8 +109,14 @@ object NaverApi {
 
     fun schedule(date: LocalDate): List<GameInfo> = parseSchedule(JSONObject(get(scheduleUrl(date))))
     fun game(id: String): GameInfo? = parseGameRoot(JSONObject(get(gameUrl(id))))
-    fun relay(id: String, inning: Int? = null): RelaySnapshot? =
-        parseRelay(JSONObject(get(relayUrl(id, inning))))
+    /** 마지막으로 받은 중계 원본. 진단용으로 파일에 저장한다. */
+    @Volatile var lastRelayRaw: String? = null
+
+    fun relay(id: String, inning: Int? = null): RelaySnapshot? {
+        val raw = get(relayUrl(id, inning))
+        if (inning == null) lastRelayRaw = raw
+        return parseRelay(JSONObject(raw))
+    }
 
     // ---- 파싱 (JSON 구조에 관한 지식은 모두 여기에 모은다) ----
 

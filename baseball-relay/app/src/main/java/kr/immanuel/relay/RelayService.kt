@@ -114,6 +114,7 @@ class RelayService : Service() {
                     waitSec = 60
                 } else {
                     val snap = NaverApi.relay(game.id)
+                    saveRaw()
                     val plays = ArrayList(snap?.plays ?: emptyList())
                     // 이닝이 바뀌는 사이에 지나간 플레이를 놓치지 않도록 이전 이닝도 같이 받는다.
                     if (snap != null && engine.halfInning > 0 && engine.halfInning != snap.inning) {
@@ -157,6 +158,19 @@ class RelayService : Service() {
                 waitSec = if (errors > 5) 30 else waitSec
             }
             delay(waitSec * 1000L)
+        }
+    }
+
+    /** 진단용: 경기 중 처음 받은 중계와 마지막으로 받은 중계 원본을 저장한다. */
+    private fun saveRaw() {
+        val raw = NaverApi.lastRelayRaw ?: return
+        runCatching {
+            val dir = java.io.File(cacheDir, "diag").apply { mkdirs() }
+            val first = java.io.File(dir, "relay_first.json")
+            if (!first.exists() || !first.readText().contains(gameId ?: "-")) {
+                first.writeText("// gameId=$gameId\n$raw")
+            }
+            java.io.File(dir, "relay_last.json").writeText("// gameId=$gameId\n$raw")
         }
     }
 

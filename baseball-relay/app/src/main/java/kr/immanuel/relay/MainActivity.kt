@@ -12,13 +12,10 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -89,19 +86,26 @@ class MainActivity : Activity() {
         root.addView(statusView)
 
         root.addView(header("응원 팀"))
-        root.addView(Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, Teams.all.map { it.name })
-            setSelection(Teams.all.indexOfFirst { it.code == prefs.team }.coerceAtLeast(0))
-            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                    val code = Teams.all[pos].code
-                    if (code != prefs.team) {
-                        prefs.team = code
-                        prefs.engineState = null
-                        checkNow()
+        root.addView(Button(this).apply {
+            fun label() = "${Teams.all.firstOrNull { it.code == prefs.team }?.name ?: prefs.team}  ▾"
+            text = label()
+            setOnClickListener {
+                val names = Teams.all.map { it.name }.toTypedArray()
+                val current = Teams.all.indexOfFirst { it.code == prefs.team }
+                android.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("응원 팀 선택")
+                    .setSingleChoiceItems(names, current) { dialog, which ->
+                        val code = Teams.all[which].code
+                        if (code != prefs.team) {
+                            prefs.team = code
+                            prefs.engineState = null
+                            text = label()
+                            checkNow()
+                        }
+                        dialog.dismiss()
                     }
-                }
-                override fun onNothingSelected(p: AdapterView<*>?) {}
+                    .setNegativeButton("취소", null)
+                    .show()
             }
         })
 
@@ -140,9 +144,13 @@ class MainActivity : Activity() {
             RelayService.stop(this)
             statusView.postDelayed({ refreshStatus() }, 800)
         })
-        root.addView(button("알림 테스트 (워치 확인용)") {
-            Notifier.post(this, RelayEvent(Kind.HOMERUN, "💥 홈런! 삼성 6 : 4 KIA", "테스트 알림입니다. 워치에도 표시되는지 확인해 주세요."), null)
+        root.addView(button("10초 뒤 테스트 알림 (워치 확인용)") {
+            Toast.makeText(this, "휴대폰 화면을 끄고 10초 기다려 주세요. 워치는 휴대폰을 쓰는 동안 알림을 띄우지 않습니다.", Toast.LENGTH_LONG).show()
+            statusView.postDelayed({
+                Notifier.post(applicationContext, RelayEvent(Kind.HOMERUN, "💥 홈런! 삼성 6 : 4 KIA", "테스트 알림입니다. 워치에 이 알림이 보이면 설정이 끝난 것입니다."), null)
+            }, 10_000)
         })
+        root.addView(button("워치 알림 설정 열기 (Galaxy Wearable)") { openWearableApp() })
 
         root.addView(header("설정"))
         root.addView(button("배터리 최적화에서 제외 (권장)") { askBatteryExemption() })
@@ -194,6 +202,13 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun openWearableApp() {
+        val pkgs = listOf("com.samsung.android.app.watchmanager", "com.google.android.apps.wear.companion")
+        val intent = pkgs.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
+        if (intent != null) startActivity(intent)
+        else Toast.makeText(this, "Galaxy Wearable 앱을 찾지 못했습니다.", Toast.LENGTH_LONG).show()
+    }
+
     private fun askBatteryExemption() {
         try {
             startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
@@ -224,6 +239,8 @@ class MainActivity : Activity() {
                     grab("game", NaverApi.gameUrl(game.id))
                     grab("relay", NaverApi.relayUrl(game.id))
                 }
+                File(cacheDir, "diag/relay_first.json").takeIf { it.exists() }?.let { sb.append("===== relay_first (경기 중 처음 받은 중계)\n").append(it.readText()).append("\n\n") }
+                File(cacheDir, "diag/relay_last.json").takeIf { it.exists() }?.let { sb.append("===== relay_last (마지막으로 받은 중계)\n").append(it.readText()).append("\n\n") }
                 sb.append("===== engine\n").append(prefs.engineState).append("\n")
                 f.writeText(sb.toString())
                 f
