@@ -1,5 +1,5 @@
 // 팬플룻 교실 자동 점검
-// 사용법(저장소 맨 위 폴더에서): node panflute/tools/check.js [screens|practice|pitch|mix|weak|store|import|all]
+// 사용법(저장소 맨 위 폴더에서): node panflute/tools/check.js [screens|practice|pitch|mix|weak|begin|store|import|all]
 // - 앱 폴더를 작은 웹 서버로 띄우고, 마이크 대신 원하는 음을 내는 가짜 소리를 넣어 확인함.
 // - 스크린샷은 panflute/tools/out/ 에 저장함(저장소에는 올리지 않음).
 const { chromium } = require('playwright');
@@ -27,6 +27,7 @@ const FAKE_MIC = () => {
     const nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const ch = nb.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
     const ns = ac.createBufferSource(); ns.buffer = nb; ns.loop = true; const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1500; const ng = ac.createGain(); ng.gain.value = 0;
     o.connect(g); o2.connect(g2); ns.connect(hp); hp.connect(ng); [g, g2, ng].forEach(x => x.connect(d)); o.start(); o2.start(); ns.start();
+    window.__air = v => { g.gain.value = 0; g2.gain.value = 0; ng.gain.value = v; }; // 음 없이 바람 소리만
     window.__set = (f, on, noise = 0, h2 = 0) => { if (f) { o.frequency.value = f; o2.frequency.value = f * 2; } g.gain.setTargetAtTime(on ? 0.3 : 0, ac.currentTime, 0.005); g2.gain.value = on ? 0.3 * h2 : 0; ng.gain.value = on ? noise : 0; };
     return d.stream;
   };
@@ -139,6 +140,47 @@ async function weak(b) {
   await p.context().close();
 }
 
+async function begin(b) {
+  console.log('■ 초보자 기능 (첫 소리 도우미 · 첫 곡 · 관 번호 악보 · 다음 관 · 5분 코스 · 배지)');
+  const errs = []; const p = await newPage(b, 390, 844, errs);
+  await p.evaluate(() => go('firstsound', {}, { push: true })); await p.waitForTimeout(1500);
+  const st = () => p.evaluate(() => [document.querySelector('#fsRing').className.replace('fs-ring', '').trim() || 'quiet', document.querySelector('#fsState').textContent, document.querySelector('#fsTip').textContent]);
+  const pipe = await p.evaluate(() => TGT.m);
+  await p.evaluate(() => window.__air(0.05)); await p.waitForTimeout(900); const air = await st();
+  await p.evaluate(m => window.__set(440 * Math.pow(2, (m - 69) / 12), true), pipe); await p.waitForTimeout(1500); const tone = await st();
+  await p.evaluate(m => window.__set(440 * Math.pow(2, (m + 12 - 69) / 12), true), pipe); await p.waitForTimeout(1800); const over = await st(); // 성공 알림음이 나는 동안(약 0.5초)은 판정을 쉬므로 조금 더 기다림
+  await p.evaluate(() => window.__set(0, false)); await p.waitForTimeout(900); const quiet = await st();
+  ok(air[0] === 'air' && air[2].length > 5, `바람 소리만: ${air[1]} · ${air[2].slice(0, 30)}`);
+  ok(tone[0] === 'tone', `관 소리: ${tone[1]}`); ok(over[0] === 'over', `한 옥타브 위: ${over[1]}`); ok(quiet[0] === 'quiet', `조용함: ${quiet[1]}`);
+  ok(await p.evaluate(() => !!DB.badges.sound1), '첫 소리 배지를 받음');
+  // 첫 곡: 순서와 잠금
+  await p.evaluate(() => { setPref('songCat', 'first'); go('songs', {}, { push: true }); }); await p.waitForTimeout(500);
+  const fl = await p.evaluate(() => [...document.querySelectorAll('#sgList .song')].map(x => x.dataset.id + (x.querySelector('.fs-lock') ? '*' : '')));
+  ok(fl.length === 8 && fl[0] === 'first1' && fl[1] === 'first2*', `첫 곡 8곡이 차례대로, 뒤 곡은 잠김: ${fl.join(' ')}`);
+  // 관 번호 악보 + 다음 관 미리 보기
+  await p.evaluate(() => { setPref('lbKind', 'pipe'); go('follow', { id: 'first3' }, { push: true }); }); await p.waitForTimeout(800);
+  const lab = await p.evaluate(() => [[...document.querySelectorAll('#fwLane .lb')].slice(0, 4).map(x => x.textContent).join(','), document.querySelector('#fwP').textContent, document.querySelectorAll('#fwPm [stroke-dasharray]').length]);
+  ok(/^\d+,\d+,\d+/.test(lab[0]), `악보 아래 관 번호: ${lab[0]}`);
+  ok(/다음 \d+번 관/.test(lab[1]) && lab[2] > 0, `다음 관 미리 보기: ${lab[1]} (점선 테두리 ${lab[2]}개)`);
+  await p.evaluate(() => setPref('lbKind', 'name'));
+  // 5분 코스
+  await p.evaluate(() => { go('home'); startCourse(); }); await p.waitForTimeout(700);
+  const c1 = await p.evaluate(() => [stack[stack.length - 1].id, !!document.querySelector('#rtbar')]);
+  await p.evaluate(() => Routine.next()); await p.waitForTimeout(500); const c2 = await p.evaluate(() => stack[stack.length - 1].id);
+  await p.evaluate(() => Routine.next()); await p.waitForTimeout(500); const c3 = await p.evaluate(() => [stack[stack.length - 1].id, stack[stack.length - 1].params.id]);
+  await p.evaluate(() => Routine.next()); await p.waitForTimeout(500);
+  ok(c1[0] === 'longtone' && c1[1] && c2 === 'scale' && c3[0] === 'follow', `5분 코스: ${c1[0]} → ${c2} → ${c3.join(':')} (진행 줄 ${c1[1] ? '있음' : '없음'})`);
+  ok(await p.evaluate(() => !!DB.badges.course && !Routine.on), '5분 코스를 마치면 배지를 받고 진행 줄이 사라짐');
+  await p.evaluate(() => go('records')); await p.waitForTimeout(500);
+  ok(await p.evaluate(() => document.querySelectorAll('.bdg.on').length >= 2), `기록 화면 배지 ${await p.evaluate(() => document.querySelectorAll('.bdg.on').length)}개 표시`);
+  await p.screenshot({ path: path.join(OUT, 'begin-records.png'), fullPage: true });
+  ok(!errs.length, '스크립트 오류 없음 ' + errs.join(' | '));
+  await p.context().close();
+  // 첫 곡 1을 끝까지 불면 2가 열리고 ‘다음 첫 곡’ 버튼
+  const res = await play(b, 'follow', { id: 'first1' });
+  ok(/다음 첫 곡/.test(res || ''), '첫 곡을 마치면 결과 줄에 ‘다음 첫 곡’ 버튼');
+}
+
 async function pitch(b) {
   console.log('■ 음정 인식 정확도 (관마다, 숨소리 잡음 섞어서)');
   const p = await newPage(b);
@@ -201,6 +243,7 @@ async function imports(b) {
     if (what === 'all' || what === 'pitch') await pitch(b);
     if (what === 'all' || what === 'mix') await mix(b);
     if (what === 'all' || what === 'weak') await weak(b);
+    if (what === 'all' || what === 'begin') await begin(b);
     if (what === 'all' || what === 'store') await store(b);
     if (what === 'all' || what === 'import') await imports(b);
   } finally { await b.close(); srv.kill(); }
