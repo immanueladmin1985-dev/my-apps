@@ -1622,13 +1622,23 @@ function yinPitch(buf, sr, minF, maxF) {
   }
   cm[0] = 1; let run = 0;
   for (let tau = 1; tau <= tMax + 1; tau++) { run += d[tau]; cm[tau] = run > 0 ? d[tau] * tau / run : 1; }
-  let tau = -1; const TH = 0.15;
+  let best = 1; for (let t = tMin; t <= tMax; t++) if (cm[t] < best) best = cm[t];
+  if (best > 0.32) return null;
+  // 숨소리가 섞이면 진짜 주기의 골이 0.15보다 얕아져 한 옥타브 낮게 읽기 쉬움 → 가장 깊은 골보다 조금 높은 문턱도 함께 씀
+  const TH = Math.max(0.15, best + 0.1);
+  let tau = -1;
   for (let t = tMin; t <= tMax; t++) {
-    if (cm[t] < TH) { while (t + 1 <= tMax && cm[t + 1] < cm[t]) t++; tau = t; break; }
+    if (cm[t] < TH) {
+      // 잡음으로 생긴 작은 골에서 멈추면 음이 높게 나옴 → 문턱 아래 구간에서 가장 깊은 곳을 고름
+      const lim = Math.min(tMax, Math.floor(t * 1.25)); tau = t;
+      for (let u = t + 1; u <= lim && cm[u] < TH; u++) if (cm[u] < cm[tau]) tau = u;
+      break;
+    }
   }
-  if (tau < 0) { let best = 1, bt = -1; for (let t = tMin; t <= tMax; t++) if (cm[t] < best) { best = cm[t]; bt = t; } if (best > 0.32) return null; tau = bt; }
+  if (tau < 0) return null;
   let better = tau;
-  if (tau > 1 && tau < tMax + 1) { const a = cm[tau - 1], b = cm[tau], c = cm[tau + 1]; const den = a - 2 * b + c; if (den !== 0) better = tau + 0.5 * (a - c) / den; }
+  // 위치 보정은 정규화 전 차이 함수로 함(정규화 값으로 하면 잡음이 있을 때 한쪽으로 치우침)
+  if (tau > 1 && tau < tMax + 1) { const a = d[tau - 1], b = d[tau], c = d[tau + 1]; const den = a - 2 * b + c; if (den > 0) better = tau + 0.5 * (a - c) / den; }
   return { f: sr / better, c: 1 - cm[tau] };
 }
 
@@ -2236,8 +2246,9 @@ function LineLane(host, notes, o = {}) {
   const sp = lineSpacing(notes, ts, pk);
   const stepY = m => { let st = stepOf(m - WOFF()).step; if (st > 44) st -= 7; return ySt(st); };
   let minY = ySt(38), maxY = ySt(30);
-  notes.forEach(n => { if (!n.rest) { const y = stepY(n.m); minY = Math.min(minY, y); maxY = Math.max(maxY, y); } });
-  const lbY = Math.max(ySt(30) + 22, maxY + 19);
+  let artY = 0; // 음표 아래에 붙는 악상기호(스타카토 점 등)가 계이름 글자와 겹치지 않게
+  notes.forEach((n, i) => { if (!n.rest) { const y = stepY(n.m); minY = Math.min(minY, y); maxY = Math.max(maxY, y); if (o.artic && o.artic.marks[i] && y > ySt(34)) artY = Math.max(artY, y + 17); } });
+  const lbY = Math.max(ySt(30) + 22, maxY + 19, artY + 12);
   const arcs = !!(o.slur || (o.slurs && o.slurs.length) || (o.artic && o.artic.slurs.length));
   const cropTop = o.artic && o.artic.nls.length ? 0 : Math.max(0, Math.min(ySt(38) - 10, minY - 37, arcs ? minY - 47 : 1e9));
   const cropH = lbY + 7 - cropTop;
