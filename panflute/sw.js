@@ -1,4 +1,4 @@
-const CACHE = 'nanjang-pf-v16';
+const CACHE = 'nanjang-pf-v17';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './hero.webp', './art-flute.webp',
   './vendor/fonts/GowunDodum.woff2', './vendor/fonts/SongMyung.woff2', './vendor/fonts/NanumPenScript.woff2', './vendor/fonts/GreatVibes.woff2'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });

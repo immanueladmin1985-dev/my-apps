@@ -700,14 +700,14 @@ body.focusmode #rtbar{position:fixed;right:calc(max(8px,env(safe-area-inset-righ
 body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:calc(50% - 40px)}
 
 /* ---------- 소리 정보 줄 ---------- */
-.sinfo{display:grid;grid-template-columns:1.3fr 1fr 1.1fr .95fr .8fr;gap:4px;font-variant-numeric:tabular-nums;min-height:44px}
+.sinfo{display:grid;grid-template-columns:1.3fr 1fr 1.1fr .95fr .8fr;}.sinfo.noclr{grid-template-columns:1.3fr 1fr 1.1fr .8fr}.sinfo{gap:4px;font-variant-numeric:tabular-nums;min-height:44px}
 .sinfo:empty{display:none}
 .sinfo>span{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:3px;padding:4px 7px;border-radius:10px;background:var(--surface);border:1px solid var(--line);line-height:1.2;min-width:0;overflow:hidden}
 .sinfo i{flex-basis:100%;font-style:normal;font-size:.7rem;font-weight:700;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sinfo b{font-size:1.08rem}
 .sinfo small{font-size:.72rem;color:var(--ink-2);font-weight:700}
 .sinfo em{flex-basis:100%;font-style:normal;font-size:.74rem;font-weight:700;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (max-width:520px){.sinfo{grid-template-columns:1.3fr 1fr 1.1fr .9fr}.sinfo .si-d{display:none}} /* 좁은 세로 화면: ‘오늘’ 칸은 기록 탭에서 봄 */
+@media (max-width:520px){.sinfo{grid-template-columns:1.3fr 1fr 1.1fr .9fr}.sinfo .si-d{display:none}.sinfo.noclr .si-d{display:flex}} /* 좁은 세로 화면: ‘오늘’ 칸은 기록 탭에서 봄 */
 .sinfo .good{color:var(--jade)}.sinfo .high{color:var(--warm)}.sinfo .low{color:var(--cool)}.sinfo .bad{color:var(--bad)}
 .brm{font-family:var(--serif);font-size:26px;font-weight:700;fill:var(--cool);text-anchor:middle}
 
@@ -1974,9 +1974,9 @@ const SI = {
     const html = `<span class="si-a"><i>지금</i><b>${v ? m2f(fr.mf).toFixed(1) : '—'}</b><small>Hz</small><em class="${cls}">${v ? `${esc(nFull(tm && Math.abs(fr.mf - tm) < 1.5 ? tm : fr.midi))} ${cc >= 0 ? '+' : '−'}${Math.abs(Math.round(cc))}¢` : '소리를 기다려요'}</em></span>`
       + `<span class="si-b"><i>목표</i><b>${tm ? m2f(tm).toFixed(1) : '—'}</b><small>${tm ? 'Hz ' + esc(nFull(tm)) : ''}</small></span>`
       + `<span class="si-c"><i>고르게 유지</i><b class="${cur ? 'good' : ''}">${cur.toFixed(1)}</b><small>초</small><em>최고 ${Math.max(best, cur).toFixed(1)}초</em></span>`
-      + (() => { const on = this.clrT && performance.now() - this.clrT < 600, q = clarityTag(this.clr); return `<span class="si-e"><i>소리 맑기</i><b class="${on ? q.cls : ''}">${on ? q.t : '—'}</b><em>${on ? `${q.pct}%` : ''}</em></span>`; })()
+      + (!pref('showClarity', true) ? '' : (() => { const on = this.clrT && performance.now() - this.clrT < 600, q = clarityTag(this.clr); return `<span class="si-e"><i>소리 맑기</i><b class="${on ? q.cls : ''}">${on ? q.t : '—'}</b><em>${on ? `${q.pct}%` : ''}</em></span>`; })())
       + `<span class="si-d"><i>오늘</i><b>${this.minTxt}</b>${boxes[0].dataset.extra ? `<em>${esc(boxes[0].dataset.extra)}</em>` : ''}</span>`;
-    boxes.forEach(b => { if (b._h !== html) { b.innerHTML = html; b._h = html; } });
+    const nc = !pref('showClarity', true); boxes.forEach(b => { b.classList.toggle('noclr', nc); if (b._h !== html) { b.innerHTML = html; b._h = html; } });
   }
 };
 
@@ -3036,7 +3036,7 @@ defScreen('tuner', {
         setNeedle(g, c, true);
         const pn = pipeNo(m), bf = bendFrom(m);
         sEl.textContent = `${pn ? pn + '번 관 · ' : bf ? nFull(bf.from) + ' 관을 꺾은 음 · ' : ''}${c >= 0 ? '+' : ''}${Math.round(c)}센트`;
-        const a = adviceFor(c); hEl.className = 't-hint ' + a.cls; hEl.textContent = a.cls === 'good' && SI.clrT && SI.clr < 0.8 && !(target && m !== target) ? '음은 맞아요. ' + BREATHY_TIP : target && m !== target ? `목표는 ‘${nFull(target)}’${iE(nFull(target))}. ${m < target ? '더 높은' : '더 낮은'} 관을 불어 보세요` : a.txt;
+        const a = adviceFor(c); hEl.className = 't-hint ' + a.cls; hEl.textContent = a.cls === 'good' && pref('showClarity', true) && SI.clrT && SI.clr < 0.8 && !(target && m !== target) ? '음은 맞아요. ' + BREATHY_TIP : target && m !== target ? `목표는 ‘${nFull(target)}’${iE(nFull(target))}. ${m < target ? '더 높은' : '더 낮은'} 관을 불어 보세요` : a.txt;
         trace.push(c, fr.rms * 8);
         pm.setLive(PIPES.includes(m) ? m : null, c);
         if (m === holdM) holdC.push(c); else { if (holdC.length > 30) recordHabit(holdM, mean(holdC)); holdM = m; holdC = [c]; }
@@ -3275,8 +3275,8 @@ function longMode(el, setMode) {
     recordHabit(lock, mC); saveDB(); sessionNote(`${nFull(lock)} ${sec.toFixed(1)}초`);
     fb.className = 'fb good'; fb.textContent = '수고하셨어요! 숨을 고르고 다시 해 보세요'; if (target) paintTarget();
     resultSheet(`${nFull(lock)} 롱톤`, `<div class="result"><div class="stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div><div class="score">${sec.toFixed(1)}초</div><div class="muted">${isBest ? '이 음의 최고 기록이에요!' : `목표 ${goal}초`}</div>
-      <div class="kv"><div><b>±${sC.toFixed(0)}</b><span>음정 흔들림(센트)</span></div><div><b>${mC >= 0 ? '+' : ''}${mC.toFixed(0)}</b><span>평균 음정(센트)</span></div><div><b>${Math.round(clamp(100 - vC * 200, 0, 100))}%</b><span>소리 크기 고르기</span></div>${clrs.length ? `<div><b>${clarityTag(mean(clrs)).pct}%</b><span>소리 맑기 · ${clarityTag(mean(clrs)).t}</span></div>` : ''}</div>
-      <p class="small muted">${clrs.length && mean(clrs) < 0.8 ? BREATHY_TIP + ' ' : ''}${sC > 12 ? '음이 흔들렸어요. 배에 힘을 주고 바람을 일정하게 내보내 보세요. ' : ''}${Math.abs(mC) > S().tol ? (mC > 0 ? '전체적으로 조금 높았어요. 바람을 살짝 줄여 보세요.' : '전체적으로 조금 낮았어요. 바람을 조금 빠르게 해 보세요.') : '음 높이는 잘 맞았어요.'}</p></div>`, [{ id: 'ok', label: '확인', primary: true }], () => reset());
+      <div class="kv"><div><b>±${sC.toFixed(0)}</b><span>음정 흔들림(센트)</span></div><div><b>${mC >= 0 ? '+' : ''}${mC.toFixed(0)}</b><span>평균 음정(센트)</span></div><div><b>${Math.round(clamp(100 - vC * 200, 0, 100))}%</b><span>소리 크기 고르기</span></div>${clrs.length && pref('showClarity', true) ? `<div><b>${clarityTag(mean(clrs)).pct}%</b><span>소리 맑기 · ${clarityTag(mean(clrs)).t}</span></div>` : ''}</div>
+      <p class="small muted">${clrs.length && pref('showClarity', true) && mean(clrs) < 0.8 ? BREATHY_TIP + ' ' : ''}${sC > 12 ? '음이 흔들렸어요. 배에 힘을 주고 바람을 일정하게 내보내 보세요. ' : ''}${Math.abs(mC) > S().tol ? (mC > 0 ? '전체적으로 조금 높았어요. 바람을 살짝 줄여 보세요.' : '전체적으로 조금 낮았어요. 바람을 조금 빠르게 해 보세요.') : '음 높이는 잘 맞았어요.'}</p></div>`, [{ id: 'ok', label: '확인', primary: true }], () => reset());
   }
   return () => { unMic(); if (unSub) unSub(); if (trace) trace.destroy(); };
 }
@@ -4079,6 +4079,7 @@ function recordMiss(sid, notes, ts, pk, offset, bad) {
   const L = Array.isArray(DB.songMiss[sid]) ? DB.songMiss[sid] : (DB.songMiss[sid] = []); L.push(R); if (L.length > 5) L.splice(0, L.length - 5); saveDB();
 }
 function weakBars(sid) {
+  if (!pref('weakOn', true)) return null;
   const L = DB.songMiss[sid]; if (!Array.isArray(L) || !L.length) return null;
   const sum = {}; L.forEach(R => Object.keys(R).forEach(k => { const v = sum[k] || (sum[k] = { s: 0, n: 0 }); v.s += R[k]; v.n++; }));
   const avg = k => sum[k] ? sum[k].s / sum[k].n : 0;
@@ -5555,7 +5556,7 @@ function calendarHTML(y, mo) {
 }
 
 /* ================= 설정 ================= */
-const SET_TABS = [['flute', '내 팬플룻', ['내 팬플룻']], ['pitch', '음정·마이크', ['음정', '마이크']], ['view', '보기', ['보기']], ['sound', '소리·이어폰', ['소리', '듣는 장치 · 소리 지연']], ['screen', '화면·설치', ['화면']], ['extra', '추가 기능', ['추가 기능']]];
+const SET_TABS = [['flute', '내 팬플룻', ['내 팬플룻']], ['pitch', '음정·마이크', ['음정', '마이크']], ['view', '보기', ['보기', '연습 도우미']], ['sound', '소리·이어폰', ['소리', '듣는 장치 · 소리 지연']], ['screen', '화면·설치', ['화면']], ['extra', '추가 기능', ['추가 기능']]];
 const featOn = k => !!pref('feat_' + k, k === 'loop');
 const goalMin = () => clamp(+pref('goalMin', 20) || 20, 5, 180);
 const scoreSize = () => { const v = pref('scoreSize', 'n'); return ['n', 'l', 'xl'].includes(v) ? v : 'n'; };
@@ -5592,6 +5593,16 @@ defScreen('settings', {
         <div><span class="label">음 이름</span>${segHTML('ns', [['ko', '도레미'], ['en', 'CDE'], ['both', '둘 다']], s.noteStyle)}</div>
         <div class="row"><span class="grow"><b>관 번호 보이기</b></span><label class="switch"><input type="checkbox" id="stNo" ${s.showPipeNo ? 'checked' : ''}><span></span></label></div>
       </div>
+      </div><div class="blk"><div class="sec-title">연습 도우미</div>
+      <div class="card stack">
+        <p class="small muted" style="margin:0">연습을 돕는 표시와 소리예요. 필요 없는 것은 꺼 두세요. 곡 연습 화면의 설정 창에서도 바꿀 수 있어요.</p>
+        ${[['brMarks', true, '숨 쉴 곳 표시', '악보에 파란 숨표(’)를 달고, 박자대로 불기에서 음 중간에 소리가 끊긴 마디를 알려 줘요'],
+          ['showClarity', true, '소리 맑기 칸', '소리 정보 줄에 바람 새는 소리가 얼마나 섞였는지 보여 줘요'],
+          ['drone', false, '기준음', '목표 음을 낮게 계속 울려 줘요 (음정 보기·롱톤·음계·곡 따라 불기 등)'],
+          ['accOn', false, '곡 반주', '박자대로 불기와 시범 듣기에 낮은 화음 반주를 붙여요'],
+          ['weakOn', true, '자주 틀리는 마디 알려 주기', '곡 결과와 곡 창에 ‘○~○마디 연습’ 버튼을 띄워요']]
+          .map(([k, d, t, ds]) => `<div class="row"><span class="grow"><b>${t}</b><div class="tiny muted">${ds}</div></span><label class="switch"><input type="checkbox" data-pref="${k}" ${pref(k, d) ? 'checked' : ''}><span></span></label></div>`).join('')}
+      </div>
       </div><div class="blk"><div class="sec-title">소리</div>
       <div class="card stack">
         <div><span class="label">시범 소리 크기</span><div class="row"><input type="range" min="0.1" max="1.5" step="0.05" value="${s.synthVol}" id="stSv"><button class="btn sm" id="stSt">${ICONS.ear}</button></div></div>
@@ -5626,7 +5637,7 @@ defScreen('settings', {
       </div>
       </div></div>
       <p class="center mt2" style="font-family:var(--hand);font-size:1.9rem;margin-bottom:0;color:var(--peony)">Made by 장작&amp;난로</p>
-      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.4</p>`;
+      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.8</p>`;
       // 카테고리 탭: 제목으로 묶어 고른 탭의 칸만 보여 줌
       const paintTab = () => { $$('.blk', el).forEach(b => { const t = $('.sec-title', b).textContent.trim(); const k = (SET_TABS.find(x => x[2].includes(t)) || SET_TABS[0])[0]; b.classList.toggle('hidden', k !== tab); }); $$('#stTabs .chip', el).forEach(c => c.classList.toggle('on', c.dataset.st === tab)); };
       paintTab();
@@ -5634,6 +5645,7 @@ defScreen('settings', {
       $$('.sec-title', el).forEach(t => t.classList.add('st-h'));
       bindSeg(el, 'ssz', v => { setPref('scoreSize', v); });
       bindSeg(el, 'hst', v => { setPref('homeStyle', v); toast(v === 'tabs' ? '홈 연습 목록을 단계별 탭으로 보여 드려요' : '홈 연습 목록을 단계별로 접어서 보여 드려요'); });
+      $$('[data-pref]', el).forEach(c => c.onchange = () => { setPref(c.dataset.pref, c.checked); toast(`${c.closest('.row').querySelector('b').textContent}: ${c.checked ? '켰어요' : '껐어요'}`); });
       $$('[data-feat]', el).forEach(c => c.onchange = () => { setPref('feat_' + c.dataset.feat, c.checked); if (c.dataset.feat === 'routine' && !c.checked) Routine.stop(); render(); });
       bindSeg(el, 'goal', v => setPref('goalMin', +v));
       const rt = $('#stRt', el); if (rt) rt.onclick = () => routineSheet(() => render());
