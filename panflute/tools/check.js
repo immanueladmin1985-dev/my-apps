@@ -1,5 +1,5 @@
 // 팬플룻 교실 자동 점검
-// 사용법(저장소 맨 위 폴더에서): node panflute/tools/check.js [screens|practice|pitch|store|import|all]
+// 사용법(저장소 맨 위 폴더에서): node panflute/tools/check.js [screens|practice|pitch|mix|weak|store|import|all]
 // - 앱 폴더를 작은 웹 서버로 띄우고, 마이크 대신 원하는 음을 내는 가짜 소리를 넣어 확인함.
 // - 스크린샷은 panflute/tools/out/ 에 저장함(저장소에는 올리지 않음).
 const { chromium } = require('playwright');
@@ -19,7 +19,10 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 // 가짜 마이크: window.__set(주파수, 켬, 잡음 세기, 2배음 세기)로 소리를 바꿈
 const FAKE_MIC = () => {
   navigator.mediaDevices.getUserMedia = async () => {
-    const ac = new AudioContext(); const d = ac.createMediaStreamDestination();
+    // __leak 이면 앱이 내는 소리(기준음·반주)도 마이크에 그대로 섞음 (스피커 소리가 마이크로 들어가는 상황)
+    const leak = window.__leak && typeof AudioEng !== 'undefined';
+    const ac = leak ? AudioEng.ensure() : new AudioContext(); const d = ac.createMediaStreamDestination();
+    if (leak) AudioEng.master.connect(d);
     const o = ac.createOscillator(), o2 = ac.createOscillator(); const g = ac.createGain(), g2 = ac.createGain(); g.gain.value = 0; g2.gain.value = 0;
     const nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const ch = nb.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
     const ns = ac.createBufferSource(); ns.buffer = nb; ns.loop = true; const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1500; const ng = ac.createGain(); ng.gain.value = 0;
@@ -30,8 +33,9 @@ const FAKE_MIC = () => {
   navigator.mediaDevices.enumerateDevices = async () => [{ kind: 'audioinput', deviceId: 'fake', label: '가짜 마이크', groupId: 'g' }];
 };
 
-async function newPage(b, w = 390, h = 844, errs = []) {
+async function newPage(b, w = 390, h = 844, errs = [], leak = false) {
   const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, permissions: ['microphone'] });
+  if (leak) await ctx.addInitScript(() => { window.__leak = true; });
   await ctx.addInitScript(FAKE_MIC);
   const p = await ctx.newPage();
   p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
@@ -59,8 +63,9 @@ async function screens(b) {
 }
 
 // 지금 목표 음(TGT.m)을 따라 불면서 연습을 끝까지 진행
-async function play(b, screen, params, limit = 90000) {
-  const errs = []; const p = await newPage(b, 390, 844, errs);
+async function play(b, screen, params, limit = 90000, prep = null) {
+  const errs = []; const p = await newPage(b, 390, 844, errs, !!prep);
+  if (prep) await p.evaluate(prep);
   await p.evaluate(([s, pr]) => go(s, pr, { push: true }), [screen, params]); await p.waitForTimeout(800);
   const start = await p.$('#dock .btn.primary'); if (start) { await start.click(); await p.waitForTimeout(300); }
   const t0 = Date.now(); let last = -1, lastK = 0, res = null;
@@ -74,14 +79,64 @@ async function play(b, screen, params, limit = 90000) {
     await p.waitForTimeout(80);
   }
   await p.screenshot({ path: path.join(OUT, `play-${screen}.png`) });
-  ok(res && !errs.length, `${screen} ${JSON.stringify(params)}: ${res ? '끝까지 진행 · ' + res.slice(0, 40) : '끝나지 않음'} ${errs.join(' | ')}`);
-  await p.context().close();
+  ok(res && !errs.length, `${screen} ${JSON.stringify(params)}${prep ? ' (앱 소리 섞음)' : ''}: ${res ? '끝까지 진행 · ' + res.slice(0, 40) : '끝나지 않음'} ${errs.join(' | ')}`);
+  await p.context().close(); return res;
 }
 async function practice(b) {
   console.log('■ 연습 끝까지 진행 (가짜 마이크로 목표 음을 붊)');
   await play(b, 'follow', { id: 'twinkle' });
   await play(b, 'playalong', { id: 'mary' });
   for (const s of ['scale', 'match', 'leap', 'legato', 'staccato']) await play(b, s, {});
+}
+
+async function mix(b) {
+  console.log('■ 기준음·반주 소리가 마이크에 섞여도 판정이 맞는지');
+  const p = await newPage(b, 390, 844, [], true);
+  await p.evaluate(() => { setPref('drone', true); go('tuner', {}, { push: true }); }); await p.waitForTimeout(1200);
+  let worst = 0, wrong = 0, droneSeen = 0;
+  for (const m of [67, 72, 76, 79, 84, 91, 96, 103]) {
+    const v = await p.evaluate(m => new Promise(r => { TGT.m = m; setTimeout(() => { window.__set(440 * Math.pow(2, (m - 69) / 12), true, 0.05); const a = []; const un = Mic.sub(fr => a.push(fr.voiced ? fr.mf : 0)); setTimeout(() => { un(); window.__set(0, false); r({ a: a.slice(-15).filter(x => x), d: Drone.cur }); }, 700); }, 400); }), m);
+    if (v.d) droneSeen++;
+    if (!v.a.length) { wrong++; continue; } const c = (v.a.sort((x, y) => x - y)[v.a.length >> 1] - m) * 100; if (Math.abs(c) > 50) wrong++; else worst = Math.max(worst, Math.abs(c));
+  }
+  ok(droneSeen === 8 && !wrong && worst <= 10, `기준음을 켠 채 음정 보기: 기준음 울림 ${droneSeen}/8, 틀림 ${wrong}건, 가장 큰 차이 ${worst.toFixed(0)}센트`);
+  const silent = await p.evaluate(() => new Promise(r => { TGT.m = 72; setTimeout(() => { const a = []; const un = Mic.sub(fr => a.push(fr.voiced)); setTimeout(() => { un(); r(a.filter(Boolean).length + '/' + a.length); }, 800); }, 400); }));
+  ok(silent.startsWith('0/'), `안 불 때 기준음만 들어오면 소리로 읽지 않음 (${silent})`);
+  await p.context().close();
+  const res = await play(b, 'playalong', { id: 'twinkle' }, 90000, () => { setPref('accOn', true); setPref('paArt', false); });
+  const sc = res ? +((/(\d+)점/.exec(res) || [])[1] || 0) : 0; ok(sc >= 90, `반주를 켠 채 박자대로 불기 점수 ${sc}점 (90점 이상이어야 함)`);
+}
+
+async function weak(b) {
+  console.log('■ 자주 틀리는 마디 · 음 중간 끊김 · 숨표');
+  const errs = []; const p = await newPage(b, 390, 844, errs);
+  await p.evaluate(() => { setPref('paArt', false); go('playalong', { id: 'mary' }, { push: true }); }); await p.waitForTimeout(800);
+  const info = await p.evaluate(() => { const s = getSong('mary'); const n = fitSongK(s).notes; return { bars: barIndexOf(n, s.ts, 0), d: n.map(x => x.d), br: document.querySelectorAll('.brm').length }; });
+  for (let run = 0; run < 2; run++) {
+    await p.click('#dock .btn.primary'); await p.waitForTimeout(200);
+    const t0 = Date.now(); let res = null, cutAt = 0;
+    while (Date.now() - t0 < 60000) {
+      const st = await p.evaluate(() => { const c = document.querySelector('.n.cur'); return { i: c ? +c.dataset.i : -1, m: TGT.m, done: !!document.querySelector('#rbar') }; });
+      if (st.done) { res = await p.evaluate(() => document.querySelector('#rbar').innerText.replace(/\s+/g, ' ')); break; }
+      if (st.i >= 0 && st.m) {
+        const wrong = info.bars[st.i] === 2; // 3번째 마디는 일부러 틀림
+        if (st.i === 6 && !cutAt) { cutAt = Date.now(); await p.evaluate(m => window.__set(440 * Math.pow(2, (m - 69) / 12), true), st.m); await p.waitForTimeout(350); await p.evaluate(() => window.__set(0, false)); await p.waitForTimeout(300); }
+        await p.evaluate(m => window.__set(440 * Math.pow(2, (m - 69) / 12), true), st.m + (wrong ? 3 : 0));
+      }
+      await p.waitForTimeout(60);
+    }
+    ok(!!res, `${run + 1}번째 박자대로 불기 끝 · ${res ? res.slice(0, 60) : ''}`);
+    if (run === 0) { await p.click('#rbar [data-r="more"]'); await p.waitForTimeout(400); const more = await p.evaluate(() => document.querySelector('.sheet').innerText); ok(/소리가 끊긴 곳: 2마디/.test(more), `음 중간에 끊긴 곳 안내: ${(/음 중간에[^.]*\./.exec(more) || ['없음'])[0]}`); await p.evaluate(() => history.back()); await p.waitForTimeout(400); }
+    else {
+      ok(/3~\d마디 연습/.test(res || ''), '결과 줄에 ‘자주 틀리는 마디 연습’ 버튼이 나옴');
+      await p.click('#rbar [data-r="weak"]'); await p.waitForTimeout(800);
+      const sec = await p.evaluate(() => ({ sec: pref('sec_mary', null), n: document.querySelectorAll('#paLane .n').length, opt: OPTS && OPTS.txt() }));
+      ok(sec.sec && sec.sec.a <= 2 && sec.sec.z >= 2 && sec.n < 20, `누르면 그 마디만 되풀이 (${JSON.stringify(sec.sec)}, 음 ${sec.n}개, ${sec.opt})`);
+    }
+  }
+  ok(info.br >= 1, `악보에 숨표 ${info.br}개`);
+  ok(!errs.length, '스크립트 오류 없음 ' + errs.join(' | '));
+  await p.context().close();
 }
 
 async function pitch(b) {
@@ -144,6 +199,8 @@ async function imports(b) {
     if (what === 'all' || what === 'screens') await screens(b);
     if (what === 'all' || what === 'practice') await practice(b);
     if (what === 'all' || what === 'pitch') await pitch(b);
+    if (what === 'all' || what === 'mix') await mix(b);
+    if (what === 'all' || what === 'weak') await weak(b);
     if (what === 'all' || what === 'store') await store(b);
     if (what === 'all' || what === 'import') await imports(b);
   } finally { await b.close(); srv.kill(); }
