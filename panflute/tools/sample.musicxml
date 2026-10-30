@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1"><work><work-title>XML 시험</work-title></work>
+<part-list><score-part id="P1"><part-name>Flute</part-name></score-part></part-list>
+<part id="P1">
+<measure number="0" implicit="yes"><attributes><divisions>2</divisions><key><fifths>1</fifths></key><time><beats>3</beats><beat-type>4</beat-type></time></attributes>
+<direction><sound tempo="84"/></direction>
+<note><pitch><step>D</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice></note></measure>
+<measure number="1"><barline location="left"><repeat direction="forward"/></barline>
+<note><pitch><step>G</step><octave>5</octave></pitch><duration>3</duration><voice>1</voice><notations><articulations><staccato/></articulations></notations></note>
+<note><pitch><step>F</step><alter>1</alter><octave>5</octave></pitch><duration>1</duration><voice>1</voice></note>
+<note><chord/><pitch><step>A</step><octave>5</octave></pitch><duration>1</duration><voice>1</voice></note>
+<note><pitch><step>E</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><tie type="start"/></note>
+<backup><duration>6</duration></backup>
+<note><pitch><step>G</step><octave>3</octave></pitch><duration>6</duration><voice>2</voice></note></measure>
+<measure number="2"><note><pitch><step>E</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><tie type="stop"/></note>
+<note><rest/><duration>4</duration><voice>1</voice></note>
+<barline location="right"><repeat direction="backward"/></barline></measure>
+<measure number="3"><note><pitch><step>G</step><octave>5</octave></pitch><duration>6</duration><voice>1</voice></note></measure>
+</part></score-partwise>

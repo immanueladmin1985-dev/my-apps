@@ -13,10 +13,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Great+Vibes&family=Nanum+Pen+Script&family=Noto+Music&family=Song+Myung&display=swap" rel="stylesheet">
+<link rel="preload" href="vendor/fonts/GowunDodum.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* 글꼴은 앱 안에 넣어 둠(인터넷 없이 처음 열어도 같은 모양). 앱에 쓰는 글자와 자주 쓰는 한글 2350자만 남긴 파일, 라이선스는 vendor/fonts/OFL-*.txt */
+@font-face{font-family:'Gowun Dodum';src:url(vendor/fonts/GowunDodum.woff2) format('woff2');font-display:swap}
+@font-face{font-family:'Song Myung';src:url(vendor/fonts/SongMyung.woff2) format('woff2');font-display:swap}
+@font-face{font-family:'Nanum Pen Script';src:url(vendor/fonts/NanumPenScript.woff2) format('woff2');font-display:swap}
+@font-face{font-family:'Great Vibes';src:url(vendor/fonts/GreatVibes.woff2) format('woff2');font-display:swap}
 :root{
   --fs:18px;
   --serif:'Song Myung','Noto Serif KR','Noto Serif CJK KR',serif;
@@ -1102,15 +1105,26 @@ function merge3(mine, base, theirs) {
     if (isObj(m) && isObj(t)) { merge3(m, isObj(b) ? b : {}, t); return; }
     if (same(m, b)) { if (t === undefined) delete mine[k]; else mine[k] = t; return; }
     if (same(t, b)) return;
+    if (Array.isArray(m) && Array.isArray(t) && byId(m) && byId(t)) { mine[k] = mergeById(m, Array.isArray(b) && byId(b) ? b : [], t); return; }
     if (k === 'sessions' && Array.isArray(m) && Array.isArray(t)) { const seen = new Set(m.map(x => x.t + x.f)); mine[k] = m.concat(t.filter(x => !seen.has(x.t + x.f))).sort((x, y) => x.t - y.t); }
   });
   return mine;
+}
+/* id가 있는 항목 목록(듣는 장치 등)은 통째로 덮지 않고 항목마다 합침: 한 창에서 잰 스피커 지연을
+   다른 창이 자기 목록으로 덮어 '아직 안 잼'으로 되돌리던 문제를 막음 */
+const byId = a => a.every(x => isObj(x) && typeof x.id === 'string');
+function mergeById(m, b, t) {
+  const inB = id => b.some(x => x.id === id);
+  const out = [];
+  t.forEach(x => { const mx = m.find(y => y.id === x.id); if (mx) out.push(merge3(mx, b.find(y => y.id === x.id) || {}, x)); else if (!inB(x.id)) out.push(x); });
+  m.forEach(x => { if (!t.some(y => y.id === x.id) && !inB(x.id)) out.push(x); });
+  return out;
 }
 function syncDB() { // 저장소가 다른 창 때문에 바뀌었으면 이 창의 DB에 합침
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw || raw === lastRaw) return false;
-    const base = lastRaw ? JSON.parse(lastRaw) : {};
+    const base = normalizeDB(lastRaw ? JSON.parse(lastRaw) : {}); // 기본값을 채운 모습끼리 비교해야 아직 저장 안 된 기본값을 '바꾼 값'으로 착각하지 않음
     merge3(DB, base, JSON.parse(raw)); normalizeDB(DB); lastRaw = raw; refreshPipes && refreshPipes();
     return true;
   } catch (e) { return false; }
@@ -1123,6 +1137,7 @@ function normalizeDB(d) {
   if (!isObj(d.settings)) d.settings = {};
   const s = d.settings; // 있는 객체를 그대로 두고 빠진 값만 채움 (화면이 들고 있는 참조가 끊기지 않게)
   Object.keys(DEFAULTS).forEach(k => { if (s[k] === undefined) s[k] = isObj(DEFAULTS[k]) ? Object.assign({}, DEFAULTS[k]) : DEFAULTS[k]; });
+  outsInit(s);
   if (!isObj(s.flute)) s.flute = {};
   Object.keys(DEFAULTS.flute).forEach(k => { if (s.flute[k] === undefined) s.flute[k] = DEFAULTS.flute[k]; });
   d.sessions = Array.isArray(d.sessions) ? d.sessions : [];
@@ -2648,8 +2663,7 @@ function transcribeFrames(F, ons, grid, ts, per) {
 }
 
 /* ================= 듣는 장치: 장치마다 소리 지연·화면 늦춤을 따로 저장 ================= */
-function outsInit() {
-  const s = S();
+function outsInit(s = S()) {
   if (!Array.isArray(s.outs) || !s.outs.length) s.outs = [
     { id: 'base', name: '스피커 · 유선 이어폰', bt: false, lat: typeof s.latency === 'number' ? s.latency : null, rep: null, vis: null },
     { id: 'bt', name: '블루투스 이어폰', bt: true, lat: null, rep: null, vis: null }];
@@ -3781,6 +3795,211 @@ function seqChip(n, cls = '') {
 const DURS = [[4, '4박'], [3, '3박'], [2, '2박'], [1.5, '1박 반'], [1, '1박'], [0.75, '¾박'], [0.5, '반 박'], [0.25, '¼박']];
 function durName(d) { const f = DURS.find(x => Math.abs(x[0] - d) < 0.01); return f ? f[1] : d + '박'; }
 
+/* ================= 악보 파일 불러오기 (ABC · MusicXML) =================
+   다른 곳에서 받은 악보를 이 앱의 곡 형식({m, d}, d는 4분음표 = 1)으로 바꿈. 불러온 곡은 기기 안(내 곡)에만 저장함.
+   여러 성부·화음이 있으면 첫 성부의 가장 높은 음(보통 가락)만 씀. 도돌이표와 1·2번 괄호는 펼쳐서 차례대로 적음. */
+const SC_STEP = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+function abcKeySig(k) { // 'G', 'Dm', 'A dor' 같은 조표 → 음 이름별 반음
+  const mm = /^\s*([A-G])([#b]?)\s*([A-Za-z]*)/.exec(k || 'C'); const sig = {}; if (!mm) return sig;
+  const md = mm[3].toLowerCase().slice(0, 3);
+  const mode = md === '' || md === 'maj' || md === 'ion' ? 0 : md === 'm' || md === 'min' || md === 'aeo' ? -3 : md === 'mix' ? -1 : md === 'dor' ? -2 : md === 'phr' ? -4 : md === 'lyd' ? 1 : md === 'loc' ? -5 : 0;
+  const n = { C: 0, G: 1, D: 2, A: 3, E: 4, B: 5, F: -1 }[mm[1]] + (mm[2] === '#' ? 7 : mm[2] === 'b' ? -7 : 0) + mode;
+  if (n > 0) 'FCGDAEB'.slice(0, n).split('').forEach(c => sig[c] = 1); else if (n < 0) 'BEADGCF'.slice(0, -n).split('').forEach(c => sig[c] = -1);
+  return sig;
+}
+function frac(s, def) { const mm = /^\s*(\d+)\s*\/\s*(\d+)/.exec(s || ''); return mm ? +mm[1] / +mm[2] : def; }
+// 마디 목록(도돌이표 표시 포함) → 펼친 음 목록
+function unrollBars(bars) {
+  const out = []; let i = 0, rs = 0, pass = 1; const done = new Set(); let guard = 0;
+  while (i < bars.length && guard++ < 5000) {
+    const b = bars[i];
+    if (b.fwd && !(pass > 1 && i === rs)) { rs = i; pass = 1; }
+    if (b.end && !b.end.includes(pass)) { i++; continue; }
+    out.push(...b.notes.map(n => Object.assign({}, n)));
+    if (b.bwd && !done.has(i)) { done.add(i); pass++; i = rs; continue; }
+    if (b.bwd) { pass = 1; rs = i + 1; }
+    i++;
+  }
+  const res = [];
+  out.forEach(n => { const p = res[res.length - 1]; if (p && p.tie && !p.rest && !n.rest && p.m === n.m) { p.d += n.d; p.tie = n.tie; } else res.push(n); });
+  res.forEach(n => { delete n.tie; n.d = Math.round(n.d * 48) / 48; });
+  while (res.length && res[res.length - 1].rest) res.pop();
+  return res.filter(n => n.d > 0);
+}
+function scoreDraft(t, bpm, num, den, bars) {
+  const ts = num * 4 / den; const notes = unrollBars(bars);
+  const first = bars.find(b => b.notes.length); const fd = first ? first.notes.reduce((a, n) => a + n.d, 0) : 0;
+  const pk = first === bars[0] && fd > 0.01 && fd < ts - 0.01 ? Math.round(fd * 48) / 48 : 0;
+  return { t: (t || '').trim().slice(0, 40), bpm: clamp(Math.round(bpm || 90), 30, 220), ts, tsd: den === 4 ? undefined : `${num}/${den}`, pk, notes };
+}
+function parseABC(text) {
+  const tunes = []; let cur = null;
+  text.replace(/\r/g, '').split('\n').forEach(raw => {
+    const line = raw.replace(/(^|[^\\])%.*$/, '$1');
+    const h = /^([A-Za-z]):\s*(.*)$/.exec(line.trim());
+    if (h && h[1] === 'X') { cur = { head: {}, body: '' }; tunes.push(cur); return; }
+    if (!cur) { if (h) { cur = { head: {}, body: '' }; tunes.push(cur); } else return; }
+    if (h && !cur.started) { if (h[1] === 'T' && cur.head.T) return; cur.head[h[1]] = h[2]; if (h[1] === 'K') cur.started = true; return; }
+    if (h) { if ('KMLQ'.includes(h[1])) cur.body += `[${h[1]}:${h[2]}]`; return; } // 곡 중간의 조·박자 바뀜. 가사(w:) 등은 건너뜀
+    if (cur.started) cur.body += line + ' ';
+  });
+  return tunes.filter(t => t.started).map(abcTune).filter(t => t.notes.filter(n => !n.rest).length >= 2);
+}
+function abcTune(tu) {
+  const H = tu.head; let num = 4, den = 4;
+  const setM = v => { v = (v || '').trim(); if (v === 'C') { num = 4; den = 4; } else if (v === 'C|') { num = 2; den = 2; } else { const mm = /^(\d+)\s*\/\s*(\d+)/.exec(v); if (mm) { num = +mm[1]; den = +mm[2]; } } };
+  setM(H.M);
+  let L = H.L ? frac(H.L, 1 / 8) * 4 : (num / den < 0.75 ? 0.25 : 0.5);
+  let bpm = 0; const setQ = v => { const mm = /(\d+)\s*\/\s*(\d+)\s*=\s*(\d+)/.exec(v || ''); if (mm) bpm = +mm[3] * (+mm[1] / +mm[2]) * 4; else { const m2 = /^\s*(\d+)\s*$/.exec(v || ''); if (m2) bpm = +m2[1]; } };
+  setQ(H.Q);
+  let sig = abcKeySig(H.K), acc = {};
+  const bars = []; let bar = { notes: [] }, ending = null, tup = null, broken = null, art = null;
+  const pushBar = () => { if (ending) bar.end = ending; bars.push(bar); bar = { notes: [] }; acc = {}; };
+  const add = n => {
+    if (tup) { n.d *= tup.f; if (--tup.n <= 0) tup = null; }
+    if (broken) { const p = broken.prev; const k = broken.k; p.d *= k; n.d *= 2 - k; broken = null; }
+    if (art && !n.rest) { n.a = art; } art = null;
+    bar.notes.push(n);
+  };
+  const lenOf = (a, sl, b) => { let x = a ? +a : 1; if (sl) x /= b ? +b : Math.pow(2, sl.length); return x * L; };
+  const s = tu.body; let i = 0;
+  const chordTop = list => list.reduce((a, n) => (!a || n.m > a.m ? n : a), null);
+  const NOTE = /^(\^\^|\^|__|_|=)?([A-Ga-g])([,']*)(\d*)(\/*)(\d*)/;
+  const pitch = (ac, lt, oc) => {
+    const up = lt.toUpperCase(); let o = lt === up ? 4 : 5; for (const c of oc) o += c === "'" ? 1 : -1;
+    const key = up + o; let alt;
+    if (ac) { alt = { '^^': 2, '^': 1, '__': -2, '_': -1, '=': 0 }[ac]; acc[key] = alt; } else alt = key in acc ? acc[key] : (sig[up] || 0);
+    return (o + 1) * 12 + SC_STEP[up] + alt;
+  };
+  while (i < s.length) {
+    const r = s.slice(i); let mm;
+    if ((mm = /^\[([KMLQ]):([^\]]*)\]/.exec(r))) { if (mm[1] === 'K') sig = abcKeySig(mm[2]); else if (mm[1] === 'M') setM(mm[2]); else if (mm[1] === 'L') L = frac(mm[2], 1 / 8) * 4; else setQ(mm[2]); i += mm[0].length; continue; }
+    if ((mm = /^(!([^!]*)!|\+([^+]*)\+)/.exec(r))) { const d = (mm[2] || mm[3] || '').toLowerCase(); if (d === 'tenuto') art = 't'; else if (d === 'accent' || d === '>' || d === 'emphasis') art = '>'; else if (d === 'staccato') art = 's'; i += mm[0].length; continue; }
+    if (r[0] === '"') { const e = s.indexOf('"', i + 1); i = e < 0 ? s.length : e + 1; continue; }
+    if (r[0] === '{') { const e = s.indexOf('}', i + 1); i = e < 0 ? s.length : e + 1; continue; }
+    if ((mm = /^(:*\|[\]|]?:*|\[\||::|:+)(\s*\[?([12](?:[,-][12])*)(?![\d\/]))?/.exec(r)) && !/^\[\d/.test(r)) {
+      const tk = mm[1]; const bwd = tk.startsWith(':') || tk === '::', fwd = tk.endsWith(':') || tk === '::';
+      if (bar.notes.length || bwd) { if (bwd) bar.bwd = true; pushBar(); }
+      if (bwd || /\|\||\|\]|\[\|/.test(tk)) ending = null;
+      if (fwd) bar.fwd = true;
+      if (mm[3]) ending = mm[3].split(/[,-]/).map(Number);
+      i += mm[0].length; continue;
+    }
+    if ((mm = /^\[([12])(?![\d:])/.exec(r))) { if (bar.notes.length) pushBar(); ending = [+mm[1]]; i += mm[0].length; continue; }
+    if ((mm = /^\((\d)(?::(\d)?)?(?::(\d)?)?/.exec(r))) { const p = +mm[1]; const q = mm[2] ? +mm[2] : ({ 2: 3, 3: 2, 4: 3, 6: 2 }[p] || 2); tup = { f: q / p, n: mm[3] ? +mm[3] : p }; i += mm[0].length; continue; }
+    if ((mm = /^(>+|<+)/.exec(r))) { const p = bar.notes[bar.notes.length - 1]; if (p) { const k = 1 + (1 - Math.pow(0.5, mm[1].length)); broken = { prev: p, k: mm[1][0] === '>' ? k : 2 - k }; } i += mm[0].length; continue; }
+    if (r[0] === '[') { // 화음: 가장 높은 음만
+      const e = s.indexOf(']', i); if (e < 0) { i++; continue; }
+      const inner = s.slice(i + 1, e); const list = []; let j = 0, first = null;
+      while (j < inner.length) { const nm = NOTE.exec(inner.slice(j)); if (nm) { const n = { m: pitch(nm[1], nm[2], nm[3]), d: lenOf(nm[4], nm[5], nm[6]) }; if (!first) first = n; list.push(n); j += nm[0].length; } else j++; }
+      i = e + 1; const dm = /^(\d*)(\/*)(\d*)/.exec(s.slice(i)); i += dm[0].length;
+      if (list.length) { const top = chordTop(list); const n = { m: top.m, d: first.d * (dm[0] ? lenOf(dm[1], dm[2], dm[3]) / L : 1) }; if (s[i] === '-') { n.tie = true; i++; } add(n); }
+      continue;
+    }
+    if ((mm = NOTE.exec(r))) { const n = { m: pitch(mm[1], mm[2], mm[3]), d: lenOf(mm[4], mm[5], mm[6]) }; i += mm[0].length; if (s[i] === '-') { n.tie = true; i++; } add(n); continue; }
+    if ((mm = /^[zx](\d*)(\/*)(\d*)/.exec(r))) { add({ rest: true, d: lenOf(mm[1], mm[2], mm[3]) }); i += mm[0].length; continue; }
+    if ((mm = /^Z(\d*)/.exec(r))) { const k = mm[1] ? +mm[1] : 1; for (let q = 0; q < k; q++) { bar.notes.push({ rest: true, d: num * 4 / den }); pushBar(); } i += mm[0].length; continue; }
+    if (r[0] === '.') art = 's';
+    i++;
+  }
+  if (bar.notes.length) pushBar();
+  return scoreDraft(H.T, bpm || 100, num, den, bars);
+}
+function parseMusicXML(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('xml');
+  const q = (el, sel) => { const e = el.querySelector(sel); return e ? e.textContent.trim() : ''; };
+  const part = doc.querySelector('part'); if (!part) throw new Error('part');
+  const t = q(doc, 'work-title') || q(doc, 'movement-title') || q(doc, 'credit-words');
+  let div = 1, num = 4, den = 4, bpm = 0, voice = null, ending = null; const bars = [];
+  Array.from(part.children).filter(m => m.tagName === 'measure').forEach(me => {
+    const bar = { notes: [] }; let last = null;
+    Array.from(me.children).forEach(el => {
+      const tag = el.tagName;
+      if (tag === 'attributes') { const d = q(el, 'divisions'); if (d) div = +d || 1; const b = q(el, 'time > beats'), bt = q(el, 'time > beat-type'); if (b && bt && !bars.length && !bar.notes.length) { num = parseInt(b, 10) || 4; den = +bt || 4; } }
+      else if ((tag === 'direction' || tag === 'sound') && !bpm) { const sd = tag === 'sound' ? el : el.querySelector('sound'); if (sd && sd.getAttribute('tempo')) bpm = +sd.getAttribute('tempo'); }
+      else if (tag === 'barline') {
+        const rp = el.querySelector('repeat'); const en = el.querySelector('ending');
+        if (rp && rp.getAttribute('direction') === 'forward') bar.fwd = true;
+        if (rp && rp.getAttribute('direction') === 'backward') bar.bwd = true;
+        if (en) { const ty = en.getAttribute('type'); if (ty === 'start') ending = (en.getAttribute('number') || '1').split(/[,\s]+/).map(Number); else bar.endStop = true; }
+      } else if (tag === 'note') {
+        if (el.querySelector('grace') || el.querySelector('cue')) return;
+        const v = q(el, 'voice') || '1', st = q(el, 'staff') || '1'; if (st !== '1') return;
+        if (voice === null) voice = v; if (v !== voice) return;
+        const isChord = !!el.querySelector('chord'); const d = (+q(el, 'duration') || 0) / div;
+        let n;
+        if (el.querySelector('rest')) n = { rest: true, d };
+        else { const step = q(el, 'pitch > step'), oct = +q(el, 'pitch > octave'), alt = Math.round(+q(el, 'pitch > alter') || 0); if (!(step in SC_STEP)) return; n = { m: (oct + 1) * 12 + SC_STEP[step] + alt, d }; }
+        if (Array.from(el.querySelectorAll('tie')).some(x => x.getAttribute('type') === 'start')) n.tie = true;
+        if (el.querySelector('staccato')) n.a = 's'; else if (el.querySelector('tenuto')) n.a = 't'; else if (el.querySelector('accent')) n.a = '>';
+        if (isChord) { if (last && !last.rest && !n.rest && n.m > last.m) { last.m = n.m; } return; }
+        if (d <= 0) return;
+        bar.notes.push(n); last = n;
+      }
+    });
+    if (ending) bar.end = ending;
+    if (bar.endStop) { ending = null; delete bar.endStop; }
+    bars.push(bar);
+  });
+  return [scoreDraft(t, bpm || 100, num, den, bars)];
+}
+// .mxl(압축한 MusicXML) 풀기: 브라우저의 DecompressionStream 사용
+async function unzipEntries(buf) {
+  const dv = new DataView(buf); let e = buf.byteLength - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--; if (e < 0) throw new Error('zip');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const files = {}; const td = new TextDecoder();
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    files[td.decode(new Uint8Array(buf, p + 46, nl))] = { method, csize, lho }; p += 46 + nl + xl + cl;
+  }
+  const read = async name => {
+    const f = files[name]; if (!f) return null; const off = f.lho + 30 + dv.getUint16(f.lho + 26, true) + dv.getUint16(f.lho + 28, true);
+    const data = new Uint8Array(buf, off, f.csize); if (f.method === 0) return td.decode(data);
+    if (typeof DecompressionStream === 'undefined') throw new Error('nodecomp');
+    return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  };
+  return { names: Object.keys(files), read };
+}
+async function readScoreFile(file) {
+  const name = (file.name || '').toLowerCase();
+  if (name.endsWith('.mxl')) {
+    const z = await unzipEntries(await file.arrayBuffer());
+    const cont = await z.read('META-INF/container.xml'); const mm = cont && /full-path="([^"]+)"/.exec(cont);
+    const main = mm ? mm[1] : z.names.find(x => /\.(xml|musicxml)$/i.test(x) && !x.startsWith('META-INF'));
+    if (!main) throw new Error('mxl'); return parseMusicXML(await z.read(main));
+  }
+  const txt = await file.text();
+  if (/<score-(partwise|timewise)/.test(txt)) { if (/<score-timewise/.test(txt)) throw new Error('timewise'); return parseMusicXML(txt); }
+  return parseABC(txt);
+}
+function importSheet() {
+  const sh = openSheet(`<h3>악보 파일 불러오기</h3>
+    <p class="small muted" style="margin:0">ABC(.abc) 또는 MusicXML(.musicxml, .xml, .mxl) 악보를 불러와 ‘내 곡’으로 만들어요. 악보 프로그램(뮤즈스코어·피날레 등)에서 MusicXML로 내보낸 파일도 돼요. 여러 성부가 있으면 맨 위 가락만 가져와요.</p>
+    <button class="btn primary big wide mt" data-a="file">${ICONS.music}파일 고르기</button>
+    <input type="file" data-in accept=".abc,.txt,.xml,.musicxml,.mxl" hidden>
+    <span class="label mt2">또는 ABC 글을 붙여 넣기</span>
+    <textarea class="txt" rows="5" data-abc placeholder="X:1&#10;T:곡 이름&#10;M:4/4&#10;L:1/4&#10;K:C&#10;C D E F | G2 G2 |]" style="font-family:monospace;font-size:.85rem"></textarea>
+    <button class="btn wide mt" data-a="paste">붙여 넣은 글로 만들기</button>
+    <p class="tiny muted mt">저작권이 끝난 곡이나 직접 만든 악보만 불러와 주세요. 불러온 곡은 이 기기 안에만 저장돼요.</p>`);
+  const inp = $('[data-in]', sh);
+  const done = list => {
+    if (!list.length) { toast('악보에서 음을 찾지 못했어요. 파일을 확인해 주세요', 3500); return; }
+    const open = d => sheetDone(() => { go('editor', { draft: Object.assign({ fromFile: true }, d) }); toast('불러왔어요. 확인하고 ‘저장’을 누르면 내 곡에 들어가요', 3500); });
+    if (list.length === 1) { open(list[0]); return; }
+    // ABC 파일에 곡이 여러 개면 고르게 함
+    sh.innerHTML = '<div class="grab"></div><h3>어느 곡을 불러올까요?</h3><div class="list mt">' + list.map((d, i) => `<button class="row-btn btn wide" data-pick="${i}" style="justify-content:flex-start;margin-top:6px">${esc(d.t || `이름 없는 곡 ${i + 1}`)} <small class="muted">음 ${d.notes.filter(n => !n.rest).length}개</small></button>`).join('') + '</div>';
+    sh.onclick = e => { const b = e.target.closest('[data-pick]'); if (b) open(list[+b.dataset.pick]); };
+  };
+  const fail = err => { const m = String(err && err.message); toast(m === 'nodecomp' ? '이 브라우저는 .mxl 압축 파일을 못 열어요. 악보 프로그램에서 압축하지 않은 MusicXML(.musicxml)로 내보내 주세요' : m === 'timewise' ? '이 MusicXML 형식(timewise)은 아직 못 읽어요. partwise로 내보내 주세요' : '악보 파일을 읽지 못했어요. ABC나 MusicXML 파일인지 확인해 주세요', 4500); };
+  inp.onchange = async () => { const f = inp.files[0]; if (!f) return; try { done(await readScoreFile(f)); } catch (err) { fail(err); } };
+  sh.addEventListener('click', e => {
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    if (b.dataset.a === 'file') inp.click();
+    else { const txt = $('[data-abc]', sh).value; if (!txt.trim()) { toast('ABC 글을 붙여 넣어 주세요'); return; } try { done(parseABC(/^\s*X:/m.test(txt) || /^\s*K:/m.test(txt) ? txt : 'X:1\nK:C\n' + txt)); } catch (err) { fail(err); } }
+  });
+}
+
 /* ================= 연습곡 목록 ================= */
 defScreen('songs', {
   tab: true, title: '연습곡',
@@ -3795,7 +4014,7 @@ defScreen('songs', {
         <div class="chips scroll mt" id="sgCat">${[['fav', '★ 즐겨찾기']].concat(SONG_CATS).map(([k, l]) => `<button class="chip ${k === cat ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div>
         <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); const pn = pins.includes(s.id); return `<div class="song-w" data-t="${esc(normQ(s.t))}"><button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${esc(s.t)}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button><button type="button" class="pin${pn ? ' on' : ''}" data-spin="${esc(s.id)}" aria-pressed="${pn}" aria-label="${esc(s.t)} 즐겨찾기">${ICONS.star}</button></div>`; }).join('') : `<div class="li"><span class="grow muted">${cat === 'mine' ? '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.' : cat === 'fav' ? '곡 오른쪽의 별표를 누르면 여기에 모여요.' : '곡이 없어요.'}</span></div>`}</div>
         <p class="small muted center hidden" id="sgNone">찾는 곡이 없어요.</p>
-        <button class="btn wide mt" id="sgNew">${ICONS.pen}계이름으로 내 곡 만들기</button>
+        <div class="row mt"><button class="btn grow" id="sgNew">${ICONS.pen}계이름으로 내 곡 만들기</button><button class="btn grow" id="sgImp">${ICONS.music}악보 파일 불러오기</button></div>
         <p class="tiny muted mt">기본 곡은 저작권이 끝난 민요·찬송가·명곡·동요의 가락만 담았어요. 막대 개수는 난이도예요.</p>`;
       $('#sgCat', el).addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; cat = b.dataset.k; setPref('songCat', cat); render(); });
       const qIn = $('#sgQ', el);
@@ -3804,6 +4023,7 @@ defScreen('songs', {
       const qx = $('#sgQx', el); if (qx) qx.onclick = () => { q = ''; render(); };
       $('#sgList', el).addEventListener('click', e => { const sp = e.target.closest('[data-spin]'); if (sp) { const P = songPins(); const id = sp.dataset.spin; const i = P.indexOf(id); if (i >= 0) P.splice(i, 1); else P.push(id); setPref('songPins', P); toast(i >= 0 ? '즐겨찾기에서 뺐어요' : '즐겨찾기에 넣었어요. 목록 맨 위에 보여요'); render(); return; } const b = e.target.closest('[data-id]'); if (!b) return; const id = b.dataset.id; if (mode === 'follow') go('follow', { id }); else if (mode === 'play') go('playalong', { id }); else songSheet(id); });
       $('#sgNew', el).onclick = () => go('editor', {});
+      $('#sgImp', el).onclick = importSheet;
     }
     function songSheet(id) {
       const s = getSong(id); if (!s) return; const f = fitSongK(s);
@@ -4039,8 +4259,9 @@ defScreen('editor', {
   render(el, p) {
     const orig = p.id ? DB.mySongs.find(x => x.id === p.id) : null;
     const song = orig ? JSON.parse(JSON.stringify(orig)) : { id: 'my_' + uid(), t: '', bpm: 80, ts: 4, notes: [] };
-    if (!orig && p.draft) { song.bpm = p.draft.bpm; song.ts = p.draft.ts; song.notes = JSON.parse(JSON.stringify(p.draft.notes)); }
+    if (!orig && p.draft) { song.bpm = p.draft.bpm; song.ts = p.draft.ts; song.notes = JSON.parse(JSON.stringify(p.draft.notes)); if (p.draft.t) song.t = p.draft.t; if (p.draft.pk) song.pk = p.draft.pk; if (p.draft.tsd) song.tsd = p.draft.tsd; }
     let dur = 1, dot = false, sel = song.notes.length - 1, picked = false, oct = 0, demo = null, lane = null; const hist = [];
+    if (p.draft && p.draft.fromFile) sel = 0; // 불러온 악보는 처음부터 훑어보게
     const optTxt = () => `곡 정보: ${song.t || '이름 없음'} · 빠르기 ${song.bpm} · ${song.ts}박자`;
     function info(focusName) {
       const sh = openSheet(`<h3>곡 정보</h3><div class="opt-grid mt">
@@ -4052,7 +4273,7 @@ defScreen('editor', {
       const t = $('#edT', sh); t.oninput = () => { song.t = t.value.trim(); paintOpts(); };
       if (focusName) setTimeout(() => { try { t.focus(); } catch (e) { } }, 150);
       bindStepCtl(sh, 'edB', { get: () => song.bpm, set: v => { song.bpm = v; paintOpts(); }, min: 30, max: 200, fast: 5, fav: 'editor' });
-      bindSeg(sh, 'edts', v => { song.ts = +v; paintOpts(); paint(); });
+      bindSeg(sh, 'edts', v => { song.ts = +v; delete song.tsd; paintOpts(); paint(); });
       $('#edMic', sh).onclick = () => sheetDone(() => go('transcribe'));
       $('[data-ox]', sh).onclick = () => sheetDone();
     }
@@ -4074,7 +4295,7 @@ defScreen('editor', {
     }
     function paint() {
       if (lane) lane.destroy(); laneHost.className = 'pf-main fx'; laneHost.innerHTML = '';
-      lane = StaffLane(laneHost, song.notes, { ts: song.ts, labels: true, edit: true, kMax: 1.4, noEnd: true, total: STF.X0 + song.notes.reduce((a, n) => a + n.d, 0) * STF.PX + 1600, artic: { marks: song.notes.map(n => n.a || null), slurs: [], nls: [] }, empty: '음 길이를 고르고 오선을 누르거나 아래 계이름 버튼을 눌러 보세요' });
+      lane = StaffLane(laneHost, song.notes, { ts: song.ts, pk: song.pk || 0, tsd: song.tsd, labels: true, edit: true, kMax: 1.4, noEnd: true, total: STF.X0 + song.notes.reduce((a, n) => a + n.d, 0) * STF.PX + 1600, artic: { marks: song.notes.map(n => n.a || null), slurs: [], nls: [] }, empty: '음 길이를 고르고 오선을 누르거나 아래 계이름 버튼을 눌러 보세요' });
       if (song.notes.length) lane.goTo(clamp(sel, 0, song.notes.length - 1), false);
       $('#edUndo', el).disabled = !hist.length; $('#edDel', el).disabled = !song.notes.length;
     }
@@ -4109,7 +4330,7 @@ defScreen('editor', {
     setDock(`<button class="btn primary big wide" id="edSave">${ICONS.check}저장</button>`).querySelector('#edSave').onclick = () => {
       if (!song.t) { toast('곡 이름을 적어 주세요'); info(true); return; }
       if (song.notes.filter(n => !n.rest).length < 2) { toast('음을 두 개 이상 적어 주세요'); return; }
-      const i = DB.mySongs.findIndex(x => x.id === song.id); const rec = { id: song.id, t: song.t, bpm: song.bpm, ts: song.ts, notes: song.notes.map(n => Object.assign({}, n)) };
+      const i = DB.mySongs.findIndex(x => x.id === song.id); const rec = { id: song.id, t: song.t, bpm: song.bpm, ts: song.ts, notes: song.notes.map(n => Object.assign({}, n)) }; if (song.pk) rec.pk = song.pk; if (song.tsd) rec.tsd = song.tsd;
       if (i >= 0) DB.mySongs[i] = rec; else DB.mySongs.push(rec);
       saveDB(); setPref('songCat', 'mine'); toast('저장했어요. 연습곡의 ‘내 곡’에서 찾을 수 있어요'); back();
     };
