@@ -70,6 +70,8 @@
       <button id="bFinish" class="wide finish">이번 절 끝나면 후주로 마치기</button>
       <div id="endInfo" class="endinfo hidden"><span class="cd"></span><button id="endCancel">예약 취소</button></div>
 
+      <button id="bPresent" class="wide ghost hidden">🖥 다른 모니터에 띄우기</button>
+
       <details id="endSet">
         <summary>⏰ 마치기 예약 (타이머 · 반복 횟수)</summary>
         <div class="tabs2" role="tablist">
@@ -94,6 +96,21 @@
           </div>
         </div>
         <label class="set"><span>예약대로 마치면 앱도 닫기</span><input id="autoClose" type="checkbox"></label>
+      </details>
+
+      <details id="saveSet">
+        <summary>💾 저장하기 (원하는 부분 · 반복 파일)</summary>
+        <div class="tabs2" role="tablist">
+          <button id="tabMp4" class="on" role="tab">🎬 영상 파일(mp4)</button>
+          <button id="tabHtml" role="tab">♾ 무한 반복 파일</button>
+        </div>
+        <label class="set"><span id="svIntroL">전주 넣기</span><input id="svIntro" type="checkbox" checked></label>
+        <div class="grp"><div class="gl">넣을 절</div><div id="svVerses" class="chips"></div></div>
+        <div id="svRepRow" class="pick"><span>반복</span><button id="svRepM" class="sq" aria-label="한 번 줄이기">−</button><input id="svRep" type="number" min="1" max="99" value="3" inputmode="numeric" aria-label="반복 횟수"><span>번</span><button id="svRepP" class="sq" aria-label="한 번 늘리기">+</button></div>
+        <label class="set"><span id="svOutroL">후주 넣기</span><input id="svOutro" type="checkbox" checked></label>
+        <p id="svSum" class="note"></p>
+        <button id="svGo" class="wide pri">🎬 mp4 만들기</button>
+        <div id="svProg" class="prog hidden"><div class="pbar"><i></i></div><div class="prow"><span></span><button id="svCancel">취소</button></div></div>
       </details>
 
       <details id="adj">
@@ -129,6 +146,7 @@
 <dialog id="dlg"><div id="dlgBody"></div><div id="dlgBtns" class="row"></div></dialog>
 
 <script src="js/analyze.js"></script>
+<script src="js/loopfile.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

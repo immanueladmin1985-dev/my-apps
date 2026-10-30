@@ -146,7 +146,7 @@
     A.vs.push(voice(off, A.ctx.currentTime + 0.05, true));
     extend(); syncVideo(true); wake(true); paint();
   }
-  function pause() { A.pausedAt = heard(); stopAll(); A.playing = false; vid.pause(); wake(false); paint(); }
+  function pause() { A.pausedAt = heard(); stopAll(); A.playing = false; syncVideo(false); wake(false); paint(); }
   function seek(t) { t = Math.max(0, Math.min(A.buf ? A.buf.duration - 0.1 : 0, t)); if (A.playing) play(t); else { A.pausedAt = t; try { vid.currentTime = t; } catch (e) {} paint(); } }
   function setLoop(on) { A.loop = on; resched(); }
   function tick() {
@@ -156,6 +156,7 @@
       else finishApp();
     }
     paintEndInfo();
+    if (A.playing || PR.v) syncVideo(false);   // 화면 그리기가 멈춘 창(뒤에 숨은 창)에서도 영상이 따라가게
     if (!A.playing) return;
     const now = A.ctx.currentTime;
     for (const v of A.vs) if (v.wrap && !v.counted && v.t0 <= now) { v.counted = true; A.passes++; }
@@ -186,16 +187,17 @@
   $('#endStay').onclick = () => $('#endOv').classList.add('hidden');
 
   /* ---------- 영상 맞추기 ---------- */
-  const vid = $('#vid'); let lastSeek = 0;
-  function syncVideo(force) {
-    if (!vid.src || vid.readyState < 1) return;
-    const t = heard();
-    if (A.playing) {
-      if (vid.paused) { const p = vid.play(); if (p && p.catch) p.catch(() => {}); }
-      const now = performance.now();
-      if ((force || Math.abs(vid.currentTime - t) > 0.3) && now - lastSeek > 600) { lastSeek = now; try { vid.currentTime = t; } catch (e) {} }
-    } else if (!vid.paused) vid.pause();
+  const vid = $('#vid');
+  const PR = { win: null, v: null };   // 다른 모니터에 띄운 창
+  function syncEl(el, force) {
+    if (!el || !el.src || el.readyState < 1) return;
+    const t = heard(), now = performance.now();
+    if (A.playing) { if (el.paused) { const p = el.play(); if (p && p.catch) p.catch(() => {}); } }
+    else if (!el.paused) el.pause();
+    if ((force || Math.abs(el.currentTime - t) > (A.playing ? 0.3 : 0.05)) && now - (el._ls || 0) > 600) { el._ls = now; try { el.currentTime = t; } catch (e) {} }
   }
+  // 이 창의 영상과 다른 모니터에 띄운 영상을 소리에 맞춘다
+  function syncVideo(force) { syncEl(vid, force); if (PR.v) syncEl(PR.v, force); }
 
   /* ---------- 화면 ---------- */
   const pc = t => (A.buf ? t / A.buf.duration * 100 : 0) + '%';
@@ -234,7 +236,7 @@
     f.textContent = A.loop ? '이번 절 끝나면 후주로 마치기' : (cv < k ? '후주로 마치는 중 · 누르면 다시 반복' : '다시 반복하기');
     if (k >= 1) { $('#vS').textContent = fmt(song.B[0], 2); $('#vE').textContent = fmt(song.B[k], 2); }
   }
-  (function frame() { if (A.playing) { syncVideo(false); paint(); } requestAnimationFrame(frame); })();
+  (function frame() { if (A.playing) { syncVideo(false); paint(); } else if (PR.v) syncVideo(false); requestAnimationFrame(frame); })();
 
   /* ---------- 마치기 예약 (타이머 · 반복 횟수 중 하나만) ---------- */
   $('#tmH').innerHTML = [...Array(6).keys()].map(h => `<option value="${h}">${h}</option>`).join('');
@@ -385,7 +387,7 @@
   };
 
   function showHome() {
-    if (A.playing) pause(); stopAll(); A.buf = null;
+    if (A.playing) pause(); stopAll(); A.buf = null; closePresent();
     if (vid.src) { try { URL.revokeObjectURL(vid.src); } catch (e) {} vid.removeAttribute('src'); vid.load(); }
     $('#player').classList.add('hidden'); $('#home').classList.remove('hidden'); $('#hBack').classList.add('hidden');
     renderLib(); paintInstall();
@@ -429,7 +431,8 @@
     $('#busy').classList.remove('hidden'); $('#busyMsg').textContent = '소리 불러오는 중…';
     A.buf = null; A.pausedAt = 0; A.loop = true; A.passes = 0; A.limit = 0; stopAll(); A.playing = false;
     A.cBase = 0; renderSegs(); paintEndInfo();
-    vid.src = URL.createObjectURL(blob);
+    song.blob = blob; vid.src = URL.createObjectURL(blob);
+    if (PR.v) PR.v.src = vid.src;
     try {
       const ab = await blob.arrayBuffer();
       ensureCtx();
@@ -455,7 +458,7 @@
       return;
     }
     $('#busy').classList.add('hidden');
-    lastCur = null; renderSegs(); paint(); drawWave();
+    lastCur = null; renderSegs(); paint(); drawWave(); renderSave(); paintPresent();
   }
   function pickFile(f) {
     if (!f) return;
@@ -512,6 +515,206 @@
     if (e.target.closest && e.target.closest('input,dialog')) return;
     if (e.code === 'Space' && A.buf) { e.preventDefault(); A.playing ? pause() : play(); }
   });
+
+  /* ---------- 다른 모니터에 띄우기 (PPT 발표자 보기처럼) ----------
+     고른 모니터에 영상만 있는 창을 따로 띄우고, 이 창에서 조작한다. 띄운 창의 영상은 소리 없이 이 창의 소리에 맞춰 따라간다. */
+  const PRESENT_HTML = '<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>반주 반복기 · 화면</title><style>' +
+    'html,body{margin:0;height:100%;background:#000;overflow:hidden}video{width:100%;height:100%;object-fit:contain;display:block}' +
+    '#hint{position:fixed;left:50%;bottom:32px;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;font:20px system-ui,"Malgun Gothic",sans-serif;padding:14px 22px;border-radius:14px;transition:opacity .6s;white-space:nowrap}' +
+    'body.idle{cursor:none}body.idle #hint{opacity:0}</style></head><body><video playsinline muted></video>' +
+    '<div id="hint">화면을 두 번 누르면 전체화면 · 조작은 원래 창에서 해요</div></body></html>';
+  const isDesktop = () => !/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent) && !(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  async function presentPick() {
+    if (PR.win && !PR.win.closed) { closePresent(); return; }
+    if (!A.buf) { toast('먼저 반주를 열어 주세요'); return; }
+    let screens = null, cur = null;
+    if ('getScreenDetails' in window) { try { const d = await window.getScreenDetails(); screens = d.screens; cur = d.currentScreen; } catch (e) {} }
+    if (screens && screens.length > 1) {
+      const btns = screens.map((s, i) => ({ label: `${s.label || '모니터 ' + (i + 1)}${s.isPrimary ? ' (주 모니터)' : ''}${s === cur ? ' · 지금 화면' : ''} · ${s.width}×${s.height}`, val: i, cls: s === cur ? '' : 'pri' }));
+      const pick = await modal('<h3>어느 모니터에 띄울까요?</h3><p class="msg">고른 모니터에 영상만 크게 띄우고, 이 창에서 조작해요.</p>', btns.concat([{ label: '취소', val: -1 }]));
+      if (pick == null || pick < 0) return;
+      openPresent(screens[pick]);
+    } else {
+      // 권한을 묻느라 누른 효과가 사라졌을 수 있어, 한 번 더 눌러서 창을 연다(팝업 차단 방지)
+      const ok = await modal(`<h3>영상 화면 띄우기</h3><p class="msg">${screens ? '연결된 모니터가 하나만 보여요.' : '이 브라우저는 모니터를 고를 수 없어요.'} 새 창을 띄우면, 그 창을 원하는 모니터로 끌어 놓고 두 번 누르세요(전체화면).</p>`, [{ label: '취소', val: false }, { label: '창 띄우기', val: true, cls: 'pri' }]);
+      if (ok) openPresent(null, screens ? 'one' : 'noapi');
+    }
+  }
+  function openPresent(s, why) {
+    const f = s ? `popup,fullscreen,left=${s.left},top=${s.top},width=${s.width},height=${s.height}` : 'popup,width=960,height=560';
+    let w = null; try { w = window.open('', 'hl-present', f); } catch (e) {}
+    if (!w) { modal('<h3>창을 열지 못했어요</h3><p class="msg">브라우저가 새 창(팝업)을 막았어요. 주소창 오른쪽의 팝업 차단 표시를 눌러 "항상 허용"으로 바꾼 뒤 다시 눌러 주세요.</p>', [{ label: '알겠어요', val: 1, cls: 'pri' }]); return; }
+    const doc = w.document; doc.open(); doc.write(PRESENT_HTML); doc.close();
+    if (s) { try { w.moveTo(s.left, s.top); w.resizeTo(s.width, s.height); } catch (e) {} }
+    const v = doc.querySelector('video'); v.muted = true; v.src = vid.src;
+    PR.win = w; PR.v = v;
+    const fs = () => { const d = doc.documentElement; if (doc.fullscreenElement) doc.exitFullscreen().catch(() => {}); else { const r = d.requestFullscreen(s ? { screen: s, navigationUI: 'hide' } : { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); } };
+    doc.addEventListener('dblclick', fs);
+    let idle; const wake2 = () => { doc.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => doc.body.classList.add('idle'), 3000); };
+    doc.addEventListener('mousemove', wake2); wake2();
+    w.addEventListener('keydown', e => { if (e.code === 'Space' && A.buf) { e.preventDefault(); A.playing ? pause() : play(); } });
+    // 창이 열리자마자 전체화면 시도(되는 브라우저만). 안 되면 두 번 누르기 안내
+    try { const r = doc.documentElement.requestFullscreen(s ? { screen: s } : undefined); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+    v.addEventListener('loadedmetadata', () => syncVideo(true));
+    paintPresent();
+    if (why === 'one') toast('모니터가 하나만 보여요. 창을 원하는 모니터로 끌어 놓고 두 번 누르면 전체화면이에요');
+    else if (why === 'noapi') toast('띄운 창을 원하는 모니터로 끌어 놓고, 두 번 누르면 전체화면이에요');
+    else toast('고른 모니터에 띄웠어요. 전체화면이 아니면 그 화면을 두 번 누르세요');
+    try { window.focus(); } catch (e) {}
+  }
+  function closePresent() { try { if (PR.win && !PR.win.closed) PR.win.close(); } catch (e) {} PR.win = null; PR.v = null; paintPresent(); }
+  function paintPresent() {
+    const on = !!(PR.win && !PR.win.closed), b = $('#bPresent');
+    b.classList.toggle('hidden', !isDesktop()); b.classList.toggle('on', on);
+    b.textContent = on ? '🖥 띄운 화면 닫기' : '🖥 다른 모니터에 띄우기';
+  }
+  $('#bPresent').onclick = presentPick;
+  setInterval(() => { if (PR.win && PR.win.closed) { PR.win = null; PR.v = null; paintPresent(); } }, 1000);
+  window.addEventListener('pagehide', () => { try { if (PR.win) PR.win.close(); } catch (e) {} });
+
+  /* ---------- 저장하기 ----------
+     🎬 mp4: 고른 부분(전주·절·후주)을 정한 번만큼 이어 붙인 영상 파일. TV·USB·휴대폰 어디서나 그냥 재생된다.
+     ♾ 무한 반복 파일: 영상과 반복 구간을 html 파일 하나에 담아, 열고 ▶ 한 번 누르면 끝없이 반복된다. */
+  const SV = { tab: 'mp4', verses: null, job: null };
+  const svOrder = () => SV.verses && SV.verses.length ? SV.verses.slice().sort((a, b) => a - b) : [...Array(Math.max(0, K())).keys()];
+  const svRep = () => Math.max(1, Math.min(99, Math.round(+$('#svRep').value || 1)));
+  function planSegs(rep) {
+    const B = song.B, k = K(), d = A.buf.duration, out = [];
+    if ($('#svIntro').checked && B[0] > 0.05) out.push([0, B[0]]);
+    for (let r = 0; r < rep; r++) for (const j of svOrder()) out.push([B[j], B[j + 1]]);
+    if ($('#svOutro').checked && d - B[k] > 0.05) out.push([B[k], d]);
+    const m = []; for (const g of out) { const p = m[m.length - 1]; if (p && Math.abs(p[1] - g[0]) < 1e-9) p[1] = g[1]; else m.push(g.slice()); }
+    return m;
+  }
+  function renderSave() {
+    if (!A.buf || K() < 1) return;
+    const k = K(), mp4 = SV.tab === 'mp4';
+    if (SV.verses && SV.verses.some(i => i >= k)) SV.verses = null;
+    $('#tabMp4').classList.toggle('on', mp4); $('#tabHtml').classList.toggle('on', !mp4);
+    $('#svVerses').innerHTML = [...Array(k).keys()].map(i => `<button data-i="${i}" class="${svOrder().includes(i) ? 'on' : ''}">${k === 1 ? '반복 구간' : (i + 1) + '절'}</button>`).join('');
+    $('#svRepRow').classList.toggle('hidden', !mp4);
+    $('#svIntroL').textContent = mp4 ? '전주 넣기' : '처음 한 번 전주부터';
+    $('#svOutroL').textContent = mp4 ? '후주 넣기' : '마칠 때 후주까지';
+    const len = planSegs(mp4 ? svRep() : 1).reduce((s, g) => s + g[1] - g[0], 0);
+    $('#svSum').textContent = mp4
+      ? `만들 영상 길이 ${fmt(len)} · 크기 약 ${Math.max(1, Math.round(len * (vid.videoWidth ? 0.4 : 0.17) / 8))}MB. 크롬·엣지에서 만들 수 있어요(길이만큼 시간이 조금 걸려요).`
+      : `파일 하나(약 ${Math.max(1, Math.round(song.blob.size * 1.37 / 1048576))}MB)만 USB·카카오톡 등으로 옮기면, 인터넷 없이 아무 컴퓨터에서나 열고 ▶을 한 번 누르면 고른 절이 끝없이 반복돼요. 마칠 때는 "마치기"를 누르면 돼요.`;
+    $('#svGo').textContent = mp4 ? '🎬 mp4 만들기' : '♾ 무한 반복 파일 만들기';
+  }
+  $('#tabMp4').onclick = () => { SV.tab = 'mp4'; renderSave(); };
+  $('#tabHtml').onclick = () => { SV.tab = 'html'; renderSave(); };
+  $('#svVerses').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; const i = +b.dataset.i;
+    let s = svOrder(); s = s.includes(i) ? s.filter(x => x !== i) : s.concat(i);
+    if (!s.length) { toast('한 절은 넣어야 해요'); return; }
+    SV.verses = s.length === K() ? null : s; renderSave();
+  });
+  $('#svRepM').onclick = () => { $('#svRep').value = Math.max(1, svRep() - 1); renderSave(); };
+  $('#svRepP').onclick = () => { $('#svRep').value = Math.min(99, svRep() + 1); renderSave(); };
+  ['svRep', 'svIntro', 'svOutro'].forEach(id => $('#' + id).addEventListener('input', renderSave));
+  $('#saveSet').addEventListener('toggle', renderSave);
+  function setJob(msg, frac) {
+    const on = msg != null; $('#svProg').classList.toggle('hidden', !on); $('#svGo').disabled = on;
+    if (on) { $('#svProg span').textContent = msg; $('#svProg i').style.width = Math.round((frac || 0) * 100) + '%'; }
+  }
+  $('#svCancel').onclick = () => { if (SV.job) SV.job.cancel = true; };
+  $('#svGo').onclick = () => { if (!A.buf || SV.job) return; (SV.tab === 'mp4' ? makeMp4 : makeLoopFile)(); };
+  function download(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  }
+  const baseName = () => song.name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '_');
+  function loadMB() {
+    if (window.Mediabunny) return Promise.resolve();
+    return new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'vendor/mediabunny.min.js'; s.onload = ok; s.onerror = () => no(new Error('라이브러리를 불러오지 못했어요')); document.head.appendChild(s); });
+  }
+  // 소리: 1초씩 잘라 넣고, 이어 붙인 곳은 0.012초 동안 앞 소리에서 새 소리로 부드럽게 바꾼다
+  async function addAudio(asrc, a, b, prevEnd, job) {
+    const buf = A.buf, sr = buf.sampleRate, ch = buf.numberOfChannels, src = [];
+    for (let c = 0; c < ch; c++) src.push(buf.getChannelData(c));
+    const s0 = Math.round(a * sr), s1 = Math.round(b * sr), XFn = Math.round(0.012 * sr), p0 = prevEnd != null ? Math.round(prevEnd * sr) : -1;
+    for (let st = s0; st < s1; st += sr) {
+      if (job.cancel) throw new Error('cancel');
+      const n = Math.min(sr, s1 - st), ab = new AudioBuffer({ length: n, numberOfChannels: ch, sampleRate: sr });
+      for (let c = 0; c < ch; c++) {
+        const o = ab.getChannelData(c), d = src[c]; o.set(d.subarray(st, st + n));
+        if (p0 >= 0) for (let i = 0; i < n && st - s0 + i < XFn; i++) { const r = st - s0 + i, w = r / XFn, q = p0 + r; o[i] = o[i] * w + (q < d.length ? d[q] : 0) * (1 - w); }
+      }
+      await asrc.add(ab);
+    }
+  }
+  async function makeMp4() {
+    const hasV = !!vid.videoWidth, ext = hasV ? 'mp4' : 'm4a', rep = svRep(), segs = planSegs(rep);
+    const fname = `${baseName()} (${svOrder().length === K() ? '' : svOrder().map(i => i + 1).join('·') + '절 '}${rep}번 반복).${ext}`;
+    const total = segs.reduce((s, g) => s + g[1] - g[0], 0);
+    let handle = null, writable = null, output = null;
+    // 크롬·엣지는 저장할 곳을 먼저 고르고 곧바로 파일에 써서, 긴 영상도 메모리를 적게 쓴다
+    if (window.showSaveFilePicker) {
+      try { handle = await window.showSaveFilePicker({ suggestedName: fname, types: [{ description: hasV ? 'MP4 영상' : 'M4A 소리', accept: { [hasV ? 'video/mp4' : 'audio/mp4']: ['.' + ext] } }] }); }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const job = SV.job = { cancel: false };
+    setJob('준비하는 중…', 0);
+    try {
+      await loadMB(); const MB = window.Mediabunny;
+      const input = new MB.Input({ source: new MB.BlobSource(song.blob), formats: MB.ALL_FORMATS });
+      const vt = hasV ? await input.getPrimaryVideoTrack() : null;
+      const vcodec = vt ? await MB.getFirstEncodableVideoCodec(['avc', 'vp9', 'av1'], { width: vt.displayWidth, height: vt.displayHeight }) : null;
+      const acodec = await MB.getFirstEncodableAudioCodec(['aac', 'opus'], { numberOfChannels: A.buf.numberOfChannels, sampleRate: A.buf.sampleRate });
+      if ((vt && !vcodec) || !acodec) throw new Error('이 브라우저에서는 영상을 만들 수 없어요. PC의 크롬이나 엣지에서 해 주세요.');
+      if (handle) writable = await handle.createWritable();
+      const target = writable ? new MB.StreamTarget(writable) : new MB.BufferTarget();
+      output = new MB.Output({ format: new MB.Mp4OutputFormat({ fastStart: writable ? false : 'in-memory' }), target });
+      const vsrc = vt ? new MB.VideoSampleSource({ codec: vcodec, bitrate: MB.QUALITY_MEDIUM, keyFrameInterval: 2 }) : null;
+      if (vsrc) output.addVideoTrack(vsrc);
+      const asrc = new MB.AudioBufferSource({ codec: acodec, bitrate: 160000 });
+      output.addAudioTrack(asrc);
+      await output.start();
+      const sink = vt ? new MB.VideoSampleSink(vt) : null;
+      let outT = 0;
+      for (let i = 0; i < segs.length; i++) {
+        const [a, b] = segs[i];
+        if (sink) {
+          let last = -1;
+          for await (const s of sink.samples(a, b)) {
+            if (job.cancel) { s.close(); throw new Error('cancel'); }
+            const ts = outT + Math.max(0, s.timestamp - a);
+            if (s.timestamp >= b || ts <= last + 1e-4) { s.close(); continue; }
+            s.setTimestamp(ts); last = ts;
+            await vsrc.add(s); s.close();
+            setJob(`만드는 중… ${fmt(ts)} / ${fmt(total)}`, ts / total);
+          }
+        }
+        await addAudio(asrc, a, b, i > 0 ? segs[i - 1][1] : null, job);
+        outT += b - a;
+        setJob(`만드는 중… ${fmt(outT)} / ${fmt(total)}`, outT / total);
+      }
+      setJob('마무리하는 중…', 1);
+      await output.finalize();
+      if (!writable) download(new Blob([target.buffer], { type: hasV ? 'video/mp4' : 'audio/mp4' }), fname);
+      toast(writable ? `"${handle.name}"으로 저장했어요` : '다 만들었어요. 받은 파일(다운로드)에 있어요');
+    } catch (e) {
+      try { if (output) await output.cancel(); } catch (x) {}
+      try { if (writable) await writable.abort(); } catch (x) {}
+      if (e && e.message === 'cancel') toast('만들기를 취소했어요');
+      else modal(`<h3>영상을 만들지 못했어요</h3><p class="msg">${esc((e && e.message) || e)}</p>`, [{ label: '알겠어요', val: 1, cls: 'pri' }]);
+    } finally { SV.job = null; setJob(null); }
+  }
+  async function makeLoopFile() {
+    const job = SV.job = { cancel: false };
+    setJob('파일 만드는 중…', 0.3);
+    try {
+      const data = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(r.error); r.readAsDataURL(song.blob); });
+      if (job.cancel) throw new Error('cancel');
+      const cfg = { name: baseName(), B: song.B, order: svOrder(), intro: $('#svIntro').checked, outro: $('#svOutro').checked, vol: ui.vol };
+      const html = window.HymnLoopFile(cfg, data);
+      download(new Blob([html], { type: 'text/html' }), `${cfg.name} (무한 반복).html`);
+      toast('다 만들었어요. 받은 파일(다운로드)에 있어요');
+    } catch (e) {
+      if (e && e.message === 'cancel') toast('만들기를 취소했어요');
+      else modal(`<h3>파일을 만들지 못했어요</h3><p class="msg">${esc((e && e.message) || e)}</p>`, [{ label: '알겠어요', val: 1, cls: 'pri' }]);
+    } finally { SV.job = null; setJob(null); }
+  }
 
   /* ---------- 화면 꺼짐 막기 ---------- */
   let lock = null;

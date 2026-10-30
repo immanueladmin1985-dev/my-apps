@@ -156,3 +156,10 @@ dialog .row { margin-top: 16px; }
 .wl b { font-variant-numeric: tabular-nums; }
 .nudge button { min-width: 52px; }
 .endinfo button { white-space: nowrap; flex: none; }
+#bPresent.on { background: var(--accent); color: #fff; }
+.prog { margin-top: 10px; }
+.pbar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.pbar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.prow { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.prow button { padding: 6px 12px; }
+#svGo:disabled { opacity: .5; }
