@@ -1,6 +1,7 @@
-const CACHE = 'nanjang-pf-v19';
+const CACHE = 'nanjang-pf-v20';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './hero.webp', './hero-dark.webp', './art-flute.webp',
-  './vendor/fonts/GowunDodum.woff2', './vendor/fonts/SongMyung.woff2', './vendor/fonts/NanumPenScript.woff2', './vendor/fonts/GreatVibes.woff2'];
+  './vendor/fonts/GowunDodum.woff2', './vendor/fonts/SongMyung.woff2', './vendor/fonts/NanumPenScript.woff2', './vendor/fonts/GreatVibes.woff2',
+  './icons/backing.webp', './icons/basics.webp', './icons/bend.webp', './icons/dotted.webp', './icons/editor.webp', './icons/firstsound.webp', './icons/follow.webp', './icons/leap.webp', './icons/legato.webp', './icons/longtone.webp', './icons/match.webp', './icons/metro.webp', './icons/pipes.webp', './icons/playalong.webp', './icons/record.webp', './icons/scale.webp', './icons/staccato.webp', './icons/stage1.webp', './icons/stage2.webp', './icons/stage3.webp', './icons/stage4.webp', './icons/tongue.webp', './icons/transcribe.webp', './icons/tuner.webp', './icons/vibrato.webp'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
