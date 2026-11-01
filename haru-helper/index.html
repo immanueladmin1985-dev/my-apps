@@ -11,190 +11,237 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="하루 도우미">
-<meta name="theme-color" content="#f5f6fb">
+<meta name="theme-color" content="#f4f3fb">
 <style>
 :root{
-  --bg:#f5f6fb; --card:#ffffff; --field:#eef0f6; --text:#1b1d26; --sub:#6b7080; --line:#e3e6ef;
-  --accent:#5b6ee1; --accent-soft:#e9ecfd; --good:#139a5b; --good-soft:#e3f5ec; --warn:#e5484d; --warn-soft:#fdecec;
-  --amber:#c27a12; --amber-soft:#fdf2df; --calm:#2a9db0; --calm-soft:#e0f4f7;
-  --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.06);
+  --bg:#f4f3fb; --bg2:#ebe8fb; --card:#ffffff; --field:#f1f0f8; --text:#1d1b2e; --sub:#727089; --line:#e8e6f2;
+  --accent:#5b5bd6; --accent-soft:#ecebfd; --grad:linear-gradient(135deg,#6366f1 0%,#8b5cf6 55%,#c084fc 100%);
+  --good:#16a34a; --good-soft:#e3f6e9; --warn:#e5484d; --warn-soft:#fdeced;
+  --amber:#c2730a; --amber-soft:#fff1dc; --teal:#0e9aa7; --teal-soft:#dff5f6; --rose:#d9466f; --rose-soft:#fde8ef;
+  --sky:#2f80ed; --sky-soft:#e3eefd; --green:#2f9e5b; --green-soft:#e2f5ea; --violet:#7c4ddb; --violet-soft:#efe8fc;
+  --shadow:0 1px 2px rgba(40,30,90,.04),0 8px 24px rgba(40,30,90,.07);
+  --shadow2:0 10px 30px rgba(91,91,214,.28);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#111318; --card:#1b1e25; --field:#252932; --text:#eef0f4; --sub:#9aa0ad; --line:#2c313b;
-    --accent:#8495ff; --accent-soft:#232a4a; --good:#3ccf86; --good-soft:#16301f; --warn:#ff6b6f; --warn-soft:#3a1f22;
-    --amber:#f0b14a; --amber-soft:#352a17; --calm:#4cc6d8; --calm-soft:#15323a;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+    --bg:#121220; --bg2:#1b1a33; --card:#1c1c2c; --field:#26263a; --text:#efeef8; --sub:#a09eb8; --line:#2d2c42;
+    --accent:#9b9bff; --accent-soft:#2a2a4a;
+    --good:#4ad07f; --good-soft:#173324; --warn:#ff6b70; --warn-soft:#3a1f25;
+    --amber:#f3b14e; --amber-soft:#3a2c17; --teal:#4fd1db; --teal-soft:#15333a; --rose:#ff7b9c; --rose-soft:#3c1d2a;
+    --sky:#6aa8ff; --sky-soft:#1a2b45; --green:#5ad08b; --green-soft:#183225; --violet:#b69bff; --violet-soft:#2b2245;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    --shadow2:0 10px 30px rgba(0,0,0,.4);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#111318; --card:#1b1e25; --field:#252932; --text:#eef0f4; --sub:#9aa0ad; --line:#2c313b;
-  --accent:#8495ff; --accent-soft:#232a4a; --good:#3ccf86; --good-soft:#16301f; --warn:#ff6b6f; --warn-soft:#3a1f22;
-  --amber:#f0b14a; --amber-soft:#352a17; --calm:#4cc6d8; --calm-soft:#15323a;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+  --bg:#121220; --bg2:#1b1a33; --card:#1c1c2c; --field:#26263a; --text:#efeef8; --sub:#a09eb8; --line:#2d2c42;
+  --accent:#9b9bff; --accent-soft:#2a2a4a;
+  --good:#4ad07f; --good-soft:#173324; --warn:#ff6b70; --warn-soft:#3a1f25;
+  --amber:#f3b14e; --amber-soft:#3a2c17; --teal:#4fd1db; --teal-soft:#15333a; --rose:#ff7b9c; --rose-soft:#3c1d2a;
+  --sky:#6aa8ff; --sky-soft:#1a2b45; --green:#5ad08b; --green-soft:#183225; --violet:#b69bff; --violet-soft:#2b2245;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --shadow2:0 10px 30px rgba(0,0,0,.4);
 }
 html{font-size:16px}
 html[data-font="1"]{font-size:18px}
 html[data-font="2"]{font-size:20px}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--text);height:100%;overflow:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-  -webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%;line-height:1.45}
-button,input,textarea,select{font:inherit;color:inherit}
+body{font-family:"Pretendard","SamsungOneKorean","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+  -webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%;line-height:1.45;letter-spacing:-.01em;
+  background:radial-gradient(120% 60% at 50% -10%,var(--bg2) 0%,var(--bg) 60%) fixed}
+button,input,textarea,select{font:inherit;color:inherit;letter-spacing:inherit}
 button{border:0;background:none;cursor:pointer;touch-action:manipulation}
-input,textarea{border:0;outline:none;background:var(--field);border-radius:12px;padding:.7rem .8rem;width:100%;min-width:0}
+input,textarea{border:1.5px solid transparent;outline:none;background:var(--field);border-radius:14px;padding:.75rem .9rem;width:100%;min-width:0;transition:border-color .15s,background .15s}
+input:focus,textarea:focus{border-color:var(--accent);background:var(--card)}
 textarea{resize:vertical;min-height:6rem;line-height:1.5}
 .hidden{display:none!important}
 
 .app{height:var(--appH,100dvh);display:flex;flex-direction:column}
-.hd{flex:none;display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top)) 12px 6px 16px;max-width:1040px;width:100%;margin:0 auto}
-.hd h1{flex:1;font-size:1.15rem;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hd h1 small{font-size:.8rem;font-weight:600;color:var(--sub);margin-left:6px}
-.ibtn{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--sub);flex:none}
+.hd{flex:none;display:flex;align-items:center;gap:4px;padding:calc(8px + env(safe-area-inset-top)) 10px 4px 20px;max-width:1040px;width:100%;margin:0 auto}
+.hd h1{flex:1;font-size:1.3rem;font-weight:800;letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ibtn{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:var(--sub);flex:none}
 .ibtn:active{background:var(--field)}
 .ibtn svg{width:22px;height:22px}
 
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.view{max-width:1040px;margin:0 auto;padding:4px 16px 24px;display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
+.view{max-width:1040px;margin:0 auto;padding:6px 16px 28px;display:grid;grid-template-columns:1fr;gap:14px;align-items:start;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
 @media (min-width:760px){ .view{grid-template-columns:1fr 1fr} .view > .wide{grid-column:1 / -1} }
 
-.card{background:var(--card);border-radius:20px;padding:14px 16px 16px;box-shadow:var(--shadow);min-width:0}
-.card h2{font-size:1rem;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.card h2 .sp{flex:1}
-.card h2 button{font-size:.82rem;font-weight:700;color:var(--accent);padding:4px 8px;border-radius:8px}
-.sub{color:var(--sub);font-size:.85rem}
-.note{font-size:.82rem;color:var(--sub);margin-top:8px;line-height:1.5}
+.card{background:var(--card);border-radius:24px;padding:16px 18px 18px;box-shadow:var(--shadow);min-width:0}
+.ch{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ch h2{flex:1;font-size:1.02rem;font-weight:800;letter-spacing:-.02em}
+.ch h2 small{font-size:.78rem;color:var(--sub);font-weight:700;margin-left:4px}
+.ch .link{font-size:.82rem;font-weight:800;color:var(--accent);padding:6px 10px;border-radius:10px;background:var(--accent-soft)}
+.ico{width:2.2rem;height:2.2rem;border-radius:12px;display:grid;place-items:center;font-size:1.1rem;flex:none;background:var(--accent-soft)}
+.c-indigo{background:var(--accent-soft);color:var(--accent)} .c-amber{background:var(--amber-soft);color:var(--amber)}
+.c-teal{background:var(--teal-soft);color:var(--teal)} .c-rose{background:var(--rose-soft);color:var(--rose)}
+.c-sky{background:var(--sky-soft);color:var(--sky)} .c-green{background:var(--green-soft);color:var(--green)}
+.c-violet{background:var(--violet-soft);color:var(--violet)}
+.sub{color:var(--sub);font-size:.86rem}
+.note{font-size:.8rem;color:var(--sub);margin-top:10px;line-height:1.55}
 
 .row{display:flex;gap:8px;align-items:center}
 .row > input{flex:1}
-.btn{height:2.75rem;padding:0 1rem;border-radius:12px;font-weight:700;font-size:.95rem;background:var(--field);color:var(--text);white-space:nowrap;flex:none}
-.btn.primary{background:var(--accent);color:#fff}
+.btn{height:2.85rem;padding:0 1.05rem;border-radius:14px;font-weight:800;font-size:.94rem;background:var(--field);color:var(--text);white-space:nowrap;flex:none;transition:transform .1s,filter .1s}
+.btn.primary{background:var(--grad);color:#fff;box-shadow:0 6px 16px rgba(99,102,241,.3)}
 .btn.good{background:var(--good);color:#fff}
 .btn.warn{background:var(--warn);color:#fff}
 .btn.soft{background:var(--accent-soft);color:var(--accent)}
-.btn.block{width:100%;margin-top:8px}
-.btn:active{filter:brightness(.93)}
-.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn.block{width:100%;margin-top:10px}
+.btn:active{transform:scale(.97);filter:brightness(.95)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .btns .btn{flex:1 1 auto}
 
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{height:2.3rem;padding:0 .8rem;border-radius:99px;background:var(--field);font-size:.9rem;font-weight:600;white-space:nowrap}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{height:2.4rem;padding:0 .9rem;border-radius:99px;background:var(--field);font-size:.9rem;font-weight:700;white-space:nowrap;transition:background .15s,color .15s}
 .chip.on{background:var(--accent);color:#fff}
 
 /* 목록 */
 .list{display:flex;flex-direction:column}
-.item{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.item{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
 .item:first-child{border-top:0}
-.item .tx{flex:1;min-width:0;overflow-wrap:anywhere}
-.item .tx small{display:block;color:var(--sub);font-size:.78rem;margin-top:1px}
-.item.done .tx{color:var(--sub);text-decoration:line-through}
-.item.due{background:var(--warn-soft);border-radius:12px;padding:9px 10px;border-top:0;margin:2px 0}
-.mini{min-width:2.4rem;height:2.4rem;padding:0 .5rem;border-radius:10px;display:grid;place-items:center;font-size:.85rem;font-weight:700;color:var(--sub);flex:none}
+.item .tx{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:600}
+.item .tx small{display:block;color:var(--sub);font-size:.78rem;margin-top:2px;font-weight:500}
+.item.done .tx{color:var(--sub);text-decoration:line-through;font-weight:500}
+.item.due{background:var(--warn-soft);border-radius:16px;padding:11px 12px;border-top:0;margin:3px 0}
+.mini{min-width:2.4rem;height:2.4rem;padding:0 .55rem;border-radius:12px;display:grid;place-items:center;font-size:.85rem;font-weight:800;color:var(--sub);flex:none}
 .mini:active{background:var(--field)}
-.mini.txt{background:var(--field);color:var(--text)}
-.check{width:1.6rem;height:1.6rem;border-radius:8px;border:2px solid var(--line);flex:none;display:grid;place-items:center;color:#fff;font-size:.9rem;font-weight:900}
+.mini.txt{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.check{width:1.7rem;height:1.7rem;border-radius:9px;border:2px solid var(--line);flex:none;display:grid;place-items:center;color:#fff;font-size:.9rem;font-weight:900;transition:background .15s,border-color .15s}
 .on > .check, .check.on{background:var(--good);border-color:var(--good)}
-.empty{color:var(--sub);font-size:.9rem;padding:8px 0}
-.more{font-size:.85rem;color:var(--sub);font-weight:700;padding:8px 0 0}
+.empty{color:var(--sub);font-size:.9rem;padding:6px 0;line-height:1.55}
+.more{font-size:.85rem;color:var(--accent);font-weight:800;padding:10px 0 0}
 
-/* 탭 */
-.seg{display:flex;background:var(--field);border-radius:12px;padding:3px;gap:2px}
-.seg button{flex:1;height:2.4rem;border-radius:10px;font-size:.9rem;font-weight:700;color:var(--sub)}
-.seg button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
-.tabs{flex:none;display:flex;background:var(--card);border-top:1px solid var(--line);padding:4px 6px calc(4px + env(safe-area-inset-bottom))}
-.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:12px;color:var(--sub);font-size:.75rem;font-weight:700}
-.tabs button b{font-size:1.35rem;line-height:1.2;filter:grayscale(.8);opacity:.75}
-.tabs button.on{color:var(--accent)}
-.tabs button.on b{filter:none;opacity:1}
-.tabs .badge{position:absolute;margin-left:22px;margin-top:-2px;min-width:18px;height:18px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;line-height:18px;padding:0 5px}
-.tabs button{position:relative}
+/* 세그먼트 · 아래 탭 */
+.seg{display:flex;background:var(--card);border-radius:18px;padding:4px;gap:2px;box-shadow:var(--shadow)}
+.seg button{flex:1;height:2.6rem;border-radius:14px;font-size:.88rem;font-weight:800;color:var(--sub);white-space:nowrap}
+.seg button.on{background:var(--grad);color:#fff}
+.tabs{flex:none;display:flex;background:var(--card);margin:0 12px calc(8px + env(safe-area-inset-bottom));border-radius:24px;padding:6px;box-shadow:0 -2px 20px rgba(40,30,90,.08),var(--shadow);max-width:560px;width:calc(100% - 24px);align-self:center}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;padding:6px 0 5px;border-radius:18px;color:var(--sub);font-size:.72rem;font-weight:800;position:relative;transition:background .2s,color .2s}
+.tabs button b{font-size:1.3rem;line-height:1.25;filter:grayscale(1);opacity:.6;transition:filter .2s,opacity .2s,transform .2s}
+.tabs button.on{color:var(--accent);background:var(--accent-soft)}
+.tabs button.on b{filter:none;opacity:1;transform:translateY(-1px) scale(1.08)}
+.tabs .badge{position:absolute;top:2px;left:calc(50% + 8px);min-width:18px;height:18px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;line-height:18px;padding:0 5px;font-weight:800}
 
 /* 첫 화면 */
-.banner{background:var(--accent-soft);border-radius:16px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start}
-.banner img{width:40px;height:40px;border-radius:10px;flex:none}
-.banner b{display:block;font-size:.9rem}
+.banner{background:var(--card);border-radius:20px;padding:14px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow);border:1.5px solid var(--accent-soft)}
+.banner img{width:44px;height:44px;border-radius:12px;flex:none}
+.banner b{display:block;font-size:.92rem}
 .banner p{font-size:.78rem;color:var(--sub);margin-top:2px}
-.banner .btns{margin-top:8px}
-.banner .btn{height:2.2rem;font-size:.82rem;padding:0 .75rem;flex:0 0 auto;background:var(--card)}
-.banner .btn.primary{background:var(--accent)}
+.banner .btns{margin-top:10px}
+.banner .btn{height:2.3rem;font-size:.82rem;padding:0 .8rem;flex:0 0 auto}
 .banner .btn.ghost{background:none;color:var(--sub)}
-.greet{font-size:1.25rem;font-weight:800;padding:6px 2px 0}
-.greet small{display:block;font-size:.85rem;color:var(--sub);font-weight:600;margin-top:2px}
-.focus{font-size:1.25rem;font-weight:800;padding:10px 12px;background:var(--amber-soft);border-radius:14px;overflow-wrap:anywhere}
-.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.qbtn{border-radius:18px;padding:16px 14px;text-align:left;font-weight:800;font-size:1rem;box-shadow:var(--shadow);min-height:5.2rem}
-.qbtn small{display:block;font-weight:600;font-size:.78rem;opacity:.8;margin-top:4px}
-.qbtn.mind{background:var(--calm-soft);color:var(--calm)}
-.qbtn.talk{background:var(--amber-soft);color:var(--amber)}
-.foot{text-align:center;padding:4px 0 8px}
+.hero{position:relative;overflow:hidden;border-radius:28px;padding:20px 20px 16px;color:#fff;background:var(--grad);box-shadow:var(--shadow2)}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.13)}
+.hero::before{width:180px;height:180px;right:-50px;top:-70px}
+.hero::after{width:110px;height:110px;right:60px;bottom:-60px;background:rgba(255,255,255,.09)}
+.hero .date{font-size:.85rem;font-weight:700;opacity:.85;position:relative}
+.hero .hi{font-size:1.45rem;font-weight:800;letter-spacing:-.03em;margin-top:2px;position:relative}
+.stats{display:flex;gap:8px;margin-top:16px;position:relative}
+.stats button{flex:1;background:rgba(255,255,255,.18);border-radius:16px;padding:9px 6px;color:#fff;font-size:.76rem;font-weight:700;backdrop-filter:blur(4px)}
+.stats b{display:block;font-size:1.35rem;font-weight:800;line-height:1.2}
+.capbox{display:flex;gap:8px;align-items:center;background:var(--field);border-radius:16px;padding:4px 4px 4px 14px;border:1.5px solid transparent;transition:border-color .15s,background .15s}
+.capbox:focus-within{border-color:var(--accent);background:var(--card)}
+.capbox input{background:none;border:0;padding:.7rem 0;font-size:1rem}
+.capbox input:focus{background:none}
+.capbox .btn{height:2.6rem}
+.capto{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.capto button{height:2.7rem;border-radius:14px;font-weight:800;font-size:.9rem}
+.focus{position:relative;font-size:1.25rem;font-weight:800;letter-spacing:-.02em;padding:16px 64px 16px 16px;background:linear-gradient(135deg,var(--amber-soft),var(--rose-soft));border-radius:18px;overflow-wrap:anywhere;min-height:4.2rem;display:flex;align-items:center}
+.focus .done{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:3rem;height:3rem;border-radius:50%;background:var(--good);color:#fff;font-size:1.3rem;font-weight:900;box-shadow:0 6px 14px rgba(22,163,74,.35)}
+.focus .done:active{transform:translateY(-50%) scale(.92)}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qbtn{position:relative;overflow:hidden;border-radius:24px;padding:18px 16px;text-align:left;font-weight:800;font-size:1.02rem;min-height:6.4rem;color:#fff;box-shadow:var(--shadow)}
+.qbtn .e{display:block;font-size:1.6rem;margin-bottom:6px}
+.qbtn small{display:block;font-weight:600;font-size:.76rem;opacity:.9;margin-top:2px}
+.qbtn.mind{background:linear-gradient(135deg,#14b8a6,#0ea5e9)}
+.qbtn.talk{background:linear-gradient(135deg,#f59e0b,#f43f5e)}
+.qbtn::after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.15);right:-25px;bottom:-35px}
+.foot{text-align:center;padding:2px 0 6px}
 
 /* 마음 */
-.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.tool{background:var(--field);border-radius:16px;padding:12px;text-align:left;font-weight:800;font-size:.95rem;min-height:4.8rem}
-.tool small{display:block;font-weight:600;font-size:.75rem;color:var(--sub);margin-top:3px}
-.tool.hot{background:var(--calm-soft);color:var(--calm);outline:2px solid var(--calm)}
-.lv{display:flex;align-items:center;gap:10px;margin-top:12px}
-.lv input{flex:1;padding:0;background:none;accent-color:var(--accent);height:2rem}
-.lv b{font-size:1.4rem;width:2.4rem;text-align:center}
-.help{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--calm-soft);font-size:.88rem;font-weight:600}
-.crisis{font-size:.8rem;color:var(--sub);line-height:1.55}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tool{border-radius:20px;padding:14px;text-align:left;font-weight:800;font-size:.95rem;min-height:6rem;transition:transform .1s}
+.tool:active{transform:scale(.97)}
+.tool .e{display:block;font-size:1.5rem;margin-bottom:4px}
+.tool small{display:block;font-weight:600;font-size:.74rem;opacity:.75;margin-top:2px;color:var(--text)}
+.tool.hot{outline:2.5px solid currentColor;animation:glow 1.6s infinite}
+@keyframes glow{50%{outline-color:transparent}}
+.lv{display:flex;align-items:center;gap:10px;margin-top:14px}
+.lv input{flex:1;padding:0;background:none;accent-color:var(--accent);height:2rem;border:0}
+.lv b{font-size:1.5rem;width:2.6rem;height:2.6rem;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.help{margin-top:12px;padding:12px 14px;border-radius:16px;background:var(--teal-soft);color:var(--teal);font-size:.88rem;font-weight:700}
+.crisis{font-size:.8rem;color:var(--sub);line-height:1.6;background:transparent;box-shadow:none;border:1.5px dashed var(--line)}
 .crisis b{color:var(--text)}
-.bars{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
-.bars div{display:flex;align-items:center;gap:8px;font-size:.82rem}
-.bars span{width:4.2rem;flex:none}
-.bars i{display:block;height:10px;border-radius:5px;background:var(--accent);min-width:4px}
+.bars{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.bars div{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:700}
+.bars span{width:4.6rem;flex:none}
+.bars i{display:block;height:10px;border-radius:5px;background:var(--grad);min-width:6px}
 
 /* 대화 */
-.big{font-size:3rem;font-weight:800;text-align:center;letter-spacing:-.02em}
-.ratio{height:14px;border-radius:7px;background:var(--calm-soft);overflow:hidden;margin:6px 0 4px}
-.ratio i{display:block;height:100%;background:var(--amber);transition:width .3s}
-.rl{display:flex;justify-content:space-between;font-size:.82rem;color:var(--sub);font-weight:700}
-.talkbtn{width:100%;min-height:9rem;border-radius:24px;font-size:1.35rem;font-weight:800;margin-top:12px;background:var(--calm-soft);color:var(--calm);box-shadow:var(--shadow);transition:background .3s,color .3s}
-.talkbtn small{display:block;font-size:.85rem;font-weight:700;margin-top:6px;opacity:.85}
-.talkbtn.me{background:var(--amber);color:#fff}
-.talkbtn.long{background:var(--warn);color:#fff;animation:pulse 1.2s infinite}
-@keyframes pulse{50%{transform:scale(.985)}}
-.tip{background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:12px 14px;font-weight:700;font-size:.95rem;margin-top:12px;text-align:center}
-.tips li{margin:0 0 6px 1.2rem;font-size:.9rem}
+.big{font-size:3.2rem;font-weight:800;text-align:center;letter-spacing:-.03em;line-height:1.1}
+.ratio{height:12px;border-radius:6px;background:var(--teal-soft);overflow:hidden;margin:14px 0 6px}
+.ratio i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#f43f5e);transition:width .3s;border-radius:6px}
+.rl{display:flex;justify-content:space-between;font-size:.82rem;color:var(--sub);font-weight:800}
+.talkring{width:min(68vw,250px);aspect-ratio:1;border-radius:50%;margin:18px auto 4px;padding:9px;background:var(--teal-soft)}
+.talkbtn{width:100%;height:100%;border-radius:50%;font-size:1.25rem;font-weight:800;background:var(--card);color:var(--teal);box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px;transition:background .3s,color .3s}
+.talkbtn .e{font-size:2.4rem}
+.talkbtn small{font-size:.8rem;font-weight:700;opacity:.85}
+.talkbtn.me{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff}
+.talkbtn.long{background:linear-gradient(135deg,#f43f5e,#e11d48);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:scale(.97)}}
+.tip{background:var(--accent-soft);color:var(--accent);border-radius:16px;padding:12px 14px;font-weight:800;font-size:.92rem;margin-top:14px;text-align:center}
+.tips{list-style:none}
+.tips li{padding:9px 0 9px 1.9rem;font-size:.9rem;font-weight:600;border-top:1px solid var(--line);position:relative}
+.tips li:first-child{border-top:0}
+.tips li::before{content:"✓";position:absolute;left:0;top:8px;width:1.35rem;height:1.35rem;border-radius:50%;background:var(--amber-soft);color:var(--amber);font-size:.75rem;font-weight:900;display:grid;place-items:center}
 
 /* 창 */
-.idim{position:fixed;inset:0;background:rgba(10,12,20,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50;animation:fade .15s}
+.idim{position:fixed;inset:0;background:rgba(15,12,35,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50;animation:fade .15s;backdrop-filter:blur(2px)}
 @keyframes fade{from{opacity:0}}
-.isheet{background:var(--card);width:100%;max-width:560px;max-height:88dvh;overflow-y:auto;border-radius:22px 22px 0 0;padding:18px 18px calc(16px + env(safe-area-inset-bottom))}
-@media (min-width:600px){ .idim{align-items:center} .isheet{border-radius:22px} }
-.isheet h3{font-size:1.15rem;font-weight:800;margin-bottom:10px}
+@keyframes up{from{transform:translateY(30px);opacity:.5}}
+.isheet{background:var(--card);width:100%;max-width:560px;max-height:88dvh;overflow-y:auto;border-radius:28px 28px 0 0;padding:10px 20px calc(18px + env(safe-area-inset-bottom));animation:up .2s ease}
+.isheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+@media (min-width:600px){ .idim{align-items:center} .isheet{border-radius:28px;padding-top:20px} .isheet::before{display:none} }
+.isheet h3{font-size:1.2rem;font-weight:800;margin-bottom:10px;letter-spacing:-.02em}
 .isheet p{font-size:.92rem;margin-bottom:8px}
 .isheet ol,.isheet ul{margin:6px 0 10px 1.3rem;font-size:.92rem}
-.isheet li{margin-bottom:5px}
-.isheet label.f{display:block;font-size:.82rem;color:var(--sub);font-weight:700;margin:12px 0 6px}
-.kbd{display:inline-block;padding:0 6px;border-radius:6px;background:var(--field);font-weight:700}
-.srow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
-.srow > span{flex:1;font-weight:700;font-size:.95rem}
+.isheet li{margin-bottom:6px}
+.isheet label.f{display:block;font-size:.8rem;color:var(--sub);font-weight:800;margin:14px 0 7px}
+.kbd{display:inline-block;padding:0 6px;border-radius:6px;background:var(--field);font-weight:800}
+.srow{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.srow > span{flex:1;font-weight:800;font-size:.95rem}
 .srow small{display:block;font-weight:500;font-size:.78rem;color:var(--sub)}
-.switch{position:relative;width:50px;height:30px;flex:none}
-.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;z-index:1;cursor:pointer}
-.switch span{position:absolute;inset:0;border-radius:15px;background:var(--line);transition:.2s}
-.switch span::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch{position:relative;width:52px;height:31px;flex:none}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;z-index:1;cursor:pointer;padding:0}
+.switch span{position:absolute;inset:0;border-radius:16px;background:var(--line);transition:.2s}
+.switch span::after{content:"";position:absolute;left:3px;top:3px;width:25px;height:25px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .switch input:checked + span{background:var(--accent)}
-.switch input:checked + span::after{transform:translateX(20px)}
+.switch input:checked + span::after{transform:translateX(21px)}
+.remcard{border-radius:18px;padding:14px;background:var(--warn-soft);margin-bottom:10px}
+.remcard .t{font-size:1.2rem;font-weight:800;overflow-wrap:anywhere}
 
 /* 전체 화면 도구 (숨 고르기 등) */
-.over{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));text-align:center}
+.over{position:fixed;inset:0;z-index:40;background:radial-gradient(120% 80% at 50% 0%,var(--teal-soft),var(--bg) 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));text-align:center;animation:fade .25s}
 .over h3{font-size:1.4rem;font-weight:800}
 .over p{color:var(--sub);font-size:1rem;max-width:26rem}
-.orb{width:min(62vw,42vh,300px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#9fe3ee,var(--calm));transform:scale(.45);box-shadow:0 10px 40px rgba(42,157,176,.35)}
-.phase{font-size:2rem;font-weight:800;color:var(--calm);min-height:2.6rem}
-.ring{width:min(62vw,42vh,280px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:3rem;font-weight:800}
-.ring div{width:84%;aspect-ratio:1;border-radius:50%;background:var(--bg);display:grid;place-items:center}
-.gnum{font-size:5rem;font-weight:900;color:var(--calm);line-height:1}
+.orbwrap{position:relative;width:min(66vw,42vh,300px);aspect-ratio:1;display:grid;place-items:center}
+.orbwrap::before{content:"";position:absolute;inset:0;border-radius:50%;border:2px dashed var(--teal);opacity:.3}
+.orb{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 38% 32%,#b9f3f7,#14b8a6 60%,#0e7490);transform:scale(.45);box-shadow:0 18px 50px rgba(20,184,166,.4)}
+.phase{font-size:2rem;font-weight:800;color:var(--teal);min-height:2.6rem}
+.ring{width:min(62vw,42vh,280px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:3rem;font-weight:800;background:var(--teal-soft)}
+.ring div{width:86%;aspect-ratio:1;border-radius:50%;background:var(--card);display:grid;place-items:center;box-shadow:var(--shadow)}
+.gnum{font-size:5.5rem;font-weight:900;color:var(--teal);line-height:1}
 .dots{display:flex;gap:10px;justify-content:center}
-.dots i{width:22px;height:22px;border-radius:50%;background:var(--line)}
-.dots i.on{background:var(--calm)}
+.dots i{width:20px;height:20px;border-radius:50%;background:var(--line);transition:background .2s,transform .2s}
+.dots i.on{background:var(--teal);transform:scale(1.15)}
 .over .btns{width:100%;max-width:26rem}
-.osub{font-size:.95rem;color:var(--sub);font-weight:700}
+.osub{font-size:.95rem;color:var(--sub);font-weight:800}
 
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#1f2330;color:#fff;border-radius:14px;padding:10px 12px 10px 16px;display:flex;gap:10px;align-items:center;font-size:.9rem;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
-.toast button{color:#9fb0ff;font-weight:800;padding:4px 8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));background:#25233a;color:#fff;border-radius:16px;padding:11px 12px 11px 16px;display:flex;gap:10px;align-items:center;font-size:.9rem;font-weight:600;z-index:60;max-width:calc(100% - 32px);box-shadow:0 8px 28px rgba(0,0,0,.28);animation:up .2s ease}
+.toast button{color:#b9b5ff;font-weight:800;padding:4px 8px}
 </style>
 </head>
 <body>
@@ -225,6 +272,8 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
   var uid = function(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); };
   var MIN = 60000, HOUR = 3600000, DAY = 86400000;
+  // 안드로이드 앱(위젯·워치) 안에서 열렸을 때 쓰는 연결 통로
+  var NATIVE = window.HaruNative || null;
 
   // ===== 저장 =====
   var KEY = 'haru-helper-v1', UIKEY = 'haru-helper-ui-v1';
@@ -240,7 +289,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   }
   var state = freshState();
   try{ var s0 = JSON.parse(localStorage.getItem(KEY)); if(s0 && typeof s0 === 'object') for(var k0 in s0) state[k0] = s0[k0]; }catch(e){}
-  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} nativeSync(); }
 
   var ui = { tab: 'today', mem: 'notes', autoFS: true, installDismissed: false, theme: 'auto', font: 0, vib: true, sound: true, talkSec: 45, talkSound: false };
   try{ var u0 = JSON.parse(localStorage.getItem(UIKEY)); if(u0) for(var k1 in u0) ui[k1] = u0[k1]; }catch(e){}
@@ -249,7 +298,79 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var r = document.documentElement;
     if(ui.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', ui.theme);
     r.setAttribute('data-font', String(ui.font || 0));
+    if(NATIVE){ try{ var cs = getComputedStyle(r); NATIVE.bars(cs.getPropertyValue('--bg').trim(), cs.getPropertyValue('--card').trim(), isDark()); }catch(e){} }
   }
+  function isDark(){ return ui.theme === 'dark' || (ui.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); }
+
+  // ===== 안드로이드 앱 연결: 위젯·워치에 보여 줄 요약을 보내고, 위젯·워치에서 누른 것을 받아 반영 =====
+  var syncT = 0;
+  function nativeSync(){
+    if(!NATIVE) return;
+    clearTimeout(syncT);
+    syncT = setTimeout(function(){
+      var f = state.tasks.find(function(t){ return t.id === state.focus && !t.done; });
+      var snap = {
+        v: 1, ts: Date.now(), talkSec: ui.talkSec, vib: ui.vib,
+        focus: f ? { id: f.id, text: f.text } : null,
+        tasks: state.tasks.filter(function(t){ return !t.done; }).slice(0, 30).map(function(t){ return { id: t.id, text: t.text }; }),
+        reminders: state.reminders.filter(function(r){ return !r.done; }).map(function(r){ return { id: r.id, text: r.text, at: r.at, daily: !!r.daily }; }),
+        lists: state.lists.map(function(l){ return { id: l.id, name: l.name, items: l.items.map(function(i){ return { id: i.id, text: i.text, on: !!i.on }; }) }; }),
+        notes: state.notes.length
+      };
+      try{ NATIVE.sync(JSON.stringify(snap)); }catch(e){}
+    }, 120);
+  }
+  function applyAction(a){
+    var t, r, l, it;
+    switch(a.type){
+      case 'taskDone': t = state.tasks.find(function(x){ return x.id === a.id; }); if(t && !t.done){ t.done = true; t.doneAt = a.t || Date.now(); if(state.focus === t.id) state.focus = null; } break;
+      case 'remDone': r = state.reminders.find(function(x){ return x.id === a.id; }); if(r) remDone(r); break;
+      case 'remSnooze': r = state.reminders.find(function(x){ return x.id === a.id; }); if(r){ r.at = a.at; r.fired = false; r.done = false; } break;
+      case 'listTog': l = state.lists.find(function(x){ return x.id === a.list; }); it = l && l.items.find(function(x){ return x.id === a.item; }); if(it) it.on = !!a.on; break;
+      case 'listReset': l = state.lists.find(function(x){ return x.id === a.list; }); if(l) l.items.forEach(function(x){ x.on = false; }); break;
+      case 'note': if(a.text) state.notes.push({ id: uid(), text: String(a.text), t: a.t || Date.now(), from: a.from || '' }); break;
+      case 'focus': if(state.tasks.some(function(x){ return x.id === a.id; })) state.focus = a.id; break;
+      case 'talkLog': if(a.dur > 15000){ state.talks.push({ id: uid(), t: a.t, dur: a.dur, me: a.me, longest: a.longest, alerts: a.alerts, from: 'watch' }); if(state.talks.length > 100) state.talks.shift(); } break;
+    }
+  }
+  function pullActions(){
+    if(!NATIVE) return;
+    var list = [];
+    try{ list = JSON.parse(NATIVE.takeActions() || '[]'); }catch(e){}
+    if(!list.length) return;
+    list.forEach(applyAction);
+    var notes = list.filter(function(a){ return a.type === 'note'; }).length;
+    save(); refreshSoft();
+    if(notes) toast('워치에서 메모 ' + notes + '개가 들어왔어요');
+  }
+  // 열린 창이 없을 때만 화면을 다시 그림 (입력 중인 내용 보호)
+  function refreshSoft(){ if(!$('sheetRoot').children.length && !(document.activeElement && document.activeElement.matches('input,textarea'))) render(); }
+  window.haruPull = pullActions;
+  // 위젯·워치·알림에서 앱을 열 때 바로 갈 화면
+  window.haruOpen = function(what){
+    closeOver(); $('sheetRoot').innerHTML = '';
+    switch(what){
+      case 'capture': ui.tab = 'today'; render(); setTimeout(function(){ var c = $('cap'); if(c) c.focus(); }, 150); break;
+      case 'focus': ui.tab = 'today'; render(); pickFocusSheet(); break;
+      case 'breath': ui.tab = 'mind'; render(); breathRun(0, 2); break;
+      case 'pause': ui.tab = 'mind'; render(); pauseRun(); break;
+      case 'mind': ui.tab = 'mind'; render(); break;
+      case 'talk': talkStart(); break;
+      case 'lists': ui.tab = 'mem'; ui.mem = 'lists'; render(); break;
+      case 'rem': ui.tab = 'mem'; ui.mem = 'rem'; render(); break;
+      case 'notes': ui.tab = 'mem'; ui.mem = 'notes'; render(); break;
+      default: ui.tab = 'today'; render();
+    }
+    saveUI(); $('scroll').scrollTop = 0;
+  };
+  // 안드로이드 뒤로 가기: 열린 창부터 닫고, 닫을 것이 없으면 false
+  window.haruBack = function(){
+    var dims = $('sheetRoot').children;
+    if(dims.length){ var d = dims[dims.length - 1]; if(d.close) d.close(); else d.remove(); return true; }
+    if(over){ closeOver(); return true; }
+    if(ui.tab !== 'today'){ ui.tab = 'today'; saveUI(); render(); return true; }
+    return false;
+  };
   applyLook();
 
   // ===== 시간 표시 =====
@@ -295,7 +416,12 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       }
     }catch(e){}
   }
-  function buzz(p){ if(ui.vib && navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } }
+  function buzz(p){
+    if(!ui.vib) return;
+    var arr = [].concat(p);
+    if(NATIVE){ try{ NATIVE.vibrate(arr.join(',')); }catch(e){} return; }
+    if(navigator.vibrate){ try{ navigator.vibrate(arr); }catch(e){} }
+  }
   function notify(title, body){
     try{
       if(!('Notification' in window) || Notification.permission !== 'granted') return;
@@ -308,8 +434,13 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
 
   // ===== 화면 꺼짐 방지 =====
   var wake = null, wakeWant = 0;
-  function wakeOn(){ wakeWant++; reqWake(); }
-  function wakeOff(){ wakeWant = Math.max(0, wakeWant - 1); if(!wakeWant && wake){ try{ wake.release(); }catch(e){} wake = null; } }
+  function wakeOn(){ wakeWant++; if(NATIVE){ try{ NATIVE.keepScreen(true); }catch(e){} } reqWake(); }
+  function wakeOff(){
+    wakeWant = Math.max(0, wakeWant - 1);
+    if(wakeWant) return;
+    if(NATIVE){ try{ NATIVE.keepScreen(false); }catch(e){} }
+    if(wake){ try{ wake.release(); }catch(e){} wake = null; }
+  }
   function reqWake(){
     if(!wakeWant || wake || !navigator.wakeLock || document.hidden) return;
     navigator.wakeLock.request('screen').then(function(w){ wake = w; w.addEventListener('release', function(){ wake = null; }); }).catch(function(){});
@@ -343,18 +474,19 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
 
   // ===== 홈 화면 앱 판단 =====
   // 브라우저의 전체화면(Fullscreen API)도 크롬은 display-mode: fullscreen 으로 알려 주므로, 처음 열렸을 때의 상태로 판단
-  var BOOT_STANDALONE = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches || navigator.standalone === true;
+  var BOOT_STANDALONE = !!NATIVE || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches || navigator.standalone === true;
   function isStandalone(){
-    if(navigator.standalone === true || matchMedia('(display-mode: standalone)').matches) return true;
+    if(NATIVE || navigator.standalone === true || matchMedia('(display-mode: standalone)').matches) return true;
     if(document.fullscreenElement || document.webkitFullscreenElement) return BOOT_STANDALONE;
     return BOOT_STANDALONE || matchMedia('(display-mode: fullscreen)').matches;
   }
   var inFrame = false; try{ inFrame = window.self !== window.top; }catch(e){ inFrame = true; }
 
   // ===== 화면 그리기 =====
-  var TITLES = { today: '하루 도우미', mem: '기억 도우미', mind: '마음 도우미', talk: '대화 도우미' };
+  var TITLES = { today: '하루 도우미', mem: '기억', mind: '마음', talk: '대화' };
   var draft = { emo: null, lv: 5 };
   function dueReminders(){ var n = Date.now(); return state.reminders.filter(function(r){ return !r.done && r.at <= n; }); }
+  function head(icon, color, title, right){ return '<div class="ch"><span class="ico c-' + color + '">' + icon + '</span><h2>' + title + '</h2>' + (right || '') + '</div>'; }
 
   function render(){
     $('title').innerHTML = esc(TITLES[ui.tab]);
@@ -363,6 +495,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     tb.innerHTML = '<b>🧠</b>기억' + (due ? '<span class="badge">' + due + '</span>' : '');
     var v = $('view');
     v.innerHTML = ui.tab === 'mem' ? viewMem() : ui.tab === 'mind' ? viewMind() : ui.tab === 'talk' ? viewTalk() : viewToday();
+    v.style.animation = 'none'; void v.offsetWidth; v.style.animation = '';
     paintInstall();
   }
 
@@ -374,33 +507,35 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     h += '<div class="banner wide hidden" id="banner"><img src="icon-192.png" alt=""><div><b>홈 화면에 설치해 두세요</b><p>아이콘으로 바로 열리고, 주소창 없이 넓게 쓸 수 있어요. 인터넷이 안 될 때도 열려요.</p>' +
       '<div class="btns"><button class="btn primary" data-a="install">설치하기</button><button class="btn" data-a="fs" id="bFs">전체화면</button><button class="btn ghost" data-a="later">다음에</button></div></div></div>';
     var d = new Date(), hr = d.getHours();
-    var hi = hr < 5 ? '늦은 밤이에요' : hr < 11 ? '좋은 아침이에요' : hr < 17 ? '오늘 하루 잘 보내고 있나요?' : hr < 21 ? '오늘도 수고 많았어요' : '하루를 정리할 시간이에요';
-    h += '<div class="greet wide">' + hi + '<small>' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일</small></div>';
+    var hi = hr < 5 ? '늦은 밤이에요 🌙' : hr < 11 ? '좋은 아침이에요 ☀️' : hr < 17 ? '오늘도 잘 하고 있어요 🌤' : hr < 21 ? '오늘도 수고 많았어요 🌇' : '하루를 정리할 시간이에요 🌙';
+    var openN = state.tasks.filter(function(t){ return !t.done; }).length, remN = state.reminders.filter(function(r){ return !r.done; }).length;
+    h += '<div class="hero wide"><div class="date">' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일</div><div class="hi">' + hi + '</div>' +
+      '<div class="stats"><button data-a="goMem" data-sub="tasks"><b>' + openN + '</b>할 일</button><button data-a="goMem" data-sub="rem"><b>' + remN + '</b>알림</button><button data-a="goMem" data-sub="notes"><b>' + state.notes.length + '</b>메모</button></div></div>';
 
-    h += '<div class="card wide"><h2>💭 떠오른 생각, 잊기 전에 적기</h2>' +
-      '<div class="row"><input id="cap" placeholder="예: 우체국 들르기, 엄마한테 전화" enterkeyhint="done" autocomplete="off"></div>' +
-      '<div class="btns"><button class="btn primary" data-a="cap" data-to="note">📝 메모</button><button class="btn soft" data-a="cap" data-to="task">✅ 할 일</button><button class="btn soft" data-a="cap" data-to="rem">⏰ 알림</button></div>' +
+    h += '<div class="card wide">' + head('💭', 'indigo', '떠오른 생각, 잊기 전에 적기') +
+      '<div class="capbox"><input id="cap" placeholder="예: 우체국 들르기, 엄마한테 전화" enterkeyhint="done" autocomplete="off"></div>' +
+      '<div class="capto"><button class="c-indigo" data-a="cap" data-to="note">📝 메모</button><button class="c-green" data-a="cap" data-to="task">✅ 할 일</button><button class="c-amber" data-a="cap" data-to="rem">⏰ 알림</button></div>' +
       '<p class="note">일단 적어 두면 머릿속에서 내려놓을 수 있어요. 정리는 나중에 ‘기억’에서 해요.</p></div>';
 
     var f = state.tasks.find(function(t){ return t.id === state.focus && !t.done; });
-    h += '<div class="card"><h2>🎯 지금 할 일 하나</h2>';
-    if(f) h += '<div class="focus">' + esc(f.text) + '</div><div class="btns"><button class="btn good" data-a="taskDone" data-id="' + f.id + '">다 했어요</button><button class="btn" data-a="pickFocus">다른 걸로</button></div>';
-    else h += '<p class="sub">여러 가지를 한꺼번에 하려면 더 쉽게 잊어요. 지금 할 일 하나만 골라 두세요.</p><button class="btn soft block" data-a="pickFocus">하나 고르기</button>';
+    h += '<div class="card">' + head('🎯', 'amber', '지금 할 일 하나', f ? '<button class="link" data-a="pickFocus">바꾸기</button>' : '');
+    if(f) h += '<div class="focus">' + esc(f.text) + '<button class="done" data-a="taskDone" data-id="' + f.id + '" aria-label="다 했어요">✓</button></div>';
+    else h += '<p class="empty">여러 가지를 한꺼번에 붙잡고 있으면 더 쉽게 잊어요. 지금 할 일 하나만 골라 두세요.</p><button class="btn soft block" data-a="pickFocus">하나 고르기</button>';
     h += '</div>';
 
     var up = state.reminders.filter(function(r){ return !r.done; }).sort(function(a, b){ return a.at - b.at; });
-    h += '<div class="card"><h2>⏰ 알림<span class="sp"></span><button data-a="remNew">+ 추가</button></h2>';
+    h += '<div class="card">' + head('⏰', 'rose', '알림', '<button class="link" data-a="remNew">+ 추가</button>');
     if(!up.length) h += '<p class="empty">정해 둔 알림이 없어요.</p>';
     else h += '<div class="list">' + up.slice(0, 4).map(remItem).join('') + '</div>' + (up.length > 4 ? '<button class="more" data-a="goMem" data-sub="rem">알림 ' + up.length + '개 모두 보기 ›</button>' : '');
     h += '</div>';
 
-    h += '<div class="card"><h2>🧾 챙길 것</h2><div class="chips">' + state.lists.map(function(l){
+    h += '<div class="card">' + head('🧾', 'sky', '챙길 것') + '<div class="chips">' + state.lists.map(function(l){
       var n = l.items.filter(function(i){ return i.on; }).length;
       return '<button class="chip" data-a="openList" data-id="' + l.id + '">' + esc(l.name) + ' <span class="sub">' + n + '/' + l.items.length + '</span></button>';
     }).join('') + '</div><p class="note">문을 나서기 전에 열어서 하나씩 눌러 보세요.</p></div>';
 
-    h += '<div class="quick"><button class="qbtn mind" data-a="goTab" data-tab="mind">😮‍💨 마음이 끓어오를 때<small>숨 고르기 · 90초 멈춤</small></button>' +
-      '<button class="qbtn talk" data-a="talkStart">🗣 대화 시작<small>말하는 시간 살피기</small></button></div>';
+    h += '<div class="quick"><button class="qbtn mind" data-a="goTab" data-tab="mind"><span class="e">😮‍💨</span>마음이 끓어오를 때<small>숨 고르기 · 90초 멈춤</small></button>' +
+      '<button class="qbtn talk" data-a="talkStart"><span class="e">🗣</span>대화 시작<small>말하는 시간 살피기</small></button></div>';
     h += installFoot();
     return h;
   }
@@ -409,7 +544,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var due = r.at <= Date.now();
     return '<div class="item' + (due ? ' due' : '') + '"><div class="tx">' + esc(r.text) +
       '<small>' + (due ? '⏰ ' + fmtAt(r.at) + ' · 시간이 됐어요' : fmtAt(r.at) + ' · ' + fmtLeft(r.at)) + (r.daily ? ' · 매일' : '') + '</small></div>' +
-      (due ? '<button class="mini txt" data-a="remOk" data-id="' + r.id + '">확인</button>' : '<button class="mini" data-a="remIcs" data-id="' + r.id + '" title="캘린더에 넣기">📅</button>') +
+      (due ? '<button class="mini txt" data-a="remOk" data-id="' + r.id + '">확인</button>' : (NATIVE ? '' : '<button class="mini" data-a="remIcs" data-id="' + r.id + '" title="캘린더에 넣기">📅</button>')) +
       '<button class="mini" data-a="remDel" data-id="' + r.id + '" aria-label="지우기">✕</button></div>';
   }
 
@@ -418,33 +553,36 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var subs = [['notes', '📝 메모'], ['tasks', '✅ 할 일'], ['rem', '⏰ 알림'], ['lists', '🧾 챙길 것']];
     var h = '<div class="seg wide">' + subs.map(function(s){ return '<button data-a="memSub" data-sub="' + s[0] + '"' + (ui.mem === s[0] ? ' class="on"' : '') + '>' + s[1] + '</button>'; }).join('') + '</div>';
     if(ui.mem === 'notes'){
-      h += '<div class="card wide"><h2>📝 메모함</h2><div class="row"><input id="addNote" placeholder="떠오른 생각 적기" enterkeyhint="done" autocomplete="off"><button class="btn primary" data-a="addNote">추가</button></div></div>';
-      h += '<div class="card wide">' + (state.notes.length ? '<div class="list">' + state.notes.slice().reverse().map(function(n){
-        return '<div class="item"><div class="tx">' + esc(n.text) + '<small>' + fmtAgo(n.t) + '</small></div>' +
+      h += '<div class="card wide">' + head('📝', 'indigo', '메모함', '<span class="sub">' + state.notes.length + '개</span>') +
+        '<div class="capbox"><input id="addNote" placeholder="떠오른 생각 적기" enterkeyhint="done" autocomplete="off"><button class="btn primary" data-a="addNote">추가</button></div>';
+      h += state.notes.length ? '<div class="list" style="margin-top:8px">' + state.notes.slice().reverse().map(function(n){
+        return '<div class="item"><div class="tx">' + esc(n.text) + '<small>' + (n.from === 'watch' ? '⌚ 워치 · ' : '') + fmtAgo(n.t) + '</small></div>' +
           '<button class="mini" data-a="noteTask" data-id="' + n.id + '" title="할 일로">✅</button><button class="mini" data-a="noteRem" data-id="' + n.id + '" title="알림으로">⏰</button>' +
           '<button class="mini" data-a="noteDel" data-id="' + n.id + '" aria-label="지우기">✕</button></div>';
-      }).join('') + '</div><p class="note">✅ 할 일로 옮기기 · ⏰ 알림 만들기 · ✕ 지우기</p>' : '<p class="empty">메모가 없어요. 생각이 떠오르면 바로 적어 두세요.</p>') + '</div>';
+      }).join('') + '</div><p class="note">✅ 할 일로 옮기기 · ⏰ 알림 만들기 · ✕ 지우기</p>' : '<p class="empty" style="margin-top:8px">메모가 없어요. 생각이 떠오르면 바로 적어 두세요.</p>';
+      h += '</div>';
     } else if(ui.mem === 'tasks'){
       var open = state.tasks.filter(function(t){ return !t.done; }), done = state.tasks.filter(function(t){ return t.done; });
-      h += '<div class="card wide"><h2>✅ 할 일</h2><div class="row"><input id="addTask" placeholder="할 일 적기 (작게 나눌수록 시작하기 쉬워요)" enterkeyhint="done" autocomplete="off"><button class="btn primary" data-a="addTask">추가</button></div></div>';
-      h += '<div class="card wide">' + (open.length ? '<div class="list">' + open.map(function(t){
+      h += '<div class="card wide">' + head('✅', 'green', '할 일', '<span class="sub">' + open.length + '개 남음</span>') +
+        '<div class="capbox"><input id="addTask" placeholder="할 일 적기 (작게 나눌수록 시작하기 쉬워요)" enterkeyhint="done" autocomplete="off"><button class="btn primary" data-a="addTask">추가</button></div>';
+      h += open.length ? '<div class="list" style="margin-top:8px">' + open.map(function(t){
         return '<div class="item"><button class="check" data-a="taskDone" data-id="' + t.id + '" aria-label="완료"></button><div class="tx">' + (state.focus === t.id ? '🎯 ' : '') + esc(t.text) + '<small>' + fmtAgo(t.t) + '</small></div>' +
           '<button class="mini" data-a="setFocus" data-id="' + t.id + '" title="지금 할 일로">🎯</button><button class="mini" data-a="taskDel" data-id="' + t.id + '" aria-label="지우기">✕</button></div>';
-      }).join('') + '</div><p class="note">🎯를 누르면 첫 화면에 ‘지금 할 일 하나’로 크게 보여요.</p>' : '<p class="empty">남은 할 일이 없어요. 👏</p>');
+      }).join('') + '</div><p class="note">🎯를 누르면 첫 화면에 ‘지금 할 일 하나’로 크게 보여요.</p>' : '<p class="empty" style="margin-top:8px">남은 할 일이 없어요. 👏</p>';
       if(done.length) h += '<div class="list" style="margin-top:10px">' + done.slice(-5).reverse().map(function(t){
         return '<div class="item done on"><button class="check" data-a="taskUndo" data-id="' + t.id + '">✓</button><div class="tx">' + esc(t.text) + '</div></div>';
       }).join('') + '</div><button class="more" data-a="clearDone">끝낸 일 ' + done.length + '개 정리하기</button>';
       h += '</div>';
     } else if(ui.mem === 'rem'){
       var rs = state.reminders.filter(function(r){ return !r.done; }).sort(function(a, b){ return a.at - b.at; });
-      h += '<div class="card wide"><h2>⏰ 알림<span class="sp"></span><button data-a="remNew">+ 추가</button></h2>' +
+      h += '<div class="card wide">' + head('⏰', 'rose', '알림', '<button class="link" data-a="remNew">+ 추가</button>') +
         (rs.length ? '<div class="list">' + rs.map(remItem).join('') + '</div>' : '<p class="empty">알림이 없어요.</p>') +
-        '<p class="note">앱을 열어 두거나 잠깐 내려 둔 동안 울려요. 앱을 완전히 닫으면 늦게 울리거나 안 울릴 수 있으니, 꼭 지켜야 하는 일은 📅를 눌러 휴대폰 캘린더에도 넣어 두세요.</p>' +
-        notifHint() + '</div>';
+        (NATIVE ? '<p class="note">앱을 닫아 두어도 제시간에 휴대폰과 워치로 알려 줘요.</p>' + nativeAlarmHint()
+          : '<p class="note">앱을 열어 두거나 잠깐 내려 둔 동안 울려요. 앱을 완전히 닫으면 늦게 울리거나 안 울릴 수 있으니, 꼭 지켜야 하는 일은 📅를 눌러 휴대폰 캘린더에도 넣어 두세요.</p>' + notifHint()) + '</div>';
     } else {
       state.lists.forEach(function(l){
         var n = l.items.filter(function(i){ return i.on; }).length;
-        h += '<div class="card"><h2>' + esc(l.name) + ' <span class="sub">' + n + '/' + l.items.length + '</span><span class="sp"></span><button data-a="listEdit" data-id="' + l.id + '">고치기</button></h2>' + listBody(l) + '</div>';
+        h += '<div class="card"><div class="ch"><h2>' + esc(l.name) + ' <small>' + n + '/' + l.items.length + '</small></h2><button class="link" data-a="listEdit" data-id="' + l.id + '">고치기</button></div>' + listBody(l) + '</div>';
       });
       h += '<div class="card"><button class="btn soft block" data-a="listNew" style="margin:0">+ 새 목록 만들기</button><p class="note">예: 출근 가방, 운동 갈 때, 교회 갈 때</p></div>';
     }
@@ -462,36 +600,47 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     if(Notification.permission === 'denied') return '<p class="note">⚠️ 알림이 꺼져 있어요. 브라우저 설정에서 이 사이트의 알림을 허용하면 다른 앱을 쓰는 중에도 알려 줘요.</p>';
     return '<button class="btn soft block" data-a="askNotif">🔔 휴대폰 알림 허용하기</button>';
   }
+  function nativeAlarmHint(){
+    var ok = true, notif = 'granted';
+    try{ ok = NATIVE.exactAlarmOk(); notif = NATIVE.notifState(); }catch(e){}
+    var h = '';
+    if(notif !== 'granted') h += '<button class="btn soft block" data-a="nativeNotif">🔔 알림 허용하기</button>';
+    if(!ok) h += '<button class="btn soft block" data-a="nativeAlarm">⏰ 정확한 시간 알림 허용하기</button>';
+    return h;
+  }
 
   // ----- 마음 -----
   var EMOS = ['😠 화남', '😤 짜증', '😰 불안', '😞 서운함', '😣 답답함', '😢 슬픔', '😩 지침', '😳 부끄러움', '🙂 괜찮음', '😊 좋음'];
+  var TOOLS = [
+    ['breath', '🌬', '숨 고르기', '천천히 들이쉬고 길게 내쉬기', 'teal', true],
+    ['pause', '⏸', '90초 멈춤', '말하거나 보내기 전에 잠깐', 'indigo', true],
+    ['ground', '👀', '5·4·3·2·1', '주변 감각으로 돌아오기', 'green'],
+    ['unsentNew', '✉️', '보내지 않는 글', '하고 싶은 말을 여기에만', 'rose'],
+    ['body', '🧊', '몸으로 진정하기', '찬물 · 자리 옮기기 · 걷기', 'sky'],
+    ['afterTalk', '🤝', '다시 이야기할 때', '화가 가라앉은 뒤 할 말', 'amber']
+  ];
   function viewMind(){
-    var h = '<div class="card"><h2>지금 마음은 어떤가요?</h2><div class="chips">' + EMOS.map(function(e){
+    var h = '<div class="card">' + head('💗', 'rose', '지금 마음은 어떤가요?') + '<div class="chips">' + EMOS.map(function(e){
       return '<button class="chip' + (draft.emo === e ? ' on' : '') + '" data-a="emo" data-v="' + e + '">' + e + '</button>';
     }).join('') + '</div>' +
       '<div class="lv"><span class="sub">약함</span><input type="range" min="1" max="10" id="lv" value="' + draft.lv + '"><span class="sub">강함</span><b id="lvN">' + draft.lv + '</b></div>' +
       '<div id="lvHelp">' + lvHelp() + '</div>' +
-      '<button class="btn primary block" data-a="moodSave">기록하기</button><p class="note">이름을 붙여 주기만 해도 감정이 조금 가라앉아요.</p></div>';
+      '<button class="btn primary block" data-a="moodSave">기록하기</button><p class="note">감정에 이름을 붙여 주기만 해도 조금 가라앉아요.</p></div>';
 
     var hot = draft.emo && draft.lv >= 7;
-    h += '<div class="card"><h2>🆘 마음이 끓어오를 때</h2><div class="tools">' +
-      '<button class="tool' + (hot ? ' hot' : '') + '" data-a="breath">🌬 숨 고르기<small>천천히 들이쉬고 길게 내쉬기</small></button>' +
-      '<button class="tool' + (hot ? ' hot' : '') + '" data-a="pause">⏸ 90초 멈춤<small>말하거나 보내기 전에 잠깐</small></button>' +
-      '<button class="tool" data-a="ground">👀 5·4·3·2·1<small>주변 감각으로 돌아오기</small></button>' +
-      '<button class="tool" data-a="unsentNew">✉️ 보내지 않는 글<small>하고 싶은 말을 여기에만</small></button>' +
-      '<button class="tool" data-a="body">🧊 몸으로 진정하기<small>찬물 · 자리 옮기기 · 걷기</small></button>' +
-      '<button class="tool" data-a="afterTalk">🤝 다시 이야기할 때<small>화가 가라앉은 뒤 할 말</small></button>' +
-      '</div></div>';
+    h += '<div class="card">' + head('🆘', 'teal', '마음이 끓어오를 때') + '<div class="tools">' + TOOLS.map(function(t){
+      return '<button class="tool c-' + t[4] + (hot && t[5] ? ' hot' : '') + '" data-a="' + t[0] + '"><span class="e">' + t[1] + '</span>' + t[2] + '<small>' + t[3] + '</small></button>';
+    }).join('') + '</div></div>';
 
     if(state.unsent.length){
-      h += '<div class="card"><h2>✉️ 보내지 않은 글</h2><div class="list">' + state.unsent.slice().reverse().map(function(u){
+      h += '<div class="card">' + head('✉️', 'rose', '보내지 않은 글') + '<div class="list">' + state.unsent.slice().reverse().map(function(u){
         return '<div class="item"><div class="tx">' + esc(u.text.length > 60 ? u.text.slice(0, 60) + '…' : u.text) + '<small>' + fmtAgo(u.t) + '</small></div>' +
           '<button class="mini txt" data-a="unsentOpen" data-id="' + u.id + '">다시 읽기</button><button class="mini" data-a="unsentDel" data-id="' + u.id + '" aria-label="지우기">✕</button></div>';
       }).join('') + '</div></div>';
     }
 
     var wk = state.moods.filter(function(m){ return m.t > Date.now() - 7 * DAY; });
-    h += '<div class="card"><h2>📝 마음 기록 <span class="sub">최근 7일 ' + wk.length + '번</span></h2>';
+    h += '<div class="card">' + head('📝', 'violet', '마음 기록 <small>최근 7일 ' + wk.length + '번</small>');
     if(wk.length){
       var cnt = {}; wk.forEach(function(m){ cnt[m.emo] = (cnt[m.emo] || 0) + 1; });
       var top = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }).slice(0, 5), mx = cnt[top[0]];
@@ -517,28 +666,32 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   var talk = null;   // { start, me, curStart, longest, alerts, lastAlert }
   var TIPS = ['상대가 말을 끝낼 때까지 듣고, 속으로 셋을 센 뒤 말하기', '내 이야기 하나 하면, 질문 하나 하기', '한 번에 한 가지 이야기만', '상대가 한 말을 짧게 다시 말해 보기', '끼어들고 싶으면 아래에 적어 두기', '“내가 너무 많이 말했지? 너는 어때?”', '결론부터 짧게, 자세한 건 물어보면'];
   function talkMs(){ return talk ? talk.me + (talk.curStart ? Date.now() - talk.curStart : 0) : 0; }
+  function ringBg(cur){
+    var p = Math.min(1, cur / (ui.talkSec * 1000)), col = p >= 1 ? '#f43f5e' : '#f59e0b';
+    return talk && talk.curStart ? 'conic-gradient(' + col + ' ' + (p * 360) + 'deg, var(--amber-soft) 0)' : 'var(--teal-soft)';
+  }
   function viewTalk(){
     var h = '';
     if(talk){
       var tot = Date.now() - talk.start, me = talkMs(), pct = tot > 0 ? Math.round(me / tot * 100) : 0;
       var cur = talk.curStart ? Date.now() - talk.curStart : 0, long = cur >= ui.talkSec * 1000;
-      h += '<div class="card wide"><div class="sub" style="text-align:center">대화한 시간</div><div class="big" id="tTot">' + mmss(tot) + '</div>' +
-        '<div class="ratio"><i id="tBar" style="width:' + pct + '%"></i></div><div class="rl"><span id="tMe">나 ' + pct + '% · ' + mmss(me) + '</span><span id="tYou">상대 ' + (100 - pct) + '%</span></div>' +
-        '<button class="talkbtn' + (talk.curStart ? (long ? ' long' : ' me') : '') + '" id="tBtn" data-a="talkTog">' + talkBtnText(cur) + '</button>' +
-        '<div class="tip" id="tTip">' + esc(TIPS[talk.tip % TIPS.length]) + '</div></div>';
-      h += '<div class="card"><h2>💡 끼어들고 싶은 말 적어 두기</h2><div class="row"><input id="park" placeholder="키워드만 짧게" enterkeyhint="done" autocomplete="off"><button class="btn primary" data-a="park">적기</button></div>' + parkedList() + '</div>';
-      h += '<div class="card"><button class="btn warn block" data-a="talkEnd" style="margin:0">대화 끝내기</button><p class="note">말을 시작할 때 큰 버튼을 누르고, 다 말하면 다시 누르세요. 한 번에 ' + ui.talkSec + '초 넘게 이어서 말하면 진동으로 살짝 알려 줘요.</p></div>';
+      h += '<div class="card wide"><div class="sub" style="text-align:center;font-weight:700">대화한 시간</div><div class="big" id="tTot">' + mmss(tot) + '</div>' +
+        '<div class="talkring" id="tRing" style="background:' + ringBg(cur) + '"><button class="talkbtn' + (talk.curStart ? (long ? ' long' : ' me') : '') + '" id="tBtn" data-a="talkTog">' + talkBtnText(cur) + '</button></div>' +
+        '<div class="ratio"><i id="tBar" style="width:' + pct + '%"></i></div><div class="rl"><span id="tMe">🗣 나 ' + pct + '% · ' + mmss(me) + '</span><span id="tYou">👂 상대 ' + (100 - pct) + '%</span></div>' +
+        '<div class="tip" id="tTip">💡 ' + esc(TIPS[talk.tip % TIPS.length]) + '</div></div>';
+      h += '<div class="card">' + head('💡', 'amber', '끼어들고 싶은 말 적어 두기') + '<div class="capbox"><input id="park" placeholder="키워드만 짧게" enterkeyhint="done" autocomplete="off"><button class="btn primary" data-a="park">적기</button></div>' + parkedList() + '</div>';
+      h += '<div class="card"><button class="btn warn block" data-a="talkEnd" style="margin:0">대화 끝내기</button><p class="note">말을 시작할 때 동그란 버튼을 누르고, 다 말하면 다시 누르세요. 한 번에 ' + ui.talkSec + '초 넘게 이어서 말하면 진동으로 살짝 알려 줘요.</p></div>';
     } else {
-      h += '<div class="card wide"><h2>🗣 대화할 때 말하는 시간 살피기</h2><p class="sub">대화를 시작하면 큰 버튼이 나와요. 내가 말할 때 누르고, 다 말하면 다시 누르세요. 한 번에 오래 이어서 말하면 진동으로 살짝 알려 주고, 내가 말한 비율도 보여 줘요.</p>' +
-        '<label class="sub" style="display:block;margin:12px 0 6px;font-weight:700">이만큼 이어서 말하면 알려 주기</label><div class="chips">' + [20, 30, 45, 60, 90].map(function(s){
+      h += '<div class="card wide">' + head('🗣', 'amber', '대화할 때 말하는 시간 살피기') + '<p class="sub">대화를 시작하면 동그란 버튼이 나와요. 내가 말할 때 누르고, 다 말하면 다시 누르세요. 한 번에 오래 이어서 말하면 진동으로 살짝 알려 주고, 내가 말한 비율도 보여 줘요.' + (NATIVE ? ' 워치에서도 똑같이 쓸 수 있어요.' : '') + '</p>' +
+        '<label class="sub" style="display:block;margin:14px 0 8px;font-weight:800">이만큼 이어서 말하면 알려 주기</label><div class="chips">' + [20, 30, 45, 60, 90].map(function(s){
           return '<button class="chip' + (ui.talkSec === s ? ' on' : '') + '" data-a="talkSec" data-v="' + s + '">' + s + '초</button>';
-        }).join('') + '</div><button class="btn primary block" data-a="talkStart" style="height:3.4rem;font-size:1.1rem;margin-top:14px">대화 시작</button></div>';
-      h += '<div class="card"><h2>📌 대화할 때 기억할 것</h2><ul class="tips">' + TIPS.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
-      h += '<div class="card"><h2>💡 적어 둔 할 말</h2>' + (state.parked.length ? parkedList() + '<div class="btns"><button class="btn" data-a="parkClear">모두 지우기</button></div>' : '<p class="empty">대화 중에 끼어들고 싶은 말을 적어 두면 여기에 모여요. 상대 말이 끝난 뒤 하나만 골라 말해 보세요.</p>') + '</div>';
+        }).join('') + '</div><button class="btn primary block" data-a="talkStart" style="height:3.5rem;font-size:1.1rem;margin-top:16px">대화 시작</button></div>';
+      h += '<div class="card">' + head('📌', 'violet', '대화할 때 기억할 것') + '<ul class="tips">' + TIPS.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+      h += '<div class="card">' + head('💡', 'amber', '적어 둔 할 말') + (state.parked.length ? parkedList() + '<div class="btns"><button class="btn" data-a="parkClear">모두 지우기</button></div>' : '<p class="empty">대화 중에 끼어들고 싶은 말을 적어 두면 여기에 모여요. 상대 말이 끝난 뒤 하나만 골라 말해 보세요.</p>') + '</div>';
       if(state.talks.length){
-        h += '<div class="card wide"><h2>📊 지난 대화</h2><div class="list">' + state.talks.slice(-8).reverse().map(function(t){
+        h += '<div class="card wide">' + head('📊', 'sky', '지난 대화') + '<div class="list">' + state.talks.slice(-8).reverse().map(function(t){
           var p = Math.round(t.me / Math.max(1, t.dur) * 100);
-          return '<div class="item"><div class="tx">' + fmtAt(t.t) + ' · ' + mmss(t.dur) + '<small>내가 말한 비율 ' + p + '% · 가장 길게 이어 말한 시간 ' + mmss(t.longest) + ' · 알림 ' + t.alerts + '번</small></div>' +
+          return '<div class="item"><div class="tx">' + (t.from === 'watch' ? '⌚ ' : '') + fmtAt(t.t) + ' · ' + mmss(t.dur) + '<small>내가 말한 비율 ' + p + '% · 가장 길게 이어 말한 시간 ' + mmss(t.longest) + ' · 알림 ' + t.alerts + '번</small></div>' +
             '<button class="mini" data-a="talkDel" data-id="' + t.id + '" aria-label="지우기">✕</button></div>';
         }).join('') + '</div></div>';
       }
@@ -546,9 +699,9 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     return h;
   }
   function talkBtnText(cur){
-    if(!talk.curStart) return '🗣 내가 말할 때 누르기<small>상대가 말하는 중이에요 · 잘 듣고 있어요</small>';
-    if(cur >= ui.talkSec * 1000) return '✋ 숨 한 번 쉬고 넘겨 볼까요?<small>' + mmss(cur) + ' 이어서 말하는 중 · 다 말했으면 누르기</small>';
-    return '✋ 다 말했으면 누르기<small>' + mmss(cur) + ' 말하는 중</small>';
+    if(!talk.curStart) return '<span class="e">🗣</span>내가 말할 때<br>누르기<small>지금은 잘 듣는 중</small>';
+    if(cur >= ui.talkSec * 1000) return '<span class="e">✋</span>숨 한 번 쉬고<br>넘겨 볼까요?<small>' + mmss(cur) + ' 이어서 말하는 중</small>';
+    return '<span class="e">✋</span>다 말했으면<br>누르기<small>' + mmss(cur) + ' 말하는 중</small>';
   }
   function parkedList(){
     return state.parked.length ? '<div class="list" style="margin-top:8px">' + state.parked.slice().reverse().map(function(p){
@@ -556,7 +709,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     }).join('') + '</div>' : '';
   }
   function talkStart(){
-    if(talk) { ui.tab = 'talk'; saveUI(); render(); return; }
+    if(talk){ ui.tab = 'talk'; saveUI(); render(); return; }
     talk = { start: Date.now(), me: 0, curStart: 0, longest: 0, alerts: 0, lastAlert: 0, tip: Math.floor(Math.random() * TIPS.length) };
     wakeOn(); ui.tab = 'talk'; saveUI(); render();
   }
@@ -564,6 +717,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var n = Date.now();
     if(talk.curStart){ var c = n - talk.curStart; talk.me += c; talk.longest = Math.max(talk.longest, c); talk.curStart = 0; talk.tip++; }
     else { talk.curStart = n; talk.lastAlert = 0; }
+    buzz(25);
     render();
   }
   function talkEnd(){
@@ -590,8 +744,9 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var tot = Date.now() - talk.start, me = talkMs(), pct = tot > 0 ? Math.round(me / tot * 100) : 0;
     $('tTot').textContent = mmss(tot);
     $('tBar').style.width = pct + '%';
-    $('tMe').textContent = '나 ' + pct + '% · ' + mmss(me);
-    $('tYou').textContent = '상대 ' + (100 - pct) + '%';
+    $('tMe').textContent = '🗣 나 ' + pct + '% · ' + mmss(me);
+    $('tYou').textContent = '👂 상대 ' + (100 - pct) + '%';
+    $('tRing').style.background = ringBg(cur);
     var b = $('tBtn');
     b.className = 'talkbtn' + (talk.curStart ? (cur >= lim ? ' long' : ' me') : '');
     b.innerHTML = talkBtnText(cur);
@@ -602,9 +757,10 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   function checkReminders(){
     var n = Date.now(), fresh = state.reminders.filter(function(r){ return !r.done && r.at <= n && !r.fired; });
     if(!fresh.length) return;
-    fresh.forEach(function(r){ r.fired = true; notify('⏰ ' + r.text, '하루 도우미 알림 · ' + hm(new Date(r.at))); });
+    // 안드로이드 앱에서는 알림을 앱이 따로 울리므로 여기서는 창만 띄움
+    fresh.forEach(function(r){ r.fired = true; if(!NATIVE) notify('⏰ ' + r.text, '하루 도우미 알림 · ' + hm(new Date(r.at))); });
     save();
-    buzz([400, 200, 400, 200, 400]); beep(3);
+    if(!NATIVE){ buzz([400, 200, 400, 200, 400]); beep(3); }
     showDue();
     render();
   }
@@ -613,7 +769,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     if(!due.length) return;
     due.forEach(function(r){ remShown[r.id] = 1; });
     var m = openModal('<h3>⏰ 잊지 마세요</h3>' + due.map(function(r){
-      return '<div class="card" style="box-shadow:none;background:var(--warn-soft);margin-bottom:8px" data-rid="' + r.id + '"><div style="font-size:1.2rem;font-weight:800;overflow-wrap:anywhere">' + esc(r.text) + '</div><div class="sub">' + fmtAt(r.at) + (r.daily ? ' · 매일' : '') + '</div>' +
+      return '<div class="remcard" data-rid="' + r.id + '"><div class="t">' + esc(r.text) + '</div><div class="sub">' + fmtAt(r.at) + (r.daily ? ' · 매일' : '') + '</div>' +
         '<div class="btns"><button class="btn good" data-r="ok">' + (r.daily ? '했어요 (내일 또)' : '했어요') + '</button><button class="btn" data-r="10">10분 뒤</button><button class="btn" data-r="60">1시간 뒤</button></div></div>';
     }).join('') + '<button class="btn block" data-close>나중에 (목록에 남겨 두기)</button>', function(){ due.forEach(function(r){ delete remShown[r.id]; }); });
     m.addEventListener('click', function(e){
@@ -629,7 +785,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     else r.done = true;
   }
   setInterval(checkReminders, 10000);
-  setInterval(function(){ if(ui.tab !== 'talk' && !$('sheetRoot').children.length && !document.activeElement.matches('input,textarea')) render(); }, 60000);
+  setInterval(function(){ if(ui.tab !== 'talk') refreshSoft(); }, 60000);
 
   // ===== 알림 만들기 창 =====
   function remSheet(text){
@@ -655,6 +811,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     });
   }
   function askNotifSoft(){
+    if(NATIVE){ try{ if(NATIVE.notifState() !== 'granted') NATIVE.requestNotif(); }catch(e){} return; }
     try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(function(){ render(); }); }catch(e){}
   }
   function icsFor(r){
@@ -700,7 +857,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   }
   function breathRun(p, mins){
     var phases = p ? [['들이쉬기', 4, 1], ['멈추기', 4, 1], ['내쉬기', 4, .45], ['멈추기', 4, .45]] : [['들이쉬기', 4, 1], ['내쉬기', 6, .45]];
-    var o = openOver('<h3>🌬 숨 고르기</h3><div class="phase" id="orbT">준비</div><div class="orb" id="orb"></div><div class="osub" id="orbS">편하게 앉아 어깨 힘을 빼요</div><div class="btns"><button class="btn" id="orbX">그만하기</button></div>');
+    var o = openOver('<h3>🌬 숨 고르기</h3><div class="phase" id="orbT">준비</div><div class="orbwrap"><div class="orb" id="orb"></div></div><div class="osub" id="orbS">편하게 앉아 어깨 힘을 빼요</div><div class="btns"><button class="btn" id="orbX">그만하기</button></div>');
     var orb = o.el.querySelector('#orb'), end = Date.now() + mins * MIN + 3000, i = 0;
     o.el.querySelector('#orbX').onclick = closeOver;
     function step(){
@@ -718,7 +875,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     later(step, 1500);
   }
   function breathDone(){
-    var o = openOver('<h3>잘했어요 🌿</h3><p>몸이 조금 가벼워졌나요? 아직 남아 있다면 한 번 더 해도 괜찮아요.</p><div class="btns"><button class="btn" data-x="again">한 번 더</button><button class="btn" data-x="log">마음 기록하기</button><button class="btn primary" data-x="close">마치기</button></div>');
+    var o = openOver('<div style="font-size:4rem">🌿</div><h3>잘했어요</h3><p>몸이 조금 가벼워졌나요? 아직 남아 있다면 한 번 더 해도 괜찮아요.</p><div class="btns"><button class="btn" data-x="again">한 번 더</button><button class="btn" data-x="log">마음 기록하기</button><button class="btn primary" data-x="close">마치기</button></div>');
     o.el.addEventListener('click', function(e){
       var b = e.target.closest('[data-x]'); if(!b) return;
       var x = b.getAttribute('data-x'); closeOver();
@@ -733,7 +890,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var iv = setInterval(function(){
       if(!over) return clearInterval(iv);
       var g = Date.now() - st, left = total - g, deg = Math.min(360, g / total * 360);
-      o.el.querySelector('#ring').style.background = 'conic-gradient(var(--calm) ' + deg + 'deg, var(--calm-soft) 0)';
+      o.el.querySelector('#ring').style.background = 'conic-gradient(var(--teal) ' + deg + 'deg, var(--teal-soft) 0)';
       o.el.querySelector('#ringT').textContent = mmss(left + 999);
       o.el.querySelector('#ringM').textContent = PAUSE_MSG[Math.min(PAUSE_MSG.length - 1, Math.floor(g / 15000))];
       if(left <= 0){ clearInterval(iv); buzz([200, 100, 200]); beep(2, 660); breathDone(); }
@@ -761,6 +918,10 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     paint();
   }
   var LOCK_MIN = 20;
+  function copyText(t){
+    if(NATIVE){ try{ NATIVE.copy(t); toast('복사했어요'); }catch(e){ toast('복사하지 못했어요'); } return; }
+    try{ navigator.clipboard.writeText(t).then(function(){ toast('복사했어요'); }, function(){ toast('복사하지 못했어요'); }); }catch(err){ toast('복사하지 못했어요'); }
+  }
   function unsentSheet(u){
     var m;
     if(u){
@@ -771,7 +932,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       m.addEventListener('click', function(e){
         var b = e.target.closest('[data-x]'); if(!b) return;
         if(b.getAttribute('data-x') === 'del'){ m.close(); withUndo('글을 지웠어요', function(){ state.unsent = state.unsent.filter(function(x){ return x.id !== u.id; }); }); }
-        else { try{ navigator.clipboard.writeText(u.text).then(function(){ toast('복사했어요'); }, function(){ toast('복사하지 못했어요'); }); }catch(err){ toast('복사하지 못했어요'); } }
+        else copyText(u.text);
       });
       return;
     }
@@ -861,9 +1022,14 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     h += '<label class="f">글자 크기</label><div class="chips" id="sFont">' + ['보통', '크게', '아주 크게'].map(function(t, i){ return '<button class="chip' + ((ui.font || 0) === i ? ' on' : '') + '" data-v="' + i + '">' + t + '</button>'; }).join('') + '</div>';
     h += '<div style="margin-top:12px"></div>';
     h += sw('sVib', ui.vib, '진동', '알림·대화 도우미에서 진동으로 알려 줘요');
-    h += sw('sSnd', ui.sound, '소리', '알림이 울릴 때 소리를 내요');
+    h += sw('sSnd', ui.sound, '소리', '앱을 보고 있을 때 알림 소리를 내요');
     h += sw('sTalkSnd', ui.talkSound, '대화 중에도 소리 내기', '끄면 대화 중에는 진동으로만 알려 줘요');
-    if('Notification' in window){
+    if(NATIVE){
+      var ns = 'granted', ex = true; try{ ns = NATIVE.notifState(); ex = NATIVE.exactAlarmOk(); }catch(e){}
+      h += '<div class="srow"><span>알림 권한<small>' + (ns === 'granted' ? '허용됨' : '꺼져 있어요 · 알림이 울리지 않아요') + '</small></span>' + (ns === 'granted' ? '' : '<button class="btn soft" data-x="nnotif">허용하기</button>') + '</div>';
+      h += '<div class="srow"><span>정확한 시간 알림<small>' + (ex ? '허용됨' : '꺼져 있어요 · 알림이 몇 분 늦을 수 있어요') + '</small></span>' + (ex ? '' : '<button class="btn soft" data-x="nalarm">허용하기</button>') + '</div>';
+      h += '<div class="srow"><span>위젯 · 워치<small>홈 화면을 길게 눌러 위젯에서 ‘하루 도우미’를 추가하세요. 워치에서는 타일과 시계 화면 컴플리케이션으로 추가해요.</small></span></div>';
+    } else if('Notification' in window){
       var p = Notification.permission;
       h += '<div class="srow"><span>휴대폰 알림<small>' + (p === 'granted' ? '허용됨 · 다른 앱을 쓰는 중에도 알려 줘요' : p === 'denied' ? '막혀 있어요 · 브라우저 설정에서 이 사이트 알림을 허용해 주세요' : '허용하면 다른 앱을 쓰는 중에도 알려 줘요') + '</small></span>' +
         (p === 'default' ? '<button class="btn soft" data-x="notif">허용하기</button>' : '') + '</div>';
@@ -877,7 +1043,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       '<button class="btn block" data-x="wipe" style="color:var(--warn)">모든 기록 지우기</button>';
     h += '<button class="btn primary block" data-close>닫기</button>';
     var m = openModal(h);
-    var bind = function(id, key){ var el = m.querySelector('#' + id); if(el) el.addEventListener('change', function(){ ui[key] = el.checked; saveUI(); }); };
+    var bind = function(id, key){ var el = m.querySelector('#' + id); if(el) el.addEventListener('change', function(){ ui[key] = el.checked; saveUI(); nativeSync(); }); };
     bind('sVib', 'vib'); bind('sSnd', 'sound'); bind('sTalkSnd', 'talkSound'); bind('sFs', 'autoFS');
     m.addEventListener('click', function(e){
       var c = e.target.closest('#sTheme .chip, #sFont .chip');
@@ -895,12 +1061,16 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       else if(x === 'exp') exportData();
       else if(x === 'imp') importData();
       else if(x === 'wipe') wipeSheet();
+      else if(x === 'nnotif'){ try{ NATIVE.requestNotif(); }catch(err){} }
+      else if(x === 'nalarm'){ try{ NATIVE.openAlarmSettings(); }catch(err){} }
     });
   }
   function exportData(){
     var d = new Date(), name = '하루도우미-백업-' + d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2) + '.json';
+    var text = JSON.stringify({ app: 'haru-helper', v: 1, state: state }, null, 1);
+    if(NATIVE){ try{ NATIVE.saveFile(name, 'application/json', text); }catch(e){ toast('저장하지 못했어요'); } return; }
     var a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify({ app: 'haru-helper', v: 1, state: state }, null, 1)], { type: 'application/json' }));
+    a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     a.download = name; document.body.appendChild(a); a.click(); a.remove();
     toast('백업 파일을 받았어요');
   }
@@ -928,7 +1098,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var byId = function(arr){ return arr.find(function(x){ return x.id === id; }); };
     switch(a){
       case 'goTab': ui.tab = b.getAttribute('data-tab'); saveUI(); render(); $('scroll').scrollTop = 0; break;
-      case 'goMem': ui.tab = 'mem'; ui.mem = b.getAttribute('data-sub'); saveUI(); render(); break;
+      case 'goMem': ui.tab = 'mem'; ui.mem = b.getAttribute('data-sub'); saveUI(); render(); $('scroll').scrollTop = 0; break;
       case 'memSub': ui.mem = b.getAttribute('data-sub'); saveUI(); render(); break;
       case 'install': installSheet(); break;
       case 'fs': FS.toggle(); break;
@@ -957,6 +1127,8 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       case 'remDel': withUndo('알림을 지웠어요', function(){ state.reminders = state.reminders.filter(function(x){ return x.id !== id; }); }); break;
       case 'remIcs': { var ri = byId(state.reminders); if(ri) icsFor(ri); break; }
       case 'askNotif': askNotifSoft(); break;
+      case 'nativeNotif': try{ NATIVE.requestNotif(); }catch(e){} break;
+      case 'nativeAlarm': try{ NATIVE.openAlarmSettings(); }catch(e){} break;
       case 'openList': listSheet(id); break;
       case 'listTog': { var l = findList(id), it = l && l.items.find(function(x){ return x.id === b.getAttribute('data-item'); }); if(it){ it.on = !it.on; buzz(15); save(); if(ui.tab === 'mem' && !$('sheetRoot').children.length) render(); } break; }
       case 'listReset': { var lr = findList(id); if(lr){ lr.items.forEach(function(x){ x.on = false; }); save(); if(!$('sheetRoot').children.length) render(); } break; }
@@ -973,7 +1145,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       case 'unsentNew': unsentSheet(null); break;
       case 'unsentOpen': { var uu = byId(state.unsent); if(uu) unsentSheet(uu); break; }
       case 'unsentDel': withUndo('글을 지웠어요', function(){ state.unsent = state.unsent.filter(function(x){ return x.id !== id; }); }); break;
-      case 'talkSec': ui.talkSec = +b.getAttribute('data-v'); saveUI(); render(); break;
+      case 'talkSec': ui.talkSec = +b.getAttribute('data-v'); saveUI(); nativeSync(); render(); break;
       case 'talkStart': talkStart(); break;
       case 'talkTog': talkToggle(); break;
       case 'talkEnd': talkEnd(); break;
@@ -998,7 +1170,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   $('view').addEventListener('input', function(e){
     if(e.target.id !== 'lv') return;
     draft.lv = +e.target.value; $('lvN').textContent = draft.lv; $('lvHelp').innerHTML = lvHelp();
-    [].forEach.call($('view').querySelectorAll('.tool'), function(t, i){ t.classList.toggle('hot', i < 2 && !!draft.emo && draft.lv >= 7); });
+    [].forEach.call($('view').querySelectorAll('.tool'), function(t, i){ t.classList.toggle('hot', !!TOOLS[i][5] && !!draft.emo && draft.lv >= 7); });
   });
 
   // ===== 홈 화면 설치 · 전체화면 =====
@@ -1069,6 +1241,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   }, true);
   document.addEventListener('fullscreenchange', paintInstall);
   document.addEventListener('webkitfullscreenchange', paintInstall);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyLook);
 
   // 휴대폰 키보드가 올라올 때 화면 높이 맞추기
   function fit(){ if(window.visualViewport) document.documentElement.style.setProperty('--appH', Math.round(visualViewport.height) + 'px'); }
@@ -1077,15 +1250,17 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
 
   document.addEventListener('visibilitychange', function(){
     if(document.hidden) return;
-    reqWake(); checkReminders(); showDue();
-    if(!$('sheetRoot').children.length && ui.tab !== 'talk') render();
+    reqWake(); pullActions(); checkReminders(); showDue();
+    if(ui.tab !== 'talk') refreshSoft();
   });
 
-  if('serviceWorker' in navigator && location.protocol === 'https:'){
+  if(!NATIVE && 'serviceWorker' in navigator && location.protocol === 'https:'){
     window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
   }
 
   render();
+  pullActions();
+  nativeSync();
   checkReminders(); showDue();
 })();
 </script>
