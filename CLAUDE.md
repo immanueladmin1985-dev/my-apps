@@ -50,3 +50,9 @@
 - 빌드: `baseball-relay/**` 를 main 에 푸시하면 GitHub Actions(`baseball-relay-build.yml`)가 서명 전 APK 를 `baseball-relay-build` 브랜치에 올린다. 받기: `git fetch origin baseball-relay-build:refs/remotes/origin/baseball-relay-build && git archive origin/baseball-relay-build | tar -x -C <폴더>`.
 - 서명: Artifact "야구 중계 알림 서명 키"(https://claude.ai/artifact/F8xwtcNRALfnEpCGmzkgrK)에서 `relay.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> relay.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.
 - 네이버 중계 API(`api-gw.sports.naver.com`)는 해외 IP(GitHub, 작업 환경)를 막는다. 응답 구조 확인은 앱의 "진단 데이터 공유" 파일로 한다. JSON 구조 지식은 `Naver.kt`, 알림 판단은 `RelayEngine.kt`(단위 테스트 있음)에 모은다.
+
+## 하루 도우미 안드로이드 앱 (`haru-helper/android/`, 개인용)
+- 웹 앱(`haru-helper/index.html`)을 WebView 로 그대로 띄운다(빌드할 때 assets 로 복사). 화면을 고치면 웹과 앱이 같이 바뀐다. 웹은 `window.HaruNative` 가 있으면 요약을 `sync` 로 보내고, 위젯·워치·알림에서 누른 동작을 `takeActions` 로 가져와 반영한다. 동작 규칙은 웹의 `applyAction` 과 `shared/java/.../Snap.kt`(단위 테스트 있음)를 함께 맞춘다.
+- 폰 앱(`app/`)과 워치 앱(`wear/`)은 applicationId `kr.immanuel.haru` 와 서명 키가 같아야 한다.
+- 빌드: main 에 푸시하면 `haru-helper-build.yml` 이 서명 전 APK 를 `haru-helper-build` 브랜치에 올린다. 받기: `git fetch origin haru-helper-build:refs/remotes/origin/haru-helper-build && git archive origin/haru-helper-build | tar -x -C <폴더>`.
+- 서명: Artifact "하루 도우미 서명 키"에서 `haru.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> haru.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.

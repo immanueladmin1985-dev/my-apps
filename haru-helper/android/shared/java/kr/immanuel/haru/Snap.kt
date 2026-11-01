@@ -9,7 +9,7 @@ import java.util.Calendar
  * 폰 위젯과 워치(타일·컴플리케이션·앱)는 이것만 읽고, 누른 동작은 [apply]로 바로 반영한 뒤 웹 앱에도 전달한다.
  */
 class Snap(val o: JSONObject) {
-    constructor(s: String?) : this(runCatching { JSONObject(s ?: "{}") }.getOrElse { JSONObject() })
+    constructor(s: String?) : this(parse(s))
 
     data class Task(val id: String, val text: String)
     data class Rem(val id: String, val text: String, val at: Long, val daily: Boolean)
@@ -87,6 +87,12 @@ class Snap(val o: JSONObject) {
     }
 
     companion object {
+        fun parse(s: String?): JSONObject = try {
+            JSONObject(s ?: "{}")
+        } catch (_: Exception) {
+            JSONObject()
+        }
+
         const val MIN = 60_000L
         const val HOUR = 3_600_000L
         const val DAY = 86_400_000L
