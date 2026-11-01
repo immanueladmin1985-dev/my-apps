@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">하루 도우미</string>
+    <string name="tile_label">하루 도우미</string>
+    <string name="tile_desc">지금 할 일과 다음 알림, 숨 고르기·말로 메모·대화 타이머</string>
+    <string name="comp_label">하루 도우미</string>
+</resources>

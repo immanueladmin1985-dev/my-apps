@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="light">true</bool>
+    <color name="bg">#F4F3FB</color>
+    <color name="card">#FFFFFF</color>
+    <color name="w_bg">#FFFFFF</color>
+    <color name="w_text">#1D1B2E</color>
+    <color name="w_sub">#727089</color>
+    <color name="w_accent">#5B5BD6</color>
+    <color name="w_amber">#C2730A</color>
+    <color name="w_focus1">#FFF1DC</color>
+    <color name="w_focus2">#FDE8EF</color>
+    <color name="w_check">#16A34A</color>
+    <color name="w_indigo_bg">#ECEBFD</color>
+    <color name="w_indigo">#5B5BD6</color>
+    <color name="w_teal_bg">#DFF5F6</color>
+    <color name="w_teal">#0E8A96</color>
+    <color name="w_amber_bg">#FFF1DC</color>
+    <color name="w_sky_bg">#E3EEFD</color>
+    <color name="w_sky">#2F80ED</color>
+</resources>

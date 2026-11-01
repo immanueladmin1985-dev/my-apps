@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">하루 도우미</string>
+    <string name="widget_label">하루 도우미</string>
+    <string name="widget_desc">지금 할 일, 다가오는 알림, 숨 고르기·대화 바로가기</string>
+</resources>
