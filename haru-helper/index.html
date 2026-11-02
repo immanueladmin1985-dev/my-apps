@@ -512,6 +512,10 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     h += '<div class="hero wide"><div class="date">' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일</div><div class="hi">' + hi + '</div>' +
       '<div class="stats"><button data-a="goMem" data-sub="tasks"><b>' + openN + '</b>할 일</button><button data-a="goMem" data-sub="rem"><b>' + remN + '</b>알림</button><button data-a="goMem" data-sub="notes"><b>' + state.notes.length + '</b>메모</button></div></div>';
 
+    if(NATIVE && !ui.widgetLater && widgetCount() === 0){
+      h += '<div class="card wide">' + head('📱', 'violet', '홈 화면에 위젯 놓기') + '<p class="sub">위젯을 놓아 두면 앱을 열지 않아도 지금 할 일과 다음 알림이 홈 화면에 보여요.</p>' +
+        '<div class="btns"><button class="btn primary" data-a="pinWidget">위젯 추가하기</button><button class="btn" data-a="widgetLater">다음에</button></div></div>';
+    }
     h += '<div class="card wide">' + head('💭', 'indigo', '떠오른 생각, 잊기 전에 적기') +
       '<div class="capbox"><input id="cap" placeholder="예: 우체국 들르기, 엄마한테 전화" enterkeyhint="done" autocomplete="off"></div>' +
       '<div class="capto"><button class="c-indigo" data-a="cap" data-to="note">📝 메모</button><button class="c-green" data-a="cap" data-to="task">✅ 할 일</button><button class="c-amber" data-a="cap" data-to="rem">⏰ 알림</button></div>' +
@@ -599,6 +603,14 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     if(Notification.permission === 'granted') return '';
     if(Notification.permission === 'denied') return '<p class="note">⚠️ 알림이 꺼져 있어요. 브라우저 설정에서 이 사이트의 알림을 허용하면 다른 앱을 쓰는 중에도 알려 줘요.</p>';
     return '<button class="btn soft block" data-a="askNotif">🔔 휴대폰 알림 허용하기</button>';
+  }
+  function widgetCount(){ try{ return NATIVE.widgetCount(); }catch(e){ return 0; } }
+  // 홈 화면에 위젯 놓기: 런처가 지원하면 바로 ‘추가’ 창이 뜨고, 아니면 직접 놓는 방법을 안내
+  function pinWidget(){
+    var ok = false;
+    try{ ok = NATIVE.pinWidget(); }catch(e){}
+    if(ok){ toast('뜨는 창에서 ‘추가’를 누르세요'); return; }
+    openModal('<h3>📱 위젯 직접 놓기</h3><ol><li>홈 화면의 빈 곳을 길게 누르세요</li><li>아래에 나오는 <b>위젯</b>을 누르세요</li><li>목록에서 <b>하루 도우미</b>를 찾아 누르고 <b>추가</b>를 누르세요 (위쪽 검색 칸에 ‘하루’를 넣으면 빨라요)</li></ol><button class="btn primary block" data-close>알겠어요</button>');
   }
   function nativeAlarmHint(){
     var ok = true, notif = 'granted';
@@ -1028,7 +1040,8 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       var ns = 'granted', ex = true; try{ ns = NATIVE.notifState(); ex = NATIVE.exactAlarmOk(); }catch(e){}
       h += '<div class="srow"><span>알림 권한<small>' + (ns === 'granted' ? '허용됨' : '꺼져 있어요 · 알림이 울리지 않아요') + '</small></span>' + (ns === 'granted' ? '' : '<button class="btn soft" data-x="nnotif">허용하기</button>') + '</div>';
       h += '<div class="srow"><span>정확한 시간 알림<small>' + (ex ? '허용됨' : '꺼져 있어요 · 알림이 몇 분 늦을 수 있어요') + '</small></span>' + (ex ? '' : '<button class="btn soft" data-x="nalarm">허용하기</button>') + '</div>';
-      h += '<div class="srow"><span>위젯 · 워치<small>홈 화면을 길게 눌러 위젯에서 ‘하루 도우미’를 추가하세요. 워치에서는 타일과 시계 화면 컴플리케이션으로 추가해요.</small></span></div>';
+      h += '<div class="srow"><span>홈 화면 위젯<small>' + (widgetCount() ? '홈 화면에 ' + widgetCount() + '개 놓여 있어요' : '아직 놓지 않았어요') + '</small></span><button class="btn soft" data-x="pin">추가</button></div>';
+      h += '<div class="srow"><span>워치<small>워치 화면을 옆으로 넘겨 타일 추가에서 ‘하루 도우미’를 고르고, 시계 화면을 길게 눌러 컴플리케이션으로도 놓을 수 있어요.</small></span></div>';
     } else if('Notification' in window){
       var p = Notification.permission;
       h += '<div class="srow"><span>휴대폰 알림<small>' + (p === 'granted' ? '허용됨 · 다른 앱을 쓰는 중에도 알려 줘요' : p === 'denied' ? '막혀 있어요 · 브라우저 설정에서 이 사이트 알림을 허용해 주세요' : '허용하면 다른 앱을 쓰는 중에도 알려 줘요') + '</small></span>' +
@@ -1063,6 +1076,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       else if(x === 'wipe') wipeSheet();
       else if(x === 'nnotif'){ try{ NATIVE.requestNotif(); }catch(err){} }
       else if(x === 'nalarm'){ try{ NATIVE.openAlarmSettings(); }catch(err){} }
+      else if(x === 'pin') pinWidget();
     });
   }
   function exportData(){
@@ -1129,6 +1143,8 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       case 'askNotif': askNotifSoft(); break;
       case 'nativeNotif': try{ NATIVE.requestNotif(); }catch(e){} break;
       case 'nativeAlarm': try{ NATIVE.openAlarmSettings(); }catch(e){} break;
+      case 'pinWidget': pinWidget(); break;
+      case 'widgetLater': ui.widgetLater = true; saveUI(); render(); toast('설정(톱니바퀴)에서 언제든 추가할 수 있어요'); break;
       case 'openList': listSheet(id); break;
       case 'listTog': { var l = findList(id), it = l && l.items.find(function(x){ return x.id === b.getAttribute('data-item'); }); if(it){ it.on = !it.on; buzz(15); save(); if(ui.tab === 'mem' && !$('sheetRoot').children.length) render(); } break; }
       case 'listReset': { var lr = findList(id); if(lr){ lr.items.forEach(function(x){ x.on = false; }); save(); if(!$('sheetRoot').children.length) render(); } break; }

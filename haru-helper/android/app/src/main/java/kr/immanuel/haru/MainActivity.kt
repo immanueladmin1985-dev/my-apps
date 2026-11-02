@@ -3,6 +3,8 @@ package kr.immanuel.haru
 import android.Manifest
 import android.app.Activity
 import android.app.AlarmManager
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -190,6 +192,15 @@ class MainActivity : Activity() {
         web.setBackgroundColor(c)
     }
 
+    fun widgetCount(): Int =
+        runCatching { AppWidgetManager.getInstance(this).getAppWidgetIds(ComponentName(this, HaruWidget::class.java)).size }.getOrDefault(0)
+
+    /** 홈 화면 런처가 지원하면 ‘위젯 추가’ 창을 바로 띄운다. */
+    fun pinWidget(): Boolean = runCatching {
+        val m = AppWidgetManager.getInstance(this)
+        m.isRequestPinAppWidgetSupported && m.requestPinAppWidget(ComponentName(this, HaruWidget::class.java), null, null)
+    }.getOrDefault(false)
+
     fun keepScreen(on: Boolean) {
         if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -221,6 +232,8 @@ class Bridge(private val a: MainActivity) {
     @JavascriptInterface fun requestNotif() = a.runOnUiThread { a.requestNotif() }
     @JavascriptInterface fun exactAlarmOk(): Boolean = a.exactAlarmOk()
     @JavascriptInterface fun openAlarmSettings() = a.runOnUiThread { a.openAlarmSettings() }
+    @JavascriptInterface fun widgetCount(): Int = a.widgetCount()
+    @JavascriptInterface fun pinWidget(): Boolean = a.pinWidget()
 
     @JavascriptInterface fun copy(text: String) = a.runOnUiThread {
         a.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("하루 도우미", text))
