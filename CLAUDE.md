@@ -54,5 +54,5 @@
 ## 하루 도우미 안드로이드 앱 (`haru-helper/android/`, 개인용)
 - 웹 앱(`haru-helper/index.html`)을 WebView 로 그대로 띄운다(빌드할 때 assets 로 복사). 화면을 고치면 웹과 앱이 같이 바뀐다. 웹은 `window.HaruNative` 가 있으면 요약을 `sync` 로 보내고, 위젯·워치·알림에서 누른 동작을 `takeActions` 로 가져와 반영한다. 동작 규칙은 웹의 `applyAction` 과 `shared/java/.../Snap.kt`(단위 테스트 있음)를 함께 맞춘다.
 - 폰 앱(`app/`)과 워치 앱(`wear/`)은 applicationId `kr.immanuel.haru` 와 서명 키가 같아야 한다.
-- 빌드: main 에 푸시하면 `haru-helper-build.yml` 이 서명 전 APK 를 `haru-helper-build` 브랜치에 올린다. 받기: `git fetch origin haru-helper-build:refs/remotes/origin/haru-helper-build && git archive origin/haru-helper-build | tar -x -C <폴더>`.
+- 빌드: main 에 푸시하면 `haru-helper-build.yml` 이 서명 전 APK 를 `haru-helper-build` 브랜치에 올린다. 받기: `git fetch origin +haru-helper-build:refs/remotes/origin/haru-helper-build && git archive origin/haru-helper-build | tar -x -C <폴더>`.
 - 서명: Artifact "하루 도우미 서명 키"에서 `haru.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> haru.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.
