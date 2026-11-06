@@ -138,7 +138,13 @@ nav button.sel{color:var(--accent)}
           <div class="row"><input id="txt" placeholder="TV 검색창을 먼저 선택한 뒤 입력"><button class="primary" style="flex:0 0 auto" onclick="sendText()">보내기</button></div>
         </div>
         <div class="card">
-          <h2>TV 앱 바로 실행</h2>
+          <h2>주소 보내기</h2>
+          <div class="row"><input id="url" type="url" placeholder="유튜브 영상 주소나 사이트 주소"><button class="primary" style="flex:0 0 auto" onclick="sendUrl()">TV로</button></div>
+          <p class="muted">유튜브 주소는 TV의 유튜브 앱에서 바로 재생됩니다. 일반 사이트는 TV에 브라우저 앱(예: TV Bro)이 있어야 열립니다. 폰의 유튜브·인터넷 앱에서 <b>공유 → TV로 보내기</b>를 눌러도 됩니다.</p>
+          <button class="ghost" onclick="saveUrl()">＋ 이 주소를 아래 버튼으로 저장</button>
+        </div>
+        <div class="card">
+          <h2>TV 앱 · 사이트 바로 열기</h2>
           <div id="appChips" class="chips"></div>
           <div class="row" style="margin-top:10px">
             <button onclick="addCurrentApp()">＋ 지금 켜진 앱</button>
@@ -299,7 +305,7 @@ const N = window.TvNative || (function(){
     toast:m=>toast(m),runMode:id=>setTimeout(()=>runDone('✅ 실행 (가짜)'),500),testMode:()=>setTimeout(()=>runDone('✅ 시험 (가짜)'),500),
     tvStatus:()=>JSON.stringify(st.tv),tvConnect:cb=>later(cb,false,'먼저 설정에서 구글 TV를 연결해 주세요.'),key:cb=>later(cb,true,null),app:cb=>later(cb,true,null),text:cb=>later(cb,true,null),
     discover:cb=>later(cb,true,[{name:'거실 Google TV',host:'192.168.0.23'}]),pairStart:cb=>later(cb,true,null),pairFinish:cb=>later(cb,true,{connected:true,on:true,app:'',volume:''}),setTvHost:()=>{},
-    hejSendCode:cb=>later(cb,true,null),hejVerify:cb=>later(cb,true,null),hejLogin:cb=>{st.hejLoggedIn=true;later(cb,true,st.scenes)},hejLogout:()=>{st.hejLoggedIn=false},hejScenes:cb=>later(cb,true,st.scenes),runScene:cb=>later(cb,true,null),pinShortcut:()=>true,switchInput:cb=>later(cb,true,null),setCurrentInput:i=>{if(st.settings.inputs)st.settings.inputs.current=i},launchCandidates:p=>JSON.stringify(['intent:#Intent;package='+p+';end','market://details?id='+p+'&launch=true','https://play.google.com/store/apps/details?id='+p+'&launch=true','market://launch?id='+p])};
+    hejSendCode:cb=>later(cb,true,null),hejVerify:cb=>later(cb,true,null),hejLogin:cb=>{st.hejLoggedIn=true;later(cb,true,st.scenes)},hejLogout:()=>{st.hejLoggedIn=false},hejScenes:cb=>later(cb,true,st.scenes),runScene:cb=>later(cb,true,null),pinShortcut:()=>true,switchInput:cb=>later(cb,true,null),setCurrentInput:i=>{if(st.settings.inputs)st.settings.inputs.current=i},launchCandidates:p=>JSON.stringify(['intent:#Intent;package='+p+';end','storeopen:'+p,'https://play.google.com/store/apps/details?id='+p+'&launch=true','market://launch?id='+p])};
 })();
 
 const cbs = {}; let cbN = 0;
@@ -555,6 +561,17 @@ function sendText(){
   const t = $('#txt').value; if (!t) return;
   call('text', t).then(()=>{ $('#txt').value=''; toast('보냈습니다'); }).catch(e => remoteMsg(e.message,'bad'));
 }
+function sendUrl(){
+  let u = $('#url').value.trim(); if (!u) return;
+  if (!/^https?:\/\//.test(u)) u = 'https://' + u;
+  call('app', u).then(()=>toast('TV로 보냈습니다')).catch(e => remoteMsg(e.message,'bad'));
+}
+function saveUrl(){
+  let u = $('#url').value.trim(); if (!u) { toast('주소를 먼저 입력해 주세요'); return; }
+  if (!/^https?:\/\//.test(u)) u = 'https://' + u;
+  dialog('사이트 버튼 저장', `<label>버튼 이름</label><input id="suName" value="${esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])}"><button class="primary" style="width:100%;margin-top:10px" id="suOk">저장</button>`);
+  $('#suOk').onclick = () => { S.tvApps.push({name: val('suName') || u, link: u}); N.saveTvApps(JSON.stringify(S.tvApps)); closeModal('dlg'); renderApps(); $('#url').value=''; };
+}
 function renderApps(){
   $('#appChips').innerHTML = S.tvApps.map((a,i)=>`<button data-i="${i}">${esc(a.name)}</button>`).join('') || '<span class="muted">아직 없습니다</span>';
   $('#appChips').querySelectorAll('button').forEach(b => {
@@ -599,7 +616,8 @@ function findLaunch(idx, k = 0){
       <div class="row"><button onclick="closeModal('dlg')">닫기</button><button class="primary" onclick="findLaunch(${idx},0)">처음부터 다시</button></div>`);
     return;
   }
-  dialog(`“${esc(a.name)}” 여는 방법 찾기 (${k+1}/${cands.length})`, `<p class="muted">TV로 열기 요청을 보냈습니다. TV에서 앱이 열렸나요? 플레이 스토어 화면만 뜨면 “안 열려요”를 눌러 주세요.</p>
+  const how = cands[k].startsWith('storeopen:') ? '<p class="muted">이 방법은 플레이 스토어의 앱 화면을 연 뒤 몇 초 기다렸다가 ‘열기’ 버튼을 대신 누릅니다. 앱이 열릴 때까지 잠시 기다려 주세요.</p>' : '';
+  dialog(`“${esc(a.name)}” 여는 방법 찾기 (${k+1}/${cands.length})`, `${how}<p class="muted">TV로 열기 요청을 보냈습니다. TV에서 앱이 열렸나요? 플레이 스토어 화면에 머물러 있으면 “안 열려요”를 눌러 주세요.</p>
     <div class="row"><button id="lnNo">안 열려요</button><button class="primary" id="lnYes">열렸어요</button></div>
     <button class="ghost" style="width:100%;margin-top:8px" id="lnAgain">다시 보내기</button>`);
   const send = () => call('app', cands[k]).catch(e => toast(e.message));
@@ -750,11 +768,19 @@ function refreshScenes(){
 function dialog(title, html){ $('#dlgTitle').textContent = title; $('#dlgBody').innerHTML = html; $('#dlg').classList.add('show'); }
 
 // 처음 버전의 기본 앱 버튼(패키지 이름)을 바로 열리는 주소로 바꾼다.
+// 스토어 화면만 열던 방식(market://details…&launch=true)은 ‘열기’까지 대신 누르는 방식으로 바꾼다.
 (function migrateApps(){
   const fix = {'com.google.android.youtube.tv':'https://www.youtube.com','com.netflix.ninja':'https://www.netflix.com/title'};
+  const store = l => { const m = /^market:\/\/details\?id=([\w.]+)&launch=true$/.exec(l||''); return m ? 'storeopen:' + m[1] : null; };
   let changed = false;
-  S.tvApps.forEach(a => { if (fix[a.link]) { a.pkg = a.link; a.link = fix[a.link]; changed = true; } });
+  S.tvApps.forEach(a => {
+    if (fix[a.link]) { a.pkg = a.link; a.link = fix[a.link]; changed = true; }
+    const st = store(a.link); if (st) { a.link = st; changed = true; }
+  });
   if (changed) N.saveTvApps(JSON.stringify(S.tvApps));
+  let mChanged = false;
+  S.modes.forEach(m => m.steps.forEach(st => { const n = store(st.link); if (n) { st.link = n; mChanged = true; } }));
+  if (mChanged) N.saveModes(JSON.stringify(S.modes));
 })();
 renderModes();
 refreshPill();

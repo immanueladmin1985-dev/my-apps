@@ -92,17 +92,22 @@ object AtvWire {
     /**
      * 패키지 이름으로 앱을 여는 주소 후보. 예전에 쓰던 market://launch?id= 는
      * 플레이 스토어 업데이트 뒤로 막혀서(AVA Connect 같은 앱을 깔면 다시 됨) 맨 뒤에 둔다.
+     * storeopen: 은 우리 앱이 처리하는 표시로, 스토어 화면을 열고 ‘열기’ 버튼을 대신 누른다.
      * TV마다 되는 방식이 달라서 화면에서 차례로 시험해 보고 되는 것을 저장한다.
      */
     fun launchCandidates(pkg: String): List<String> {
         val p = pkg.trim()
         return listOf(
             "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LEANBACK_LAUNCHER;package=$p;end",
-            "market://details?id=$p&launch=true",
+            "$STORE_OPEN$p",
             "https://play.google.com/store/apps/details?id=$p&launch=true",
             "market://launch?id=$p",
         )
     }
+
+    /** 플레이 스토어의 앱 화면을 연 뒤 잠시 기다렸다가 확인(‘열기’)을 누르는 방식 */
+    const val STORE_OPEN = "storeopen:"
+    fun storeDetails(pkg: String) = "market://details?id=$pkg"
 
     /** 주소면 그대로, 패키지 이름만 있으면 첫 번째 후보로 연다. */
     fun appLink(linkOrPackage: String): ByteArray {

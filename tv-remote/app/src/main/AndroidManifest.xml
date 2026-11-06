@@ -37,6 +37,22 @@
             android:taskAffinity=".run"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
+        <!-- 폰의 공유 메뉴 → TV로 주소 보내기 -->
+        <activity
+            android:name=".ShareActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/share_label"
+            android:noHistory="true"
+            android:taskAffinity=".share"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- 제미나이에게 "티비 켜기 열어 줘"라고 말하면 실행되는 앱 이름 -->
         <activity-alias
             android:name=".VoiceOn"

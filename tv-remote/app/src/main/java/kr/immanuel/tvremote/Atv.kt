@@ -194,7 +194,16 @@ object Atv {
         }
 
         fun key(code: Int) = write(AtvWire.key(code))
-        fun app(link: String) = write(AtvWire.appLink(link))
+        fun app(link: String) {
+            if (link.startsWith(AtvWire.STORE_OPEN)) {
+                // 스토어의 앱 화면이 뜨면 기본으로 ‘열기’ 버튼에 초점이 있다.
+                write(AtvWire.appLink(AtvWire.storeDetails(link.removePrefix(AtvWire.STORE_OPEN))))
+                Thread.sleep(Atv.storeOpenDelay)
+                write(AtvWire.key(Keys.OK))
+            } else {
+                write(AtvWire.appLink(link))
+            }
+        }
         fun text(value: String) {
             if (value.isEmpty()) return
             write(AtvWire.text(ime.first, ime.second, value))
@@ -208,9 +217,13 @@ object Atv {
 
     @Volatile private var session: Session? = null
 
+    /** 스토어 화면이 뜬 뒤 ‘열기’를 누르기까지 기다리는 시간 */
+    @Volatile var storeOpenDelay = 3000L
+
     /** 열려 있는 연결을 다시 쓰거나 새로 연결한다. */
     @Synchronized
     fun session(ctx: Context, waitReadyMs: Long = 4000): Session {
+        storeOpenDelay = Store.settings(ctx).optLong("storeOpenDelay", 3000).coerceIn(1000, 10_000)
         val host = Store.tvHost(ctx) ?: throw IllegalStateException("먼저 설정에서 구글 TV를 연결해 주세요.")
         session?.let { if (!it.closed && it.host == host) return it }
         session?.close()
