@@ -170,6 +170,14 @@ class MainActivity : Activity() {
             Store.setTv(ctx, host.trim(), name.ifBlank { host.trim() })
         }
 
+        @JavascriptInterface
+        fun switchInput(cb: String, name: String) = async(cb) { Runner.switchInput(ctx, name); null }
+
+        @JavascriptInterface fun setCurrentInput(index: Int) = Store.setCurrentInput(ctx, index)
+
+        @JavascriptInterface
+        fun launchCandidates(pkg: String): String = JSONArray(AtvWire.launchCandidates(pkg)).toString()
+
         @JavascriptInterface fun hejSendCode(cb: String, email: String) = async(cb) { Hej.sendCode(email.trim()); null }
         @JavascriptInterface fun hejVerify(cb: String, email: String, code: String) = async(cb) { Hej.verifyCode(email.trim(), code); null }
 

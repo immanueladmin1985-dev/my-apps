@@ -9,6 +9,7 @@
   --bg:#111318;--card:#1c1f27;--card2:#252a35;--line:#2f3542;--text:#f2f3f7;--sub:#9aa1b2;
   --accent:#4f8cff;--accent2:#2d5fc2;--ok:#3ecf8e;--warn:#ffb347;--bad:#ff6b6b;--gold:#ffc83d;
 }
+[hidden]{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;font-size:15px}
 body{padding-bottom:calc(72px + env(safe-area-inset-bottom));min-height:100vh}
@@ -66,6 +67,13 @@ nav button.sel{color:var(--accent)}
 .steps li .t small{color:var(--sub)}
 .steps li button{padding:6px 9px;font-size:13px}
 .steps li select{width:auto;padding:4px 6px;font-size:12px;margin-top:4px}
+.steps li .sel2{display:flex;gap:6px;flex-wrap:wrap}
+.chips button.cur{background:var(--accent);color:#fff}
+.inrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.inrow input{flex:1}
+.inrow button{padding:8px 10px}
+.check{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--text)}
+.check input{width:auto}
 .emojis{display:flex;flex-wrap:wrap;gap:6px}
 .emojis button{font-size:22px;padding:6px 8px;background:var(--card2)}
 .emojis button.sel{outline:2px solid var(--accent)}
@@ -121,6 +129,11 @@ nav button.sel{color:var(--accent)}
           <button data-k="26"><b>⏻</b>전원</button>
         </div>
         <div class="card">
+          <h2>외부입력</h2>
+          <div id="inputChips" class="chips"></div>
+          <p class="muted" id="inputNote"></p>
+        </div>
+        <div class="card">
           <h2>글자 입력</h2>
           <div class="row"><input id="txt" placeholder="TV 검색창을 먼저 선택한 뒤 입력"><button class="primary" style="flex:0 0 auto" onclick="sendText()">보내기</button></div>
         </div>
@@ -170,6 +183,32 @@ nav button.sel{color:var(--accent)}
         <p class="muted" id="hejWho"></p>
         <div class="row"><button onclick="refreshScenes()">레시피 다시 불러오기</button><button class="danger" onclick="hejLogout()">로그아웃</button></div>
         <p class="muted" id="sceneCount"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⇄ 외부입력 목록</h2>
+      <p class="muted">TV의 외부입력 목록에 나오는 순서대로 적어 주세요. 모드에서 “닌텐도로 이동”처럼 고르면 지금 입력에서 몇 번 움직일지 앱이 계산합니다. 헤이홈 앱에서 버튼 하나짜리 레시피(외부입력, 위, 아래, 확인 등)를 만들어 두고 아래에서 골라 주세요.</p>
+      <div id="inNames" style="margin-top:10px"></div>
+      <div class="row"><input id="inNew" placeholder="예: 닌텐도 (HDMI 2)"><button style="flex:0 0 auto" onclick="addInput()">추가</button></div>
+      <label>지금 TV 입력 (앱이 기억한 위치)</label>
+      <select id="inCurrent" onchange="saveInputs()"></select>
+      <label>입력을 바꾸는 방식</label>
+      <select id="inStyle" onchange="saveInputs()">
+        <option value="menu">외부입력 버튼으로 목록을 열고 방향키로 이동</option>
+        <option value="cycle">외부입력 버튼을 누를 때마다 다음 입력으로 바뀜</option>
+      </select>
+      <label>‘외부입력’ 레시피</label><select id="inOpen" onchange="saveInputs()"></select>
+      <div id="inMenuOnly">
+        <label>목록에서 다음 입력으로 가는 레시피 (예: 아래 또는 위)</label><select id="inNext" onchange="saveInputs()"></select>
+        <label>이전 입력으로 가는 레시피 (없으면 비워 두기)</label><select id="inPrev" onchange="saveInputs()"></select>
+        <label class="check"><input type="checkbox" id="inWrap" onchange="saveInputs()"> 목록 끝에서 처음으로 이어짐</label>
+      </div>
+      <label class="check" id="inFirstWrap"><input type="checkbox" id="inFirst" onchange="saveInputs()"> 첫 번째 누름은 목록만 열림</label>
+      <label>마지막에 누를 ‘확인’ 레시피 (없으면 비워 두기)</label><select id="inOk" onchange="saveInputs()"></select>
+      <div class="row">
+        <div><label>목록이 열리는 시간(초)</label><input id="inOpenWait" inputmode="decimal" onchange="saveInputs()"></div>
+        <div><label>버튼 사이 간격(초)</label><input id="inStepWait" inputmode="decimal" onchange="saveInputs()"></div>
       </div>
     </div>
 
@@ -232,6 +271,7 @@ nav button.sel{color:var(--accent)}
       <button data-t="scene" class="sel">헤이홈 레시피</button>
       <button data-t="key">구글 TV 버튼</button>
       <button data-t="app">구글 TV 앱</button>
+      <button data-t="input">외부입력 이동</button>
       <button data-t="wait">기다리기</button>
       <button data-t="text">글자 입력</button>
     </div>
@@ -252,14 +292,14 @@ nav button.sel{color:var(--accent)}
 // 앱 밖(브라우저)에서 열면 화면 확인용 가짜 객체를 쓴다.
 const N = window.TvNative || (function(){
   let st = {modes:[{id:'m-on',name:'티비 켜기',emoji:'📺',steps:[{type:'scene',label:'TV 전원',familyId:1,sceneId:'a',when:'tvOff'},{type:'key',label:'구글 TV 깨우기',code:224},{type:'wait',label:'3초 기다리기',ms:3000},{type:'scene',label:'구글 티비',familyId:1,sceneId:'b'}]},{id:'m-off',name:'티비 끄기',emoji:'🌙',steps:[{type:'key',label:'구글 TV 잠자기',code:223}]}],
-    settings:{},tvHost:'',tvName:'',tvApps:[{name:'유튜브',link:'com.google.android.youtube.tv'}],hejEmail:'',hejLoggedIn:false,
+    settings:{inputs:{names:['TV','구글 TV (HDMI 1)','닌텐도 (HDMI 2)'],current:1,open:{familyId:1,sceneId:'c',name:'외부입력'}}},tvHost:'',tvName:'',tvApps:[{name:'유튜브',link:'com.google.android.youtube.tv'},{name:'쿠팡플레이',link:'com.coupang.mobile.play'}],hejEmail:'',hejLoggedIn:false,
     scenes:[{familyId:1,family:'우리집',sceneId:'a',name:'TV 전원'},{familyId:1,family:'우리집',sceneId:'b',name:'구글 티비'},{familyId:1,family:'우리집',sceneId:'c',name:'닌텐도'}],lastRun:'',tv:{connected:false,on:null,app:'',volume:''},version:'dev'};
   const later=(cb,ok,d)=>setTimeout(()=>tvCb(cb,ok,d),300);
   return {state:()=>JSON.stringify(st),saveModes:j=>{st.modes=JSON.parse(j)},saveSettings:j=>{st.settings=JSON.parse(j)},saveTvApps:j=>{st.tvApps=JSON.parse(j)},
     toast:m=>toast(m),runMode:id=>setTimeout(()=>runDone('✅ 실행 (가짜)'),500),testMode:()=>setTimeout(()=>runDone('✅ 시험 (가짜)'),500),
     tvStatus:()=>JSON.stringify(st.tv),tvConnect:cb=>later(cb,false,'먼저 설정에서 구글 TV를 연결해 주세요.'),key:cb=>later(cb,true,null),app:cb=>later(cb,true,null),text:cb=>later(cb,true,null),
     discover:cb=>later(cb,true,[{name:'거실 Google TV',host:'192.168.0.23'}]),pairStart:cb=>later(cb,true,null),pairFinish:cb=>later(cb,true,{connected:true,on:true,app:'',volume:''}),setTvHost:()=>{},
-    hejSendCode:cb=>later(cb,true,null),hejVerify:cb=>later(cb,true,null),hejLogin:cb=>{st.hejLoggedIn=true;later(cb,true,st.scenes)},hejLogout:()=>{st.hejLoggedIn=false},hejScenes:cb=>later(cb,true,st.scenes),runScene:cb=>later(cb,true,null),pinShortcut:()=>true};
+    hejSendCode:cb=>later(cb,true,null),hejVerify:cb=>later(cb,true,null),hejLogin:cb=>{st.hejLoggedIn=true;later(cb,true,st.scenes)},hejLogout:()=>{st.hejLoggedIn=false},hejScenes:cb=>later(cb,true,st.scenes),runScene:cb=>later(cb,true,null),pinShortcut:()=>true,switchInput:cb=>later(cb,true,null),setCurrentInput:i=>{if(st.settings.inputs)st.settings.inputs.current=i},launchCandidates:p=>JSON.stringify(['intent:#Intent;package='+p+';end','market://details?id='+p+'&launch=true','https://play.google.com/store/apps/details?id='+p+'&launch=true','market://launch?id='+p])};
 })();
 
 const cbs = {}; let cbN = 0;
@@ -288,16 +328,19 @@ const KEYS = [
 ];
 const keyName = c => (KEYS.find(k=>k[0]===c)||[c,'버튼 '+c,'🔘']);
 const COND = {always:'항상', tvOff:'구글 TV가 꺼져 있을 때만', tvOn:'구글 TV가 켜져 있을 때만'};
-function stepIcon(s){ return {scene:'🏠',key:keyName(s.code)[2],app:'📱',wait:'⏱',text:'⌨'}[s.type]||'•'; }
+function stepIcon(s){ return {scene:'🏠',key:keyName(s.code)[2],app:'📱',wait:'⏱',text:'⌨',input:'⇄'}[s.type]||'•'; }
 function stepText(s){
   if (s.label) return s.label;
   if (s.type==='wait') return (s.ms/1000)+'초 기다리기';
   if (s.type==='key') return keyName(s.code)[1];
   if (s.type==='app') return s.link;
   if (s.type==='text') return '“'+s.text+'” 입력';
+  if (s.type==='input') return '입력 이동: '+s.target;
   return s.type;
 }
-function stepKind(s){ return {scene:'헤이홈 레시피',key:'구글 TV 버튼',app:'구글 TV 앱',wait:'기다리기',text:'글자 입력'}[s.type]||''; }
+function stepKind(s){ return {scene:'헤이홈 레시피',key:'구글 TV 버튼',app:'구글 TV 앱',wait:'기다리기',text:'글자 입력',input:'외부입력 이동'}[s.type]||''; }
+const DELAYS = [0,0.5,1,2,3,5,8,10,15];
+function delayText(ms){ return ms ? (ms/1000)+'초 뒤에' : '바로'; }
 
 // ---------------- 화면 전환 ----------------
 let page = 'modes';
@@ -369,14 +412,26 @@ function renderEditor(){
   ul.innerHTML = ed.steps.map((s,i) => `
     <li>
       <span class="i">${stepIcon(s)}</span>
-      <div class="t"><div>${esc(stepText(s))}</div><small>${stepKind(s)}</small><br>
-        <select data-c="${i}">${Object.entries(COND).map(([k,v])=>`<option value="${k}" ${(s.when||'always')===k?'selected':''}>${v}</option>`).join('')}</select>
+      <div class="t"><div>${esc(stepText(s))}</div><small>${stepKind(s)}</small>
+        <div class="sel2">
+          <select data-dl="${i}">${(DELAYS.includes((s.delay||0)/1000)?DELAYS:[...DELAYS,(s.delay||0)/1000]).map(d=>`<option value="${d*1000}" ${(s.delay||0)===d*1000?'selected':''}>⏱ ${delayText(d*1000)}</option>`).join('')}<option value="custom">⏱ 직접 입력…</option></select>
+          <select data-c="${i}">${Object.entries(COND).map(([k,v])=>`<option value="${k}" ${(s.when||'always')===k?'selected':''}>${v}</option>`).join('')}</select>
+        </div>
       </div>
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}" class="danger">✕</button>
     </li>`).join('');
-  ul.querySelectorAll('select').forEach(sel => sel.onchange = () => {
+  ul.querySelectorAll('select[data-c]').forEach(sel => sel.onchange = () => {
     const s = ed.steps[+sel.dataset.c];
     if (sel.value === 'always') delete s.when; else s.when = sel.value;
+  });
+  ul.querySelectorAll('select[data-dl]').forEach(sel => sel.onchange = () => {
+    const s = ed.steps[+sel.dataset.dl];
+    if (sel.value === 'custom') {
+      dialog('몇 초 뒤에 실행할까요?', `<p class="muted">앞 단계가 끝나고 이만큼 기다린 뒤 “${esc(stepText(s))}”을(를) 실행합니다.</p><div class="row"><input id="dlSec" inputmode="decimal" placeholder="예: 4.5" value="${(s.delay||0)/1000||''}"><button class="primary" style="flex:0 0 auto" id="dlOk">확인</button></div>`);
+      $('#dlOk').onclick = () => { const v = parseFloat(val('dlSec')); if (!(v>=0 && v<=60)) { toast('0~60초로 적어 주세요'); return; } setDelay(s, v*1000); closeModal('dlg'); renderEditor(); };
+      return;
+    }
+    setDelay(s, +sel.value); renderEditor();
   });
   ul.querySelectorAll('button').forEach(b => b.onclick = () => {
     const d = b.dataset;
@@ -386,6 +441,7 @@ function renderEditor(){
     renderEditor();
   });
 }
+function setDelay(s, ms){ ms = Math.round(ms); if (ms > 0) s.delay = ms; else delete s.delay; }
 function collectEditor(){
   ed.name = val('edName') || '이름 없는 모드';
   return ed;
@@ -451,7 +507,13 @@ function renderPicker(){
       <label>앱 이름</label><input id="pkAppName"><label>패키지 이름 또는 주소</label><input id="pkAppLink" placeholder="예: com.netflix.ninja">
       <button class="primary" style="width:100%;margin-top:10px" id="pkAppAdd">추가</button>`;
     body.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const a = S.tvApps[+b.dataset.i]; addStep({type:'app',label:a.name+' 실행',link:a.link}); });
+    if (S.tvApps.some(a => !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(a.link))) body.insertAdjacentHTML('afterbegin','<p class="muted">리모컨 화면에서 한 번 눌러 “여는 방법 찾기”를 마친 앱이어야 모드에서도 잘 열립니다.</p>');
     $('#pkAppAdd').onclick = () => { const l = val('pkAppLink'); if (!l) return; addStep({type:'app',label:(val('pkAppName')||l)+' 실행',link:l}); };
+  } else if (pkTab === 'input') {
+    const names = inputs().names;
+    body.innerHTML = names.length ? `<p class="muted">고른 입력으로 옮기는 데 필요한 버튼을 앱이 계산해서 누릅니다.</p><div class="list">${names.map((n,i)=>`<button data-i="${i}">⇄ ${esc(n)}</button>`).join('')}</div>`
+      : '<p class="muted">설정 → 외부입력 목록에서 입력 순서와 레시피를 먼저 정해 주세요.</p>';
+    body.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const n = names[+b.dataset.i]; addStep({type:'input',label:'입력 이동: '+n,target:n}); });
   } else if (pkTab === 'wait') {
     body.innerHTML = `<div class="chips">${[1,2,3,5,8,10,15].map(s=>`<button data-s="${s}">${s}초</button>`).join('')}</div>
       <label>직접 입력 (초)</label><div class="row"><input id="pkSec" inputmode="decimal" placeholder="예: 4.5"><button class="primary" style="flex:0 0 auto" id="pkSecAdd">추가</button></div>`;
@@ -478,7 +540,7 @@ function refreshPill(){
 window.tvChanged = refreshPill;
 function remoteMsg(t, cls){ const el=$('#remoteMsg'); el.textContent=t; el.className='status '+(cls||''); }
 function enterRemote(){
-  renderApps(); renderSceneChips();
+  renderApps(); renderSceneChips(); freshSettings(); renderInputChips();
   if (!S.tvHost) { remoteMsg('설정에서 구글 TV를 먼저 연결해 주세요.','bad'); return; }
   remoteMsg('구글 TV에 연결하는 중…');
   call('tvConnect').then(st => { S.tv = st; refreshPill(); remoteMsg('연결됨 · ' + (S.tvName||S.tvHost), 'ok'); })
@@ -496,7 +558,11 @@ function sendText(){
 function renderApps(){
   $('#appChips').innerHTML = S.tvApps.map((a,i)=>`<button data-i="${i}">${esc(a.name)}</button>`).join('') || '<span class="muted">아직 없습니다</span>';
   $('#appChips').querySelectorAll('button').forEach(b => {
-    b.onclick = () => call('app', S.tvApps[+b.dataset.i].link).catch(e => remoteMsg(e.message,'bad'));
+    b.onclick = () => {
+      const a = S.tvApps[+b.dataset.i];
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(a.link)) { findLaunch(+b.dataset.i); return; }
+      call('app', a.link).catch(e => remoteMsg(e.message,'bad'));
+    };
     b.oncontextmenu = e => { e.preventDefault(); removeApp(+b.dataset.i); };
   });
 }
@@ -519,7 +585,28 @@ function openAppManual(pkg){
     const link = val('apLink'); if (!link) return;
     S.tvApps.push({name: val('apName') || link.split('.').pop(), link});
     N.saveTvApps(JSON.stringify(S.tvApps)); closeModal('dlg'); renderApps();
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(link)) findLaunch(S.tvApps.length - 1);
   };
+}
+// 패키지 이름만 아는 앱은 TV마다 열리는 방식이 달라서, 차례로 시험해 보고 열린 방식을 저장한다.
+function findLaunch(idx, k = 0){
+  const a = S.tvApps[idx];
+  const pkg = a.pkg || a.link;
+  const cands = JSON.parse(N.launchCandidates(pkg));
+  if (k >= cands.length) {
+    dialog('열리는 방법을 찾지 못했습니다', `<p class="muted">이 TV에서는 “${esc(a.name)}”을(를) 패키지 이름으로 열 수 없었습니다. 두 가지 방법이 있습니다.</p>
+      <p class="muted">• TV에 <b>AVA Connect</b> 앱(무료)을 설치하면 패키지 이름으로 여는 기능이 다시 동작합니다. 설치한 뒤 다시 시험해 주세요.<br>• 앱이 자기 주소(딥링크)를 지원하면 그 주소를 직접 넣을 수 있습니다. 예: 유튜브 https://www.youtube.com</p>
+      <div class="row"><button onclick="closeModal('dlg')">닫기</button><button class="primary" onclick="findLaunch(${idx},0)">처음부터 다시</button></div>`);
+    return;
+  }
+  dialog(`“${esc(a.name)}” 여는 방법 찾기 (${k+1}/${cands.length})`, `<p class="muted">TV로 열기 요청을 보냈습니다. TV에서 앱이 열렸나요? 플레이 스토어 화면만 뜨면 “안 열려요”를 눌러 주세요.</p>
+    <div class="row"><button id="lnNo">안 열려요</button><button class="primary" id="lnYes">열렸어요</button></div>
+    <button class="ghost" style="width:100%;margin-top:8px" id="lnAgain">다시 보내기</button>`);
+  const send = () => call('app', cands[k]).catch(e => toast(e.message));
+  send();
+  $('#lnAgain').onclick = send;
+  $('#lnYes').onclick = () => { a.pkg = pkg; a.link = cands[k]; N.saveTvApps(JSON.stringify(S.tvApps)); closeModal('dlg'); renderApps(); toast('저장했습니다. 이제 바로 열립니다'); };
+  $('#lnNo').onclick = () => { call('key', 4).catch(()=>{}); findLaunch(idx, k+1); };
 }
 function renderSceneChips(){
   const el = $('#sceneChips');
@@ -528,6 +615,67 @@ function renderSceneChips(){
   el.querySelectorAll('button').forEach(b => b.onclick = () => {
     const s = S.scenes[+b.dataset.i];
     call('runScene', s.familyId, s.sceneId).then(()=>toast('“'+s.name+'” 실행')).catch(e => toast(e.message));
+  });
+}
+
+// ---------------- 외부입력 ----------------
+function freshSettings(){ try { S.settings = JSON.parse(N.state()).settings || {}; } catch(e) {} return S.settings; }
+function inputs(){
+  const i = (S.settings||{}).inputs || {};
+  return {names:[], current:0, style:'menu', wrap:false, firstOpens:false, openWait:1500, stepWait:700, ...i};
+}
+function sceneOptions(sel, cur, allowNone){
+  sel.innerHTML = (allowNone ? '<option value="">(없음)</option>' : '<option value="">레시피를 고르세요</option>') +
+    S.scenes.map((s,i)=>`<option value="${i}" ${cur && cur.sceneId===s.sceneId && cur.familyId===s.familyId ? 'selected':''}>${esc(s.name)}</option>`).join('');
+}
+function pickScene(id){ const v = $('#'+id).value; if (v === '') return null; const s = S.scenes[+v]; return {familyId:s.familyId, sceneId:s.sceneId, name:s.name}; }
+function renderInputs(){
+  const c = inputs();
+  $('#inNames').innerHTML = c.names.map((n,i)=>`<div class="inrow"><span class="muted" style="width:20px">${i+1}</span><input value="${esc(n)}" data-n="${i}"><button data-u="${i}">↑</button><button data-d="${i}">↓</button><button class="danger" data-x="${i}">✕</button></div>`).join('') || '<p class="muted">아직 입력이 없습니다.</p>';
+  $('#inNames').querySelectorAll('input').forEach(el => el.onchange = () => { c.names[+el.dataset.n] = el.value.trim() || c.names[+el.dataset.n]; storeInputs(c); });
+  $('#inNames').querySelectorAll('button').forEach(b => b.onclick = () => {
+    const d = b.dataset, cur = c.names[c.current];
+    if (d.u != null && +d.u > 0) { const i=+d.u; [c.names[i-1],c.names[i]]=[c.names[i],c.names[i-1]]; }
+    if (d.d != null && +d.d < c.names.length-1) { const i=+d.d; [c.names[i+1],c.names[i]]=[c.names[i],c.names[i+1]]; }
+    if (d.x != null) c.names.splice(+d.x,1);
+    c.current = Math.max(0, c.names.indexOf(cur));
+    storeInputs(c); renderInputs();
+  });
+  $('#inCurrent').innerHTML = c.names.map((n,i)=>`<option value="${i}" ${i===c.current?'selected':''}>${esc(n)}</option>`).join('');
+  $('#inStyle').value = c.style;
+  sceneOptions($('#inOpen'), c.open, false); sceneOptions($('#inNext'), c.next, false);
+  sceneOptions($('#inPrev'), c.prev, true); sceneOptions($('#inOk'), c.ok, true);
+  $('#inWrap').checked = !!c.wrap; $('#inFirst').checked = !!c.firstOpens;
+  $('#inMenuOnly').hidden = c.style !== 'menu'; $('#inFirstWrap').hidden = c.style !== 'cycle';
+  $('#inOpenWait').value = c.openWait/1000; $('#inStepWait').value = c.stepWait/1000;
+}
+function storeInputs(c){
+  const st = freshSettings(); st.inputs = c; N.saveSettings(JSON.stringify(st));
+}
+function saveInputs(){
+  const c = inputs();
+  c.current = +$('#inCurrent').value || 0;
+  c.style = $('#inStyle').value;
+  c.open = pickScene('inOpen'); c.next = pickScene('inNext'); c.prev = pickScene('inPrev'); c.ok = pickScene('inOk');
+  c.wrap = $('#inWrap').checked; c.firstOpens = $('#inFirst').checked;
+  const ow = parseFloat($('#inOpenWait').value), sw = parseFloat($('#inStepWait').value);
+  c.openWait = Math.round((ow>0?ow:1.5)*1000); c.stepWait = Math.round((sw>0?sw:0.7)*1000);
+  storeInputs(c); renderInputs(); toast('저장했습니다');
+}
+function addInput(){
+  const n = val('inNew'); if (!n) return;
+  const c = inputs(); if (c.names.includes(n)) { toast('이미 있는 이름입니다'); return; }
+  c.names.push(n); $('#inNew').value = ''; storeInputs(c); renderInputs();
+}
+function renderInputChips(){
+  const c = inputs(), el = $('#inputChips');
+  if (!c.names.length) { el.innerHTML = '<span class="muted">설정에서 외부입력 목록을 만들면 보입니다</span>'; $('#inputNote').textContent=''; return; }
+  el.innerHTML = c.names.map((n,i)=>`<button data-i="${i}" class="${i===c.current?'cur':''}">${esc(n)}</button>`).join('');
+  $('#inputNote').textContent = '파란 버튼이 앱이 기억하는 지금 입력입니다. 리모컨으로 직접 바꿨다면 버튼을 길게 눌러 지금 입력을 바로잡아 주세요.';
+  el.querySelectorAll('button').forEach(b => {
+    b.onclick = () => { const n = c.names[+b.dataset.i]; toast('입력 이동: '+n);
+      call('switchInput', n).then(()=>{ freshSettings(); renderInputChips(); }).catch(e => toast(e.message)); };
+    b.oncontextmenu = e => { e.preventDefault(); N.setCurrentInput(+b.dataset.i); freshSettings(); renderInputChips(); toast('지금 입력을 바로잡았습니다'); };
   });
 }
 
@@ -544,10 +692,11 @@ function renderSettings(){
     const cur = (S.settings||{})[slot] || (S.modes[slot==='voiceOff'?1:0]||{}).id || '';
     sel.innerHTML = S.modes.map(m=>`<option value="${esc(m.id)}" ${m.id===cur?'selected':''}>${esc(m.emoji+' '+m.name)}</option>`).join('');
   }
+  freshSettings(); renderInputs();
   $('#ver').textContent = '버전 ' + S.version;
 }
 function saveSlot(sel){
-  S.settings = S.settings || {};
+  freshSettings();
   S.settings[sel.id.replace('slot-','')] = sel.value;
   N.saveSettings(JSON.stringify(S.settings));
   toast('저장했습니다');
@@ -600,6 +749,13 @@ function refreshScenes(){
 // ---------------- 창 ----------------
 function dialog(title, html){ $('#dlgTitle').textContent = title; $('#dlgBody').innerHTML = html; $('#dlg').classList.add('show'); }
 
+// 처음 버전의 기본 앱 버튼(패키지 이름)을 바로 열리는 주소로 바꾼다.
+(function migrateApps(){
+  const fix = {'com.google.android.youtube.tv':'https://www.youtube.com','com.netflix.ninja':'https://www.netflix.com/title'};
+  let changed = false;
+  S.tvApps.forEach(a => { if (fix[a.link]) { a.pkg = a.link; a.link = fix[a.link]; changed = true; } });
+  if (changed) N.saveTvApps(JSON.stringify(S.tvApps));
+})();
 renderModes();
 refreshPill();
 setInterval(refreshPill, 5000);

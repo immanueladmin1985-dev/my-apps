@@ -21,8 +21,9 @@ class AtvWireTest {
         assertEquals("520508e0011003", hex(AtvWire.key(224)))
         assertEquals(
             "d205260a246d61726b65743a2f2f6c61756e63683f69643d636f6d2e6e6574666c69782e6e696e6a61",
-            hex(AtvWire.appLink("com.netflix.ninja"))
+            hex(AtvWire.appLink("market://launch?id=com.netflix.ninja"))
         )
+        assertEquals(AtvWire.launchCandidates("com.a.b").first(), String(PMsg(PMsg(AtvWire.appLink("com.a.b")).bytes(90)!!).bytes(1)!!))
         assertEquals("0a2208e704121d0a014d12015618012201312a0961747672656d6f74653205312e302e30", hex(AtvWire.configure(0xFFFF, "M", "V")))
         assertEquals("aa0113080310051a0d08011209080210021a03616263", hex(AtvWire.text(3, 5, "abc")))
     }
@@ -57,10 +58,27 @@ class AtvWireTest {
         assertNull(AtvWire.secret(cn, e, sn, e, "12345"))
     }
 
+    @Test fun inputPlan() {
+        fun p(cur: Int, t: Int, style: String = "menu", wrap: Boolean = false, prev: Boolean = true, ok: Boolean = true, first: Boolean = false) =
+            InputPlan.plan(4, cur, t, style, wrap, prev, ok, first).joinToString(",")
+        assertEquals("open,next,next,ok", p(0, 2))
+        assertEquals("open,prev,prev,ok", p(3, 1))
+        assertEquals("", p(2, 2))
+        assertEquals("open,prev,ok", p(0, 3, wrap = true))
+        assertEquals("open,next,ok", p(3, 0, wrap = true))
+        assertEquals("open,next,next,next,ok", p(1, 0, wrap = true, prev = false))
+        assertEquals("", p(3, 1, prev = false))
+        assertEquals("open,open", p(3, 1, style = "cycle", ok = false))
+        assertEquals("open,open,open,ok", p(3, 1, style = "cycle", first = true))
+        assertEquals("open,next", p(0, 1, ok = false))
+    }
+
     @Test fun modes() {
-        val json = """[{"id":"a","name":"닌텐도","emoji":"🎮","steps":[{"type":"scene","label":"TV 전원","familyId":3,"sceneId":"s1","when":"tvOff"},{"type":"wait","ms":99999},{"type":"key","code":224}]}]"""
+        val json = """[{"id":"a","name":"닌텐도","emoji":"🎮","steps":[{"type":"scene","label":"TV 전원","familyId":3,"sceneId":"s1","when":"tvOff"},{"type":"wait","ms":99999},{"type":"key","code":224,"delay":1500},{"type":"input","target":"닌텐도"}]}]"""
         val m = Mode.list(json).single()
-        assertEquals(3, m.steps.size)
+        assertEquals(4, m.steps.size)
+        assertEquals(1500L, m.steps[2].delay)
+        assertEquals("닌텐도", m.steps[3].target)
         assertEquals(60_000L, m.steps[1].ms)
         assertTrue(m.needsTv)
         assertTrue(m.steps[0].runs(false)); assertTrue(!m.steps[0].runs(true)); assertTrue(!m.steps[0].runs(null))

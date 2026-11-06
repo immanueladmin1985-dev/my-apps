@@ -53,6 +53,16 @@ object Store {
         changed(ctx)
     }
 
+    /** 외부입력을 옮긴 뒤 지금 입력 위치를 기억한다. */
+    @Synchronized
+    fun setCurrentInput(ctx: Context, index: Int) {
+        val o = settings(ctx)
+        val inp = o.optJSONObject("inputs") ?: return
+        inp.put("current", index)
+        o.put("inputs", inp)
+        p(ctx).edit().putString("settings", o.toString()).apply()
+    }
+
     fun setting(ctx: Context, key: String): String = settings(ctx).optString(key)
 
     /** 음성(제미나이)·빠른 설정에 연결한 모드. 따로 고르지 않았으면 첫 번째·두 번째 모드. */
@@ -75,8 +85,8 @@ object Store {
 
     /** 리모컨 화면에 둘 TV 앱 버튼 [{name, link}] */
     fun tvApps(ctx: Context): String = p(ctx).getString("tvApps", null) ?: JSONArray().apply {
-        put(JSONObject().put("name", "유튜브").put("link", "com.google.android.youtube.tv"))
-        put(JSONObject().put("name", "넷플릭스").put("link", "com.netflix.ninja"))
+        put(JSONObject().put("name", "유튜브").put("link", "https://www.youtube.com"))
+        put(JSONObject().put("name", "넷플릭스").put("link", "https://www.netflix.com/title"))
     }.toString()
 
     fun saveTvApps(ctx: Context, json: String) {

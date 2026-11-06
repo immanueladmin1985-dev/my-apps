@@ -87,10 +87,27 @@ object AtvWire {
     /** direction: 3 = 짧게 누름 */
     fun key(code: Int, direction: Int = 3): ByteArray = PB().msg(10, PB().int(1, code).int(2, direction)).build()
 
-    /** 패키지 이름만 주면 market://launch?id= 로 실행한다. */
+    private val SCHEME = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:")
+
+    /**
+     * 패키지 이름으로 앱을 여는 주소 후보. 예전에 쓰던 market://launch?id= 는
+     * 플레이 스토어 업데이트 뒤로 막혀서(AVA Connect 같은 앱을 깔면 다시 됨) 맨 뒤에 둔다.
+     * TV마다 되는 방식이 달라서 화면에서 차례로 시험해 보고 되는 것을 저장한다.
+     */
+    fun launchCandidates(pkg: String): List<String> {
+        val p = pkg.trim()
+        return listOf(
+            "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LEANBACK_LAUNCHER;package=$p;end",
+            "market://details?id=$p&launch=true",
+            "https://play.google.com/store/apps/details?id=$p&launch=true",
+            "market://launch?id=$p",
+        )
+    }
+
+    /** 주소면 그대로, 패키지 이름만 있으면 첫 번째 후보로 연다. */
     fun appLink(linkOrPackage: String): ByteArray {
         val s = linkOrPackage.trim()
-        val link = if (Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:").containsMatchIn(s)) s else "market://launch?id=$s"
+        val link = if (SCHEME.containsMatchIn(s)) s else launchCandidates(s).first()
         return PB().msg(90, PB().str(1, link)).build()
     }
 

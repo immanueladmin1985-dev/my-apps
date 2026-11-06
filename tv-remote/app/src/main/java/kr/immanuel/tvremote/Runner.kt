@@ -45,8 +45,10 @@ object Runner {
             val name = s.label.ifEmpty { s.type }
             progress("${i + 1}/${mode.steps.size} $name")
             try {
+                if (s.delay > 0) Thread.sleep(s.delay.coerceIn(0, 60_000))
                 when (s.type) {
                     "wait" -> Thread.sleep(s.ms.coerceIn(0, 60_000))
+                    "input" -> switchInput(app, s.target)
                     "scene" -> Hej.runScene(app, s.familyId, s.sceneId)
                     "key", "app", "text" -> {
                         val t = tv?.takeIf { !it.closed } ?: Atv.session(app).also { tv = it }
@@ -71,6 +73,34 @@ object Runner {
         listeners.forEach { runCatching { it(msg) } }
         main.postDelayed({ Atv.closeIfIdle(55_000) }, 60_000)
         return msg
+    }
+
+    /**
+     * 외부입력 이동. 설정의 입력 목록에서 지금 입력과 목표 입력의 거리를 계산해
+     * 헤이홈 레시피(외부입력 / 다음 / 이전 / 확인)를 필요한 만큼 실행한다.
+     */
+    fun switchInput(ctx: Context, target: String) {
+        val cfg = Store.settings(ctx).optJSONObject("inputs") ?: throw IllegalStateException("설정에서 외부입력 목록을 먼저 만들어 주세요.")
+        val names = cfg.optJSONArray("names")?.let { a -> (0 until a.length()).map { a.optString(it) } } ?: emptyList()
+        val t = names.indexOf(target)
+        if (t < 0) throw IllegalStateException("외부입력 목록에 ‘$target’이 없습니다.")
+        fun scene(key: String) = cfg.optJSONObject(key)?.takeIf { it.optString("sceneId").isNotEmpty() }
+        val open = scene("open") ?: throw IllegalStateException("‘외부입력’ 레시피를 설정에서 골라 주세요.")
+        val style = cfg.optString("style", "menu")
+        val plan = InputPlan.plan(
+            names.size, cfg.optInt("current", 0), t, style,
+            cfg.optBoolean("wrap", false), scene("prev") != null, scene("ok") != null, cfg.optBoolean("firstOpens", false),
+        )
+        if (plan.isEmpty() && t != cfg.optInt("current", 0) && style != "cycle")
+            throw IllegalStateException("‘이전’ 레시피가 없어 앞쪽 입력으로 돌아갈 수 없습니다.")
+        val openWait = cfg.optLong("openWait", 1500).coerceIn(200, 10_000)
+        val stepWait = cfg.optLong("stepWait", 700).coerceIn(200, 10_000)
+        plan.forEachIndexed { i, a ->
+            if (i > 0) Thread.sleep(if (plan[i - 1] == "open" && style == "menu") openWait else stepWait)
+            val sc = when (a) { "open" -> open; "next" -> scene("next"); "prev" -> scene("prev"); else -> scene("ok") }!!
+            Hej.runScene(ctx, sc.optLong("familyId"), sc.optString("sceneId"))
+        }
+        Store.setCurrentInput(ctx, t)
     }
 
     /** 화면을 막지 않고 실행한다. toast=true 면 결과를 짧게 띄운다. */

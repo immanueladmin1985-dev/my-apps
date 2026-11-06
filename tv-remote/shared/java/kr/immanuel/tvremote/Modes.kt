@@ -13,6 +13,8 @@ import org.json.JSONObject
  *  - app   : 구글 TV 앱 실행 (link = 패키지 이름 또는 주소)
  *  - text  : 구글 TV 입력창에 글자 넣기 (text)
  *  - wait  : 기다리기 (ms)
+ *  - input : 외부입력 이동 (target = 입력 이름). 설정의 입력 목록 순서로 몇 번 움직일지 계산한다.
+ * 모든 단계에 delay(ms)를 주면 그 단계를 실행하기 전에 그만큼 기다린다.
  * 조건(when): "always" | "tvOff" (구글 TV가 꺼져 있었을 때만) | "tvOn" (켜져 있었을 때만)
  * 조건은 모드를 시작할 때 확인한 구글 TV 상태로 판단한다.
  */
@@ -26,6 +28,8 @@ data class Step(
     val text: String = "",
     val ms: Long = 0,
     val cond: String = "always",
+    val delay: Long = 0,
+    val target: String = "",
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("type", type)
@@ -37,6 +41,8 @@ data class Step(
         if (text.isNotEmpty()) put("text", text)
         if (ms != 0L) put("ms", ms)
         if (cond != "always") put("when", cond)
+        if (delay != 0L) put("delay", delay)
+        if (target.isNotEmpty()) put("target", target)
     }
 
     /** 이 단계를 실행하려면 구글 TV 연결이 필요한가. */
@@ -59,6 +65,8 @@ data class Step(
             text = o.optString("text"),
             ms = o.optLong("ms").coerceIn(0, 60_000),
             cond = o.optString("when", "always").ifEmpty { "always" },
+            delay = o.optLong("delay").coerceIn(0, 60_000),
+            target = o.optString("target"),
         )
     }
 }
@@ -119,4 +127,37 @@ object Keys {
     const val TV_INPUT = 178
     const val SLEEP = 223
     const val WAKEUP = 224
+}
+
+/**
+ * 외부입력 이동 계획.
+ * style "menu"  : 외부입력 버튼으로 목록을 열면 커서가 지금 입력에 있고, 다음/이전 버튼으로 움직인 뒤 (확인)
+ * style "cycle" : 외부입력 버튼을 누를 때마다 다음 입력으로 바뀐다 (firstOpens 면 첫 누름은 목록만 연다)
+ * 결과는 "open" / "next" / "prev" / "ok" 의 차례.
+ */
+object InputPlan {
+    fun plan(
+        count: Int, current: Int, target: Int, style: String,
+        wrap: Boolean, hasPrev: Boolean, hasOk: Boolean, firstOpens: Boolean,
+    ): List<String> {
+        if (count <= 0 || target !in 0 until count) return emptyList()
+        val cur = current.coerceIn(0, count - 1)
+        if (style == "cycle") {
+            var n = Math.floorMod(target - cur, count)
+            if (n == 0) return emptyList()
+            if (firstOpens) n += 1
+            return List(n) { "open" } + if (hasOk) listOf("ok") else emptyList()
+        }
+        if (target == cur) return emptyList()
+        val forward = Math.floorMod(target - cur, count)
+        val backward = Math.floorMod(cur - target, count)
+        val moves: List<String> = when {
+            wrap && hasPrev -> if (forward <= backward) List(forward) { "next" } else List(backward) { "prev" }
+            wrap -> List(forward) { "next" }
+            target > cur -> List(target - cur) { "next" }
+            hasPrev -> List(cur - target) { "prev" }
+            else -> return emptyList() // 이전 버튼 없이 되돌아갈 수 없다
+        }
+        return listOf("open") + moves + if (hasOk) listOf("ok") else emptyList()
+    }
 }
