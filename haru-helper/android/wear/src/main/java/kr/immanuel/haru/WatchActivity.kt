@@ -1,6 +1,9 @@
 package kr.immanuel.haru
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Build
 import android.app.RemoteInput
 import android.content.Intent
 import android.os.Bundle
@@ -17,6 +20,11 @@ class WatchActivity : Activity() {
         super.onCreate(savedInstanceState)
         box = Ui.page(this)
         if (intent?.getStringExtra("open") == "memo") memo()
+        // 일과 알림·진동을 띄우려면 알림 권한이 필요함 (Wear OS 4 이상)
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9)
+        }
+        WRoutine.schedule(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -73,6 +81,16 @@ class WatchActivity : Activity() {
             box.addView(c)
         }
 
+        // 다음 일과 알림
+        if (s.feat("routine")) Routine.next(s.routine, now, emptySet())?.let { ev ->
+            box.addView(Ui.text(this, "🗓 다음 " + Fmt.hm(ev.at) + "  " + ev.emoji + " " + ev.title, 12f, Ui.GRAY))
+        }
+        if (s.feat("sos")) box.addView(Ui.button(this, "🚨  화났을 때", Ui.ROSE) {
+            startActivity(Intent(this, StepsActivity::class.java).putExtra("kind", "sos"))
+        })
+        if (s.feat("urge")) box.addView(Ui.button(this, "🍪  먹고 싶을 때", 0xFF7C3AED.toInt()) {
+            startActivity(Intent(this, StepsActivity::class.java).putExtra("kind", "urge"))
+        })
         box.addView(Ui.button(this, "💭  말로 메모", Ui.INDIGO) { memo() })
         box.addView(Ui.button(this, "🌬  숨 고르기", Ui.TEAL) { startActivity(Intent(this, BreathActivity::class.java)) })
         box.addView(Ui.button(this, "🗣  대화 타이머", Ui.AMBER) { startActivity(Intent(this, TalkActivity::class.java)) })

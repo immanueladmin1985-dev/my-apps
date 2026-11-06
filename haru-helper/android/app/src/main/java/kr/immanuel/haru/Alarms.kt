@@ -85,6 +85,7 @@ class ActionReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         val type = intent.getStringExtra("type") ?: return
         val id = intent.getStringExtra("id") ?: ""
+        if (type == "ack") { RoutineAlarms.ack(ctx, id, true); return }
         val a = JSONObject().put("type", type).put("id", id)
         if (type == "remSnooze") a.put("at", System.currentTimeMillis() + intent.getIntExtra("min", 10) * Snap.MIN)
         Store.act(ctx, a)
@@ -134,5 +135,94 @@ object Notifier {
             .addAction(android.app.Notification.Action.Builder(null, "10분 뒤", action("remSnooze", 10)).build())
             .build()
         runCatching { nm.notify(id.hashCode(), n) }
+    }
+}
+
+/**
+ * 하루 일과 알림(휴대폰 쪽). ‘알림 받을 곳’이 휴대폰이나 둘 다일 때만 울린다.
+ * 확인을 누를 때까지 소리·진동이 되풀이되고(FLAG_INSISTENT), 워치에서 확인하면 같이 꺼진다.
+ */
+object RoutineAlarms {
+    private const val ACTION = "kr.immanuel.haru.ROUTINE"
+    private const val CH = "routine"
+
+    private fun pending(ctx: Context, ev: Routine.Ev?, flag: Int): PendingIntent? {
+        val i = Intent(ctx, RoutineReceiver::class.java).setAction(ACTION)
+        if (ev != null) i.putExtra("key", ev.key).putExtra("at", ev.at).putExtra("e", ev.emoji).putExtra("t", ev.title).putExtra("b", ev.body)
+        return PendingIntent.getBroadcast(ctx, 7, i, flag or PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    private fun set(ctx: Context, name: String): MutableSet<String> {
+        val cut = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).format(java.util.Date(System.currentTimeMillis() - 3 * Snap.DAY))
+        return (Store.sp(ctx).getStringSet(name, emptySet()) ?: emptySet()).filter { it.take(8) >= cut }.toMutableSet()
+    }
+
+    fun schedule(ctx: Context) {
+        val am = ctx.getSystemService(AlarmManager::class.java) ?: return
+        pending(ctx, null, PendingIntent.FLAG_NO_CREATE)?.let { am.cancel(it); it.cancel() }
+        val cfg = Store.snap(ctx).routine ?: return
+        if (cfg.optString("target", "watch") == "watch") return
+        val now = System.currentTimeMillis()
+        val ev = Routine.next(cfg, now, set(ctx, "rFired") + set(ctx, "rAcked")) ?: return
+        val p = pending(ctx, ev, PendingIntent.FLAG_UPDATE_CURRENT) ?: return
+        val whenMs = maxOf(ev.at, now + 500)
+        if (Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms()) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenMs, p)
+        else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenMs, p)
+    }
+
+    fun fired(ctx: Context, key: String) {
+        Store.sp(ctx).edit().putStringSet("rFired", set(ctx, "rFired").apply { add(key) }).apply()
+    }
+
+    fun isAcked(ctx: Context, key: String) = key in set(ctx, "rAcked")
+
+    /** 확인: 알림을 끄고, 다른 기기(워치)에도 알린다. */
+    fun ack(ctx: Context, key: String, tellWatch: Boolean) {
+        Store.sp(ctx).edit().putStringSet("rAcked", set(ctx, "rAcked").apply { add(key) }).apply()
+        ctx.getSystemService(NotificationManager::class.java)?.cancel(key.hashCode())
+        if (tellWatch) WatchSync.sendAck(ctx, key)
+    }
+
+    fun show(ctx: Context, key: String, e: String, t: String, b: String) {
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+        if (nm.getNotificationChannel(CH) == null) {
+            nm.createNotificationChannel(NotificationChannel(CH, "하루 일과", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "쉬는 시간·점심·퇴근·일정을 확인할 때까지 알려 줘요"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 300, 500)
+            })
+        }
+        val ack = PendingIntent.getBroadcast(
+            ctx, 0,
+            Intent(ctx, ActionReceiver::class.java).setData(Uri.parse("haru://ack/" + Uri.encode(key))).putExtra("type", "ack").putExtra("id", key),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val n = android.app.Notification.Builder(ctx, CH)
+            .setSmallIcon(R.drawable.ic_stat)
+            .setContentTitle("$e $t")
+            .setContentText(b)
+            .setStyle(android.app.Notification.BigTextStyle().bigText(b))
+            .setCategory(android.app.Notification.CATEGORY_ALARM)
+            .setColor(0xFF6366F1.toInt())
+            .setOngoing(true)
+            .setLocalOnly(true)   // 워치는 자기 알람으로 따로 울림
+            .setContentIntent(ack)
+            .setDeleteIntent(ack)
+            .addAction(android.app.Notification.Action.Builder(null, "확인", ack).build())
+            .build()
+        n.flags = n.flags or android.app.Notification.FLAG_INSISTENT
+        runCatching { nm.notify(key.hashCode(), n) }
+    }
+}
+
+class RoutineReceiver : BroadcastReceiver() {
+    override fun onReceive(ctx: Context, intent: Intent) {
+        val key = intent.getStringExtra("key") ?: return
+        RoutineAlarms.fired(ctx, key)
+        val late = System.currentTimeMillis() - intent.getLongExtra("at", 0) > 15 * Snap.MIN
+        if (!late && !RoutineAlarms.isAcked(ctx, key)) {
+            RoutineAlarms.show(ctx, key, intent.getStringExtra("e") ?: "", intent.getStringExtra("t") ?: "", intent.getStringExtra("b") ?: "")
+        }
+        RoutineAlarms.schedule(ctx)
     }
 }

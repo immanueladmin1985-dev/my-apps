@@ -158,6 +158,10 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
 .qbtn small{display:block;font-weight:600;font-size:.76rem;opacity:.9;margin-top:2px}
 .qbtn.mind{background:linear-gradient(135deg,#14b8a6,#0ea5e9)}
 .qbtn.talk{background:linear-gradient(135deg,#f59e0b,#f43f5e)}
+.qbtn.sos{background:linear-gradient(135deg,#f43f5e,#be123c)}
+.qbtn.urge{background:linear-gradient(135deg,#8b5cf6,#6366f1)}
+@media (min-width:760px){ .quick.wide{grid-template-columns:repeat(4,1fr)} }
+details summary{list-style:none} details summary::-webkit-details-marker{display:none}
 .qbtn::after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.15);right:-25px;bottom:-35px}
 .foot{text-align:center;padding:2px 0 6px}
 
@@ -311,6 +315,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       notes: [], tasks: [], focus: null, reminders: [], moods: [], unsent: [], talks: [], parked: [],
       plans: DEF_PLANS.map(function(p){ return { id: uid(), area: p[0], when: p[1], then: p[2] }; }),
       focusLog: [], estLog: [], checkins: {}, thoughts: [], session: null,
+      routine: JSON.parse(JSON.stringify(DEF_ROUTINE)), sos: JSON.parse(JSON.stringify(DEF_SOS)), urges: [], routineAcks: {},
       lists: DEF_LISTS.map(function(l){ return { id: l.id, name: l.name, items: l.items.map(function(t){ return { id: uid(), text: t, on: false }; }) }; })
     };
   }
@@ -322,14 +327,32 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     ['talk', '내 말이 길어졌다고 느끼면', '“너는 어떻게 생각해?”라고 묻는다'],
     ['life', '현관문 손잡이를 잡으면', '‘나가기 전’ 목록을 연다']
   ];
+  // 하루 일과 알림 기본값 (처음에는 꺼져 있음)
+  var DEF_ROUTINE = { on: false, workOn: true, days: [1, 2, 3, 4, 5], start: '09:00', end: '18:00', lunch: '12:00', lunchEnd: '13:00', focus: 50, rest: 10,
+    alerts: { start: true, rest: true, lunch: true, end: true }, target: 'watch',
+    events: [
+      { id: 'sun', name: '주일예배', time: '11:00', days: [0], before: 30, on: true, msg: '' },
+      { id: 'wed', name: '수요예배', time: '19:30', days: [3], before: 30, on: true, msg: '' },
+      { id: 'kitchen', name: '주방 마감', time: '21:00', days: [0, 1, 2, 3, 4, 5, 6], before: 0, on: false, msg: '양치하고 따뜻한 차 한 잔 마셔요. 오늘 먹는 건 여기까지!' }
+    ] };
+  var DEF_SOS = [
+    { id: 'notice', on: true, e: '🚨', t: '알아차리기', b: '지금 화가 많이 났어요. 이대로 말하거나 메시지를 보내면 나중에 후회하기 쉬워요.', ok: '알아차렸어요' },
+    { id: 'stop', on: true, e: '✋', t: '말 멈추기', b: '하던 말과 쓰던 메시지를 지금 멈춰요. 보내기 버튼은 누르지 않아요.', ok: '멈췄어요' },
+    { id: 'move', on: true, e: '🚶', t: '자리 옮기기', b: '할 수 있다면 지금 그 자리를 떠나요. “잠깐 화장실 다녀올게요” 한마디면 충분해요.', ok: '옮겼어요', alt: '지금은 못 옮겨요' },
+    { id: 'cold', on: true, e: '💧', t: '찬물 · 물 한 컵', b: '찬물로 손이나 얼굴을 적시거나, 물 한 컵을 천천히 마셔요. 몸이 먼저 식어야 마음도 식어요.', ok: '했어요', alt: '건너뛰기' },
+    { id: 'breath', on: true, e: '🌬', t: '길게 내쉬기 5번', b: '4초 들이쉬고 6초 내쉬기를 다섯 번 해요. 진동에 맞춰 따라 해요.', ok: '다 했어요', alt: '건너뛰기', breath: 5 },
+    { id: 'plan', on: true, e: '🧭', t: '내가 정한 계획', b: '', ok: '기억했어요' },
+    { id: 'check', on: true, e: '🌡', t: '지금은 어떤가요?', b: '화가 조금 가라앉았나요? 돌아가서 할 말은 “아까는 내가 감정이 커서…”로 시작하면 좋아요.', ok: '가라앉았어요', alt: '아직 커요' }
+  ];
   var state = freshState();
   try{ var s0 = JSON.parse(localStorage.getItem(KEY)); if(s0 && typeof s0 === 'object') for(var k0 in s0) state[k0] = s0[k0]; }catch(e){}
   // 예전 버전에서 저장한 기록에 새 항목 채우기
-  (function(){ var f = freshState(); ['plans', 'focusLog', 'estLog', 'thoughts'].forEach(function(k){ if(!Array.isArray(state[k])) state[k] = f[k]; }); if(!state.checkins || typeof state.checkins !== 'object') state.checkins = {}; })();
+  (function(){ var f = freshState(); ['plans', 'focusLog', 'estLog', 'thoughts', 'sos', 'urges'].forEach(function(k){ if(!Array.isArray(state[k])) state[k] = f[k]; }); ['checkins', 'routineAcks'].forEach(function(k){ if(!state[k] || typeof state[k] !== 'object') state[k] = {}; }); if(!state.routine || typeof state.routine !== 'object') state.routine = f.routine; })();
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} nativeSync(); }
 
-  var ui = { tab: 'today', mem: 'notes', autoFS: true, installDismissed: false, theme: 'auto', font: 0, vib: true, sound: true, talkSec: 45, talkSound: false, focusMin: 20, autoTalk: false, autoSens: 1, voice: null };
+  var ui = { tab: 'today', mem: 'notes', autoFS: true, installDismissed: false, theme: 'auto', font: 0, vib: true, sound: true, talkSec: 45, talkSound: false, focusMin: 20, autoTalk: false, autoSens: 1, voice: null, feat: {} };
   try{ var u0 = JSON.parse(localStorage.getItem(UIKEY)); if(u0) for(var k1 in u0) ui[k1] = u0[k1]; }catch(e){}
+  if(!ui.feat || typeof ui.feat !== 'object') ui.feat = {};
   function saveUI(){ try{ localStorage.setItem(UIKEY, JSON.stringify(ui)); }catch(e){} }
   function applyLook(){
     var r = document.documentElement;
@@ -352,7 +375,11 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
         tasks: state.tasks.filter(function(t){ return !t.done; }).slice(0, 30).map(function(t){ return { id: t.id, text: t.text }; }),
         reminders: state.reminders.filter(function(r){ return !r.done; }).map(function(r){ return { id: r.id, text: r.text, at: r.at, daily: !!r.daily }; }),
         lists: state.lists.map(function(l){ return { id: l.id, name: l.name, items: l.items.map(function(i){ return { id: i.id, text: i.text, on: !!i.on }; }) }; }),
-        notes: state.notes.length
+        notes: state.notes.length,
+        feat: { routine: F('routine'), sos: F('sos'), urge: F('urge'), focus: F('focus'), checkin: F('checkin'), plans: F('plans') },
+        // 워치가 스스로 알람을 걸 수 있도록 일과 설정을 통째로 보냄
+        routine: Object.assign({}, state.routine, { on: !!state.routine.on && F('routine') }),
+        flows: { sos: F('sos') ? sosSteps() : [], urge: F('urge') ? urgeSteps('food') : [] }
       };
       try{ NATIVE.sync(JSON.stringify(snap)); }catch(e){}
     }, 120);
@@ -367,6 +394,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       case 'listReset': l = state.lists.find(function(x){ return x.id === a.list; }); if(l) l.items.forEach(function(x){ x.on = false; }); break;
       case 'note': if(a.text) state.notes.push({ id: uid(), text: String(a.text), t: a.t || Date.now(), from: a.from || '' }); break;
       case 'focus': if(state.tasks.some(function(x){ return x.id === a.id; })) state.focus = a.id; break;
+      case 'flowDone': state.urges.push({ id: uid(), t: a.t || Date.now(), kind: a.kind === 'sos' ? 'anger' : 'food', outcome: a.outcome || 'passed', from: a.from || 'watch' }); break;
       case 'talkLog': if(a.dur > 15000){ state.talks.push({ id: uid(), t: a.t, dur: a.dur, me: a.me, longest: a.longest, alerts: a.alerts, from: 'watch' }); if(state.talks.length > 100) state.talks.shift(); } break;
     }
   }
@@ -573,14 +601,18 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     else h += '<div class="list">' + up.slice(0, 4).map(remItem).join('') + '</div>' + (up.length > 4 ? '<button class="more" data-a="goMem" data-sub="rem">알림 ' + up.length + '개 모두 보기 ›</button>' : '');
     h += '</div>';
 
-    h += focusCard() + checkinCard();
+    h += routineCard() + (F('focus') ? focusCard() : '') + (F('checkin') ? checkinCard() : '');
     h += '<div class="card">' + head('🧾', 'sky', '챙길 것') + '<div class="chips">' + state.lists.map(function(l){
       var n = l.items.filter(function(i){ return i.on; }).length;
       return '<button class="chip" data-a="openList" data-id="' + l.id + '">' + esc(l.name) + ' <span class="sub">' + n + '/' + l.items.length + '</span></button>';
     }).join('') + '</div><p class="note">문을 나서기 전에 열어서 하나씩 눌러 보세요.</p></div>';
 
-    h += '<div class="quick"><button class="qbtn mind" data-a="goTab" data-tab="mind"><span class="e">😮‍💨</span>마음이 끓어오를 때<small>숨 고르기 · 90초 멈춤</small></button>' +
-      '<button class="qbtn talk" data-a="talkStart"><span class="e">🗣</span>대화 시작<small>말하는 시간 살피기</small></button></div>';
+    var qb = [];
+    if(F('sos')) qb.push('<button class="qbtn sos" data-a="sos"><span class="e">🚨</span>화났을 때<small>한 단계씩 따라 하기</small></button>');
+    if(F('urge')) qb.push('<button class="qbtn urge" data-a="urge"><span class="e">🌊</span>충동이 올 때<small>먹고·사고 싶을 때 10분 미루기</small></button>');
+    qb.push('<button class="qbtn mind" data-a="goTab" data-tab="mind"><span class="e">😮‍💨</span>마음 도구<small>숨 고르기 · 90초 멈춤</small></button>');
+    qb.push('<button class="qbtn talk" data-a="talkStart"><span class="e">🗣</span>대화 시작<small>말하는 시간 살피기</small></button>');
+    h += '<div class="quick wide">' + qb.join('') + '</div>';
     h += installFoot();
     return h;
   }
@@ -675,7 +707,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     ['reframe', '🔍', '생각 바꿔 보기', '사실과 추측을 나눠 보기', 'indigo']
   ];
   function viewMind(){
-    var h = '<div class="card">' + head('💗', 'rose', '지금 마음은 어떤가요?') + '<div class="chips">' + EMOS.map(function(e){
+    var h = sosCard() + urgeCard() + '<div class="card">' + head('💗', 'rose', '지금 마음은 어떤가요?') + '<div class="chips">' + EMOS.map(function(e){
       return '<button class="chip' + (draft.emo === e ? ' on' : '') + '" data-a="emo" data-v="' + e + '">' + e + '</button>';
     }).join('') + '</div>' +
       '<div class="lv"><span class="sub">약함</span><input type="range" min="1" max="10" id="lv" value="' + draft.lv + '"><span class="sub">강함</span><b id="lvN">' + draft.lv + '</b></div>' +
@@ -687,7 +719,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       return '<button class="tool c-' + t[4] + (hot && t[5] ? ' hot' : '') + '" data-a="' + t[0] + '"><span class="e">' + t[1] + '</span>' + t[2] + '<small>' + t[3] + '</small></button>';
     }).join('') + '</div></div>';
 
-    h += plansCard(['mind', 'life'], '🧭', '만약-그러면 계획');
+    if(F('plans')) h += plansCard(['mind', 'life'], '🧭', '만약-그러면 계획');
     if(state.unsent.length){
       h += '<div class="card">' + head('✉️', 'rose', '보내지 않은 글') + '<div class="list">' + state.unsent.slice().reverse().map(function(u){
         return '<div class="item"><div class="tx">' + esc(u.text.length > 60 ? u.text.slice(0, 60) + '…' : u.text) + '<small>' + fmtAgo(u.t) + '</small></div>' +
@@ -748,7 +780,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
         '<label class="sub" style="display:block;margin:14px 0 8px;font-weight:800">이만큼 이어서 말하면 알려 주기</label><div class="chips">' + [20, 30, 45, 60, 90].map(function(s){
           return '<button class="chip' + (ui.talkSec === s ? ' on' : '') + '" data-a="talkSec" data-v="' + s + '">' + s + '초</button>';
         }).join('') + '</div>' + autoSetup() + '<button class="btn primary block" data-a="talkStart" style="height:3.5rem;font-size:1.1rem;margin-top:16px">대화 시작</button></div>';
-      h += plansCard(['talk'], '🧭', '대화할 때 만약-그러면');
+      if(F('plans')) h += plansCard(['talk'], '🧭', '대화할 때 만약-그러면');
       h += '<div class="card">' + head('📌', 'violet', '대화할 때 기억할 것') + '<ul class="tips">' + TIPS.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
       h += '<div class="card">' + head('💡', 'amber', '적어 둔 할 말') + (state.parked.length ? parkedList() + '<div class="btns"><button class="btn" data-a="parkClear">모두 지우기</button></div>' : '<p class="empty">대화 중에 끼어들고 싶은 말을 적어 두면 여기에 모여요. 상대 말이 끝난 뒤 하나만 골라 말해 보세요.</p>') + '</div>';
       if(state.talks.length){
@@ -1221,10 +1253,12 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       var ms = state.moods.filter(function(m){ return todayKey(m.t) === k; });
       if(Object.keys(c).length || ms.length) any = true;
       var top = ms.slice().sort(function(a, b){ return b.lv - a.lv; })[0];
-      rows += '<tr><td>' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + WD[d.getDay()] + '</td><td>' + ({ y: '✅', n: '❌', na: '–' }[c.med] || '') + '</td><td>' + esc(c.sleep || '') + '</td><td>' + ({ y: '✅', n: '–' }[c.move] || '') + '</td><td>' + (top ? esc(top.emo.split(' ')[0]) + ' ' + top.lv : '') + '</td></tr>';
+      var ug = state.urges.filter(function(u){ return todayKey(u.t) === k; });
+      if(ug.length) any = true;
+      rows += '<tr><td>' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + WD[d.getDay()] + '</td><td>' + ({ y: '✅', n: '❌', na: '–' }[c.med] || '') + '</td><td>' + esc(c.sleep || '') + '</td><td>' + ({ y: '✅', n: '–' }[c.move] || '') + '</td><td>' + (top ? esc(top.emo.split(' ')[0]) + ' ' + top.lv : '') + '</td><td>' + (ug.length ? ug.filter(function(u){ return u.outcome === 'passed'; }).length + '/' + ug.length : '') + '</td></tr>';
     }
     if(!any) return '';
-    return '<div class="card">' + head('📅', 'green', '지난 7일') + '<table class="week"><tr><th>날짜</th><th>💊 약</th><th>😴 잠</th><th>🏃</th><th>가장 큰 감정</th></tr>' + rows + '</table>' +
+    return '<div class="card">' + head('📅', 'green', '지난 7일') + '<table class="week"><tr><th>날짜</th><th>💊 약</th><th>😴 잠</th><th>🏃</th><th>가장 큰 감정</th><th>🌊 넘김</th></tr>' + rows + '</table>' +
       '<p class="note">잠이 부족하거나 약을 빠뜨린 날 감정이 더 커졌는지 살펴보세요. 진료받을 때 이 표를 보여 드리면 도움이 돼요.</p></div>';
   }
 
@@ -1261,7 +1295,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   }
   // 대화 중 아래쪽 한 줄: 내가 정한 대화 계획을 먼저, 그다음 기본 요령
   function talkTip(){
-    var list = state.plans.filter(function(p){ return p.area === 'talk'; }).map(function(p){ return '만약 ' + p.when + ' → ' + p.then; }).concat(TIPS);
+    var list = state.plans.filter(function(p){ return F('plans') && p.area === 'talk'; }).map(function(p){ return '만약 ' + p.when + ' → ' + p.then; }).concat(TIPS);
     return list[(talk ? talk.tip : 0) % list.length];
   }
 
@@ -1432,6 +1466,332 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
         '<p class="note">휴대폰을 가슴 주머니나 내 앞 가까이에 두세요. 다른 사람 말까지 내 말로 잡히면 ‘엄격’, 내 말을 놓치면 ‘넉넉’으로 바꿔요. 목소리 높이가 비슷한 사람과 이야기할 때는 틀릴 수 있어서, 언제든 버튼으로 바로잡을 수 있어요.</p>' : '');
   }
 
+  // ===== 기능 켜고 끄기 =====
+  var FEATS = [
+    ['routine', '🗓 하루 일과 알림', '출근·쉬는 시간·점심·퇴근·예배 시간에 확인할 때까지 알려 줘요'],
+    ['sos', '🚨 화났을 때 SOS', '한 단계씩 확인받으며 화를 가라앉혀요'],
+    ['urge', '🌊 충동이 올 때', '먹고·사고·보고 싶은 충동을 10분 미루기'],
+    ['focus', '⏱ 집중 타이머', '집중할 만큼 하고 쉬기, 딴생각 적어 두기'],
+    ['checkin', '📋 오늘 체크인', '약·잠·운동 기록'],
+    ['plans', '🧭 만약-그러면 계획', '그 순간 할 행동을 미리 정해 두기']
+  ];
+  function F(k){ return !ui.feat || ui.feat[k] !== false; }
+  function featSheet(){
+    var m = openModal('<h3>기능 켜고 끄기</h3><p class="sub">끈 기능은 화면과 워치에서 보이지 않고, 알림도 울리지 않아요. 기록은 지워지지 않아요.</p>' +
+      FEATS.map(function(f){ return '<div class="srow"><span>' + f[1] + '<small>' + f[2] + '</small></span><label class="switch"><input type="checkbox" data-f="' + f[0] + '"' + (F(f[0]) ? ' checked' : '') + '><span></span></label></div>'; }).join('') +
+      '<button class="btn primary block" data-close>닫기</button>', function(){ render(); });
+    [].forEach.call(m.querySelectorAll('[data-f]'), function(el){
+      el.addEventListener('change', function(){ ui.feat[el.getAttribute('data-f')] = el.checked; saveUI(); nativeSync(); });
+    });
+  }
+
+  // ===== 하루 일과 알림 =====
+  // 집중 타이머를 매번 켜기 어렵다면, 출근·퇴근·점심 시간만 넣어 두면 쉬는 시간을 저절로 계산해 알려 준다.
+  // 앱에서는 워치(또는 휴대폰)가 확인을 누를 때까지 계속 진동한다. 계산 규칙은 android/shared/.../Routine.kt 와 같다.
+  var WDN = ['일', '월', '화', '수', '목', '금', '토'];
+  function hm2m(s){ var p = String(s || '').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
+  function routineEvents(day){
+    var r = state.routine, out = [];
+    if(!r || !r.on || !F('routine')) return out;
+    var d0 = new Date(day); d0.setHours(0, 0, 0, 0);
+    var base = d0.getTime(), dow = d0.getDay(), key = todayKey(base).replace(/-/g, '');
+    var al = r.alerts || {}, on = function(k){ return al[k] !== false; };
+    function add(m, code, e, t, b){ out.push({ key: key + ':' + code, at: base + m * MIN, e: e, t: t, b: b }); }
+    if(r.workOn !== false && (r.days || []).indexOf(dow) >= 0){
+      var s = hm2m(r.start), e = hm2m(r.end), l1 = hm2m(r.lunch), l2 = hm2m(r.lunchEnd), w = +r.focus || 0, rest = +r.rest || 0;
+      if(e > s){
+        if(on('start')) add(s, 'start', '🏢', '출근 시간이에요', '오늘 할 일 하나를 정하고 시작해요');
+        var lunchDone = !(l2 > l1 && l1 > s && l2 < e), t = s, k = 0;
+        var lunch = function(){ if(on('lunch')){ add(l1, 'lunch', '🍚', '점심시간이에요', '일어나서 밥 먹으러 가요. 약 먹는 날도 점심은 꼭 챙겨요'); add(l2, 'lunchEnd', '💼', '점심시간 끝', '다시 시작해요. 할 일 하나만 골라요'); } };
+        while(k < 40 && w > 0 && rest > 0){
+          k++;
+          var b = t + w;
+          if(!lunchDone && b >= l1 - 10){ lunch(); t = l2; lunchDone = true; continue; }
+          if(b + rest > e - 5) break;
+          if(on('rest')){ add(b, 'rest' + k, '☕', '쉬는 시간 ' + rest + '분', '일어나서 물 한 잔 마시고 몸을 풀어요'); add(b + rest, 'back' + k, '⏱', '다시 집중', '쉬는 시간 끝. 하던 일로 돌아가요'); }
+          t = b + rest;
+        }
+        if(!lunchDone) lunch();
+        if(on('end')) add(e, 'end', '🏠', '퇴근 시간이에요', '오늘도 수고했어요. 내일 첫 할 일 하나만 적어 두세요');
+      }
+    }
+    (r.events || []).forEach(function(ev){
+      if(!ev.on || (ev.days || []).indexOf(dow) < 0) return;
+      var tm = hm2m(ev.time), emo = /예배/.test(ev.name) ? '⛪' : '📌';
+      if(+ev.before > 0) add(tm - ev.before, 'ev-' + ev.id + '-b', emo, ev.name + ' ' + ev.before + '분 전', ev.msg || '준비하고 출발해요');
+      add(tm, 'ev-' + ev.id, emo, ev.name + ' 시간이에요', ev.msg || '');
+    });
+    return out.sort(function(a, b){ return a.at - b.at; });
+  }
+  function routineUpcoming(n){
+    var now = Date.now(), res = [];
+    for(var i = 0; i < 8 && res.length < n; i++) routineEvents(now + i * DAY).forEach(function(ev){ if(ev.at > now && res.length < n) res.push(ev); });
+    return res;
+  }
+  function routineCard(){
+    if(!F('routine')) return '';
+    var r = state.routine;
+    var h = '<div class="card">' + head('🗓', 'sky', '하루 일과 알림', '<button class="link" data-a="routineSet">설정</button>');
+    if(!r.on) return h + '<p class="sub">출근·점심·퇴근·예배 시간만 넣어 두면, 쉬는 시간을 저절로 계산해서 ' + (NATIVE ? '워치가 진동으로' : '') + ' 알려 줘요. 확인을 누를 때까지 계속 알려요.</p><button class="btn primary block" data-a="routineSet">일과 넣기</button></div>';
+    var up = routineUpcoming(3);
+    h += up.length ? '<div class="list">' + up.map(function(ev){ return '<div class="item"><div class="tx">' + ev.e + ' ' + esc(ev.t) + '<small>' + fmtAt(ev.at) + ' · ' + fmtLeft(ev.at) + '</small></div></div>'; }).join('') + '</div>' : '<p class="empty">일주일 안에 울릴 알림이 없어요.</p>';
+    return h + '</div>';
+  }
+  function routineSheet(){
+    var r = JSON.parse(JSON.stringify(state.routine));
+    var tin = function(id, label, v){ return '<label style="flex:1;min-width:8rem"><span class="sub" style="display:block;font-weight:800;margin-bottom:4px">' + label + '</span><input type="time" id="' + id + '" value="' + esc(v) + '"></label>'; };
+    var RH = [[25, 5], [50, 10], [90, 15]];
+    var AL = [['start', '🏢 출근'], ['rest', '☕ 쉬는 시간'], ['lunch', '🍚 점심'], ['end', '🏠 퇴근']];
+    var TG = [['watch', '⌚ 워치'], ['phone', '📱 휴대폰'], ['both', '둘 다']];
+    function evList(){
+      return (r.events.length ? r.events.map(function(ev){
+        return '<div class="plan"><div class="tx"><b>' + esc(ev.name) + '</b> ' + (ev.on ? '' : '<span class="sub">(꺼짐)</span>') + '<br>' + ev.days.map(function(d){ return WDN[d]; }).join('·') + ' ' + esc(ev.time) + (ev.before ? ' · ' + ev.before + '분 전에도' : '') + '</div><button class="mini txt" data-ev="' + ev.id + '">고치기</button></div>';
+      }).join('') : '<p class="empty">일정이 없어요.</p>') + '<button class="btn soft block" data-ev="new">+ 일정 추가 (예배, 약속, 약 먹기 등)</button>';
+    }
+    var m = openModal('<h3>🗓 하루 일과 알림</h3>' +
+      '<div class="srow" style="border-top:0"><span>일과 알림 켜기<small>' + (NATIVE ? '알림이 오면 확인을 누를 때까지 진동이 계속돼요' : '웹에서는 이 화면을 열어 둔 동안만 울려요. 안드로이드 앱을 쓰면 워치로 알려 줘요') + '</small></span><label class="switch"><input type="checkbox" id="rtOn"' + (r.on ? ' checked' : '') + '><span></span></label></div>' +
+      '<div class="srow"><span>출근~퇴근 시간 알림<small>쉬는 시간을 저절로 계산해요</small></span><label class="switch"><input type="checkbox" id="rtWork"' + (r.workOn !== false ? ' checked' : '') + '><span></span></label></div>' +
+      '<label class="f">일하는 요일</label><div class="chips" id="rtDays">' + WDN.map(function(n, i){ return '<button class="chip' + (r.days.indexOf(i) >= 0 ? ' on' : '') + '" data-v="' + i + '">' + n + '</button>'; }).join('') + '</div>' +
+      '<label class="f">시간</label><div class="row" style="flex-wrap:wrap">' + tin('rtS', '출근', r.start) + tin('rtE', '퇴근', r.end) + '</div><div class="row" style="flex-wrap:wrap;margin-top:8px">' + tin('rtL1', '점심 시작', r.lunch) + tin('rtL2', '점심 끝', r.lunchEnd) + '</div>' +
+      '<label class="f">집중하고 쉬는 리듬</label><div class="chips" id="rtRh">' + RH.map(function(x){ return '<button class="chip' + (+r.focus === x[0] && +r.rest === x[1] ? ' on' : '') + '" data-f="' + x[0] + '" data-r="' + x[1] + '">' + x[0] + '분 일하고 ' + x[1] + '분 쉬기</button>'; }).join('') + '</div>' +
+      '<label class="f">알릴 것</label><div class="chips" id="rtAl">' + AL.map(function(a){ return '<button class="chip' + ((r.alerts || {})[a[0]] !== false ? ' on' : '') + '" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>' +
+      (NATIVE ? '<label class="f">알림 받을 곳</label><div class="chips" id="rtTg">' + TG.map(function(t){ return '<button class="chip' + (r.target === t[0] ? ' on' : '') + '" data-v="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><p class="note">워치를 고르면 휴대폰은 울리지 않아요. 워치와 연결이 끊겨 있으면 ‘둘 다’가 안전해요.</p>' : '') +
+      '<label class="f">일정</label><div id="rtEv">' + evList() + '</div>' +
+      '<label class="f">오늘 미리 보기</label><div id="rtPv" class="sub"></div>' +
+      '<div class="btns"><button class="btn" data-close>취소</button><button class="btn primary" data-ok>저장</button></div>');
+    function read(){
+      r.on = m.querySelector('#rtOn').checked; r.workOn = m.querySelector('#rtWork').checked;
+      r.days = [].map.call(m.querySelectorAll('#rtDays .on'), function(x){ return +x.getAttribute('data-v'); });
+      r.start = m.querySelector('#rtS').value || r.start; r.end = m.querySelector('#rtE').value || r.end;
+      r.lunch = m.querySelector('#rtL1').value || r.lunch; r.lunchEnd = m.querySelector('#rtL2').value || r.lunchEnd;
+      var rh = m.querySelector('#rtRh .on'); if(rh){ r.focus = +rh.getAttribute('data-f'); r.rest = +rh.getAttribute('data-r'); }
+      r.alerts = {}; AL.forEach(function(a){ r.alerts[a[0]] = !!m.querySelector('#rtAl [data-v="' + a[0] + '"].on'); });
+      var tg = m.querySelector('#rtTg .on'); if(tg) r.target = tg.getAttribute('data-v');
+    }
+    function preview(){
+      read();
+      var keep = state.routine; state.routine = Object.assign({}, r, { on: true });
+      var evs = routineEvents(Date.now()); state.routine = keep;
+      m.querySelector('#rtPv').innerHTML = evs.length ? evs.map(function(ev){ return hm(new Date(ev.at)) + ' ' + ev.e + ' ' + esc(ev.t); }).join('<br>') : '오늘은 울릴 알림이 없어요.';
+    }
+    m.addEventListener('click', function(e){
+      var c = e.target.closest('.chip');
+      if(c && c.parentNode.id === 'rtDays' || c && c.parentNode.id === 'rtAl'){ c.classList.toggle('on'); preview(); return; }
+      if(c && (c.parentNode.id === 'rtRh' || c.parentNode.id === 'rtTg')){ [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); }); preview(); return; }
+      var eb = e.target.closest('[data-ev]');
+      if(eb){ read(); eventSheet(r, eb.getAttribute('data-ev'), function(){ m.querySelector('#rtEv').innerHTML = evList(); preview(); }); return; }
+      if(e.target.closest('[data-ok]')){
+        read(); state.routine = r; save(); m.close(); render();
+        toast(r.on ? '저장했어요. 다음 알림: ' + ((routineUpcoming(1)[0] || {}).t || '없음') : '일과 알림을 껐어요');
+        if(r.on) askNotifSoft();
+      }
+    });
+    m.addEventListener('change', preview);
+    preview();
+  }
+  function eventSheet(r, id, done){
+    var ev = id === 'new' ? { id: uid(), name: '', time: '19:00', days: [0], before: 10, on: true, msg: '' } : r.events.find(function(x){ return x.id === id; });
+    if(!ev) return;
+    var isNew = id === 'new';
+    var m = openModal('<h3>' + (isNew ? '일정 추가' : '일정 고치기') + '</h3>' +
+      '<div class="srow" style="border-top:0"><span>이 일정 알림</span><label class="switch"><input type="checkbox" id="evOn"' + (ev.on ? ' checked' : '') + '><span></span></label></div>' +
+      '<label class="f">이름</label><input id="evN" value="' + esc(ev.name) + '" placeholder="예: 수요예배, 약 먹기, 주방 마감"' + (isNew ? ' autofocus' : '') + '>' +
+      '<label class="f">시간</label><input type="time" id="evT" value="' + esc(ev.time) + '">' +
+      '<label class="f">요일</label><div class="chips" id="evD">' + WDN.map(function(n, i){ return '<button class="chip' + (ev.days.indexOf(i) >= 0 ? ' on' : '') + '" data-v="' + i + '">' + n + '</button>'; }).join('') + '</div>' +
+      '<label class="f">미리 알림</label><div class="chips" id="evB">' + [0, 10, 30, 60].map(function(x){ return '<button class="chip' + (+ev.before === x ? ' on' : '') + '" data-v="' + x + '">' + (x ? x + '분 전에도' : '제시간에만') + '</button>'; }).join('') + '</div>' +
+      '<label class="f">알림에 보여 줄 말 (선택)</label><input id="evM" value="' + esc(ev.msg || '') + '" placeholder="예: 성경책 챙기기">' +
+      '<div class="btns">' + (isNew ? '' : '<button class="btn warn" data-x="del">지우기</button>') + '<button class="btn" data-close>취소</button><button class="btn primary" data-x="ok">저장</button></div>');
+    m.addEventListener('click', function(e){
+      var c = e.target.closest('.chip');
+      if(c && c.parentNode.id === 'evD'){ c.classList.toggle('on'); return; }
+      if(c && c.parentNode.id === 'evB'){ [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); }); return; }
+      var b = e.target.closest('[data-x]'); if(!b) return;
+      if(b.getAttribute('data-x') === 'del'){ r.events = r.events.filter(function(x){ return x.id !== ev.id; }); m.close(); done(); return; }
+      var name = m.querySelector('#evN').value.trim();
+      var days = [].map.call(m.querySelectorAll('#evD .on'), function(x){ return +x.getAttribute('data-v'); });
+      if(!name || !days.length){ toast('이름과 요일을 정해 주세요'); return; }
+      ev.name = name; ev.time = m.querySelector('#evT').value || ev.time; ev.days = days;
+      ev.before = +(m.querySelector('#evB .on') || { getAttribute: function(){ return 0; } }).getAttribute('data-v');
+      ev.msg = m.querySelector('#evM').value.trim(); ev.on = m.querySelector('#evOn').checked;
+      if(isNew) r.events.push(ev);
+      m.close(); done();
+    });
+  }
+  // 웹으로만 쓸 때: 화면이 열려 있으면 확인을 누를 때까지 진동·소리로 알림 (앱에서는 휴대폰·워치가 대신 울림)
+  var rtShown = {};
+  function routineCheck(){
+    if(NATIVE || !state.routine.on || !F('routine')) return;
+    var now = Date.now();
+    routineEvents(now).forEach(function(ev){
+      if(ev.at > now || ev.at < now - 15 * MIN || state.routineAcks[ev.key] || rtShown[ev.key]) return;
+      rtShown[ev.key] = 1;
+      var iv = setInterval(function(){ buzz([500, 300, 500]); beep(2, 740); }, 4000);
+      buzz([500, 300, 500]); beep(2, 740);
+      var m = openModal('<div style="font-size:3.5rem;text-align:center">' + ev.e + '</div><h3 style="text-align:center">' + esc(ev.t) + '</h3><p style="text-align:center">' + esc(ev.b) + '</p><button class="btn good block" data-ok style="height:3.4rem">확인</button>', function(){ clearInterval(iv); });
+      m.querySelector('[data-ok]').onclick = function(){ routineAck(ev.key); m.close(); };
+    });
+  }
+  function routineAck(key){
+    state.routineAcks[key] = 1;
+    var cut = todayKey(Date.now() - 3 * DAY).replace(/-/g, '');
+    Object.keys(state.routineAcks).forEach(function(k){ if(k.slice(0, 8) < cut) delete state.routineAcks[k]; });
+    save();
+  }
+  setInterval(routineCheck, 10000);
+
+  // ===== 단계별로 확인받는 도우미 (화났을 때 SOS · 충동이 올 때) =====
+  // 할 일을 한 단계씩 보여 주고, ‘했어요’를 눌러야 다음으로 넘어간다. 워치에서도 같은 단계로 한다.
+  var URGE_KIND = { food: ['🍪', '먹고'], buy: ['🛒', '사고'], phone: ['📱', '계속 보고'], other: ['🌊', '하고'] };
+  function urgeSteps(kind){
+    var w = URGE_KIND[kind] ? URGE_KIND[kind][1] : '하고', food = kind === 'food';
+    var s = [
+      { id: 'notice', e: '🌊', t: '알아차리기', b: '지금 ' + w + ' 싶은 마음이 올라왔어요. 충동은 파도처럼 커졌다가 보통 10~20분이면 가라앉아요.', ok: '알아차렸어요' }
+    ];
+    if(food) s.push({ id: 'halt', e: '🔍', t: '진짜 배고픔인가요?', b: '배가 고픈가요? 아니면 화나거나, 외롭거나 심심하거나, 피곤한가요? 마음이 고픈 거라면 음식으로는 채워지지 않아요.', ok: '배가 고파요', alt: '마음이 고파요' });
+    s.push({ id: 'water', e: '💧', t: food ? '물 한 컵 · 양치' : '물 한 컵 · 일어나기', b: food ? '물 한 컵을 천천히 마시고 양치를 해요. 양치를 하면 그만 먹기가 쉬워져요.' : '물 한 컵을 마시고 자리에서 일어나요. 지금 있는 곳을 잠깐 벗어나요.', ok: '했어요', alt: '건너뛰기' });
+    s.push({ id: 'delay', e: '⏳', t: '10분만 미루기', b: '“안 돼” 대신 “10분 뒤에 다시 정하자”고 해요. 그동안 샤워, 산책, 설거지, 전화처럼 손과 몸을 쓰는 일을 해요.', ok: '10분 기다렸어요', alt: '건너뛰기', timer: 10 });
+    s.push({ id: 'decide', e: '🧭', t: '이제 어떻게 할까요?', b: '파도가 지나갔나요?', ok: '넘겼어요', alt: food ? '그래도 먹을래요' : '그래도 할래요' });
+    return s;
+  }
+  function sosSteps(){
+    return state.sos.filter(function(s){ return s.on; }).map(function(s){
+      if(s.id !== 'plan') return s;
+      var ps = F('plans') ? state.plans.filter(function(p){ return p.area === 'mind'; }) : [];
+      return ps.length ? Object.assign({}, s, { b: ps.map(function(p){ return '만약 ' + p.when + ' → ' + p.then; }).join('\n') }) : null;
+    }).filter(Boolean);
+  }
+  function flowRun(kind, steps, onEnd){
+    var i = 0, last = '', bt = [];
+    var o = openOver('<div class="stepn" id="flE"></div><h3 id="flT"></h3><p id="flB" style="white-space:pre-line"></p><div id="flX" class="osub"></div><div class="dots" id="flD"></div>' +
+      '<div class="btns" style="flex-direction:column"><button class="btn primary" id="flOk" style="height:3.6rem;font-size:1.08rem"></button><button class="btn" id="flAlt"></button></div><button class="btn" id="flQ" style="background:none;color:var(--sub)">그만하기</button>');
+    function clearT(){ bt.forEach(clearTimeout); bt.forEach(clearInterval); bt = []; }
+    function paint(){
+      clearT();
+      var s = steps[i], x = o.el.querySelector('#flX');
+      o.el.querySelector('#flE').textContent = s.e;
+      o.el.querySelector('#flT').textContent = s.t;
+      o.el.querySelector('#flB').textContent = s.b;
+      o.el.querySelector('#flD').innerHTML = steps.map(function(_, j){ return '<i' + (j <= i ? ' class="on"' : '') + '></i>'; }).join('');
+      o.el.querySelector('#flOk').textContent = s.ok;
+      var alt = o.el.querySelector('#flAlt'); alt.textContent = s.alt || ''; alt.classList.toggle('hidden', !s.alt);
+      x.textContent = '';
+      buzz(40);
+      if(s.breath){
+        var n = 0, inh = true;
+        (function cyc(){
+          if(n >= s.breath){ x.textContent = '잘했어요 👏'; buzz([60, 100, 60]); return; }
+          x.textContent = (inh ? '들이쉬기' : '내쉬기') + ' · ' + (n + 1) + '/' + s.breath;
+          buzz(inh ? 70 : [40, 90, 40]);
+          var t = setTimeout(function(){ if(!inh) n++; inh = !inh; cyc(); }, inh ? 4000 : 6000); bt.push(t);
+        })();
+      }
+      if(s.timer){
+        var end = Date.now() + s.timer * MIN;
+        var iv = setInterval(function(){
+          var left = end - Date.now();
+          if(left <= 0){ clearInterval(iv); x.textContent = '10분이 지났어요. 파도가 지나갔나요?'; buzz([300, 150, 300]); beep(2, 660); return; }
+          x.textContent = '⏳ ' + mmss(left + 999) + ' 남았어요';
+        }, 500); bt.push(iv);
+      }
+    }
+    function next(choice){
+      last = choice; i++;
+      if(i >= steps.length){ clearT(); onEnd(last, o); return; }
+      paint();
+    }
+    o.el.querySelector('#flOk').onclick = function(){ next('ok'); };
+    o.el.querySelector('#flAlt').onclick = function(){ next('alt'); };
+    o.el.querySelector('#flQ').onclick = function(){ clearT(); closeOver(); };
+    paint();
+    // 화면을 닫으면 단계 타이머도 멈춤
+    var origRemove = o.el.remove.bind(o.el); o.el.remove = function(){ clearT(); origRemove(); };
+  }
+  function logUrge(kind, outcome, from){
+    state.urges.push({ id: uid(), t: Date.now(), kind: kind, outcome: outcome, from: from || '' });
+    if(state.urges.length > 1000) state.urges.shift();
+    save();
+  }
+  function endScreen(e, title, body){
+    var o = openOver('<div style="font-size:4rem">' + e + '</div><h3>' + title + '</h3><p>' + body + '</p><div class="btns"><button class="btn primary" data-x="close">마치기</button></div>');
+    o.el.addEventListener('click', function(ev){ if(ev.target.closest('[data-x]')){ closeOver(); render(); } });
+  }
+  function sosRun(){
+    var steps = sosSteps();
+    if(!steps.length){ toast('켜 둔 단계가 없어요. 단계 고르기에서 켜 주세요'); return; }
+    flowRun('sos', steps, function(last){
+      var calm = last !== 'alt';
+      logUrge('anger', calm ? 'passed' : 'still');
+      if(calm) endScreen('🌿', '잘 넘겼어요', '화가 났을 때 멈춘 건 정말 큰 일이에요. 돌아가서 할 말은 ‘다시 이야기할 때’에 있는 문장으로 시작해 보세요.');
+      else {
+        var o = openOver('<div style="font-size:4rem">🫂</div><h3>괜찮아요, 아직 커도 돼요</h3><p>조금 더 걸으면서 숨을 고르거나, 90초만 더 멈춰 봐요. 지금은 대화로 돌아가지 않아도 돼요.</p><div class="btns"><button class="btn primary" data-x="pause">90초 멈춤</button><button class="btn" data-x="close">마치기</button></div>');
+        o.el.addEventListener('click', function(ev){ var b = ev.target.closest('[data-x]'); if(!b) return; if(b.getAttribute('data-x') === 'pause') pauseRun(); else { closeOver(); render(); } });
+      }
+    });
+  }
+  function urgeRun(kind){
+    if(!kind){
+      var o = openOver('<div class="stepn">🌊</div><h3>무엇을 하고 싶은가요?</h3><p>충동은 이길 필요가 없어요. 10분만 미뤄 보면 대부분 지나가요.</p><div class="btns" style="flex-direction:column">' +
+        Object.keys(URGE_KIND).map(function(k){ return '<button class="btn" data-k="' + k + '" style="height:3.3rem">' + URGE_KIND[k][0] + ' ' + { food: '먹고 싶어요', buy: '사고 싶어요', phone: '계속 보고 싶어요', other: '다른 충동이에요' }[k] + '</button>'; }).join('') +
+        '</div><button class="btn" data-x style="background:none;color:var(--sub)">그만하기</button>');
+      o.el.addEventListener('click', function(ev){ var b = ev.target.closest('[data-k]'); if(b) urgeRun(b.getAttribute('data-k')); else if(ev.target.closest('[data-x]')) closeOver(); });
+      return;
+    }
+    var hungry = null;
+    var steps = urgeSteps(kind).map(function(s){ return s.id === 'halt' ? Object.assign({}, s) : s; });
+    flowRun('urge', steps, function(last){
+      logUrge(kind, last === 'alt' ? 'gave' : 'passed');
+      if(last !== 'alt') endScreen('🎉', '파도를 넘겼어요!', '방금 충동 하나를 흘려보냈어요. 이런 경험이 쌓일수록 다음 파도는 더 작아져요.');
+      else if(kind === 'food') endScreen('🍽', '괜찮아요, 이렇게 먹어요', '한 번 먹을 만큼만 접시에 덜어서, 앉아서, 화면은 끄고 천천히 먹어요. 봉지째 들고 먹지 않기!');
+      else endScreen('👍', '괜찮아요', '하더라도 시간을 정해 두고 해요. 미뤄 본 것만으로도 잘했어요.');
+    });
+  }
+  function urgeCard(){
+    if(!F('urge')) return '';
+    var wk = state.urges.filter(function(u){ return u.kind !== 'anger' && u.t > Date.now() - 7 * DAY; }), passed = wk.filter(function(u){ return u.outcome === 'passed'; }).length;
+    var kitchen = (state.routine.events || []).find(function(e){ return e.id === 'kitchen'; });
+    return '<div class="card">' + head('🌊', 'amber', '충동이 올 때') +
+      '<p class="sub">먹고 싶을 때, 사고 싶을 때, 그만 보기 어려울 때 눌러요. 10분만 미루는 연습을 해요.' + (wk.length ? ' 최근 7일 ' + wk.length + '번 중 ' + passed + '번 넘겼어요.' : '') + '</p>' +
+      '<div class="btns"><button class="btn primary" data-a="urge" data-k="food">🍪 먹고 싶어요</button><button class="btn soft" data-a="urge">🌊 다른 충동</button></div>' +
+      '<details style="margin-top:12px"><summary style="font-weight:800;cursor:pointer">🌙 저녁에 많이 먹게 될 때</summary><ul class="tips" style="margin-top:6px">' +
+      '<li>끼니를 거르지 않고 3~4시간마다 먹어요. 낮에 굶으면 저녁에 몰아 먹게 돼요.</li>' +
+      '<li>약 먹는 날은 입맛이 없어도 점심을 챙겨요. 약 효과가 떨어지는 저녁에 배고픔이 한꺼번에 몰려오기 쉬워요.</li>' +
+      '<li>‘주방 마감 시간’을 정하고, 그 시간에 양치해요.</li>' +
+      '<li>간식은 사 두지 않거나, 보이지 않는 곳에 둬요.</li>' +
+      '<li>먹을 때는 봉지째 말고 접시에 덜어서, 앉아서, 화면 없이 먹어요.</li></ul></details>' +
+      (kitchen && F('routine') ? '<div class="srow" style="margin-top:8px"><span>🌙 주방 마감 알림<small>매일 ' + esc(kitchen.time) + '에 “양치하고 따뜻한 차 한 잔” 알림 (시간은 하루 일과 설정에서)</small></span><label class="switch"><input type="checkbox" data-a="kitchen"' + (kitchen.on && state.routine.on ? ' checked' : '') + '><span></span></label></div>' : '') +
+      '</div>';
+  }
+  function sosCard(){
+    if(!F('sos')) return '';
+    var wk = state.urges.filter(function(u){ return u.kind === 'anger' && u.t > Date.now() - 7 * DAY; });
+    return '<div class="card">' + head('🚨', 'rose', '화났을 때 SOS', '<button class="link" data-a="sosEdit">단계 고르기</button>') +
+      '<p class="sub">“어떻게 해야 한다”를 읽는 대신, 지금 할 일을 하나씩 하고 ‘했어요’를 눌러요.' + (wk.length ? ' 최근 7일 ' + wk.length + '번 해냈어요.' : '') + '</p>' +
+      '<button class="btn warn block" data-a="sos" style="height:3.6rem;font-size:1.1rem">🚨 지금 화났어요</button></div>';
+  }
+  function sosEditSheet(){
+    var m = openModal('<h3>🚨 SOS 단계 고르기</h3><p class="sub">필요 없는 단계는 끄고, 나에게 맞는 단계를 더할 수 있어요. 워치에서도 같은 단계로 해요.</p><div id="seL"></div>' +
+      '<label class="f">내 단계 더하기</label><input id="seT" placeholder="예: 창문 열고 바깥 공기 마시기"><div class="btns"><button class="btn soft" data-x="add">더하기</button></div>' +
+      '<button class="btn primary block" data-close>닫기</button>', function(){ save(); render(); });
+    function list(){
+      m.querySelector('#seL').innerHTML = state.sos.map(function(s){
+        return '<div class="srow"><span>' + s.e + ' ' + esc(s.t) + '<small>' + esc(s.id === 'plan' ? '‘만약-그러면 계획’의 마음 계획을 보여 줘요' : s.b) + '</small></span>' + (s.custom ? '<button class="mini" data-del="' + s.id + '">✕</button>' : '') +
+          '<label class="switch"><input type="checkbox" data-s="' + s.id + '"' + (s.on ? ' checked' : '') + '><span></span></label></div>';
+      }).join('');
+    }
+    m.addEventListener('change', function(e){ var id = e.target.getAttribute('data-s'); if(!id) return; var s = state.sos.find(function(x){ return x.id === id; }); if(s){ s.on = e.target.checked; save(); } });
+    m.addEventListener('click', function(e){
+      var d = e.target.closest('[data-del]');
+      if(d){ state.sos = state.sos.filter(function(x){ return x.id !== d.getAttribute('data-del'); }); save(); list(); return; }
+      if(e.target.closest('[data-x="add"]')){
+        var v = m.querySelector('#seT').value.trim(); if(!v) return;
+        var at = state.sos.findIndex(function(x){ return x.id === 'check'; });
+        state.sos.splice(at < 0 ? state.sos.length : at, 0, { id: 'c' + uid(), on: true, custom: true, e: '⭐', t: v, b: '내가 정한 단계예요. 지금 해 봐요.', ok: '했어요', alt: '건너뛰기' });
+        m.querySelector('#seT').value = ''; save(); list();
+      }
+    });
+    list();
+  }
+
   // ===== 챙길 것 목록 =====
   function findList(id){ return state.lists.find(function(l){ return l.id === id; }); }
   function listSheet(id){
@@ -1502,6 +1862,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       h += '<button class="btn block" data-x="fs">' + (FS.on() ? '전체화면 끝내기' : '전체화면 켜기') + '</button>';
     }
     if(!isStandalone()) h += '<button class="btn block" data-x="inst">📲 홈 화면에 설치하기</button>';
+    h += '<button class="btn block" data-x="feat">🧩 기능 켜고 끄기</button><button class="btn block" data-x="routine">🗓 하루 일과 알림 설정</button>';
     h += '<label class="f">자료 (이 기기 안에만 저장돼요)</label><div class="btns"><button class="btn" data-x="exp">백업 파일 받기</button><button class="btn" data-x="imp">백업 불러오기</button></div>' +
       '<button class="btn block" data-x="wipe" style="color:var(--warn)">모든 기록 지우기</button>';
     h += '<button class="btn primary block" data-close>닫기</button>';
@@ -1527,6 +1888,8 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       else if(x === 'nnotif'){ try{ NATIVE.requestNotif(); }catch(err){} }
       else if(x === 'nalarm'){ try{ NATIVE.openAlarmSettings(); }catch(err){} }
       else if(x === 'pin') pinWidget();
+      else if(x === 'feat') featSheet();
+      else if(x === 'routine') routineSheet();
     });
   }
   function exportData(){
@@ -1604,6 +1967,11 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       case 'moodSave': moodSheet(); break;
       case 'moodDel': withUndo('기록을 지웠어요', function(){ state.moods = state.moods.filter(function(x){ return x.id !== id; }); }); break;
       case 'breath': breathMenu(); break;
+      case 'sos': sosRun(); break;
+      case 'sosEdit': sosEditSheet(); break;
+      case 'urge': urgeRun(b.getAttribute('data-k')); break;
+      case 'routineSet': routineSheet(); break;
+      case 'kitchen': { var kev = state.routine.events.find(function(x){ return x.id === 'kitchen'; }); if(kev){ kev.on = !!b.checked; if(kev.on) state.routine.on = true; save(); render(); toast(kev.on ? '매일 ' + kev.time + '에 알려 줄게요' : '주방 마감 알림을 껐어요'); } break; }
       case 'stop': stopRun(); break;
       case 'reframe': reframeSheet(); break;
       case 'thoughtDel': withUndo('기록을 지웠어요', function(){ state.thoughts = state.thoughts.filter(function(x){ return x.id !== id; }); }); break;

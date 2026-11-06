@@ -52,9 +52,9 @@ class HaruTileService : TileService() {
 
     private fun gap(h: Float): LayoutElement = Spacer.Builder().setHeight(dp(h)).build()
 
-    private fun launch(cls: Class<*>, extra: String? = null): ModifiersBuilders.Clickable {
+    private fun launch(cls: Class<*>, extra: String? = null, key: String = "open"): ModifiersBuilders.Clickable {
         val act = ActionBuilders.AndroidActivity.Builder().setPackageName(packageName).setClassName(cls.name)
-        if (extra != null) act.addKeyToExtraMapping("open", ActionBuilders.AndroidStringExtra.Builder().setValue(extra).build())
+        if (extra != null) act.addKeyToExtraMapping(key, ActionBuilders.AndroidStringExtra.Builder().setValue(extra).build())
         return ModifiersBuilders.Clickable.Builder()
             .setId(cls.simpleName + (extra ?: ""))
             .setOnClick(ActionBuilders.LaunchAction.Builder().setAndroidActivity(act.build()).build())
@@ -64,19 +64,19 @@ class HaruTileService : TileService() {
     /** 둥근 단추 (이모지 하나). */
     private fun circle(emoji: String, color: Int, click: ModifiersBuilders.Clickable): LayoutElement =
         Box.Builder()
-            .setWidth(dp(46f))
-            .setHeight(dp(46f))
+            .setWidth(dp(40f))
+            .setHeight(dp(40f))
             .setModifiers(
                 ModifiersBuilders.Modifiers.Builder()
                     .setClickable(click)
                     .setBackground(
                         ModifiersBuilders.Background.Builder()
                             .setColor(argb(color))
-                            .setCorner(ModifiersBuilders.Corner.Builder().setRadius(dp(23f)).build())
+                            .setCorner(ModifiersBuilders.Corner.Builder().setRadius(dp(20f)).build())
                             .build()
                     ).build()
             )
-            .addContent(text(emoji, 20f))
+            .addContent(text(emoji, 18f))
             .build()
 
     private fun hgap(w: Float): LayoutElement = Spacer.Builder().setWidth(dp(w)).build()
@@ -103,18 +103,16 @@ class HaruTileService : TileService() {
                 else text((if (r.at <= now) "🔔 " else "⏰ ") + Fmt.hm(r.at) + " " + r.text, 12f, if (r.at <= now) ROSE else GRAY)
             )
         }
+        val row = Row.Builder().setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+        if (s.feat("sos")) row.addContent(circle("🚨", ROSE_BG, launch(StepsActivity::class.java, "sos", "kind"))).addContent(hgap(6f))
+        row.addContent(circle("🌬", TEAL, launch(BreathActivity::class.java)))
+            .addContent(hgap(6f))
+            .addContent(circle("💭", INDIGO, launch(WatchActivity::class.java, "memo")))
+            .addContent(hgap(6f))
+            .addContent(circle("🗣", AMBER_BG, launch(TalkActivity::class.java)))
         col.addContent(head.build())
             .addContent(gap(10f))
-            .addContent(
-                Row.Builder()
-                    .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
-                    .addContent(circle("🌬", TEAL, launch(BreathActivity::class.java)))
-                    .addContent(hgap(8f))
-                    .addContent(circle("💭", INDIGO, launch(WatchActivity::class.java, "memo")))
-                    .addContent(hgap(8f))
-                    .addContent(circle("🗣", AMBER_BG, launch(TalkActivity::class.java)))
-                    .build()
-            )
+            .addContent(row.build())
         return Box.Builder()
             .setWidth(expand())
             .setHeight(expand())
@@ -133,5 +131,6 @@ class HaruTileService : TileService() {
         private const val ROSE = 0xFFFF7B9C.toInt()
         private const val TEAL = 0xFF0E7490.toInt()
         private const val INDIGO = 0xFF4F46E5.toInt()
+        private const val ROSE_BG = 0xFFBE123C.toInt()
     }
 }

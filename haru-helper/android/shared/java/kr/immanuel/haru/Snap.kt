@@ -35,6 +35,19 @@ class Snap(val o: JSONObject) {
             Lst(l.optString("id"), l.optString("name"), objs(l.optJSONArray("items")).map { Item(it.optString("id"), it.optString("text"), it.optBoolean("on")) })
         }
 
+    /** 단계별 도우미(화났을 때 SOS, 충동이 올 때)의 한 단계. */
+    data class Step(val id: String, val e: String, val t: String, val b: String, val ok: String, val alt: String, val timer: Int, val breath: Int)
+
+    /** 웹 앱 설정에서 끈 기능은 false. */
+    fun feat(k: String): Boolean = o.optJSONObject("feat")?.optBoolean(k, true) ?: true
+
+    /** 하루 일과 알림 설정 (Routine.events 로 계산). */
+    val routine: JSONObject? get() = o.optJSONObject("routine")
+
+    fun flow(kind: String): List<Step> = objs(o.optJSONObject("flows")?.optJSONArray(kind)).map {
+        Step(it.optString("id"), it.optString("e"), it.optString("t"), it.optString("b"), it.optString("ok"), it.optString("alt"), it.optInt("timer"), it.optInt("breath"))
+    }
+
     /** 지금 보여 줄 할 일: 정해 둔 ‘지금 할 일’, 없으면 첫 할 일. */
     val current: Task? get() = focus ?: tasks.firstOrNull()
 

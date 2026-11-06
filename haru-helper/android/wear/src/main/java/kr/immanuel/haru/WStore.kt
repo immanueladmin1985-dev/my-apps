@@ -10,6 +10,7 @@ import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUp
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import org.json.JSONArray
@@ -34,6 +35,7 @@ object WStore {
         for (i in 0 until q.length()) q.optJSONObject(i)?.let { s.apply(it, now) }
         sp(ctx).edit().putString("snap", s.toString()).apply()
         refresh(ctx)
+        WRoutine.schedule(ctx)
     }
 
     fun act(ctx: Context, a: JSONObject) {
@@ -101,5 +103,10 @@ class DataLayerService : WearableListenerService() {
             val m = DataMapItem.fromDataItem(e.dataItem).dataMap
             WStore.saveFromPhone(this, m.getString("snap") ?: "{}")
         }
+    }
+
+    /** 폰에서 일과 알림을 확인했을 때 워치 알림도 끈다. */
+    override fun onMessageReceived(e: MessageEvent) {
+        if (e.path == "/haru/ack") WRoutine.ack(this, String(e.data, Charsets.UTF_8), false)
     }
 }

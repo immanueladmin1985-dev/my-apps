@@ -28,12 +28,23 @@ object WatchSync {
     }
 }
 
+/** 워치에 ‘일과 알림 확인함’을 알린다. */
+fun WatchSync.sendAck(ctx: Context, key: String) {
+    val app = ctx.applicationContext
+    runCatching {
+        Wearable.getNodeClient(app).connectedNodes.addOnSuccessListener { nodes ->
+            nodes.forEach { Wearable.getMessageClient(app).sendMessage(it.id, "/haru/ack", key.toByteArray(Charsets.UTF_8)) }
+        }
+    }
+}
+
 /** 워치에서 누른 동작(다 했어요, 말로 메모, 대화 기록 등)을 받는다. */
 class PhoneListener : WearableListenerService() {
     override fun onMessageReceived(e: MessageEvent) {
         when (e.path) {
             "/haru/action" -> runCatching { Store.act(this, JSONObject(String(e.data, Charsets.UTF_8))) }
             "/haru/hello" -> WatchSync.push(this)
+            "/haru/ack" -> RoutineAlarms.ack(this, String(e.data, Charsets.UTF_8), false)
         }
     }
 }

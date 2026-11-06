@@ -56,6 +56,7 @@ object Store {
     /** 요약이 바뀌면 알림 예약, 위젯, 워치를 모두 새로 맞춘다. */
     fun changed(ctx: Context) {
         Alarms.schedule(ctx)
+        RoutineAlarms.schedule(ctx)
         HaruWidget.updateAll(ctx)
         WatchSync.push(ctx)
     }

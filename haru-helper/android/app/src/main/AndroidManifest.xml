@@ -48,6 +48,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".RoutineReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".ActionReceiver"
             android:exported="false" />
 
