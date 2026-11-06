@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>사계절 정원</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="사계절 정원">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f3f6ee">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<section id="home" class="screen">
+  <div class="banner hidden" id="banner">
+    <img src="icon-192.png" alt="">
+    <div>
+      <b>홈 화면에 설치해 두세요</b>
+      <p>아이콘으로 바로 열리고, 인터넷이 없어도 정원을 가꿀 수 있어요.</p>
+      <div class="btns">
+        <button class="chip primary" id="bInst">설치하기</button>
+        <button class="chip" id="bFs">전체화면</button>
+        <button class="chip ghost" id="bLater">다음에</button>
+      </div>
+    </div>
+  </div>
+  <div class="home-inner">
+    <div class="logo">
+      <div class="art">🌱🌼🌳</div>
+      <h1>사계절 정원</h1>
+      <p>같은 것 셋을 이어 정원을 키워요</p>
+    </div>
+    <div class="lvcard" id="lvcard"></div>
+    <button class="big primary hidden" id="hCont"><span class="ic">🌿</span><span class="tx">이어서 가꾸기<small id="hContSub"></small></span></button>
+    <button class="big" id="hNew"><span class="ic">🌱</span><span class="tx">새 정원 시작<small>정원 크기와 방식을 골라요</small></span></button>
+    <button class="big" id="hDaily"><span class="ic">📅</span><span class="tx">오늘의 정원<small id="hDailySub"></small></span></button>
+    <div class="row">
+      <button class="mini" id="hBook"><span class="ic">📖</span>도감</button>
+      <button class="mini" id="hBadge"><span class="ic">🏅</span>배지</button>
+      <button class="mini" id="hRec"><span class="ic">📊</span>기록</button>
+    </div>
+    <div class="row two">
+      <button class="mini" id="hHow"><span class="ic">❔</span>놀이 방법</button>
+      <button class="mini" id="hSet"><span class="ic">⚙️</span>설정</button>
+    </div>
+    <button class="linkbtn" id="hInst">📲 홈 화면에 설치하기</button>
+    <div class="ver">사계절 정원 1.0</div>
+  </div>
+</section>
+
+<section id="game" class="screen hidden">
+  <div class="topbar">
+    <button class="ibtn" id="gMenu" aria-label="메뉴"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="scorebox main"><small>점수</small><b id="gScore">0</b></div>
+    <div class="scorebox"><small>최고</small><b id="gBest">0</b></div>
+    <div class="season" id="gSeason"></div>
+  </div>
+  <div class="stage" id="stage">
+    <div class="board" id="board"></div>
+  </div>
+  <div class="tray">
+    <div class="hand">
+      <button class="slot basket" id="gBasket" aria-label="바구니"><small>바구니</small><span class="tile empty"></span></button>
+      <div class="slot cur" id="gCur"></div>
+      <div class="slot nxt" id="gNext"></div>
+    </div>
+    <div class="tools">
+      <button id="gGlove"><span class="e">🧤</span>장갑<i></i></button>
+      <button id="gUndo"><span class="e">↩️</span>되돌리기<i></i></button>
+      <button id="gHint"><span class="e">💡</span>힌트<i></i></button>
+    </div>
+  </div>
+</section>
+
+<div id="modalRoot"></div>
+<div class="toast" id="toast"></div>
+
+<script src="js/game.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
