@@ -44,14 +44,38 @@
     unitsByDong.forEach(l => l.sort((a, b) => floorOf(b.ho) - floorOf(a.ho) || (+a.ho % 100) - (+b.ho % 100) || String(a.id).localeCompare(String(b.id))));
     D.rounds.forEach(r => { if (!alive(r)) return; roundById.set(r.id, r); if (!roundsByDong.has(r.dong)) roundsByDong.set(r.dong, []); roundsByDong.get(r.dong).push(r); });
     roundsByDong.forEach(l => l.sort((a, b) => a.no - b.no));
-    D.visits.forEach(v => { if (!alive(v)) return; if (!visitsByUnit.has(v.unit)) visitsByUnit.set(v.unit, []); visitsByUnit.get(v.unit).push(v); });
-    visitsByUnit.forEach(l => l.sort((a, b) => b.no - a.no || (+b.updatedAt || 0) - (+a.updatedAt || 0)));
+    const statsByRound = new Map();
+    D.visits.forEach(v => { if (!alive(v)) return; if (!visitsByUnit.has(v.unit)) visitsByUnit.set(v.unit, []); visitsByUnit.get(v.unit).push(v); bumpStat(statsByRound, v, 1); });
+    visitsByUnit.forEach(l => l.sort(cmpVisit));
     // 이름 목록(로그인 때 고르기 쉽게)
     const names = new Set();
     dongs.forEach(d => String(d.managers || '').split(/\s+/).forEach(n => n.length >= 2 && names.add(n)));
     D.visits.forEach(v => v.by && names.add(v.by));
-    IX = { ver: S.ver, dongs, unitsByDong, roundsByDong, visitsByUnit, roundById, names: [...names].sort() };
+    IX = { ver: S.ver, dongs, unitsByDong, roundsByDong, visitsByUnit, roundById, statsByRound, names: [...names].sort() };
     return IX;
+  }
+  const cmpVisit = (a, b) => b.no - a.no || (+b.updatedAt || 0) - (+a.updatedAt || 0);
+  function bumpStat(map, v, n) {
+    const k = v.dong + '-' + v.no; let c = map.get(k);
+    if (!c) map.set(k, c = {});
+    c[v.res] = (c[v.res] || 0) + n;
+    if (c[v.res] <= 0) delete c[v.res];
+  }
+  // 한 건만 바뀌었으면 색인 전체를 다시 만들지 않고 그 부분만 고침
+  function patchIx({ t, rec, before }) {
+    if (IX.ver !== S.ver - 1) return;
+    if (t === 'visits') {
+      let l = IX.visitsByUnit.get(rec.unit);
+      if (!l) IX.visitsByUnit.set(rec.unit, l = []);
+      const i = l.findIndex(v => v.id === rec.id);
+      if (i >= 0) l.splice(i, 1);
+      if (before && alive(before)) bumpStat(IX.statsByRound, before, -1);
+      if (alive(rec)) { l.push(rec); l.sort(cmpVisit); bumpStat(IX.statsByRound, rec, 1); }
+      IX.ver = S.ver;
+    } else if (t === 'units' && alive(rec)) {
+      const l = IX.unitsByDong.get(rec.dong) || [], i = l.findIndex(u => u.id === rec.id);
+      if (i >= 0) { l[i] = rec; IX.ver = S.ver; }
+    }
   }
   const isMine = d => C.name && String(d.managers || '').split(/\s+/).some(n => n && (n === C.name || C.name.indexOf(n) >= 0 || n.indexOf(C.name) >= 0));
   const roundOf = v => ix().roundById.get(v.dong + '-' + v.no);
@@ -77,7 +101,10 @@
     view = v; history.pushState({ v }, '');
     render(); window.scrollTo(0, 0);
   }
+  let skipPop = false;
   window.addEventListener('popstate', e => {
+    // 집 창을 단추로 닫으며 되돌린 것이면 화면은 그대로 둠(다시 그리면 목록이 맨 위로 올라감)
+    if (skipPop) { skipPop = false; return; }
     const st = e.state || {};
     if (sheetOpen() && !st.sheet) { closeSheet(true); if (st.v && vkey(st.v) === vkey(view)) return; }
     if (st.sheet) return;
@@ -138,13 +165,28 @@
     wake(view.name === 'dong' && !!activeRound(view.dong));
   }
   let rq = 0;
-  S.on(why => {
+  // 글자를 쓰는 중에는 화면을 다시 그리지 않음(쓰던 글이 사라지지 않게) → 다 쓰고 나서 그림
+  const typing = () => { const a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.closest('#main')); };
+  function redrawKeepScroll() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+  S.on((why, info) => {
     if (why === 'sync') { const p = $('#pill'); if (p) p.innerHTML = syncPill(); const w = $('#waitBar'); if (w) w.outerHTML = waitBar(); bindWaitBar(); return; }
     if (why === 'auth') { closeSheet(true); render(); return; }
-    if (why === 'put') return;   // 내가 고친 것은 그 자리에서 다시 그림
-    cancelAnimationFrame(rq); rq = requestAnimationFrame(() => { const y = window.scrollY; if (!sheetOpen()) { render(); window.scrollTo(0, y); } else pendingRender = true; });
+    if (why === 'put') { patchIx(info); return; }   // 내가 고친 것은 그 자리에서 다시 그림
+    cancelAnimationFrame(rq); rq = requestAnimationFrame(() => { if (sheetOpen() || typing()) pendingRender = true; else redrawKeepScroll(); });
   });
+  document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !sheetOpen() && !typing()) { pendingRender = false; redrawKeepScroll(); } }, 200));
   let pendingRender = false;
+
+  // 무거운 도구는 쓸 때만 읽음(앱을 열 때마다 읽으면 시작이 느려짐)
+  const libs = {};
+  function loadLib(src) {
+    return libs[src] || (libs[src] = new Promise((res, rej) => {
+      const el = document.createElement('script'); el.src = src; el.onload = res;
+      el.onerror = () => { delete libs[src]; rej(new Error('도구를 읽지 못했어요. 인터넷을 확인해 주세요')); };
+      document.head.appendChild(el);
+    }));
+  }
+  const needXlsx = () => loadLib('vendor/xlsx.full.min.js');
 
   /* ---------- 초대 링크 · 카카오톡 안 브라우저 ---------- */
   // 서버 주소는 ?s= 로 붙임(#s= 는 '다른 브라우저로 열기' 때 빠지는 경우가 있음)
@@ -165,8 +207,9 @@
     if (IS_ANDROID) { location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end'; return; }
     modal(`<h3>${IS_IOS ? '사파리' : '크롬'}로 열기</h3><p class="msg">오른쪽 아래(또는 위)의 <b>⋯</b> 메뉴에서 <b>${IS_IOS ? 'Safari로 열기' : '다른 브라우저로 열기'}</b>를 눌러 주세요.</p>`, [{ label: '알겠어요', val: true, cls: 'pri' }]);
   }
-  function showJoinQR() {
+  async function showJoinQR() {
     const url = joinLink();
+    try { await loadLib('vendor/qrcode.js'); } catch (e) { toast(e.message); return; }
     let svg = '';
     try { const q = qrcode(0, 'M'); q.addData(url); q.make(); svg = q.createSvgTag({ cellSize: 6, margin: 3, scalable: true }); } catch (e) { svg = '<p class="err">QR을 만들지 못했어요</p>'; }
     modal(`<h3>📷 초대 QR</h3><div class="qr">${svg}</div>
@@ -304,6 +347,9 @@
     const keys = Object.keys(groups).sort();
     keys.forEach(k => groups[k].sort((a, b) => (isMine(b) - isMine(a)) || String(a.id).localeCompare(String(b.id))));
     const empty = !X.dongs.length;
+    // 단지 탭: 고른 것이 없으면 내 담당 동이 있는 단지부터
+    const tab = keys.includes(C.homeTab) ? C.homeTab : (keys.find(k => groups[k].some(isMine)) || keys[0]);
+    const cnt = k => groups[k].reduce((a, d) => a + (X.unitsByDong.get(d.id) || []).length, 0);
     const html = `
       <div class="banner hidden" id="banner"><img src="icon-192.png" alt=""><span>홈 화면에 설치하면 아이콘으로 바로 열 수 있어요.</span>
         <button class="btn pri" id="bInst">설치하기</button><button class="btn" id="bFs">전체화면</button><button class="btn ghost" id="bLater">다음에</button></div>
@@ -317,12 +363,14 @@
         <button id="qRep"><i>🖨</i>목록·인쇄</button>
       </div>
       ${empty ? `<div class="empty">아직 자료가 없어요.<br>관리자가 <b>설정 → 관리자 → 원래 엑셀 불러오기</b>로<br>1단지·2단지 엑셀 파일을 넣어 주세요.<br><br><button class="btn pri" id="goSet">설정 열기</button></div>` : ''}
-      ${keys.map(k => `<h2 class="sec">${esc(k)}단지 <small>${groups[k].length}개 동 · ${groups[k].reduce((a, d) => a + (X.unitsByDong.get(d.id) || []).length, 0)}세대</small></h2>
-        <div class="dongs">${groups[k].map(dongCard).join('')}</div>`).join('')}
+      ${keys.length > 1 ? `<div class="ctabs" role="tablist">${keys.map(k => `<button role="tab" data-tab="${esc(k)}" class="${k === tab ? 'on' : ''}" aria-selected="${k === tab}">${esc(k)}단지<small>${groups[k].length}개 동 · ${cnt(k)}세대</small></button>`).join('')}</div>`
+        : keys.map(k => `<h2 class="sec">${esc(k)}단지 <small>${groups[k].length}개 동 · ${cnt(k)}세대</small></h2>`).join('')}
+      ${tab ? `<div class="dongs">${groups[tab].map(dongCard).join('')}</div>` : ''}
       <div style="margin-top:1.4rem;text-align:center"><button class="btn ghost" id="hInst2">📲 홈 화면에 설치하기</button></div>`;
     return {
       title: '전도현황', html, bind() {
         document.querySelectorAll('.dong').forEach(b => b.onclick = () => go({ name: 'dong', dong: b.dataset.dong }));
+        document.querySelectorAll('.ctabs [data-tab]').forEach(b => b.onclick = () => { C.homeTab = b.dataset.tab; S.saveCfg(); redrawKeepScroll(); });
         $('#sf').onsubmit = e => { e.preventDefault(); const q = $('#sq').value.trim(); if (q) go({ name: 'search', q }); };
         $('#qList').onclick = () => go({ name: 'list' });
         $('#qSim').onclick = () => go({ name: 'simbang' });
@@ -357,9 +405,8 @@
     </button>`;
   }
   function roundStats(r) {
-    const c = {}; let n = 0;
-    D.visits.forEach(v => { if (alive(v) && v.dong === r.dong && v.no === r.no) { c[v.res] = (c[v.res] || 0) + 1; n++; } });
-    return n ? Object.keys(c).map(k => `${RES_LABEL[k] || k} ${c[k]}`).join(' · ') : '기록 없음';
+    const c = ix().statsByRound.get(r.dong + '-' + r.no) || {}, keys = Object.keys(c);
+    return keys.length ? keys.map(k => `${RES_LABEL[k] || k} ${c[k]}`).join(' · ') : '기록 없음';
   }
   function roundRow(r) {
     return `<div class="rd"><span class="no">${r.no}차</span><span class="tx"><b>${esc(dLong(r.date) || '날짜 없음')}</b> ${esc(giftOf(r))}${r.gift && r.event && r.event !== r.gift ? ' <span class="muted">· ' + esc(r.event) + '</span>' : ''}
@@ -381,8 +428,7 @@
       ${ar ? '' : `<button class="btn pri big noprint" id="startR">✏️ 오늘 전도 기록 시작하기</button>`}
     </div>`;
     if (ar) {
-      const done = us.filter(u => (X.visitsByUnit.get(u.id) || []).some(v => v.no === ar.no)).length;
-      html += `<div class="active"><span class="t">✏️ ${esc(roundLabel(ar))} 기록 중<small>집을 누르고 결과를 고르세요 · ${done}집 기록함</small></span>
+      html += `<div class="active"><span class="t">✏️ ${esc(roundLabel(ar))} 기록 중<small>${esc(activeHint(dong, ar))}</small></span>
         <button id="editR">고치기</button><button id="endR">끝내기</button></div>`;
     }
     const fl = ['전체', ...(ar ? ['오늘안함'] : []), '전도대상', '심방', ...STATUS.filter(s => c[s])];
@@ -466,8 +512,8 @@
   function autoText(r) { return `${dShort(r.date)}.${WD[new Date(r.date + 'T00:00').getDay()] || ''} ${r.gift || ''}${r.people ? ' (' + r.people + ')' : ''}`.replace(/\s+/g, ' ').trim(); }
 
   async function startRound(dong) {
-    // 구글 시트가 느릴 때(처음 깨어날 때 10초 넘게 걸리기도 함) 기다리지 않음: 최대 3초만 보고 바로 시작
-    if (S.online() && !S.sandboxed) { toast('최신 기록을 확인하는 중…'); await Promise.race([S.sync(), new Promise(r => setTimeout(r, 3000))]); }
+    // 구글 시트가 느려도(처음 깨어날 때 10초 넘게 걸리기도 함) 기다리지 않고 바로 창을 띄움. 맞추는 일은 뒤에서 함
+    S.scheduleSync(0);
     const rs = ix().roundsByDong.get(dong) || [];
     const t = rs.filter(r => r.date === today()).pop();
     if (t) {
@@ -476,11 +522,13 @@
       if (v === 'use') { C.active[dong] = t.id; S.saveCfg(); render(); return; }
       if (v !== 'new') return;
     }
-    const no = Math.max(0, ...rs.map(r => r.no), ...[...D.visits.values()].filter(v => v.dong === dong).map(v => v.no)) + 1;
+    const nextNo = () => { let m = 0; (ix().roundsByDong.get(dong) || []).forEach(r => { if (r.no > m) m = r.no; }); D.visits.forEach(v => { if (v.dong === dong && v.no > m) m = v.no; }); return m + 1; };
+    let no = nextNo();
     const ok = await modal(`<h3>${esc(dong)}동 ${no}차 전도 시작</h3>${roundForm({}, dong)}`, [{ label: '취소', val: false }, { label: '시작하기', val: true, cls: 'pri' }], bindRoundForm);
     if (!ok) return;
     const f = readRoundForm();
     if (!f.gift && !f.event) { toast('무엇으로 전도했는지 골라 주세요'); return startRound(dong); }
+    no = nextNo();   // 창을 띄운 사이에 다른 분이 만든 회차가 들어왔을 수 있어 다시 셈
     const r = S.put('rounds', Object.assign({ id: dong + '-' + no, dong, no }, f, { text: autoText(f) }));
     C.active[dong] = r.id; S.saveCfg();
     render(); toast(`${no}차 시작! 다녀온 집을 누르세요`);
@@ -497,18 +545,18 @@
   }
 
   /* ---------- 한 집 (아래에서 올라오는 창) ---------- */
-  let sheetUnit = null, sheetRound = null;
+  let sheetUnit = null, sheetRound = null, sheetAll = false;
   const sheetOpen = () => !!$('#sheet');
   function openUnit(id) {
-    sheetUnit = id; sheetRound = null;
+    sheetUnit = id; sheetRound = null; sheetAll = false;
     history.pushState({ v: view, sheet: id }, '');
     drawSheet();
   }
   function closeSheet(fromPop) {
     const el = $('#sheet'); if (el) el.remove();
     document.body.style.overflow = '';
-    if (!fromPop && history.state && history.state.sheet) history.back();
-    if (pendingRender) { pendingRender = false; const y = window.scrollY; render(); window.scrollTo(0, y); }
+    if (!fromPop && history.state && history.state.sheet) { skipPop = true; history.back(); }
+    if (pendingRender) { pendingRender = false; redrawKeepScroll(); }
   }
   function drawSheet() {
     const u = D.units.get(sheetUnit); if (!u) return;
@@ -538,9 +586,9 @@
           <div class="memoTxt">${u.memo ? esc(u.memo) : '<span class="muted">없음</span>'}</div>
           <button class="btn ghost sm" id="shMemo" style="align-self:flex-start">메모 고치기</button></div>
         <div class="box"><h4>지난 기록 <small>${vs.length}번 · 최근 것이 위</small></h4>
-          <div class="hist">${vs.map(v => { const rr = roundOf(v); return `<button class="it" data-v="${esc(v.id)}">
+          <div class="hist">${vs.slice(0, sheetAll ? vs.length : 5).map(v => { const rr = roundOf(v); return `<button class="it" data-v="${esc(v.id)}">
             <span class="m"><b>${v.no}차</b>${rr && rr.date ? esc(dLong(rr.date)) : ''} ${esc(giftOf(rr))} ${rTag(v.res)}<span style="margin-left:auto" class="small">${v.by ? esc(v.by) : '엑셀'}</span></span>
-            <span class="t">${esc(v.text)}</span></button>`; }).join('') || '<p class="muted">아직 기록이 없어요.</p>'}</div></div>
+            <span class="t">${esc(v.text)}</span></button>`; }).join('') || '<p class="muted">아직 기록이 없어요.</p>'}</div>${!sheetAll && vs.length > 5 ? `<button class="btn ghost" id="shMore">지난 기록 ${vs.length - 5}개 더 보기</button>` : ''}</div>
         ${u.marks ? `<p class="small muted">옛 엑셀 선물 표시: ${esc(u.marks)}</p>` : ''}
         ${u.by ? `<p class="small muted">마지막으로 고친 사람: ${esc(u.by)}</p>` : ''}
       </div></div></div>`;
@@ -550,6 +598,7 @@
     const sh = $('#sheet');
     sh.onclick = e => { if (e.target === sh) closeSheet(); };
     $('#shClose').onclick = () => closeSheet();
+    const more = $('#shMore'); if (more) more.onclick = () => { sheetAll = true; drawSheet(); };
     let res = cur ? cur.res : '';
     sh.querySelectorAll('[data-res]').forEach(b => b.onclick = () => {
       res = b.dataset.res;
@@ -561,7 +610,7 @@
       if (!res) { toast('결과(만나서 전달·부재·거부)를 골라 주세요'); return; }
       S.put('visits', { id: u.id + '-r' + r.no, unit: u.id, dong: u.dong, no: r.no, res, text: text || (RES.find(x => x[0] === res) || [, res])[1] });
       toast(`${u.ho}호 저장했어요`);
-      closeSheet(); afterPut();
+      closeSheet(); afterPut(u.id);
     };
     const dl = $('#eDel');
     if (dl) dl.onclick = async () => {
@@ -583,7 +632,21 @@
     };
     sh.querySelectorAll('.hist .it').forEach(b => b.onclick = () => editVisit(D.visits.get(b.dataset.v)));
   }
-  function afterPut() { if (!sheetOpen()) { const y = window.scrollY; render(); window.scrollTo(0, y); } else pendingRender = true; }
+  // 집 하나를 저장한 뒤: 동 화면이면 그 집 칸만 바꿈(전체를 다시 그리지 않아 빠르고 자리도 그대로)
+  function afterPut(uid) {
+    if (sheetOpen()) { pendingRender = true; return; }
+    const el = uid && view.name === 'dong' && DONG_FILTER[view.dong] !== '오늘안함' ? document.querySelector(`.unit[data-u="${uid}"]`) : null;
+    if (!el) { redrawKeepScroll(); return; }
+    const u = D.units.get(uid), ar = activeRound(view.dong);
+    el.outerHTML = unitCard(u, ar);
+    const nu = document.querySelector(`.unit[data-u="${uid}"]`); if (nu) nu.onclick = () => openUnit(uid);
+    const rd = $('.dhead .rounds'); if (rd) rd.innerHTML = (ix().roundsByDong.get(view.dong) || []).slice(-2).reverse().map(roundRow).join('');
+    const sm = $('.active .t small'); if (sm && ar) sm.textContent = activeHint(view.dong, ar);
+  }
+  function activeHint(dong, ar) {
+    const X = ix(), done = (X.unitsByDong.get(dong) || []).filter(u => (X.visitsByUnit.get(u.id) || []).some(v => v.no === ar.no)).length;
+    return `집을 누르고 결과를 고르세요 · ${done}집 기록함`;
+  }
 
   async function chooseRound(u) {
     const rs = (ix().roundsByDong.get(u.dong) || []).slice(-6).reverse();
@@ -699,15 +762,18 @@
 
   /* ---------- 엑셀 받기 ---------- */
   const EXF = { visitLine, statusLabel: s => STATUS_LABEL[s] || s, resLabel: r => RES_LABEL[r] || r };
-  function exportAll(dongs) {
+  async function exportAll(dongs) {
     if (!ix().dongs.length) { toast('아직 자료가 없어요'); return; }
     try {
+      toast('엑셀을 만드는 중…');
+      await needXlsx();
       const one = Array.isArray(dongs) ? dongs : null;
       Export.download(ix(), EXF, { dongs: one, today: today(), filename: `전도현황${one ? '_' + one.join('_') + '동' : ''}_${today()}.xlsx` });
       toast('엑셀 파일을 받았어요');
     } catch (e) { toast('엑셀을 만들지 못했어요'); console.error(e); }
   }
-  function exportList(list, label) {
+  async function exportList(list, label) {
+    try { await needXlsx(); } catch (e) { toast(e.message); return; }
     const rows = [['동', '호수', '구분', '심방대상', '기본 메모', '최근 기록 1', '최근 기록 2']];
     list.forEach(u => { const vs = ix().visitsByUnit.get(u.id) || []; rows.push([u.dong, u.ho, STATUS_LABEL[u.status], u.simbang === '1' ? 'O' : '', u.memo, vs[0] ? visitLine(vs[0]) : '', vs[1] ? visitLine(vs[1]) : '']); });
     const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = [6, 7, 9, 7, 40, 45, 45].map(w => ({ wch: w }));
@@ -946,6 +1012,7 @@
     toast('엑셀을 읽는 중…');
     const all = { dongs: [], rounds: [], units: [], visits: [] }, warn = [], got = {};
     try {
+      await needXlsx();
       for (const f of files) {
         const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
         const r = EvParse.parseWorkbook(XLSX, wb);
@@ -1064,6 +1131,9 @@
     const c = {}; units.forEach(u => c[u.status] = (c[u.status] || 0) + 1);
     return STATUS.filter(s => c[s]).map(s => `<span class="sc" style="--c:${sCol(s)}">${STATUS_LABEL[s]} <b>${c[s]}</b></span>`).join('');
   }
+  const REP_PREVIEW = 200;
+  let repFull = false;
+  window.addEventListener('afterprint', () => { if (repFull) { repFull = false; if (view.name === 'report') redrawKeepScroll(); } });
   VIEWS.report = () => {
     const X = ix(), rows = repRows(), cols = repCols();
     const chip = (on, attr, val, label) => `<button class="chip ${on ? 'on' : ''}" ${attr}="${esc(val)}">${label}</button>`;
@@ -1084,25 +1154,28 @@
     <div class="line noprint" style="margin:.7rem 0"><span class="muted"><b>${rows.length}</b>세대</span><span style="flex:1"></span><button class="btn pri" id="rPrint">🖨 인쇄</button><button class="btn" id="rXls">📥 엑셀</button></div>`;
     const thead = `<thead><tr>${cols.map(c => `<th class="${c[2]}">${c[0]}</th>`).join('')}</tr></thead>`;
     const tr = x => `<tr style="--c:${sCol(x.u.status)}">${cols.map(c => `<td class="${c[2]}">${c[1](x)}</td>`).join('')}</tr>`;
-    let body = '';
+    let body = '', left = repFull ? Infinity : REP_PREVIEW;
+    const take = l => { const t = l.slice(0, left); left -= t.length; return t; };
     if (REP.group) {
       const byD = new Map(); rows.forEach(x => { if (!byD.has(x.d.id)) byD.set(x.d.id, []); byD.get(x.d.id).push(x); });
       let first = true;
       byD.forEach((list, id) => {
+        const shown = take(list);
+        if (!shown.length) return;
         const d = D.dongs.get(id) || { managers: '' };
         const rs = X.roundsByDong.get(id) || [], last = rs[rs.length - 1];
         body += `<section class="repg ${REP.pageBreak && !first ? 'pb' : ''}"><h2 class="sec">${esc(id)}동 <small>담당 ${esc(d.managers || '-')} · ${list.length}세대${last ? ' · 최근 ' + esc(roundLabel(last)) : ''}</small></h2>
           <div class="scs">${summaryChips(list.map(x => x.u))}</div>
-          <div class="tw"><table class="rep">${thead}<tbody>${list.map(tr).join('')}</tbody></table></div></section>`;
+          <div class="tw"><table class="rep">${thead}<tbody>${shown.map(tr).join('')}</tbody></table></div></section>`;
         first = false;
       });
-    } else body = `<div class="scs">${summaryChips(rows.map(x => x.u))}</div><div class="tw"><table class="rep">${thead}<tbody>${rows.map(tr).join('')}</tbody></table></div>`;
+    } else body = `<div class="scs">${summaryChips(rows.map(x => x.u))}</div><div class="tw"><table class="rep">${thead}<tbody>${take(rows).map(tr).join('')}</tbody></table></div>`;
     const filt = [REP.dongs.length ? REP.dongs.map(x => x + '동').join(', ') : '모든 동', REP.statuses.length ? REP.statuses.map(s => STATUS_LABEL[s]).join(', ') : '', REP.simOnly ? '심방대상만' : '', REP.lastRes.length ? '최근 결과: ' + REP.lastRes.map(r => RES_LABEL[r]).join(', ') : '', (SORTS.find(s => s[0] === REP.sort) || [, ''])[1]].filter(Boolean).join(' · ');
-    const html = opts + `<div class="printhead"><b>전도현황 목록</b> <span>${esc(dLong(today()))} · ${esc(filt)} · ${rows.length}세대</span></div>` + (rows.length ? body : '<div class="empty">고른 조건에 맞는 집이 없어요.</div>');
+    const html = opts + `<div class="printhead"><b>전도현황 목록</b> <span>${esc(dLong(today()))} · ${esc(filt)} · ${rows.length}세대</span></div>` + (rows.length ? body : '<div class="empty">고른 조건에 맞는 집이 없어요.</div>') + (!repFull && rows.length > REP_PREVIEW ? `<p class="noprint muted small" style="text-align:center;margin-top:1rem">화면에는 앞의 ${REP_PREVIEW}세대만 보여요. 인쇄와 엑셀에는 전체 ${rows.length}세대가 나와요.</p>` : '');
     return {
       title: '목록·인쇄', html, bind() {
         const tgl = (arr, v) => { const i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); };
-        const re = () => { saveRep(); const y = window.scrollY; render(); window.scrollTo(0, y); };
+        const re = () => { saveRep(); repFull = false; redrawKeepScroll(); };
         document.querySelectorAll('[data-rd]').forEach(b => b.onclick = () => { tgl(REP.dongs, b.dataset.rd); re(); });
         document.querySelectorAll('[data-rs]').forEach(b => b.onclick = () => { tgl(REP.statuses, b.dataset.rs); re(); });
         document.querySelectorAll('[data-rr]').forEach(b => b.onclick = () => { tgl(REP.lastRes, b.dataset.rr); re(); });
@@ -1115,8 +1188,12 @@
         $('#rSort').onchange = e => { REP.sort = e.target.value; re(); };
         $('#rReset').onclick = () => { Object.assign(REP, JSON.parse(JSON.stringify(REP_DEF))); re(); };
         $('#repDet').ontoggle = e => { C.repOpen = e.target.open; S.saveCfg(); };
-        $('#rPrint').onclick = () => window.print();
-        $('#rXls').onclick = () => {
+        $('#rPrint').onclick = () => {
+          if (rows.length > REP_PREVIEW && !repFull) { repFull = true; redrawKeepScroll(); }
+          window.print();
+        };
+        $('#rXls').onclick = async () => {
+          try { await needXlsx(); } catch (e) { toast(e.message); return; }
           const head = cols.map(c => c[0]); if (REP.group) head.unshift('동');
           const plain = (c, x) => c[2] === 'c-st' ? STATUS_LABEL[x.u.status] : c[2] === 'c-sim' ? (x.u.simbang === '1' ? 'O' : '') : c[2] === 'c-rec' ? x.vs.slice(0, REP.cols.recent).map(visitLine).join('\n') : c[2] === 'c-memo' ? x.u.memo : c[2] === 'c-ho' ? x.u.ho : c[2] === 'c-last' ? x.last : c[2] === 'c-cnt' ? x.vs.length : c[2] === 'c-dong' ? x.d.id : '';
           const aoa = [head, ...rows.map(x => (REP.group ? [x.d.id] : []).concat(cols.map(c => plain(c, x))))];

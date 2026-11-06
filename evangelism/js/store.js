@@ -41,8 +41,11 @@
     if (dbp) return dbp;
     dbp = new Promise((res, rej) => {
       try {
-        const r = indexedDB.open('evangelism', 1);
-        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        const r = indexedDB.open('evangelism', 2);
+        r.onupgradeneeded = () => {
+          if (!r.result.objectStoreNames.contains('kv')) r.result.createObjectStore('kv');
+          if (!r.result.objectStoreNames.contains('rec')) r.result.createObjectStore('rec');
+        };
         r.onsuccess = () => res(r.result);
         r.onerror = () => rej(r.error);
       } catch (e) { rej(e); }
@@ -72,26 +75,54 @@
     ['by', 'deleted', 'updatedAt'].forEach(k => { if (d[k] == null) d[k] = ''; });
     return d;
   }
-  function changed(why) { ver++; listeners.forEach(f => { try { f(why); } catch (e) { console.error(e); } }); }
+  // 자료가 바뀐 때만 ver 를 올림(맞추는 중 표시 같은 것은 색인을 다시 만들지 않게)
+  const NO_DATA = { sync: 1, auth: 1 };
+  function changed(why, info) { if (!NO_DATA[why]) ver++; listeners.forEach(f => { try { f(why, info); } catch (e) { console.error(e); } }); }
 
-  let saveTimer = null;
+  // 바뀐 기록만 골라 저장함(전체를 통째로 쓰면 휴대폰이 잠깐 멈춤)
+  const dirty = new Set();
+  let wipe = false, saveTimer = null;
+  const mark = (t, id) => dirty.add(t + '|' + id);
   function persist() {
     if (real) return;
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      const o = {}; TABLES.forEach(t => o[t] = [...data[t].values()]);
-      kvSet('data', o); kvSet('outbox', outbox); kvSet('log', localLog.slice(-500));
-    }, 300);
+    saveTimer = setTimeout(flush, 400);
   }
+  async function flush() {
+    if (real) return;
+    const keys = [...dirty], w = wipe; dirty.clear(); wipe = false;
+    try {
+      const db = await idb();
+      await new Promise((res, rej) => {
+        const tx = db.transaction(['rec', 'kv'], 'readwrite'), rec = tx.objectStore('rec'), kv = tx.objectStore('kv');
+        if (w) rec.clear();
+        keys.forEach(k => { const i = k.indexOf('|'), d = data[k.slice(0, i)].get(k.slice(i + 1)); if (d) rec.put(d, k); else rec.delete(k); });
+        kv.put(outbox, 'outbox'); kv.put(localLog.slice(-500), 'log');
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+    } catch (e) {}
+  }
+  function clearAll() { TABLES.forEach(t => data[t].clear()); dirty.clear(); wipe = true; }
 
   async function load() {
     await ensureDevice();
-    const o = await kvGet('data');
-    if (o) TABLES.forEach(t => (o[t] || []).forEach(d => data[t].set(String(d.id), norm(t, d))));
+    try {
+      const db = await idb();
+      const [keys, vals] = await new Promise((res, rej) => {
+        const st = db.transaction('rec').objectStore('rec'), a = st.getAllKeys(), b = st.getAll();
+        b.onsuccess = () => res([a.result, b.result]); b.onerror = () => rej(b.error);
+      });
+      keys.forEach((k, n) => { const t = k.slice(0, k.indexOf('|')); if (data[t]) data[t].set(String(vals[n].id), norm(t, vals[n])); });
+    } catch (e) {}
+    // 예전 판은 'data' 하나에 통째로 저장했음 → 한 번 옮김
+    if (!data.units.size) {
+      const o = await kvGet('data');
+      if (o) { TABLES.forEach(t => (o[t] || []).forEach(d => { data[t].set(String(d.id), norm(t, d)); mark(t, d.id); })); kvSet('data', null); persist(); }
+    }
     outbox = (await kvGet('outbox')) || [];
     localLog = (await kvGet('log')) || [];
     // 서버 판이 바뀌어 예전 자료를 한 번 새로 받아야 할 때
-    if (cfg.schema !== SCHEMA) { if (cfg.server) { cfg.since = 0; TABLES.forEach(t => data[t].clear()); } cfg.schema = SCHEMA; saveCfg(); }
+    if (cfg.schema !== SCHEMA) { if (cfg.server) { cfg.since = 0; clearAll(); } cfg.schema = SCHEMA; saveCfg(); }
     changed('load');
   }
 
@@ -105,15 +136,16 @@
       outbox = outbox.filter(x => !(x.t === t && String(x.d.id) === id));
       outbox.push({ t, d: rec });
       localLog.push({ time: Date.now(), by: cfg.name, t, id, before: before ? JSON.stringify(before) : '', after: JSON.stringify(rec) });
-      persist(); scheduleSync(800);
+      mark(t, id); persist(); scheduleSync(800);
     }
-    changed('put');
+    changed('put', { t, rec, before });
     return rec;
   }
   function del(t, id) { return put(t, { id, deleted: '1' }); }
 
   function replaceAll(o) {
-    TABLES.forEach(t => { data[t].clear(); (o[t] || []).forEach(d => data[t].set(String(d.id), norm(t, d))); });
+    clearAll();
+    TABLES.forEach(t => (o[t] || []).forEach(d => { data[t].set(String(d.id), norm(t, d)); mark(t, d.id); }));
     outbox = []; persist(); changed('import');
   }
 
@@ -123,7 +155,7 @@
       if (!real) real = data;
       data = { dongs: new Map(), rounds: new Map(), units: new Map(), visits: new Map() };
       TABLES.forEach(t => (demo[t] || []).forEach(d => data[t].set(String(d.id), norm(t, d))));
-    } else if (real) { data = real; real = null; }
+    } else if (real) { data = real; real = null; persist(); }
     api.data = data;
     changed('import');
   }
@@ -193,11 +225,13 @@
             const id = String(d.id); if (pending.has(t + '|' + id)) return;
             const cur = tgt[t].get(id);
             if (cur && String(cur.updatedAt) === String(d.updatedAt) && cur.by === d.by) return;
-            tgt[t].set(id, norm(t, d)); n++;
+            // 내가 보낸 것이 되돌아온 경우 등 내용이 같으면 화면을 다시 그리지 않음
+            if (cur && Object.keys(d).every(k => k === 'updatedAt' || String(cur[k] == null ? '' : cur[k]) === String(d[k] == null ? '' : d[k]))) { cur.updatedAt = d.updatedAt; mark(t, id); return; }
+            tgt[t].set(id, norm(t, d)); mark(t, id); n++;
           }));
           cfg.since = j.now; saveCfg();
           persist();
-          if (n || batch.length) changed('pull');
+          if (n) changed('pull');
           more = outbox.length > 0;
         }
         state.error = ''; state.lastOk = Date.now();
@@ -210,13 +244,13 @@
     return syncing;
   }
 
-  async function fullReload() { cfg.since = 0; saveCfg(); TABLES.forEach(t => data[t].clear()); await sync(); persist(); changed('import'); }
+  async function fullReload() { cfg.since = 0; saveCfg(); clearAll(); await sync(); persist(); changed('import'); }
 
   async function serverImport(o) {
     // 표마다 나눠 보냄(한 번에 너무 크면 구글이 거절함)
     for (const t of TABLES) await call('import', { part: t, data: { [t]: o[t] } }, 300000);
     cfg.since = 0; saveCfg(); outbox = [];
-    TABLES.forEach(t => data[t].clear());
+    clearAll();
     await sync();
   }
 
