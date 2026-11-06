@@ -1,7 +1,8 @@
 /* 자료 보관(IndexedDB) 과 구글 시트 주고받기 */
 (function () {
   'use strict';
-  const TABLES = ['dongs', 'rounds', 'units', 'visits'];
+  const TABLES = ['dongs', 'rounds', 'units', 'visits', 'campaigns'];
+  const IMPORT_TABLES = ['dongs', 'rounds', 'units', 'visits'];   // 엑셀 불러오기가 바꾸는 표
   const NUM = { rounds: ['no'], units: ['seq'], visits: ['no'] };
   const SCHEMA = 2;
 
@@ -62,7 +63,8 @@
   }
 
   /* ---------- 자료 ---------- */
-  let data = { dongs: new Map(), rounds: new Map(), units: new Map(), visits: new Map() };
+  const emptyData = () => { const o = {}; TABLES.forEach(t => o[t] = new Map()); return o; };
+  let data = emptyData();
   let real = null;     // 사용법 둘러보기 동안 진짜 자료를 잠시 치워 둠
   let outbox = [];     // 아직 구글 시트에 못 보낸 것 [{t, d}]
   let localLog = [];   // 이 기기에서 고친 것 (서버가 없을 때 '고친 기록'에 씀)
@@ -153,7 +155,7 @@
   function sandbox(demo) {
     if (demo) {
       if (!real) real = data;
-      data = { dongs: new Map(), rounds: new Map(), units: new Map(), visits: new Map() };
+      data = emptyData();
       TABLES.forEach(t => (demo[t] || []).forEach(d => data[t].set(String(d.id), norm(t, d))));
     } else if (real) { data = real; real = null; persist(); }
     api.data = data;
@@ -183,6 +185,8 @@
         const msg = { pass: '구글 시트의 서버 코드가 예전 판이에요. 관리자에게 알려 주세요', mpass: '마스터 암호가 맞지 않아요', locked: '마스터 암호를 여러 번 틀려서 10분 동안 막혔어요', master: '관리자(마스터)만 할 수 있어요', setup: '구글 시트에서 setup 을 아직 실행하지 않았어요', device: '승인되지 않은 기기예요', pending: '아직 승인을 기다리는 중이에요', revoked: '이 기기는 사용이 끊겼어요', key: '기기 정보가 맞지 않아요' }[j.error];
         const e = new Error(msg || (j.error || '실패')); e.code = j.error; e.res = j; throw e;
       }
+      if (action === 'sync' || action === 'hello') cfg.serverVer = j.ver || 2;
+      if (j.lastBackup) cfg.lastBackup = +j.lastBackup;
       if (j.status) { cfg.status = j.status; }
       if (j.name) cfg.name = j.name;
       if (j.role) cfg.role = j.role;
@@ -248,7 +252,7 @@
 
   async function serverImport(o) {
     // 표마다 나눠 보냄(한 번에 너무 크면 구글이 거절함)
-    for (const t of TABLES) await call('import', { part: t, data: { [t]: o[t] } }, 300000);
+    for (const t of IMPORT_TABLES) await call('import', { part: t, data: { [t]: o[t] } }, 300000);
     cfg.since = 0; saveCfg(); outbox = [];
     clearAll();
     await sync();

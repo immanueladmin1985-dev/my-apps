@@ -52,13 +52,13 @@
       const rs = ix.roundsByDong.get(d.id) || [];
       const out = [['주공 ' + d.id + '동' + (d.managers ? ' (담당: ' + d.managers + ')' : '')], [], ['회차', '날짜', '선물', '행사', '함께 간 사람', '내용']];
       rs.forEach(r => out.push([r.no + '차', r.date || '', r.gift || '', r.event || '', r.people || '', r.text || '']));
-      out.push([], ['순번', '호수', '구분', '기본 메모', '최근 기록 1', '최근 기록 2', '전체 기록 (회차.내용)']);
+      out.push([], ['순번', '호수', '구분', '기본 메모', '최근 기록 1', '최근 기록 2', '전체 기록 (회차.내용)', '알아둘 점', '다음에 할 일']);
       (ix.unitsByDong.get(d.id) || []).forEach((u, i) => {
         const vs = ix.visitsByUnit.get(u.id) || [];
         const joined = vs.slice().reverse().map(v => v.no + '.' + (v.res && v.res !== '만남' ? '[' + f.resLabel(v.res) + '] ' : '') + v.text).join('  ');
-        out.push([i + 1, u.ho, f.statusLabel(u.status), u.memo, vs[0] ? f.visitLine(vs[0]) : '', vs[1] ? f.visitLine(vs[1]) : '', joined]);
+        out.push([i + 1, u.ho, f.statusLabel(u.status), u.memo, vs[0] ? f.visitLine(vs[0]) : '', vs[1] ? f.visitLine(vs[1]) : '', joined, u.tip || '', u.todo || '']);
       });
-      XLSX.utils.book_append_sheet(wb, sheet(out, [6, 11, 10, 30, 30, 30, 90]), d.id + '동');
+      XLSX.utils.book_append_sheet(wb, sheet(out, [6, 11, 10, 30, 30, 30, 90, 24, 24]), d.id + '동');
     });
     return wb;
   }

@@ -11,6 +11,7 @@
   const STATUS_LABEL = { 대상: '대상', 특별: '특별대상', 교인: '교인', 장결: '장기결석', 거부: '거부', 부재: '부재', 교회: '다른 교회', 성당: '성당', 이사: '이사', 기타: '기타' };
   const RES = [['만남', '만나서 전달'], ['문앞', '문앞에 두고 옴'], ['부재', '부재'], ['거부', '거부']];
   const RES_LABEL = { 만남: '만남', 문앞: '문앞', 부재: '부재', 거부: '거부', 이사: '이사' };
+  const RES_FULL = { 만남: '만나서 전달', 문앞: '문앞에 두고 옴', 부재: '부재', 거부: '거부', 이사: '이사' };
   const GIFT_PRESET = ['꽃', '화분', '달력', '갈비', '김', '계란', '떡', '과자', '초청장', '선물세트'];
   const EVENT_PRESET = ['부활절', '어버이날', '창립기념일', '맥추감사절', '추석', '추수감사절', '성탄절', '설'];
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
@@ -80,15 +81,23 @@
   const isMine = d => C.name && String(d.managers || '').split(/\s+/).some(n => n && (n === C.name || C.name.indexOf(n) >= 0 || n.indexOf(C.name) >= 0));
   const roundOf = v => ix().roundById.get(v.dong + '-' + v.no);
   const giftOf = r => r ? (r.gift || r.event || '') : '';
-  function roundLabel(r) { return r ? `${r.no}차${r.date ? ' · ' + dShort(r.date) : ''}${giftOf(r) ? ' · ' + giftOf(r) : ''}` : ''; }
+  function roundLabel(r) { return r ? ([r.date ? dShort(r.date) : '', giftOf(r)].filter(Boolean).join(' · ') || (r.text || '날짜 없음').slice(0, 20)) : ''; }
   function visitLine(v) { const r = roundOf(v); return `${v.no}차 ${r && r.date ? dShort(r.date) + ' ' : ''}${giftOf(r) ? giftOf(r) + ' ' : ''}[${RES_LABEL[v.res] || v.res}] ${v.text || ''}`.trim(); }
   function visitHtml(v) {
     const r = roundOf(v);
-    return `<em>${v.no}차</em> ${r && r.date ? dShort(r.date) : ''} ${esc(giftOf(r))} <span style="color:${rCol(v.res)};font-weight:800">${esc(RES_LABEL[v.res] || v.res)}</span> ${esc(v.res === '부재' && v.text === '부재' ? '' : v.text)}`;
+    return `<em>${r && r.date ? dShort(r.date) : v.no + '차'}</em> ${esc(giftOf(r))} <span style="color:${rCol(v.res)};font-weight:800">${esc(RES_LABEL[v.res] || v.res)}</span> ${esc(v.res === '부재' && v.text === '부재' ? '' : v.text)}`;
   }
   const unitName = u => `${u.dong}동 ${u.ho}호`;
   const firstLine = s => String(s || '').split('\n')[0].slice(0, 60);
-  function activeRound(dong) { const id = C.active && C.active[dong]; const r = id && D.rounds.get(id); return alive(r) ? r : null; }
+  const activeCampaign = () => { for (const c of D.campaigns.values()) if (alive(c) && c.active === '1') return c; return null; };
+  // '지난 전도에 이어 쓰기'를 고른 경우(그날 하루만)
+  function overrideRound(dong) { const id = C.activeDay === today() && C.active && C.active[dong]; const r = id && D.rounds.get(id); return alive(r) ? r : null; }
+  // 지금 기록이 들어갈 묶음: 오늘 것(이번 전도가 정해져 있으면 그 전도의 오늘 것). 없으면 첫 집을 저장할 때 만듦
+  function activeRound(dong) {
+    const o = overrideRound(dong); if (o) return o;
+    const t = today(), c = activeCampaign(), l = (ix().roundsByDong.get(dong) || []).filter(r => r.date === t);
+    return (c ? l.filter(r => r.campaign === c.id) : l).pop() || null;
+  }
 
   /* ---------- 화면 이동 ---------- */
   let view = { name: 'home' };
@@ -162,7 +171,7 @@
     app.innerHTML = top(r.title, view.name !== 'home') + `<main id="main">${r.html}</main>`;
     bindTop(); r.bind && r.bind();
     paintInstall();
-    wake(view.name === 'dong' && !!activeRound(view.dong));
+    wake(view.name === 'dong');
   }
   let rq = 0;
   // 글자를 쓰는 중에는 화면을 다시 그리지 않음(쓰던 글이 사라지지 않게) → 다 쓰고 나서 그림
@@ -324,19 +333,14 @@
   const isMaster = () => S.online() && C.role === '마스터';
 
   /* ---------- 첫 화면 ---------- */
-  function dongCard(d) {
-    const us = ix().unitsByDong.get(d.id) || [];
-    const rs = ix().roundsByDong.get(d.id) || [];
-    const last = rs[rs.length - 1];
-    const c = {}; us.forEach(u => c[u.status] = (c[u.status] || 0) + 1);
-    const bar = STATUS.filter(s => c[s]).map(s => `<span style="width:${c[s] / us.length * 100}%;background:${sCol(s)}"></span>`).join('');
-    const show = ['대상', '특별', '교인', '거부', '부재'].filter(s => c[s]).map(s => `<span><i class="dot" style="background:${sCol(s)}"></i>${STATUS_LABEL[s]} <b>${c[s]}</b></span>`).join('');
+  function dongCard(d, ctx) {
+    const n = dongCounts(d.id, ctx), rs = ix().roundsByDong.get(d.id) || [], last = rs[rs.length - 1];
+    const pct = n.go ? Math.round(n.done / n.go * 100) : 0;
     return `<button class="dong" data-dong="${esc(d.id)}">
-      ${isMine(d) ? '<span class="mine">내 담당</span>' : ''}
-      <span class="nm">${esc(d.id)}동</span>
-      <span class="mgr">담당 ${esc(d.managers || '-')} · ${us.length}세대</span>
-      <span class="last">${last ? `최근 <b>${esc(roundLabel(last))}</b>` : '<span class="muted">아직 기록 없음</span>'}</span>
-      <span class="bar">${bar}</span><span class="counts">${show}</span>
+      <span class="dl"><span class="nm">${esc(d.id)}동${isMine(d) ? ' <span class="mine">내 담당</span>' : ''}</span>
+        <span class="mgr">${esc(d.managers || '담당자 없음')}</span>
+        ${ctx.c ? `<span class="prog"><i style="width:${pct}%"></i></span>` : `<span class="mgr">${last ? '마지막 ' + esc(roundLabel(last)) : '아직 기록 없음'}</span>`}</span>
+      <span class="dr">${ctx.c ? '남은 집' : '갈 집'}<b>${ctx.c ? n.left : n.go}</b></span>
     </button>`;
   }
   const VIEWS = {};
@@ -350,22 +354,25 @@
     // 단지 탭: 고른 것이 없으면 내 담당 동이 있는 단지부터
     const tab = keys.includes(C.homeTab) ? C.homeTab : (keys.find(k => groups[k].some(isMine)) || keys[0]);
     const cnt = k => groups[k].reduce((a, d) => a + (X.unitsByDong.get(d.id) || []).length, 0);
+    const hc = activeCampaign(), hctx = { c: hc, ar: null, over: false };
     const html = `
       <div class="banner hidden" id="banner"><img src="icon-192.png" alt=""><span>홈 화면에 설치하면 아이콘으로 바로 열 수 있어요.</span>
         <button class="btn pri" id="bInst">설치하기</button><button class="btn" id="bFs">전체화면</button><button class="btn ghost" id="bLater">다음에</button></div>
       ${inappBar()}${waitBar()}
-      <p class="hello"><b>${esc(C.name)}</b> 님, 반가워요 🙂 <button class="link" id="hTut">처음이세요? ▶ 사용법 보기</button></p>
+      <p class="hello"><b>${esc(C.name)}</b> 님, 반가워요 🙂 <button class="link" id="hTut">▶ 사용법 보기</button></p>
+      ${hc ? `<div class="campbar">📣 이번 전도: <b>${esc([hc.title, hc.gift].filter(Boolean).join(' '))}</b></div>` : ''}
       <form class="searchbox" id="sf"><input id="sq" type="search" placeholder="🔍 호수·이름·전화·내용 찾기 (예: 1807)" enterkeyhint="search"></form>
       <div class="quick">
-        <button id="qList"><i>📋</i>구분별 보기</button>
+        <button id="qCare"><i>⭐</i>챙길 집</button>
         <button id="qSim"><i>🙏</i>심방대상</button>
-        <button id="qRecent"><i>🕘</i>최근 기록</button>
+        <button id="qList"><i>📋</i>구분별 보기</button>
         <button id="qRep"><i>🖨</i>목록·인쇄</button>
       </div>
+      ${isMaster() || !C.server ? '<button class="btn dashbtn" id="qDash">📊 현황판 · 이번 전도 정하기</button>' : ''}
       ${empty ? `<div class="empty">아직 자료가 없어요.<br>관리자가 <b>설정 → 관리자 → 원래 엑셀 불러오기</b>로<br>1단지·2단지 엑셀 파일을 넣어 주세요.<br><br><button class="btn pri" id="goSet">설정 열기</button></div>` : ''}
       ${keys.length > 1 ? `<div class="ctabs" role="tablist">${keys.map(k => `<button role="tab" data-tab="${esc(k)}" class="${k === tab ? 'on' : ''}" aria-selected="${k === tab}">${esc(k)}단지<small>${groups[k].length}개 동 · ${cnt(k)}세대</small></button>`).join('')}</div>`
         : keys.map(k => `<h2 class="sec">${esc(k)}단지 <small>${groups[k].length}개 동 · ${cnt(k)}세대</small></h2>`).join('')}
-      ${tab ? `<div class="dongs">${groups[tab].map(dongCard).join('')}</div>` : ''}
+      ${tab ? `<div class="dongs">${groups[tab].map(d => dongCard(d, hctx)).join('')}</div>` : ''}
       <div style="margin-top:1.4rem;text-align:center"><button class="btn ghost" id="hInst2">📲 홈 화면에 설치하기</button></div>`;
     return {
       title: '전도현황', html, bind() {
@@ -374,7 +381,8 @@
         $('#sf').onsubmit = e => { e.preventDefault(); const q = $('#sq').value.trim(); if (q) go({ name: 'search', q }); };
         $('#qList').onclick = () => go({ name: 'list' });
         $('#qSim').onclick = () => go({ name: 'simbang' });
-        $('#qRecent').onclick = () => go({ name: 'recent' });
+        $('#qCare').onclick = () => go({ name: 'care' });
+        const qd = $('#qDash'); if (qd) qd.onclick = () => go({ name: 'dash' });
         $('#qRep').onclick = () => go({ name: 'report' });
         $('#hTut').onclick = () => startTutorial();
         bindWaitBar(); bindInapp();
@@ -387,21 +395,46 @@
 
   // 마스터에게: 승인을 기다리는 기기가 있으면 첫 화면 위에 알림
   function waitBar() {
-    return isMaster() && C.waiting ? `<div id="waitBar" class="banner warnb"><span>📱 승인을 기다리는 휴대폰이 <b>${C.waiting}대</b> 있어요.</span><button class="btn pri" id="wbGo">승인하러 가기</button></div>` : '<div id="waitBar"></div>';
+    const a = isMaster() && C.waiting ? `<div class="banner warnb"><span>📱 승인을 기다리는 휴대폰이 <b>${C.waiting}대</b> 있어요.</span><button class="btn pri" id="wbGo">승인하러 가기</button></div>` : '';
+    return `<div id="waitBar">${a}${serverBar()}</div>`;
   }
-  function bindWaitBar() { const b = $('#wbGo'); if (b) b.onclick = () => go({ name: 'devices' }); }
+  function bindWaitBar() { const b = $('#wbGo'); if (b) b.onclick = () => go({ name: 'devices' }); bindServerBar(); }
+  // 서버 코드가 예전 판이면 마스터에게 알림
+  function serverBar() {
+    return isMaster() && C.serverVer && C.serverVer < 3 ? '<div class="banner warnb"><span>⚙️ 새 기능을 쓰려면 <b>서버 코드를 새로 바꿔</b> 주세요.</span><button class="btn pri" id="srvBtn">바꾸는 방법</button></div>' : '';
+  }
+  function bindServerBar() { const b = $('#srvBtn'); if (b) b.onclick = howToConnect; }
 
   /* ---------- 동 화면 ---------- */
   const DONG_FILTER = {};
-  function unitCard(u, ar) {
+  const GO_STATUS = ['대상', '특별', '교인', '장결', '부재', '기타'];   // 찾아갈 집 (다른 교회·성당·이사·거부는 기본으로 접어 둠)
+  const isGo = u => GO_STATUS.includes(u.status);
+  // 지금 기록하는 기준: 이번 전도(마스터가 정함) 또는 오늘
+  function workCtx(dong) { return { c: activeCampaign(), ar: activeRound(dong), over: !!overrideRound(dong) }; }
+  function doneVisit(vs, ctx) {
+    if (ctx.over) return vs.find(v => v.no === ctx.ar.no);
+    const t = today();
+    return vs.find(v => { const r = roundOf(v); return r && (ctx.c ? r.campaign === ctx.c.id : r.date === t); });
+  }
+  function dongCounts(dong, ctx) {
+    const X = ix(); let go = 0, done = 0, gave = 0;
+    (X.unitsByDong.get(dong) || []).forEach(u => {
+      const d = doneVisit(X.visitsByUnit.get(u.id) || [], ctx);
+      if (isGo(u)) { go++; if (d) done++; }
+      if (d && (d.res === '만남' || d.res === '문앞')) gave++;
+    });
+    return { go, done, left: Math.max(0, go - done), gave };
+  }
+  function unitCard(u, ctx) {
     const vs = ix().visitsByUnit.get(u.id) || [];
-    const cur = ar && vs.find(v => v.no === ar.no);
-    const lines = vs.slice(0, 2).map(v => `<span class="ln">${visitHtml(v)}</span>`).join('');
+    const cur = doneVisit(vs, ctx);
+    const past = (cur ? vs.filter(v => v !== cur) : vs).slice(0, 2);
     return `<button class="unit ${cur ? 'done' : ''}" data-u="${esc(u.id)}" style="border-left-color:${sCol(u.status)}">
       <span class="l"><b>${esc(u.ho)}</b>${sTag(u.status)}${u.simbang === '1' ? '<span class="sim">🙏 심방</span>' : ''}</span>
       <span class="r">${u.memo ? `<span class="who">${esc(firstLine(u.memo))}</span>` : ''}
-      ${cur ? `<span class="now">✓ 이번 기록: ${esc(RES_LABEL[cur.res] || cur.res)}${cur.text && cur.text !== cur.res ? ' · ' + esc(cur.text) : ''}</span>` : ''}
-      ${lines || '<span class="none">기록 없음</span>'}</span>
+      ${u.tip ? `<span class="tipline">💡 ${esc(u.tip)}</span>` : ''}${u.todo ? `<span class="todoline">📌 ${esc(u.todo)}</span>` : ''}
+      ${cur ? `<span class="now">✓ 다녀옴: ${esc(RES_FULL[cur.res] || cur.res)}${cur.text && cur.text !== (RES_FULL[cur.res] || cur.res) ? ' · ' + esc(cur.text) : ''}</span>` : ''}
+      ${past.map(v => `<span class="ln">${visitHtml(v)}</span>`).join('') || (cur ? '' : '<span class="none">기록 없음</span>')}</span>
     </button>`;
   }
   function roundStats(r) {
@@ -409,50 +442,52 @@
     return keys.length ? keys.map(k => `${RES_LABEL[k] || k} ${c[k]}`).join(' · ') : '기록 없음';
   }
   function roundRow(r) {
-    return `<div class="rd"><span class="no">${r.no}차</span><span class="tx"><b>${esc(dLong(r.date) || '날짜 없음')}</b> ${esc(giftOf(r))}${r.gift && r.event && r.event !== r.gift ? ' <span class="muted">· ' + esc(r.event) + '</span>' : ''}
-      ${r.people ? `<br><span class="muted small">함께: ${esc(r.people)}</span>` : ''}<br><span class="small">${esc(roundStats(r))}</span></span></div>`;
+    return `<div class="rd"><span class="tx"><b>${esc(r.date ? dLong(r.date) : (r.text || '날짜 없음').slice(0, 24))}</b> ${esc(giftOf(r))}${r.gift && r.event && r.event !== r.gift ? ' <span class="muted">· ' + esc(r.event) + '</span>' : ''}
+      <br><span class="small">${esc(roundStats(r))}</span>${r.people ? ` <span class="muted small">· ${esc(r.people)}</span>` : ''}</span></div>`;
+  }
+  function barSmall(dong, ctx) {
+    const n = dongCounts(dong, ctx);
+    return !ctx.c && !ctx.ar ? `남은 집 ${n.left}곳 · 첫 집을 누르면 선물을 물어봐요` : `남은 집 ${n.left}곳 · ${n.done}집 다녀옴`;
+  }
+  function todayBar(dong, ctx) {
+    const title = ctx.over ? `${dShort(ctx.ar.date)} ${giftOf(ctx.ar)} 기록 이어 쓰는 중` : ctx.c ? `📣 이번 전도: ${[ctx.c.title, ctx.c.gift].filter(Boolean).join(' ')}` : ctx.ar ? `오늘 전도: ${giftOf(ctx.ar)}` : '오늘 전도';
+    return `<div class="active"><span class="t">${esc(title)}<small id="barSmall">${esc(barSmall(dong, ctx))}</small></span>
+      ${ctx.over ? '<button id="endR">끝내기</button>' : ctx.ar && !ctx.c ? '<button id="editR">선물 바꾸기</button>' : ''}</div>`;
   }
   VIEWS.dong = () => {
     const X = ix(), dong = view.dong, d = D.dongs.get(dong) || { id: dong, managers: '' };
     const us = X.unitsByDong.get(dong) || [], rs = X.roundsByDong.get(dong) || [];
-    const ar = activeRound(dong);
-    const f = DONG_FILTER[dong] || '전체';
+    const ctx = workCtx(dong);
+    const f = DONG_FILTER[dong] || '갈집';
     const c = {}; us.forEach(u => c[u.status] = (c[u.status] || 0) + 1);
-    const list = us.filter(u => f === '전체' ? true : f === '전도대상' ? !['교회', '성당', '이사'].includes(u.status) : f === '심방' ? (u.simbang === '1' || u.status === '특별') : f === '오늘안함' ? !(ar && (X.visitsByUnit.get(u.id) || []).some(v => v.no === ar.no)) : u.status === f);
-    let html = `<div class="dhead">
-      <div class="card"><div class="muted small">담당 ${esc(d.managers || '-')} · ${us.length}세대</div>
-        <h2 class="sec" style="margin:.5rem 0 .3rem">최근 회차 <small>${rs.length ? '모두 ' + rs.length + '번' : ''}</small></h2>
-        <div class="rounds">${rs.slice(-2).reverse().map(roundRow).join('') || '<p class="muted">아직 회차가 없어요.</p>'}</div>
-        ${rs.length > 2 ? '<button class="btn ghost sm" id="allR" style="margin-top:.5rem">지난 회차 모두 보기</button>' : ''}
-      </div>
-      ${ar ? '' : `<button class="btn pri big noprint" id="startR">✏️ 오늘 전도 기록 시작하기</button>`}
-    </div>`;
-    if (ar) {
-      html += `<div class="active"><span class="t">✏️ ${esc(roundLabel(ar))} 기록 중<small>${esc(activeHint(dong, ar))}</small></span>
-        <button id="editR">고치기</button><button id="endR">끝내기</button></div>`;
-    }
-    const fl = ['전체', ...(ar ? ['오늘안함'] : []), '전도대상', '심방', ...STATUS.filter(s => c[s])];
-    const flLabel = s => s === '전체' ? `전체 <small>${us.length}</small>` : s === '오늘안함' ? '아직 안 간 집' : s === '전도대상' ? '전도 대상만' : s === '심방' ? '🙏 심방대상' : `<i class="dot" style="background:${sCol(s)}"></i>${STATUS_LABEL[s]} <small>${c[s]}</small>`;
-    html += `<div class="chips scroll" style="margin:.8rem 0 .2rem">${fl.map(s => `<button class="chip ${s === f ? 'on' : ''}" data-f="${s}">${flLabel(s)}</button>`).join('')}</div>`;
+    const n = dongCounts(dong, ctx);
+    const list = us.filter(u => f === '전체' ? true : f === '갈집' ? isGo(u) : f === '남은집' ? (isGo(u) && !doneVisit(X.visitsByUnit.get(u.id) || [], ctx)) : f === '심방' ? (u.simbang === '1' || u.status === '특별') : u.status === f);
+    let html = todayBar(dong, ctx);
+    const fl = ['갈집', '남은집', '전체', '심방', ...STATUS.filter(s => c[s])];
+    const flLabel = s => s === '갈집' ? `갈 집 <small>${n.go}</small>` : s === '남은집' ? `남은 집 <small>${n.left}</small>` : s === '전체' ? `전체 <small>${us.length}</small>` : s === '심방' ? '🙏 심방' : `<i class="dot" style="background:${sCol(s)}"></i>${STATUS_LABEL[s]} <small>${c[s]}</small>`;
+    html += `<div class="chips scroll" style="margin:.2rem 0 .2rem">${fl.map(s => `<button class="chip ${s === f ? 'on' : ''}" data-f="${s}">${flLabel(s)}</button>`).join('')}</div>`;
     let lastFloor = null, body = '';
     list.forEach(u => {
       const fl2 = floorOf(u.ho);
       if (fl2 !== lastFloor) { if (lastFloor !== null) body += '</div>'; body += `<div class="floor">${fl2}층</div><div class="units">`; lastFloor = fl2; }
-      body += unitCard(u, ar);
+      body += unitCard(u, ctx);
     });
     if (lastFloor !== null) body += '</div>';
-    html += body || '<div class="empty">해당하는 집이 없어요.</div>';
-    html += `<div class="noprint" style="display:flex;gap:.5rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap">
-      <button class="btn ghost" id="dXls">📥 ${esc(dong)}동 엑셀 받기</button><button class="btn ghost" id="dPrint">🖨 목록 뽑기·인쇄</button></div>`;
+    html += body || `<div class="empty">${f === '남은집' ? '모두 다녀오셨어요. 수고하셨어요! 🎉' : '해당하는 집이 없어요.'}</div>`;
+    html += `<details class="card noprint" style="margin-top:1.2rem" id="dPast"><summary><b>이 동의 지난 전도</b> <span class="muted small">담당 ${esc(d.managers || '-')} · ${rs.length}번</span></summary>
+        <div class="rounds dpast">${rs.slice(-2).reverse().map(roundRow).join('') || '<p class="muted">아직 없어요.</p>'}</div>
+        ${rs.length > 2 ? '<button class="btn ghost sm" id="allR">모두 보기</button>' : ''}</details>
+      <div class="noprint dacts">
+      <button class="btn ghost" id="dShare">📤 오늘 결과 보내기</button><button class="btn ghost" id="dPrint">🖨 이 동 목록·인쇄</button><button class="btn ghost" id="dXls">📥 엑셀</button></div>`;
     return {
       title: dong + '동', html, bind() {
         document.querySelectorAll('.unit').forEach(b => b.onclick = () => openUnit(b.dataset.u));
-        document.querySelectorAll('.chip[data-f]').forEach(b => b.onclick = () => { DONG_FILTER[dong] = b.dataset.f; const y = window.scrollY; render(); window.scrollTo(0, y); });
+        document.querySelectorAll('.chip[data-f]').forEach(b => b.onclick = () => { DONG_FILTER[dong] = b.dataset.f; redrawKeepScroll(); });
         const a = $('#allR'); if (a) a.onclick = () => go({ name: 'rounds', dong });
-        const s = $('#startR'); if (s) s.onclick = () => startRound(dong);
-        const e = $('#endR'); if (e) e.onclick = () => { delete C.active[dong]; S.saveCfg(); render(); toast('기록을 마쳤어요. 수고하셨어요!'); };
-        const er = $('#editR'); if (er) er.onclick = () => editRound(ar);
+        const e = $('#endR'); if (e) e.onclick = () => { delete C.active[dong]; S.saveCfg(); render(); toast('이어 쓰기를 마쳤어요'); };
+        const er = $('#editR'); if (er) er.onclick = () => editRound(ctx.ar);
         $('#dXls').onclick = () => exportAll([dong]);
+        $('#dShare').onclick = () => shareToday([dong]);
         $('#dPrint').onclick = () => { REP.dongs = [dong]; saveRep(); go({ name: 'report' }); };
       }
     };
@@ -461,34 +496,34 @@
   VIEWS.rounds = () => {
     const dong = view.dong, rs = (ix().roundsByDong.get(dong) || []).slice().reverse();
     return {
-      title: dong + '동 회차', html: `<div class="card rounds">${rs.map(r => `<button class="rdb" data-r="${esc(r.id)}" style="display:block;width:100%;text-align:left">${roundRow(r)}</button>`).join('') || '<p class="muted">회차가 없어요.</p>'}</div>`,
+      title: dong + '동 지난 전도', html: `<div class="card rounds">${rs.map(r => `<button class="rdb" data-r="${esc(r.id)}" style="display:block;width:100%;text-align:left">${roundRow(r)}</button>`).join('') || '<p class="muted">아직 없어요.</p>'}</div>`,
       bind() { document.querySelectorAll('.rdb').forEach(b => b.onclick = () => go({ name: 'round', id: b.dataset.r })); }
     };
   };
   VIEWS.round = () => {
     const r = D.rounds.get(view.id);
-    if (!alive(r)) return { title: '회차', html: '<div class="empty">지워진 회차예요.</div>' };
+    if (!alive(r)) return { title: '지난 전도', html: '<div class="empty">지워진 기록이에요.</div>' };
     const vs = [...D.visits.values()].filter(v => alive(v) && v.dong === r.dong && v.no === r.no).sort((a, b) => +b.unit.split('-')[1] - +a.unit.split('-')[1]);
     const html = `<div class="card">${roundRow(r)}${r.text ? `<p class="small muted" style="margin-top:.4rem">${esc(r.text)}</p>` : ''}
-      <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap"><button class="btn sm ghost" id="rEdit">회차 고치기</button>
-      <button class="btn sm ghost" id="rUse">이 회차로 기록 이어 쓰기</button></div></div>
-      <h2 class="sec">이 회차에 다녀온 집 <small>${vs.length}집</small></h2>
+      <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap"><button class="btn sm ghost" id="rEdit">고치기</button>
+      <button class="btn sm ghost" id="rUse">이 전도에 기록 이어 쓰기</button></div></div>
+      <h2 class="sec">다녀온 집 <small>${vs.length}집</small></h2>
       <div class="list">${vs.map(v => { const u = D.units.get(v.unit) || { ho: v.unit, status: '기타' }; return `<button class="row" data-u="${esc(v.unit)}" style="border-left-color:${sCol(u.status)}"><span class="h"><b>${esc(u.ho)}호</b>${sTag(u.status)}${rTag(v.res)}</span><span class="ln">${esc(v.text)}</span></button>`; }).join('')}</div>`;
     return {
-      title: `${r.dong}동 ${r.no}차`, html, bind() {
+      title: `${r.dong}동 ${dShort(r.date) || '지난 전도'}`, html, bind() {
         document.querySelectorAll('.row').forEach(b => b.onclick = () => openUnit(b.dataset.u));
         $('#rEdit').onclick = () => editRound(r);
-        $('#rUse').onclick = () => { C.active[r.dong] = r.id; S.saveCfg(); go({ name: 'dong', dong: r.dong }); };
+        $('#rUse').onclick = () => { C.active[r.dong] = r.id; C.activeDay = today(); S.saveCfg(); go({ name: 'dong', dong: r.dong }); };
       }
     };
   };
 
-  /* ---------- 회차 만들기·고치기 ---------- */
+  /* ---------- 전도 기록 묶음 (날짜·선물) ---------- */
   function knownGifts(dong) {
     const set = new Set();
     (ix().roundsByDong.get(dong) || []).slice(-12).reverse().forEach(r => r.gift && set.add(r.gift));
     GIFT_PRESET.forEach(g => set.add(g));
-    return [...set].slice(0, 14);
+    return [...set].slice(0, 12);
   }
   function roundForm(r, dong) {
     return `<label class="field"><span>날짜</span><input type="date" id="rfDate" value="${esc(r.date || today())}"></label>
@@ -510,116 +545,151 @@
   }
   const readRoundForm = () => ({ date: $('#rfDate').value || today(), gift: $('#rfGift').value.trim(), event: $('#rfEvent').value.trim(), people: $('#rfPeople').value.trim().replace(/\s*,\s*|\s+/g, ', ') });
   function autoText(r) { return `${dShort(r.date)}.${WD[new Date(r.date + 'T00:00').getDay()] || ''} ${r.gift || ''}${r.people ? ' (' + r.people + ')' : ''}`.replace(/\s+/g, ' ').trim(); }
+  function nextNo(dong) { let m = 0; (ix().roundsByDong.get(dong) || []).forEach(r => { if (r.no > m) m = r.no; }); D.visits.forEach(v => { if (v.dong === dong && v.no > m) m = v.no; }); return m + 1; }
+  function newRound(dong, f) { const no = nextNo(dong); return S.put('rounds', Object.assign({ id: dong + '-' + no, dong, no }, f, { text: autoText(f) })); }
 
-  async function startRound(dong) {
-    // 구글 시트가 느려도(처음 깨어날 때 10초 넘게 걸리기도 함) 기다리지 않고 바로 창을 띄움. 맞추는 일은 뒤에서 함
+  // 기록할 묶음을 찾음: 오늘 이미 있으면 그것, 이번 전도가 있으면 저절로 만듦, 없으면 선물을 한 번 물어봄
+  async function ensureRound(dong) {
+    const ar = activeRound(dong);
+    if (ar) return ar;
     S.scheduleSync(0);
-    const rs = ix().roundsByDong.get(dong) || [];
-    const t = rs.filter(r => r.date === today()).pop();
-    if (t) {
-      const v = await modal(`<h3>오늘 기록이 이미 있어요</h3><p class="msg">${esc(roundLabel(t))}${t.people ? '\n함께: ' + esc(t.people) : ''}\n이 회차에 이어서 쓸까요?</p>`,
-        [{ label: '새 회차 만들기', val: 'new' }, { label: '이어서 쓰기', val: 'use', cls: 'pri' }]);
-      if (v === 'use') { C.active[dong] = t.id; S.saveCfg(); render(); return; }
-      if (v !== 'new') return;
-    }
-    const nextNo = () => { let m = 0; (ix().roundsByDong.get(dong) || []).forEach(r => { if (r.no > m) m = r.no; }); D.visits.forEach(v => { if (v.dong === dong && v.no > m) m = v.no; }); return m + 1; };
-    let no = nextNo();
-    const ok = await modal(`<h3>${esc(dong)}동 ${no}차 전도 시작</h3>${roundForm({}, dong)}`, [{ label: '취소', val: false }, { label: '시작하기', val: true, cls: 'pri' }], bindRoundForm);
-    if (!ok) return;
+    const c = activeCampaign();
+    if (c) return newRound(dong, { date: today(), gift: c.gift || '', event: c.title || '', people: C.name, campaign: c.id });
+    const v = await modal(`<h3>오늘 무엇으로 전도하세요?</h3><p class="msg">하나만 고르면 오늘 ${esc(dong)}동 기록에 계속 쓰여요.</p>
+      <div class="chips bigchips">${knownGifts(dong).map(g => `<button type="button" class="chip" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+      <input id="agGift" placeholder="직접 쓰기">`,
+      [{ label: '취소', val: false }, { label: '확인', val: 'typed', cls: 'pri' }],
+      root => root.querySelectorAll('[data-g]').forEach(b => b.onclick = () => closeModal('g:' + b.dataset.g)));
+    if (!v) return null;
+    const gift = v === 'typed' ? $('#agGift').value.trim() : v.slice(2);
+    if (!gift) { toast('선물을 골라 주세요'); return null; }
+    return newRound(dong, { date: today(), gift, event: '', people: C.name, campaign: '' });
+  }
+  // 지난 날짜로 쓰고 싶을 때
+  async function makeRoundByHand(dong) {
+    const ok = await modal(`<h3>다른 날 전도 기록 만들기</h3>${roundForm({}, dong)}`, [{ label: '취소', val: false }, { label: '만들기', val: true, cls: 'pri' }], bindRoundForm);
+    if (!ok) return null;
     const f = readRoundForm();
-    if (!f.gift && !f.event) { toast('무엇으로 전도했는지 골라 주세요'); return startRound(dong); }
-    no = nextNo();   // 창을 띄운 사이에 다른 분이 만든 회차가 들어왔을 수 있어 다시 셈
-    const r = S.put('rounds', Object.assign({ id: dong + '-' + no, dong, no }, f, { text: autoText(f) }));
-    C.active[dong] = r.id; S.saveCfg();
-    render(); toast(`${no}차 시작! 다녀온 집을 누르세요`);
+    if (!f.gift && !f.event) { toast('무엇으로 전도했는지 골라 주세요'); return null; }
+    return newRound(dong, Object.assign(f, { campaign: '' }));
   }
   async function editRound(r) {
-    const vcount = [...D.visits.values()].filter(v => alive(v) && v.dong === r.dong && v.no === r.no).length;
-    const v = await modal(`<h3>${esc(r.dong)}동 ${r.no}차 고치기</h3>${roundForm(r, r.dong)}`,
-      [...(vcount ? [] : [{ label: '회차 지우기', val: 'del', cls: 'warn' }]), { label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }], bindRoundForm);
-    if (v === 'del') { S.del('rounds', r.id); if (C.active[r.dong] === r.id) { delete C.active[r.dong]; S.saveCfg(); } render(); toast('회차를 지웠어요'); return; }
+    const vcount = (ix().statsByRound.get(r.dong + '-' + r.no) ? Object.values(ix().statsByRound.get(r.dong + '-' + r.no)).reduce((a, b) => a + b, 0) : 0);
+    const v = await modal(`<h3>${esc(r.dong)}동 전도 고치기</h3>${roundForm(r, r.dong)}`,
+      [...(vcount ? [] : [{ label: '지우기', val: 'del', cls: 'warn' }]), { label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }], bindRoundForm);
+    if (v === 'del') { S.del('rounds', r.id); if (C.active[r.dong] === r.id) { delete C.active[r.dong]; S.saveCfg(); } render(); toast('지웠어요'); return; }
     if (!v) return;
     const f = readRoundForm();
     S.put('rounds', Object.assign({ id: r.id }, f, { text: r.by ? autoText(f) : r.text }));
-    render(); toast('회차를 고쳤어요');
+    render(); toast('고쳤어요');
   }
 
   /* ---------- 한 집 (아래에서 올라오는 창) ---------- */
+  // 자주 쓰는 말: 누르면 메모에 들어가고, 알아둘 점·할 일·심방대상도 함께 표시됨
+  const PHRASES = [
+    { t: '고맙다고 받으심' }, { t: '예배 권함' },
+    { t: '예배 오겠다고 함', todo: '예배 오겠다고 하심 — 주일 전에 연락' }, { t: '교회 다녀 본 적 있음' },
+    { t: '건강이 안 좋으심', sim: 1 }, { t: '다시 가 보기', todo: '다시 가 보기' },
+    { t: '저녁에만 계심', tip: '저녁에만 계심' }, { t: '낮에만 계심', tip: '낮에만 계심' }
+  ];
+  const PHONE_RE = /01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/g;
+  const phonesOf = u => [...new Set(String((u.memo || '') + ' ' + (u.tip || '') + ' ' + (u.todo || '')).match(PHONE_RE) || [])];
+  const addPart = (s, p) => { s = s || ''; return s.indexOf(p) >= 0 ? s : (s ? s + ' · ' : '') + p; };
+  const delPart = (s, p) => String(s || '').split(' · ').filter(x => x !== p).join(' · ');
+
   let sheetUnit = null, sheetRound = null, sheetAll = false;
   const sheetOpen = () => !!$('#sheet');
   function openUnit(id) {
     sheetUnit = id; sheetRound = null; sheetAll = false;
+    const nx = $('.unit.next'); if (nx) nx.classList.remove('next');
     history.pushState({ v: view, sheet: id }, '');
     drawSheet();
   }
+  // 쓰던 메모가 있으면 닫을 때 함께 저장
+  function commitMemo() {
+    const t = $('#eText'); if (!t) return;
+    const v = D.visits.get(t.dataset.vid), val = t.value.trim();
+    if (v && alive(v) && val && val !== v.text) S.put('visits', { id: v.id, text: val });
+  }
   function closeSheet(fromPop) {
+    commitMemo();
     const el = $('#sheet'); if (el) el.remove();
     document.body.style.overflow = '';
     if (!fromPop && history.state && history.state.sheet) { skipPop = true; history.back(); }
     if (pendingRender) { pendingRender = false; redrawKeepScroll(); }
   }
+  function sheetCur(u) {
+    const vs = ix().visitsByUnit.get(u.id) || [];
+    if (sheetRound) return vs.find(v => v.no === sheetRound.no);
+    return doneVisit(vs, workCtx(u.dong));
+  }
   function drawSheet() {
     const u = D.units.get(sheetUnit); if (!u) return;
     const vs = ix().visitsByUnit.get(u.id) || [];
-    const r = sheetRound || activeRound(u.dong);
-    const cur = r && vs.find(v => v.no === r.no);
-    let entry;
-    if (r) {
-      entry = `<div class="box" id="entry"><h4>✏️ ${cur ? '기록 고치기' : '오늘 기록'} <small>${esc(roundLabel(r))}</small></h4>
-        <div class="resbtns">${RES.map(([k, l]) => `<button data-res="${k}" class="${cur && cur.res === k ? 'on' : ''}" style="${cur && cur.res === k ? 'background:' + rCol(k) : ''}">${l}</button>`).join('')}</div>
-        <textarea id="eText" placeholder="있었던 일 (예: 70대 할아버지 고맙다고 하심, 예배 권함)">${esc(cur ? cur.text : '')}</textarea>
-        <button class="btn pri big" id="eSave">저장하기</button>
-        ${cur ? '<button class="btn ghost sm" id="eDel" style="align-self:flex-start">이 기록 지우기</button>' : ''}
-      </div>`;
-    } else {
-      entry = `<button class="btn pri big" id="eStart">✏️ 이 집 기록 쓰기</button>`;
-    }
+    const ctx = workCtx(u.dong), r = sheetRound || ctx.ar, cur = sheetCur(u);
+    const label = sheetRound ? roundLabel(sheetRound) : ctx.c ? `이번 전도 · ${[ctx.c.title, ctx.c.gift].filter(Boolean).join(' ')}` : r ? `오늘 · ${giftOf(r)}` : '오늘';
+    const defText = cur ? (RES_FULL[cur.res] || cur.res) : '';
+    const memoVal = cur && cur.text !== defText ? cur.text : '';
+    const phones = phonesOf(u);
+    const showMemo = cur && (cur.res === '만남' || memoVal);
     const html = `<div class="sheet" id="sheet"><div class="pane" role="dialog" aria-label="${esc(unitName(u))}">
       <div class="sh"><h3>${esc(unitName(u))}</h3>${sTag(u.status)}<button class="ibtn" id="shClose" aria-label="닫기">${ICON.close}</button></div>
       <div class="sb">
-        ${entry}
-        <div class="box"><h4>구분 <small>누르면 바뀌어요</small></h4>
-          <div class="stbtns">${STATUS.map(s => `<button data-st="${s}" class="${u.status === s ? 'on' : ''}" style="${u.status === s ? 'background:' + sCol(s) : ''}">${STATUS_LABEL[s]}</button>`).join('')}</div>
-          <label class="toggle"><input type="checkbox" id="shSim" ${u.simbang === '1' ? 'checked' : ''}> 🙏 심방대상으로 표시</label>
+        ${u.memo ? `<div class="whoBox">${esc(firstLine(u.memo))}</div>` : ''}
+        ${u.tip ? `<div class="tipBox">💡 ${esc(u.tip)}</div>` : ''}
+        ${u.todo ? `<div class="todoBox"><span>📌 ${esc(u.todo)}</span><button class="btn sm" id="todoDone">✓ 했어요</button></div>` : ''}
+        ${phones.length ? `<div class="calls">${phones.map(p => `<a class="btn call" href="tel:${esc(p.replace(/\D/g, ''))}">📞 ${esc(p)}</a>`).join('')}</div>` : ''}
+        <div class="box" id="entry"><h4>${cur ? '✓ 기록했어요. 바꾸려면 다시 누르세요' : '어떻게 되었나요? 누르면 바로 저장돼요'} <small>${esc(label)}</small></h4>
+          <div class="resbtns">${RES.map(([k, l]) => `<button data-res="${k}" class="${cur && cur.res === k ? 'on' : ''}" style="${cur && cur.res === k ? 'background:' + rCol(k) : ''}">${l}</button>`).join('')}</div>
+          ${showMemo ? `<div class="field"><span>있었던 일 (안 써도 돼요)</span>
+            <div class="chips qps">${PHRASES.map((p, i) => `<button type="button" class="chip ${memoVal.indexOf(p.t) >= 0 ? 'on' : ''}" data-qp="${i}">${esc(p.t)}</button>`).join('')}</div>
+            <textarea id="eText" data-vid="${esc(cur.id)}" rows="2" placeholder="직접 쓰기 (키보드의 🎤 마이크를 누르면 말로도 돼요)">${esc(memoVal)}</textarea></div>
+            <button class="btn pri big" id="eDone">완료</button>` : ''}
+          <div class="line" style="justify-content:space-between">${cur ? '<button class="btn ghost sm" id="eDel">이 기록 지우기</button>' : '<span></span>'}<button class="link" id="eOther">다른 날 기록으로 쓰기</button></div>
         </div>
+        <div class="box"><h4>💡 알아둘 점 · 📌 다음에 할 일 <small>찾아갈 때 보여요</small></h4>
+          <button class="btn ghost sm" id="shNote" style="align-self:flex-start">${u.tip || u.todo ? '고치기' : '적어 두기'}</button></div>
+        <details class="box"><summary><b>구분 바꾸기</b> <span class="muted small">지금: ${esc(STATUS_LABEL[u.status] || u.status)}</span></summary>
+          <div class="stbtns" style="margin-top:.6rem">${STATUS.map(s => `<button data-st="${s}" class="${u.status === s ? 'on' : ''}" style="${u.status === s ? 'background:' + sCol(s) : ''}">${STATUS_LABEL[s]}</button>`).join('')}</div>
+          <label class="toggle" style="margin-top:.6rem"><input type="checkbox" id="shSim" ${u.simbang === '1' ? 'checked' : ''}> 🙏 심방대상으로 표시</label>
+        </details>
         <div class="box"><h4>기본 메모 <small>이름·연락처·가족</small></h4>
           <div class="memoTxt">${u.memo ? esc(u.memo) : '<span class="muted">없음</span>'}</div>
           <button class="btn ghost sm" id="shMemo" style="align-self:flex-start">메모 고치기</button></div>
         <div class="box"><h4>지난 기록 <small>${vs.length}번 · 최근 것이 위</small></h4>
           <div class="hist">${vs.slice(0, sheetAll ? vs.length : 5).map(v => { const rr = roundOf(v); return `<button class="it" data-v="${esc(v.id)}">
-            <span class="m"><b>${v.no}차</b>${rr && rr.date ? esc(dLong(rr.date)) : ''} ${esc(giftOf(rr))} ${rTag(v.res)}<span style="margin-left:auto" class="small">${v.by ? esc(v.by) : '엑셀'}</span></span>
+            <span class="m"><b>${rr && rr.date ? esc(dLong(rr.date)) : v.no + '차'}</b> ${esc(giftOf(rr))} ${rTag(v.res)}<span style="margin-left:auto" class="small">${v.by ? esc(v.by) : '엑셀'}</span></span>
             <span class="t">${esc(v.text)}</span></button>`; }).join('') || '<p class="muted">아직 기록이 없어요.</p>'}</div>${!sheetAll && vs.length > 5 ? `<button class="btn ghost" id="shMore">지난 기록 ${vs.length - 5}개 더 보기</button>` : ''}</div>
         ${u.marks ? `<p class="small muted">옛 엑셀 선물 표시: ${esc(u.marks)}</p>` : ''}
         ${u.by ? `<p class="small muted">마지막으로 고친 사람: ${esc(u.by)}</p>` : ''}
       </div></div></div>`;
-    const old = $('#sheet'); if (old) old.remove();
+    const old = $('#sheet'); const keep = old ? old.querySelector('.sb').scrollTop : 0; if (old) old.remove();
     document.body.insertAdjacentHTML('beforeend', html);
     document.body.style.overflow = 'hidden';
-    const sh = $('#sheet');
+    const sh = $('#sheet'); sh.querySelector('.sb').scrollTop = keep;
     sh.onclick = e => { if (e.target === sh) closeSheet(); };
-    $('#shClose').onclick = () => closeSheet();
+    $('#shClose').onclick = () => { closeSheet(); afterPut(u.id); };
     const more = $('#shMore'); if (more) more.onclick = () => { sheetAll = true; drawSheet(); };
-    let res = cur ? cur.res : '';
-    sh.querySelectorAll('[data-res]').forEach(b => b.onclick = () => {
-      res = b.dataset.res;
-      sh.querySelectorAll('[data-res]').forEach(x => { x.classList.toggle('on', x === b); x.style.background = x === b ? rCol(x.dataset.res) : ''; });
-    });
-    const save = $('#eSave');
-    if (save) save.onclick = () => {
-      const text = $('#eText').value.trim();
-      if (!res) { toast('결과(만나서 전달·부재·거부)를 골라 주세요'); return; }
-      S.put('visits', { id: u.id + '-r' + r.no, unit: u.id, dong: u.dong, no: r.no, res, text: text || (RES.find(x => x[0] === res) || [, res])[1] });
-      toast(`${u.ho}호 저장했어요`);
-      closeSheet(); afterPut(u.id);
-    };
+    sh.querySelectorAll('[data-res]').forEach(b => b.onclick = () => quickSave(u, b.dataset.res));
+    sh.querySelectorAll('[data-qp]').forEach(b => b.onclick = () => togglePhrase(u, b));
+    const dn = $('#eDone'); if (dn) dn.onclick = () => finishHouse(u);
     const dl = $('#eDel');
     if (dl) dl.onclick = async () => {
-      if (await modal('<h3>이 기록을 지울까요?</h3><p class="msg">설정의 ‘고친 기록’에서 되살릴 수 있어요.</p>', [{ label: '취소', val: false }, { label: '지우기', val: true, cls: 'warn' }])) {
-        S.del('visits', cur.id); drawSheet(); afterPut(); toast('지웠어요');
+      const c0 = sheetCur(u);
+      if (c0 && await modal('<h3>이 기록을 지울까요?</h3><p class="msg">설정의 ‘고친 기록’에서 되살릴 수 있어요.</p>', [{ label: '취소', val: false }, { label: '지우기', val: true, cls: 'warn' }])) {
+        const t = $('#eText'); if (t) t.remove();
+        S.del('visits', c0.id); drawSheet(); afterPut(); toast('지웠어요');
       }
     };
-    const st = $('#eStart');
-    if (st) st.onclick = () => chooseRound(u);
+    $('#eOther').onclick = () => chooseRound(u);
+    const td = $('#todoDone'); if (td) td.onclick = () => { S.put('units', { id: u.id, todo: '' }); drawSheet(); afterPut(); toast('할 일을 지웠어요'); };
+    $('#shNote').onclick = async () => {
+      const ok = await modal(`<h3>${esc(unitName(u))}</h3>
+        <label class="field"><span>💡 알아둘 점 (예: 저녁에만 계심, 개 있음)</span><textarea id="nTip" rows="2">${esc(u.tip || '')}</textarea></label>
+        <label class="field"><span>📌 다음에 할 일 (예: 12월에 예배 권하기)</span><textarea id="nTodo" rows="2">${esc(u.todo || '')}</textarea></label>`, [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }]);
+      if (!ok) return;
+      S.put('units', { id: u.id, tip: $('#nTip').value.trim(), todo: $('#nTodo').value.trim() }); drawSheet(); afterPut(); toast('저장했어요');
+    };
     sh.querySelectorAll('[data-st]').forEach(b => b.onclick = () => {
       if (b.dataset.st === u.status) return;
       S.put('units', { id: u.id, status: b.dataset.st }); drawSheet(); afterPut(); toast(`구분을 ‘${STATUS_LABEL[b.dataset.st]}’(으)로 바꿨어요`);
@@ -632,36 +702,76 @@
     };
     sh.querySelectorAll('.hist .it').forEach(b => b.onclick = () => editVisit(D.visits.get(b.dataset.v)));
   }
+  // 결과 단추: 누르면 바로 저장. 만남은 있었던 일을 쓸 수 있게 창을 두고, 나머지는 닫고 다음 집으로
+  async function quickSave(u, res) {
+    commitMemo();
+    const r = sheetRound || await ensureRound(u.dong);
+    if (!r || !$('#sheet')) return;
+    const id = u.id + '-r' + r.no, before = D.visits.get(id), prev = before && alive(before) ? Object.assign({}, before) : null;
+    const keepText = prev && prev.text !== (RES_FULL[prev.res] || prev.res) ? prev.text : '';
+    S.put('visits', { id, unit: u.id, dong: u.dong, no: r.no, res, text: keepText || RES_FULL[res] || res, deleted: '' });
+    if (r.date === today() && !String(r.people || '').split(/,\s*/).includes(C.name)) S.put('rounds', { id: r.id, people: [r.people, C.name].filter(Boolean).join(', ') });
+    const undo = () => {
+      if (prev) { const p = Object.assign({}, prev); delete p.updatedAt; delete p.by; S.put('visits', p); } else S.del('visits', id);
+      afterPut(u.id); toast('되돌렸어요');
+    };
+    if (res === '만남') { drawSheet(); afterPut(); toastUndo(`${u.ho}호 저장했어요`, undo); return; }
+    if ($('#eText')) $('#eText').remove();
+    finishHouse(u); toastUndo(`${u.ho}호 ${RES_LABEL[res] || res} 저장했어요`, undo);
+  }
+  function togglePhrase(u, b) {
+    const p = PHRASES[+b.dataset.qp], t = $('#eText'), on = !b.classList.contains('on');
+    b.classList.toggle('on', on);
+    t.value = on ? addPart(t.value.trim(), p.t) : delPart(t.value.trim(), p.t);
+    const cur = D.units.get(u.id), ch = {};
+    if (p.todo) ch.todo = on ? addPart(cur.todo, p.todo) : delPart(cur.todo, p.todo);
+    if (p.tip) ch.tip = on ? addPart(cur.tip, p.tip) : delPart(cur.tip, p.tip);
+    if (p.sim) ch.simbang = on ? '1' : cur.simbang;
+    if (Object.keys(ch).length) { S.put('units', Object.assign({ id: u.id }, ch)); if (on) toast(p.todo ? '📌 할 일에 넣었어요' : p.tip ? '💡 알아둘 점에 넣었어요' : '🙏 심방대상으로 표시했어요'); }
+  }
+  // 한 집을 마치고 목록으로: 그 집 칸을 바꾸고 다음 갈 집을 표시
+  function finishHouse(u) { closeSheet(); afterPut(u.id); markNext(u.id); }
+  function markNext(uid) {
+    if (view.name !== 'dong') return;
+    const cards = [...document.querySelectorAll('.unit')], i = cards.findIndex(c => c.dataset.u === uid);
+    const free = c => !c.classList.contains('done');
+    const nx = cards.slice(i + 1).find(free) || cards.find(free);
+    document.querySelectorAll('.unit.next').forEach(c => c.classList.remove('next'));
+    if (nx) { nx.classList.add('next'); try { nx.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+  }
   // 집 하나를 저장한 뒤: 동 화면이면 그 집 칸만 바꿈(전체를 다시 그리지 않아 빠르고 자리도 그대로)
   function afterPut(uid) {
     if (sheetOpen()) { pendingRender = true; return; }
-    const el = uid && view.name === 'dong' && DONG_FILTER[view.dong] !== '오늘안함' ? document.querySelector(`.unit[data-u="${uid}"]`) : null;
-    if (!el) { redrawKeepScroll(); return; }
-    const u = D.units.get(uid), ar = activeRound(view.dong);
-    el.outerHTML = unitCard(u, ar);
+    if (view.name !== 'dong') { if (view.name !== 'report') redrawKeepScroll(); return; }
+    const f = DONG_FILTER[view.dong] || '갈집';
+    const el = uid && f !== '남은집' ? document.querySelector(`.unit[data-u="${uid}"]`) : null;
+    const u = uid && D.units.get(uid), ctx = workCtx(view.dong);
+    if (!el || !u || (f === '갈집' && !isGo(u)) || (STATUS.includes(f) && u.status !== f)) { redrawKeepScroll(); return; }
+    el.outerHTML = unitCard(u, ctx);
     const nu = document.querySelector(`.unit[data-u="${uid}"]`); if (nu) nu.onclick = () => openUnit(uid);
-    const rd = $('.dhead .rounds'); if (rd) rd.innerHTML = (ix().roundsByDong.get(view.dong) || []).slice(-2).reverse().map(roundRow).join('');
-    const sm = $('.active .t small'); if (sm && ar) sm.textContent = activeHint(view.dong, ar);
-  }
-  function activeHint(dong, ar) {
-    const X = ix(), done = (X.unitsByDong.get(dong) || []).filter(u => (X.visitsByUnit.get(u.id) || []).some(v => v.no === ar.no)).length;
-    return `집을 누르고 결과를 고르세요 · ${done}집 기록함`;
+    const bar = $('.active');
+    if (bar) { bar.outerHTML = todayBar(view.dong, ctx); const e = $('#endR'); if (e) e.onclick = () => { delete C.active[view.dong]; S.saveCfg(); render(); }; const er = $('#editR'); if (er) er.onclick = () => editRound(ctx.ar); }
+    const counts = dongCounts(view.dong, ctx);
+    document.querySelectorAll('.chip[data-f]').forEach(c => {
+      const sm = c.querySelector('small'); if (!sm) return;
+      if (c.dataset.f === '갈집') sm.textContent = counts.go; else if (c.dataset.f === '남은집') sm.textContent = counts.left;
+    });
   }
 
   async function chooseRound(u) {
     const rs = (ix().roundsByDong.get(u.dong) || []).slice(-6).reverse();
-    const v = await modal(`<h3>어느 회차 기록인가요?</h3>
+    const v = await modal(`<h3>어느 날 기록인가요?</h3>
       <div class="list">${rs.map(r => `<button class="row" data-pick="${esc(r.id)}"><span class="h"><b>${esc(roundLabel(r))}</b></span>${r.people ? `<span class="small muted">함께: ${esc(r.people)}</span>` : ''}</button>`).join('')}</div>`,
-      [{ label: '취소', val: false }, { label: '오늘 새 회차 만들기', val: 'new', cls: 'pri' }],
+      [{ label: '취소', val: false }, { label: '날짜 직접 넣기', val: 'new', cls: 'pri' }],
       root => root.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => closeModal('pick:' + b.dataset.pick)));
-    if (v === 'new') { closeSheet(); await startRound(u.dong); if (activeRound(u.dong)) openUnit(u.id); return; }
+    if (v === 'new') { const r = await makeRoundByHand(u.dong); if (r) { sheetRound = r; drawSheet(); } return; }
     if (typeof v === 'string' && v.startsWith('pick:')) { sheetRound = D.rounds.get(v.slice(5)); drawSheet(); }
   }
   async function editVisit(v) {
     if (!v) return;
     const r = roundOf(v);
     let res = v.res;
-    const ok = await modal(`<h3>${esc(v.no)}차 기록 고치기</h3><p class="small muted">${esc(roundLabel(r))} · ${v.by ? esc(v.by) + ' 씀' : '엑셀에서 옮김'}</p>
+    const ok = await modal(`<h3>기록 고치기</h3><p class="small muted">${esc(roundLabel(r))} · ${v.by ? esc(v.by) + ' 씀' : '엑셀에서 옮김'}</p>
       <div class="resbtns">${[...RES, ['이사', '이사']].map(([k, l]) => `<button data-res="${k}" class="${res === k ? 'on' : ''}" style="${res === k ? 'background:' + rCol(k) : ''}">${l}</button>`).join('')}</div>
       <textarea id="vTxt" rows="5">${esc(v.text)}</textarea>`,
       [{ label: '지우기', val: 'del', cls: 'warn' }, { label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }],
@@ -673,6 +783,168 @@
     else return;
     drawSheet(); afterPut();
   }
+
+  /* ---------- 챙길 집 ---------- */
+  // 기록에서 저절로 뽑는 목록: 할 일 있는 집, 오겠다고 한 집, 계속 부재인 집, 계속 거부하는 집
+  const CARE = { mine: true, limit: { todo: 30, promise: 30, absent: 30, refuse: 30 } };
+  const PROMISE_RE = /(예배|교회|주일).{0,14}(오겠|온다|오신다|오신대|나오겠|나온다|나오신|가겠|가보겠|오기로)|오겠다고|오기로\s?(함|하심)/;
+  function runOf(vs, res) { let n = 0; for (const v of vs) { if (v.res === res) n++; else break; } return n; }
+  function careLists() {
+    const X = ix(), out = { todo: [], promise: [], absent: [], refuse: [] };
+    const year = new Date(Date.now() - 365 * 864e5), yStr = ymd(year);
+    const mine = X.dongs.filter(isMine);
+    const useMine = CARE.mine && mine.length && !LIST.complex && !LIST.dong;
+    X.dongs.forEach(d => {
+      if (useMine && !isMine(d)) return;
+      if (LIST.complex && String(d.complex) !== LIST.complex) return;
+      if (LIST.dong && d.id !== LIST.dong) return;
+      (X.unitsByDong.get(d.id) || []).forEach(u => {
+        const vs = X.visitsByUnit.get(u.id) || [];
+        if (u.todo) out.todo.push({ u, why: '📌 ' + u.todo });
+        const r0 = vs[0] && roundOf(vs[0]);
+        if (vs[0] && PROMISE_RE.test(vs[0].text) && r0 && r0.date >= yStr && !['교회', '성당', '이사'].includes(u.status)) out.promise.push({ u, why: `🙋 ${dShort(r0.date)}: ${vs[0].text}` });
+        const a = runOf(vs, '부재');
+        if (a >= 3 && isGo(u)) out.absent.push({ u, n: a, why: `🌙 ${a}번 계속 부재 — 다른 시간대에 가 보세요${u.tip ? ' (' + u.tip + ')' : ''}` });
+        const f = runOf(vs, '거부');
+        if (f >= 2 && !['거부', '교회', '성당', '이사'].includes(u.status)) out.refuse.push({ u, n: f, why: `✋ ${f}번 계속 거부` });
+      });
+    });
+    out.absent.sort((a, b) => b.n - a.n); out.refuse.sort((a, b) => b.n - a.n);
+    return { out, useMine, hasMine: !!mine.length };
+  }
+  VIEWS.care = () => {
+    const { out, useMine, hasMine } = careLists();
+    const rowOf = (x, act) => `<div class="carerow"><button class="row" data-u="${esc(x.u.id)}" style="border-left-color:${sCol(x.u.status)}"><span class="h"><b>${esc(unitName(x.u))}</b>${sTag(x.u.status)}</span>
+      ${x.u.memo ? `<span class="memo">${esc(firstLine(x.u.memo))}</span>` : ''}<span class="ln why">${esc(x.why)}</span></button>${act ? act(x) : ''}</div>`;
+    const sec = (key, title, hint, act) => {
+      const list = out[key], lim = CARE.limit[key];
+      return `<h2 class="sec">${title} <small>${list.length}집</small></h2><p class="muted small hintp">${hint}</p>
+        <div class="list">${list.slice(0, lim).map(x => rowOf(x, act)).join('') || '<p class="muted small">없어요.</p>'}</div>
+        ${list.length > lim ? `<div style="text-align:center;margin-top:.5rem"><button class="btn ghost sm" data-more="${key}">${list.length - lim}집 더 보기</button></div>` : ''}`;
+    };
+    const html = `<div class="filters">${scopeSelect()}
+      ${hasMine && !LIST.complex && !LIST.dong ? `<label class="toggle"><input type="checkbox" id="cMine" ${CARE.mine ? 'checked' : ''}> 내 담당 동만 보기</label>` : ''}</div>
+      ${sec('todo', '📌 할 일이 있는 집', '집 창에서 ‘다음에 할 일’을 적거나, 자주 쓰는 말을 누르면 여기에 나와요.')}
+      ${sec('promise', '🙋 오겠다고 한 집', '최근 1년 안에 예배 오겠다고 기록된 집이에요. 연락해 보세요.')}
+      ${sec('absent', '🌙 계속 부재인 집', '3번 넘게 계속 안 계신 집이에요. 저녁이나 주말에 가 보세요.')}
+      ${sec('refuse', '✋ 계속 거부하는 집', '2번 넘게 계속 거절한 집이에요. 구분을 ‘거부’로 바꾸면 갈 집에서 빠져요.', x => `<button class="btn sm ghost" data-refuse="${esc(x.u.id)}">구분을 ‘거부’로 바꾸기</button>`)}`;
+    return {
+      title: '챙길 집', html, bind() {
+        bindScope(); bindRows();
+        const m = $('#cMine'); if (m) m.onchange = e => { CARE.mine = e.target.checked; redrawKeepScroll(); };
+        document.querySelectorAll('[data-more]').forEach(b => b.onclick = () => { CARE.limit[b.dataset.more] += 100; redrawKeepScroll(); });
+        document.querySelectorAll('[data-refuse]').forEach(b => b.onclick = () => { S.put('units', { id: b.dataset.refuse, status: '거부' }); redrawKeepScroll(); toast('구분을 거부로 바꿨어요'); });
+      }
+    };
+  };
+
+  /* ---------- 오늘 결과 보내기 ---------- */
+  // 카톡방 등에 보낼 요약. 주민 이름·호수는 넣지 않고 숫자만 넣음
+  function todaySummary(dongs) {
+    const X = ix(), t = today(), lines = [], sum = {};
+    X.dongs.forEach(d => {
+      if (dongs && !dongs.includes(d.id)) return;
+      const c = {}; let n = 0, gift = '';
+      (X.roundsByDong.get(d.id) || []).filter(r => r.date === t).forEach(r => {
+        gift = gift || giftOf(r);
+        const st = X.statsByRound.get(d.id + '-' + r.no) || {};
+        Object.keys(st).forEach(k => { c[k] = (c[k] || 0) + st[k]; sum[k] = (sum[k] || 0) + st[k]; n += st[k]; });
+      });
+      if (n) lines.push(`${d.id}동${gift ? '(' + gift + ')' : ''} ${n}집: ${Object.keys(c).map(k => (RES_LABEL[k] || k) + ' ' + c[k]).join(', ')}`);
+    });
+    if (!lines.length) return '';
+    const total = Object.values(sum).reduce((a, b) => a + b, 0);
+    return `[전도현황] ${dLong(t)}\n${lines.join('\n')}${lines.length > 1 ? `\n합계 ${total}집: ${Object.keys(sum).map(k => (RES_LABEL[k] || k) + ' ' + sum[k]).join(', ')}` : ''}`;
+  }
+  async function shareToday(dongs) {
+    const text = todaySummary(dongs);
+    if (!text) { toast('오늘 기록이 아직 없어요'); return; }
+    const v = await modal(`<h3>오늘 결과 보내기</h3><p class="msg sharebox">${esc(text)}</p><p class="small muted">주민 이름과 호수는 들어가지 않아요.</p>`,
+      [{ label: '닫기', val: false }, { label: '복사', val: 'copy' }, ...(navigator.share ? [{ label: '📤 보내기', val: 'share', cls: 'pri' }] : [])]);
+    if (v === 'share') { try { await navigator.share({ text }); } catch (e) {} }
+    if (v === 'copy') { try { await navigator.clipboard.writeText(text); toast('복사했어요. 카톡방에 붙여 넣으세요'); } catch (e) { toast('복사하지 못했어요'); } }
+  }
+
+  /* ---------- 현황판 (마스터) ---------- */
+  function needNewServer() {
+    if (!S.online() || (C.serverVer || 0) >= 3) return false;
+    modal('<h3>서버 코드를 바꿔 주세요</h3><p class="msg">이 기능은 새 서버 코드가 있어야 저장돼요.\n설정 → 관리자 → <b>연결 방법 보기 → 서버 코드 복사</b>로 붙여 넣고, <b>setup ▶ 실행</b> 뒤 <b>배포 관리 → ✏️ → 버전: 새 버전 → 배포</b>를 해 주세요.</p>', [{ label: '알겠어요', val: true, cls: 'pri' }]);
+    return true;
+  }
+  async function setCampaign() {
+    if (needNewServer()) return;
+    const cur = activeCampaign() || {};
+    const chips = (id, list, val) => `<div class="chips" id="${id}">${list.map(g => `<button type="button" class="chip ${g === val ? 'on' : ''}" data-v="${esc(g)}">${esc(g)}</button>`).join('')}</div>`;
+    const ok = await modal(`<h3>이번 전도 정하기</h3><p class="msg">정해 두면 집사님·권사님은 선물을 고르지 않아도 돼요.\n안 정하면 각자 그날 선물을 직접 넣어요.</p>
+      <div class="field"><span>행사</span>${chips('cmE', EVENT_PRESET, cur.title)}<input id="cmTitle" value="${esc(cur.title || '')}" placeholder="예: 성탄절"></div>
+      <div class="field"><span>선물</span>${chips('cmG', GIFT_PRESET, cur.gift)}<input id="cmGift" value="${esc(cur.gift || '')}" placeholder="예: 달력"></div>`,
+      [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }],
+      root => [['#cmE', '#cmTitle'], ['#cmG', '#cmGift']].forEach(([box, inp]) => root.querySelectorAll(box + ' .chip').forEach(b => b.onclick = () => {
+        const on = !b.classList.contains('on'); root.querySelectorAll(box + ' .chip').forEach(x => x.classList.remove('on')); if (on) b.classList.add('on'); root.querySelector(inp).value = on ? b.dataset.v : '';
+      })));
+    if (!ok) return;
+    const title = $('#cmTitle').value.trim(), gift = $('#cmGift').value.trim();
+    if (!title && !gift) { toast('행사나 선물을 넣어 주세요'); return; }
+    if (cur.id && cur.title === title) { S.put('campaigns', { id: cur.id, title, gift }); }
+    else {
+      if (cur.id) S.put('campaigns', { id: cur.id, active: '' });
+      S.put('campaigns', { id: 'c' + Date.now(), title, gift, active: '1', start: today() });
+    }
+    render(); toast('이번 전도를 정했어요');
+  }
+  async function endCampaign() {
+    const c = activeCampaign(); if (!c) return;
+    if (await modal(`<h3>‘${esc([c.title, c.gift].filter(Boolean).join(' '))}’ 전도를 끝낼까요?</h3><p class="msg">기록은 그대로 남아요. 끝내면 다시 각자 그날 선물을 직접 넣어요.</p>`, [{ label: '취소', val: false }, { label: '끝내기', val: true, cls: 'pri' }])) {
+      S.put('campaigns', { id: c.id, active: '' }); render(); toast('이번 전도를 끝냈어요');
+    }
+  }
+  VIEWS.dash = () => {
+    const X = ix(), c = activeCampaign(), t = today();
+    const ctx = { c, ar: null, over: false };
+    let tGo = 0, tDone = 0, tGave = 0;
+    const days = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? Math.floor((new Date(t + 'T00:00') - new Date(+m[1], +m[2] - 1, +m[3])) / 864e5) : null; };
+    const rows = X.dongs.map(d => {
+      const n = dongCounts(d.id, ctx), rs = (X.roundsByDong.get(d.id) || []).filter(r => r.date && r.date.length === 10), last = rs[rs.length - 1];
+      tGo += n.go; tDone += n.done; tGave += n.gave;
+      const ago = last ? days(last.date) : null, pct = n.go ? Math.round(n.done / n.go * 100) : 0;
+      return `<tr data-dong="${esc(d.id)}"><td><b>${esc(d.id)}</b></td><td class="muted mgrc">${esc(d.managers || '-')}</td><td class="num">${n.go}</td>
+        ${c ? `<td class="progc"><span class="prog"><i style="width:${pct}%"></i></span><span class="small">${n.done}집 (${pct}%)</span></td><td class="num">${n.gave}</td>` : ''}
+        <td class="lastc ${ago != null && ago > 60 ? 'late' : ''}">${last ? esc(dShort(last.date)) + (ago != null ? `<br><span class="small">${ago === 0 ? '오늘' : ago + '일 전'}</span>` : '') : '-'}</td></tr>`;
+    }).join('');
+    const since = Date.now() - 30 * 864e5, who = {};
+    D.visits.forEach(v => { if (alive(v) && v.by && +v.updatedAt > since) who[v.by] = (who[v.by] || 0) + 1; });
+    const people = Object.keys(who).sort((a, b) => who[b] - who[a]);
+    const camp = c ? `<div class="campnow"><b>📣 ${esc([c.title, c.gift].filter(Boolean).join(' '))}</b> <span class="muted small">${esc(dShort(c.start))} 시작</span></div>
+        <div class="big3"><div><b>${tGo}</b><span>필요한 선물<br><small>(갈 집 수)</small></span></div><div><b>${tGave}</b><span>전달함</span></div><div><b>${Math.max(0, tGo - tGave)}</b><span>더 필요</span></div></div>
+        <span class="prog big"><i style="width:${tGo ? Math.round(tDone / tGo * 100) : 0}%"></i></span><p class="small muted">갈 집 ${tGo}곳 중 ${tDone}곳 다녀옴</p>
+        <div class="line"><button class="btn sm" id="dcSet">바꾸기</button><button class="btn sm ghost" id="dcEnd">전도 끝내기</button></div>`
+      : `<p>지금은 정해 둔 전도가 없어서 각자 그날 선물을 직접 넣어요.<br><span class="small muted">정해 두면 선물을 고르지 않아도 되고, 동별 진행률과 필요한 선물 수가 나와요.</span></p><button class="btn pri" id="dcSet">📣 이번 전도 정하기</button>`;
+    const html = `${serverBar()}<div class="card set"><h2 class="sec" style="margin:0">이번 전도</h2>${camp}</div>
+      <h2 class="sec">동별 현황 <small>동을 누르면 열려요</small></h2>
+      <div class="tw"><table class="rep dasht"><thead><tr><th>동</th><th class="mgrc">담당</th><th>갈 집</th>${c ? '<th>진행</th><th>전달</th>' : ''}<th>마지막 전도</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="card set" style="margin-top:1rem"><h2 class="sec" style="margin:0">최근 30일 기록한 분</h2>
+        ${people.length ? `<div class="scs">${people.map(n => `<span class="sc" style="--c:var(--accent)">${esc(n)} <b>${who[n]}</b></span>`).join('')}</div>` : '<p>아직 앱에서 쓴 기록이 없어요.</p>'}</div>
+      <div class="card set" style="margin-top:1rem"><h2 class="sec" style="margin:0">오늘 결과·백업</h2>
+        <div class="line"><button class="btn sm" id="dcShare">📤 오늘 결과 보내기</button><button class="btn sm" id="dcBak">💾 지금 백업</button><button class="btn sm ghost" id="dcDev">📱 기기 승인·관리</button></div>
+        <p class="small muted">백업은 매주 월요일 새벽에 저절로 ‘전도현황 백업’ 폴더에 만들어져요(최근 8개).${C.lastBackup ? ` 마지막 백업: ${esc(timeStr(C.lastBackup))}` : ''}</p></div>`;
+    return {
+      title: '현황판', html, bind() {
+        bindServerBar();
+        $('#dcSet').onclick = setCampaign;
+        const e = $('#dcEnd'); if (e) e.onclick = endCampaign;
+        document.querySelectorAll('.dasht tr[data-dong]').forEach(tr => tr.onclick = () => go({ name: 'dong', dong: tr.dataset.dong }));
+        $('#dcShare').onclick = () => shareToday();
+        $('#dcDev').onclick = () => go({ name: 'devices' });
+        $('#dcBak').onclick = async () => {
+          if (needNewServer()) return;
+          if (!S.online()) { toast('구글 시트와 연결되어 있지 않아요'); return; }
+          toast('백업하는 중… (1분쯤 걸려요)');
+          try { const j = await S.call('backup', {}, 180000); C.lastBackup = Date.now(); S.saveCfg(); redrawKeepScroll(); toast('백업했어요: ' + j.name); }
+          catch (x) { toast('백업하지 못했어요: ' + x.message); }
+        };
+      }
+    };
+  };
 
   /* ---------- 구분별 보기 · 심방대상 · 찾기 · 최근 기록 ---------- */
   const LIST = { complex: '', dong: '', status: '대상', limit: 150 };
@@ -744,7 +1016,7 @@
       if (qd && qd === ql.replace(/\s/g, '') && (u.ho === qd || (d.id + u.ho) === qd)) { out.push([u, '']); return; }
       let i = hit(u.memo); if (i >= 0) { out.push([u, `<span class="ln">📝 ${snip(u.memo, i)}</span>`]); return; }
       const vs = X.visitsByUnit.get(u.id) || [];
-      for (const v of vs) { i = hit(v.text); if (i >= 0) { out.push([u, `<span class="ln"><em>${v.no}차</em> ${snip(v.text, i)}</span>`]); return; } }
+      for (const v of vs) { i = hit(v.text); if (i >= 0) { out.push([u, `<span class="ln"><em>${esc(dShort((roundOf(v) || {}).date) || v.no + '차')}</em> ${snip(v.text, i)}</span>`]); return; } }
     }));
     const html = `<form class="searchbox" id="sf"><input id="sq" type="search" value="${esc(q)}" enterkeyhint="search"></form>
       <h2 class="sec">‘${esc(q)}’ 찾은 결과 <small>${out.length}세대</small></h2>
@@ -807,7 +1079,7 @@
       </div>
       <div class="card set"><h2 class="sec" style="margin:0">자료</h2>
         <p>${S.online() ? `구글 시트와 연결됨 · ${st.lastOk ? '마지막으로 맞춘 때 ' + timeStr(st.lastOk) : '아직 맞추지 않음'}${S.outbox.length ? ` · <b style="color:var(--warn)">못 보낸 기록 ${S.outbox.length}개</b>` : ''}${st.error ? '<br>연결 문제: ' + esc(st.error) : ''}` : '구글 시트와 연결되지 않아 이 기기에만 저장돼요.'}</p>
-        <div class="line">${S.online() ? '<button class="btn sm" id="sSync">지금 맞추기</button>' : ''}<button class="btn sm" id="sRep">📄 목록 뽑기·인쇄</button><button class="btn sm" id="sXls">📥 전체 엑셀 받기</button><button class="btn sm" id="sLog">🕘 고친 기록 보기</button></div>
+        <div class="line">${S.online() ? '<button class="btn sm" id="sSync">지금 맞추기</button>' : ''}<button class="btn sm" id="sRecent">🕘 최근 기록</button><button class="btn sm" id="sRep">📄 목록 뽑기·인쇄</button><button class="btn sm" id="sXls">📥 전체 엑셀 받기</button><button class="btn sm" id="sLog">🕘 고친 기록 보기</button></div>
       </div>
       <div class="card set"><h2 class="sec" style="margin:0">관리자 <small>교회 담당자만</small></h2>${admin}</div>
       <p class="small muted" style="text-align:center">전도현황 · 자료는 교회 구글 시트에만 저장되고 이 앱 주소에는 남지 않아요.</p>
@@ -828,10 +1100,10 @@
       <hr class="hr">
       <div class="line">${S.online() ? '<button class="btn sm" id="aReload">구글 시트에서 처음부터 다시 받기</button>' : ''}<button class="btn sm warn" id="aWipe">이 기기 자료 지우기</button></div>`;
   };
-  function localAdminHtml() { return connectHtml() + toolsHtml(); }
+  function localAdminHtml() { return '<button class="btn pri" id="aDash">📊 현황판 · 이번 전도 정하기</button>' + connectHtml() + toolsHtml(); }
   function masterHtml() {
     const join = joinLink();
-    return `<button class="btn pri" id="aDev">📱 기기 승인·관리${C.waiting ? ` <span class="badge">${C.waiting}</span>` : ''}</button>
+    return `<button class="btn pri" id="aDash">📊 현황판 · 이번 전도 정하기</button><button class="btn pri" id="aDev">📱 기기 승인·관리${C.waiting ? ` <span class="badge">${C.waiting}</span>` : ''}</button>
       <div class="field"><span>초대 링크 — 새 휴대폰에서 이 링크를 열고 이름을 넣어 승인 요청을 보내면, 여기 ‘기기 승인’에서 승인해 주세요.</span><input id="aJoin" readonly value="${esc(join)}">
         <div class="line"><button class="btn sm pri" id="aQR">📷 초대 QR 보기</button><button class="btn sm" id="aCopy">링크 복사</button><button class="btn sm" id="aHow">연결 방법 보기</button><button class="btn sm" id="aOff">이 기기 연결 끊기</button></div></div>
       ${toolsHtml()}`;
@@ -851,6 +1123,8 @@
     on('#sTut', () => startTutorial());
     on('#sSync', async () => { await S.sync(); render(); toast(S.state.error ? '연결하지 못했어요: ' + S.state.error : '최신 기록으로 맞췄어요'); });
     on('#sRep', () => go({ name: 'report' }));
+    on('#sRecent', () => go({ name: 'recent' }));
+    on('#aDash', () => go({ name: 'dash' }));
     on('#sXls', () => exportAll());
     on('#sLog', () => go({ name: 'log' }));
     on('#sAdmin', () => { adminOpen = true; render(); });
@@ -1051,9 +1325,10 @@
     let a = {}, b = {}; try { a = JSON.parse(x.after || '{}'); } catch (e) {} try { b = JSON.parse(x.before || '{}'); } catch (e) {}
     const T = x.t;
     if (x.id === '엑셀 불러오기') return `엑셀 불러오기 (${esc(x.after)})`;
-    if (T === 'visits') { const u = D.units.get(a.unit || b.unit); return `${u ? esc(unitName(u)) : esc(a.unit)} ${esc(a.no || b.no)}차 기록 ${a.deleted === '1' ? '<b style="color:var(--warn)">지움</b>' : b.id ? '고침' : '씀'}: ${esc(RES_LABEL[a.res] || a.res || '')} ${esc((a.text || '').slice(0, 40))}`; }
+    if (T === 'visits') { const u = D.units.get(a.unit || b.unit); return `${u ? esc(unitName(u)) : esc(a.unit)} 기록 ${a.deleted === '1' ? '<b style="color:var(--warn)">지움</b>' : b.id ? '고침' : '씀'}: ${esc(RES_LABEL[a.res] || a.res || '')} ${esc((a.text || '').slice(0, 40))}`; }
     if (T === 'units') { const u = D.units.get(x.id); const what = b.status !== a.status ? `구분 ${esc(STATUS_LABEL[b.status] || b.status)} → ${esc(STATUS_LABEL[a.status] || a.status)}` : b.memo !== a.memo ? '기본 메모 고침' : b.simbang !== a.simbang ? (a.simbang === '1' ? '심방대상 표시' : '심방대상 뺌') : '고침'; return `${u ? esc(unitName(u)) : esc(x.id)} ${what}`; }
-    if (T === 'rounds') return `${esc(a.dong || b.dong)}동 ${esc(a.no || b.no)}차 회차 ${a.deleted === '1' ? '지움' : b.id ? '고침' : '만듦'} ${esc(a.gift || '')}`;
+    if (T === 'rounds') return `${esc(a.dong || b.dong)}동 전도 ${a.deleted === '1' ? '지움' : b.id ? '고침' : '만듦'} ${esc(a.gift || '')}`;
+    if (T === 'campaigns') return `이번 전도 ${a.active === '1' ? '정함' : '끝냄'}: ${esc([a.title, a.gift].filter(Boolean).join(' '))}`;
     if (T === 'dongs') return `${esc(x.id)}동 담당자: ${esc(a.managers || '')}`;
     return esc(T + ' ' + x.id);
   }
@@ -1083,7 +1358,7 @@
 
   /* ---------- 목록 뽑기·인쇄 ---------- */
   // 원하는 동·구분·정보만 골라 한 줄씩 표로 보여 주고, 그대로 인쇄하거나 엑셀로 받음
-  const REP_DEF = { dongs: [], statuses: [], simOnly: false, lastRes: [], cols: { status: 1, sim: 1, memo: 1, recent: 2, last: 1, count: 1 }, sort: 'ho-desc', group: true, pageBreak: false };
+  const REP_DEF = { dongs: [], statuses: [], simOnly: false, lastRes: [], cols: { status: 1, sim: 1, memo: 1, tip: 1, recent: 2, last: 1, count: 1 }, sort: 'ho-desc', group: true, pageBreak: false };
   const REP = Object.assign({}, REP_DEF, C.report || {}, { cols: Object.assign({}, REP_DEF.cols, (C.report || {}).cols || {}) });
   function saveRep() { C.report = REP; S.saveCfg(); }
   const SORTS = [['ho-desc', '동·호수 (높은 층부터)'], ['ho-asc', '동·호수 (낮은 층부터)'], ['status', '구분 순서 (대상·특별대상 먼저)'], ['last-old', '오래 안 간 집 먼저'], ['last-new', '최근에 다녀온 집 먼저'], ['count', '많이 다녀온 집 먼저'], ['res', '최근 결과 (만남→부재→거부)']];
@@ -1122,6 +1397,7 @@
     if (c.status) cols.push(['구분', x => sTag(x.u.status), 'c-st']);
     if (c.sim) cols.push(['심방', x => x.u.simbang === '1' ? '🙏' : '', 'c-sim']);
     if (c.memo) cols.push(['기본 메모', x => esc(x.u.memo).replace(/\n/g, '<br>'), 'c-memo']);
+    if (c.tip) cols.push(['알아둘 점·할 일', x => [x.u.tip ? '💡 ' + esc(x.u.tip) : '', x.u.todo ? '📌 ' + esc(x.u.todo) : ''].filter(Boolean).join('<br>'), 'c-tip']);
     if (c.last) cols.push(['마지막 방문', x => esc(dShort(x.last)), 'c-last']);
     if (c.count) cols.push(['횟수', x => x.vs.length || '', 'c-cnt']);
     if (c.recent) cols.push([c.recent >= 99 ? '전체 기록' : `최근 기록 ${c.recent}개`, x => x.vs.slice(0, c.recent).map(v => `<div class="rl">${visitHtml(v)}</div>`).join(''), 'c-rec']);
@@ -1137,7 +1413,7 @@
   VIEWS.report = () => {
     const X = ix(), rows = repRows(), cols = repCols();
     const chip = (on, attr, val, label) => `<button class="chip ${on ? 'on' : ''}" ${attr}="${esc(val)}">${label}</button>`;
-    const colOpt = [['status', '구분'], ['sim', '심방 표시'], ['memo', '기본 메모'], ['last', '마지막 방문 날'], ['count', '다녀간 횟수']];
+    const colOpt = [['status', '구분'], ['sim', '심방 표시'], ['memo', '기본 메모'], ['tip', '알아둘 점·할 일'], ['last', '마지막 방문 날'], ['count', '다녀간 횟수']];
     const opts = `<details class="card noprint repopt" ${C.repOpen === false ? '' : 'open'} id="repDet"><summary><b>무엇을 뽑을지 고르기</b> <span class="muted small">(누르면 접혀요)</span></summary>
       <div class="field"><span>동 <small class="muted">(아무것도 안 고르면 모든 동)</small></span><div class="chips">${X.dongs.map(d => chip(REP.dongs.includes(d.id), 'data-rd', d.id, esc(d.id) + '동')).join('')}</div></div>
       <div class="field"><span>구분 <small class="muted">(아무것도 안 고르면 모두)</small></span><div class="chips">${STATUS.map(s => chip(REP.statuses.includes(s), 'data-rs', s, `<i class="dot" style="background:${sCol(s)}"></i>${STATUS_LABEL[s]}`)).join('')}
@@ -1195,7 +1471,7 @@
         $('#rXls').onclick = async () => {
           try { await needXlsx(); } catch (e) { toast(e.message); return; }
           const head = cols.map(c => c[0]); if (REP.group) head.unshift('동');
-          const plain = (c, x) => c[2] === 'c-st' ? STATUS_LABEL[x.u.status] : c[2] === 'c-sim' ? (x.u.simbang === '1' ? 'O' : '') : c[2] === 'c-rec' ? x.vs.slice(0, REP.cols.recent).map(visitLine).join('\n') : c[2] === 'c-memo' ? x.u.memo : c[2] === 'c-ho' ? x.u.ho : c[2] === 'c-last' ? x.last : c[2] === 'c-cnt' ? x.vs.length : c[2] === 'c-dong' ? x.d.id : '';
+          const plain = (c, x) => c[2] === 'c-st' ? STATUS_LABEL[x.u.status] : c[2] === 'c-sim' ? (x.u.simbang === '1' ? 'O' : '') : c[2] === 'c-rec' ? x.vs.slice(0, REP.cols.recent).map(visitLine).join('\n') : c[2] === 'c-memo' ? x.u.memo : c[2] === 'c-tip' ? [x.u.tip, x.u.todo].filter(Boolean).join(' / ') : c[2] === 'c-ho' ? x.u.ho : c[2] === 'c-last' ? x.last : c[2] === 'c-cnt' ? x.vs.length : c[2] === 'c-dong' ? x.d.id : '';
           const aoa = [head, ...rows.map(x => (REP.group ? [x.d.id] : []).concat(cols.map(c => plain(c, x))))];
           const ws = XLSX.utils.aoa_to_sheet(aoa);
           ws['!cols'] = head.map(h => ({ wch: /메모/.test(h) ? 36 : /기록/.test(h) ? 60 : /방문/.test(h) ? 11 : 8 }));
@@ -1224,30 +1500,26 @@
         if (k % 2) visits.push({ id: id + '-r2', unit: id, dong: d.id, no: 2, res: k === 1 ? '거부' : '만남', text: k === 1 ? '필요 없다고 하심' : '예배 권함, 웃으며 받으심' });
       }
     });
-    return { dongs, rounds, units, visits };
+    return { dongs, rounds, units, visits, campaigns: [{ id: 'cdemo', title: '연습', gift: '꽃', active: '1', start: today() }] };
   }
   const firstUnit = () => document.querySelector('.unit');
   const TSTEPS = [
     { text: '사용법을 처음부터 한 번 보여 드릴게요.<br><b>연습용 자료</b>라서 아무것도 저장되지 않아요.<br>밝게 빛나는 곳만 눌러지고, 언제든 <b>그만하기</b>를 누르면 끝나요.', next: '시작하기' },
-    { sel: '.dong[data-dong="901"]', text: '동 카드를 누르면 그 동의 집들이 나와요.<br><b>901동</b>을 눌러 보세요.', need: () => view.name === 'dong' && view.dong === '901' },
-    { sel: '.dhead .card', text: '맨 위에는 <b>최근 두 번의 전도</b>(날짜·선물·함께 간 사람·결과 수)가 보여요.', next: '다음' },
-    { sel: () => firstUnit(), text: '집마다 <b>구분</b>(대상·거부 등)과 <b>최근 기록 두 개</b>가 한 줄에 보여요.<br>왼쪽 색 띠로 구분을 바로 알 수 있어요.', next: '다음' },
-    { sel: '#startR', text: '전도를 나가면 먼저 <b>오늘 전도 기록 시작하기</b>를 눌러요.', need: () => dlgOpen() && !!$('#rfGifts') },
-    { sel: '#rfGifts .chip[data-v="꽃"]', text: '오늘 무엇을 드렸는지 고르세요.<br><b>꽃</b>을 눌러 보세요.', need: () => dlgOpen() && $('#rfGift') && $('#rfGift').value === '꽃' },
-    { sel: '#dlgIn .acts .btn.pri', text: '날짜·회차 번호·쓴 사람은 <b>저절로</b> 들어가요.<br><b>시작하기</b>를 누르세요.', need: () => !!activeRound('901') && !modalResolve },
-    { sel: '.active', text: '이제 <b>기록 중</b>이에요. 다녀온 집을 누르기만 하면 돼요.', next: '다음' },
-    { sel: () => firstUnit(), text: '첫 번째 집을 눌러 보세요.', need: () => sheetOpen() },
-    { sel: '[data-res="만남"]', text: '만났으면 <b>만나서 전달</b>, 안 계시면 <b>부재</b>, 거절하면 <b>거부</b>를 눌러요.<br><b>만나서 전달</b>을 눌러 보세요.', need: () => { const b = $('[data-res="만남"]'); return b && b.classList.contains('on'); } },
-    { sel: '#eText', text: '있었던 일을 짧게 써요. 예시를 넣어 두었어요.<br>직접 고쳐 써 봐도 돼요.', next: '다음', allowType: true, enter() { const t = $('#eText'); if (t && !t.value) t.value = '70대 할머니 고맙다고 하심. 예배 권함'; } },
-    { sel: '#eSave', text: '<b>저장하기</b>를 누르세요.<br>(연습이라 진짜로 저장되지는 않아요)', need: () => !sheetOpen() },
-    { sel: '.unit.done', text: '기록한 집에는 <b>초록 테두리</b>와 <b>✓ 이번 기록</b>이 생겨요.', next: '다음' },
-    { sel: '.chip[data-f="오늘안함"]', text: '<b>아직 안 간 집</b>을 누르면 남은 집만 볼 수 있어요.', next: '다음' },
-    { sel: '#endR', text: '다 돌았으면 <b>끝내기</b>를 눌러요.', need: () => !activeRound('901') },
-    { sel: '#tBack', text: '왼쪽 위 <b>‹</b> 를 누르면 첫 화면으로 돌아가요.', need: () => view.name === 'home' },
+    { sel: '.dong[data-dong="901"]', text: '동을 누르면 그 동의 집들이 나와요.<br><b>901동</b>을 눌러 보세요.', need: () => view.name === 'dong' && view.dong === '901' },
+    { sel: '.active', text: '위에 <b>이번 전도</b>와 <b>남은 집 수</b>가 보여요.<br>관리자가 정해 두면 선물을 고를 필요가 없어요. 안 정해 두었으면 첫 집에서 한 번만 물어봐요.', next: '다음' },
+    { sel: () => firstUnit(), text: '갈 집만 위층부터 차례로 나와요.<br>왼쪽 색 띠와 글자가 <b>구분</b>, 오른쪽이 <b>최근 기록</b>이에요.<br>다른 교회·성당·거부 집은 접어 두었어요.', next: '다음' },
+    { sel: () => firstUnit(), text: '다녀온 집을 눌러요.<br>첫 번째 집을 눌러 보세요.', need: () => sheetOpen() },
+    { sel: '[data-res="만남"]', text: '결과를 <b>한 번 누르면 바로 저장</b>돼요.<br><b>만나서 전달</b>을 눌러 보세요.', need: () => !!$('#eText') },
+    { sel: '[data-qp="1"]', text: '있었던 일은 <b>단추로</b> 넣을 수 있어요. 안 넣어도 돼요.<br><b>예배 권함</b>을 눌러 보세요.', need: () => { const b = $('[data-qp="1"]'); return b && b.classList.contains('on'); } },
+    { sel: '#eDone', text: '<b>완료</b>를 누르세요.<br>(연습이라 진짜로 저장되지는 않아요)', need: () => !sheetOpen() },
+    { sel: '.unit.done', text: '다녀온 집은 <b>초록색</b>으로 바뀌고 <b>✓ 다녀옴</b>이 나와요.', next: '다음' },
+    { sel: '.unit.next', text: '<b>다음 갈 집</b>에 파란 테두리가 생겨요.<br>이 집을 눌러 보세요.', need: () => sheetOpen() },
+    { sel: '[data-res="부재"]', text: '안 계시면 <b>부재</b>를 눌러요.<br>누르면 저장되고 창이 바로 닫혀서, 다음 집으로 바로 갈 수 있어요.', need: () => !sheetOpen() },
+    { sel: '#tBack', text: '잘못 눌렀으면 아래에 잠깐 나오는 <b>되돌리기</b>를 누르면 돼요.<br>이제 왼쪽 위 <b>‹</b> 를 눌러 첫 화면으로 가세요.', need: () => view.name === 'home' },
     { sel: '.searchbox', text: '호수(예: 1807)나 이름·전화번호·내용으로 <b>찾을</b> 수 있어요.', next: '다음' },
-    { sel: '.quick', text: '<b>구분별 보기</b>(거부·대상 등만), <b>심방대상</b>, <b>최근 기록</b>, <b>목록·인쇄</b>는 여기에 있어요.', next: '다음' },
+    { sel: '#qCare', text: '<b>챙길 집</b>에는 할 일이 있는 집, 오겠다고 한 집, 계속 부재인 집이 저절로 모여요.', next: '다음' },
     { sel: '#tFont', text: '글자가 작으면 이 단추로 <b>글자를 크게</b> 할 수 있어요.', next: '다음' },
-    { text: '다 봤어요! 👏<br>이제 진짜 기록을 써 보세요.<br>사용법은 <b>설정 → 사용법 둘러보기</b>에서 다시 볼 수 있어요.', next: '마치기' }
+    { text: '다 봤어요! 👏<br>이제 진짜 기록을 써 보세요.<br>사용법은 첫 화면의 <b>▶ 사용법 보기</b>에서 다시 볼 수 있어요.', next: '마치기' }
   ];
   function startTutorial() {
     if (TUT.on) return;
@@ -1425,7 +1697,14 @@
 
   /* ---------- 기타 ---------- */
   let tt;
-  function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600); }
+  function toast(m) { const t = $('#toast'); t.classList.remove('act'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600); }
+  function toastUndo(m, undo) {
+    const t = $('#toast'); t.textContent = m + ' ';
+    const b = document.createElement('button'); b.textContent = '되돌리기';
+    b.onclick = () => { t.classList.remove('show', 'act'); undo(); };
+    t.appendChild(b); t.classList.add('show', 'act');
+    clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show', 'act'), 6000);
+  }
   window.addEventListener('online', () => S.scheduleSync(500));
   setInterval(() => { if (document.visibilityState === 'visible' && !sheetOpen() && !modalResolve) S.scheduleSync(0); }, 90000);
 

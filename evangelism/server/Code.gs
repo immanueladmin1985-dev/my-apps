@@ -15,12 +15,14 @@
 
 var TABLES = {
   dongs:  { sheet: '동',      cols: [['id','동'],['complex','단지'],['managers','담당자'],['note','메모'],['by','고친 사람'],['updatedAt','고친 시각'],['deleted','지움']] },
-  rounds: { sheet: '회차',    cols: [['id','회차ID'],['dong','동'],['no','회차'],['date','날짜'],['gift','선물'],['event','행사'],['people','함께 간 사람'],['text','내용'],['by','고친 사람'],['updatedAt','고친 시각'],['deleted','지움']] },
-  units:  { sheet: '세대',    cols: [['id','세대ID'],['dong','동'],['ho','호수'],['seq','순번'],['status','구분'],['simbang','심방대상'],['memo','기본 메모'],['marks','옛 선물 표시'],['by','고친 사람'],['updatedAt','고친 시각'],['deleted','지움']] },
-  visits: { sheet: '방문기록', cols: [['id','기록ID'],['unit','세대ID'],['dong','동'],['no','회차'],['res','결과'],['text','내용'],['by','쓴 사람'],['updatedAt','고친 시각'],['deleted','지움']] }
+  rounds: { sheet: '회차',    cols: [['id','회차ID'],['dong','동'],['no','회차'],['date','날짜'],['gift','선물'],['event','행사'],['people','함께 간 사람'],['text','내용'],['by','고친 사람'],['updatedAt','고친 시각'],['deleted','지움'],['campaign','이번 전도ID']] },
+  units:  { sheet: '세대',    cols: [['id','세대ID'],['dong','동'],['ho','호수'],['seq','순번'],['status','구분'],['simbang','심방대상'],['memo','기본 메모'],['marks','옛 선물 표시'],['by','고친 사람'],['updatedAt','고친 시각'],['deleted','지움'],['tip','알아둘 점'],['todo','다음에 할 일']] },
+  visits: { sheet: '방문기록', cols: [['id','기록ID'],['unit','세대ID'],['dong','동'],['no','회차'],['res','결과'],['text','내용'],['by','쓴 사람'],['updatedAt','고친 시각'],['deleted','지움']] },
+  campaigns: { sheet: '이번전도', cols: [['id','ID'],['title','행사'],['gift','선물'],['active','지금 진행'],['start','시작한 날'],['by','고친 사람'],['updatedAt','고친 시각'],['deleted','지움']] }
 };
 var DEV = { sheet: '기기', cols: ['기기ID', '열쇠(암호화)', '이름', '기기 정보', '확인 번호', '상태', '권한', '요청 시각', '승인한 사람', '마지막 접속'] };
 var LOG_SHEET = '변경기록';
+var SERVER_VER = 3;
 
 // 시트에서 연 Apps Script 면 그 시트를, 따로 만든 프로젝트면 setup 때 새로 만든 시트를 씀
 function book() {
@@ -60,6 +62,9 @@ function setup() {
   Object.keys(TABLES).forEach(function (t) { sheetOf(t); });
   devSheet();
   fixImportedBy();
+  // 매주 월요일 새벽 자동 백업 (한 번만 등록)
+  var has2 = ScriptApp.getProjectTriggers().some(function (tr) { return tr.getHandlerFunction() === 'backup'; });
+  if (!has2) ScriptApp.newTrigger('backup').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(4).create();
   var lg = ss.getSheetByName(LOG_SHEET) || ss.insertSheet(LOG_SHEET);
   if (lg.getLastRow() === 0) { lg.appendRow(['시각', '사람', '표', 'ID', '바꾸기 전', '바꾼 뒤']); lg.setFrozenRows(1); }
 }
@@ -72,6 +77,8 @@ function sheetOf(t) {
     sh.getRange(1, 1, 1, d.cols.length).setValues([d.cols.map(function (c) { return c[1]; })]).setFontWeight('bold');
     sh.setFrozenRows(1);
     sh.getRange('A:Z').setNumberFormat('@');   // "=" 로 시작하는 메모도 글자로 저장
+  } else if (sh.getLastColumn() < d.cols.length) {
+    sh.getRange(1, 1, 1, d.cols.length).setValues([d.cols.map(function (c) { return c[1]; })]).setFontWeight('bold');
   }
   return sh;
 }
@@ -99,7 +106,7 @@ function hash(s) {
 // 주소를 브라우저에서 그냥 열면 서버가 작동하는지 보여 줌
 function doGet(e) {
   var p = (e && e.parameter) || {};
-  if (!p.action) return json({ ok: true, app: '전도현황', ver: 2, msg: '전도현황 서버가 작동 중입니다. 이 주소를 앱의 구글 시트 연결 주소에 넣으세요.' });
+  if (!p.action) return json({ ok: true, app: '전도현황', ver: SERVER_VER, msg: '전도현황 서버가 작동 중입니다. 이 주소를 앱의 구글 시트 연결 주소에 넣으세요.' });
   return json({ ok: false, error: '앱에서만 쓸 수 있어요' });
 }
 function doPost(e) {
@@ -135,6 +142,8 @@ function masterTry(ok) {
 }
 
 function handle(p) {
+  var readOnly = p.action === 'hello' || p.action === 'log' || p.action === 'devices' || (p.action === 'sync' && !(p.records && p.records.length));
+  if (readOnly) return handleLocked(p);
   var lock = LockService.getScriptLock(); lock.waitLock(25000);
   try { return handleLocked(p); } finally { lock.releaseLock(); }
 }
@@ -181,12 +190,12 @@ function handleLocked(p) {
   if (me.status !== '승인') return { ok: false, error: me.status === '대기' ? 'pending' : 'revoked', status: me.status, code: me.code, name: me.name };
   if (now - Number(me.lastSeen || 0) > 30 * 60000) { me.lastSeen = String(now); writeDevice(me); }
   var master = me.role === '마스터';
-  var info = { name: me.name, role: me.role, status: me.status, waiting: master ? devs.filter(function (d) { return d.status === '대기'; }).length : 0 };
+  var info = { ver: SERVER_VER, name: me.name, role: me.role, status: me.status, waiting: master ? devs.filter(function (d) { return d.status === '대기'; }).length : 0 };
 
   switch (p.action) {
-    case 'hello': return merge({ ok: true, now: now }, info);
+    case 'hello': return merge({ ok: true, now: now, lastBackup: lastBackup() }, info);
     case 'sync': {
-      var saved = push(p.records || [], me.name);
+      var saved = push(p.records || [], me.name, master);
       return merge({ ok: true, now: Date.now(), saved: saved, rows: pull(Number(p.since) || 0) }, info);
     }
     case 'log': return { ok: true, rows: readLog(Number(p.limit) || 200) };
@@ -208,6 +217,7 @@ function handleLocked(p) {
       writeDevice(t);
       return { ok: true, devices: readDevices().map(pubDevice) };
     }
+    case 'backup': return { ok: true, name: backup() };
     case 'import': return { ok: true, now: Date.now(), count: importAll(p.data || {}, me.name, p.part || 'all') };
   }
   return { ok: false, error: '모르는 요청' };
@@ -222,10 +232,16 @@ function rowToObj(t, r) {
 }
 function objToRow(t, o) { return TABLES[t].cols.map(function (c) { return o[c[0]] == null ? '' : String(o[c[0]]); }); }
 
+// 표마다 마지막으로 바뀐 시각 (캐시가 사라지면 없음 → 그때는 그냥 읽음)
+function lastChange(t) { return Number(CacheService.getScriptCache().get('lc_' + t) || 0); }
+function touched(t) { CacheService.getScriptCache().put('lc_' + t, String(Date.now() + 2000), 21600); }
+
 function pull(since) {
   var out = {};
   Object.keys(TABLES).forEach(function (t) {
-    var sh = sheetOf(t), n = sh.getLastRow() - 1, list = [];
+    var list = [], lc = lastChange(t);
+    if (since && lc && lc <= since) { out[t] = list; return; }   // 그 뒤로 바뀐 것이 없으면 시트를 읽지 않음
+    var sh = sheetOf(t), n = sh.getLastRow() - 1;
     if (n > 0) {
       var ui = TABLES[t].cols.map(function (c) { return c[0]; }).indexOf('updatedAt');
       sh.getRange(2, 1, n, TABLES[t].cols.length).getValues().forEach(function (r) {
@@ -239,25 +255,34 @@ function pull(since) {
 
 // 받은 기록마다 같은 ID 줄을 고치거나 새로 붙이고, 변경기록에 바꾸기 전·뒤를 남김
 // 쓴 사람은 앱이 보낸 이름이 아니라 승인된 기기의 이름으로 남김
-function push(records, name) {
+function push(records, name, master) {
   var now = Date.now(), saved = 0, logs = [], byT = {};
-  records.forEach(function (rec) { if (TABLES[rec.t] && rec.d && rec.d.id) (byT[rec.t] = byT[rec.t] || []).push(rec.d); });
+  records.forEach(function (rec) {
+    if (!TABLES[rec.t] || !rec.d || !rec.d.id) return;
+    if (!master && (rec.t === 'campaigns' || rec.t === 'dongs')) return;   // 이번 전도·담당자는 마스터만 바꿈
+    (byT[rec.t] = byT[rec.t] || []).push(rec.d);
+  });
   Object.keys(byT).forEach(function (t) {
     var sh = sheetOf(t), w = TABLES[t].cols.length, n = sh.getLastRow() - 1;
-    var data = n > 0 ? sh.getRange(2, 1, n, w).getValues() : [];
-    var idx = {}; data.forEach(function (r, i) { idx[String(r[0])] = i; });
+    var ids = n > 0 ? sh.getRange(2, 1, n, 1).getValues() : [];
+    var idx = {}; ids.forEach(function (r, i) { idx[String(r[0])] = i; });
     var appends = [], appIdx = {};
     byT[t].forEach(function (d) {
       d.updatedAt = String(now++); d.by = name;
       var id = String(d.id), row = objToRow(t, d), at = idx[id];
-      var before = at != null ? JSON.stringify(rowToObj(t, data[at])) : '';
-      if (at != null) { sh.getRange(at + 2, 1, 1, w).setValues([row]); data[at] = row; }
+      var before = '';
+      if (at != null) {
+        var rg = sh.getRange(at + 2, 1, 1, w);
+        before = JSON.stringify(rowToObj(t, rg.getValues()[0]));
+        rg.setValues([row]);
+      }
       else if (appIdx[id] != null) appends[appIdx[id]] = row;
       else { appIdx[id] = appends.length; appends.push(row); }
       logs.push([new Date(), name, t, id, before, JSON.stringify(d)]);
       saved++;
     });
     if (appends.length) sh.getRange(sh.getLastRow() + 1, 1, appends.length, w).setNumberFormat('@').setValues(appends);
+    touched(t);
   });
   if (logs.length) {
     var lg = book().getSheetByName(LOG_SHEET);
@@ -296,6 +321,7 @@ function importAll(data, name, part) {
     if (part !== 'all' && part !== t) return;
     var list = data[t] || [], sh = sheetOf(t), w = TABLES[t].cols.length;
     if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, w).clearContent();
+    touched(t);
     if (!list.length) return;
     var rows = list.map(function (d) { d.updatedAt = String(now); d.by = d.by || ''; return objToRow(t, d); });
     for (var i = 0; i < rows.length; i += 5000) {
@@ -303,8 +329,25 @@ function importAll(data, name, part) {
       sh.getRange(2 + i, 1, chunk.length, w).setNumberFormat('@').setValues(chunk);
     }
     count += rows.length;
+    touched(t);
   });
   var lg = book().getSheetByName(LOG_SHEET);
   lg.appendRow([new Date(), name, part, '엑셀 불러오기', '', count + '줄']);
   return count;
 }
+
+/* ---------- 백업 ---------- */
+// '전도현황 백업' 폴더에 시트 사본을 만들고 최근 8개만 남김. 폴더와 사본은 공유되지 않음
+function backup() {
+  var it = DriveApp.getFoldersByName('전도현황 백업');
+  var folder = it.hasNext() ? it.next() : DriveApp.createFolder('전도현황 백업');
+  var ss = book(), name = '전도현황 백업 ' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HHmm');
+  DriveApp.getFileById(ss.getId()).makeCopy(name, folder);
+  var files = [], fi = folder.getFiles();
+  while (fi.hasNext()) files.push(fi.next());
+  files.sort(function (a, b) { return b.getDateCreated() - a.getDateCreated(); });
+  files.slice(8).forEach(function (f) { f.setTrashed(true); });
+  PropertiesService.getScriptProperties().setProperty('LAST_BACKUP', String(Date.now()));
+  return name;
+}
+function lastBackup() { return PropertiesService.getScriptProperties().getProperty('LAST_BACKUP') || ''; }
