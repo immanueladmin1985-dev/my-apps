@@ -1,6 +1,6 @@
-const CACHE = 'evangelism-v7';
+const CACHE = 'evangelism-v8';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './css/app.css',
-  './js/config.js', './js/parse.js', './js/store.js', './js/export.js', './js/app.js', './vendor/xlsx.full.min.js', './vendor/qrcode.js', './server/Code.gs'];
+  './js/config.js', './js/parse.js', './js/store.js', './js/export.js', './js/app.js', './vendor/xlsx.full.min.js', './vendor/qrcode.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
@@ -8,6 +8,8 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   // 구글 시트(서버) 요청은 저장하지 않음
   if (url.origin !== location.origin) return;
+  // 서버 코드는 언제나 최신을 받음(예전 코드를 붙여 넣는 일이 없게)
+  if (url.pathname.endsWith('.gs')) { e.respondWith(fetch(req.url, { cache: 'no-store' })); return; }
   // 앱 화면은 인터넷이 되면 항상 새 버전을, 안 되면 저장해 둔 버전을 씀
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(r => { const cp = r.clone(); caches.open(CACHE).then(c => c.put('./index.html', cp)); return r; })

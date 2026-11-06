@@ -1275,8 +1275,8 @@
         <li>집사님·권사님 휴대폰에서 <b>초대 링크</b>를 열고 이름을 넣어 승인 요청 → 내 휴대폰의 <b>기기 승인</b>에서 확인 번호를 보고 승인하면 끝!</li>
       </ol>`, [{ label: '서버 코드 복사', val: 'copy' }, { label: '닫기', val: true, cls: 'pri' }]).then(async v => {
       if (v !== 'copy') return;
-      try { const t = await (await fetch('server/Code.gs', { cache: 'no-store' })).text(); await navigator.clipboard.writeText(t); toast('서버 코드를 복사했어요'); }
-      catch (e) { window.open('server/Code.gs', '_blank'); toast('열린 창의 글을 모두 복사해 주세요'); }
+      try { const t = await (await fetch('server/Code.gs?v=' + Date.now(), { cache: 'no-store' })).text(); await navigator.clipboard.writeText(t); toast('새 서버 코드를 복사했어요'); }
+      catch (e) { toast('복사하지 못했어요. 다시 눌러 주세요'); }
     });
   }
 
