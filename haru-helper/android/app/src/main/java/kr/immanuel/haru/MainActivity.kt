@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
+import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -38,6 +39,7 @@ class MainActivity : Activity() {
     private var pendingOpen: String? = null
     private var fileCb: ValueCallback<Array<Uri>>? = null
     private var saveText: String? = null
+    private var micRequest: PermissionRequest? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +70,21 @@ class MainActivity : Activity() {
                 }
             }
             webChromeClient = object : WebChromeClient() {
+                // 대화 도우미의 자동 말하기 감지가 마이크를 쓸 때
+                override fun onPermissionRequest(request: PermissionRequest) {
+                    runOnUiThread {
+                        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE !in request.resources) {
+                            request.deny()
+                        } else if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                            request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
+                        } else {
+                            micRequest?.deny()
+                            micRequest = request
+                            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
+                        }
+                    }
+                }
+
                 override fun onShowFileChooser(view: WebView, cb: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
                     fileCb?.onReceiveValue(null)
                     fileCb = cb
@@ -117,6 +134,14 @@ class MainActivity : Activity() {
     /** 위젯·워치에서 누른 동작을 웹 앱이 가져가게 한다. */
     fun pull() = runOnUiThread {
         if (ready) web.evaluateJavascript("window.haruPull && haruPull()", null)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQ_MIC) return
+        val r = micRequest ?: return
+        micRequest = null
+        if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) r.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) else r.deny()
     }
 
     @Deprecated("Deprecated in Java")
@@ -212,6 +237,7 @@ class MainActivity : Activity() {
         private const val REQ_FILE = 1
         private const val REQ_SAVE = 2
         private const val REQ_NOTIF = 3
+        private const val REQ_MIC = 4
         private var live: WeakReference<MainActivity>? = null
 
         fun current(): MainActivity? = live?.get()

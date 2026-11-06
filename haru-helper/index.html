@@ -240,6 +240,31 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
 .over .btns{width:100%;max-width:26rem}
 .osub{font-size:.95rem;color:var(--sub);font-weight:800}
 
+/* 집중 타이머 · 체크인 · 계획 */
+.disc{width:min(70vw,40vh,300px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow);transition:background .5s}
+.disc div{width:78%;aspect-ratio:1;border-radius:50%;background:var(--card);display:grid;place-items:center;align-content:center;gap:2px}
+.disc b{font-size:2.6rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.disc small{font-size:.8rem;color:var(--sub);font-weight:700}
+.ftask{font-size:1.25rem;font-weight:800;max-width:24rem;overflow-wrap:anywhere}
+.fbar{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--violet-soft),var(--accent-soft));border-radius:18px;padding:12px 14px;font-weight:800}
+.fbar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ckrow{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ckrow > b{width:4.6rem;font-size:.86rem;flex:none}
+.ckrow .chip{height:2.1rem;padding:0 .7rem;font-size:.84rem}
+.ckdone{display:flex;align-items:center;gap:12px;font-weight:800;font-size:.95rem;flex-wrap:wrap}
+.week{width:100%;border-collapse:collapse;font-size:.82rem;text-align:center}
+.week th{font-weight:700;color:var(--sub);padding:4px 2px;font-size:.75rem}
+.week td{padding:6px 2px;border-top:1px solid var(--line);font-weight:700}
+.week td:first-child,.week th:first-child{text-align:left}
+.plan{border-radius:16px;background:var(--field);padding:11px 12px;margin-top:8px;display:flex;gap:10px;align-items:flex-start}
+.plan .tx{flex:1;min-width:0;font-size:.9rem;line-height:1.5;overflow-wrap:anywhere}
+.plan .tx b{color:var(--accent)}
+.stepn{width:4.2rem;height:4.2rem;border-radius:50%;background:var(--violet-soft);color:var(--violet);font-size:2.2rem;font-weight:900;display:grid;place-items:center}
+.vmeter{height:8px;border-radius:4px;background:var(--field);overflow:hidden;margin-top:6px}
+.vmeter i{display:block;height:100%;width:0;background:var(--teal);transition:width .15s}
+.auto{display:flex;align-items:center;gap:8px;justify-content:center;font-size:.86rem;font-weight:800;color:var(--sub);margin-top:10px}
+.auto .dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.auto .dot.me{background:#f59e0b}.auto .dot.other{background:var(--teal)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));background:#25233a;color:#fff;border-radius:16px;padding:11px 12px 11px 16px;display:flex;gap:10px;align-items:center;font-size:.9rem;font-weight:600;z-index:60;max-width:calc(100% - 32px);box-shadow:0 8px 28px rgba(0,0,0,.28);animation:up .2s ease}
 .toast button{color:#b9b5ff;font-weight:800;padding:4px 8px}
 </style>
@@ -284,14 +309,26 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   function freshState(){
     return {
       notes: [], tasks: [], focus: null, reminders: [], moods: [], unsent: [], talks: [], parked: [],
+      plans: DEF_PLANS.map(function(p){ return { id: uid(), area: p[0], when: p[1], then: p[2] }; }),
+      focusLog: [], estLog: [], checkins: {}, thoughts: [], session: null,
       lists: DEF_LISTS.map(function(l){ return { id: l.id, name: l.name, items: l.items.map(function(t){ return { id: uid(), text: t, on: false }; }) }; })
     };
   }
+  // 만약-그러면 계획(실행 의도) 예시
+  var DEF_PLANS = [
+    ['mind', '화가 확 올라오면', '대답하기 전에 숨을 길게 세 번 내쉰다'],
+    ['mind', '메시지를 세게 쓰고 싶어지면', '‘보내지 않는 글’에 먼저 쓰고 20분 뒤에 다시 읽는다'],
+    ['talk', '상대 말을 끊고 싶어지면', '키워드만 적어 두고 끝까지 듣는다'],
+    ['talk', '내 말이 길어졌다고 느끼면', '“너는 어떻게 생각해?”라고 묻는다'],
+    ['life', '현관문 손잡이를 잡으면', '‘나가기 전’ 목록을 연다']
+  ];
   var state = freshState();
   try{ var s0 = JSON.parse(localStorage.getItem(KEY)); if(s0 && typeof s0 === 'object') for(var k0 in s0) state[k0] = s0[k0]; }catch(e){}
+  // 예전 버전에서 저장한 기록에 새 항목 채우기
+  (function(){ var f = freshState(); ['plans', 'focusLog', 'estLog', 'thoughts'].forEach(function(k){ if(!Array.isArray(state[k])) state[k] = f[k]; }); if(!state.checkins || typeof state.checkins !== 'object') state.checkins = {}; })();
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} nativeSync(); }
 
-  var ui = { tab: 'today', mem: 'notes', autoFS: true, installDismissed: false, theme: 'auto', font: 0, vib: true, sound: true, talkSec: 45, talkSound: false };
+  var ui = { tab: 'today', mem: 'notes', autoFS: true, installDismissed: false, theme: 'auto', font: 0, vib: true, sound: true, talkSec: 45, talkSound: false, focusMin: 20, autoTalk: false, autoSens: 1, voice: null };
   try{ var u0 = JSON.parse(localStorage.getItem(UIKEY)); if(u0) for(var k1 in u0) ui[k1] = u0[k1]; }catch(e){}
   function saveUI(){ try{ localStorage.setItem(UIKEY, JSON.stringify(ui)); }catch(e){} }
   function applyLook(){
@@ -367,7 +404,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   window.haruBack = function(){
     var dims = $('sheetRoot').children;
     if(dims.length){ var d = dims[dims.length - 1]; if(d.close) d.close(); else d.remove(); return true; }
-    if(over){ closeOver(); return true; }
+    if(over){ closeOver(); render(); return true; }
     if(ui.tab !== 'today'){ ui.tab = 'today'; saveUI(); render(); return true; }
     return false;
   };
@@ -485,7 +522,9 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   // ===== 화면 그리기 =====
   var TITLES = { today: '하루 도우미', mem: '기억', mind: '마음', talk: '대화' };
   var draft = { emo: null, lv: 5 };
-  function dueReminders(){ var n = Date.now(); return state.reminders.filter(function(r){ return !r.done && r.at <= n; }); }
+  // 집중 타이머가 앱 밖에서도 울리도록 넣어 두는 알림(kind: timer)은 알림 목록에 보이지 않게 함
+  function userRems(){ return state.reminders.filter(function(r){ return r.kind !== 'timer'; }); }
+  function dueReminders(){ var n = Date.now(); return userRems().filter(function(r){ return !r.done && r.at <= n; }); }
   function head(icon, color, title, right){ return '<div class="ch"><span class="ico c-' + color + '">' + icon + '</span><h2>' + title + '</h2>' + (right || '') + '</div>'; }
 
   function render(){
@@ -508,7 +547,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       '<div class="btns"><button class="btn primary" data-a="install">설치하기</button><button class="btn" data-a="fs" id="bFs">전체화면</button><button class="btn ghost" data-a="later">다음에</button></div></div></div>';
     var d = new Date(), hr = d.getHours();
     var hi = hr < 5 ? '늦은 밤이에요 🌙' : hr < 11 ? '좋은 아침이에요 ☀️' : hr < 17 ? '오늘도 잘 하고 있어요 🌤' : hr < 21 ? '오늘도 수고 많았어요 🌇' : '하루를 정리할 시간이에요 🌙';
-    var openN = state.tasks.filter(function(t){ return !t.done; }).length, remN = state.reminders.filter(function(r){ return !r.done; }).length;
+    var openN = state.tasks.filter(function(t){ return !t.done; }).length, remN = userRems().filter(function(r){ return !r.done; }).length;
     h += '<div class="hero wide"><div class="date">' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + WD[d.getDay()] + '요일</div><div class="hi">' + hi + '</div>' +
       '<div class="stats"><button data-a="goMem" data-sub="tasks"><b>' + openN + '</b>할 일</button><button data-a="goMem" data-sub="rem"><b>' + remN + '</b>알림</button><button data-a="goMem" data-sub="notes"><b>' + state.notes.length + '</b>메모</button></div></div>';
 
@@ -521,18 +560,20 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       '<div class="capto"><button class="c-indigo" data-a="cap" data-to="note">📝 메모</button><button class="c-green" data-a="cap" data-to="task">✅ 할 일</button><button class="c-amber" data-a="cap" data-to="rem">⏰ 알림</button></div>' +
       '<p class="note">일단 적어 두면 머릿속에서 내려놓을 수 있어요. 정리는 나중에 ‘기억’에서 해요.</p></div>';
 
+    if(state.session) h += '<button class="fbar wide" data-a="focusOpen">⏱ <span>집중 중 · ' + esc(state.session.text) + '</span><b id="fbLeft">' + mmss(state.session.end - Date.now()) + '</b></button>';
     var f = state.tasks.find(function(t){ return t.id === state.focus && !t.done; });
     h += '<div class="card">' + head('🎯', 'amber', '지금 할 일 하나', f ? '<button class="link" data-a="pickFocus">바꾸기</button>' : '');
     if(f) h += '<div class="focus">' + esc(f.text) + '<button class="done" data-a="taskDone" data-id="' + f.id + '" aria-label="다 했어요">✓</button></div>';
     else h += '<p class="empty">여러 가지를 한꺼번에 붙잡고 있으면 더 쉽게 잊어요. 지금 할 일 하나만 골라 두세요.</p><button class="btn soft block" data-a="pickFocus">하나 고르기</button>';
     h += '</div>';
 
-    var up = state.reminders.filter(function(r){ return !r.done; }).sort(function(a, b){ return a.at - b.at; });
+    var up = userRems().filter(function(r){ return !r.done; }).sort(function(a, b){ return a.at - b.at; });
     h += '<div class="card">' + head('⏰', 'rose', '알림', '<button class="link" data-a="remNew">+ 추가</button>');
     if(!up.length) h += '<p class="empty">정해 둔 알림이 없어요.</p>';
     else h += '<div class="list">' + up.slice(0, 4).map(remItem).join('') + '</div>' + (up.length > 4 ? '<button class="more" data-a="goMem" data-sub="rem">알림 ' + up.length + '개 모두 보기 ›</button>' : '');
     h += '</div>';
 
+    h += focusCard() + checkinCard();
     h += '<div class="card">' + head('🧾', 'sky', '챙길 것') + '<div class="chips">' + state.lists.map(function(l){
       var n = l.items.filter(function(i){ return i.on; }).length;
       return '<button class="chip" data-a="openList" data-id="' + l.id + '">' + esc(l.name) + ' <span class="sub">' + n + '/' + l.items.length + '</span></button>';
@@ -578,7 +619,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       }).join('') + '</div><button class="more" data-a="clearDone">끝낸 일 ' + done.length + '개 정리하기</button>';
       h += '</div>';
     } else if(ui.mem === 'rem'){
-      var rs = state.reminders.filter(function(r){ return !r.done; }).sort(function(a, b){ return a.at - b.at; });
+      var rs = userRems().filter(function(r){ return !r.done; }).sort(function(a, b){ return a.at - b.at; });
       h += '<div class="card wide">' + head('⏰', 'rose', '알림', '<button class="link" data-a="remNew">+ 추가</button>') +
         (rs.length ? '<div class="list">' + rs.map(remItem).join('') + '</div>' : '<p class="empty">알림이 없어요.</p>') +
         (NATIVE ? '<p class="note">앱을 닫아 두어도 제시간에 휴대폰과 워치로 알려 줘요.</p>' + nativeAlarmHint()
@@ -629,7 +670,9 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     ['ground', '👀', '5·4·3·2·1', '주변 감각으로 돌아오기', 'green'],
     ['unsentNew', '✉️', '보내지 않는 글', '하고 싶은 말을 여기에만', 'rose'],
     ['body', '🧊', '몸으로 진정하기', '찬물 · 자리 옮기기 · 걷기', 'sky'],
-    ['afterTalk', '🤝', '다시 이야기할 때', '화가 가라앉은 뒤 할 말', 'amber']
+    ['afterTalk', '🤝', '다시 이야기할 때', '화가 가라앉은 뒤 할 말', 'amber'],
+    ['stop', '✋', 'STOP 기술', '멈추고 · 물러나고 · 살피고 · 고르기', 'violet', true],
+    ['reframe', '🔍', '생각 바꿔 보기', '사실과 추측을 나눠 보기', 'indigo']
   ];
   function viewMind(){
     var h = '<div class="card">' + head('💗', 'rose', '지금 마음은 어떤가요?') + '<div class="chips">' + EMOS.map(function(e){
@@ -644,6 +687,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       return '<button class="tool c-' + t[4] + (hot && t[5] ? ' hot' : '') + '" data-a="' + t[0] + '"><span class="e">' + t[1] + '</span>' + t[2] + '<small>' + t[3] + '</small></button>';
     }).join('') + '</div></div>';
 
+    h += plansCard(['mind', 'life'], '🧭', '만약-그러면 계획');
     if(state.unsent.length){
       h += '<div class="card">' + head('✉️', 'rose', '보내지 않은 글') + '<div class="list">' + state.unsent.slice().reverse().map(function(u){
         return '<div class="item"><div class="tx">' + esc(u.text.length > 60 ? u.text.slice(0, 60) + '…' : u.text) + '<small>' + fmtAgo(u.t) + '</small></div>' +
@@ -664,6 +708,12 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     }).join('') + '</div>' : '<p class="empty">아직 기록이 없어요. 어떤 때 감정이 커지는지 보이기 시작하면 미리 대비할 수 있어요.</p>';
     h += '</div>';
 
+    if(state.thoughts.length){
+      h += '<div class="card">' + head('🔍', 'indigo', '생각 바꿔 보기 기록') + '<div class="list">' + state.thoughts.slice(-4).reverse().map(function(t){
+        return '<div class="item"><div class="tx">' + esc(t.thought) + '<small>→ ' + esc(t.alt || '') + (t.act ? ' · 할 일: ' + esc(t.act) : '') + '</small><small>' + fmtAgo(t.t) + '</small></div><button class="mini" data-a="thoughtDel" data-id="' + t.id + '" aria-label="지우기">✕</button></div>';
+      }).join('') + '</div></div>';
+    }
+    h += weekCard();
     h += '<div class="card wide crisis">이 앱은 스스로 마음을 돌보도록 돕는 도구이고, 치료를 대신하지는 않아요. 너무 힘들거나 나를 해치고 싶은 생각이 들면 혼자 견디지 말고 <b>자살예방상담전화 109</b>(24시간)나 믿을 수 있는 사람에게 바로 연락하세요. 증상이 생활을 계속 힘들게 하면 정신건강의학과 상담도 큰 도움이 돼요.</div>';
     return h;
   }
@@ -690,14 +740,15 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       h += '<div class="card wide"><div class="sub" style="text-align:center;font-weight:700">대화한 시간</div><div class="big" id="tTot">' + mmss(tot) + '</div>' +
         '<div class="talkring" id="tRing" style="background:' + ringBg(cur) + '"><button class="talkbtn' + (talk.curStart ? (long ? ' long' : ' me') : '') + '" id="tBtn" data-a="talkTog">' + talkBtnText(cur) + '</button></div>' +
         '<div class="ratio"><i id="tBar" style="width:' + pct + '%"></i></div><div class="rl"><span id="tMe">🗣 나 ' + pct + '% · ' + mmss(me) + '</span><span id="tYou">👂 상대 ' + (100 - pct) + '%</span></div>' +
-        '<div class="tip" id="tTip">💡 ' + esc(TIPS[talk.tip % TIPS.length]) + '</div></div>';
+        autoLine() + '<div class="tip" id="tTip">💡 ' + esc(talkTip()) + '</div></div>';
       h += '<div class="card">' + head('💡', 'amber', '끼어들고 싶은 말 적어 두기') + '<div class="capbox"><input id="park" placeholder="키워드만 짧게" enterkeyhint="done" autocomplete="off"><button class="btn primary" data-a="park">적기</button></div>' + parkedList() + '</div>';
       h += '<div class="card"><button class="btn warn block" data-a="talkEnd" style="margin:0">대화 끝내기</button><p class="note">말을 시작할 때 동그란 버튼을 누르고, 다 말하면 다시 누르세요. 한 번에 ' + ui.talkSec + '초 넘게 이어서 말하면 진동으로 살짝 알려 줘요.</p></div>';
     } else {
       h += '<div class="card wide">' + head('🗣', 'amber', '대화할 때 말하는 시간 살피기') + '<p class="sub">대화를 시작하면 동그란 버튼이 나와요. 내가 말할 때 누르고, 다 말하면 다시 누르세요. 한 번에 오래 이어서 말하면 진동으로 살짝 알려 주고, 내가 말한 비율도 보여 줘요.' + (NATIVE ? ' 워치에서도 똑같이 쓸 수 있어요.' : '') + '</p>' +
         '<label class="sub" style="display:block;margin:14px 0 8px;font-weight:800">이만큼 이어서 말하면 알려 주기</label><div class="chips">' + [20, 30, 45, 60, 90].map(function(s){
           return '<button class="chip' + (ui.talkSec === s ? ' on' : '') + '" data-a="talkSec" data-v="' + s + '">' + s + '초</button>';
-        }).join('') + '</div><button class="btn primary block" data-a="talkStart" style="height:3.5rem;font-size:1.1rem;margin-top:16px">대화 시작</button></div>';
+        }).join('') + '</div>' + autoSetup() + '<button class="btn primary block" data-a="talkStart" style="height:3.5rem;font-size:1.1rem;margin-top:16px">대화 시작</button></div>';
+      h += plansCard(['talk'], '🧭', '대화할 때 만약-그러면');
       h += '<div class="card">' + head('📌', 'violet', '대화할 때 기억할 것') + '<ul class="tips">' + TIPS.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
       h += '<div class="card">' + head('💡', 'amber', '적어 둔 할 말') + (state.parked.length ? parkedList() + '<div class="btns"><button class="btn" data-a="parkClear">모두 지우기</button></div>' : '<p class="empty">대화 중에 끼어들고 싶은 말을 적어 두면 여기에 모여요. 상대 말이 끝난 뒤 하나만 골라 말해 보세요.</p>') + '</div>';
       if(state.talks.length){
@@ -722,8 +773,9 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   }
   function talkStart(){
     if(talk){ ui.tab = 'talk'; saveUI(); render(); return; }
-    talk = { start: Date.now(), me: 0, curStart: 0, longest: 0, alerts: 0, lastAlert: 0, tip: Math.floor(Math.random() * TIPS.length) };
+    talk = { start: Date.now(), me: 0, curStart: 0, longest: 0, alerts: 0, lastAlert: 0, tip: Math.floor(Math.random() * 20) };
     wakeOn(); ui.tab = 'talk'; saveUI(); render();
+    if(ui.autoTalk && ui.voice) autoStart();
   }
   function talkToggle(){
     var n = Date.now();
@@ -733,6 +785,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     render();
   }
   function talkEnd(){
+    autoStop();
     if(talk.curStart) talkToggle();
     var dur = Date.now() - talk.start, rec = { id: uid(), t: talk.start, dur: dur, me: talk.me, longest: talk.longest, alerts: talk.alerts };
     var p = Math.round(rec.me / Math.max(1, dur) * 100);
@@ -759,6 +812,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     $('tMe').textContent = '🗣 나 ' + pct + '% · ' + mmss(me);
     $('tYou').textContent = '👂 상대 ' + (100 - pct) + '%';
     $('tRing').style.background = ringBg(cur);
+    $('tTip').textContent = '💡 ' + talkTip();
     var b = $('tBtn');
     b.className = 'talkbtn' + (talk.curStart ? (cur >= lim ? ' long' : ' me') : '');
     b.innerHTML = talkBtnText(cur);
@@ -767,7 +821,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   // ===== 알림 확인 =====
   var remShown = {};
   function checkReminders(){
-    var n = Date.now(), fresh = state.reminders.filter(function(r){ return !r.done && r.at <= n && !r.fired; });
+    var n = Date.now(), fresh = userRems().filter(function(r){ return !r.done && r.at <= n && !r.fired; });
     if(!fresh.length) return;
     // 안드로이드 앱에서는 알림을 앱이 따로 울리므로 여기서는 창만 띄움
     fresh.forEach(function(r){ r.fired = true; if(!NATIVE) notify('⏰ ' + r.text, '하루 도우미 알림 · ' + hm(new Date(r.at))); });
@@ -983,6 +1037,401 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     });
   }
 
+  // ===== 집중 타이머 =====
+  // 성인 ADHD 인지행동치료(Safren 등)의 ‘집중할 수 있는 시간만큼 나눠서 하기’, ‘딴생각은 적어 두고 나중에 하기’와
+  // 시간을 눈에 보이게 하기(줄어드는 원), 예상 시간과 실제 시간 비교로 시간 감각 맞추기
+  function todayKey(t){ var d = new Date(t || Date.now()); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function focusCard(){
+    var today = state.focusLog.filter(function(x){ return todayKey(x.t) === todayKey(); });
+    var mins = today.reduce(function(a, x){ return a + x.mins; }, 0);
+    var h = '<div class="card">' + head('⏱', 'violet', '집중 타이머') + '<p class="sub">' + (today.length ? '오늘 ' + today.length + '번 · ' + mins + '분 집중했어요. 👏' : '집중할 수 있는 만큼만 짧게 나눠서 해요. 딴생각은 적어 두고 나중에 봐요.') + '</p>';
+    var r = estRatio();
+    if(r) h += '<p class="note">⏳ 시간 감각: 최근 ' + r.n + '번은 실제로 걸린 시간이 예상의 <b>' + r.x + '배</b>였어요.' + (r.x >= 1.3 ? ' 다음 계획에는 예상 시간에 ' + r.x + '배를 곱해 잡아 보세요.' : '') + '</p>';
+    h += '<button class="btn primary block" data-a="' + (state.session ? 'focusOpen' : 'focusStart') + '">' + (state.session ? '집중 화면 열기' : '집중 시작') + '</button></div>';
+    return h;
+  }
+  function estRatio(){
+    var l = state.estLog.slice(-5); if(l.length < 3) return null;
+    var e = 0, a = 0; l.forEach(function(x){ e += x.est; a += x.real; });
+    return { n: l.length, x: Math.round(a / e * 10) / 10 };
+  }
+  // 예상 시간을 적어 둔 할 일을 끝내면 집중 타이머로 잰 실제 시간과 비교
+  function estMsg(t){
+    if(!t.est || !t.spent) return '';
+    state.estLog.push({ est: t.est, real: t.spent, t: Date.now() });
+    if(state.estLog.length > 50) state.estLog.shift();
+    return '끝! 예상 ' + t.est + '분 · 실제 ' + t.spent + '분 집중했어요';
+  }
+  function focusSheet(){
+    var open = state.tasks.filter(function(t){ return !t.done; });
+    var cur = state.tasks.find(function(t){ return t.id === state.focus && !t.done; });
+    var m = openModal('<h3>⏱ 집중 시작</h3><label class="f">무엇을 할까요?</label>' +
+      (open.length ? '<div class="chips" id="fsT">' + open.slice(0, 8).map(function(t){ return '<button class="chip' + (cur && t.id === cur.id ? ' on' : '') + '" data-id="' + t.id + '">' + esc(t.text) + '</button>'; }).join('') + '</div>' : '') +
+      '<input id="fsNew" placeholder="' + (open.length ? '또는 새로 적기' : '예: 메일 답장 3개 쓰기') + '" style="margin-top:8px" autocomplete="off">' +
+      '<label class="f">얼마나 집중할까요?</label><div class="chips" id="fsM">' + [10, 15, 20, 25, 45].map(function(x){ return '<button class="chip' + (x === ui.focusMin ? ' on' : '') + '" data-v="' + x + '">' + x + '분</button>'; }).join('') + '</div>' +
+      '<label class="f">이 일을 다 끝내려면 몇 분 걸릴 것 같아요? (고르지 않아도 돼요)</label><div class="chips" id="fsE">' + [5, 15, 30, 60, 120].map(function(x){ return '<button class="chip" data-v="' + x + '">' + (x < 60 ? x + '분' : x / 60 + '시간') + '</button>'; }).join('') + '</div>' +
+      '<p class="note">처음에는 ‘이 정도면 쉽다’ 싶은 짧은 시간으로 시작하세요. 예상과 실제를 비교하다 보면 시간 감각이 조금씩 맞춰져요.</p>' +
+      '<div class="btns"><button class="btn" data-close>취소</button><button class="btn primary" data-go>시작</button></div>');
+    m.addEventListener('click', function(e){
+      var c = e.target.closest('.chip');
+      if(c){
+        var g = c.parentNode, was = c.classList.contains('on');
+        [].forEach.call(g.children, function(x){ x.classList.remove('on'); });
+        if(!(g.id === 'fsE' && was)) c.classList.add('on');
+        if(g.id === 'fsT') m.querySelector('#fsNew').value = '';
+        return;
+      }
+      if(!e.target.closest('[data-go]')) return;
+      var nv = m.querySelector('#fsNew').value.trim(), sel = m.querySelector('#fsT .on'), t;
+      if(nv) t = addTask(nv);
+      else if(sel) t = state.tasks.find(function(x){ return x.id === sel.getAttribute('data-id'); });
+      if(!t){ toast('무엇을 할지 골라 주세요'); return; }
+      var mins = +(m.querySelector('#fsM .on') || { getAttribute: function(){ return ui.focusMin; } }).getAttribute('data-v');
+      var est = m.querySelector('#fsE .on');
+      if(est){ t.est = +est.getAttribute('data-v'); t.spent = 0; }
+      m.close();
+      startTimer('focus', t.id, t.text, mins);
+    });
+  }
+  function startTimer(type, taskId, text, mins){
+    var now = Date.now();
+    state.session = { type: type, taskId: taskId, text: text, start: now, end: now + mins * MIN, mins: mins, distract: 0 };
+    state.reminders = state.reminders.filter(function(r){ return r.kind !== 'timer'; });
+    state.reminders.push({ id: 'timer-' + uid(), kind: 'timer', text: (type === 'break' ? '☕ 쉬는 시간 끝: ' : '⏱ 집중 시간 끝: ') + text, at: state.session.end, done: false, fired: false });
+    save(); focusOverlay();
+  }
+  function clearTimer(){
+    state.session = null;
+    state.reminders = state.reminders.filter(function(r){ return r.kind !== 'timer'; });
+  }
+  function focusOverlay(){
+    var s = state.session; if(!s) return;
+    var brk = s.type === 'break';
+    var o = openOver('<div class="osub">' + (brk ? '☕ 쉬는 시간' : '⏱ 집중하는 중') + '</div><div class="ftask">' + esc(brk ? '일어나서 몸을 풀고 물 한 잔 마셔요' : s.text) + '</div>' +
+      '<div class="disc" id="fDisc"><div><b id="fLeft"></b><small id="fSub"></small></div></div>' +
+      (brk ? '' : '<div class="btns"><button class="btn soft" id="fDis" style="height:3.2rem">💭 딴생각 적어 두기</button></div>') +
+      '<div class="btns"><button class="btn" id="fHide">작게 보기</button><button class="btn" id="fStop">' + (brk ? '쉬는 시간 끝내기' : '그만하기') + '</button></div>');
+    o.kind = 'focus';
+    if(!brk) o.el.querySelector('#fDis').onclick = distractSheet;
+    o.el.querySelector('#fHide').onclick = function(){ closeOver(); render(); };
+    o.el.querySelector('#fStop').onclick = function(){ focusFinish(false); };
+    paintFocus();
+  }
+  function paintFocus(){
+    var s = state.session; if(!s) return;
+    var left = Math.max(0, s.end - Date.now()), frac = left / (s.mins * MIN);
+    var d = $('fDisc');
+    if(d){
+      d.style.background = 'conic-gradient(' + (s.type === 'break' ? 'var(--green)' : 'var(--rose)') + ' 0 ' + (frac * 360) + 'deg, var(--field) 0)';
+      $('fLeft').textContent = mmss(left + 999);
+      $('fSub').textContent = s.type === 'break' ? '쉬는 중' : '남음' + (s.distract ? ' · 딴생각 ' + s.distract + '개 적음' : '');
+    }
+    var fb = $('fbLeft'); if(fb) fb.textContent = mmss(left + 999);
+  }
+  function focusTick(){
+    if(!state.session) return;
+    paintFocus();
+    if(Date.now() >= state.session.end) focusFinish(true);
+  }
+  setInterval(focusTick, 1000);
+  function focusFinish(complete){
+    var s = state.session; if(!s) return;
+    var mins = complete ? s.mins : Math.round((Date.now() - s.start) / MIN);
+    clearTimer();
+    if(s.type === 'focus' && mins >= 1){
+      state.focusLog.push({ t: s.start, mins: mins, taskId: s.taskId });
+      if(state.focusLog.length > 500) state.focusLog.shift();
+      var t = state.tasks.find(function(x){ return x.id === s.taskId; });
+      if(t) t.spent = (t.spent || 0) + mins;
+    }
+    save();
+    if(!complete){ closeOver(); render(); if(s.type === 'focus' && mins >= 1) toast(mins + '분 집중했어요. 다음에 이어서 해요'); return; }
+    buzz([300, 150, 300, 150, 300]);
+    if(!NATIVE) beep(3, 660);
+    if(s.type === 'break'){
+      var ob = openOver('<div style="font-size:4rem">☕</div><h3>쉬는 시간이 끝났어요</h3><p>' + esc(s.text) + '</p><div class="btns"><button class="btn primary" data-x="again">' + ui.focusMin + '분 더 집중하기</button><button class="btn" data-x="close">마치기</button></div>');
+      ob.el.addEventListener('click', function(e){
+        var b = e.target.closest('[data-x]'); if(!b) return;
+        if(b.getAttribute('data-x') === 'again') startTimer('focus', s.taskId, s.text, ui.focusMin); else { closeOver(); render(); }
+      });
+      render();
+      return;
+    }
+    var o = openOver('<div style="font-size:4rem">🎉</div><h3>' + mins + '분 집중했어요!</h3><p>' + esc(s.text) + (s.distract ? '<br>적어 둔 딴생각 ' + s.distract + '개는 메모함에 있어요.' : '') + '</p>' +
+      '<div class="btns"><button class="btn good" data-x="done">이 일 끝냈어요</button></div>' +
+      '<div class="btns"><button class="btn primary" data-x="break">5분 쉬고 한 번 더</button><button class="btn" data-x="close">마치기</button></div>');
+    o.el.addEventListener('click', function(e){
+      var b = e.target.closest('[data-x]'); if(!b) return;
+      var x = b.getAttribute('data-x');
+      if(x === 'break'){ startTimer('break', s.taskId, s.text, 5); return; }
+      closeOver();
+      if(x === 'done'){
+        var t = state.tasks.find(function(y){ return y.id === s.taskId; });
+        if(t && !t.done){ t.done = true; t.doneAt = Date.now(); if(state.focus === t.id) state.focus = null; var em = estMsg(t); save(); toast(em || '잘했어요! 하나 끝냈어요 🎉'); }
+      }
+      render();
+    });
+    render();
+  }
+  function distractSheet(){
+    var m = openModal('<h3>💭 딴생각 적어 두기</h3><p class="sub">떠오른 생각을 짧게 적고 바로 하던 일로 돌아가요. 집중이 끝나면 메모함에서 볼 수 있어요.</p><input id="dT" autofocus placeholder="예: 택배 반품 신청" enterkeyhint="done" autocomplete="off"><div class="btns"><button class="btn" data-close>취소</button><button class="btn primary" data-ok>적고 돌아가기</button></div>');
+    function ok(){
+      var v = m.querySelector('#dT').value.trim(); if(!v){ m.close(); return; }
+      state.notes.push({ id: uid(), text: v, t: Date.now(), from: 'focus' });
+      if(state.session) state.session.distract++;
+      save(); m.close(); paintFocus(); toast('적어 두었어요. 다시 집중!');
+    }
+    m.querySelector('[data-ok]').onclick = ok;
+    m.querySelector('#dT').addEventListener('keydown', function(e){ if(e.key === 'Enter' && !e.isComposing) ok(); });
+  }
+
+  // ===== 오늘 체크인 (약 · 잠 · 운동) =====
+  // 스스로 기록하고 돌아보기(자기 모니터링). 약을 꾸준히 먹는 것이 가장 효과가 큰 치료라서 함께 기록함
+  var ckEditing = false;
+  var CK = [
+    ['med', '💊 약', [['y', '먹었어요'], ['n', '안 먹었어요'], ['na', '해당 없음']]],
+    ['sleep', '😴 잠', [['<5', '5시간 미만'], ['5-6', '5~6시간'], ['7-8', '7~8시간'], ['9+', '9시간 넘게']]],
+    ['move', '🏃 운동', [['y', '했어요'], ['n', '안 했어요']]]
+  ];
+  function ckLabel(k, v){ var o = k[2].find(function(x){ return x[0] === v; }); return o ? o[1] : '-'; }
+  function checkinCard(){
+    var c = state.checkins[todayKey()] || {};
+    var done = CK.every(function(k){ return c[k[0]]; });
+    var h = '<div class="card">' + head('📋', 'green', '오늘 체크인', done && !ckEditing ? '<button class="link" data-a="ckEdit">고치기</button>' : '');
+    if(done && !ckEditing){
+      h += '<div class="ckdone">' + CK.map(function(k){ return k[1].split(' ')[0] + ' ' + ckLabel(k, c[k[0]]); }).join('<span class="sub">·</span>') + '</div>' +
+        '<p class="note">약·잠·운동과 기분이 어떻게 이어지는지 ‘마음’ 탭의 지난 7일에서 볼 수 있어요.</p>';
+    } else {
+      h += '<p class="sub">세 가지만 눌러 두면, 어떤 날 힘들었는지 나중에 한눈에 보여요.</p>' + CK.map(function(k){
+        return '<div class="ckrow"><b>' + k[1] + '</b>' + k[2].map(function(o){ return '<button class="chip' + (c[k[0]] === o[0] ? ' on' : '') + '" data-a="ck" data-k="' + k[0] + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>';
+      }).join('');
+    }
+    return h + '</div>';
+  }
+  function setCheckin(k, v){
+    var d = todayKey(), c = state.checkins[d] = state.checkins[d] || {};
+    c[k] = v;
+    if(CK.every(function(x){ return c[x[0]]; })) ckEditing = false;
+    save(); render();
+  }
+  function weekCard(){
+    var rows = '', any = false;
+    for(var i = 6; i >= 0; i--){
+      var t = Date.now() - i * DAY, d = new Date(t), k = todayKey(t), c = state.checkins[k] || {};
+      var ms = state.moods.filter(function(m){ return todayKey(m.t) === k; });
+      if(Object.keys(c).length || ms.length) any = true;
+      var top = ms.slice().sort(function(a, b){ return b.lv - a.lv; })[0];
+      rows += '<tr><td>' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + WD[d.getDay()] + '</td><td>' + ({ y: '✅', n: '❌', na: '–' }[c.med] || '') + '</td><td>' + esc(c.sleep || '') + '</td><td>' + ({ y: '✅', n: '–' }[c.move] || '') + '</td><td>' + (top ? esc(top.emo.split(' ')[0]) + ' ' + top.lv : '') + '</td></tr>';
+    }
+    if(!any) return '';
+    return '<div class="card">' + head('📅', 'green', '지난 7일') + '<table class="week"><tr><th>날짜</th><th>💊 약</th><th>😴 잠</th><th>🏃</th><th>가장 큰 감정</th></tr>' + rows + '</table>' +
+      '<p class="note">잠이 부족하거나 약을 빠뜨린 날 감정이 더 커졌는지 살펴보세요. 진료받을 때 이 표를 보여 드리면 도움이 돼요.</p></div>';
+  }
+
+  // ===== 만약-그러면 계획 (실행 의도) =====
+  var AREA = { mind: '💗 마음', talk: '🗣 대화', life: '🏠 생활' };
+  function plansCard(areas, icon, title){
+    var ps = state.plans.filter(function(p){ return areas.indexOf(p.area) >= 0; });
+    return '<div class="card">' + head(icon, 'violet', title, '<button class="link" data-a="planNew" data-area="' + areas[0] + '">+ 추가</button>') +
+      '<p class="sub">“만약 ○○하면 → △△한다”를 미리 정해 두면, 그 순간이 왔을 때 고민하지 않고 바로 움직이기 쉬워요.</p>' +
+      (ps.length ? ps.map(function(p){
+        return '<div class="plan"><div class="tx">만약 <b>' + esc(p.when) + '</b><br>→ ' + esc(p.then) + '</div><button class="mini" data-a="planEdit" data-id="' + p.id + '">고치기</button></div>';
+      }).join('') : '<p class="empty">아직 계획이 없어요.</p>') + '</div>';
+  }
+  function planSheet(id, area){
+    var p = id ? state.plans.find(function(x){ return x.id === id; }) : { id: uid(), area: area || 'mind', when: '', then: '' }, isNew = !id;
+    if(!p) return;
+    var m = openModal('<h3>' + (isNew ? '새 만약-그러면 계획' : '계획 고치기') + '</h3><label class="f">어디에 쓸까요?</label><div class="chips" id="pA">' +
+      Object.keys(AREA).map(function(k){ return '<button class="chip' + (p.area === k ? ' on' : '') + '" data-v="' + k + '">' + AREA[k] + '</button>'; }).join('') + '</div>' +
+      '<label class="f">만약 (그 순간)</label><input id="pW" value="' + esc(p.when) + '" placeholder="예: 회의에서 말하고 싶어 몸이 들썩이면"' + (isNew ? ' autofocus' : '') + '>' +
+      '<label class="f">그러면 (할 행동 하나)</label><input id="pT" value="' + esc(p.then) + '" placeholder="예: 펜으로 키워드만 적는다">' +
+      '<p class="note">‘그 순간’은 눈에 보이는 구체적인 상황으로, ‘행동’은 바로 할 수 있는 작은 것 하나로 적으면 잘 지켜져요.</p>' +
+      '<div class="btns">' + (isNew ? '' : '<button class="btn warn" data-x="del">지우기</button>') + '<button class="btn" data-close>취소</button><button class="btn primary" data-x="ok">저장</button></div>');
+    m.addEventListener('click', function(e){
+      var c = e.target.closest('#pA .chip');
+      if(c){ [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); }); return; }
+      var b = e.target.closest('[data-x]'); if(!b) return;
+      if(b.getAttribute('data-x') === 'del'){ m.close(); withUndo('계획을 지웠어요', function(){ state.plans = state.plans.filter(function(x){ return x.id !== p.id; }); }); return; }
+      var w = m.querySelector('#pW').value.trim(), t = m.querySelector('#pT').value.trim();
+      if(!w || !t){ toast('‘만약’과 ‘그러면’을 모두 적어 주세요'); return; }
+      p.when = w.replace(/^만약\s*/, ''); p.then = t.replace(/^그러면\s*/, ''); p.area = m.querySelector('#pA .on').getAttribute('data-v');
+      if(isNew) state.plans.push(p);
+      save(); m.close(); render();
+    });
+  }
+  // 대화 중 아래쪽 한 줄: 내가 정한 대화 계획을 먼저, 그다음 기본 요령
+  function talkTip(){
+    var list = state.plans.filter(function(p){ return p.area === 'talk'; }).map(function(p){ return '만약 ' + p.when + ' → ' + p.then; }).concat(TIPS);
+    return list[(talk ? talk.tip : 0) % list.length];
+  }
+
+  // ===== STOP 기술 (변증법적 행동치료) · 생각 바꿔 보기 (인지행동치료) =====
+  var STOP = [
+    ['S', '멈추기', '몸을 그대로 멈춰요. 지금은 말도, 행동도 하지 않아요.'],
+    ['T', '한 걸음 물러나기', '숨을 깊게 한 번 쉬어요. 할 수 있다면 그 자리에서 잠깐 떨어져요.'],
+    ['O', '살펴보기', '몸의 느낌, 떠오르는 생각과 감정, 그리고 실제로 일어난 일을 있는 그대로 봐요.'],
+    ['P', '마음 챙겨 나아가기', '내가 정말 바라는 결과에 도움이 되는 행동 하나를 골라요. 관계를 지키는 쪽은 무엇일까요?']
+  ];
+  function stopRun(){
+    var i = 0;
+    var o = openOver('<div class="stepn" id="sN"></div><h3 id="sH"></h3><p id="sP"></p><div class="dots" id="sD"></div><div class="btns"><button class="btn primary" id="sB" style="height:3.4rem;font-size:1.05rem">다음</button></div><button class="btn" id="sX">그만하기</button>');
+    function paint(){
+      var st = STOP[i];
+      o.el.querySelector('#sN').textContent = st[0];
+      o.el.querySelector('#sH').textContent = st[1];
+      o.el.querySelector('#sP').textContent = st[2];
+      o.el.querySelector('#sD').innerHTML = STOP.map(function(_, j){ return '<i' + (j <= i ? ' class="on"' : '') + '></i>'; }).join('');
+      o.el.querySelector('#sB').textContent = i === STOP.length - 1 ? '골랐어요' : '다음';
+    }
+    o.el.querySelector('#sX').onclick = closeOver;
+    o.el.querySelector('#sB').onclick = function(){ buzz(30); i++; if(i >= STOP.length) return breathDone(); paint(); };
+    paint();
+  }
+  function reframeSheet(){
+    var QS = ['확실한 사실은 무엇이고, 추측은 무엇일까?', '친구가 같은 일을 겪었다면 뭐라고 말해 줄까?', '일주일 뒤에도 이게 이만큼 중요할까?', '다른 이유가 있을 수도 있을까?'];
+    var m = openModal('<h3>🔍 생각 바꿔 보기</h3><p class="sub">감정이 클 때 떠오른 생각은 사실보다 크게 느껴지기 쉬워요. 하나씩 적어 보세요.</p>' +
+      '<label class="f">1. 어떤 일이 있었나요? (본 그대로)</label><input id="rS" placeholder="예: 팀장님이 내 보고서에 답을 안 했다">' +
+      '<label class="f">2. 그때 떠오른 생각</label><input id="rT" placeholder="예: 날 무시하는 거다">' +
+      '<label class="f">3. 다르게 볼 수도 있을까요? (질문을 눌러 보세요)</label><div class="chips" id="rQ">' + QS.map(function(q){ return '<button class="chip" style="height:auto;min-height:2.3rem;padding:.45rem .8rem;white-space:normal;text-align:left">' + q + '</button>'; }).join('') + '</div>' +
+      '<textarea id="rA" style="margin-top:8px;min-height:4rem" placeholder="예: 바빠서 아직 못 봤을 수도 있다"></textarea>' +
+      '<label class="f">4. 지금 할 수 있는 행동 하나</label><input id="rN" placeholder="예: 내일 오전에 한 번 물어본다">' +
+      '<div class="btns"><button class="btn" data-close>취소</button><button class="btn primary" data-ok>저장</button></div>');
+    m.addEventListener('click', function(e){
+      var c = e.target.closest('#rQ .chip');
+      if(c){ [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); }); var a = m.querySelector('#rA'); a.placeholder = c.textContent; a.focus(); return; }
+      if(!e.target.closest('[data-ok]')) return;
+      var th = m.querySelector('#rT').value.trim();
+      if(!th){ toast('떠오른 생각을 적어 주세요'); return; }
+      state.thoughts.push({ id: uid(), t: Date.now(), sit: m.querySelector('#rS').value.trim(), thought: th, alt: m.querySelector('#rA').value.trim(), act: m.querySelector('#rN').value.trim() });
+      if(state.thoughts.length > 300) state.thoughts.shift();
+      save(); m.close(); render(); toast('잘했어요. 생각을 한 번 더 살펴봤어요');
+    });
+  }
+
+  // ===== 자동 말하기 감지 (실험) =====
+  // 마이크 소리의 크기와 목소리 높이(기본 주파수)를 ‘내 목소리 등록’ 값과 비교해 내가 말하는 중인지 추정한다.
+  // 소리는 저장하거나 보내지 않고, 이 기기 안에서 바로 계산만 한다.
+  function micOpen(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return Promise.reject(new Error('no mic'));
+    return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }).then(function(stream){
+      var C = window.AudioContext || window.webkitAudioContext, ctx = new C();
+      var an = ctx.createAnalyser(); an.fftSize = 2048;
+      ctx.createMediaStreamSource(stream).connect(an);
+      if(ctx.state === 'suspended') ctx.resume();
+      return { stream: stream, ctx: ctx, an: an, buf: new Float32Array(2048), hist: [], iv: 0 };
+    });
+  }
+  function micClose(v){
+    if(!v) return;
+    clearInterval(v.iv);
+    try{ v.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+    try{ v.ctx.close(); }catch(e){}
+  }
+  // 정규화 자기상관으로 목소리 높이(Hz) 찾기. 목소리가 아니면 0
+  function detectPitch(b, sr){
+    var n = b.length >> 1, x = new Float32Array(n), sr2 = sr / 2, i, L;
+    for(i = 0; i < n; i++) x[i] = (b[2 * i] + b[2 * i + 1]) / 2;
+    var minL = Math.floor(sr2 / 400), maxL = Math.min(n - 64, Math.ceil(sr2 / 70)), W = n - maxL;
+    var e0 = 0; for(i = 0; i < W; i++) e0 += x[i] * x[i];
+    if(e0 <= 0) return 0;
+    var rs = [], best = 0;
+    for(L = minL; L <= maxL; L++){
+      var c = 0, e1 = 0;
+      for(i = 0; i < W; i++){ var y = x[i + L]; c += x[i] * y; e1 += y * y; }
+      var r = c / Math.sqrt(e0 * e1 + 1e-12); rs.push(r); if(r > best) best = r;
+    }
+    if(best < 0.55) return 0;
+    // 한 옥타브 낮게 읽지 않도록, 가장 큰 값에 가까운 첫 봉우리를 고름
+    for(L = 1; L < rs.length - 1; L++) if(rs[L] >= best * 0.88 && rs[L] >= rs[L - 1] && rs[L] >= rs[L + 1]) return sr2 / (L + minL);
+    return 0;
+  }
+  function micFrame(v){
+    v.an.getFloatTimeDomainData(v.buf);
+    var b = v.buf, sum = 0;
+    for(var i = 0; i < b.length; i++) sum += b[i] * b[i];
+    var db = 20 * Math.log10(Math.sqrt(sum / b.length) + 1e-9);
+    v.hist.push(db); if(v.hist.length > 300) v.hist.shift();
+    var sorted = v.hist.slice().sort(function(a, c){ return a - c; }), floor = sorted[Math.floor(sorted.length * 0.15)];
+    var pitch = db > floor + 8 && db > -70 ? detectPitch(b, v.ctx.sampleRate) : 0;
+    return { db: db, floor: floor, pitch: pitch, voiced: pitch > 0 };
+  }
+  function pct(arr, p){ var s = arr.slice().sort(function(a, b){ return a - b; }); return s[Math.min(s.length - 1, Math.floor(s.length * p))]; }
+  function voiceEnroll(){
+    var ve = null, busy = false;
+    var m = openModal('<h3>🎙 내 목소리 등록</h3><p>평소 대화하는 크기로 아래 문장을 10초 동안 소리 내어 읽어 주세요. 소리는 저장하지 않고, 목소리 크기와 높이만 기억해요.</p>' +
+      '<div class="card" style="box-shadow:none;background:var(--field);font-weight:700;line-height:1.7">오늘은 날씨가 참 좋네요. 점심은 뭘 먹을까요? 저는 따뜻한 국수가 먹고 싶어요. 이따가 산책도 하고, 저녁에는 일찍 쉬려고 해요.</div>' +
+      '<div class="vmeter"><i id="veM"></i></div><p class="sub" id="veS" style="margin-top:8px">휴대폰은 대화할 때 두는 자리(가슴 주머니, 내 앞 탁자)에 두고 읽으면 더 정확해요.</p>' +
+      '<div class="btns"><button class="btn" data-close>취소</button><button class="btn primary" id="veGo">시작</button></div>', function(){ micClose(ve); ve = null; });
+    var go = m.querySelector('#veGo');
+    go.onclick = function(){
+      if(busy) return; busy = true; go.disabled = true; go.style.opacity = .6;
+      micOpen().then(function(v){
+        ve = v;
+        var fr = [], st = Date.now();
+        v.iv = setInterval(function(){
+          var f = micFrame(v), meter = m.querySelector('#veM'), s = m.querySelector('#veS');
+          if(!meter){ micClose(v); return; }
+          if(f.voiced) fr.push(f);
+          meter.style.width = Math.max(0, Math.min(100, (f.db - f.floor) * 2.5)) + '%';
+          var left = Math.ceil((10000 - (Date.now() - st)) / 1000);
+          s.textContent = '듣는 중… ' + Math.max(0, left) + '초 남음';
+          if(Date.now() - st < 10000) return;
+          micClose(v); ve = null; busy = false; go.disabled = false; go.style.opacity = '';
+          if(fr.length < 40){ s.textContent = '목소리가 잘 안 들렸어요. 조금 더 크게, 휴대폰을 가까이 두고 다시 읽어 주세요.'; go.textContent = '다시 하기'; return; }
+          var ps = fr.map(function(x){ return x.pitch; }), ds = fr.map(function(x){ return x.db; });
+          ui.voice = { p20: pct(ps, 0.2), p50: pct(ps, 0.5), p80: pct(ps, 0.8), db25: pct(ds, 0.25), db50: pct(ds, 0.5), at: Date.now() };
+          ui.autoTalk = true; saveUI(); m.close(); render();
+          toast('등록했어요. 대화를 시작하면 저절로 알아들어요');
+        }, 50);
+      }).catch(function(){ busy = false; m.close(); toast('마이크를 쓸 수 없어요. 마이크 권한을 허용해 주세요'); });
+    };
+  }
+  var AUTO = null;
+  function autoStart(){
+    if(AUTO || !ui.voice) return;
+    AUTO = { pending: true };
+    micOpen().then(function(v){
+      if(!talk){ micClose(v); AUTO = null; return; }
+      AUTO = { v: v, score: 0, lastMe: 0, n: 0, show: 'quiet', level: 0 };
+      v.iv = setInterval(autoFrame, 50);
+    }).catch(function(){ AUTO = null; toast('마이크를 쓸 수 없어서 버튼으로만 기록해요'); });
+  }
+  function autoStop(){ if(AUTO && AUTO.v) micClose(AUTO.v); AUTO = null; }
+  function autoFrame(){
+    if(!talk || !AUTO || !AUTO.v){ autoStop(); return; }
+    var f = micFrame(AUTO.v), p = ui.voice, margin = [4, 7, 10][ui.autoSens] || 7, now = Date.now();
+    var me = f.voiced && f.db >= p.db25 - margin && f.pitch >= p.p20 / 1.2 && f.pitch <= p.p80 * 1.2;
+    AUTO.score = AUTO.score * 0.85 + (me ? 0.15 : 0);
+    if(AUTO.score > 0.5){
+      AUTO.lastMe = now;
+      if(!talk.curStart){ talk.curStart = now - 400; talk.lastAlert = 0; }
+    }
+    // 1.5초 넘게 내 목소리가 없으면 내 차례가 끝난 것으로 봄
+    if(talk.curStart && AUTO.lastMe && now - AUTO.lastMe > 1500 && AUTO.score < 0.2){
+      var c = Math.max(0, AUTO.lastMe - talk.curStart);
+      talk.me += c; talk.longest = Math.max(talk.longest, c); talk.curStart = 0; talk.tip++;
+    }
+    AUTO.show = AUTO.score > 0.5 ? 'me' : f.voiced ? 'other' : 'quiet';
+    AUTO.level = Math.max(0, Math.min(1, (f.db - f.floor) / 40));
+    if(++AUTO.n % 4) return;
+    var dot = $('aDot'), tx = $('aTx'), lv = $('aLv');
+    if(dot) dot.className = 'dot ' + AUTO.show;
+    if(tx) tx.textContent = { me: '자동 감지 · 지금 내가 말하는 중', other: '자동 감지 · 다른 목소리', quiet: '자동 감지 · 조용함' }[AUTO.show];
+    if(lv) lv.style.width = Math.round(AUTO.level * 100) + '%';
+  }
+  function autoLine(){
+    if(!(ui.autoTalk && ui.voice)) return '';
+    return '<div class="auto"><span class="dot" id="aDot"></span><span id="aTx">' + (AUTO && AUTO.v ? '자동 감지 중' : '마이크 연결 중…') + '</span></div><div class="vmeter"><i id="aLv"></i></div>';
+  }
+  function autoSetup(){
+    var on = ui.autoTalk && ui.voice;
+    return '<div class="srow" style="margin-top:14px"><span>🎙 자동으로 알아듣기 <small style="display:inline">(실험)</small><small>' +
+      (ui.voice ? '마이크로 내 목소리를 알아듣고 저절로 시간을 재요. 버튼을 누르지 않아도 돼요.' : '내 목소리를 10초 등록해 두면, 버튼을 누르지 않아도 내가 말하는 시간을 저절로 재요.') +
+      '</small></span><label class="switch"><input type="checkbox" data-a="autoToggle"' + (on ? ' checked' : '') + '><span></span></label></div>' +
+      (on ? '<div class="ckrow"><b>민감도</b>' + ['엄격', '보통', '넉넉'].map(function(t, i){ return '<button class="chip' + (ui.autoSens === i ? ' on' : '') + '" data-a="autoSens" data-v="' + i + '">' + t + '</button>'; }).join('') + '<button class="chip" data-a="autoEnroll">다시 등록</button></div>' +
+        '<p class="note">휴대폰을 가슴 주머니나 내 앞 가까이에 두세요. 다른 사람 말까지 내 말로 잡히면 ‘엄격’, 내 말을 놓치면 ‘넉넉’으로 바꿔요. 목소리 높이가 비슷한 사람과 이야기할 때는 틀릴 수 있어서, 언제든 버튼으로 바로잡을 수 있어요.</p>' : '');
+  }
+
   // ===== 챙길 것 목록 =====
   function findList(id){ return state.lists.find(function(l){ return l.id === id; }); }
   function listSheet(id){
@@ -1036,6 +1485,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     h += sw('sVib', ui.vib, '진동', '알림·대화 도우미에서 진동으로 알려 줘요');
     h += sw('sSnd', ui.sound, '소리', '앱을 보고 있을 때 알림 소리를 내요');
     h += sw('sTalkSnd', ui.talkSound, '대화 중에도 소리 내기', '끄면 대화 중에는 진동으로만 알려 줘요');
+    h += '<label class="f">집중 타이머 기본 시간</label><div class="chips" id="sFocus">' + [10, 15, 20, 25, 45].map(function(m){ return '<button class="chip' + (ui.focusMin === m ? ' on' : '') + '" data-v="' + m + '">' + m + '분</button>'; }).join('') + '</div>';
     if(NATIVE){
       var ns = 'granted', ex = true; try{ ns = NATIVE.notifState(); ex = NATIVE.exactAlarmOk(); }catch(e){}
       h += '<div class="srow"><span>알림 권한<small>' + (ns === 'granted' ? '허용됨' : '꺼져 있어요 · 알림이 울리지 않아요') + '</small></span>' + (ns === 'granted' ? '' : '<button class="btn soft" data-x="nnotif">허용하기</button>') + '</div>';
@@ -1059,10 +1509,10 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
     var bind = function(id, key){ var el = m.querySelector('#' + id); if(el) el.addEventListener('change', function(){ ui[key] = el.checked; saveUI(); nativeSync(); }); };
     bind('sVib', 'vib'); bind('sSnd', 'sound'); bind('sTalkSnd', 'talkSound'); bind('sFs', 'autoFS');
     m.addEventListener('click', function(e){
-      var c = e.target.closest('#sTheme .chip, #sFont .chip');
+      var c = e.target.closest('#sTheme .chip, #sFont .chip, #sFocus .chip');
       if(c){
         [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); });
-        if(c.parentNode.id === 'sTheme') ui.theme = c.getAttribute('data-v'); else ui.font = +c.getAttribute('data-v');
+        if(c.parentNode.id === 'sTheme') ui.theme = c.getAttribute('data-v'); else if(c.parentNode.id === 'sFocus') ui.focusMin = +c.getAttribute('data-v'); else ui.font = +c.getAttribute('data-v');
         saveUI(); applyLook(); return;
       }
       var b = e.target.closest('[data-x]'); if(!b) return;
@@ -1130,7 +1580,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       case 'noteTask': { var nt = byId(state.notes); if(!nt) break; addTask(nt.text); state.notes = state.notes.filter(function(x){ return x !== nt; }); save(); render(); toast('할 일로 옮겼어요'); break; }
       case 'noteRem': { var nr = byId(state.notes); if(nr) remSheet(nr.text); break; }
       case 'addTask': { var tv = $('addTask').value.trim(); if(!tv) break; addTask(tv); render(); $('addTask').focus(); break; }
-      case 'taskDone': { var t = byId(state.tasks); if(!t) break; t.done = true; t.doneAt = Date.now(); if(state.focus === id) state.focus = null; save(); render(); buzz(30); toast('잘했어요! 하나 끝냈어요 🎉'); break; }
+      case 'taskDone': { var t = byId(state.tasks); if(!t) break; t.done = true; t.doneAt = Date.now(); if(state.focus === id) state.focus = null; var em = estMsg(t); save(); render(); buzz(30); toast(em || '잘했어요! 하나 끝냈어요 🎉'); break; }
       case 'taskUndo': { var tu = byId(state.tasks); if(tu){ tu.done = false; save(); render(); } break; }
       case 'taskDel': withUndo('할 일을 지웠어요', function(){ state.tasks = state.tasks.filter(function(x){ return x.id !== id; }); if(state.focus === id) state.focus = null; }); break;
       case 'setFocus': state.focus = id; save(); render(); toast('첫 화면에 ‘지금 할 일’로 보여 줄게요'); break;
@@ -1154,6 +1604,18 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
       case 'moodSave': moodSheet(); break;
       case 'moodDel': withUndo('기록을 지웠어요', function(){ state.moods = state.moods.filter(function(x){ return x.id !== id; }); }); break;
       case 'breath': breathMenu(); break;
+      case 'stop': stopRun(); break;
+      case 'reframe': reframeSheet(); break;
+      case 'thoughtDel': withUndo('기록을 지웠어요', function(){ state.thoughts = state.thoughts.filter(function(x){ return x.id !== id; }); }); break;
+      case 'planNew': planSheet(null, b.getAttribute('data-area')); break;
+      case 'planEdit': planSheet(id); break;
+      case 'focusStart': focusSheet(); break;
+      case 'focusOpen': focusOverlay(); break;
+      case 'ck': setCheckin(b.getAttribute('data-k'), b.getAttribute('data-v')); break;
+      case 'ckEdit': ckEditing = true; render(); break;
+      case 'autoToggle': ui.autoTalk = !ui.autoTalk; saveUI(); if(ui.autoTalk && !ui.voice){ voiceEnroll(); } render(); break;
+      case 'autoEnroll': voiceEnroll(); break;
+      case 'autoSens': ui.autoSens = +b.getAttribute('data-v'); saveUI(); render(); break;
       case 'pause': pauseRun(); break;
       case 'ground': groundRun(); break;
       case 'body': bodySheet(); break;
@@ -1277,6 +1739,7 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
   render();
   pullActions();
   nativeSync();
+  if(state.session) focusTick();
   checkReminders(); showDue();
 })();
 </script>
