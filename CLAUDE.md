@@ -63,4 +63,4 @@
 - 입구: 모드 화면, 홈 화면 위젯(앞 4개), 앱 바로가기, 빠른 설정 타일, 런처 별칭 "티비 켜기"/"티비 끄기"(제미나이 음성용), 워치 타일·앱(폰이 대신 실행).
 - 폰 앱(`app/`)과 워치 앱(`wear/`)은 applicationId `kr.immanuel.tvremote` 와 서명 키가 같아야 한다.
 - 빌드: main 에 푸시하면 `tv-remote-build.yml` 이 서명 전 APK 를 `tv-remote-build` 브랜치에 올린다. 받기: `git fetch origin +tv-remote-build:refs/remotes/origin/tv-remote-build && git archive origin/tv-remote-build | tar -x -C <폴더>`.
-- 서명: Artifact "TV 한번에 서명 키"에서 `tvremote.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> tvremote.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.
+- 서명: Artifact "TV 한번에 서명 키"(https://claude.ai/artifact/3KQgLZh7twWNaF2twLVMJp)에서 `tvremote.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> tvremote.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.

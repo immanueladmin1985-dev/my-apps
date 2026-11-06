@@ -27,8 +27,8 @@ object Hej {
         fun toJson() = JSONObject().put("token", token).put("jsession", jsession).put("user", user).put("exp", expiresAt).toString()
 
         companion object {
-            fun from(s: String?): Session? = try {
-                JSONObject(s ?: return null).let { Session(it.getString("token"), it.getString("jsession"), it.getString("user"), it.getLong("exp")) }
+            fun from(s: String?): Session? = if (s == null) null else try {
+                JSONObject(s).let { Session(it.getString("token"), it.getString("jsession"), it.getString("user"), it.getLong("exp")) }
             } catch (_: Exception) {
                 null
             }
