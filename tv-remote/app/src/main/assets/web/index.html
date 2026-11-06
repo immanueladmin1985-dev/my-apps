@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TV 한번에</title>
+<style>
+:root{
+  --bg:#111318;--card:#1c1f27;--card2:#252a35;--line:#2f3542;--text:#f2f3f7;--sub:#9aa1b2;
+  --accent:#4f8cff;--accent2:#2d5fc2;--ok:#3ecf8e;--warn:#ffb347;--bad:#ff6b6b;--gold:#ffc83d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;font-size:15px}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom));min-height:100vh}
+button{font:inherit;color:inherit;border:0;background:var(--card2);border-radius:12px;padding:10px 14px;cursor:pointer}
+button:active{transform:scale(.97);filter:brightness(1.2)}
+button.primary{background:var(--accent);color:#fff;font-weight:700}
+button.danger{background:#3a2025;color:var(--bad)}
+button.ghost{background:transparent;color:var(--sub)}
+input,select{font:inherit;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+label{display:block;color:var(--sub);font-size:13px;margin:12px 0 6px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 16px 8px;display:flex;align-items:center;gap:10px}
+header h1{margin:0;font-size:20px;flex:1}
+.pill{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--card2);color:var(--sub);white-space:nowrap}
+.pill.on{background:#123b2b;color:var(--ok)}
+.pill.off{background:#3a2c14;color:var(--warn)}
+main{padding:0 16px}
+.page{display:none}.page.show{display:block}
+.status{background:var(--card);border-radius:12px;padding:10px 12px;color:var(--sub);font-size:13px;margin-bottom:12px;min-height:20px}
+.status.ok{color:var(--ok)}.status.bad{color:var(--warn)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.mode{background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:18px;padding:16px 14px 12px;position:relative;min-height:118px;display:flex;flex-direction:column;text-align:left}
+.mode .em{font-size:30px}
+.mode .nm{font-size:17px;font-weight:700;margin-top:6px}
+.mode .st{font-size:12px;color:var(--sub);margin-top:4px;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.mode .edit{position:absolute;top:8px;right:8px;padding:6px 10px;font-size:12px;background:rgba(255,255,255,.06)}
+.mode.running{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.add{border:2px dashed var(--line);background:transparent;color:var(--sub);min-height:118px;border-radius:18px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#161920;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;background:none;border-radius:0;padding:12px 0 14px;color:var(--sub);font-size:12px}
+nav button b{display:block;font-size:20px;font-weight:400}
+nav button.sel{color:var(--accent)}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+.muted{color:var(--sub);font-size:13px;line-height:1.5}
+/* 리모컨 */
+.pad{position:relative;width:230px;height:230px;margin:6px auto 14px;border-radius:50%;background:var(--card2)}
+.pad button{position:absolute;background:transparent;font-size:22px;width:70px;height:70px;border-radius:50%}
+.pad .u{top:4px;left:80px}.pad .d{bottom:4px;left:80px}.pad .l{left:4px;top:80px}.pad .r{right:4px;top:80px}
+.pad .c{left:65px;top:65px;width:100px;height:100px;background:var(--accent2);font-size:16px;font-weight:700}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.keys button{padding:12px 0;font-size:13px}
+.keys button b{display:block;font-size:20px;font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{padding:9px 12px;font-size:14px}
+/* 편집 */
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:20;overflow:auto;display:none;padding-bottom:40px}
+.sheet.show{display:block}
+.steps{list-style:none;margin:0;padding:0}
+.steps li{background:var(--card);border-radius:12px;padding:10px;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+.steps li .i{font-size:20px;width:28px;text-align:center}
+.steps li .t{flex:1;min-width:0}
+.steps li .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.steps li .t small{color:var(--sub)}
+.steps li button{padding:6px 9px;font-size:13px}
+.steps li select{width:auto;padding:4px 6px;font-size:12px;margin-top:4px}
+.emojis{display:flex;flex-wrap:wrap;gap:6px}
+.emojis button{font-size:22px;padding:6px 8px;background:var(--card2)}
+.emojis button.sel{outline:2px solid var(--accent)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;display:none;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.modal .box{background:var(--card);width:100%;max-width:560px;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.modal h3{margin:0 0 12px}
+.tabs{display:flex;gap:6px;overflow:auto;margin-bottom:12px}
+.tabs button{white-space:nowrap;font-size:13px;padding:8px 12px}
+.tabs button.sel{background:var(--accent);color:#fff}
+.list button{display:block;width:100%;text-align:left;margin-bottom:6px}
+.list button small{color:var(--sub);display:block}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;z-index:50;font-size:14px;display:none;max-width:90%}
+@media (min-width:700px){ .padwrap{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start} }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">TV 한번에</h1>
+  <span id="tvPill" class="pill">구글 TV 미연결</span>
+</header>
+
+<main>
+  <!-- 모드 -->
+  <section id="pg-modes" class="page show">
+    <div id="lastRun" class="status">모드를 누르면 설정해 둔 단계가 차례대로 실행됩니다.</div>
+    <div id="modeGrid" class="grid"></div>
+    <p class="muted" style="margin-top:16px">편집에서 순서를 바꿀 수 있습니다. 앞의 4개는 홈 화면 위젯과 앱 바로가기에, 모두 워치에 보입니다.</p>
+  </section>
+
+  <!-- 리모컨 -->
+  <section id="pg-remote" class="page">
+    <div id="remoteMsg" class="status">구글 TV에 연결하는 중…</div>
+    <div class="padwrap">
+      <div>
+        <div class="pad">
+          <button class="u" data-k="19">▲</button>
+          <button class="l" data-k="21">◀</button>
+          <button class="c" data-k="23">확인</button>
+          <button class="r" data-k="22">▶</button>
+          <button class="d" data-k="20">▼</button>
+        </div>
+      </div>
+      <div>
+        <div class="keys">
+          <button data-k="4"><b>↩</b>뒤로</button>
+          <button data-k="3"><b>⌂</b>홈</button>
+          <button data-k="85"><b>⏯</b>재생</button>
+          <button data-k="176"><b>⚙</b>설정</button>
+          <button data-k="25"><b>🔉</b>소리 −</button>
+          <button data-k="24"><b>🔊</b>소리 +</button>
+          <button data-k="164"><b>🔇</b>음소거</button>
+          <button data-k="26"><b>⏻</b>전원</button>
+        </div>
+        <div class="card">
+          <h2>글자 입력</h2>
+          <div class="row"><input id="txt" placeholder="TV 검색창을 먼저 선택한 뒤 입력"><button class="primary" style="flex:0 0 auto" onclick="sendText()">보내기</button></div>
+        </div>
+        <div class="card">
+          <h2>TV 앱 바로 실행</h2>
+          <div id="appChips" class="chips"></div>
+          <div class="row" style="margin-top:10px">
+            <button onclick="addCurrentApp()">＋ 지금 TV에 켜진 앱 추가</button>
+            <button onclick="openAppManual()">＋ 직접 추가</button>
+          </div>
+          <p class="muted" id="curApp"></p>
+        </div>
+        <div class="card">
+          <h2>헤이홈 레시피 바로 실행</h2>
+          <div id="sceneChips" class="chips"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 설정 -->
+  <section id="pg-settings" class="page">
+    <div class="card">
+      <h2>📺 구글 TV</h2>
+      <div id="tvInfo" class="muted"></div>
+      <div class="row" style="margin-top:10px"><button onclick="findTv()">같은 와이파이에서 찾기</button></div>
+      <div id="tvFound" class="list" style="margin-top:10px"></div>
+      <label>또는 IP 주소 직접 입력 (TV 설정 → 네트워크에서 확인)</label>
+      <div class="row"><input id="tvIp" placeholder="예: 192.168.0.23" inputmode="decimal"><button class="primary" style="flex:0 0 auto" onclick="pair(val('tvIp'),'')">페어링</button></div>
+    </div>
+
+    <div class="card">
+      <h2>🏠 헤이홈</h2>
+      <div id="hejOut">
+        <p class="muted">헤이홈 앱에서 만든 레시피(원터치)를 그대로 불러와 모드에 넣습니다. 처음 한 번은 이메일 인증번호 확인이 필요합니다.</p>
+        <label>헤이홈 이메일</label>
+        <input id="hejEmail" type="email" autocomplete="username">
+        <div class="row" style="margin-top:8px"><button onclick="hejSend()">① 인증번호 보내기</button></div>
+        <label>메일로 받은 6자리 인증번호</label>
+        <div class="row"><input id="hejCode" inputmode="numeric" maxlength="6"><button style="flex:0 0 auto" onclick="hejVerify()">② 확인</button></div>
+        <label>헤이홈 비밀번호</label>
+        <input id="hejPw" type="password" autocomplete="current-password">
+        <button class="primary" style="width:100%;margin-top:10px" onclick="hejLogin()">③ 로그인</button>
+        <p class="muted">비밀번호는 이 폰 안에서만 암호화해 보관하고, 로그인이 풀렸을 때 다시 로그인하는 데에만 씁니다.</p>
+      </div>
+      <div id="hejIn" style="display:none">
+        <p class="muted" id="hejWho"></p>
+        <div class="row"><button onclick="refreshScenes()">레시피 다시 불러오기</button><button class="danger" onclick="hejLogout()">로그아웃</button></div>
+        <p class="muted" id="sceneCount"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎙 음성 · 빠른 설정</h2>
+      <label>“티비 켜기” 앱으로 실행할 모드</label>
+      <select id="slot-voiceOn" onchange="saveSlot(this)"></select>
+      <label>“티비 끄기” 앱으로 실행할 모드</label>
+      <select id="slot-voiceOff" onchange="saveSlot(this)"></select>
+      <label>빠른 설정 타일로 실행할 모드</label>
+      <select id="slot-qsMode" onchange="saveSlot(this)"></select>
+      <p class="muted">제미나이에게 <b>“티비 켜기 열어 줘”</b>라고 말하면 위에서 고른 모드가 바로 실행됩니다. “티비 켜기”, “티비 끄기”는 이 앱이 홈 화면 앱 목록에 함께 만들어 두는 실행 버튼입니다.<br>
+      빠른 설정 타일은 알림창을 내린 뒤 ✏(편집)에서 “TV 한번에”를 끌어다 놓으면 됩니다.</p>
+    </div>
+
+    <div class="card">
+      <h2>도움말</h2>
+      <p class="muted">• 헤이홈 IR 리모컨은 전원 버튼이 켜기·끄기를 번갈아 하는 경우가 많습니다. 단계의 조건을 “구글 TV가 꺼져 있을 때만”으로 두면 이미 켜져 있을 때 TV가 꺼지는 일을 막을 수 있습니다.<br>
+      • 레시피 안의 타이머는 헤이홈 서버에서 진행되므로, 레시피 다음 단계 앞에 “기다리기”를 넣어 시간을 맞춰 주세요.<br>
+      • 워치에서는 타일이나 앱에서 모드를 누르면 폰이 대신 실행합니다.</p>
+      <p class="muted" id="ver"></p>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-pg="modes" class="sel"><b>▦</b>모드</button>
+  <button data-pg="remote"><b>◎</b>리모컨</button>
+  <button data-pg="settings"><b>⚙</b>설정</button>
+</nav>
+
+<!-- 모드 편집 -->
+<div id="editor" class="sheet">
+  <header><button class="ghost" onclick="closeEditor()">✕</button><h1 id="edTitle">모드 편집</h1><button class="primary" onclick="saveEditor()">저장</button></header>
+  <main>
+    <label>이름</label>
+    <input id="edName" maxlength="20" placeholder="예: 닌텐도">
+    <label>아이콘</label>
+    <div id="edEmojis" class="emojis"></div>
+    <label>단계 (위에서부터 차례대로 실행)</label>
+    <ul id="edSteps" class="steps"></ul>
+    <button class="primary" style="width:100%" onclick="openPicker()">＋ 단계 추가</button>
+    <div class="row" style="margin-top:16px">
+      <button onclick="testEditor()">▶ 시험 실행</button>
+      <button onclick="pinEditor()">홈 화면에 꺼내기</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button onclick="moveMode(-1)">순서 앞으로</button>
+      <button onclick="moveMode(1)">순서 뒤로</button>
+    </div>
+    <button class="danger" style="width:100%;margin-top:8px" id="edDel" onclick="deleteMode()">이 모드 삭제</button>
+  </main>
+</div>
+
+<!-- 단계 고르기 -->
+<div id="picker" class="modal" onclick="if(event.target===this)closeModal('picker')">
+  <div class="box">
+    <h3>단계 추가</h3>
+    <div class="tabs" id="pkTabs">
+      <button data-t="scene" class="sel">헤이홈 레시피</button>
+      <button data-t="key">구글 TV 버튼</button>
+      <button data-t="app">구글 TV 앱</button>
+      <button data-t="wait">기다리기</button>
+      <button data-t="text">글자 입력</button>
+    </div>
+    <div id="pkBody"></div>
+  </div>
+</div>
+
+<!-- 범용 창 -->
+<div id="dlg" class="modal" onclick="if(event.target===this)closeModal('dlg')">
+  <div class="box"><h3 id="dlgTitle"></h3><div id="dlgBody"></div></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+'use strict';
+// ---------------- 네이티브 연결 ----------------
+// 앱 밖(브라우저)에서 열면 화면 확인용 가짜 객체를 쓴다.
+const N = window.TvNative || (function(){
+  let st = {modes:[{id:'m-on',name:'티비 켜기',emoji:'📺',steps:[{type:'scene',label:'TV 전원',familyId:1,sceneId:'a',when:'tvOff'},{type:'key',label:'구글 TV 깨우기',code:224},{type:'wait',label:'3초 기다리기',ms:3000},{type:'scene',label:'구글 티비',familyId:1,sceneId:'b'}]},{id:'m-off',name:'티비 끄기',emoji:'🌙',steps:[{type:'key',label:'구글 TV 잠자기',code:223}]}],
+    settings:{},tvHost:'',tvName:'',tvApps:[{name:'유튜브',link:'com.google.android.youtube.tv'}],hejEmail:'',hejLoggedIn:false,
+    scenes:[{familyId:1,family:'우리집',sceneId:'a',name:'TV 전원'},{familyId:1,family:'우리집',sceneId:'b',name:'구글 티비'},{familyId:1,family:'우리집',sceneId:'c',name:'닌텐도'}],lastRun:'',tv:{connected:false,on:null,app:'',volume:''},version:'dev'};
+  const later=(cb,ok,d)=>setTimeout(()=>tvCb(cb,ok,d),300);
+  return {state:()=>JSON.stringify(st),saveModes:j=>{st.modes=JSON.parse(j)},saveSettings:j=>{st.settings=JSON.parse(j)},saveTvApps:j=>{st.tvApps=JSON.parse(j)},
+    toast:m=>toast(m),runMode:id=>setTimeout(()=>runDone('✅ 실행 (가짜)'),500),testMode:()=>setTimeout(()=>runDone('✅ 시험 (가짜)'),500),
+    tvStatus:()=>JSON.stringify(st.tv),tvConnect:cb=>later(cb,false,'먼저 설정에서 구글 TV를 연결해 주세요.'),key:cb=>later(cb,true,null),app:cb=>later(cb,true,null),text:cb=>later(cb,true,null),
+    discover:cb=>later(cb,true,[{name:'거실 Google TV',host:'192.168.0.23'}]),pairStart:cb=>later(cb,true,null),pairFinish:cb=>later(cb,true,{connected:true,on:true,app:'',volume:''}),setTvHost:()=>{},
+    hejSendCode:cb=>later(cb,true,null),hejVerify:cb=>later(cb,true,null),hejLogin:cb=>{st.hejLoggedIn=true;later(cb,true,st.scenes)},hejLogout:()=>{st.hejLoggedIn=false},hejScenes:cb=>later(cb,true,st.scenes),runScene:cb=>later(cb,true,null),pinShortcut:()=>true};
+})();
+
+const cbs = {}; let cbN = 0;
+window.tvCb = (id, ok, data) => { const f = cbs[id]; delete cbs[id]; if (f) f(ok, data); };
+function call(fn, ...args) {
+  return new Promise((res, rej) => {
+    const id = 'c' + (++cbN);
+    cbs[id] = (ok, d) => ok ? res(d) : rej(new Error(d || '실패'));
+    N[fn](id, ...args);
+  });
+}
+
+let S = JSON.parse(N.state());
+const $ = s => document.querySelector(s);
+const val = id => document.getElementById(id).value.trim();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>t.style.display='none',2600); }
+function lsGet(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){return d;} }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+// ---------------- 공통 ----------------
+const KEYS = [
+  [224,'구글 TV 깨우기 (켜기)','☀'],[223,'구글 TV 잠자기 (끄기)','🌙'],[26,'전원 (켜기·끄기 번갈아)','⏻'],
+  [3,'홈','⌂'],[4,'뒤로','↩'],[19,'위','▲'],[20,'아래','▼'],[21,'왼쪽','◀'],[22,'오른쪽','▶'],[23,'확인','●'],
+  [24,'소리 크게','🔊'],[25,'소리 작게','🔉'],[164,'음소거','🔇'],[85,'재생·일시정지','⏯'],[176,'설정','⚙'],[178,'외부입력(TV 내장형)','⇄']
+];
+const keyName = c => (KEYS.find(k=>k[0]===c)||[c,'버튼 '+c,'🔘']);
+const COND = {always:'항상', tvOff:'구글 TV가 꺼져 있을 때만', tvOn:'구글 TV가 켜져 있을 때만'};
+function stepIcon(s){ return {scene:'🏠',key:keyName(s.code)[2],app:'📱',wait:'⏱',text:'⌨'}[s.type]||'•'; }
+function stepText(s){
+  if (s.label) return s.label;
+  if (s.type==='wait') return (s.ms/1000)+'초 기다리기';
+  if (s.type==='key') return keyName(s.code)[1];
+  if (s.type==='app') return s.link;
+  if (s.type==='text') return '“'+s.text+'” 입력';
+  return s.type;
+}
+function stepKind(s){ return {scene:'헤이홈 레시피',key:'구글 TV 버튼',app:'구글 TV 앱',wait:'기다리기',text:'글자 입력'}[s.type]||''; }
+
+// ---------------- 화면 전환 ----------------
+let page = 'modes';
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => show(b.dataset.pg));
+function show(p){
+  page = p;
+  document.querySelectorAll('.page').forEach(x => x.classList.toggle('show', x.id === 'pg-' + p));
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('sel', x.dataset.pg === p));
+  $('#title').textContent = {modes:'TV 한번에',remote:'리모컨',settings:'설정'}[p];
+  if (p === 'remote') enterRemote();
+  if (p === 'settings') renderSettings();
+  window.scrollTo(0,0);
+}
+window.goBack = () => {
+  for (const id of ['dlg','picker']) if ($('#'+id).classList.contains('show')) { closeModal(id); return true; }
+  if ($('#editor').classList.contains('show')) { closeEditor(); return true; }
+  if (page !== 'modes') { show('modes'); return true; }
+  return false;
+};
+
+// ---------------- 모드 화면 ----------------
+let running = null;
+function renderModes(){
+  const g = $('#modeGrid');
+  g.innerHTML = S.modes.map(m => `
+    <div class="mode ${running===m.id?'running':''}" data-id="${esc(m.id)}" role="button">
+      <div class="em">${esc(m.emoji)}</div>
+      <div class="nm">${esc(m.name)}</div>
+      <div class="st">${m.steps.length ? m.steps.map(stepText).map(esc).join(' → ') : '단계가 없습니다'}</div>
+      <button class="edit" data-edit="${esc(m.id)}">편집</button>
+    </div>`).join('') + `<button class="add" onclick="openEditor(null)">＋ 모드 만들기</button>`;
+  g.querySelectorAll('.mode').forEach(el => el.onclick = e => {
+    if (e.target.dataset.edit) { openEditor(e.target.dataset.edit); return; }
+    runMode(el.dataset.id);
+  });
+  if (S.lastRun) setLast(S.lastRun);
+}
+function setLast(msg){
+  const el = $('#lastRun');
+  el.textContent = msg;
+  el.className = 'status ' + (msg.startsWith('✅') ? 'ok' : msg.startsWith('⚠') ? 'bad' : '');
+}
+function runMode(id){
+  const m = S.modes.find(x => x.id === id); if (!m) return;
+  running = id; renderModes(); setLast('▶ ' + m.name + ' 실행 중…');
+  N.runMode(id);
+}
+window.runDone = msg => { running = null; S.lastRun = msg; renderModes(); setLast(msg); refreshPill(); if (page!=='modes') toast(msg); };
+
+// ---------------- 모드 편집 ----------------
+const EMOJIS = ['📺','🎮','🌙','🎬','🎵','▶️','📡','🍿','⚽','🙏','👶','☀️','🔇','💡'];
+let ed = null, edIsNew = false;
+function openEditor(id){
+  const m = id ? S.modes.find(x => x.id === id) : null;
+  edIsNew = !m;
+  ed = m ? JSON.parse(JSON.stringify(m)) : {id:'m-'+Date.now().toString(36), name:'', emoji:'📺', steps:[]};
+  $('#edTitle').textContent = edIsNew ? '새 모드' : '모드 편집';
+  $('#edName').value = ed.name;
+  $('#edDel').style.display = edIsNew ? 'none' : '';
+  renderEditor();
+  $('#editor').classList.add('show');
+}
+function closeEditor(){ $('#editor').classList.remove('show'); ed = null; }
+function renderEditor(){
+  $('#edEmojis').innerHTML = EMOJIS.map(e => `<button class="${e===ed.emoji?'sel':''}" data-e="${e}">${e}</button>`).join('');
+  $('#edEmojis').querySelectorAll('button').forEach(b => b.onclick = () => { ed.emoji = b.dataset.e; renderEditor(); });
+  const ul = $('#edSteps');
+  if (!ed.steps.length) { ul.innerHTML = '<li class="muted">아직 단계가 없습니다. 아래 “단계 추가”를 눌러 주세요.</li>'; return; }
+  ul.innerHTML = ed.steps.map((s,i) => `
+    <li>
+      <span class="i">${stepIcon(s)}</span>
+      <div class="t"><div>${esc(stepText(s))}</div><small>${stepKind(s)}</small><br>
+        <select data-c="${i}">${Object.entries(COND).map(([k,v])=>`<option value="${k}" ${(s.when||'always')===k?'selected':''}>${v}</option>`).join('')}</select>
+      </div>
+      <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}" class="danger">✕</button>
+    </li>`).join('');
+  ul.querySelectorAll('select').forEach(sel => sel.onchange = () => {
+    const s = ed.steps[+sel.dataset.c];
+    if (sel.value === 'always') delete s.when; else s.when = sel.value;
+  });
+  ul.querySelectorAll('button').forEach(b => b.onclick = () => {
+    const d = b.dataset;
+    if (d.u != null && +d.u > 0) { const i=+d.u; [ed.steps[i-1],ed.steps[i]]=[ed.steps[i],ed.steps[i-1]]; }
+    if (d.d != null && +d.d < ed.steps.length-1) { const i=+d.d; [ed.steps[i+1],ed.steps[i]]=[ed.steps[i],ed.steps[i+1]]; }
+    if (d.x != null) ed.steps.splice(+d.x,1);
+    renderEditor();
+  });
+}
+function collectEditor(){
+  ed.name = val('edName') || '이름 없는 모드';
+  return ed;
+}
+function saveEditor(){
+  const m = collectEditor();
+  const i = S.modes.findIndex(x => x.id === m.id);
+  if (i >= 0) S.modes[i] = m; else S.modes.push(m);
+  N.saveModes(JSON.stringify(S.modes));
+  closeEditor(); renderModes(); toast('저장했습니다');
+}
+function testEditor(){
+  const m = collectEditor();
+  setLast('▶ ' + m.name + ' 시험 실행 중…');
+  toast('시험 실행합니다');
+  N.testMode(JSON.stringify(m));
+}
+function pinEditor(){
+  if (edIsNew) { toast('먼저 저장해 주세요'); return; }
+  const id = ed.id;
+  saveEditor();
+  const ok = N.pinShortcut(id);
+  toast(ok ? '홈 화면에 추가하는 창을 띄웠습니다' : '이 런처는 바로가기 추가를 지원하지 않습니다');
+}
+function moveMode(dir){
+  if (edIsNew) { toast('먼저 저장해 주세요'); return; }
+  const i = S.modes.findIndex(x => x.id === ed.id), j = i + dir;
+  if (i < 0 || j < 0 || j >= S.modes.length) return;
+  [S.modes[i], S.modes[j]] = [S.modes[j], S.modes[i]];
+  N.saveModes(JSON.stringify(S.modes)); renderModes();
+  toast(`${j+1}번째로 옮겼습니다`);
+}
+function deleteMode(){
+  dialog('모드 삭제', `<p>“${esc(ed.name)}” 모드를 삭제할까요?</p><div class="row"><button onclick="closeModal('dlg')">취소</button><button class="danger" id="delYes">삭제</button></div>`);
+  $('#delYes').onclick = () => {
+    S.modes = S.modes.filter(x => x.id !== ed.id);
+    N.saveModes(JSON.stringify(S.modes));
+    closeModal('dlg'); closeEditor(); renderModes();
+  };
+}
+
+// ---------------- 단계 고르기 ----------------
+let pkTab = 'scene';
+$('#pkTabs').querySelectorAll('button').forEach(b => b.onclick = () => { pkTab = b.dataset.t; renderPicker(); });
+function openPicker(){ renderPicker(); $('#picker').classList.add('show'); }
+function closeModal(id){ $('#'+id).classList.remove('show'); }
+function addStep(s){ ed.steps.push(s); closeModal('picker'); renderEditor(); toast('“'+stepText(s)+'” 추가'); }
+function renderPicker(){
+  $('#pkTabs').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.t === pkTab));
+  const body = $('#pkBody');
+  if (pkTab === 'scene') {
+    if (!S.hejLoggedIn) { body.innerHTML = '<p class="muted">설정에서 헤이홈에 먼저 로그인해 주세요.</p>'; return; }
+    body.innerHTML = `<div class="list">${S.scenes.map((s,i)=>`<button data-i="${i}">${esc(s.name)}<small>${esc(s.family)}</small></button>`).join('') || '<p class="muted">레시피가 없습니다. 헤이홈 앱에서 “클릭했을 때” 레시피를 만들어 주세요.</p>'}</div>
+      <button class="ghost" id="pkRefresh">↻ 레시피 다시 불러오기</button>`;
+    body.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const s = S.scenes[+b.dataset.i]; addStep({type:'scene',label:s.name,familyId:s.familyId,sceneId:s.sceneId}); });
+    $('#pkRefresh').onclick = () => refreshScenes().then(renderPicker);
+  } else if (pkTab === 'key') {
+    body.innerHTML = `<div class="list">${KEYS.map(k=>`<button data-k="${k[0]}">${k[2]} ${esc(k[1])}</button>`).join('')}</div>`;
+    body.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { const k = keyName(+b.dataset.k); addStep({type:'key',label:k[1],code:k[0]}); });
+  } else if (pkTab === 'app') {
+    body.innerHTML = `<div class="list">${S.tvApps.map((a,i)=>`<button data-i="${i}">📱 ${esc(a.name)}<small>${esc(a.link)}</small></button>`).join('')}</div>
+      <p class="muted">목록에 없는 앱은 리모컨 화면에서 “지금 TV에 켜진 앱 추가”로 넣거나 아래에 패키지 이름을 적어 주세요.</p>
+      <label>앱 이름</label><input id="pkAppName"><label>패키지 이름 또는 주소</label><input id="pkAppLink" placeholder="예: com.netflix.ninja">
+      <button class="primary" style="width:100%;margin-top:10px" id="pkAppAdd">추가</button>`;
+    body.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const a = S.tvApps[+b.dataset.i]; addStep({type:'app',label:a.name+' 실행',link:a.link}); });
+    $('#pkAppAdd').onclick = () => { const l = val('pkAppLink'); if (!l) return; addStep({type:'app',label:(val('pkAppName')||l)+' 실행',link:l}); };
+  } else if (pkTab === 'wait') {
+    body.innerHTML = `<div class="chips">${[1,2,3,5,8,10,15].map(s=>`<button data-s="${s}">${s}초</button>`).join('')}</div>
+      <label>직접 입력 (초)</label><div class="row"><input id="pkSec" inputmode="decimal" placeholder="예: 4.5"><button class="primary" style="flex:0 0 auto" id="pkSecAdd">추가</button></div>`;
+    body.querySelectorAll('[data-s]').forEach(b => b.onclick = () => addStep({type:'wait',label:b.dataset.s+'초 기다리기',ms:+b.dataset.s*1000}));
+    $('#pkSecAdd').onclick = () => { const s = parseFloat(val('pkSec')); if (s>0&&s<=60) addStep({type:'wait',label:s+'초 기다리기',ms:Math.round(s*1000)}); else toast('0초보다 크고 60초 이하로 적어 주세요'); };
+  } else if (pkTab === 'text') {
+    body.innerHTML = `<p class="muted">TV에서 입력창이 열려 있을 때 글자를 넣습니다. 앞 단계에서 검색창을 열어 두세요.</p>
+      <input id="pkText"><button class="primary" style="width:100%;margin-top:10px" id="pkTextAdd">추가</button>`;
+    $('#pkTextAdd').onclick = () => { const t = val('pkText'); if (t) addStep({type:'text',label:'“'+t+'” 입력',text:t}); };
+  }
+}
+
+// ---------------- 리모컨 ----------------
+function refreshPill(){
+  try { S.tv = JSON.parse(N.tvStatus()); } catch(e) {}
+  const p = $('#tvPill');
+  if (!S.tvHost) { p.textContent = '구글 TV 미연결'; p.className = 'pill'; return; }
+  if (!S.tv.connected) { p.textContent = '대기 중'; p.className = 'pill'; return; }
+  p.textContent = S.tv.on === false ? '구글 TV 꺼짐' : '구글 TV 켜짐';
+  p.className = 'pill ' + (S.tv.on === false ? 'off' : 'on');
+  const cur = $('#curApp');
+  if (cur) cur.textContent = S.tv.app ? '지금 TV 앱: ' + S.tv.app : '';
+}
+window.tvChanged = refreshPill;
+function remoteMsg(t, cls){ const el=$('#remoteMsg'); el.textContent=t; el.className='status '+(cls||''); }
+function enterRemote(){
+  renderApps(); renderSceneChips();
+  if (!S.tvHost) { remoteMsg('설정에서 구글 TV를 먼저 연결해 주세요.','bad'); return; }
+  remoteMsg('구글 TV에 연결하는 중…');
+  call('tvConnect').then(st => { S.tv = st; refreshPill(); remoteMsg('연결됨 · ' + (S.tvName||S.tvHost), 'ok'); })
+    .catch(e => remoteMsg(e.message,'bad'));
+}
+function sendKey(code){
+  if (navigator.vibrate) try{navigator.vibrate(15)}catch(e){}
+  call('key', code).catch(e => remoteMsg(e.message,'bad'));
+}
+document.querySelectorAll('#pg-remote [data-k]').forEach(b => b.onclick = () => sendKey(+b.dataset.k));
+function sendText(){
+  const t = $('#txt').value; if (!t) return;
+  call('text', t).then(()=>{ $('#txt').value=''; toast('보냈습니다'); }).catch(e => remoteMsg(e.message,'bad'));
+}
+function renderApps(){
+  $('#appChips').innerHTML = S.tvApps.map((a,i)=>`<button data-i="${i}">${esc(a.name)}</button>`).join('') || '<span class="muted">아직 없습니다</span>';
+  $('#appChips').querySelectorAll('button').forEach(b => {
+    b.onclick = () => call('app', S.tvApps[+b.dataset.i].link).catch(e => remoteMsg(e.message,'bad'));
+    b.oncontextmenu = e => { e.preventDefault(); removeApp(+b.dataset.i); };
+  });
+}
+function removeApp(i){
+  const a = S.tvApps[i];
+  dialog('앱 버튼 삭제', `<p>“${esc(a.name)}” 버튼을 지울까요?</p><div class="row"><button onclick="closeModal('dlg')">취소</button><button class="danger" id="appDel">삭제</button></div>`);
+  $('#appDel').onclick = () => { S.tvApps.splice(i,1); N.saveTvApps(JSON.stringify(S.tvApps)); closeModal('dlg'); renderApps(); };
+}
+function addCurrentApp(){
+  refreshPill();
+  const pkg = S.tv.app;
+  if (!pkg) { toast('TV에서 앱을 먼저 연 뒤 잠시 후 다시 눌러 주세요'); return; }
+  openAppManual(pkg);
+}
+function openAppManual(pkg){
+  dialog('TV 앱 버튼 추가', `<label>버튼 이름</label><input id="apName"><label>패키지 이름 또는 주소</label><input id="apLink" value="${esc(pkg||'')}" placeholder="예: com.netflix.ninja">
+    <p class="muted">구글 플레이 웹사이트의 앱 주소에서 id= 뒤가 패키지 이름입니다. 길게 누르면 버튼을 지울 수 있습니다.</p>
+    <button class="primary" style="width:100%" id="apOk">추가</button>`);
+  $('#apOk').onclick = () => {
+    const link = val('apLink'); if (!link) return;
+    S.tvApps.push({name: val('apName') || link.split('.').pop(), link});
+    N.saveTvApps(JSON.stringify(S.tvApps)); closeModal('dlg'); renderApps();
+  };
+}
+function renderSceneChips(){
+  const el = $('#sceneChips');
+  if (!S.hejLoggedIn) { el.innerHTML = '<span class="muted">설정에서 헤이홈에 로그인하면 보입니다</span>'; return; }
+  el.innerHTML = S.scenes.map((s,i)=>`<button data-i="${i}">🏠 ${esc(s.name)}</button>`).join('') || '<span class="muted">레시피가 없습니다</span>';
+  el.querySelectorAll('button').forEach(b => b.onclick = () => {
+    const s = S.scenes[+b.dataset.i];
+    call('runScene', s.familyId, s.sceneId).then(()=>toast('“'+s.name+'” 실행')).catch(e => toast(e.message));
+  });
+}
+
+// ---------------- 설정 ----------------
+function renderSettings(){
+  $('#tvInfo').innerHTML = S.tvHost ? `연결된 TV: <b>${esc(S.tvName||S.tvHost)}</b> (${esc(S.tvHost)})<br>다른 TV로 바꾸거나 연결이 안 되면 다시 찾아서 페어링하세요.` : '아직 연결한 구글 TV가 없습니다. TV와 폰이 같은 와이파이에 있어야 합니다.';
+  $('#hejOut').style.display = S.hejLoggedIn ? 'none' : '';
+  $('#hejIn').style.display = S.hejLoggedIn ? '' : 'none';
+  $('#hejWho').textContent = '로그인: ' + S.hejEmail;
+  $('#sceneCount').textContent = '불러온 레시피 ' + S.scenes.length + '개';
+  if (!$('#hejEmail').value) $('#hejEmail').value = S.hejEmail || '';
+  for (const slot of ['voiceOn','voiceOff','qsMode']) {
+    const sel = $('#slot-'+slot);
+    const cur = (S.settings||{})[slot] || (S.modes[slot==='voiceOff'?1:0]||{}).id || '';
+    sel.innerHTML = S.modes.map(m=>`<option value="${esc(m.id)}" ${m.id===cur?'selected':''}>${esc(m.emoji+' '+m.name)}</option>`).join('');
+  }
+  $('#ver').textContent = '버전 ' + S.version;
+}
+function saveSlot(sel){
+  S.settings = S.settings || {};
+  S.settings[sel.id.replace('slot-','')] = sel.value;
+  N.saveSettings(JSON.stringify(S.settings));
+  toast('저장했습니다');
+}
+function findTv(){
+  $('#tvFound').innerHTML = '<p class="muted">찾는 중… (4초)</p>';
+  call('discover').then(list => {
+    $('#tvFound').innerHTML = list.length ? list.map(t=>`<button data-h="${esc(t.host)}" data-n="${esc(t.name)}">📺 ${esc(t.name)}<small>${esc(t.host)}</small></button>`).join('')
+      : '<p class="muted">찾지 못했습니다. TV가 켜져 있는지, 같은 와이파이인지 확인하거나 IP를 직접 입력해 주세요.</p>';
+    $('#tvFound').querySelectorAll('button').forEach(b => b.onclick = () => pair(b.dataset.h, b.dataset.n));
+  }).catch(e => $('#tvFound').innerHTML = `<p class="muted">${esc(e.message)}</p>`);
+}
+function pair(host, name){
+  if (!host) { toast('IP 주소를 입력해 주세요'); return; }
+  dialog('구글 TV 페어링', `<p class="muted">${esc(host)}에 연결하는 중… TV 화면에 6자리 코드가 뜨면 아래에 입력하세요.</p>
+    <input id="pin" maxlength="6" placeholder="예: 1A2B3C" style="text-transform:uppercase;font-size:22px;letter-spacing:4px;text-align:center" autocapitalize="characters">
+    <button class="primary" style="width:100%;margin-top:10px" id="pinOk" disabled>확인</button><p class="muted" id="pinMsg"></p>`);
+  call('pairStart', host, name || '').then(() => {
+    $('#pinOk').disabled = false; $('#pin').focus();
+    $('#pinMsg').textContent = 'TV 화면의 코드를 입력하세요.';
+  }).catch(e => $('#pinMsg').textContent = e.message);
+  $('#pinOk').onclick = () => {
+    $('#pinOk').disabled = true; $('#pinMsg').textContent = '확인하는 중…';
+    call('pairFinish', val('pin')).then(st => {
+      S = JSON.parse(N.state()); S.tv = st; closeModal('dlg'); renderSettings(); refreshPill(); toast('구글 TV를 연결했습니다');
+    }).catch(e => { $('#pinMsg').textContent = e.message + ' 처음부터 다시 페어링해 주세요.'; });
+  };
+}
+function busy(btnText){ toast(btnText); }
+function hejSend(){
+  const email = val('hejEmail'); if (!email) { toast('이메일을 입력해 주세요'); return; }
+  busy('인증번호를 보내는 중…');
+  call('hejSendCode', email).then(()=>toast('메일로 인증번호를 보냈습니다')).catch(e=>toast(e.message));
+}
+function hejVerify(){
+  call('hejVerify', val('hejEmail'), val('hejCode')).then(()=>toast('인증되었습니다. 비밀번호로 로그인해 주세요')).catch(e=>toast(e.message));
+}
+function hejLogin(){
+  busy('로그인하는 중…');
+  call('hejLogin', val('hejEmail'), $('#hejPw').value).then(sc => {
+    S = JSON.parse(N.state()); S.scenes = sc; $('#hejPw').value=''; renderSettings(); toast('로그인했습니다. 레시피 ' + sc.length + '개');
+  }).catch(e => toast(e.message));
+}
+function hejLogout(){ N.hejLogout(); S = JSON.parse(N.state()); renderSettings(); }
+function refreshScenes(){
+  toast('레시피를 불러오는 중…');
+  return call('hejScenes').then(sc => { S.scenes = sc; renderSettings(); toast('레시피 ' + sc.length + '개'); }).catch(e => toast(e.message));
+}
+
+// ---------------- 창 ----------------
+function dialog(title, html){ $('#dlgTitle').textContent = title; $('#dlgBody').innerHTML = html; $('#dlg').classList.add('show'); }
+
+renderModes();
+refreshPill();
+setInterval(refreshPill, 5000);
+</script>
+</body>
+</html>

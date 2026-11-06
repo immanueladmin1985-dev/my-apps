@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV 한번에</string>
+    <string name="voice_on">티비 켜기</string>
+    <string name="voice_off">티비 끄기</string>
+    <string name="widget_label">TV 한번에 모드</string>
+</resources>

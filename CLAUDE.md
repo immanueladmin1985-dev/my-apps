@@ -56,3 +56,11 @@
 - 폰 앱(`app/`)과 워치 앱(`wear/`)은 applicationId `kr.immanuel.haru` 와 서명 키가 같아야 한다.
 - 빌드: main 에 푸시하면 `haru-helper-build.yml` 이 서명 전 APK 를 `haru-helper-build` 브랜치에 올린다. 받기: `git fetch origin +haru-helper-build:refs/remotes/origin/haru-helper-build && git archive origin/haru-helper-build | tar -x -C <폴더>`.
 - 서명: Artifact "하루 도우미 서명 키"에서 `haru.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> haru.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.
+
+## TV 한번에 (`tv-remote/`, 개인용 안드로이드 앱)
+- 구글 TV(안드로이드 TV 리모컨 v2 프로토콜, 6466/6467 포트)와 헤이홈 레시피(square.hej.so 웹 대시보드의 비공식 요청)를 "모드" 하나로 묶어 실행한다. 앱 목록(`index.html`)과 `README.md`에는 넣지 않는다.
+- 화면은 `app/src/main/assets/web/index.html`(WebView, `window.TvNative`), 기기 제어는 Kotlin. 구글 TV 메시지 모양은 `shared/java/.../AtvWire.kt`(파이썬 androidtvremote2 로 만든 기대값 단위 테스트 있음), 헤이홈 요청은 `Hej.kt`.
+- 입구: 모드 화면, 홈 화면 위젯(앞 4개), 앱 바로가기, 빠른 설정 타일, 런처 별칭 "티비 켜기"/"티비 끄기"(제미나이 음성용), 워치 타일·앱(폰이 대신 실행).
+- 폰 앱(`app/`)과 워치 앱(`wear/`)은 applicationId `kr.immanuel.tvremote` 와 서명 키가 같아야 한다.
+- 빌드: main 에 푸시하면 `tv-remote-build.yml` 이 서명 전 APK 를 `tv-remote-build` 브랜치에 올린다. 받기: `git fetch origin +tv-remote-build:refs/remotes/origin/tv-remote-build && git archive origin/tv-remote-build | tar -x -C <폴더>`.
+- 서명: Artifact "TV 한번에 서명 키"에서 `tvremote.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> tvremote.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.

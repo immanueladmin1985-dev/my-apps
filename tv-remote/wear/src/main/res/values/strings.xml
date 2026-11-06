@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV 한번에</string>
+    <string name="tile_label">TV 한번에</string>
+    <string name="tile_desc">모드 버튼을 누르면 폰이 TV를 켜고 조작합니다</string>
+</resources>
