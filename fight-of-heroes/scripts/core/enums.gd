@@ -7,7 +7,8 @@ enum TargetMode { SELF, UNIT, DIRECTION, POINT }
 enum TargetTeam { ENEMY, ALLY, ANY }
 enum Slot { Q, W, E, R }
 enum CastResult { OK, NOT_LEARNED, COOLDOWN, NO_MANA, DISABLED, OUT_OF_RANGE, NO_TARGET, DEAD }
-enum StatusKind { STUN, SLOW, DOT, STAT_BUFF, HASTE }
+## HEAL_OVER_TIME / MANA_OVER_TIME: 초당 magnitude 만큼 체력·마나 회복 (물약)
+enum StatusKind { STUN, SLOW, DOT, STAT_BUFF, HASTE, HEAL_OVER_TIME, MANA_OVER_TIME }
 ## AI 가 스킬을 언제 쓸지 고르는 기준.
 ## OFFENSE: 대상이 사거리 안이면 사용, ENGAGE: 거리를 좁힐 때, DEFENSE: 체력이 줄었을 때, ESCAPE: 도망칠 때.
 enum AIUse { OFFENSE, ENGAGE, DEFENSE, ESCAPE }

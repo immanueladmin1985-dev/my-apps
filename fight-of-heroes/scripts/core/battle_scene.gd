@@ -17,6 +17,7 @@ var follow_target: Node2D = null
 @onready var monster_manager: MonsterManager = $MonsterManager
 @onready var boss_manager: BossManager = $BossManager
 @onready var experience_manager: ExperienceManager = $ExperienceManager
+@onready var shop_manager: ShopManager = $ShopManager
 
 
 func _ready() -> void:
@@ -62,6 +63,8 @@ func _ready() -> void:
 	boss_manager.setup(battle_manager, hero_manager, monster_manager)
 	experience_manager.setup(hero_manager)
 	ai_manager.monster_manager = monster_manager
+	shop_manager.setup(map)
+	ai_manager.shop = shop_manager
 	camera.limit_left = int(-80)
 	camera.limit_top = int(-80)
 	camera.limit_right = int(map.size.x + 80)
@@ -71,8 +74,17 @@ func _ready() -> void:
 		camera.reset_smoothing()
 	$AimIndicator.setup(player_hero, player_controller)
 	hud.ai_manager = ai_manager
+	hud.shop = shop_manager
 	hud.setup(player_hero, player_controller, battle_manager)
 	hud.setup_overview(map, hero_manager, camera, monster_manager)
+	if GameManager.dev_args.has("open_shop") and player_hero != null:
+		# 개발용: 상점 화면 확인. 아이템 몇 개를 미리 산 상태로 연다.
+		player_hero.gold = 3000
+		for id in ["dagger", "health_potion", "health_potion", "old_boots"]:
+			shop_manager.buy(player_hero, id)
+		if GameManager.dev_args["open_shop"] != "closed":
+			hud.toggle_shop()
+			hud.shop_panel._select_item(ItemManager.get_item("hero_sword"))
 
 
 func _process(_delta: float) -> void:

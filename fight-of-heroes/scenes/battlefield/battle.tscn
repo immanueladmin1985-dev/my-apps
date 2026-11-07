@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/map/monster_manager.gd" id="9_mm"]
 [ext_resource type="Script" path="res://scripts/map/boss_manager.gd" id="10_boss"]
 [ext_resource type="Script" path="res://scripts/progression/experience_manager.gd" id="11_xp"]
+[ext_resource type="Script" path="res://scripts/items/shop_manager.gd" id="12_shop"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1_battle")
@@ -51,6 +52,9 @@ script = ExtResource("10_boss")
 
 [node name="ExperienceManager" type="Node" parent="."]
 script = ExtResource("11_xp")
+
+[node name="ShopManager" type="Node" parent="."]
+script = ExtResource("12_shop")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_hud")

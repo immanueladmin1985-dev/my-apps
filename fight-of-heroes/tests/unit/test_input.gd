@@ -133,3 +133,37 @@ func test_tap_enemy_selects() -> void:
 	await frames(1)
 	eq(battle.player_controller.selected, enemy, "누른 적을 선택")
 	eq(hero.attack_order, enemy, "선택한 적을 공격하러 감")
+
+
+func test_hud_buttons_work_while_moving() -> void:
+	var c: Vector2 = hud.joystick.rest_center()
+	_touch(0, c, true)
+	await frames(1)
+	_drag(0, c + Vector2(80, 0))
+	await frames(5)
+	# 이동 중에 "모여" 버튼(두 번째 손가락)
+	var g: Rect2 = hud.gather_button.get_global_rect()
+	_touch(1, g.get_center(), true)
+	await frames(1)
+	_touch(1, g.get_center(), false)
+	await frames(2)
+	eq(battle.ai_manager.plan_for(hero.team).get("kind"), "gather", "이동 중에도 모여 버튼이 눌림")
+	# 이동 중에 아이템 칸의 물약 사용
+	hero.inventory.add(ItemManager.get_item("health_potion"))
+	hero.health.hp = 200.0
+	var slot: Rect2 = hud.inventory_bar.slot_rect(0)
+	_touch(2, hud.inventory_bar.global_position + slot.get_center(), true)
+	await frames(2)
+	check(hero.status.has("potion_heal"), "이동 중에도 물약 사용")
+	_touch(0, c + Vector2(80, 0), false)
+	await frames(1)
+	# 상점 열기·닫기
+	var s: Rect2 = hud.shop_button.get_global_rect()
+	_touch(1, s.get_center(), true)
+	await frames(1)
+	_touch(1, s.get_center(), false)
+	await frames(2)
+	check(hud.shop_open and hud.shop_panel.visible, "상점 열림")
+	check(not hud.joystick.visible, "상점이 열리면 조작 버튼을 숨김")
+	hud.toggle_shop()
+	check(not hud.shop_open and hud.joystick.visible, "상점 닫힘")

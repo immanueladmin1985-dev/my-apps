@@ -12,6 +12,7 @@ var profile: AIProfile
 var controllers: Array = []
 var hero_manager: HeroManager
 var monster_manager: MonsterManager
+var shop: ShopManager
 ## 팀마다 플레이어가 조작하는 영웅 (없으면 null)
 var player_heroes: Dictionary = {}
 

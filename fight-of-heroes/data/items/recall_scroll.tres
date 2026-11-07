@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "recall_scroll"
+display_name = "귀환 두루마리"
+category = "special"
+tier = 1
+glyph = "귀"
+color = Color(0.6, 0.45, 0.85, 1)
+cost = 100
+description = "사용하면 3초 뒤 기지로 돌아갑니다. 움직이거나 피해를 받으면 취소됩니다. 최대 3개."
+consumable = true
+max_stack = 3
+use_kind = "recall"
+use_duration = 3.0
+use_magnitude = 0.0

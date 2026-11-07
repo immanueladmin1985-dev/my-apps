@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("2")
+stat = "move_speed"
+flat = 45.0
+percent = 0.0
+
+[sub_resource type="Resource" id="m1"]
+script = ExtResource("2")
+stat = "armor"
+flat = 20.0
+percent = 0.0
+
+[resource]
+script = ExtResource("1")
+id = "plated_boots"
+display_name = "판금 장화"
+category = "boots"
+tier = 2
+glyph = "판"
+color = Color(0.6, 0.5, 0.35, 1)
+cost = 900
+components = PackedStringArray("old_boots", "leather_armor")
+modifiers = Array[Resource]([SubResource("m0"), SubResource("m1")])
+max_owned = 1

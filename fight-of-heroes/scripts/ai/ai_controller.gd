@@ -23,6 +23,11 @@ const FOLLOW_DISTANCE := 200.0
 const SUPPORT_HELP_RANGE := 2000.0
 const DODGE_MARGIN := 40.0
 const COMMIT_RANGE := 450.0
+## 이만큼 골드가 모이면 싸움이 없을 때 기지로 쇼핑하러 간다.
+const SHOP_GOLD_TRIGGER := 1100
+## 체력 비율이 이보다 낮으면 물약을 마신다.
+const POTION_HP := 0.45
+const POTION_LEVEL_LIMIT := 9
 
 var _think_left := 0.0
 var _unstick_left := 0.0
@@ -30,6 +35,7 @@ var _unstick_dir := Vector2.ZERO
 var _dodging := false
 var objective = null  # 지금 노리는 몬스터·보스 (FARM / BOSS_FIGHT)
 var dodge_count := 0  # 시험용
+var bought: Array = []  # 시험용: 산 아이템 id
 
 
 func setup(p: AIProfile, home_pos: Vector2, rally: Vector2, seed_value := 0) -> void:
@@ -152,6 +158,8 @@ func _physics_process(delta: float) -> void:
 func think() -> void:
 	var pos: Vector2 = hero.global_position
 	var hp: float = hero.health.ratio()
+	_shop_if_possible()
+	_drink_if_needed(hp)
 	var enemies := Targeting.in_radius(get_tree(), pos, profile.sight_range, hero.team, Enums.TargetTeam.ENEMY)
 	var help_target = manager.attacker_of_allies(hero) if manager != null else null
 	if help_target != null and pos.distance_to(help_target.global_position) > _help_range():
@@ -189,6 +197,8 @@ func think() -> void:
 		elif committed:
 			objective = plan.target
 			_set_state(State.BOSS_FIGHT)
+		elif _wants_to_shop():
+			_set_state(State.BUY_ITEM)
 		elif plan.get("kind", "") == "gather":
 			objective = plan.pos
 			_set_state(State.FOLLOW if pos.distance_to(plan.pos) > FOLLOW_DISTANCE else State.IDLE)
@@ -196,6 +206,95 @@ func think() -> void:
 			_role_think()
 	_use_skills(enemies)
 	_apply_orders()
+
+
+# ---- 아이템 ----
+
+func _shop() -> ShopManager:
+	return manager.shop if manager != null else null
+
+
+## 기지에 있거나 죽어 있으면 정해 둔 순서대로 산다.
+func _shop_if_possible() -> void:
+	var shop := _shop()
+	if shop == null or not shop.can_shop(hero):
+		return
+	for i in 12:
+		var next := next_purchase()
+		if next == null:
+			break
+		var r := shop.buy(hero, next.id)
+		if r == ShopManager.Result.NO_SPACE and _sell_a_potion():
+			r = shop.buy(hero, next.id)
+		if r != ShopManager.Result.OK:
+			break
+		bought.append(next.id)
+	if hero.level < POTION_LEVEL_LIMIT:
+		while hero.inventory.count_of("health_potion") < 2 and shop.buy(hero, "health_potion") == ShopManager.Result.OK:
+			bought.append("health_potion")
+
+
+func _sell_a_potion() -> bool:
+	for i in InventoryComponent.SIZE:
+		var it: ItemData = hero.inventory.item_at(i)
+		if it != null and it.consumable:
+			return _shop().sell(hero, i) == ShopManager.Result.OK
+	return false
+
+
+## 지금 살 아이템: 순서상 아직 없는 첫 완성품을 바로 살 수 있으면 그것, 아니면 살 수 있는 재료.
+func next_purchase() -> ItemData:
+	var shop := _shop()
+	if shop == null:
+		return null
+	for fid in hero.data.ai_build:
+		var f := ItemManager.get_item(fid)
+		if f == null or hero.inventory.count_of(fid) > 0:
+			continue
+		var step = _step_toward(f, 0)
+		if step != null:
+			return step
+		return null
+	return null
+
+
+func _step_toward(item: ItemData, depth: int):
+	if depth > 4:
+		return null
+	var plan := _shop().check_buy(hero, item)
+	if plan.result == ShopManager.Result.OK:
+		return item
+	if plan.result == ShopManager.Result.LIMIT or plan.result == ShopManager.Result.NOT_IN_SHOP:
+		return null
+	for cid in item.components:
+		if hero.inventory.count_of(cid) >= item.components.count(cid):
+			continue
+		var c := ItemManager.get_item(cid)
+		if c == null:
+			continue
+		var step = _step_toward(c, depth + 1)
+		if step != null:
+			return step
+	return null
+
+
+## 싸움이 없고 골드가 충분히 모였으면 기지로 쇼핑하러 간다.
+func _wants_to_shop() -> bool:
+	if hero.gold < SHOP_GOLD_TRIGGER or _shop() == null:
+		return false
+	for fid in hero.data.ai_build:
+		if hero.inventory.count_of(fid) == 0:
+			return true
+	return false
+
+
+func _drink_if_needed(hp: float) -> void:
+	var shop := _shop()
+	if shop == null or hp >= POTION_HP or hero.status.has("potion_heal") or shop.can_shop(hero):
+		return
+	var slot: int = hero.inventory.find("health_potion")
+	if slot >= 0:
+		shop.use_item(hero, slot)
 
 
 ## 역할에 따라 할 일을 정한다 (적 영웅·몬스터가 눈앞에 없을 때).
@@ -398,6 +497,10 @@ func _apply_orders() -> void:
 			hero.move_input = Vector2.ZERO
 			hero.nav_goal = null
 			hero.attack_order = objective
+		State.BUY_ITEM:
+			hero.attack_order = null
+			hero.move_input = Vector2.ZERO
+			hero.nav_goal = home
 
 
 ## 따라가는 아군의 뒤쪽 옆에 선다.

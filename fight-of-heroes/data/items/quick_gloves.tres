@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("2")
+stat = "attack_speed"
+flat = 0.0
+percent = 0.15
+
+[resource]
+script = ExtResource("1")
+id = "quick_gloves"
+display_name = "날렵한 장갑"
+category = "weapon"
+tier = 1
+glyph = "장"
+color = Color(0.85, 0.45, 0.35, 1)
+cost = 350
+modifiers = Array[Resource]([SubResource("m0")])

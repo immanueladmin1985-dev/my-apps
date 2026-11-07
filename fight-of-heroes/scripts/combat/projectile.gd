@@ -2,6 +2,7 @@ class_name Projectile
 extends Node2D
 ## 투사체. 대상을 따라가는 방식(기본 공격)과 직선으로 날아가는 방식(스킬)이 있다.
 ## 맞으면 on_hit(대상)을 부른다. 관통하면 한 대상에게 한 번씩만 맞는다.
+## 벽에 닿으면 사라진다. 따라가던 대상이 돌진·도약하면 대상을 놓치고 마지막 위치로 날아가 사라진다.
 
 var owner_unit = null
 var team: int = 0
@@ -16,6 +17,8 @@ var on_hit: Callable
 var color := Color(1, 1, 0.8)
 
 var _traveled := 0.0
+var _target_dash := 0
+var _lost_at = null  # 대상을 놓친 뒤 날아갈 지점
 var _hit_units: Dictionary = {}
 
 
@@ -23,6 +26,7 @@ func setup_homing(from_unit, target, spd: float, hit: Callable) -> void:
 	owner_unit = from_unit
 	team = from_unit.team
 	homing_target = target
+	_target_dash = target.dash_count
 	speed = spd
 	max_distance = 3000.0
 	on_hit = hit
@@ -41,9 +45,20 @@ func setup_line(from_unit, dir: Vector2, spd: float, dist: float, w: float, pier
 
 func _physics_process(delta: float) -> void:
 	var step := speed * delta
+	if _lost_at != null:
+		var to_lost: Vector2 = _lost_at - global_position
+		if to_lost.length() <= step:
+			queue_free()
+			return
+		_move(to_lost.normalized() * step)
+		return
 	if homing_target != null:
 		if not is_instance_valid(homing_target) or homing_target.is_dead:
 			queue_free()
+			return
+		if homing_target.dash_count != _target_dash:
+			_lost_at = homing_target.global_position
+			homing_target = null
 			return
 		var to: Vector2 = homing_target.global_position - global_position
 		direction = to.normalized()
@@ -51,10 +66,12 @@ func _physics_process(delta: float) -> void:
 			on_hit.call(homing_target)
 			queue_free()
 			return
-		global_position += direction * step
+		if not _move(direction * step):
+			return
 	else:
 		var from := global_position
-		global_position += direction * step
+		if not _move(direction * step):
+			return
 		for u in Targeting.on_segment(get_tree(), from, global_position, width, team, affects):
 			if _hit_units.has(u):
 				continue
@@ -68,6 +85,19 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 	if _traveled >= max_distance:
 		queue_free()
+
+
+## 벽에 막히면 사라지고 false 를 돌려준다.
+func _move(v: Vector2) -> bool:
+	var to := global_position + v
+	if not Targeting.has_line_of_sight(self, global_position, to):
+		queue_free()
+		return false
+	global_position = to
+	direction = v.normalized() if v.length() > 0.001 else direction
+	rotation = direction.angle()
+	queue_redraw()
+	return true
 
 
 func _draw() -> void:

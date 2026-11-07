@@ -144,6 +144,9 @@ func manual_aim(slot: int, vec: Vector2) -> CastAim:
 func _unhandled_input(event: InputEvent) -> void:
 	if hero == null or hero.is_dead:
 		return
+	var hud = get_tree().get_first_node_in_group("hud")
+	if hud != null and hud.shop_open:
+		return
 	if event is InputEventScreenTouch and event.pressed:
 		var world_pos: Vector2 = hero.get_canvas_transform().affine_inverse() * event.position
 		var t = Targeting.nearest(get_tree(), world_pos, TAP_PICK_RADIUS, hero.team, Enums.TargetTeam.ENEMY)
@@ -152,10 +155,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			hero.attack_order = t
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var idx := [KEY_Q, KEY_W, KEY_E, KEY_R].find(event.physical_keycode)
-		if event.physical_keycode == KEY_G:
-			var hud = get_tree().get_first_node_in_group("hud")
-			if hud != null:
-				hud.call_gather()
+		if event.physical_keycode == KEY_G and hud != null:
+			hud.call_gather()
+		if event.physical_keycode == KEY_B and hud != null:
+			hud.toggle_shop()
+		var num := [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6].find(event.physical_keycode)
+		if num >= 0 and hud != null:
+			hud._on_inventory_slot(num)
 		if idx >= 0 and event.ctrl_pressed:
 			hero.learn(idx)
 		elif idx >= 0 and not Input.is_physical_key_pressed(KEY_SHIFT):

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("2")
+stat = "armor"
+flat = 15.0
+percent = 0.0
+
+[resource]
+script = ExtResource("1")
+id = "leather_armor"
+display_name = "가죽 갑옷"
+category = "armor"
+tier = 1
+glyph = "가"
+color = Color(0.55, 0.6, 0.7, 1)
+cost = 300
+modifiers = Array[Resource]([SubResource("m0")])

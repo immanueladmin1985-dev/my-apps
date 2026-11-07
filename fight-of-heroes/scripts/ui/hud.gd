@@ -25,7 +25,7 @@ var score_label: Label
 var time_label: Label
 var fps_label: Label
 var message_label: Label
-var pause_button: Button
+var pause_button: TouchButton
 var pause_panel: Control
 var result_panel: Control
 var result_title: Label
@@ -40,7 +40,12 @@ var boss_label: Label
 var boss_bar: StatBar
 var monster_manager: MonsterManager
 var ai_manager: AIManager
-var gather_button: Button
+var gather_button: TouchButton
+var shop_button: TouchButton
+var shop: ShopManager
+var shop_panel: ShopPanel
+var inventory_bar: InventoryBar
+var shop_open := false
 
 var _message_left := 0.0
 
@@ -62,11 +67,12 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
-	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, gold_label, name_label, gather_button] + skill_buttons:
+	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, gold_label, name_label, gather_button, shop_button, inventory_bar] + skill_buttons:
 		n.visible = playable
 	if not playable:
 		return
 	attack_button.hero = hero
+	inventory_bar.hero = hero
 	for b in skill_buttons:
 		b.hero = hero
 		var s: SkillData = hero.skill_caster.get_skill(b.slot)
@@ -218,23 +224,32 @@ func _build() -> void:
 	_place(message_label, Vector2(0.5, 0), Vector2(-320, 118), Vector2(640, 36))
 	root.add_child(message_label)
 
-	pause_button = Button.new()
+	pause_button = TouchButton.new()
 	pause_button.name = "PauseButton"
-	pause_button.text = "II"
-	pause_button.add_theme_font_size_override("font_size", 26)
-	pause_button.focus_mode = Control.FOCUS_NONE
+	pause_button.setup("II", 26)
 	_place(pause_button, Vector2(1, 0), Vector2(-84, 10), Vector2(70, 58))
 	pause_button.pressed.connect(set_paused.bind(true))
 	root.add_child(pause_button)
 
-	gather_button = Button.new()
+	gather_button = TouchButton.new()
 	gather_button.name = "GatherButton"
-	gather_button.text = "모여!"
-	gather_button.add_theme_font_size_override("font_size", 20)
-	gather_button.focus_mode = Control.FOCUS_NONE
+	gather_button.setup("모여!", 19)
 	_place(gather_button, Vector2(1, 0), Vector2(-84, 76), Vector2(70, 52))
 	gather_button.pressed.connect(call_gather)
 	root.add_child(gather_button)
+
+	shop_button = TouchButton.new()
+	shop_button.name = "ShopButton"
+	shop_button.setup("상점", 19, Color(0.35, 0.28, 0.1, 0.9))
+	_place(shop_button, Vector2(1, 0), Vector2(-84, 136), Vector2(70, 52))
+	shop_button.pressed.connect(toggle_shop)
+	root.add_child(shop_button)
+
+	inventory_bar = InventoryBar.new()
+	inventory_bar.name = "InventoryBar"
+	_place(inventory_bar, Vector2(0.5, 1), Vector2(-150, -150), Vector2(301, 46))
+	inventory_bar.slot_pressed.connect(_on_inventory_slot)
+	root.add_child(inventory_bar)
 
 	pause_panel = _make_dialog("일시정지", [
 		["계속하기", set_paused.bind(false)],
@@ -246,6 +261,12 @@ func _build() -> void:
 		["처음 화면", func(): GameManager.go_main()],
 	])
 	result_title = result_panel.get_node("Box/Title")
+	shop_panel = ShopPanel.new()
+	shop_panel.name = "ShopPanel"
+	root.add_child(shop_panel)
+	shop_panel.build()
+	shop_panel.visible = false
+	shop_panel.closed.connect(toggle_shop)
 	result_detail = _label("", 20, HORIZONTAL_ALIGNMENT_CENTER)
 	result_panel.get_node("Box").add_child(result_detail)
 	result_panel.get_node("Box").move_child(result_detail, 1)
@@ -407,6 +428,32 @@ func _on_skill_aim(slot: int, vec: Vector2) -> void:
 
 func _on_skill_released(slot: int, vec: Vector2, dragged: bool, cancelled: bool) -> void:
 	controller.end_aim(slot, vec, dragged, cancelled)
+
+
+func toggle_shop() -> void:
+	if hero == null or shop == null:
+		return
+	shop_open = not shop_open
+	if shop_open:
+		_release_all_touches()
+		shop_panel.open_for(hero, shop)
+	else:
+		shop_panel.visible = false
+	for n in [joystick, attack_button, gather_button, shop_button, pause_button, inventory_bar] + skill_buttons:
+		n.visible = not shop_open
+
+
+func _on_inventory_slot(i: int) -> void:
+	var it: ItemData = hero.inventory.item_at(i)
+	if it == null:
+		toggle_shop()
+		return
+	if it.consumable:
+		var r := shop.use_item(hero, i)
+		if r != ShopManager.Result.OK:
+			show_message(ShopManager.RESULT_TEXT.get(r, ""))
+	else:
+		show_message("%s: %s" % [it.display_name, ", ".join(it.stat_lines())])
 
 
 ## 아군 AI 를 플레이어 자리로 부른다.

@@ -22,9 +22,11 @@ func interval() -> float:
 	return 1.0 / maxf(0.1, unit.stats.get_stat("attack_speed"))
 
 
-## 몸 가장자리 사이 거리로 사거리를 잰다.
+## 몸 가장자리 사이 거리로 사거리를 잰다. 벽에 가려 보이지 않으면 사거리 밖으로 본다.
 func in_range(target, extra := 0.0) -> bool:
-	return unit.global_position.distance_to(target.global_position) <= attack_range + target.radius + extra
+	if unit.global_position.distance_to(target.global_position) > attack_range + target.radius + extra:
+		return false
+	return Targeting.has_line_of_sight(unit, unit.global_position, target.global_position)
 
 
 func is_winding_up() -> bool:
@@ -82,5 +84,8 @@ func _hit(target) -> void:
 	var info := DamageInfo.new(unit, unit.stats.get_stat("attack"), Enums.DamageType.PHYSICAL)
 	info.can_crit = true
 	info.is_basic_attack = true
-	CombatManager.apply_damage(target, info)
+	var dealt := CombatManager.apply_damage(target, info)
+	var ls: float = unit.stats.get_stat("life_steal")
+	if ls > 0.0 and dealt > 0.0:
+		CombatManager.heal(unit, dealt * ls, unit)
 	attack_landed.emit(target)

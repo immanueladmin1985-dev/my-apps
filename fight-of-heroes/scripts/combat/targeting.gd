@@ -53,3 +53,12 @@ static func nearest(tree: SceneTree, pos: Vector2, max_dist: float, team: int, a
 static func effects_parent(node: Node) -> Node:
 	var layer := node.get_tree().get_first_node_in_group("effects_layer")
 	return layer if layer != null else node.get_parent()
+
+
+## a 와 b 사이에 벽(충돌 레이어 1)이 없는지.
+static func has_line_of_sight(node: Node2D, a: Vector2, b: Vector2) -> bool:
+	var space := node.get_world_2d().direct_space_state
+	if space == null:
+		return true
+	var q := PhysicsRayQueryParameters2D.create(a, b, 1)
+	return space.intersect_ray(q).is_empty()

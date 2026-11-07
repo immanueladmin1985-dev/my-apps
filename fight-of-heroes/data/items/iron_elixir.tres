@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/elixir_iron.tres" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = "iron_elixir"
+display_name = "강철의 비약"
+category = "potion"
+tier = 1
+glyph = "철"
+color = Color(0.8, 0.35, 0.5, 1)
+cost = 400
+description = "3분 동안 방어력·마법 저항력 +25, 최대 체력 +200. 최대 2개."
+consumable = true
+max_stack = 2
+use_kind = "status"
+use_status = ExtResource("3")
+use_duration = 180.0
+use_magnitude = 0.0

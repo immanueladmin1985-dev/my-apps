@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("2")
+stat = "attack"
+flat = 40.0
+percent = 0.0
+
+[sub_resource type="Resource" id="m1"]
+script = ExtResource("2")
+stat = "armor_pen"
+flat = 30.0
+percent = 0.0
+
+[sub_resource type="Resource" id="m2"]
+script = ExtResource("2")
+stat = "cooldown_reduction"
+flat = 0.15
+percent = 0.0
+
+[resource]
+script = ExtResource("1")
+id = "conqueror_axe"
+display_name = "정복자의 도끼"
+category = "weapon"
+tier = 3
+glyph = "정"
+color = Color(0.85, 0.45, 0.35, 1)
+cost = 2400
+components = PackedStringArray("armor_breaker", "time_ring")
+modifiers = Array[Resource]([SubResource("m0"), SubResource("m1"), SubResource("m2")])
+max_owned = 1

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "potion_mana"
+display_name = "마나 회복"
+kind = 6
+color = Color(0.4, 0.6, 1, 1)

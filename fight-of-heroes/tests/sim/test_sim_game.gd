@@ -64,9 +64,16 @@ func _play(difficulty: String, kill_target: int, boss_time: float, seed_value: i
 	var heroes: Array = battle.hero_manager.heroes
 	var levels := []
 	for h: Hero in heroes:
-		levels.append(h.level)
+		levels.append("%d/%s" % [h.level, h.inventory.slots.filter(func(x): return x != null and not x.item.consumable).size()])
 		check(h.max_stuck_time < 2.0, "%s 이(가) %.1f초 동안 끼어 있었음" % [h.display_name, h.max_stuck_time])
-		check(h.gold > 0, "%s 골드 0" % h.display_name)
+		var gear := 0
+		var gear_names := []
+		for i in InventoryComponent.SIZE:
+			var it: ItemData = h.inventory.item_at(i)
+			if it != null and not it.consumable:
+				gear += it.cost
+				gear_names.append(it.display_name)
+		check(gear >= 1000, "%s 이(가) 장비를 갖춤 (장비 가치 %d, %s)" % [h.display_name, gear, ", ".join(gear_names)])
 		# 배운 지 60초가 넘은 스킬은 한 번 이상 썼어야 한다 (1레벨에 배운 스킬은 레벨업 전이라 기록에서 빠질 수 있어 따로 본다).
 		for slot in 4:
 			var at = learned.get([h, slot])

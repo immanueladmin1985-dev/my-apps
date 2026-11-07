@@ -64,7 +64,7 @@ func test_camp_respawn_and_rewards() -> void:
 	for m in mm.alive_monsters():
 		CombatManager.apply_damage(m, DamageInfo.new(h, 9999.0, Enums.DamageType.TRUE))
 	near(h.xp, 70.0, 0.01, "늑대 2마리 경험치")
-	eq(h.gold, 50, "늑대 2마리 골드")
+	eq(h.gold - DataRegistry.progression().start_gold, 50, "늑대 2마리 골드")
 	await frames(30)
 	eq(mm.alive_monsters().size(), 0, "모두 처치")
 	await frames(100)

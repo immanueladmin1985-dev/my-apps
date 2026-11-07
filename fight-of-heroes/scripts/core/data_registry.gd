@@ -10,6 +10,7 @@ const DIRS := {
 	"ai": "res://data/ai",
 	"maps": "res://data/maps",
 	"monsters": "res://data/monsters",
+	"items": "res://data/items",
 }
 
 var load_errors: PackedStringArray = []
@@ -92,6 +93,29 @@ func validate() -> PackedStringArray:
 		for i in m.skills.size():
 			if not (m.skills[i] is SkillData):
 				errors.append("%s: 패턴 %d" % [m.id, i])
+	for it: ItemData in get_all("items"):
+		var parts := 0
+		for cid in it.components:
+			var c = get_item("items", cid)
+			if c == null:
+				errors.append("%s: 재료 %s 없음" % [it.id, cid])
+			else:
+				parts += c.cost
+		if it.cost < parts:
+			errors.append("%s: 가격(%d)이 재료 합(%d)보다 작음" % [it.id, it.cost, parts])
+		for m in it.modifiers:
+			if not (m is StatModifier) or not StatsComponent.KEYS.has(m.stat):
+				errors.append("%s: 알 수 없는 능력치" % it.id)
+		if it.consumable and (it.use_kind == "none" or it.max_stack < 1):
+			errors.append("%s: 사용 아이템 설정" % it.id)
+		if it.use_kind == "status" and it.use_status == null:
+			errors.append("%s: 사용 효과 없음" % it.id)
+		if not it.consumable and it.modifiers.is_empty():
+			errors.append("%s: 능력치 없음" % it.id)
+	for h: HeroData in get_all("heroes"):
+		for bid in h.ai_build:
+			if get_item("items", bid) == null:
+				errors.append("%s: AI 아이템 순서에 없는 아이템 %s" % [h.id, bid])
 	var prog := progression()
 	if prog.ultimate_levels.is_empty():
 		errors.append("progression: 궁극기 레벨 배열이 비어 있음")

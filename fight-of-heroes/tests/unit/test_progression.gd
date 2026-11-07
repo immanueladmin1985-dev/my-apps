@@ -98,7 +98,8 @@ func test_passive_gold() -> void:
 	var a := _fresh()
 	var xm := _xp_manager([a])
 	await frames(300)
-	check(a.gold >= 9 and a.gold <= 11, "5초에 약 10골드 (%d)" % a.gold)
+	var g := a.gold - DataRegistry.progression().start_gold
+	check(g >= 9 and g <= 11, "5초에 약 10골드 (%d)" % g)
 	xm.queue_free()
 
 
@@ -113,9 +114,10 @@ func test_hero_kill_rewards() -> void:
 	bm.setup(MatchConfig.new())
 	CombatManager.apply_damage(victim, DamageInfo.new(helper, 100.0, Enums.DamageType.TRUE))
 	CombatManager.apply_damage(victim, DamageInfo.new(killer, 9999.0, Enums.DamageType.TRUE))
-	eq(killer.gold, 270, "처치 골드 250 + 20 × 레벨")
-	eq(helper.gold, 135, "도움 골드 = 처치 골드의 절반")
-	eq(far.gold, 0, "먼 아군은 골드 없음")
+	var sg := DataRegistry.progression().start_gold
+	eq(killer.gold - sg, 270, "처치 골드 250 + 20 × 레벨")
+	eq(helper.gold - sg, 135, "도움 골드 = 처치 골드의 절반")
+	eq(far.gold - sg, 0, "먼 아군은 골드 없음")
 	near(killer.xp, 55.0, 0.01, "경험치 110 을 두 명이 나눔")
 	near(far.xp, 0.0, 0.01, "먼 아군은 경험치 없음")
 	xm.queue_free()

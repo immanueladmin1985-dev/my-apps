@@ -19,6 +19,12 @@ signal gold_changed(gold: int)
 signal skill_points_changed(points: int)
 
 @onready var skill_caster: SkillCaster = $SkillCaster
+@onready var inventory: InventoryComponent = $Inventory
+
+## 귀환 중 남은 시간 (0 이면 귀환 중이 아님)
+var recall_left := 0.0
+var recall_total := 0.0
+signal recall_finished
 
 
 func setup(hero_data: HeroData, hero_team: int) -> void:
@@ -98,3 +104,40 @@ func add_gold(amount: int) -> void:
 		return
 	gold = maxi(0, gold + amount)
 	gold_changed.emit(gold)
+
+
+## 귀환: seconds 뒤 기지로 이동한다. 움직이거나, 공격하거나, 피해를 받으면 취소된다.
+func start_recall(seconds: float) -> void:
+	clear_orders()
+	attack.cancel_windup()
+	recall_left = maxf(0.1, seconds)
+	recall_total = recall_left
+
+
+func cancel_recall() -> void:
+	recall_left = 0.0
+
+
+func is_recalling() -> bool:
+	return recall_left > 0.0
+
+
+func on_damaged(src, amount: float) -> void:
+	if recall_left > 0.0 and amount > 0.0:
+		cancel_recall()
+		if controller is PlayerController:
+			EventBus.notice.emit("피해를 받아 귀환이 취소되었습니다")
+
+
+func _physics_process(delta: float) -> void:
+	super._physics_process(delta)
+	if recall_left > 0.0:
+		if is_dead or move_input.length() > 0.05 or attack_order != null or nav_goal != null or attack.is_winding_up():
+			cancel_recall()
+			return
+		recall_left -= delta
+		if recall_left <= 0.0:
+			recall_left = 0.0
+			global_position = spawn_point
+			nav_goal = null
+			recall_finished.emit()

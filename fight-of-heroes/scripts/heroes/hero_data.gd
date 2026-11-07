@@ -41,6 +41,8 @@ extends Resource
 @export_enum("fighter", "hunter", "support") var preferred_role: String = "fighter"
 ## 0~1. 높을수록 체력이 낮아도 싸운다.
 @export var ai_aggression: float = 0.5
+## AI 가 사는 완성품 순서. 재료부터 차례로 산다.
+@export var ai_build: PackedStringArray = PackedStringArray()
 ## 스킬 포인트를 올리는 순서(R 은 열리면 항상 먼저). 0=Q, 1=W, 2=E
 @export var ai_skill_priority: PackedInt32Array = PackedInt32Array([0, 1, 2])
 

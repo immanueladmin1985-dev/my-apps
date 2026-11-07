@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("2")
+stat = "attack"
+flat = 10.0
+percent = 0.0
+
+[sub_resource type="Resource" id="m1"]
+script = ExtResource("2")
+stat = "crit_chance"
+flat = 0.2
+percent = 0.0
+
+[resource]
+script = ExtResource("1")
+id = "keen_dirk"
+display_name = "예리한 단도"
+category = "weapon"
+tier = 2
+glyph = "도"
+color = Color(0.85, 0.45, 0.35, 1)
+cost = 1000
+components = PackedStringArray("dagger", "lucky_coin")
+modifiers = Array[Resource]([SubResource("m0"), SubResource("m1")])

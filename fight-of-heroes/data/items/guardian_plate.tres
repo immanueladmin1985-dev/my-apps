@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("2")
+stat = "armor"
+flat = 60.0
+percent = 0.0
+
+[sub_resource type="Resource" id="m1"]
+script = ExtResource("2")
+stat = "max_hp"
+flat = 450.0
+percent = 0.0
+
+[resource]
+script = ExtResource("1")
+id = "guardian_plate"
+display_name = "수호자의 갑옷"
+category = "armor"
+tier = 3
+glyph = "수"
+color = Color(0.55, 0.6, 0.7, 1)
+cost = 2400
+components = PackedStringArray("chain_mail", "giant_belt")
+modifiers = Array[Resource]([SubResource("m0"), SubResource("m1")])
+max_owned = 1

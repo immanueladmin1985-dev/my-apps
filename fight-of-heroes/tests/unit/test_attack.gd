@@ -47,3 +47,50 @@ func test_projectile_target_dies() -> void:
 	var fx := get_tree().get_first_node_in_group("effects_layer")
 	var alive := fx.get_children().filter(func(n): return n is Projectile)
 	eq(alive.size(), 0, "대상이 죽으면 투사체도 사라짐")
+
+
+func _wall(r: Rect2) -> void:
+	var body := StaticBody2D.new()
+	body.collision_layer = 1
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = r.size
+	shape.shape = rect
+	shape.position = r.get_center()
+	body.add_child(shape)
+	world.add_child(body)
+
+
+func test_wall_blocks_attacks() -> void:
+	_wall(Rect2(480, 300, 40, 400))
+	await frames(2)
+	var a := spawn_hero("elf_archer", Enums.Team.BLUE, Vector2(300, 500))
+	var t := spawn_dummy(Enums.Team.RED, Vector2(650, 500), {"max_hp": 5000.0})
+	check(not a.attack.in_range(t), "벽 너머는 사거리 밖")
+	t.status.apply(load("res://data/status/stun.tres"), 10.0, 0.0)
+	a.skill_caster.cast(0, CastAim.toward(Vector2.RIGHT))
+	await frames(40)
+	near(t.health.hp, 5000.0, 0.01, "직선 투사체가 벽에 막힘")
+	# 시험용 월드에는 길찾기 영역이 없어 돌아가지는 못한다. 벽 너머로는 공격하지 않는지만 본다.
+	a.attack_order = t
+	await frames(120)
+	near(t.health.hp, 5000.0, 0.01, "벽 너머로는 기본 공격하지 않음")
+
+
+func test_dash_dodges_homing_attack() -> void:
+	var a := spawn_hero("elf_archer", Enums.Team.BLUE, Vector2(200, 500))
+	var t := spawn_hero("blade_master", Enums.Team.RED, Vector2(560, 500))
+	a.attack_order = t
+	var fx := get_tree().get_first_node_in_group("effects_layer")
+	var flying: Array = []
+	for i in 40:
+		await frames(1)
+		flying = fx.get_children().filter(func(n): return n is Projectile)
+		if not flying.is_empty():
+			break
+	eq(flying.size(), 1, "기본 공격 투사체 발사")
+	a.attack_order = null
+	var hp := t.health.hp
+	t.skill_caster.cast(0, CastAim.toward(Vector2.DOWN))
+	await frames(40)
+	near(t.health.hp, hp, 0.01, "돌진하면 따라오던 투사체를 피함")

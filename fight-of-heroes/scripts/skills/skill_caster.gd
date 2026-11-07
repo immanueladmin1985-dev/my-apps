@@ -8,6 +8,8 @@ signal ranks_changed
 var skills: Array = [null, null, null, null]
 var ranks: Array = [0, 0, 0, 0]
 var cooldowns: Array = [0.0, 0.0, 0.0, 0.0]
+## 마지막 시전 때 정해진 쿨타임 (쿨타임 감소 반영). 버튼의 남은 비율 표시에 쓴다.
+var max_cooldowns: Array = [1.0, 1.0, 1.0, 1.0]
 var cast_counts: Array = [0, 0, 0, 0]
 
 @onready var unit = get_parent()
@@ -41,7 +43,7 @@ func cooldown_ratio(slot: int) -> float:
 	var s := get_skill(slot)
 	if s == null or cooldowns[slot] <= 0.0:
 		return 0.0
-	return clampf(cooldowns[slot] / maxf(0.01, s.get_cooldown(ranks[slot])), 0.0, 1.0)
+	return clampf(cooldowns[slot] / maxf(0.01, max_cooldowns[slot]), 0.0, 1.0)
 
 
 func mana_cost(slot: int) -> float:
@@ -76,7 +78,8 @@ func cast(slot: int, aim: CastAim = null) -> int:
 	var s := get_skill(slot)
 	var rank: int = ranks[slot]
 	unit.mana.spend(s.get_mana(rank))
-	cooldowns[slot] = s.get_cooldown(rank)
+	cooldowns[slot] = s.get_cooldown(rank) * (1.0 - unit.stats.get_stat("cooldown_reduction"))
+	max_cooldowns[slot] = cooldowns[slot]
 	cast_counts[slot] += 1
 	unit.attack.cancel_windup()
 	if s.cast_lock > 0.0:

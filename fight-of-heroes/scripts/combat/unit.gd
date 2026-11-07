@@ -31,6 +31,8 @@ var _prune_left := 1.0
 const ATTACKER_MEMORY := 15.0
 ## 시전 준비 동작으로 멈춰 있는 남은 시간
 var cast_lock_left := 0.0
+## 돌진할 때마다 1 씩 늘어난다. 따라가던 투사체가 이 값이 바뀌면 대상을 놓친다.
+var dash_count := 0
 
 @onready var stats: StatsComponent = $Stats
 @onready var health: HealthComponent = $Health
@@ -202,6 +204,7 @@ func start_dash(dir: Vector2, distance: float, speed: float, width: float, on_pa
 		return
 	attack.cancel_windup()
 	facing = dir.normalized()
+	dash_count += 1
 	_dash = {
 		"dir": dir.normalized(), "left": distance, "speed": speed, "width": width,
 		"on_pass": on_pass, "on_end": on_end, "hit": {},

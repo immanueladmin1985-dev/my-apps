@@ -79,6 +79,10 @@ func _physics_process(delta: float) -> void:
 	for id in active:
 		var e = active[id]
 		e.remaining -= delta
+		if e.data.kind == Enums.StatusKind.HEAL_OVER_TIME:
+			unit.health.heal(e.magnitude * delta)
+		elif e.data.kind == Enums.StatusKind.MANA_OVER_TIME:
+			unit.mana.restore(e.magnitude * delta)
 		if e.data.kind == Enums.StatusKind.DOT:
 			e.tick_left -= delta
 			while e.tick_left <= 0.0 and not unit.is_dead:
