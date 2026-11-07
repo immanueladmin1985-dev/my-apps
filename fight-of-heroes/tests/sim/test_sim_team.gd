@@ -82,18 +82,24 @@ func _run(blue: Array, red: Array, difficulty: String, seed_value: int) -> void:
 		for slot in 4:
 			var n: int = casts.get([h, slot], 0)
 			used.append(n)
-			if learned[h][slot] > 0:
+			if learned[h][slot] > 0 and _offensive(h, slot):
 				check(n >= 1, "%s(%s) 이(가) 배운 %s 스킬을 쓰지 않음" % [h.display_name, Enums.team_name(h.team), Enums.SLOT_KEYS[slot]])
 		check(h.max_stuck_time < 2.0, "%s 이(가) %.1f초 동안 끼어 있었음" % [h.display_name, h.max_stuck_time])
-		if h.controller.state_log.has(AIController.State.FOLLOW):
+		if h.controller.state_log.has(AIController.State.FARM):
 			followed += 1
 		lines.append("%s%s Lv%d %d/%d/%d" % [Enums.team_name(h.team).left(1), h.data.glyph, h.level, h.kills, h.deaths, h.assists])
 	var bm: BattleManager = battle.battle_manager
 	check(deaths >= 2, "240초 동안 사망 %d번" % deaths)
 	check(respawns[0] >= 1, "부활 없음")
 	check(assists >= 1, "도움 없음")
-	check(followed >= 2, "리더를 따라간 AI 가 %d명" % followed)
+	check(followed >= 2, "사냥(FARM)을 한 AI 가 %d명" % followed)
 	eq(bm.kills[Enums.Team.BLUE] + bm.kills[Enums.Team.RED], deaths, "킬 점수 합 = 사망 수")
 	print("       %s: 점수 %d:%d, 킬/데스/도움 %s, 부활 %d" % [difficulty, bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED], " ".join(lines), respawns[0]])
 	battle.queue_free()
 	await get_tree().process_frame
+
+
+## 위험할 때만 쓰는 스킬(방어·후퇴)은 상황에 따라 안 쓸 수 있으므로 공격·돌진용만 검사한다.
+func _offensive(h, slot: int) -> bool:
+	var sk: SkillData = h.skill_caster.get_skill(slot)
+	return sk != null and (sk.ai_use == Enums.AIUse.OFFENSE or sk.ai_use == Enums.AIUse.ENGAGE)

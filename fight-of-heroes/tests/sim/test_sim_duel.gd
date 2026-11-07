@@ -54,7 +54,7 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 		for slot in 4:
 			var n: int = casts.get("%s:%d" % [h.data.id, slot], 0)
 			used.append(n)
-			if learned[h][slot] > 0:
+			if learned[h][slot] > 0 and _offensive(h, slot):
 				check(n >= 1, "%s 이(가) 배운 %s 스킬을 한 번도 쓰지 않음" % [h.display_name, Enums.SLOT_KEYS[slot]])
 		check(h.max_stuck_time < 2.0, "%s 이(가) %.1f초 동안 끼어 있었음" % [h.display_name, h.max_stuck_time])
 		report.append("%s Lv%d 킬 %d 데스 %d 스킬 %s 최대 끼임 %.2f초" % [h.display_name, h.level, h.kills, h.deaths, str(used), h.max_stuck_time])
@@ -69,3 +69,9 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 	print("       %s: %s / 점수 %d:%d / 부활 %d / 최저 체력 %s" % [difficulty, " | ".join(report), bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED], respawns[0], str(min_hp.values().map(func(v): return roundi(v * 100)))])
 	battle.queue_free()
 	await get_tree().process_frame
+
+
+## 위험할 때만 쓰는 스킬(방어·후퇴)은 상황에 따라 안 쓸 수 있으므로 공격·돌진용만 검사한다.
+func _offensive(h, slot: int) -> bool:
+	var sk: SkillData = h.skill_caster.get_skill(slot)
+	return sk != null and (sk.ai_use == Enums.AIUse.OFFENSE or sk.ai_use == Enums.AIUse.ENGAGE)

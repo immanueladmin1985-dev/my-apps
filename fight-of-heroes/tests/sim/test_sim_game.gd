@@ -70,8 +70,9 @@ func _play(difficulty: String, kill_target: int, boss_time: float, seed_value: i
 		# 배운 지 60초가 넘은 스킬은 한 번 이상 썼어야 한다 (1레벨에 배운 스킬은 레벨업 전이라 기록에서 빠질 수 있어 따로 본다).
 		for slot in 4:
 			var at = learned.get([h, slot])
-			var old_enough: bool = (at != null and Unit.now() - at > 60.0) or (at == null and h.skill_caster.ranks[slot] > 0 and slot != 3)
-			if old_enough:
+			# R 은 상대 체력이 줄었을 때만 아껴 쓰므로 기록만 한다.
+			var old_enough: bool = (at != null and Unit.now() - at > 60.0) or (at == null and h.skill_caster.ranks[slot] > 0)
+			if old_enough and slot != 3 and _offensive(h, slot):
 				check(stats.casts.has([h, slot]), "%s 이(가) 배운 지 60초가 넘은 %s 스킬을 쓰지 않음" % [h.display_name, Enums.SLOT_KEYS[slot]])
 	check(bm.match_over, "%d분 안에 경기가 끝남" % (max_seconds / 60))
 	check(stats.monster_kills >= 6, "몬스터 처치 %d" % stats.monster_kills)
@@ -81,3 +82,9 @@ func _play(difficulty: String, kill_target: int, boss_time: float, seed_value: i
 	battle.queue_free()
 	await get_tree().process_frame
 	return {"bm": bm}
+
+
+## 위험할 때만 쓰는 스킬(방어·후퇴)은 상황에 따라 안 쓸 수 있으므로 공격·돌진용만 검사한다.
+func _offensive(h, slot: int) -> bool:
+	var sk: SkillData = h.skill_caster.get_skill(slot)
+	return sk != null and (sk.ai_use == Enums.AIUse.OFFENSE or sk.ai_use == Enums.AIUse.ENGAGE)

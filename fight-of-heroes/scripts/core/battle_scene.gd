@@ -50,8 +50,12 @@ func _ready() -> void:
 				ai_manager.attach(h, map.spawn_of(team), center, s)
 			if is_player:
 				player_hero = h
-				ai_manager.set_player(team, h)
+				# 사람이 조작할 때만 팀 계획에서 "플레이어"로 본다.
+				if not config.autoplay:
+					ai_manager.set_player(team, h)
 				h.get_node("Visual").is_player = true
+	for team in [Enums.Team.BLUE, Enums.Team.RED]:
+		ai_manager.assign_roles(team)
 	follow_target = player_hero if player_hero != null else (hero_manager.heroes[0] if not hero_manager.heroes.is_empty() else null)
 	battle_manager.setup(config)
 	monster_manager.setup(world, map, config)
@@ -66,11 +70,24 @@ func _ready() -> void:
 		camera.global_position = follow_target.global_position
 		camera.reset_smoothing()
 	$AimIndicator.setup(player_hero, player_controller)
+	hud.ai_manager = ai_manager
 	hud.setup(player_hero, player_controller, battle_manager)
 	hud.setup_overview(map, hero_manager, camera, monster_manager)
 
 
 func _process(_delta: float) -> void:
+	if GameManager.dev_args.has("overview"):
+		# 개발용: 맵 전체를 한 화면에 본다.
+		var vp := get_viewport_rect().size
+		var z := minf(vp.x / (map.size.x + 200.0), vp.y / (map.size.y + 200.0))
+		camera.zoom = Vector2(z, z)
+		camera.position_smoothing_enabled = false
+		camera.limit_left = -100000
+		camera.limit_top = -100000
+		camera.limit_right = 100000
+		camera.limit_bottom = 100000
+		camera.global_position = map.size * 0.5
+		return
 	if GameManager.dev_args.has("follow_boss"):
 		var b := get_tree().get_first_node_in_group("bosses")
 		if b != null:

@@ -98,6 +98,20 @@ func validate() -> PackedStringArray:
 	for mp: MapData in get_all("maps"):
 		if mp.obstacles.is_empty() or mp.camps.is_empty():
 			errors.append("%s: 장애물·캠프 배열이 비어 있음" % mp.id)
+		var bounds := Rect2(Vector2.ZERO, mp.size)
+		for c: CampData in mp.camps:
+			for mid in c.monsters:
+				if monster(mid) == null:
+					errors.append("%s/%s: 몬스터 %s 없음" % [mp.id, c.id, mid])
+			if not bounds.grow(-40).has_point(c.position):
+				errors.append("%s/%s: 맵 밖" % [mp.id, c.id])
+			for r in mp.obstacles:
+				if r.grow(30).has_point(c.position):
+					errors.append("%s/%s: 장애물 안 %s" % [mp.id, c.id, str(r)])
+		for sp in [mp.blue_spawn, mp.red_spawn]:
+			for r in mp.obstacles:
+				if r.grow(40).has_point(sp):
+					errors.append("%s: 시작 지점이 장애물 안" % mp.id)
 	return errors
 
 

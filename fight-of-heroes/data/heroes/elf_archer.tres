@@ -44,4 +44,5 @@ is_ranged = true
 projectile_speed = 1000.0
 passive_description = "(PHASE 5) 같은 대상을 연속으로 맞히면 공격 속도 증가"
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+preferred_role = "hunter"
 ai_aggression = 0.4

@@ -32,6 +32,9 @@ func is_boss_camp(camp: Dictionary) -> bool:
 
 func _physics_process(delta: float) -> void:
 	for camp in camps:
+		if camp.data.wave_interval > 0.0:
+			_tick_wave(camp, delta)
+			continue
 		if camp.alive:
 			var units: Array = camp.units
 			if units.all(func(m): return not is_instance_valid(m) or m.is_dead):
@@ -51,6 +54,41 @@ func _physics_process(delta: float) -> void:
 			EventBus.boss_warning.emit(d.display_name, ceili(camp.left))
 		if camp.left <= 0.0:
 			spawn_camp(camp)
+
+
+## 주기 소환 캠프: 처음 first_spawn 뒤부터 wave_interval 마다 한 무리씩, wave_max 까지 쌓인다.
+func _tick_wave(camp: Dictionary, delta: float) -> void:
+	var c: CampData = camp.data
+	var alive: Array = []
+	for m in camp.units:
+		if is_instance_valid(m) and not m.is_dead:
+			alive.append(m)
+		elif is_instance_valid(m) and m.is_dead and not m.has_meta("corpse"):
+			m.set_meta("corpse", true)
+			get_tree().create_timer(CORPSE_TIME, false).timeout.connect(m.queue_free)
+	camp.units = alive + camp.units.filter(func(m): return is_instance_valid(m) and m.is_dead)
+	camp.alive = not alive.is_empty()
+	camp.left -= delta
+	if camp.left > 0.0:
+		return
+	camp.left = c.wave_interval
+	var room := c.wave_max - alive.size()
+	var group: Array = []
+	for i in mini(room, c.monsters.size()):
+		var d := DataRegistry.monster(c.monsters[i])
+		if d == null:
+			continue
+		var m: Monster = SCENE.instantiate()
+		m.name = "%s_%s_%d_%d" % [c.id, d.id, camp.spawned, i]
+		world.add_child(m)
+		var pos := c.position + Vector2.from_angle(randf() * TAU) * randf_range(60.0, 220.0)
+		m.setup(d, pos)
+		group.append(m)
+	for m in group:
+		m.camp_mates = group
+	camp.units += group
+	camp.spawned += 1
+	camp.alive = camp.alive or not group.is_empty()
 
 
 func spawn_camp(camp: Dictionary) -> void:
@@ -92,6 +130,15 @@ func farm_spots() -> Array:
 	for camp in camps:
 		if camp.alive and not is_boss_camp(camp):
 			out.append(camp.data.position)
+	return out
+
+
+## 캠프 정보 목록: [{position, id, wave}] (살아 있는 몬스터가 있는 것만)
+func farm_camps() -> Array:
+	var out: Array = []
+	for camp in camps:
+		if camp.alive and not is_boss_camp(camp):
+			out.append({"position": camp.data.position, "id": camp.data.id, "wave": camp.data.wave_interval > 0.0})
 	return out
 
 

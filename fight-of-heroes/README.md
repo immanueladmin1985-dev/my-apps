@@ -3,7 +3,7 @@
 오프라인 3대3 2D 모바일 AOS 게임입니다. Godot 4.7, GDScript, 안드로이드 가로 화면용입니다.
 
 - 설계: [docs/DESIGN.md](docs/DESIGN.md)
-- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md)
+- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md), [PHASE 3 보완](docs/PHASE3B_REPORT.md)
 
 ## 실행과 시험
 
@@ -15,12 +15,14 @@ GODOT=/경로/godot tools/run_tests.sh --only=test_skills
 
 # 화면 캡처 (Xvfb)
 xvfb-run -a -s "-screen 0 2400x1080x24" godot --path . --rendering-driver opengl3 --windowed --resolution 2400x1080 \
-  -- --screenshot=/tmp/shot.png --wait=7 --battle=blade_master [--autoplay] [--seed=3] [--size=3] [--boss_time=3 --follow_boss]
+  -- --screenshot=/tmp/shot.png --wait=7 --battle=blade_master [--autoplay] [--seed=3] [--size=3] [--boss_time=3 --follow_boss] [--overview]
 ```
 
 시험 실행기는 20초 동안 프레임이 진행되지 않으면 멈춘 것으로 보고 실패로 끝냅니다.
 
-컴퓨터에서 실행하면 마우스로 터치를 흉내 낼 수 있고, WASD·방향키(이동), 스페이스(공격), Q/W/E/R 키도 쓸 수 있습니다.
+컴퓨터에서 실행하면 마우스로 터치를 흉내 낼 수 있고, WASD·방향키(이동), 스페이스(공격), Q/W/E/R(스킬), Ctrl+Q/W/E/R(스킬 올리기), G(모여) 키도 쓸 수 있습니다.
+
+내보낸 패키지 점검: `godot --headless --path . --export-pack "Linux" build/check.pck && godot --headless --main-pack build/check.pck -- --selfcheck`
 
 ## APK
 

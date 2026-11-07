@@ -1,9 +1,12 @@
 class_name AIManager
 extends Node
-## AI 조작기를 만들고 난이도를 적용한다. 팀 단위 판단(리더, 집중 공격 대상)도 여기서 한다.
-## 각 AI 는 자기 판단을 하되, 팀 정보는 이 매니저에게 묻는다.
+## AI 조작기를 만들고 난이도를 적용한다. 팀 단위 판단(역할 배정, 집중 공격 대상, 보스 도전, "모여")도 여기서 한다.
+## 각 AI 는 자기 판단을 하되, 팀 정보와 팀 계획은 이 매니저에게 묻는다.
 
 const FOCUS_REFRESH := 0.5
+const PLAN_REFRESH := 1.0
+const ROLES := ["fighter", "hunter", "support"]
+const GATHER_SECONDS := 15.0
 
 var profile: AIProfile
 var controllers: Array = []
@@ -14,6 +17,9 @@ var player_heroes: Dictionary = {}
 
 var _focus: Dictionary = {}  # team -> Unit
 var _focus_left := 0.0
+var _plan_left := 0.0
+## 팀 계획: team -> {kind: "none" | "boss" | "gather", target, pos, until}
+var plans: Dictionary = {}
 
 
 func setup(difficulty: String, hm: HeroManager = null) -> void:
@@ -47,19 +53,6 @@ func alive_count(team: int) -> int:
 	return hero_manager.heroes.filter(func(h): return h.team == team and not h.is_dead).size()
 
 
-## 팀 리더: 플레이어 영웅이 살아 있으면 플레이어, 아니면 살아 있는 첫 번째 영웅.
-func leader(team: int):
-	var p = player_heroes.get(team)
-	if p != null and is_instance_valid(p) and not p.is_dead:
-		return p
-	if hero_manager == null:
-		return null
-	for h in hero_manager.heroes:
-		if h.team == team and not h.is_dead:
-			return h
-	return null
-
-
 ## 팀의 집중 공격 대상: 아군 근처에서 처치하기 쉬운 적 영웅.
 func focus_target(team: int):
 	var t = _focus.get(team)
@@ -68,7 +61,109 @@ func focus_target(team: int):
 	return null
 
 
+## 팀 안의 AI 에게 역할을 나눠 준다. 플레이어가 있으면 플레이어 영웅의 선호 역할을 먼저 뺀다.
+func assign_roles(team: int) -> void:
+	var free: Array = ROLES.duplicate()
+	var player = player_heroes.get(team)
+	if player != null and free.has(player.data.preferred_role):
+		free.erase(player.data.preferred_role)
+	var ais: Array = controllers.filter(func(c): return c.hero.team == team)
+	var unassigned: Array = []
+	for c in ais:
+		var pref: String = c.hero.data.preferred_role
+		if free.has(pref):
+			c.role = pref
+			free.erase(pref)
+		else:
+			unassigned.append(c)
+	for c in unassigned:
+		c.role = free.pop_front() if not free.is_empty() else c.hero.data.preferred_role
+
+
+func plan_for(team: int) -> Dictionary:
+	var p: Dictionary = plans.get(team, {})
+	if p.get("kind", "") == "gather" and Unit.now() > p.until:
+		plans[team] = {"kind": "none"}
+		return plans[team]
+	if p.get("kind", "") == "boss" and (not is_instance_valid(p.target) or p.target.is_dead):
+		plans[team] = {"kind": "none"}
+		return plans[team]
+	return p
+
+
+## "모여!": 팀 AI 가 GATHER_SECONDS 동안 pos 로 모인다.
+func request_gather(team: int, pos: Vector2) -> void:
+	plans[team] = {"kind": "gather", "pos": pos, "until": Unit.now() + GATHER_SECONDS}
+
+
+## 팀이 보스에 도전할 준비가 됐는지: 2명 이상 살아 있고 평균 체력 50% 이상.
+## 중립 보스는 평균 6레벨, 최종 보스는 평균 8레벨 이상. 상대 팀이 1명 이하만 살아 있으면 레벨과 상관없이 도전한다.
+func team_boss_ready(team: int, boss) -> bool:
+	if hero_manager == null:
+		return false
+	var mates: Array = []
+	for h in hero_manager.heroes:
+		if h.team == team and not h.is_dead:
+			mates.append(h)
+	if mates.size() < 2:
+		return false
+	var hp := 0.0
+	var lv := 0.0
+	for m in mates:
+		hp += m.health.ratio()
+		lv += m.level
+	hp /= mates.size()
+	lv /= mates.size()
+	if hp < 0.5:
+		return false
+	var enemy_team: int = Enums.Team.RED if team == Enums.Team.BLUE else Enums.Team.BLUE
+	if alive_count(enemy_team) <= 1:
+		return true
+	return lv >= (8.0 if boss.is_final_boss() else 6.0)
+
+
+func _update_plan(team: int) -> void:
+	var p := plan_for(team)
+	if p.get("kind", "") == "gather":
+		return
+	if monster_manager == null:
+		plans[team] = {"kind": "none"}
+		return
+	# 플레이어 팀은 플레이어가 보스를 공격하기 시작하면 함께 도전한다.
+	var player = player_heroes.get(team)
+	if player != null and is_instance_valid(player) and not player.is_dead:
+		var t = player.attack_order
+		if t is Monster and t.is_boss() and not t.is_dead:
+			plans[team] = {"kind": "boss", "target": t}
+		elif p.get("kind", "") == "boss" and player.global_position.distance_to(p.target.global_position) < 900.0:
+			pass
+		else:
+			plans[team] = {"kind": "none"}
+		return
+	if p.get("kind", "") == "boss" and team_boss_ready_keep(team):
+		return
+	var fb = monster_manager.final_boss()
+	if fb != null and team_boss_ready(team, fb):
+		plans[team] = {"kind": "boss", "target": fb}
+		return
+	for b in monster_manager.bosses():
+		if not b.is_final_boss() and team_boss_ready(team, b):
+			plans[team] = {"kind": "boss", "target": b}
+			return
+	plans[team] = {"kind": "none"}
+
+
+## 이미 도전 중이면 2명 이상 살아 있는 동안 계속한다.
+func team_boss_ready_keep(team: int) -> bool:
+	return alive_count(team) >= 2
+
+
 func _physics_process(delta: float) -> void:
+	_plan_left -= delta
+	if _plan_left <= 0.0:
+		_plan_left = PLAN_REFRESH
+		for team in [Enums.Team.BLUE, Enums.Team.RED]:
+			_update_plan(team)
 	_focus_left -= delta
 	if _focus_left > 0.0 or hero_manager == null:
 		return

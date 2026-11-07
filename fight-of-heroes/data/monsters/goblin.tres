@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "goblin"
+display_name = "떠돌이 고블린"
+tier = "normal"
+color = Color(0.55, 0.7, 0.35, 1)
+glyph = "고"
+radius = 13.0
+base_stats = {
+"attack": 16.0,
+"armor": 5.0,
+"attack_speed": 1.0,
+"magic_resist": 5.0,
+"max_hp": 300.0,
+"move_speed": 240.0
+}
+attack_range = 35.0
+leash_radius = 420.0
+xp = 22.0
+gold = 16

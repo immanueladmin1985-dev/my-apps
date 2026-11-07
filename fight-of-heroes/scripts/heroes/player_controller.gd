@@ -152,6 +152,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			hero.attack_order = t
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var idx := [KEY_Q, KEY_W, KEY_E, KEY_R].find(event.physical_keycode)
+		if event.physical_keycode == KEY_G:
+			var hud = get_tree().get_first_node_in_group("hud")
+			if hud != null:
+				hud.call_gather()
 		if idx >= 0 and event.ctrl_pressed:
 			hero.learn(idx)
 		elif idx >= 0 and not Input.is_physical_key_pressed(KEY_SHIFT):

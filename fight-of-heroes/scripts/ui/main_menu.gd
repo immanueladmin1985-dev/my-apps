@@ -21,7 +21,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 10)
 	add_child(box)
 	box.add_child(_label("FIGHT OF HEROES", 54, Color(1, 0.85, 0.4)))
-	box.add_child(_label("PHASE 3 시험판 · 3대3 · 성장·몬스터·보스 (아군·적군은 무작위로 구성)", 20, Color(0.8, 0.85, 0.9)))
+	box.add_child(_label("시험판 0.3.1 · 영웅의 계곡 3대3 (아군·적군은 무작위로 구성)", 20, Color(0.8, 0.85, 0.9)))
 	box.add_child(_spacer(4))
 	for h in DataRegistry.get_all("heroes"):
 		var hd: HeroData = h

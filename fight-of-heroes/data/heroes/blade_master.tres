@@ -44,4 +44,5 @@ is_ranged = false
 projectile_speed = 900.0
 passive_description = "(PHASE 5) 기본 공격 3번째마다 추가 피해"
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+preferred_role = "fighter"
 ai_aggression = 0.7

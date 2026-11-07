@@ -8,7 +8,7 @@ extends Resource
 @export var player_index: int = 0
 @export var difficulty: String = "normal"
 @export var kill_target: int = 15
-@export var map_id: String = "arena_01"
+@export var map_id: String = "valley_01"
 ## 최종 보스가 나타나는 시각(초). 0 이하이면 맵 데이터 값을 쓴다.
 @export var final_boss_time: float = 600.0
 ## 시험용: 플레이어 영웅도 AI 가 조작한다.

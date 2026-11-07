@@ -39,11 +39,14 @@ var gold_label: Label
 var boss_label: Label
 var boss_bar: StatBar
 var monster_manager: MonsterManager
+var ai_manager: AIManager
+var gather_button: Button
 
 var _message_left := 0.0
 
 
 func _ready() -> void:
+	add_to_group("hud")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
 	get_viewport().size_changed.connect(_apply_safe_area)
@@ -59,7 +62,7 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
-	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, gold_label, name_label] + skill_buttons:
+	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, gold_label, name_label, gather_button] + skill_buttons:
 		n.visible = playable
 	if not playable:
 		return
@@ -209,7 +212,7 @@ func _build() -> void:
 	kill_feed.name = "KillFeed"
 	kill_feed.alignment = BoxContainer.ALIGNMENT_BEGIN
 	kill_feed.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_place(kill_feed, Vector2(1, 0), Vector2(-430, 76), Vector2(420, 120))
+	_place(kill_feed, Vector2(1, 0), Vector2(-520, 76), Vector2(420, 120))
 	root.add_child(kill_feed)
 	message_label = _label("", 22, HORIZONTAL_ALIGNMENT_CENTER)
 	_place(message_label, Vector2(0.5, 0), Vector2(-320, 118), Vector2(640, 36))
@@ -223,6 +226,15 @@ func _build() -> void:
 	_place(pause_button, Vector2(1, 0), Vector2(-84, 10), Vector2(70, 58))
 	pause_button.pressed.connect(set_paused.bind(true))
 	root.add_child(pause_button)
+
+	gather_button = Button.new()
+	gather_button.name = "GatherButton"
+	gather_button.text = "모여!"
+	gather_button.add_theme_font_size_override("font_size", 20)
+	gather_button.focus_mode = Control.FOCUS_NONE
+	_place(gather_button, Vector2(1, 0), Vector2(-84, 76), Vector2(70, 52))
+	gather_button.pressed.connect(call_gather)
+	root.add_child(gather_button)
 
 	pause_panel = _make_dialog("일시정지", [
 		["계속하기", set_paused.bind(false)],
@@ -395,6 +407,14 @@ func _on_skill_aim(slot: int, vec: Vector2) -> void:
 
 func _on_skill_released(slot: int, vec: Vector2, dragged: bool, cancelled: bool) -> void:
 	controller.end_aim(slot, vec, dragged, cancelled)
+
+
+## 아군 AI 를 플레이어 자리로 부른다.
+func call_gather() -> void:
+	if ai_manager == null or hero == null or hero.is_dead:
+		return
+	ai_manager.request_gather(hero.team, hero.global_position)
+	show_message("아군을 불렀습니다 (%d초)" % int(AIManager.GATHER_SECONDS))
 
 
 func set_paused(p: bool) -> void:
