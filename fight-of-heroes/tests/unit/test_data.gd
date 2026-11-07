@@ -4,6 +4,29 @@ extends TestCase
 
 func test_registry_has_no_errors() -> void:
 	eq(DataRegistry.load_errors.size(), 0, "불러오기 오류: %s" % str(DataRegistry.load_errors))
+	var errors := DataRegistry.validate()
+	eq(errors.size(), 0, "데이터 검사: %s" % str(errors))
+
+
+## 내보낼 때 값이 빠지지 않도록, 저장되는 Packed 배열 속성의 기본값은 Packed 생성자로 적어야 한다.
+func test_packed_defaults_are_not_plain_arrays() -> void:
+	for path in _scripts("res://scripts"):
+		var text := FileAccess.get_file_as_string(path)
+		var re := RegEx.create_from_string("@export var \\w+: Packed\\w+Array = \\[")
+		check(re.search(text) == null, "%s: Packed 배열 기본값을 [] 로 적음" % path)
+
+
+func _scripts(dir_path: String) -> Array:
+	var out: Array = []
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return out
+	for f in dir.get_files():
+		if f.ends_with(".gd"):
+			out.append(dir_path.path_join(f))
+	for d in dir.get_directories():
+		out += _scripts(dir_path.path_join(d))
+	return out
 
 
 func test_heroes_are_valid() -> void:

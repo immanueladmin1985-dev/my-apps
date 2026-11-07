@@ -66,6 +66,13 @@ jobs:
       - name: 자동 시험
         run: GODOT=godot fight-of-heroes/tools/run_tests.sh
 
+      - name: 내보낸 패키지 점검 (내보낼 때 데이터가 빠지지 않았는지)
+        run: |
+          cd fight-of-heroes
+          mkdir -p build
+          godot --headless --path . --export-pack "Linux" build/check.pck
+          godot --headless --main-pack build/check.pck -- --selfcheck
+
       - name: 서명 전 APK 내보내기
         run: |
           cd fight-of-heroes

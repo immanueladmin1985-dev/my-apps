@@ -10,8 +10,8 @@ extends Resource
 ## 아이콘이 없을 때 버튼에 쓰는 글자
 @export var glyph: String = ""
 @export var max_rank: int = 4
-@export var mana_cost: PackedFloat32Array = []
-@export var cooldown: PackedFloat32Array = []
+@export var mana_cost: PackedFloat32Array = PackedFloat32Array()
+@export var cooldown: PackedFloat32Array = PackedFloat32Array()
 @export var target_mode: Enums.TargetMode = Enums.TargetMode.SELF
 @export var target_team: Enums.TargetTeam = Enums.TargetTeam.ENEMY
 ## 시전 사거리 (방향형은 날아가는 거리, 지점형은 지점까지 최대 거리)

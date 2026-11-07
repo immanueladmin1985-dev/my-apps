@@ -13,6 +13,9 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
 		dev_args[kv[0]] = kv[1] if kv.size() > 1 else "1"
+	if dev_args.has("selfcheck"):
+		_selfcheck.call_deferred()
+		return
 	if dev_args.has("screenshot"):
 		_screenshot_later.call_deferred()
 
@@ -48,6 +51,15 @@ func restart_match() -> void:
 func go_main() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MAIN_SCENE)
+
+
+## 내보낸 패키지 점검: 데이터 검사 결과를 출력하고 오류가 있으면 1 로 끝낸다.
+func _selfcheck() -> void:
+	var errors := DataRegistry.validate()
+	for e in errors:
+		printerr("SELFCHECK 오류: " + e)
+	print("SELFCHECK 영웅 %d, 스킬 %d, 몬스터 %d, 오류 %d" % [DataRegistry.ids("heroes").size(), DataRegistry.ids("skills").size(), DataRegistry.ids("monsters").size(), errors.size()])
+	get_tree().quit(1 if not errors.is_empty() else 0)
 
 
 ## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--autoplay] [--boss_time=초] [--follow_boss]
