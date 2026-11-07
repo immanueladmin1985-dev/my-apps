@@ -64,3 +64,10 @@
 - 폰 앱(`app/`)과 워치 앱(`wear/`)은 applicationId `kr.immanuel.tvremote` 와 서명 키가 같아야 한다.
 - 빌드: main 에 푸시하면 `tv-remote-build.yml` 이 서명 전 APK 를 `tv-remote-build` 브랜치에 올린다. 받기: `git fetch origin +tv-remote-build:refs/remotes/origin/tv-remote-build && git archive origin/tv-remote-build | tar -x -C <폴더>`.
 - 서명: Artifact "TV 한번에 서명 키"(https://claude.ai/artifact/3KQgLZh7twWNaF2twLVMJp)에서 `tvremote.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> tvremote.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.
+
+## Fight of Heroes (`fight-of-heroes/`, Godot 4 안드로이드 게임)
+- 오프라인 3대3 2D AOS. Godot 4.7.2 + GDScript. 설계는 `fight-of-heroes/docs/DESIGN.md`, PHASE 단위로 작업하고 PHASE 마다 `docs/PHASE<n>_REPORT.md` 를 남긴다. 앱 목록(`index.html`)과 `README.md`에는 넣지 않는다.
+- 영웅·스킬·아이템은 `data/*.tres` 로만 추가하고 전투 코드는 고치지 않는다. 스킬 효과는 `scripts/skills/effects/` 를 조합한다.
+- 시험: Godot 을 받아 `GODOT=<경로> fight-of-heroes/tools/run_tests.sh` (스크립트 오류가 하나라도 있으면 실패). 화면 캡처는 Xvfb 에서 `-- --screenshot=<경로> --battle=blade_master` (README 참고).
+- 빌드: `fight-of-heroes/**` 를 푸시하면 `fight-of-heroes-build.yml` 이 시험 후 서명 전 APK 를 `fight-of-heroes-build` 브랜치에 올린다. 받기: `git fetch origin +fight-of-heroes-build:refs/remotes/origin/fight-of-heroes-build && git archive origin/fight-of-heroes-build | tar -x -C <폴더>`.
+- 서명: Artifact "Fight of Heroes 서명 키"(https://claude.ai/artifact/K8h5Qv3QjKmRNJmDLH2W4f)에서 `foh.jks.b64.txt`, `keystore.txt` 를 받아 `python3 baseball-relay/tools/sign_apk.py <입력> <출력> foh.jks <비밀번호>`. 키는 저장소에 넣지 않는다. APK 는 사용자에게 파일로만 준다.

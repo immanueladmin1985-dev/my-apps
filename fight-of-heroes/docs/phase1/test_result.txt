@@ -1,0 +1,50 @@
+■ test_attack.gd
+  [통과] test_attack_interval (15 ms)
+  [통과] test_moves_into_range (11 ms)
+  [통과] test_ranged_projectile (5 ms)
+  [통과] test_projectile_target_dies (4 ms)
+■ test_combat.gd
+  [통과] test_mitigation_formula (1 ms)
+  [통과] test_physical_and_magic_damage (1 ms)
+  [통과] test_penetration (0 ms)
+  [통과] test_critical_hit (1 ms)
+  [통과] test_shield_absorbs_first (0 ms)
+  [통과] test_shield_expires (2 ms)
+  [통과] test_death_once (1 ms)
+■ test_data.gd
+  [통과] test_registry_has_no_errors (1 ms)
+  [통과] test_heroes_are_valid (0 ms)
+  [통과] test_skills_are_valid (0 ms)
+  [통과] test_config_files_exist (0 ms)
+■ test_input.gd
+  [통과] test_joystick_moves_hero (31 ms)
+  [통과] test_joystick_and_skill_together (16 ms)
+  [통과] test_drag_aim_and_cancel (34 ms)
+  [통과] test_attack_button_targets_nearest (22 ms)
+  [통과] test_tap_enemy_selects (7 ms)
+■ test_skills.gd
+  [통과] test_no_mana_changes_nothing (2 ms)
+  [통과] test_cast_spends_mana_and_starts_cooldown (2 ms)
+  [통과] test_unit_target_range (1 ms)
+  [통과] test_dash_damages_enemies_on_path (4 ms)
+  [통과] test_area_damage_and_slow (1 ms)
+  [통과] test_piercing_projectile (7 ms)
+  [통과] test_delayed_trap_stuns (5 ms)
+  [통과] test_point_is_clamped_to_range (6 ms)
+  [통과] test_lingering_area_ticks (23 ms)
+  [통과] test_shield_and_haste_on_self (0 ms)
+  [통과] test_escape_leap (4 ms)
+■ test_stats.gd
+  [통과] test_level_growth (1 ms)
+  [통과] test_modifiers_add_and_remove (1 ms)
+  [통과] test_defaults_and_clamps (0 ms)
+■ test_status.gd
+  [통과] test_stun_blocks_everything (8 ms)
+  [통과] test_slow_and_haste (2 ms)
+  [통과] test_duration_refresh (3 ms)
+■ test_sim_duel.gd
+       normal: 검성 킬 1 데스 0 스킬 [11, 11, 8, 3] 최대 끼임 0.00초 | 엘프 궁수 킬 0 데스 1 스킬 [19, 12, 11, 3] 최대 끼임 0.52초 / 점수 1:0 / 부활 1
+  [통과] test_duel_normal (2206 ms)
+       hard: 엘프 궁수 킬 1 데스 3 스킬 [20, 12, 7, 3] 최대 끼임 0.00초 | 검성 킬 3 데스 1 스킬 [11, 8, 11, 3] 최대 끼임 0.52초 / 점수 1:3 / 부활 4
+  [통과] test_duel_hard_mirror_side (1931 ms)
+시험 39개 중 39개 통과, 실패 0건 (4.6초)

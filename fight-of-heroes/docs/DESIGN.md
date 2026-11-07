@@ -4,6 +4,9 @@
 
 ## 0. 현재 상태와 작업 환경
 
+> PHASE 0·1 을 마쳤습니다. 결과는 `docs/PHASE1_REPORT.md` 에 있습니다. 구현하면서 바뀐 점:
+> Godot 4.7 에 기본 `VirtualJoystick` 클래스가 생겨 조이스틱은 `TouchJoystick` 으로, CombatManager 는 상태가 없는 정적 클래스로 만들었습니다.
+
 - 이 저장소(`my-apps`)에는 Godot 프로젝트 파일(`project.godot`, `.tscn`, `.gd`)이 없습니다. 보존해야 할 기존 게임 파일은 없으며, 다른 앱 폴더는 건드리지 않습니다.
 - 작업 환경(클라우드 컨테이너)에서 Godot 공식 릴리스(4.7.2-stable까지 확인)를 내려받을 수 있습니다. `Xvfb`도 설치되어 있으므로 헤드리스 테스트와 화면 캡처가 가능합니다.
 - 저장소의 다른 안드로이드 앱(`baseball-relay`, `tv-remote`)처럼 GitHub Actions에서 APK를 만들고, 서명 키는 Artifact에 따로 보관하는 방식을 따릅니다.
