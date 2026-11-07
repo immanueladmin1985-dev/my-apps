@@ -32,11 +32,18 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 	EventBus.hero_respawned.connect(on_respawn)
 	var battle := BATTLE.instantiate()
 	add_child(battle)
-	await frames((SECONDS - 60) * 60)
+	var min_hp := {}
+	for sec in SECONDS - 60:
+		await frames(60)
+		for h in battle.hero_manager.heroes:
+			min_hp[h] = minf(min_hp.get(h, 1.0), 0.0 if h.is_dead else h.health.ratio())
 	var learned := {}
 	for h in battle.hero_manager.heroes:
 		learned[h] = h.skill_caster.ranks.duplicate()
-	await frames(60 * 60)
+	for sec in 60:
+		await frames(60)
+		for h in battle.hero_manager.heroes:
+			min_hp[h] = minf(min_hp.get(h, 1.0), 0.0 if h.is_dead else h.health.ratio())
 	EventBus.skill_cast.disconnect(on_cast)
 	EventBus.hero_respawned.disconnect(on_respawn)
 	GameManager.dev_args.erase("seed")
@@ -52,10 +59,13 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 		check(h.max_stuck_time < 2.0, "%s 이(가) %.1f초 동안 끼어 있었음" % [h.display_name, h.max_stuck_time])
 		report.append("%s Lv%d 킬 %d 데스 %d 스킬 %s 최대 끼임 %.2f초" % [h.display_name, h.level, h.kills, h.deaths, str(used), h.max_stuck_time])
 	var total_deaths: int = heroes.reduce(func(acc, h): return acc + h.deaths, 0)
-	check(total_deaths >= 1, "180초 동안 사망이 한 번도 없음")
-	check(respawns[0] >= 1, "부활이 한 번도 없음")
+	# 1대1 에서는 AI 가 물러나 우물에서 회복하므로 아무도 죽지 않을 수 있다. 실제로 싸웠는지를 본다.
+	var both_hurt: bool = min_hp.values().all(func(v): return v < 0.4)
+	check(total_deaths >= 1 or both_hurt, "180초 동안 사망도 없고 체력이 40%% 아래로 내려간 적도 없음 (최저 %s)" % str(min_hp.values()))
+	# 끝나기 직전에 죽은 영웅은 아직 부활 전일 수 있다.
+	check(respawns[0] <= total_deaths and respawns[0] >= total_deaths - 2, "사망한 만큼 부활 (사망 %d, 부활 %d)" % [total_deaths, respawns[0]])
 	var bm: BattleManager = battle.battle_manager
 	eq(bm.kills[Enums.Team.BLUE] + bm.kills[Enums.Team.RED], total_deaths, "킬 점수 합 = 사망 수")
-	print("       %s: %s / 점수 %d:%d / 부활 %d" % [difficulty, " | ".join(report), bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED], respawns[0]])
+	print("       %s: %s / 점수 %d:%d / 부활 %d / 최저 체력 %s" % [difficulty, " | ".join(report), bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED], respawns[0], str(min_hp.values().map(func(v): return roundi(v * 100)))])
 	battle.queue_free()
 	await get_tree().process_frame
