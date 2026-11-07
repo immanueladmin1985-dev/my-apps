@@ -7,7 +7,7 @@
 [sub_resource type="Resource" id="DamageEffect_2"]
 script = ExtResource("2")
 damage_type = 0
-base = PackedFloat32Array(200.0, 300.0, 400.0)
+base = PackedFloat32Array(170.0, 260.0, 350.0)
 ad_ratio = 1.5
 ap_ratio = 0.0
 

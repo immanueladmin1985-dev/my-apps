@@ -52,7 +52,7 @@ weapon = "shield"
 base_stats = {
 "ability_power": 10.0,
 "armor": 36.0,
-"attack": 55.0,
+"attack": 60.0,
 "attack_speed": 0.8,
 "hp_regen": 3.5,
 "magic_resist": 32.0,

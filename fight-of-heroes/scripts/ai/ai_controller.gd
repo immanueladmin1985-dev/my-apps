@@ -28,6 +28,8 @@ const SHOP_GOLD_TRIGGER := 1100
 ## 체력 비율이 이보다 낮으면 물약을 마신다.
 const POTION_HP := 0.45
 const POTION_LEVEL_LIMIT := 9
+## 지원 스킬은 체력이 이 비율보다 낮은 아군에게 쓴다.
+const SUPPORT_HP := 0.85
 
 var _think_left := 0.0
 var _unstick_left := 0.0
@@ -156,12 +158,19 @@ func _physics_process(delta: float) -> void:
 
 
 func think() -> void:
+	# 죽어서 사라진 소환수·몬스터를 가리키고 있으면 비운다.
+	if target != null and not is_instance_valid(target):
+		target = null
+	if objective != null and typeof(objective) == TYPE_OBJECT and not is_instance_valid(objective):
+		objective = null
 	var pos: Vector2 = hero.global_position
 	var hp: float = hero.health.ratio()
 	_shop_if_possible()
 	_drink_if_needed(hp)
 	var enemies := Targeting.in_radius(get_tree(), pos, profile.sight_range, hero.team, Enums.TargetTeam.ENEMY)
 	var help_target = manager.attacker_of_allies(hero) if manager != null else null
+	if help_target != null and not is_instance_valid(help_target):
+		help_target = null
 	if help_target != null and pos.distance_to(help_target.global_position) > _help_range():
 		help_target = null
 	if state == State.RETREAT:
@@ -568,7 +577,7 @@ func _aim_for(s: SkillData, enemies: Array) -> CastAim:
 				return CastAim.at_point(ally.global_position)
 			return CastAim.new()
 		Enums.AIUse.SUMMON:
-			if nd > 700.0 and not (target is Monster):
+			if nd > 700.0 and not (is_instance_valid(target) and target is Monster):
 				return null
 			if s.target_mode == Enums.TargetMode.POINT and nearest != null:
 				return CastAim.at_point(pos + (nearest.global_position - pos).limit_length(s.cast_range))
@@ -598,7 +607,7 @@ func _ally_in_need(s: SkillData):
 	var reach: float = s.cast_range if s.target_mode != Enums.TargetMode.SELF else maxf(s.radius, 1.0)
 	var best = null
 	for u in Targeting.in_radius(get_tree(), hero.global_position, reach, hero.team, Enums.TargetTeam.ALLY):
-		if not (u is Hero) or u.health.ratio() >= 0.7:
+		if not (u is Hero) or u.health.ratio() >= SUPPORT_HP:
 			continue
 		if best == null or u.health.ratio() < best.health.ratio():
 			best = u

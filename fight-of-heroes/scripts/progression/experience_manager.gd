@@ -89,8 +89,22 @@ func _on_hero_killed(victim, killer, helpers: Array) -> void:
 		if not group.has(h):
 			group.append(h)
 	var total: float = cfg.hero_xp_base + cfg.hero_xp_per_level * victim.level
+	# 레벨이 낮은 팀이 처치하면 경험치를 더 준다 (평균 레벨 1 차이마다 15%, 최대 60%).
+	var gap := _avg_level(victim.team) - _avg_level(team)
+	if gap > 0.0:
+		total *= 1.0 + minf(gap * 0.15, 0.6)
 	var kill_gold: int = cfg.hero_kill_gold + cfg.hero_kill_gold_per_level * victim.level
 	var assist_gold := int(kill_gold * cfg.assist_gold_ratio / maxf(1, helpers.size())) if not helpers.is_empty() else 0
 	for h in group:
 		var g: int = kill_gold if h == killer else (assist_gold if helpers.has(h) else 0)
 		give(h, total / group.size(), g)
+
+
+func _avg_level(team: int) -> float:
+	var n := 0
+	var sum := 0.0
+	for h in hero_manager.heroes:
+		if h.team == team:
+			n += 1
+			sum += h.level
+	return sum / maxf(1, n)

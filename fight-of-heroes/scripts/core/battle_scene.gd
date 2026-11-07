@@ -58,8 +58,10 @@ func _ready() -> void:
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		ai_manager.assign_roles(team)
 	UnitVisual.viewer_team = player_hero.team if player_hero != null else Enums.Team.BLUE
+	AudioManager.player_unit = player_hero if not config.autoplay else null
 	follow_target = player_hero if player_hero != null else (hero_manager.heroes[0] if not hero_manager.heroes.is_empty() else null)
-	battle_manager.setup(config)
+	battle_manager.setup(config, hero_manager)
+	battle_manager.ended.connect(func(_w, _r): GameManager.on_match_finished(battle_manager.summary(), self))
 	monster_manager.setup(world, map, config)
 	boss_manager.setup(battle_manager, hero_manager, monster_manager)
 	experience_manager.setup(hero_manager)
@@ -107,3 +109,19 @@ func _process(_delta: float) -> void:
 			follow_target = b
 	if follow_target != null and is_instance_valid(follow_target):
 		camera.global_position = follow_target.global_position
+
+
+## 안드로이드 뒤로 가기: 일시정지 / 계속
+func on_back() -> void:
+	if hud.shop_open:
+		hud.toggle_shop()
+	elif not battle_manager.match_over:
+		hud.set_paused(not get_tree().paused)
+
+
+## 휴대폰에서 다른 앱으로 가거나 화면이 꺼지면 자동으로 일시정지하고 설정·기록을 저장한다.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		SaveManager.save_data()
+		if hud != null and battle_manager != null and not battle_manager.match_over and not get_tree().paused and OS.has_feature("mobile"):
+			hud.set_paused(true)

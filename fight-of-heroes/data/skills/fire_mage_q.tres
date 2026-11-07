@@ -26,7 +26,7 @@ effects = Array[Resource]([SubResource("DamageEffect_4")])
 [sub_resource type="Resource" id="DamageEffect_2"]
 script = ExtResource("2")
 damage_type = 1
-base = PackedFloat32Array(80.0, 120.0, 160.0, 200.0)
+base = PackedFloat32Array(95.0, 140.0, 185.0, 230.0)
 ad_ratio = 0.0
 ap_ratio = 0.7
 

@@ -15,14 +15,41 @@ var end_reason := ""
 const ASSIST_WINDOW := 10.0
 
 
-func setup(cfg: MatchConfig) -> void:
+## 영웅별 준 피해 (영웅에게 준 피해, 전체 피해)
+var damage_to_heroes: Dictionary = {}
+var damage_total: Dictionary = {}
+## 영웅별 연속 처치 (죽으면 0). 연속 처치 중인 영웅을 잡으면 현상금을 더 준다.
+var streaks: Dictionary = {}
+var hero_manager = null
+
+
+func setup(cfg: MatchConfig, hm = null) -> void:
 	config = cfg
+	hero_manager = hm
 	EventBus.unit_died.connect(_on_unit_died)
+	EventBus.unit_damaged.connect(_on_unit_damaged)
 
 
 func _exit_tree() -> void:
 	if EventBus.unit_died.is_connected(_on_unit_died):
 		EventBus.unit_died.disconnect(_on_unit_died)
+	if EventBus.unit_damaged.is_connected(_on_unit_damaged):
+		EventBus.unit_damaged.disconnect(_on_unit_damaged)
+
+
+func _on_unit_damaged(target, info, amount: float) -> void:
+	var src = Targeting.hero_of(info.source)
+	if src == null or match_over:
+		return
+	damage_total[src] = damage_total.get(src, 0.0) + amount
+	if target is Hero and Enums.is_enemy(src.team, target.team):
+		damage_to_heroes[src] = damage_to_heroes.get(src, 0.0) + amount
+
+
+## 처치당한 영웅의 현상금: 연속 처치 2번째부터 1번마다 60 골드 (최대 300)
+func bounty_of(victim) -> int:
+	var st: int = streaks.get(victim, 0)
+	return clampi((st - 1) * 60, 0, 300)
 
 
 func _physics_process(delta: float) -> void:
@@ -34,11 +61,17 @@ func _on_unit_died(victim, killer) -> void:
 	if not (victim is Hero):
 		return
 	victim.deaths += 1
+	var bounty := bounty_of(victim)
+	streaks[victim] = 0
 	# 몬스터나 우물에게 죽으면 최근에 때린 적 영웅이 처치를 인정받는다. 없으면 점수 없음.
 	var credit = ExperienceManager.credit_hero(victim, killer)
 	if credit == null:
 		return
 	credit.kills += 1
+	streaks[credit] = streaks.get(credit, 0) + 1
+	if bounty > 0:
+		credit.add_gold(bounty)
+		EventBus.notice.emit("%s 의 연속 처치를 끊었습니다! 현상금 %d 골드" % [victim.display_name, bounty])
 	var helpers := assisters(victim, credit)
 	for a in helpers:
 		a.assists += 1
@@ -73,3 +106,36 @@ func finish(team: int, reason: String) -> void:
 	end_reason = reason
 	ended.emit(team, reason)
 	EventBus.match_ended.emit(team, reason)
+
+
+## 결과 화면과 기록에 쓰는 경기 요약
+func summary() -> Dictionary:
+	var heroes: Array = []
+	if hero_manager != null:
+		for h: Hero in hero_manager.heroes:
+			var items: Array = []
+			for i in InventoryComponent.SIZE:
+				var it: ItemData = h.inventory.item_at(i)
+				if it != null:
+					items.append(it.id)
+			heroes.append({
+				"id": h.data.id, "name": h.display_name, "team": h.team, "is_player": h.get_node("Visual").is_player,
+				"level": h.level, "kills": h.kills, "deaths": h.deaths, "assists": h.assists, "gold": h.gold,
+				"damage": roundi(damage_to_heroes.get(h, 0.0)), "damage_total": roundi(damage_total.get(h, 0.0)), "items": items,
+				"role": h.controller.role if h.controller is AIController else "",
+			})
+	var mvp := ""
+	var best := -INF
+	for e in heroes:
+		var score: float = e.kills * 3.0 + e.assists * 1.5 - e.deaths * 1.0 + e.damage / 1500.0
+		if e.team == winner:
+			score += 2.0
+		if score > best:
+			best = score
+			mvp = e.id
+	return {
+		"winner": winner, "reason": end_reason, "time": elapsed, "heroes": heroes, "mvp": mvp,
+		"blue_kills": kills[Enums.Team.BLUE], "red_kills": kills[Enums.Team.RED],
+		"difficulty": config.difficulty if config != null else "", "kill_target": config.kill_target if config != null else 0,
+		"mode": config.mode if config != null else "team",
+	}

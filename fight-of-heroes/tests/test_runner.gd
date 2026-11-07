@@ -2,7 +2,7 @@ extends Node
 ## 시험 실행기. tests/unit, tests/sim 의 test_*.gd 를 모두 실행하고 결과에 따라 종료 코드를 정한다.
 ## 실행: godot --headless --path . --fixed-fps 60 res://tests/test_runner.tscn [-- --only=이름]
 
-const DIRS := ["res://tests/unit", "res://tests/sim"]
+const DIRS := ["res://tests/unit", "res://tests/sim", "res://tests/balance"]
 ## 이 시간(초) 동안 프레임이 진행되지 않으면 멈춘 것으로 보고 실패로 끝낸다.
 const STALL_SECONDS := 20
 
@@ -38,10 +38,13 @@ func _ready() -> void:
 	await get_tree().process_frame
 	var only: String = GameManager.dev_args.get("only", "")
 	var skip_sim := GameManager.dev_args.has("fast")
+	var balance := GameManager.dev_args.has("balance")
 	var total := 0
 	var failed: Array = []
 	var started := Time.get_ticks_msec()
 	for path in _find_tests():
+		if path.contains("/balance/") != balance:
+			continue
 		if only != "" and not path.contains(only):
 			continue
 		if skip_sim and path.contains("/sim/"):

@@ -8,15 +8,32 @@ const MAX_ITEMS := 80
 
 var items: Array = []
 var player_team := Enums.Team.BLUE
+var show_numbers := true
 
 
 func _ready() -> void:
+	show_numbers = bool(SaveManager.get_setting("damage_numbers", true))
 	EventBus.unit_damaged.connect(_on_damaged)
 	EventBus.unit_healed.connect(_on_healed)
 	EventBus.reward.connect(_on_reward)
+	EventBus.hero_level_up.connect(_on_level_up)
+	EventBus.unit_died.connect(_on_died)
+
+
+func _on_level_up(hero, _level: int) -> void:
+	if is_instance_valid(hero):
+		Vfx.ring(self, hero.global_position, 70.0, Color(1, 0.85, 0.3), 0.7)
+		_add(hero.global_position + Vector2(0, -70), "레벨 업!", Color(1, 0.9, 0.4), 20)
+
+
+func _on_died(victim, _killer) -> void:
+	if is_instance_valid(victim):
+		Vfx.ring(self, victim.global_position, victim.radius * 3.0, Color(1, 1, 1, 0.8) if victim is Hero else Color(0.9, 0.8, 0.6, 0.5), 0.45)
 
 
 func _exit_tree() -> void:
+	EventBus.hero_level_up.disconnect(_on_level_up)
+	EventBus.unit_died.disconnect(_on_died)
 	EventBus.unit_damaged.disconnect(_on_damaged)
 	EventBus.unit_healed.disconnect(_on_healed)
 	EventBus.reward.disconnect(_on_reward)
@@ -29,6 +46,10 @@ func _on_reward(hero, _xp: float, gold: int) -> void:
 
 func _on_damaged(target, info: DamageInfo, amount: float) -> void:
 	if amount < 0.5 or not is_instance_valid(target):
+		return
+	if info.is_basic_attack or info.is_crit:
+		Vfx.spark(self, target.global_position + Vector2(randf_range(-6, 6), randf_range(-12, 0)), Color(1, 0.9, 0.5) if info.is_crit else Color(1, 1, 1, 0.8), 20.0 if info.is_crit else 13.0)
+	if not show_numbers:
 		return
 	var c := Color(1, 1, 1)
 	match info.type:

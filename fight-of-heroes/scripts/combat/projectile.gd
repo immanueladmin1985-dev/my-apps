@@ -14,6 +14,7 @@ var width := 24.0
 var pierce := false
 var homing_target = null
 var on_hit: Callable
+var basic_attack := false
 var color := Color(1, 1, 0.8)
 
 var _traveled := 0.0
@@ -23,6 +24,13 @@ var _leash := 0.0
 var _origin := Vector2.ZERO
 var _started := false
 var _hit_units: Dictionary = {}
+
+
+## 기본 공격 투사체: 맞으면 쏜 유닛의 AttackComponent 가 피해를 준다.
+## 함수(람다)를 넘기지 않고 쏜 유닛을 기억해, 쏜 유닛이 사라졌으면 피해 없이 사라진다.
+func setup_basic_attack(from_unit, target, spd: float, leash := 600.0) -> void:
+	setup_homing(from_unit, target, spd, Callable(), leash)
+	basic_attack = true
 
 
 ## leash: 쏜 자리에서 이 거리보다 멀리 따라가지 않는다 (사거리 밖으로 달아나면 피할 수 있다).
@@ -76,7 +84,7 @@ func _physics_process(delta: float) -> void:
 		var to: Vector2 = homing_target.global_position - global_position
 		direction = to.normalized()
 		if to.length() <= step + homing_target.radius:
-			on_hit.call(homing_target)
+			_deliver(homing_target)
 			queue_free()
 			return
 		if not _move(direction * step):
@@ -89,7 +97,9 @@ func _physics_process(delta: float) -> void:
 			if _hit_units.has(u):
 				continue
 			_hit_units[u] = true
-			on_hit.call(u)
+			if not _deliver(u):
+				queue_free()
+				return
 			if not pierce:
 				queue_free()
 				return
@@ -98,6 +108,19 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 	if _traveled >= max_distance:
 		queue_free()
+
+
+## 맞은 대상에게 효과를 준다. 쏜 쪽이 사라졌으면 false.
+func _deliver(u) -> bool:
+	if basic_attack:
+		if owner_unit == null or not is_instance_valid(owner_unit) or owner_unit.is_queued_for_deletion():
+			return false
+		owner_unit.attack._hit(u)
+		return true
+	if not on_hit.is_valid():
+		return false
+	on_hit.call(u)
+	return true
 
 
 ## 벽에 막히면 사라지고 false 를 돌려준다.

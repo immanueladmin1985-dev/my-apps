@@ -38,13 +38,13 @@ color = Color(1, 0.45, 0.25, 1)
 glyph = "화"
 weapon = "staff"
 base_stats = {
-"ability_power": 25.0,
-"armor": 18.0,
+"ability_power": 38.0,
+"armor": 22.0,
 "attack": 48.0,
 "attack_speed": 0.75,
 "hp_regen": 2.2,
 "magic_resist": 30.0,
-"max_hp": 520.0,
+"max_hp": 540.0,
 "max_mp": 380.0,
 "move_speed": 225.0,
 "mp_regen": 3.5

@@ -38,13 +38,13 @@ color = Color(0.55, 0.8, 1.0, 1)
 glyph = "빙"
 weapon = "staff"
 base_stats = {
-"ability_power": 25.0,
+"ability_power": 40.0,
 "armor": 18.0,
 "attack": 46.0,
 "attack_speed": 0.75,
 "hp_regen": 2.2,
 "magic_resist": 30.0,
-"max_hp": 510.0,
+"max_hp": 540.0,
 "max_mp": 400.0,
 "move_speed": 225.0,
 "mp_regen": 3.6

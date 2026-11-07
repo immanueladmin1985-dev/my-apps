@@ -48,10 +48,12 @@ var inventory_bar: InventoryBar
 var shop_open := false
 
 var _message_left := 0.0
+var show_fps := false
 
 
 func _ready() -> void:
 	add_to_group("hud")
+	show_fps = bool(SaveManager.get_setting("show_fps", false))
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
 	get_viewport().size_changed.connect(_apply_safe_area)
@@ -345,7 +347,9 @@ func _apply_safe_area() -> void:
 # ---- 갱신 ----
 
 func _process(delta: float) -> void:
-	fps_label.text = "FPS %d" % Engine.get_frames_per_second()
+	fps_label.visible = show_fps
+	if show_fps:
+		fps_label.text = "FPS %d" % Engine.get_frames_per_second()
 	if battle != null:
 		var t := int(battle.elapsed)
 		time_label.text = "%02d:%02d" % [t / 60, t % 60]

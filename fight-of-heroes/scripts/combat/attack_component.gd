@@ -76,7 +76,7 @@ func _release() -> void:
 		return
 	if is_ranged or unit.stats.get_stat("attack_range") > 100.0:
 		var p := Projectile.new()
-		p.setup_homing(unit, t, projectile_speed, func(target): _hit(target), total_range() * 1.35 + 60.0)
+		p.setup_basic_attack(unit, t, projectile_speed, total_range() * 1.35 + 60.0)
 		p.color = projectile_color
 		Targeting.effects_parent(unit).add_child(p)
 		p.global_position = unit.global_position
