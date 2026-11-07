@@ -87,6 +87,12 @@ func validate() -> PackedStringArray:
 		for sk in h.skills:
 			if not (sk is SkillData):
 				errors.append("%s: SkillData 가 아닌 스킬" % h.id)
+		if not (h.passive is PassiveData):
+			errors.append("%s: 패시브 없음" % h.id)
+		else:
+			_validate_effects(h.id + " 패시브", h.passive.effects, errors)
+		if not ["fighter", "hunter", "support"].has(h.preferred_role):
+			errors.append("%s: 역할 %s" % [h.id, h.preferred_role])
 	for m: MonsterData in get_all("monsters"):
 		if float(m.base_stats.get("max_hp", 0.0)) <= 0.0:
 			errors.append("%s: 최대 체력" % m.id)
@@ -144,13 +150,15 @@ func _validate_effects(owner: String, effects: Array, errors: PackedStringArray)
 		if not (e is SkillEffect):
 			errors.append(owner + ": SkillEffect 가 아닌 효과")
 			continue
+		if e is SummonEffect and monster(e.monster_id) == null:
+			errors.append("%s: 소환수 %s 없음" % [owner, e.monster_id])
 		for key in ["base", "duration", "magnitude"]:
 			var v = e.get(key)
 			if v is PackedFloat32Array and v.is_empty():
 				errors.append("%s: %s 배열이 비어 있음 (%s)" % [owner, key, e.get_script().get_global_name()])
 		if e is ApplyStatusEffect and e.status == null:
 			errors.append(owner + ": 상태 효과 데이터 없음")
-		for key in ["effects", "path_effects", "end_effects"]:
+		for key in ["effects", "path_effects", "end_effects", "arrive_effects"]:
 			var sub = e.get(key)
 			if sub is Array:
 				_validate_effects(owner, sub, errors)

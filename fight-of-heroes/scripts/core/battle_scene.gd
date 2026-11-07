@@ -57,6 +57,7 @@ func _ready() -> void:
 				h.get_node("Visual").is_player = true
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		ai_manager.assign_roles(team)
+	UnitVisual.viewer_team = player_hero.team if player_hero != null else Enums.Team.BLUE
 	follow_target = player_hero if player_hero != null else (hero_manager.heroes[0] if not hero_manager.heroes.is_empty() else null)
 	battle_manager.setup(config)
 	monster_manager.setup(world, map, config)

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
+
+[sub_resource type="Resource" id="TeleportEffect_1"]
+script = ExtResource("1")
+distance = 320.0
+behind = 40.0
+arrive_effects = Array[Resource]([])
+
+[resource]
+script = ExtResource("2")
+id = "fire_mage_e"
+display_name = "화염 도약"
+glyph = "도"
+description = "조준한 방향으로 순간이동합니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 갑니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(14.0, 13.0, 12.0, 11.0)
+target_mode = 2
+target_team = 0
+cast_range = 320.0
+radius = 0.0
+width = 0.0
+auto_aim_away = true
+ai_use = 3
+ai_range = 0.0
+color = Color(1, 0.7, 0.4, 1)
+effects = Array[Resource]([SubResource("TeleportEffect_1")])

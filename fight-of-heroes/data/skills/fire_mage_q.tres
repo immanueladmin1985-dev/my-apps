@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="DamageEffect_4"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(30.0, 45.0, 60.0, 75.0)
+ad_ratio = 0.0
+ap_ratio = 0.3
+
+[sub_resource type="Resource" id="AreaEffect_3"]
+script = ExtResource("3")
+center = 2
+radius = 90.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.6, 0.3, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_4")])
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(80.0, 120.0, 160.0, 200.0)
+ad_ratio = 0.0
+ap_ratio = 0.7
+
+[sub_resource type="Resource" id="ProjectileEffect_1"]
+script = ExtResource("1")
+speed = 1100.0
+width = 40.0
+pierce = false
+max_range = 0.0
+color = Color(1, 0.5, 0.2, 1)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("AreaEffect_3")])
+
+[resource]
+script = ExtResource("4")
+id = "fire_mage_q"
+display_name = "화염구"
+glyph = "구"
+description = "화염구를 던집니다. 처음 맞은 적과 주변에 마법 피해를 줍니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(50.0)
+cooldown = PackedFloat32Array(6.0)
+target_mode = 2
+target_team = 0
+cast_range = 700.0
+radius = 0.0
+width = 40.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(1, 0.5, 0.2, 1)
+effects = Array[Resource]([SubResource("ProjectileEffect_1")])

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="2"]
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("1")
+stat = "armor"
+flat = 30.0
+percent = 0.0
+
+[resource]
+script = ExtResource("2")
+id = "frost_armor"
+display_name = "얼음 갑옷"
+kind = 3
+color = Color(0.6, 0.85, 1, 1)
+tick_interval = 0.5
+damage_type = 1
+stat_modifiers = Array[Resource]([SubResource("StatModifier_1")])
+visual_tint = Color(0.6, 0.85, 1, 0.35)

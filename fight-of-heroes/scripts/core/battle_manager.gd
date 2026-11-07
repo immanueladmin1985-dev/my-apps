@@ -56,11 +56,12 @@ func assisters(victim, killer) -> Array:
 	var out: Array = []
 	var since := Unit.now() - ASSIST_WINDOW
 	for pair in victim.valid_attackers():
-		var u = pair[0]
-		if u == killer or not (u is Hero):
+		var u = Targeting.hero_of(pair[0])
+		if u == null or u == killer:
 			continue
 		if Enums.is_enemy(u.team, victim.team) and pair[1] >= since:
-			out.append(u)
+			if not out.has(u):
+				out.append(u)
 	return out
 
 

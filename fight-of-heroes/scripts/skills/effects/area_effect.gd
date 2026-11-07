@@ -62,5 +62,5 @@ func positions(ctx: SkillContext) -> Array:
 func hit(ctx: SkillContext, pos: Vector2) -> void:
 	if not ctx.caster_valid():
 		return
-	for u in Targeting.in_radius(ctx.caster.get_tree(), pos, radius, ctx.team(), affects):
+	for u in Targeting.in_radius(ctx.caster.get_tree(), pos, radius, ctx.team(), affects, true):
 		SkillEffect.apply_list(effects, ctx.with_target(u))

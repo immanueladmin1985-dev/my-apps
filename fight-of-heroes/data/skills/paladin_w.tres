@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
+
+[sub_resource type="Resource" id="ShieldEffect_1"]
+script = ExtResource("1")
+base = PackedFloat32Array(100.0, 150.0, 200.0, 250.0)
+duration = PackedFloat32Array(3.0)
+ad_ratio = 0.0
+ap_ratio = 0.6
+to_caster = false
+
+[resource]
+script = ExtResource("2")
+id = "paladin_w"
+display_name = "신성한 방패"
+glyph = "방"
+description = "아군 한 명(자신 포함)에게 3초 동안 보호막을 씌웁니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(12.0, 11.0, 10.0, 9.0)
+target_mode = 1
+target_team = 1
+cast_range = 600.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 4
+ai_range = 0.0
+color = Color(1, 0.95, 0.7, 1)
+effects = Array[Resource]([SubResource("ShieldEffect_1")])

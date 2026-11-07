@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/burn.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(15.0, 22.0, 29.0, 36.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.08
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(70.0, 110.0, 150.0, 190.0)
+ad_ratio = 0.0
+ap_ratio = 0.6
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 1
+radius = 110.0
+delay = 0.6
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.45, 0.15, 0.4)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("5")
+id = "fire_mage_w"
+display_name = "불기둥"
+glyph = "기"
+description = "지정한 곳에 0.6초 뒤 불기둥을 세워 마법 피해를 주고 불태웁니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(70.0)
+cooldown = PackedFloat32Array(10.0, 9.5, 9.0, 8.5)
+target_mode = 3
+target_team = 0
+cast_range = 600.0
+radius = 110.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(1, 0.4, 0.15, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

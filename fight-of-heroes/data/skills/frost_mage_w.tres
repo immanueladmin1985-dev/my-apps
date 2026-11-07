@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(0.6)
+magnitude = PackedFloat32Array(0.45)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(20.0, 30.0, 40.0, 50.0)
+ad_ratio = 0.0
+ap_ratio = 0.15
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 1
+radius = 160.0
+delay = 0.2
+duration = 3.0
+tick_interval = 0.5
+affects = 0
+color = Color(0.6, 0.85, 1, 0.25)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("5")
+id = "frost_mage_w"
+display_name = "서리 지대"
+glyph = "서"
+description = "3초 동안 지정한 곳을 얼려 0.5초마다 마법 피해를 주고 크게 둔화시킵니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(70.0)
+cooldown = PackedFloat32Array(12.0, 11.0, 10.0, 9.0)
+target_mode = 3
+target_team = 0
+cast_range = 600.0
+radius = 160.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(0.5, 0.8, 1, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

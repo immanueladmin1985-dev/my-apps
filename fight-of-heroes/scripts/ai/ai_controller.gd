@@ -558,6 +558,21 @@ func _aim_for(s: SkillData, enemies: Array) -> CastAim:
 			var away: Vector2 = (pos - nearest.global_position).normalized()
 			var to_home := (home - pos).normalized()
 			return CastAim.toward((away * 0.7 + to_home * 0.3).normalized())
+		Enums.AIUse.SUPPORT:
+			var ally = _ally_in_need(s)
+			if ally == null:
+				return null
+			if s.target_mode == Enums.TargetMode.UNIT:
+				return CastAim.at_unit(ally)
+			if s.target_mode == Enums.TargetMode.POINT:
+				return CastAim.at_point(ally.global_position)
+			return CastAim.new()
+		Enums.AIUse.SUMMON:
+			if nd > 700.0 and not (target is Monster):
+				return null
+			if s.target_mode == Enums.TargetMode.POINT and nearest != null:
+				return CastAim.at_point(pos + (nearest.global_position - pos).limit_length(s.cast_range))
+			return CastAim.new()
 		Enums.AIUse.DEFENSE:
 			var hurt_now: bool = Unit.now() - hero.last_damaged_time < 1.0
 			if (hp < 0.75 and nd < 450.0) or (hurt_now and hp < 0.9 and nd < 300.0):
@@ -575,6 +590,19 @@ func _aim_for(s: SkillData, enemies: Array) -> CastAim:
 		if target.health.ratio() > 0.65 and hp > 0.4:
 			return null
 	return _aim_at(s, target)
+
+
+## 지원 스킬을 줄 아군(자신 포함): 사거리 안에서 체력 비율이 가장 낮고 70% 아래인 아군.
+## 자신을 중심으로 퍼지는 스킬은 범위 안 아군 중에서 고른다.
+func _ally_in_need(s: SkillData):
+	var reach: float = s.cast_range if s.target_mode != Enums.TargetMode.SELF else maxf(s.radius, 1.0)
+	var best = null
+	for u in Targeting.in_radius(get_tree(), hero.global_position, reach, hero.team, Enums.TargetTeam.ALLY):
+		if not (u is Hero) or u.health.ratio() >= 0.7:
+			continue
+		if best == null or u.health.ratio() < best.health.ratio():
+			best = u
+	return best
 
 
 func _aim_at(s: SkillData, t) -> CastAim:

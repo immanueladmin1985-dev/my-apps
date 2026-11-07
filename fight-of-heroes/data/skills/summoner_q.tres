@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/summon_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
+
+[sub_resource type="Resource" id="SummonEffect_1"]
+script = ExtResource("1")
+monster_id = "skeleton"
+count = PackedInt32Array(2, 2, 3, 3)
+duration = PackedFloat32Array(14.0)
+
+[resource]
+script = ExtResource("2")
+id = "summoner_q"
+display_name = "해골 소환"
+glyph = "해"
+description = "14초 동안 해골 전사 2~3마리를 부릅니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(14.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 5
+ai_range = 0.0
+color = Color(0.85, 0.85, 0.75, 1)
+effects = Array[Resource]([SubResource("SummonEffect_1")])

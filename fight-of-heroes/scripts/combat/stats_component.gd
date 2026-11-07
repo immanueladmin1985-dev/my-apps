@@ -8,14 +8,14 @@ signal changed
 const KEYS := [
 	"max_hp", "max_mp", "attack", "ability_power", "armor", "magic_resist",
 	"attack_speed", "move_speed", "crit_chance", "crit_damage", "hp_regen", "mp_regen",
-	"armor_pen", "magic_pen", "cooldown_reduction", "life_steal",
+	"armor_pen", "magic_pen", "cooldown_reduction", "life_steal", "attack_range",
 ]
 ## 화면에 보여 줄 이름. 비율 능력치(PERCENT_STATS)는 % 로 보여 준다.
 const NAMES := {
 	"max_hp": "최대 체력", "max_mp": "최대 마나", "attack": "공격력", "ability_power": "주문력",
 	"armor": "방어력", "magic_resist": "마법 저항력", "attack_speed": "공격 속도", "move_speed": "이동 속도",
 	"crit_chance": "치명타 확률", "crit_damage": "치명타 피해", "hp_regen": "체력 회복", "mp_regen": "마나 회복",
-	"armor_pen": "방어 관통", "magic_pen": "마법 관통", "cooldown_reduction": "쿨타임 감소", "life_steal": "흡혈",
+	"armor_pen": "방어 관통", "magic_pen": "마법 관통", "cooldown_reduction": "쿨타임 감소", "life_steal": "흡혈", "attack_range": "사거리",
 }
 const PERCENT_STATS := ["crit_chance", "crit_damage", "cooldown_reduction", "life_steal"]
 const MAX_COOLDOWN_REDUCTION := 0.4

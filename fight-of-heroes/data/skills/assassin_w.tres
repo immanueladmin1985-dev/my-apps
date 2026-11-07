@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/poison.tres" id="4"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="6"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_4"]
+script = ExtResource("3")
+status = ExtResource("5")
+duration = PackedFloat32Array(1.5)
+magnitude = PackedFloat32Array(0.25)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(12.0, 18.0, 24.0, 30.0)
+to_caster = false
+ad_ratio = 0.1
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(50.0, 80.0, 110.0, 140.0)
+ad_ratio = 0.6
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ProjectileEffect_1"]
+script = ExtResource("1")
+speed = 1300.0
+width = 30.0
+pierce = false
+max_range = 0.0
+color = Color(0.5, 0.9, 0.3, 1)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3"), SubResource("ApplyStatusEffect_4")])
+
+[resource]
+script = ExtResource("6")
+id = "assassin_w"
+display_name = "독칼 던지기"
+glyph = "독"
+description = "독칼을 던져 물리 피해를 주고 3초 동안 중독·둔화시킵니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(40.0)
+cooldown = PackedFloat32Array(7.0)
+target_mode = 2
+target_team = 0
+cast_range = 600.0
+radius = 0.0
+width = 30.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(0.5, 0.9, 0.4, 1)
+effects = Array[Resource]([SubResource("ProjectileEffect_1")])

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
+
+[sub_resource type="Resource" id="ShieldEffect_1"]
+script = ExtResource("1")
+base = PackedFloat32Array(100.0, 150.0, 200.0, 250.0)
+duration = PackedFloat32Array(3.0)
+ad_ratio = 0.5
+ap_ratio = 0.0
+to_caster = true
+
+[resource]
+script = ExtResource("2")
+id = "dragon_knight_e"
+display_name = "용비늘"
+glyph = "비"
+description = "3초 동안 피해를 막는 보호막을 두릅니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(50.0)
+cooldown = PackedFloat32Array(13.0, 12.0, 11.0, 10.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 2
+ai_range = 0.0
+color = Color(0.9, 0.5, 0.4, 1)
+effects = Array[Resource]([SubResource("ShieldEffect_1")])

@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/haste.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_4"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(2.0)
+magnitude = PackedFloat32Array(0.25)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(2.0)
+magnitude = PackedFloat32Array(0.25)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ShieldEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(60.0, 90.0, 120.0, 150.0)
+duration = PackedFloat32Array(2.5)
+ad_ratio = 0.0
+ap_ratio = 0.4
+to_caster = false
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 400.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 1
+color = Color(1, 1, 0.8, 0.25)
+effects = Array[Resource]([SubResource("ShieldEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("5")
+id = "saint_e"
+display_name = "정화의 빛"
+glyph = "정"
+description = "주변 아군에게 보호막을 씌우고 2초 동안 이동 속도를 25% 높입니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(14.0, 13.0, 12.0, 11.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 400.0
+width = 0.0
+auto_aim_away = false
+ai_use = 4
+ai_range = 0.0
+color = Color(1, 1, 0.8, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1"), SubResource("ApplyStatusEffect_4")])

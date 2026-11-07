@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/stealth.tres" id="2"]
+[ext_resource type="Resource" path="res://data/status/haste.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("1")
+status = ExtResource("3")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(0.3)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[resource]
+script = ExtResource("4")
+id = "assassin_e"
+display_name = "그림자 숨기"
+glyph = "숨"
+description = "3초 동안 은신하고 이동 속도가 30% 빨라집니다. 공격하거나 스킬을 쓰면 풀립니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(16.0, 15.0, 14.0, 13.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 1
+ai_range = 700.0
+color = Color(0.5, 0.45, 0.6, 1)
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1"), SubResource("ApplyStatusEffect_2")])

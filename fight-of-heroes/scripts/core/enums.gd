@@ -8,10 +8,12 @@ enum TargetTeam { ENEMY, ALLY, ANY }
 enum Slot { Q, W, E, R }
 enum CastResult { OK, NOT_LEARNED, COOLDOWN, NO_MANA, DISABLED, OUT_OF_RANGE, NO_TARGET, DEAD }
 ## HEAL_OVER_TIME / MANA_OVER_TIME: 초당 magnitude 만큼 체력·마나 회복 (물약)
-enum StatusKind { STUN, SLOW, DOT, STAT_BUFF, HASTE, HEAL_OVER_TIME, MANA_OVER_TIME }
+## STEALTH: 적이 대상으로 고를 수 없다 (범위 공격에는 맞는다). 공격하거나 스킬을 쓰면 풀린다.
+enum StatusKind { STUN, SLOW, DOT, STAT_BUFF, HASTE, HEAL_OVER_TIME, MANA_OVER_TIME, STEALTH }
 ## AI 가 스킬을 언제 쓸지 고르는 기준.
 ## OFFENSE: 대상이 사거리 안이면 사용, ENGAGE: 거리를 좁힐 때, DEFENSE: 체력이 줄었을 때, ESCAPE: 도망칠 때.
-enum AIUse { OFFENSE, ENGAGE, DEFENSE, ESCAPE }
+## SUPPORT: 체력이 줄어든 아군(자신 포함)에게, SUMMON: 적이 가까이 있을 때 소환
+enum AIUse { OFFENSE, ENGAGE, DEFENSE, ESCAPE, SUPPORT, SUMMON }
 
 const SLOT_KEYS := ["Q", "W", "E", "R"]
 

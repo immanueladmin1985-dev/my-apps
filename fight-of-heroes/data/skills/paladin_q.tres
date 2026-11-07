@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/stun.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(1.0, 1.1, 1.2, 1.3)
+magnitude = PackedFloat32Array(0.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_1"]
+script = ExtResource("1")
+damage_type = 1
+base = PackedFloat32Array(70.0, 105.0, 140.0, 175.0)
+ad_ratio = 0.3
+ap_ratio = 0.6
+
+[resource]
+script = ExtResource("4")
+id = "paladin_q"
+display_name = "심판의 망치"
+glyph = "망"
+description = "대상에게 망치를 내리쳐 마법 피해를 주고 기절시킵니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(55.0)
+cooldown = PackedFloat32Array(10.0, 9.5, 9.0, 8.5)
+target_mode = 1
+target_team = 0
+cast_range = 450.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(1, 0.9, 0.5, 1)
+effects = Array[Resource]([SubResource("DamageEffect_1"), SubResource("ApplyStatusEffect_2")])

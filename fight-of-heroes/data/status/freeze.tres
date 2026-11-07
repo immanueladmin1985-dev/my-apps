@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "freeze"
+display_name = "빙결"
+kind = 0
+color = Color(0.6, 0.9, 1, 1)
+tick_interval = 0.5
+damage_type = 1

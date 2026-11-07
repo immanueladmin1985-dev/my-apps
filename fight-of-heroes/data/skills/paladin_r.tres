@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/heal_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="HealEffect_3"]
+script = ExtResource("3")
+base = PackedFloat32Array(100.0, 150.0, 200.0)
+ap_ratio = 0.5
+ad_ratio = 0.0
+to_caster = false
+
+[sub_resource type="Resource" id="ShieldEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(200.0, 300.0, 400.0)
+duration = PackedFloat32Array(4.0)
+ad_ratio = 0.0
+ap_ratio = 0.8
+to_caster = false
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 500.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 1
+color = Color(1, 0.95, 0.6, 0.3)
+effects = Array[Resource]([SubResource("ShieldEffect_2"), SubResource("HealEffect_3")])
+
+[resource]
+script = ExtResource("4")
+id = "paladin_r"
+display_name = "신의 가호"
+glyph = "가"
+description = "주변 아군 모두에게 큰 보호막을 씌우고 체력을 회복시킵니다."
+max_rank = 3
+mana_cost = PackedFloat32Array(120.0)
+cooldown = PackedFloat32Array(75.0, 65.0, 55.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 500.0
+width = 0.0
+auto_aim_away = false
+ai_use = 4
+ai_range = 0.0
+color = Color(1, 0.95, 0.6, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/frost_mage_q.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/frost_mage_w.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/frost_mage_e.tres" id="6"]
+[ext_resource type="Resource" path="res://data/skills/frost_mage_r.tres" id="7"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(1.0)
+magnitude = PackedFloat32Array(0.2, 0.25, 0.3, 0.35)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "chill"
+display_name = "냉기"
+description = "기본 공격이 1초 동안 적을 둔화시킵니다."
+trigger = "attack_hit"
+every = 1
+effects = Array[Resource]([SubResource("ApplyStatusEffect_2")])
+
+[resource]
+script = ExtResource("8")
+id = "frost_mage"
+display_name = "빙결술사"
+role = "군중 제어 마법사"
+difficulty = 2
+lore = "얼음의 마법사. 둔화와 빙결로 적의 발을 묶는다."
+color = Color(0.55, 0.8, 1.0, 1)
+glyph = "빙"
+weapon = "staff"
+base_stats = {
+"ability_power": 25.0,
+"armor": 18.0,
+"attack": 46.0,
+"attack_speed": 0.75,
+"hp_regen": 2.2,
+"magic_resist": 30.0,
+"max_hp": 510.0,
+"max_mp": 400.0,
+"move_speed": 225.0,
+"mp_regen": 3.6
+}
+growth_stats = {
+"ability_power": 5.0,
+"armor": 2.8,
+"attack": 2.5,
+"attack_speed": 0.015,
+"hp_regen": 0.25,
+"magic_resist": 1.5,
+"max_hp": 72.0,
+"max_mp": 32.0,
+"mp_regen": 0.2
+}
+attack_range = 400.0
+is_ranged = true
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "냉기: 기본 공격이 1초 동안 적을 둔화시킵니다."
+skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
+preferred_role = "hunter"
+ai_build = PackedStringArray("mage_boots", "archmage_crown", "chrono_scepter", "dragon_shield", "spirit_king_robe", "immortal_amulet")
+ai_skill_priority = PackedInt32Array(0, 1, 2)
+ai_aggression = 0.4

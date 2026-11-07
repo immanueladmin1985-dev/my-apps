@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bone_golem"
+display_name = "뼈 골렘"
+tier = "normal"
+color = Color(0.75, 0.72, 0.65, 1)
+glyph = "뼈"
+radius = 22.0
+base_stats = {
+"armor": 30.0,
+"attack": 45.0,
+"attack_speed": 0.8,
+"magic_resist": 30.0,
+"max_hp": 900.0,
+"move_speed": 235.0
+}
+attack_range = 50.0
+xp = 20.0
+gold = 15

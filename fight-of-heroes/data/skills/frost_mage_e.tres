@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/frost_armor.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(4.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ShieldEffect_1"]
+script = ExtResource("1")
+base = PackedFloat32Array(80.0, 120.0, 160.0, 200.0)
+duration = PackedFloat32Array(4.0)
+ad_ratio = 0.0
+ap_ratio = 0.5
+to_caster = true
+
+[resource]
+script = ExtResource("4")
+id = "frost_mage_e"
+display_name = "얼음 갑옷"
+glyph = "갑"
+description = "4초 동안 보호막과 방어력 +30 을 얻습니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(14.0, 13.0, 12.0, 11.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 2
+ai_range = 0.0
+color = Color(0.7, 0.9, 1, 1)
+effects = Array[Resource]([SubResource("ShieldEffect_1"), SubResource("ApplyStatusEffect_2")])

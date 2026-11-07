@@ -82,6 +82,7 @@ func cast(slot: int, aim: CastAim = null) -> int:
 	max_cooldowns[slot] = cooldowns[slot]
 	cast_counts[slot] += 1
 	unit.attack.cancel_windup()
+	unit.status.remove_kind(Enums.StatusKind.STEALTH)
 	if s.cast_lock > 0.0:
 		unit.cast_lock_left = s.cast_lock
 	var ctx := _build_context(s, rank, aim)

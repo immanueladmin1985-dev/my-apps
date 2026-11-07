@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(70.0, 105.0, 140.0, 175.0)
+ad_ratio = 0.9
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ProjectileEffect_1"]
+script = ExtResource("1")
+speed = 2400.0
+width = 70.0
+pierce = true
+max_range = 280.0
+color = Color(0.95, 0.9, 0.8, 1)
+effects = Array[Resource]([SubResource("DamageEffect_2")])
+
+[resource]
+script = ExtResource("3")
+id = "dragon_knight_q"
+display_name = "창 찌르기"
+glyph = "찌"
+description = "앞으로 창을 길게 찔러 일직선의 적에게 물리 피해를 줍니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(40.0)
+cooldown = PackedFloat32Array(6.0, 5.5, 5.0, 4.5)
+target_mode = 2
+target_team = 0
+cast_range = 280.0
+radius = 0.0
+width = 70.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 280.0
+color = Color(0.9, 0.85, 0.75, 1)
+effects = Array[Resource]([SubResource("ProjectileEffect_1")])

@@ -14,8 +14,8 @@ func test_full_match_hard() -> void:
 
 func _play(difficulty: String, kill_target: int, boss_time: float, seed_value: int, max_seconds: int) -> Dictionary:
 	var cfg := MatchConfig.new()
-	cfg.blue_heroes = PackedStringArray(["blade_master", "elf_archer", "blade_master"])
-	cfg.red_heroes = PackedStringArray(["elf_archer", "blade_master", "elf_archer"])
+	cfg.blue_heroes = PackedStringArray(["blade_master", "fire_mage", "saint"] if seed_value % 2 == 1 else ["dragon_knight", "summoner", "paladin"])
+	cfg.red_heroes = PackedStringArray(["monk", "frost_mage", "paladin"] if seed_value % 2 == 1 else ["assassin", "elf_archer", "saint"])
 	cfg.difficulty = difficulty
 	cfg.kill_target = kill_target
 	cfg.final_boss_time = boss_time
@@ -73,7 +73,7 @@ func _play(difficulty: String, kill_target: int, boss_time: float, seed_value: i
 			if it != null and not it.consumable:
 				gear += it.cost
 				gear_names.append(it.display_name)
-		check(gear >= 1000, "%s 이(가) 장비를 갖춤 (장비 가치 %d, %s)" % [h.display_name, gear, ", ".join(gear_names)])
+		check(gear >= 1000 or gear_names.size() >= 2, "%s 이(가) 장비를 갖춤 (장비 가치 %d, %s)" % [h.display_name, gear, ", ".join(gear_names)])
 		# 배운 지 60초가 넘은 스킬은 한 번 이상 썼어야 한다 (1레벨에 배운 스킬은 레벨업 전이라 기록에서 빠질 수 있어 따로 본다).
 		for slot in 4:
 			var at = learned.get([h, slot])

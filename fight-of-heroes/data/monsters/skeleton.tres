@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "skeleton"
+display_name = "해골 전사"
+tier = "normal"
+color = Color(0.88, 0.86, 0.78, 1)
+glyph = "해"
+radius = 13.0
+weapon = "sword"
+base_stats = {
+"armor": 10.0,
+"attack": 22.0,
+"attack_speed": 1.0,
+"magic_resist": 10.0,
+"max_hp": 300.0,
+"move_speed": 250.0
+}
+attack_range = 40.0
+xp = 8.0
+gold = 5

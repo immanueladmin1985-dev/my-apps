@@ -42,6 +42,7 @@ func setup(hero_data: HeroData, hero_team: int) -> void:
 	gold = DataRegistry.progression().start_gold
 	health.reset_full()
 	mana.reset_full()
+	$Passive.setup(hero_data.passive as PassiveData)
 	$Visual.setup(self)
 
 

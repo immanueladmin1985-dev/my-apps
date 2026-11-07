@@ -1,0 +1,81 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/heal_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/skills/saint_q.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/saint_w.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/saint_e.tres" id="6"]
+[ext_resource type="Resource" path="res://data/skills/saint_r.tres" id="7"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+
+[sub_resource type="Resource" id="HealEffect_3"]
+script = ExtResource("3")
+base = PackedFloat32Array(30.0, 45.0, 60.0, 75.0)
+ap_ratio = 0.15
+ad_ratio = 0.0
+to_caster = false
+
+[sub_resource type="Resource" id="AreaEffect_2"]
+script = ExtResource("2")
+center = 0
+radius = 450.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 1
+color = Color(1, 1, 0.7, 0.2)
+effects = Array[Resource]([SubResource("HealEffect_3")])
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "blessing"
+display_name = "축복"
+description = "5초마다 주변 아군(자신 포함)의 체력을 회복시킵니다."
+trigger = "periodic"
+interval = 5.0
+effects = Array[Resource]([SubResource("AreaEffect_2")])
+
+[resource]
+script = ExtResource("8")
+id = "saint"
+display_name = "성녀"
+role = "회복 및 지원"
+difficulty = 1
+lore = "빛의 사제. 아군을 치유하고 보호하며 위기의 순간 모두를 일으켜 세운다."
+color = Color(1.0, 0.95, 0.75, 1)
+glyph = "녀"
+weapon = "staff"
+base_stats = {
+"ability_power": 25.0,
+"armor": 18.0,
+"attack": 44.0,
+"attack_speed": 0.75,
+"hp_regen": 2.5,
+"magic_resist": 30.0,
+"max_hp": 520.0,
+"max_mp": 420.0,
+"move_speed": 225.0,
+"mp_regen": 3.8
+}
+growth_stats = {
+"ability_power": 5.0,
+"armor": 2.8,
+"attack": 2.5,
+"attack_speed": 0.015,
+"hp_regen": 0.25,
+"magic_resist": 1.5,
+"max_hp": 72.0,
+"max_mp": 32.0,
+"mp_regen": 0.2
+}
+attack_range = 380.0
+is_ranged = true
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "축복: 5초마다 주변 아군(자신 포함)의 체력을 회복시킵니다."
+skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
+preferred_role = "support"
+ai_build = PackedStringArray("mage_boots", "chrono_scepter", "spirit_king_robe", "immortal_amulet", "dragon_shield", "archmage_crown")
+ai_skill_priority = PackedInt32Array(1, 0, 2)
+ai_aggression = 0.35

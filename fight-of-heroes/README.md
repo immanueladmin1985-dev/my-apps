@@ -3,7 +3,7 @@
 오프라인 3대3 2D 모바일 AOS 게임입니다. Godot 4.7, GDScript, 안드로이드 가로 화면용입니다.
 
 - 설계: [docs/DESIGN.md](docs/DESIGN.md)
-- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md), [PHASE 3 보완](docs/PHASE3B_REPORT.md), [PHASE 4](docs/PHASE4_REPORT.md)
+- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md), [PHASE 3 보완](docs/PHASE3B_REPORT.md), [PHASE 4](docs/PHASE4_REPORT.md), [PHASE 5](docs/PHASE5_REPORT.md)
 
 ## 실행과 시험
 
@@ -40,7 +40,8 @@ python3 baseball-relay/tools/sign_apk.py <폴더>/fight-of-heroes-unsigned.apk <
 - 몬스터·보스: `data/monsters/<id>.tres` (MonsterData, 보스 패턴은 SkillData), 캠프 위치는 맵의 `camps` (CampData).
 - 아이템: `data/items/<id>.tres` (ItemData, 재료는 `components`, 능력치는 StatModifier). AI 가 사는 순서는 HeroData 의 `ai_build`.
 - 성장·경제 수치: `data/config/progression.tres`, 전투·부활: `data/config/combat.tres`.
-- 스킬 효과는 `scripts/skills/effects/` 의 효과(피해, 회복, 보호막, 상태 효과, 범위, 투사체, 돌진)를 조합합니다.
+- 스킬 효과는 `scripts/skills/effects/` 의 효과(피해, 회복, 보호막, 마나, 상태 효과, 범위, 직선 위험 지역, 투사체, 돌진, 순간이동, 소환)를 조합합니다.
+- 패시브는 HeroData 의 `passive`(PassiveData: 발동 시점·조건·효과)로 적습니다.
 - 임시 그림은 코드로 그립니다(`scripts/combat/unit_visual.gd`). 실제 스프라이트는 `assets/heroes/` 에 넣고 HeroData 의 `sprite_frames` 에 연결합니다.
 
 ## 라이선스

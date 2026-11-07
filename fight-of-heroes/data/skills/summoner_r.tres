@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/summon_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
+
+[sub_resource type="Resource" id="SummonEffect_1"]
+script = ExtResource("1")
+monster_id = "bone_golem"
+count = PackedInt32Array(1)
+duration = PackedFloat32Array(25.0, 30.0, 35.0)
+
+[resource]
+script = ExtResource("2")
+id = "summoner_r"
+display_name = "뼈 골렘"
+glyph = "골"
+description = "튼튼한 뼈 골렘을 25~35초 동안 부릅니다."
+max_rank = 3
+mana_cost = PackedFloat32Array(120.0)
+cooldown = PackedFloat32Array(80.0, 70.0, 60.0)
+target_mode = 3
+target_team = 0
+cast_range = 400.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 5
+ai_range = 0.0
+color = Color(0.8, 0.75, 0.65, 1)
+effects = Array[Resource]([SubResource("SummonEffect_1")])

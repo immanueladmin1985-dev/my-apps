@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(20.0, 30.0, 40.0, 50.0)
+ad_ratio = 0.35
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 140.0
+delay = 0.0
+duration = 1.2
+tick_interval = 0.3
+affects = 0
+color = Color(1, 0.75, 0.4, 0.25)
+effects = Array[Resource]([SubResource("DamageEffect_2")])
+
+[resource]
+script = ExtResource("3")
+id = "monk_w"
+display_name = "연환격"
+glyph = "연"
+description = "1.2초 동안 주변을 연속으로 때려 0.3초마다 물리 피해를 줍니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(50.0)
+cooldown = PackedFloat32Array(9.0, 8.5, 8.0, 7.5)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 140.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 140.0
+color = Color(1, 0.75, 0.4, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

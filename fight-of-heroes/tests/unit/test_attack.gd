@@ -94,3 +94,19 @@ func test_dash_dodges_homing_attack() -> void:
 	t.skill_caster.cast(0, CastAim.toward(Vector2.DOWN))
 	await frames(40)
 	near(t.health.hp, hp, 0.01, "돌진하면 따라오던 투사체를 피함")
+
+
+func test_homing_attack_gives_up_out_of_range() -> void:
+	var a := spawn_hero("elf_archer", Enums.Team.BLUE, Vector2(200, 500))
+	var t := spawn_dummy(Enums.Team.RED, Vector2(560, 500), {"max_hp": 5000.0, "move_speed": 0.0})
+	a.attack_order = t
+	var fx := get_tree().get_first_node_in_group("effects_layer")
+	for i in 40:
+		await frames(1)
+		if not fx.get_children().filter(func(n): return n is Projectile).is_empty():
+			break
+	a.attack_order = null
+	# 대상을 사거리 밖 먼 곳으로 옮긴다 (빠르게 달아난 것과 같다).
+	t.global_position = Vector2(1400, 500)
+	await frames(90)
+	near(t.health.hp, 5000.0, 0.01, "사거리 밖으로 멀리 달아나면 따라오던 기본 공격이 떨어짐")

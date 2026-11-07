@@ -11,3 +11,7 @@ extends Resource
 @export var damage_type: Enums.DamageType = Enums.DamageType.MAGIC
 @export var stat_modifiers: Array[Resource] = []
 @export var color: Color = Color.WHITE
+## 걸려 있는 동안 유닛 그림의 크기 배율 (변신 등). 1 이면 그대로
+@export var visual_scale: float = 1.0
+## 걸려 있는 동안 유닛 그림에 섞는 색 (알파 0 이면 섞지 않음)
+@export var visual_tint: Color = Color(1, 1, 1, 0)

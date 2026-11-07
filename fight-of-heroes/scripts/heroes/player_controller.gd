@@ -101,9 +101,11 @@ func auto_aim(slot: int) -> CastAim:
 	var tree := get_tree()
 	match s.target_mode:
 		Enums.TargetMode.UNIT:
+			if s.target_team == Enums.TargetTeam.ALLY:
+				return CastAim.at_unit(_weakest_ally(reach))
 			var t = selected if selected != null and pos.distance_to(selected.global_position) <= reach + selected.radius else null
-			if t == null or s.target_team != Enums.TargetTeam.ENEMY:
-				t = Targeting.nearest(tree, pos, reach, hero.team, s.target_team, hero if s.target_team == Enums.TargetTeam.ALLY else null)
+			if t == null:
+				t = _nearest_prefer_hero(reach)
 			return CastAim.at_unit(t)
 		Enums.TargetMode.DIRECTION:
 			if s.auto_aim_away:
@@ -115,6 +117,15 @@ func auto_aim(slot: int) -> CastAim:
 			var t = _target_within(reach + 100.0)
 			return CastAim.at_point(t.global_position if t != null else pos + hero.facing * s.cast_range * 0.6)
 	return CastAim.new()
+
+
+## 사거리 안에서 체력 비율이 가장 낮은 아군 영웅(자신 포함)
+func _weakest_ally(reach: float):
+	var best = hero
+	for u in Targeting.in_radius(get_tree(), hero.global_position, reach, hero.team, Enums.TargetTeam.ALLY):
+		if u is Hero and u.health.ratio() < best.health.ratio():
+			best = u
+	return best
 
 
 func _target_within(dist: float):
@@ -134,6 +145,8 @@ func manual_aim(slot: int, vec: Vector2) -> CastAim:
 		Enums.TargetMode.POINT:
 			return CastAim.at_point(pos + vec * s.cast_range)
 		Enums.TargetMode.UNIT:
+			if s.target_team == Enums.TargetTeam.ALLY and vec.length() < 0.25:
+				return CastAim.at_unit(hero)
 			var t = Targeting.nearest(get_tree(), pos + vec * s.cast_range, 140.0, hero.team, s.target_team)
 			return CastAim.at_unit(t)
 	return CastAim.new()

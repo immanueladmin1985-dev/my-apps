@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(200.0, 300.0, 400.0)
+ad_ratio = 1.5
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="TeleportEffect_1"]
+script = ExtResource("1")
+distance = 0.0
+behind = 20.0
+arrive_effects = Array[Resource]([SubResource("DamageEffect_2")])
+
+[resource]
+script = ExtResource("3")
+id = "assassin_r"
+display_name = "처형"
+glyph = "처"
+description = "대상에게 순간이동해 큰 물리 피해를 줍니다."
+max_rank = 3
+mana_cost = PackedFloat32Array(100.0)
+cooldown = PackedFloat32Array(55.0, 45.0, 35.0)
+target_mode = 1
+target_team = 0
+cast_range = 350.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(0.8, 0.2, 0.3, 1)
+effects = Array[Resource]([SubResource("TeleportEffect_1")])

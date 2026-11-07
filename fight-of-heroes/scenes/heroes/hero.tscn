@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/skills/skill_caster.gd" id="7_skills"]
 [ext_resource type="Script" path="res://scripts/combat/unit_visual.gd" id="8_visual"]
 [ext_resource type="Script" path="res://scripts/items/inventory_component.gd" id="9_inv"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_runner.gd" id="10_passive"]
 
 [sub_resource type="CircleShape2D" id="body"]
 radius = 16.0
@@ -39,6 +40,9 @@ script = ExtResource("7_skills")
 
 [node name="Inventory" type="Node" parent="."]
 script = ExtResource("9_inv")
+
+[node name="Passive" type="Node" parent="."]
+script = ExtResource("10_passive")
 
 [node name="NavAgent" type="NavigationAgent2D" parent="."]
 path_desired_distance = 14.0

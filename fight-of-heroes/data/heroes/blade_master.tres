@@ -5,6 +5,25 @@
 [ext_resource type="Resource" path="res://data/skills/blade_master_w.tres" id="3"]
 [ext_resource type="Resource" path="res://data/skills/blade_master_e.tres" id="4"]
 [ext_resource type="Resource" path="res://data/skills/blade_master_r.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="p100"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="p101"]
+
+
+[sub_resource type="Resource" id="p_DamageEffect_1"]
+script = ExtResource("p100")
+damage_type = 0
+base = PackedFloat32Array(40.0, 60.0, 80.0, 100.0)
+ad_ratio = 0.5
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="p_passive"]
+script = ExtResource("p101")
+id = "way_of_sword"
+display_name = "검의 길"
+description = "세 번째 공격마다 추가 물리 피해를 줍니다."
+trigger = "attack_hit"
+every = 3
+effects = Array[Resource]([SubResource("p_DamageEffect_1")])
 
 [resource]
 script = ExtResource("1")
@@ -42,7 +61,8 @@ growth_stats = {
 attack_range = 60.0
 is_ranged = false
 projectile_speed = 900.0
-passive_description = "(PHASE 5) 기본 공격 3번째마다 추가 피해"
+passive = SubResource("p_passive")
+passive_description = "검의 길: 세 번째 공격마다 추가 물리 피해를 줍니다."
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 preferred_role = "fighter"
 ai_build = PackedStringArray("plated_boots", "blood_blade", "guardian_plate", "hero_sword", "conqueror_axe", "spirit_king_robe")

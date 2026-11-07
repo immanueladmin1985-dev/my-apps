@@ -53,6 +53,34 @@ func is_stunned() -> bool:
 	return false
 
 
+func is_stealthed() -> bool:
+	for e in active.values():
+		if e.data.kind == Enums.StatusKind.STEALTH:
+			return true
+	return false
+
+
+func remove_kind(kind: int) -> void:
+	for id in active.keys():
+		if active[id].data.kind == kind:
+			remove(id)
+
+
+## 걸려 있는 효과 중 가장 큰 그림 배율과 섞을 색
+func visual_scale() -> float:
+	var k := 1.0
+	for e in active.values():
+		k = maxf(k, e.data.visual_scale)
+	return k
+
+
+func visual_tint() -> Color:
+	for e in active.values():
+		if e.data.visual_tint.a > 0.0:
+			return e.data.visual_tint
+	return Color(1, 1, 1, 0)
+
+
 func is_slowed() -> bool:
 	return _max_magnitude(Enums.StatusKind.SLOW) > 0.0
 

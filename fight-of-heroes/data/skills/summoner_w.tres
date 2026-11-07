@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/curse.tres" id="2"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("1")
+status = ExtResource("3")
+duration = PackedFloat32Array(2.0)
+magnitude = PackedFloat32Array(0.3)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(4.0)
+magnitude = PackedFloat32Array(20.0, 30.0, 40.0, 50.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.15
+
+[resource]
+script = ExtResource("4")
+id = "summoner_w"
+display_name = "저주"
+glyph = "저"
+description = "대상에게 4초 동안 지속 마법 피해를 주고 2초 동안 둔화시킵니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(50.0)
+cooldown = PackedFloat32Array(8.0)
+target_mode = 1
+target_team = 0
+cast_range = 550.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(0.6, 0.3, 0.8, 1)
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1"), SubResource("ApplyStatusEffect_2")])

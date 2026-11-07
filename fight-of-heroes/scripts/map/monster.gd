@@ -14,6 +14,13 @@ var threat: Dictionary = {}  # Unit -> 누적 피해
 var target = null
 var phase := 0
 var returning := false
+## 소환수: 주인을 따라다니며 주인 근처의 적을 공격하고, life_left 초 뒤 사라진다.
+var owner_unit = null
+var life_left := 0.0
+var expired := false
+
+const SUMMON_GUARD := 520.0
+const SUMMON_FOLLOW := 140.0
 
 var _think_left := 0.0
 var _skill_left := 1.5
@@ -48,6 +55,19 @@ func setup(d: MonsterData, pos: Vector2) -> void:
 	$Visual.setup(self)
 
 
+func setup_summon(d: MonsterData, owner, pos: Vector2, seconds: float) -> void:
+	setup(d, pos)
+	remove_from_group("monsters")
+	add_to_group("summons")
+	owner_unit = owner
+	team = owner.team
+	life_left = seconds
+
+
+func is_summon() -> bool:
+	return owner_unit != null
+
+
 func is_boss() -> bool:
 	return data != null and (data.tier == "boss" or data.tier == "final_boss")
 
@@ -57,6 +77,8 @@ func is_final_boss() -> bool:
 
 
 func on_damaged(src, amount: float) -> void:
+	if is_summon():
+		return
 	if src == null or not (src is Unit) or src.team == team or returning:
 		return
 	threat[src] = threat.get(src, 0.0) + amount
@@ -70,6 +92,13 @@ func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	if is_dead or data == null:
 		return
+	if is_summon():
+		life_left -= delta
+		if life_left <= 0.0 or not is_instance_valid(owner_unit) or owner_unit.is_dead:
+			expired = true
+			die(null)
+			get_tree().create_timer(0.6, false).timeout.connect(queue_free)
+			return
 	if returning:
 		health.heal(health.max_hp() * RETURN_HEAL * delta)
 	_skill_left -= delta
@@ -79,7 +108,28 @@ func _physics_process(delta: float) -> void:
 		_think()
 
 
+func _think_summon() -> void:
+	var o = owner_unit
+	# 주인이 공격 중인 대상, 아니면 주인 근처의 가장 가까운 적
+	var t = o.attack_order if o.attack_order != null and Targeting.is_valid(o.attack_order, team, Enums.TargetTeam.ENEMY) else null
+	if t == null:
+		t = Targeting.nearest(get_tree(), global_position, 420.0, team, Enums.TargetTeam.ENEMY)
+	if t != null and t.global_position.distance_to(o.global_position) > SUMMON_GUARD:
+		t = null
+	target = t
+	if t != null:
+		attack_order = t
+		nav_goal = null
+		_use_skill()
+	else:
+		attack_order = null
+		nav_goal = o.global_position + Vector2.from_angle(float(get_instance_id() % 628) / 100.0) * 70.0 if global_position.distance_to(o.global_position) > SUMMON_FOLLOW else null
+
+
 func _think() -> void:
+	if is_summon():
+		_think_summon()
+		return
 	if returning:
 		attack_order = null
 		nav_goal = home

@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/burn.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/fire_mage_q.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/fire_mage_w.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/fire_mage_e.tres" id="6"]
+[ext_resource type="Resource" path="res://data/skills/fire_mage_r.tres" id="7"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(8.0, 14.0, 20.0, 26.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.08
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "ignite"
+display_name = "점화"
+description = "기본 공격이 3초 동안 적을 불태웁니다."
+trigger = "attack_hit"
+every = 1
+effects = Array[Resource]([SubResource("ApplyStatusEffect_2")])
+
+[resource]
+script = ExtResource("8")
+id = "fire_mage"
+display_name = "화염술사"
+role = "광역 마법 딜러"
+difficulty = 2
+lore = "불꽃을 다루는 마법사. 멀리서 화염구와 불기둥으로 적을 태우고, 메테오로 전장을 뒤흔든다."
+color = Color(1, 0.45, 0.25, 1)
+glyph = "화"
+weapon = "staff"
+base_stats = {
+"ability_power": 25.0,
+"armor": 18.0,
+"attack": 48.0,
+"attack_speed": 0.75,
+"hp_regen": 2.2,
+"magic_resist": 30.0,
+"max_hp": 520.0,
+"max_mp": 380.0,
+"move_speed": 225.0,
+"mp_regen": 3.5
+}
+growth_stats = {
+"ability_power": 5.0,
+"armor": 2.8,
+"attack": 2.5,
+"attack_speed": 0.015,
+"hp_regen": 0.25,
+"magic_resist": 1.5,
+"max_hp": 72.0,
+"max_mp": 32.0,
+"mp_regen": 0.2
+}
+attack_range = 400.0
+is_ranged = true
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "점화: 기본 공격이 3초 동안 적을 불태웁니다."
+skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
+preferred_role = "hunter"
+ai_build = PackedStringArray("mage_boots", "chrono_scepter", "archmage_crown", "spirit_king_robe", "dragon_shield", "immortal_amulet")
+ai_skill_priority = PackedInt32Array(0, 1, 2)
+ai_aggression = 0.4

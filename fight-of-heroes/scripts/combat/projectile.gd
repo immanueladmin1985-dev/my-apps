@@ -19,16 +19,21 @@ var color := Color(1, 1, 0.8)
 var _traveled := 0.0
 var _target_dash := 0
 var _lost_at = null  # 대상을 놓친 뒤 날아갈 지점
+var _leash := 0.0
+var _origin := Vector2.ZERO
+var _started := false
 var _hit_units: Dictionary = {}
 
 
-func setup_homing(from_unit, target, spd: float, hit: Callable) -> void:
+## leash: 쏜 자리에서 이 거리보다 멀리 따라가지 않는다 (사거리 밖으로 달아나면 피할 수 있다).
+func setup_homing(from_unit, target, spd: float, hit: Callable, leash := 600.0) -> void:
 	owner_unit = from_unit
 	team = from_unit.team
 	homing_target = target
 	_target_dash = target.dash_count
 	speed = spd
 	max_distance = 3000.0
+	_leash = leash
 	on_hit = hit
 
 
@@ -44,6 +49,9 @@ func setup_line(from_unit, dir: Vector2, spd: float, dist: float, w: float, pier
 
 
 func _physics_process(delta: float) -> void:
+	if not _started:
+		_started = true
+		_origin = global_position
 	var step := speed * delta
 	if _lost_at != null:
 		var to_lost: Vector2 = _lost_at - global_position
@@ -58,6 +66,11 @@ func _physics_process(delta: float) -> void:
 			return
 		if homing_target.dash_count != _target_dash:
 			_lost_at = homing_target.global_position
+			homing_target = null
+			return
+		# 사거리 밖으로 멀리 달아나면 따라가지 않고 떨어진다.
+		if _leash > 0.0 and homing_target.global_position.distance_to(_origin) > _leash:
+			_lost_at = global_position + direction * 60.0
 			homing_target = null
 			return
 		var to: Vector2 = homing_target.global_position - global_position

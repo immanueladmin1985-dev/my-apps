@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="2"]
+
+[sub_resource type="Resource" id="StatModifier_2"]
+script = ExtResource("1")
+stat = "magic_resist"
+flat = 25.0
+percent = 0.0
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("1")
+stat = "armor"
+flat = 25.0
+percent = 0.0
+
+[resource]
+script = ExtResource("2")
+id = "monk_guard"
+display_name = "철벽 자세"
+kind = 3
+color = Color(0.8, 0.8, 0.7, 1)
+tick_interval = 0.5
+damage_type = 1
+stat_modifiers = Array[Resource]([SubResource("StatModifier_1"), SubResource("StatModifier_2")])

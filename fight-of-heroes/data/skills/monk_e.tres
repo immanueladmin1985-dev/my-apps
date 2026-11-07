@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/monk_guard.tres" id="2"]
+[ext_resource type="Resource" path="res://data/status/haste.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("1")
+status = ExtResource("3")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(0.2)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[resource]
+script = ExtResource("4")
+id = "monk_e"
+display_name = "철벽 자세"
+glyph = "철"
+description = "3초 동안 방어력·마법 저항력 +25, 이동 속도 +20%."
+max_rank = 4
+mana_cost = PackedFloat32Array(40.0)
+cooldown = PackedFloat32Array(13.0, 12.0, 11.0, 10.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 2
+ai_range = 0.0
+color = Color(0.85, 0.8, 0.6, 1)
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1"), SubResource("ApplyStatusEffect_2")])

@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/heal_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="HealEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(250.0, 375.0, 500.0)
+ap_ratio = 1.0
+ad_ratio = 0.0
+to_caster = false
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 650.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 1
+color = Color(1, 1, 0.7, 0.3)
+effects = Array[Resource]([SubResource("HealEffect_2")])
+
+[resource]
+script = ExtResource("3")
+id = "saint_r"
+display_name = "부활의 기도"
+glyph = "기"
+description = "넓은 범위의 아군 모두의 체력을 크게 회복시킵니다."
+max_rank = 3
+mana_cost = PackedFloat32Array(130.0)
+cooldown = PackedFloat32Array(80.0, 70.0, 60.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 650.0
+width = 0.0
+auto_aim_away = false
+ai_use = 4
+ai_range = 0.0
+color = Color(1, 1, 0.6, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

@@ -1,0 +1,71 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/dragon_blood.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/dragon_knight_q.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/dragon_knight_w.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/dragon_knight_e.tres" id="6"]
+[ext_resource type="Resource" path="res://data/skills/dragon_knight_r.tres" id="7"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(1.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "dragon_blood"
+display_name = "용의 피"
+description = "체력이 35% 아래로 내려가면 방어력·마법 저항력이 30 오릅니다."
+trigger = "periodic"
+interval = 0.5
+self_below_hp = 0.35
+effects = Array[Resource]([SubResource("ApplyStatusEffect_2")])
+
+[resource]
+script = ExtResource("8")
+id = "dragon_knight"
+display_name = "용기사"
+role = "변신형 전사"
+difficulty = 2
+lore = "용의 피를 이은 기사. 위기에 몰리면 단단해지고, 용으로 변신해 화염을 뿜는다."
+color = Color(0.8, 0.35, 0.3, 1)
+glyph = "용"
+weapon = "spear"
+base_stats = {
+"armor": 32.0,
+"attack": 60.0,
+"attack_speed": 0.8,
+"hp_regen": 3.2,
+"magic_resist": 28.0,
+"max_hp": 700.0,
+"max_mp": 300.0,
+"move_speed": 230.0,
+"mp_regen": 2.5
+}
+growth_stats = {
+"armor": 3.5,
+"attack": 4.0,
+"attack_speed": 0.02,
+"hp_regen": 0.3,
+"magic_resist": 1.5,
+"max_hp": 85.0,
+"max_mp": 25.0,
+"mp_regen": 0.15
+}
+attack_range = 70.0
+is_ranged = false
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "용의 피: 체력이 35% 아래로 내려가면 방어력·마법 저항력이 30 오릅니다."
+skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
+preferred_role = "fighter"
+ai_build = PackedStringArray("plated_boots", "blood_blade", "guardian_plate", "conqueror_axe", "spirit_king_robe", "hero_sword")
+ai_skill_priority = PackedInt32Array(0, 1, 2)
+ai_aggression = 0.65

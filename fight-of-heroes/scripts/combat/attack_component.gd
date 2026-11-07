@@ -22,9 +22,14 @@ func interval() -> float:
 	return 1.0 / maxf(0.1, unit.stats.get_stat("attack_speed"))
 
 
+## 기본 사거리 + 능력치 보너스(변신 등)
+func total_range() -> float:
+	return attack_range + unit.stats.get_stat("attack_range")
+
+
 ## 몸 가장자리 사이 거리로 사거리를 잰다. 벽에 가려 보이지 않으면 사거리 밖으로 본다.
 func in_range(target, extra := 0.0) -> bool:
-	if unit.global_position.distance_to(target.global_position) > attack_range + target.radius + extra:
+	if unit.global_position.distance_to(target.global_position) > total_range() + target.radius + extra:
 		return false
 	return Targeting.has_line_of_sight(unit, unit.global_position, target.global_position)
 
@@ -41,6 +46,7 @@ func try_attack(target) -> bool:
 	if not can_attack():
 		return false
 	windup_target = target
+	unit.status.remove_kind(Enums.StatusKind.STEALTH)
 	windup_left = interval() * DataRegistry.combat_config().attack_windup_ratio
 	cooldown_left = interval()
 	unit.face_towards(target.global_position)
@@ -68,9 +74,9 @@ func _release() -> void:
 	windup_target = null
 	if t == null or not is_instance_valid(t) or t.is_dead or unit.is_dead:
 		return
-	if is_ranged:
+	if is_ranged or unit.stats.get_stat("attack_range") > 100.0:
 		var p := Projectile.new()
-		p.setup_homing(unit, t, projectile_speed, func(target): _hit(target))
+		p.setup_homing(unit, t, projectile_speed, func(target): _hit(target), total_range() * 1.35 + 60.0)
 		p.color = projectile_color
 		Targeting.effects_parent(unit).add_child(p)
 		p.global_position = unit.global_position

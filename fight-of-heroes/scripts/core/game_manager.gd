@@ -20,16 +20,18 @@ func _ready() -> void:
 		_screenshot_later.call_deferred()
 
 
-## 기본 경기: 플레이어 영웅 + 나머지는 무작위로 채운 3대3. 같은 영웅이 여러 명 나올 수 있다.
+## 기본 경기: 플레이어 영웅 + 나머지는 무작위로 채운 3대3. 영웅이 모자라지 않으면 같은 영웅은 한 번만 나온다.
 func default_config(player_hero := "blade_master", team_size := 3) -> MatchConfig:
 	var c := MatchConfig.new()
 	var pool: Array = DataRegistry.ids("heroes")
+	pool.shuffle()
+	pool.erase(player_hero)
 	var blue := [player_hero]
 	var red := []
 	for i in team_size - 1:
-		blue.append(pool.pick_random())
+		blue.append(pool.pop_back() if not pool.is_empty() else DataRegistry.ids("heroes").pick_random())
 	for i in team_size:
-		red.append(pool.pick_random())
+		red.append(pool.pop_back() if not pool.is_empty() else DataRegistry.ids("heroes").pick_random())
 	c.blue_heroes = PackedStringArray(blue)
 	c.red_heroes = PackedStringArray(red)
 	c.player_index = 0

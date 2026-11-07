@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/monk_flow.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/monk_q.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/monk_w.tres" id="6"]
+[ext_resource type="Resource" path="res://data/skills/monk_e.tres" id="7"]
+[ext_resource type="Resource" path="res://data/skills/monk_r.tres" id="8"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="9"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(20.0, 35.0, 50.0, 65.0)
+ad_ratio = 0.3
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "flurry"
+display_name = "연타"
+description = "세 번째 공격마다 추가 물리 피해를 주고 3초 동안 공격 속도가 30% 빨라집니다."
+trigger = "attack_hit"
+every = 3
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("9")
+id = "monk"
+display_name = "무투가"
+role = "연속 공격형 근접 전사"
+difficulty = 2
+lore = "맨주먹으로 싸우는 무인. 빠른 연타와 붕권으로 적을 몰아붙인다."
+color = Color(0.95, 0.6, 0.3, 1)
+glyph = "무"
+weapon = "fist"
+base_stats = {
+"armor": 30.0,
+"attack": 60.0,
+"attack_speed": 1.0,
+"crit_chance": 0.1,
+"hp_regen": 3.0,
+"magic_resist": 28.0,
+"max_hp": 660.0,
+"max_mp": 280.0,
+"move_speed": 240.0,
+"mp_regen": 2.4
+}
+growth_stats = {
+"armor": 3.5,
+"attack": 4.0,
+"attack_speed": 0.02,
+"hp_regen": 0.3,
+"magic_resist": 1.5,
+"max_hp": 85.0,
+"max_mp": 25.0,
+"mp_regen": 0.15
+}
+attack_range = 55.0
+is_ranged = false
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "연타: 세 번째 공격마다 추가 물리 피해를 주고 3초 동안 공격 속도가 30% 빨라집니다."
+skills = Array[Resource]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")])
+preferred_role = "fighter"
+ai_build = PackedStringArray("berserker_boots", "blood_blade", "hero_sword", "guardian_plate", "conqueror_axe", "spirit_king_robe")
+ai_skill_priority = PackedInt32Array(0, 1, 2)
+ai_aggression = 0.7

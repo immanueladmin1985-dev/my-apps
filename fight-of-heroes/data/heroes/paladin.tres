@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/devotion.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/paladin_q.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/paladin_w.tres" id="6"]
+[ext_resource type="Resource" path="res://data/skills/paladin_e.tres" id="7"]
+[ext_resource type="Resource" path="res://data/skills/paladin_r.tres" id="8"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="9"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(1.5)
+magnitude = PackedFloat32Array(0.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_2"]
+script = ExtResource("2")
+center = 0
+radius = 450.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 1
+color = Color(1, 0.9, 0.5, 0.0)
+effects = Array[Resource]([SubResource("ApplyStatusEffect_3")])
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "devotion_aura"
+display_name = "수호의 맹세"
+description = "주변 아군의 방어력과 마법 저항력이 12 오릅니다."
+trigger = "periodic"
+interval = 1.0
+effects = Array[Resource]([SubResource("AreaEffect_2")])
+
+[resource]
+script = ExtResource("9")
+id = "paladin"
+display_name = "성기사"
+role = "방어 및 아군 보호"
+difficulty = 1
+lore = "빛의 맹세를 지키는 기사. 아군을 보호막으로 지키고 적을 심판한다."
+color = Color(0.9, 0.85, 0.55, 1)
+glyph = "성"
+weapon = "shield"
+base_stats = {
+"ability_power": 10.0,
+"armor": 36.0,
+"attack": 55.0,
+"attack_speed": 0.8,
+"hp_regen": 3.5,
+"magic_resist": 32.0,
+"max_hp": 700.0,
+"max_mp": 320.0,
+"move_speed": 225.0,
+"mp_regen": 2.8
+}
+growth_stats = {
+"armor": 3.5,
+"attack": 4.0,
+"attack_speed": 0.02,
+"hp_regen": 0.3,
+"magic_resist": 1.5,
+"max_hp": 85.0,
+"max_mp": 25.0,
+"mp_regen": 0.15
+}
+attack_range = 60.0
+is_ranged = false
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "수호의 맹세: 주변 아군의 방어력과 마법 저항력이 12 오릅니다."
+skills = Array[Resource]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")])
+preferred_role = "support"
+ai_build = PackedStringArray("plated_boots", "guardian_plate", "spirit_king_robe", "dragon_shield", "immortal_amulet", "chrono_scepter")
+ai_skill_priority = PackedInt32Array(1, 0, 2)
+ai_aggression = 0.6

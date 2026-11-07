@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/skills/assassin_q.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/assassin_w.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/assassin_e.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/assassin_r.tres" id="6"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="7"]
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(25.0, 40.0, 55.0, 70.0)
+ad_ratio = 0.4
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "weak_point"
+display_name = "급소"
+description = "체력이 절반 아래인 적에게 기본 공격이 추가 물리 피해를 줍니다."
+trigger = "attack_hit"
+every = 1
+target_below_hp = 0.5
+effects = Array[Resource]([SubResource("DamageEffect_2")])
+
+[resource]
+script = ExtResource("7")
+id = "assassin"
+display_name = "암살자"
+role = "순간 폭발 피해"
+difficulty = 3
+lore = "그림자 속을 걷는 자객. 은신으로 다가가 순식간에 적을 쓰러뜨린다."
+color = Color(0.55, 0.4, 0.7, 1)
+glyph = "암"
+weapon = "dagger"
+base_stats = {
+"armor": 24.0,
+"attack": 64.0,
+"attack_speed": 0.9,
+"crit_chance": 0.2,
+"hp_regen": 2.8,
+"magic_resist": 25.0,
+"max_hp": 600.0,
+"max_mp": 280.0,
+"move_speed": 245.0,
+"mp_regen": 2.4
+}
+growth_stats = {
+"armor": 3.5,
+"attack": 4.0,
+"attack_speed": 0.02,
+"hp_regen": 0.3,
+"magic_resist": 1.5,
+"max_hp": 85.0,
+"max_mp": 25.0,
+"mp_regen": 0.15
+}
+attack_range = 55.0
+is_ranged = false
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "급소: 체력이 절반 아래인 적에게 기본 공격이 추가 물리 피해를 줍니다."
+skills = Array[Resource]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+preferred_role = "hunter"
+ai_build = PackedStringArray("swift_boots", "hero_sword", "conqueror_axe", "blood_blade", "guardian_plate", "dragon_shield")
+ai_skill_priority = PackedInt32Array(0, 1, 2)
+ai_aggression = 0.75

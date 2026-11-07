@@ -12,6 +12,15 @@ func test_team_battle_hard() -> void:
 	await _run(["elf_archer", "elf_archer", "blade_master"], ["blade_master", "blade_master", "elf_archer"], "hard", 47)
 
 
+## 새 영웅들이 모두 나오는 3대3 (영웅 10명 중 9명 + 검성)
+func test_team_battle_new_heroes_a() -> void:
+	await _run(["fire_mage", "paladin", "monk"], ["assassin", "saint", "dragon_knight"], "normal", 61)
+
+
+func test_team_battle_new_heroes_b() -> void:
+	await _run(["summoner", "frost_mage", "blade_master"], ["elf_archer", "monk", "paladin"], "hard", 67)
+
+
 func test_match_ends_at_kill_target() -> void:
 	var cfg := _config(["blade_master", "elf_archer", "blade_master"], ["elf_archer", "blade_master", "elf_archer"], "easy", 53)
 	cfg.kill_target = 3

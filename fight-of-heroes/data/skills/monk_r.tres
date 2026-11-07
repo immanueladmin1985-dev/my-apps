@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/dash_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/stun.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="6"]
+
+[sub_resource type="Resource" id="DamageEffect_5"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(80.0, 120.0, 160.0)
+ad_ratio = 0.5
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_4"]
+script = ExtResource("5")
+center = 0
+radius = 180.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.6, 0.3, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_5")])
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(1.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(180.0, 270.0, 360.0)
+ad_ratio = 1.2
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DashEffect_1"]
+script = ExtResource("1")
+distance = 350.0
+speed = 1300.0
+width = 80.0
+path_effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+end_effects = Array[Resource]([SubResource("AreaEffect_4")])
+
+[resource]
+script = ExtResource("6")
+id = "monk_r"
+display_name = "천붕권"
+glyph = "천"
+description = "멀리 돌진해 지나간 적을 기절시키고, 도착한 자리 주변에 충격파를 일으킵니다."
+max_rank = 3
+mana_cost = PackedFloat32Array(100.0)
+cooldown = PackedFloat32Array(55.0, 45.0, 35.0)
+target_mode = 2
+target_team = 0
+cast_range = 350.0
+radius = 0.0
+width = 80.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(1, 0.5, 0.2, 1)
+effects = Array[Resource]([SubResource("DashEffect_1")])

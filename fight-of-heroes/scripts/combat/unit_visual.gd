@@ -60,12 +60,22 @@ func _update_sprite() -> void:
 	sprite.flip_h = unit.facing.x < 0.0
 
 
+## 화면을 보는 플레이어의 팀 (은신한 적은 보이지 않게 그린다)
+static var viewer_team := Enums.Team.BLUE
+
+
 func _draw() -> void:
 	if unit == null:
 		return
+	var vs: float = unit.status.visual_scale()
+	scale = Vector2(vs, vs)
 	var r: float = unit.radius
 	var team_c := Enums.team_color(unit.team)
 	var alpha := 0.35 if unit.is_dead else 1.0
+	if unit.status.is_stealthed():
+		if Enums.is_enemy(viewer_team, unit.team):
+			return
+		alpha = 0.4
 	draw_set_transform(Vector2(0, r * 0.75), 0.0, Vector2(1.0, 0.4))
 	draw_circle(Vector2.ZERO, r * 1.1, Color(0, 0, 0, 0.35 * alpha))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -92,11 +102,33 @@ func _draw_placeholder(r: float, team_c: Color, alpha: float) -> void:
 		"staff":
 			draw_line(wdir * r * 0.4, wdir * (r + 16.0), Color(0.6, 0.45, 0.3, alpha), 3.0)
 			draw_circle(wdir * (r + 16.0), 4.5, Color(body_color.lightened(0.5), alpha))
+		"dagger":
+			for side in [-1.0, 1.0]:
+				var o: Vector2 = wdir.orthogonal() * side * 9.0
+				draw_line(o + wdir * r * 0.6, o + wdir * (r + 11.0), Color(0.85, 0.85, 0.95, alpha), 3.0)
+		"shield":
+			draw_line(wdir * r * 0.5, wdir * (r + 18.0), Color(0.9, 0.92, 1.0, alpha), 4.0)
+			var sp := wdir.orthogonal() * -(r * 0.9)
+			draw_circle(sp, r * 0.55, Color(0.85, 0.75, 0.35, alpha))
+			draw_arc(sp, r * 0.55, 0, TAU, 20, Color(1, 1, 1, alpha * 0.7), 2.0)
+		"fist":
+			for side in [-1.0, 1.0]:
+				draw_circle(wdir * (r + 4.0) + wdir.orthogonal() * side * 8.0, 5.0, Color(0.95, 0.8, 0.6, alpha))
+		"spear":
+			draw_line(-wdir * r * 0.6, wdir * (r + 30.0), Color(0.7, 0.55, 0.35, alpha), 3.0)
+			draw_colored_polygon(PackedVector2Array([wdir * (r + 38.0), wdir * (r + 28.0) + wdir.orthogonal() * 5.0, wdir * (r + 28.0) - wdir.orthogonal() * 5.0]), Color(0.9, 0.9, 1.0, alpha))
+		"book":
+			var bp := wdir * (r + 8.0)
+			draw_rect(Rect2(bp - Vector2(7, 9), Vector2(14, 18)), Color(0.55, 0.3, 0.6, alpha))
+			draw_rect(Rect2(bp - Vector2(7, 9), Vector2(14, 18)), Color(1, 0.9, 0.5, alpha), false, 1.5)
 		_:
 			draw_line(wdir * r * 0.5, wdir * (r + 22.0), Color(0.9, 0.92, 1.0, alpha), 4.0)
 			draw_line(wdir.orthogonal() * 6.0 + wdir * r * 0.8, -wdir.orthogonal() * 6.0 + wdir * r * 0.8, Color(0.7, 0.6, 0.3, alpha), 3.0)
 	# 몸
 	var bc := body_color.lerp(Color.WHITE, _hit_flash * 0.7)
+	var tint: Color = unit.status.visual_tint()
+	if tint.a > 0.0:
+		bc = bc.lerp(Color(tint, 1.0), tint.a)
 	draw_circle(Vector2.ZERO, r, Color(bc, alpha))
 	draw_arc(Vector2.ZERO, r, 0, TAU, 32, Color(team_c, alpha), 3.0)
 	var fs := int(r * 1.05)

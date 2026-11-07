@@ -5,6 +5,28 @@
 [ext_resource type="Resource" path="res://data/skills/elf_archer_w.tres" id="3"]
 [ext_resource type="Resource" path="res://data/skills/elf_archer_e.tres" id="4"]
 [ext_resource type="Resource" path="res://data/skills/elf_archer_r.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="p100"]
+[ext_resource type="Resource" path="res://data/status/haste.tres" id="p101"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="p102"]
+
+
+[sub_resource type="Resource" id="p_ApplyStatusEffect_1"]
+script = ExtResource("p100")
+status = ExtResource("p101")
+duration = PackedFloat32Array(1.5)
+magnitude = PackedFloat32Array(0.1, 0.12, 0.14, 0.16)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="p_passive"]
+script = ExtResource("p102")
+id = "wind_grace"
+display_name = "바람의 가호"
+description = "기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다."
+trigger = "attack_hit"
+every = 1
+effects = Array[Resource]([SubResource("p_ApplyStatusEffect_1")])
 
 [resource]
 script = ExtResource("1")
@@ -42,7 +64,8 @@ growth_stats = {
 attack_range = 400.0
 is_ranged = true
 projectile_speed = 1000.0
-passive_description = "(PHASE 5) 같은 대상을 연속으로 맞히면 공격 속도 증가"
+passive = SubResource("p_passive")
+passive_description = "바람의 가호: 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다."
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("berserker_boots", "storm_bow", "hero_sword", "blood_blade", "dragon_shield", "immortal_amulet")

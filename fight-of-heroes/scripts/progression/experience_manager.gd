@@ -20,14 +20,16 @@ func _exit_tree() -> void:
 
 
 ## 처치를 인정받는 영웅: 마지막 일격이 적 영웅이면 그 영웅, 아니면 최근 10초 안에 때린 적 영웅.
+## 소환수가 처치하면 주인 영웅이 인정받는다.
 static func credit_hero(victim, killer):
-	if killer != null and is_instance_valid(killer) and killer is Hero and Enums.is_enemy(killer.team, victim.team):
-		return killer
+	var k = Targeting.hero_of(killer)
+	if k != null and Enums.is_enemy(k.team, victim.team):
+		return k
 	var best = null
 	var best_t := Unit.now() - 10.0
 	for pair in victim.valid_attackers():
-		var u = pair[0]
-		if u is Hero and Enums.is_enemy(u.team, victim.team) and pair[1] > best_t:
+		var u = Targeting.hero_of(pair[0])
+		if u != null and Enums.is_enemy(u.team, victim.team) and pair[1] > best_t:
 			best = u
 			best_t = pair[1]
 	return best
@@ -56,6 +58,8 @@ func _alive_near(team: int, pos: Vector2, radius: float) -> Array:
 
 func _on_unit_died(victim, killer) -> void:
 	if not (victim is Monster) or hero_manager == null:
+		return
+	if victim.expired:
 		return
 	var credit = credit_hero(victim, killer)
 	if credit == null:

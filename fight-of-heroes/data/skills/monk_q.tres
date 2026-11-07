@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/dash_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(60.0, 95.0, 130.0, 165.0)
+ad_ratio = 0.8
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DashEffect_1"]
+script = ExtResource("1")
+distance = 250.0
+speed = 1100.0
+width = 55.0
+path_effects = Array[Resource]([SubResource("DamageEffect_2")])
+end_effects = Array[Resource]([])
+
+[resource]
+script = ExtResource("3")
+id = "monk_q"
+display_name = "붕권"
+glyph = "붕"
+description = "앞으로 짧게 돌진하며 지나간 적에게 물리 피해를 줍니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(40.0)
+cooldown = PackedFloat32Array(7.0, 6.5, 6.0, 5.5)
+target_mode = 2
+target_team = 0
+cast_range = 250.0
+radius = 0.0
+width = 55.0
+auto_aim_away = false
+ai_use = 1
+ai_range = 0.0
+color = Color(1, 0.7, 0.4, 1)
+effects = Array[Resource]([SubResource("DashEffect_1")])
