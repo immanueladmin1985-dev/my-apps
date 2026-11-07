@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MapData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/map_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "arena_01"
+display_name = "시험용 아레나"
+size = Vector2(2400, 1400)
+blue_spawn = Vector2(220, 700)
+red_spawn = Vector2(2180, 700)
+obstacles = Array[Rect2]([Rect2(640, 240, 180, 140), Rect2(1580, 1020, 180, 140), Rect2(980, 960, 140, 180), Rect2(1280, 260, 140, 180), Rect2(420, 980, 120, 120), Rect2(1860, 300, 120, 120), Rect2(1110, 640, 180, 120)])
+ground_color = Color(0.2, 0.29, 0.21, 1)
+obstacle_color = Color(0.36, 0.34, 0.31, 1)

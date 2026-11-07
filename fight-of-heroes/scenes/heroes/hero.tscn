@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/hero.gd" id="1_hero"]
+[ext_resource type="Script" path="res://scripts/combat/stats_component.gd" id="2_stats"]
+[ext_resource type="Script" path="res://scripts/combat/health_component.gd" id="3_health"]
+[ext_resource type="Script" path="res://scripts/combat/mana_component.gd" id="4_mana"]
+[ext_resource type="Script" path="res://scripts/combat/status_effect_container.gd" id="5_status"]
+[ext_resource type="Script" path="res://scripts/combat/attack_component.gd" id="6_attack"]
+[ext_resource type="Script" path="res://scripts/skills/skill_caster.gd" id="7_skills"]
+[ext_resource type="Script" path="res://scripts/combat/unit_visual.gd" id="8_visual"]
+
+[sub_resource type="CircleShape2D" id="body"]
+radius = 16.0
+
+[node name="Hero" type="CharacterBody2D"]
+script = ExtResource("1_hero")
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("body")
+
+[node name="Stats" type="Node" parent="."]
+script = ExtResource("2_stats")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+
+[node name="Mana" type="Node" parent="."]
+script = ExtResource("4_mana")
+
+[node name="Status" type="Node" parent="."]
+script = ExtResource("5_status")
+
+[node name="Attack" type="Node" parent="."]
+script = ExtResource("6_attack")
+
+[node name="SkillCaster" type="Node" parent="."]
+script = ExtResource("7_skills")
+
+[node name="NavAgent" type="NavigationAgent2D" parent="."]
+path_desired_distance = 14.0
+target_desired_distance = 10.0
+radius = 16.0
+
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("8_visual")

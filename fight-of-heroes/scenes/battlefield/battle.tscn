@@ -1,0 +1,44 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/core/battle_scene.gd" id="1_battle"]
+[ext_resource type="Script" path="res://scripts/map/arena.gd" id="2_arena"]
+[ext_resource type="Script" path="res://scripts/ui/floating_text_layer.gd" id="3_float"]
+[ext_resource type="Script" path="res://scripts/ui/aim_indicator.gd" id="4_aim"]
+[ext_resource type="Script" path="res://scripts/core/battle_manager.gd" id="5_bm"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_manager.gd" id="6_hm"]
+[ext_resource type="Script" path="res://scripts/ai/ai_manager.gd" id="7_ai"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="8_hud"]
+
+[node name="Battle" type="Node2D"]
+script = ExtResource("1_battle")
+
+[node name="Arena" type="Node2D" parent="."]
+script = ExtResource("2_arena")
+
+[node name="AimIndicator" type="Node2D" parent="."]
+script = ExtResource("4_aim")
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Effects" type="Node2D" parent="." groups=["effects_layer"]]
+
+[node name="FloatingText" type="Node2D" parent="."]
+script = ExtResource("3_float")
+
+[node name="Camera" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0
+zoom = Vector2(1.25, 1.25)
+
+[node name="BattleManager" type="Node" parent="."]
+script = ExtResource("5_bm")
+
+[node name="HeroManager" type="Node" parent="."]
+script = ExtResource("6_hm")
+
+[node name="AIManager" type="Node" parent="."]
+script = ExtResource("7_ai")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("8_hud")

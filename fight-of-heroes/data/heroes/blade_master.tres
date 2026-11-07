@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/skills/blade_master_q.tres" id="2"]
+[ext_resource type="Resource" path="res://data/skills/blade_master_w.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/blade_master_e.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/blade_master_r.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+id = "blade_master"
+display_name = "검성"
+role = "근접 물리 딜러"
+difficulty = 1
+lore = "한 자루 검으로 전장을 가르는 검객. 빠른 돌진으로 거리를 좁히고 일섬으로 적을 베어 넘긴다."
+color = Color(0.95, 0.78, 0.45, 1)
+glyph = "검"
+weapon = "sword"
+base_stats = {
+"armor": 30.0,
+"attack": 62.0,
+"attack_speed": 0.85,
+"crit_chance": 0.1,
+"crit_damage": 1.75,
+"hp_regen": 3.0,
+"magic_resist": 25.0,
+"max_hp": 640.0,
+"max_mp": 300.0,
+"move_speed": 230.0,
+"mp_regen": 2.5
+}
+growth_stats = {
+"armor": 3.5,
+"attack": 4.0,
+"attack_speed": 0.02,
+"hp_regen": 0.3,
+"magic_resist": 1.5,
+"max_hp": 85.0,
+"max_mp": 25.0,
+"mp_regen": 0.15
+}
+attack_range = 60.0
+is_ranged = false
+projectile_speed = 900.0
+passive_description = "(PHASE 5) 기본 공격 3번째마다 추가 피해"
+skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+ai_aggression = 0.7

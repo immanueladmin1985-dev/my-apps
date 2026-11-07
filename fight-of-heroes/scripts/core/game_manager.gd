@@ -1,0 +1,57 @@
+extends Node
+## 화면 흐름과 경기 설정을 맡는다. 명령줄 인자로 화면 캡처 같은 개발용 기능도 켠다.
+
+const BATTLE_SCENE := "res://scenes/battlefield/battle.tscn"
+const MAIN_SCENE := "res://scenes/main/main.tscn"
+
+var match_config: MatchConfig
+var dev_args: Dictionary = {}
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	for a in OS.get_cmdline_user_args():
+		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
+		dev_args[kv[0]] = kv[1] if kv.size() > 1 else "1"
+	if dev_args.has("screenshot"):
+		_screenshot_later.call_deferred()
+
+
+func default_config(player_hero := "blade_master") -> MatchConfig:
+	var c := MatchConfig.new()
+	c.blue_heroes = PackedStringArray([player_hero])
+	c.red_heroes = PackedStringArray(["elf_archer" if player_hero != "elf_archer" else "blade_master"])
+	c.player_index = 0
+	c.difficulty = SaveManager.get_setting("difficulty", "normal")
+	c.kill_target = int(SaveManager.get_setting("kill_target", 15))
+	return c
+
+
+func start_match(config: MatchConfig) -> void:
+	match_config = config
+	get_tree().paused = false
+	get_tree().change_scene_to_file(BATTLE_SCENE)
+
+
+func restart_match() -> void:
+	start_match(match_config if match_config != null else default_config())
+
+
+func go_main() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(MAIN_SCENE)
+
+
+## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--autoplay]
+func _screenshot_later() -> void:
+	if dev_args.has("battle"):
+		var c := default_config(dev_args["battle"])
+		c.autoplay = dev_args.has("autoplay")
+		start_match(c)
+	var wait := float(dev_args.get("wait", "3"))
+	await get_tree().create_timer(wait, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var img := get_viewport().get_texture().get_image()
+	var err := img.save_png(dev_args["screenshot"])
+	print("화면 캡처 %s (%dx%d) 결과=%d" % [dev_args["screenshot"], img.get_width(), img.get_height(), err])
+	get_tree().quit()

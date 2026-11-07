@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="DamageEffect_1"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(40.0, 60.0, 80.0)
+ad_ratio = 0.3
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(0.6)
+magnitude = PackedFloat32Array(0.3)
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 1
+radius = 170.0
+delay = 0.3
+duration = 3.0
+tick_interval = 0.5
+color = Color(0.4, 0.9, 0.4, 0.25)
+effects = Array[Resource]([SubResource("DamageEffect_1"), SubResource("ApplyStatusEffect_2")])
+
+[resource]
+script = ExtResource("5")
+id = "elf_archer_r"
+display_name = "화살비"
+glyph = "비"
+description = "지정한 넓은 지역에 3초 동안 화살비를 내려 0.5초마다 물리 피해를 주고 둔화시킵니다."
+max_rank = 3
+mana_cost = PackedFloat32Array(100.0, 110.0, 120.0)
+cooldown = PackedFloat32Array(60.0, 50.0, 40.0)
+target_mode = 3
+cast_range = 650.0
+radius = 170.0
+ai_use = 0
+color = Color(0.5, 1, 0.5, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

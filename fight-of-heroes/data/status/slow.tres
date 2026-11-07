@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "slow"
+display_name = "둔화"
+kind = 1
+color = Color(0.4, 0.8, 1, 1)

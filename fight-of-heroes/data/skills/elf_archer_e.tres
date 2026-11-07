@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/dash_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/haste.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(2.0)
+magnitude = PackedFloat32Array(0.3)
+to_caster = true
+
+[sub_resource type="Resource" id="DashEffect_1"]
+script = ExtResource("1")
+distance = 280.0
+speed = 1100.0
+width = 0.0
+trail_color = Color(0.6, 1, 1, 0.5)
+end_effects = Array[Resource]([SubResource("ApplyStatusEffect_1")])
+
+[resource]
+script = ExtResource("4")
+id = "elf_archer_e"
+display_name = "후퇴 도약"
+glyph = "도"
+description = "조준한 방향으로 뛰어오르고 2초 동안 이동 속도가 30% 빨라집니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 뜁니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(40.0)
+cooldown = PackedFloat32Array(12.0, 11.0, 10.0, 9.0)
+target_mode = 2
+cast_range = 280.0
+width = 30.0
+auto_aim_away = true
+ai_use = 3
+color = Color(0.5, 0.9, 1, 1)
+effects = Array[Resource]([SubResource("DashEffect_1")])

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/ai_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "easy"
+display_name = "쉬움"
+reaction_time = 0.6
+skill_use_chance = 0.35
+aim_error_deg = 20.0
+retreat_hp = 0.2
+retreat_recover = 0.6
+can_retreat = false
+smart_ultimate = false
+focus_fire = false
+sight_range = 700.0

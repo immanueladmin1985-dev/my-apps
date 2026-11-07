@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/skills/elf_archer_q.tres" id="2"]
+[ext_resource type="Resource" path="res://data/skills/elf_archer_w.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/elf_archer_e.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/elf_archer_r.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+id = "elf_archer"
+display_name = "엘프 궁수"
+role = "원거리 물리 딜러"
+difficulty = 2
+lore = "숲을 지키는 엘프 사수. 먼 거리에서 화살을 퍼붓고, 위험하면 재빨리 물러난다."
+color = Color(0.55, 0.85, 0.5, 1)
+glyph = "궁"
+weapon = "bow"
+base_stats = {
+"armor": 20.0,
+"attack": 58.0,
+"attack_speed": 0.9,
+"crit_chance": 0.15,
+"crit_damage": 1.75,
+"hp_regen": 2.5,
+"magic_resist": 25.0,
+"max_hp": 540.0,
+"max_mp": 320.0,
+"move_speed": 225.0,
+"mp_regen": 2.8
+}
+growth_stats = {
+"armor": 3.0,
+"attack": 3.5,
+"attack_speed": 0.03,
+"hp_regen": 0.25,
+"magic_resist": 1.5,
+"max_hp": 75.0,
+"max_mp": 25.0,
+"mp_regen": 0.15
+}
+attack_range = 420.0
+is_ranged = true
+projectile_speed = 1000.0
+passive_description = "(PHASE 5) 같은 대상을 연속으로 맞히면 공격 속도 증가"
+skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+ai_aggression = 0.4

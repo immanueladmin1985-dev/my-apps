@@ -1,0 +1,87 @@
+name: fight-of-heroes 시험과 APK 빌드
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'fight-of-heroes/**'
+      - '.github/workflows/fight-of-heroes-build.yml'
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: '4.7.2'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Godot 받기
+        run: |
+          mkdir -p "$HOME/bin"
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/bin/godot"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: 내보내기 템플릿 캐시
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates
+          key: godot-templates-${{ env.GODOT_VERSION }}
+
+      - name: 내보내기 템플릿 받기
+        run: |
+          T="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          if [ ! -f "$T/android_release.apk" ]; then
+            curl -sSL -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+            unzip -q templates.tpz 'templates/android_*' 'templates/version.txt'
+            mkdir -p "$T"
+            mv templates/* "$T/"
+            rm templates.tpz
+          fi
+          ls -la "$T"
+
+      - name: 편집기 설정 (Android SDK, JDK 경로)
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.7.tres <<EOT
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOT
+          sed -i 's/^          //' ~/.config/godot/editor_settings-4.7.tres
+          cat ~/.config/godot/editor_settings-4.7.tres
+
+      - name: 자동 시험
+        run: GODOT=godot fight-of-heroes/tools/run_tests.sh
+
+      - name: 서명 전 APK 내보내기
+        run: |
+          cd fight-of-heroes
+          sed -i "s/^version\/code=.*/version\/code=${{ github.run_number }}/" export_presets.cfg
+          mkdir -p ../dist
+          godot --headless --path . --export-release "Android" ../dist/fight-of-heroes-unsigned.apk 2>&1 | tee ../dist/export.log
+          test -f ../dist/fight-of-heroes-unsigned.apk
+          echo "${{ github.run_number }}" > ../dist/version.txt
+          ls -la ../dist
+
+      - name: 서명 전 APK 를 fight-of-heroes-build 브랜치에 올리기
+        run: |
+          cd dist
+          git init -q -b fight-of-heroes-build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "빌드 ${{ github.run_number }} (${{ github.sha }})"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" fight-of-heroes-build

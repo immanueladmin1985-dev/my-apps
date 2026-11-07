@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="DamageEffect_1"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(70.0, 105.0, 140.0, 175.0)
+ad_ratio = 1.0
+
+[sub_resource type="Resource" id="ProjectileEffect_1"]
+script = ExtResource("1")
+speed = 1300.0
+width = 36.0
+pierce = true
+color = Color(0.7, 1, 0.6, 1)
+effects = Array[Resource]([SubResource("DamageEffect_1")])
+
+[resource]
+script = ExtResource("3")
+id = "elf_archer_q"
+display_name = "관통 화살"
+glyph = "관"
+description = "일직선으로 날아가며 맞는 모든 적을 꿰뚫는 화살을 쏩니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(45.0, 50.0, 55.0, 60.0)
+cooldown = PackedFloat32Array(8.0, 7.5, 7.0, 6.5)
+target_mode = 2
+cast_range = 750.0
+width = 36.0
+ai_use = 0
+ai_range = 700.0
+color = Color(0.6, 1, 0.6, 1)
+effects = Array[Resource]([SubResource("ProjectileEffect_1")])
