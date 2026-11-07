@@ -6,6 +6,7 @@ extends Control
 signal pressed_down(slot: int)
 signal aim_changed(slot: int, vec: Vector2)
 signal released(slot: int, vec: Vector2, dragged: bool, cancelled: bool)
+signal learn_pressed(slot: int)
 
 const FONT := preload("res://assets/fonts/NotoSansKR-SemiBold-subset.ttf")
 const DEADZONE := 24.0
@@ -18,6 +19,8 @@ var button_radius := 46.0
 var base_color := Color(0.3, 0.35, 0.45)
 var hero = null
 var cancel_zone: Control = null
+## 스킬 포인트가 있을 때 "+" 표시를 보여 준다 (플레이어 버튼만)
+var show_learn := false
 
 var touch_index := -1
 var press_pos := Vector2.ZERO
@@ -44,10 +47,22 @@ func is_held() -> bool:
 	return touch_index >= 0
 
 
+func learn_center_global() -> Vector2:
+	return center_global() + Vector2(-button_radius * 0.78, -button_radius * 0.78)
+
+
+func _can_learn() -> bool:
+	return show_learn and hero != null and slot >= 0 and hero.can_learn(slot)
+
+
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree():
 		return
 	if event is InputEventScreenTouch:
+		if event.pressed and _can_learn() and event.position.distance_to(learn_center_global()) <= 28.0:
+			learn_pressed.emit(slot)
+			get_viewport().set_input_as_handled()
+			return
 		if event.pressed and touch_index < 0 and event.position.distance_to(center_global()) <= button_radius * 1.15:
 			touch_index = event.index
 			press_pos = event.position
@@ -103,8 +118,22 @@ func _draw() -> void:
 			var sw := FONT.get_string_size(secs, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 			draw_string_outline(FONT, c + Vector2(-sw * 0.5, fs * 0.35), secs, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 4, Color(0, 0, 0, 0.8))
 			draw_string(FONT, c + Vector2(-sw * 0.5, fs * 0.35), secs, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1))
-		if hero.is_dead or hero.status.is_stunned():
-			draw_circle(c, r - 3.0, Color(0.3, 0.3, 0.3, 0.5))
+		if hero.is_dead or hero.status.is_stunned() or caster.ranks[slot] == 0:
+			draw_circle(c, r - 3.0, Color(0.15, 0.15, 0.15, 0.6))
+		# 단계 점
+		var n: int = s.max_rank
+		for i in n:
+			var a := PI / 2.0 + (float(i) - (n - 1) / 2.0) * 0.32
+			var p := c + Vector2(-cos(a), sin(a)) * (r + 7.0)
+			draw_circle(p, 4.0, Color(0, 0, 0, 0.7))
+			draw_circle(p, 3.0, Color(1, 0.85, 0.3) if i < caster.ranks[slot] else Color(0.4, 0.4, 0.4))
+		if _can_learn():
+			var lc := learn_center_global() - global_position
+			var pulse := 0.85 + 0.15 * sin(Time.get_ticks_msec() / 150.0)
+			draw_circle(lc, 18.0 * pulse, Color(0.2, 0.75, 0.3))
+			draw_arc(lc, 18.0 * pulse, 0, TAU, 24, Color(1, 1, 1, 0.9), 2.0)
+			draw_line(lc - Vector2(8, 0), lc + Vector2(8, 0), Color.WHITE, 3.5)
+			draw_line(lc - Vector2(0, 8), lc + Vector2(0, 8), Color.WHITE, 3.5)
 	if key_label != "":
 		var ks := int(maxf(11.0, r * 0.28))
 		var kw := FONT.get_string_size(key_label, HORIZONTAL_ALIGNMENT_LEFT, -1, ks).x

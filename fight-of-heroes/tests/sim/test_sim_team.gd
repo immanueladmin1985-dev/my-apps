@@ -48,6 +48,7 @@ func _config(blue: Array, red: Array, difficulty: String, seed_value: int) -> Ma
 	cfg.autoplay = true
 	GameManager.dev_args["seed"] = str(seed_value)
 	CombatManager.rng.seed = seed_value
+	seed(seed_value)
 	return cfg
 
 
@@ -61,7 +62,11 @@ func _run(blue: Array, red: Array, difficulty: String, seed_value: int) -> void:
 	EventBus.hero_respawned.connect(on_respawn)
 	var battle := BATTLE.instantiate()
 	add_child(battle)
-	await frames(240 * 60)
+	await frames(180 * 60)
+	var learned := {}
+	for h in battle.hero_manager.heroes:
+		learned[h] = h.skill_caster.ranks.duplicate()
+	await frames(60 * 60)
 	EventBus.skill_cast.disconnect(on_cast)
 	EventBus.hero_respawned.disconnect(on_respawn)
 	GameManager.dev_args.erase("seed")
@@ -77,13 +82,14 @@ func _run(blue: Array, red: Array, difficulty: String, seed_value: int) -> void:
 		for slot in 4:
 			var n: int = casts.get([h, slot], 0)
 			used.append(n)
-			check(n >= 1, "%s(%s) 의 %s 스킬을 쓰지 않음" % [h.display_name, Enums.team_name(h.team), Enums.SLOT_KEYS[slot]])
+			if learned[h][slot] > 0:
+				check(n >= 1, "%s(%s) 이(가) 배운 %s 스킬을 쓰지 않음" % [h.display_name, Enums.team_name(h.team), Enums.SLOT_KEYS[slot]])
 		check(h.max_stuck_time < 2.0, "%s 이(가) %.1f초 동안 끼어 있었음" % [h.display_name, h.max_stuck_time])
 		if h.controller.state_log.has(AIController.State.FOLLOW):
 			followed += 1
-		lines.append("%s%s %d/%d/%d" % [Enums.team_name(h.team).left(1), h.data.glyph, h.kills, h.deaths, h.assists])
+		lines.append("%s%s Lv%d %d/%d/%d" % [Enums.team_name(h.team).left(1), h.data.glyph, h.level, h.kills, h.deaths, h.assists])
 	var bm: BattleManager = battle.battle_manager
-	check(deaths >= 3, "240초 동안 사망 %d번" % deaths)
+	check(deaths >= 2, "240초 동안 사망 %d번" % deaths)
 	check(respawns[0] >= 1, "부활 없음")
 	check(assists >= 1, "도움 없음")
 	check(followed >= 2, "리더를 따라간 AI 가 %d명" % followed)

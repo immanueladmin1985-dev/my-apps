@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(1.5)
+magnitude = PackedFloat32Array(0.35)
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(150.0)
+ad_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 3
+radius = 110.0
+delay = 1.0
+color = Color(0.7, 0.4, 1, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("5")
+id = "forest_boss_burst"
+display_name = "표적 폭발"
+glyph = "폭"
+description = "주변 영웅마다 발밑에 위험 지역을 표시하고, 1초 뒤 마법 피해를 주고 둔화시킵니다."
+max_rank = 1
+mana_cost = PackedFloat32Array(0.0)
+cooldown = PackedFloat32Array(7.0)
+target_mode = 0
+cast_range = 700.0
+radius = 0.0
+width = 0.0
+cast_lock = 0.6
+color = Color(1, 0.5, 0.3, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

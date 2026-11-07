@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/line_zone_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/stun.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(0.8)
+magnitude = PackedFloat32Array(0.0)
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(190.0)
+ad_ratio = 0.0
+
+[sub_resource type="Resource" id="LineZoneEffect_1"]
+script = ExtResource("1")
+length = 520.0
+width = 100.0
+delay = 0.9
+dash_caster = true
+color = Color(0.4, 0.9, 0.4, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("5")
+id = "forest_boss_charge"
+display_name = "돌진"
+glyph = "돌"
+description = "0.9초 동안 직선을 표시한 뒤 그 방향으로 돌진해 부딪힌 영웅에게 피해를 주고 기절시킵니다."
+max_rank = 1
+mana_cost = PackedFloat32Array(0.0)
+cooldown = PackedFloat32Array(12.0)
+target_mode = 2
+cast_range = 520.0
+radius = 0.0
+width = 100.0
+cast_lock = 1.3
+color = Color(1, 0.5, 0.3, 1)
+effects = Array[Resource]([SubResource("LineZoneEffect_1")])

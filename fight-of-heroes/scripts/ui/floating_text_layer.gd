@@ -13,11 +13,18 @@ var player_team := Enums.Team.BLUE
 func _ready() -> void:
 	EventBus.unit_damaged.connect(_on_damaged)
 	EventBus.unit_healed.connect(_on_healed)
+	EventBus.reward.connect(_on_reward)
 
 
 func _exit_tree() -> void:
 	EventBus.unit_damaged.disconnect(_on_damaged)
 	EventBus.unit_healed.disconnect(_on_healed)
+	EventBus.reward.disconnect(_on_reward)
+
+
+func _on_reward(hero, _xp: float, gold: int) -> void:
+	if gold > 0 and is_instance_valid(hero) and hero.get_node("Visual").is_player:
+		_add(hero.global_position + Vector2(0, -60), "+%d G" % gold, Color(1, 0.85, 0.3), 18)
 
 
 func _on_damaged(target, info: DamageInfo, amount: float) -> void:

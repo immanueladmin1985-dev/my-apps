@@ -40,6 +40,15 @@ func _draw() -> void:
 		var vp := camera.get_viewport_rect().size / camera.zoom
 		var r := Rect2(camera.get_screen_center_position() - vp * 0.5, vp)
 		draw_rect(Rect2(_to_mini(r.position), r.size / map.size * size), Color(1, 1, 1, 0.6), false, 1.5)
+	for m in get_tree().get_nodes_in_group("monsters"):
+		if m.is_dead:
+			continue
+		var mp := _to_mini(m.global_position)
+		if m.is_boss():
+			draw_circle(mp, 7.0, Color(0, 0, 0, 0.6))
+			draw_circle(mp, 5.5, Color(0.8, 0.45, 1.0))
+		else:
+			draw_circle(mp, 2.5, Color(0.9, 0.85, 0.6, 0.9))
 	if hero_manager != null:
 		for h: Hero in hero_manager.heroes:
 			var p := _to_mini(h.global_position)

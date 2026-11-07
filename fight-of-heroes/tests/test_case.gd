@@ -49,6 +49,7 @@ func spawn_hero(id: String, team: int, pos: Vector2) -> Hero:
 	world.add_child(h)
 	h.global_position = pos
 	h.setup(DataRegistry.hero(id), team)
+	h.skill_caster.setup(h.data.skills, 1)
 	return h
 
 

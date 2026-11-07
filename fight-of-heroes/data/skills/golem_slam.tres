@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/stun.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(0.8)
+magnitude = PackedFloat32Array(0.0)
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(110.0)
+ad_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 150.0
+delay = 0.8
+color = Color(0.8, 0.6, 0.3, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("5")
+id = "golem_slam"
+display_name = "땅 울리기"
+glyph = "울"
+description = "0.8초 뒤 주변을 내려찍어 물리 피해를 주고 기절시킵니다."
+max_rank = 1
+mana_cost = PackedFloat32Array(0.0)
+cooldown = PackedFloat32Array(8.0)
+target_mode = 0
+cast_range = 0.0
+radius = 150.0
+width = 0.0
+cast_lock = 0.8
+color = Color(1, 0.5, 0.3, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

@@ -14,4 +14,5 @@ retreat_recover = 0.7
 can_retreat = true
 smart_ultimate = true
 focus_fire = true
-sight_range = 1000.0
+sight_range = 800.0
+dodge_telegraphs = true

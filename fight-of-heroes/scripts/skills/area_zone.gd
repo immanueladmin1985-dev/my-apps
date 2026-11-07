@@ -10,6 +10,31 @@ var _tick_left := 0.0
 var _started := false
 
 
+func _ready() -> void:
+	add_to_group("telegraphs")
+
+
+## 아직 발동하지 않은 위험 지역이 unit 을 덮고 있는지 (AI 가 피할 때 쓴다).
+func threatens(unit, margin := 0.0) -> bool:
+	if _started or not ctx.caster_valid() or not Enums.is_enemy(ctx.team(), unit.team):
+		return false
+	return unit.global_position.distance_to(global_position) <= effect.radius + unit.radius + margin
+
+
+## 위험 지역 밖으로 나가는 방향
+func escape_dir(unit) -> Vector2:
+	var d: Vector2 = unit.global_position - global_position
+	return d.normalized() if d.length() > 1.0 else Vector2.RIGHT
+
+
+func time_left() -> float:
+	return _delay_left
+
+
+func elapsed() -> float:
+	return effect.delay - _delay_left
+
+
 func setup(e: AreaEffect, c: SkillContext, _pos: Vector2) -> void:
 	effect = e
 	ctx = c
@@ -26,6 +51,7 @@ func _physics_process(delta: float) -> void:
 		_delay_left -= delta
 		if _delay_left <= 0.0:
 			_started = true
+			remove_from_group("telegraphs")
 			if effect.duration <= 0.0:
 				effect.hit(ctx, global_position)
 				Vfx.circle(self, global_position, effect.radius, effect.color, 0.35)

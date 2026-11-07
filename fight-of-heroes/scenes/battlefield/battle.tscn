@@ -8,6 +8,9 @@
 [ext_resource type="Script" path="res://scripts/heroes/hero_manager.gd" id="6_hm"]
 [ext_resource type="Script" path="res://scripts/ai/ai_manager.gd" id="7_ai"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="8_hud"]
+[ext_resource type="Script" path="res://scripts/map/monster_manager.gd" id="9_mm"]
+[ext_resource type="Script" path="res://scripts/map/boss_manager.gd" id="10_boss"]
+[ext_resource type="Script" path="res://scripts/progression/experience_manager.gd" id="11_xp"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1_battle")
@@ -39,6 +42,15 @@ script = ExtResource("6_hm")
 
 [node name="AIManager" type="Node" parent="."]
 script = ExtResource("7_ai")
+
+[node name="MonsterManager" type="Node" parent="."]
+script = ExtResource("9_mm")
+
+[node name="BossManager" type="Node" parent="."]
+script = ExtResource("10_boss")
+
+[node name="ExperienceManager" type="Node" parent="."]
+script = ExtResource("11_xp")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_hud")

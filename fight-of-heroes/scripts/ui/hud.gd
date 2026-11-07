@@ -34,6 +34,11 @@ var minimap: Minimap
 var blue_status: TeamStatus
 var red_status: TeamStatus
 var kill_feed: VBoxContainer
+var xp_bar: StatBar
+var gold_label: Label
+var boss_label: Label
+var boss_bar: StatBar
+var monster_manager: MonsterManager
 
 var _message_left := 0.0
 
@@ -54,7 +59,7 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
-	for n in [joystick, attack_button, hp_bar, mp_bar, name_label] + skill_buttons:
+	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, gold_label, name_label] + skill_buttons:
 		n.visible = playable
 	if not playable:
 		return
@@ -68,10 +73,13 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	attack_button.pressed_down.connect(func(_s): controller.attack_held = true)
 	attack_button.released.connect(func(_s, _v, _d, _c): controller.attack_held = false)
 	for b in skill_buttons:
+		b.show_learn = true
+		b.learn_pressed.connect(func(slot): hero.learn(slot))
 		b.pressed_down.connect(_on_skill_down)
 		b.aim_changed.connect(_on_skill_aim)
 		b.released.connect(_on_skill_released)
 	controller.cast_failed.connect(show_message)
+	hero.leveled_up.connect(func(lv): show_message("레벨 %d! 스킬 버튼의 + 를 눌러 스킬을 올리세요" % lv))
 	name_label.text = "%s · %s" % [hero.display_name, hero.data.role]
 
 
@@ -85,7 +93,8 @@ func _exit_tree() -> void:
 
 
 ## 미니맵과 팀 상태 표시를 연결한다.
-func setup_overview(map: MapData, hm: HeroManager, cam: Camera2D) -> void:
+func setup_overview(map: MapData, hm: HeroManager, cam: Camera2D, mm: MonsterManager = null) -> void:
+	monster_manager = mm
 	minimap.setup(map, hm, hero, cam)
 	var h := 120.0
 	minimap.offset_bottom = minimap.offset_top + h
@@ -152,8 +161,28 @@ func _build() -> void:
 	mp_bar = StatBar.new()
 	mp_bar.name = "MPBar"
 	mp_bar.fill = Color(0.3, 0.5, 1.0)
-	_place(mp_bar, Vector2(0.5, 1), Vector2(-200, -36), Vector2(400, 18))
+	_place(mp_bar, Vector2(0.5, 1), Vector2(-200, -38), Vector2(400, 16))
 	root.add_child(mp_bar)
+	xp_bar = StatBar.new()
+	xp_bar.name = "XPBar"
+	xp_bar.fill = Color(0.85, 0.7, 0.25)
+	xp_bar.show_text = false
+	_place(xp_bar, Vector2(0.5, 1), Vector2(-200, -18), Vector2(400, 8))
+	root.add_child(xp_bar)
+	gold_label = _label("0 G", 20, HORIZONTAL_ALIGNMENT_LEFT)
+	gold_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_place(gold_label, Vector2(0.5, 1), Vector2(208, -66), Vector2(140, 28))
+	root.add_child(gold_label)
+	boss_label = _label("", 18, HORIZONTAL_ALIGNMENT_CENTER)
+	_place(boss_label, Vector2(0.5, 0), Vector2(-200, 70), Vector2(400, 24))
+	boss_label.visible = false
+	root.add_child(boss_label)
+	boss_bar = StatBar.new()
+	boss_bar.name = "BossBar"
+	boss_bar.fill = Color(0.7, 0.35, 0.9)
+	_place(boss_bar, Vector2(0.5, 0), Vector2(-200, 96), Vector2(400, 16))
+	boss_bar.visible = false
+	root.add_child(boss_bar)
 
 	score_label = _label("블루 0 : 0 레드", 26, HORIZONTAL_ALIGNMENT_CENTER)
 	_place(score_label, Vector2(0.5, 0), Vector2(-200, 6), Vector2(400, 40))
@@ -183,7 +212,7 @@ func _build() -> void:
 	_place(kill_feed, Vector2(1, 0), Vector2(-430, 76), Vector2(420, 120))
 	root.add_child(kill_feed)
 	message_label = _label("", 22, HORIZONTAL_ALIGNMENT_CENTER)
-	_place(message_label, Vector2(0.5, 0), Vector2(-320, 92), Vector2(640, 36))
+	_place(message_label, Vector2(0.5, 0), Vector2(-320, 118), Vector2(640, 36))
 	root.add_child(message_label)
 
 	pause_button = Button.new()
@@ -287,9 +316,16 @@ func _process(delta: float) -> void:
 	if battle != null:
 		var t := int(battle.elapsed)
 		time_label.text = "%02d:%02d" % [t / 60, t % 60]
+		if monster_manager != null:
+			var fb := int(ceil(monster_manager.time_to_final_boss()))
+			if fb > 0:
+				time_label.text += "  ·  최종 보스 %d:%02d" % [fb / 60, fb % 60]
+	_update_boss_bar()
 	if hero != null and controller != null:
 		hp_bar.set_values(hero.health.hp, hero.health.max_hp(), hero.health.shield_total())
 		mp_bar.set_values(hero.mana.mp, hero.mana.max_mp())
+		xp_bar.set_values(hero.xp_ratio(), 1.0)
+		gold_label.text = "%d G" % hero.gold
 		cancel_zone.visible = controller.aiming_slot >= 0 and controller.aim_dragged
 		if hero.is_dead:
 			name_label.text = "부활까지 %d초" % ceili(hero.respawn_left)
@@ -300,6 +336,24 @@ func _process(delta: float) -> void:
 		message_label.modulate.a = clampf(_message_left / 0.4, 0.0, 1.0)
 		if _message_left <= 0.0:
 			message_label.text = ""
+
+
+## 화면 가운데(카메라) 가까이에 살아 있는 보스가 있으면 이름과 체력 막대를 보여 준다.
+func _update_boss_bar() -> void:
+	var cam := get_viewport().get_camera_2d()
+	var boss = null
+	if cam != null:
+		var center := cam.get_screen_center_position()
+		var best := 900.0
+		for b in get_tree().get_nodes_in_group("bosses"):
+			if not b.is_dead and b.global_position.distance_to(center) < best:
+				best = b.global_position.distance_to(center)
+				boss = b
+	boss_label.visible = boss != null
+	boss_bar.visible = boss != null
+	if boss != null:
+		boss_label.text = boss.display_name + ("  (분노)" if boss.phase > 0 else "")
+		boss_bar.set_values(boss.health.hp, boss.health.max_hp())
 
 
 func show_message(text: String) -> void:

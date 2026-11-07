@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Resource" path="res://data/skills/dragon_slam.tres" id="1"]
+[ext_resource type="Resource" path="res://data/skills/dragon_burst.tres" id="2"]
+[ext_resource type="Resource" path="res://data/skills/dragon_charge.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/dragon_rain.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="6"]
+
+[sub_resource type="Resource" id="StatModifier_2"]
+script = ExtResource("5")
+stat = "attack"
+flat = 0.0
+percent = 0.2
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("5")
+stat = "attack_speed"
+flat = 0.0
+percent = 0.3
+
+[resource]
+script = ExtResource("6")
+id = "ancient_dragon"
+display_name = "고대 흑룡"
+tier = "final_boss"
+color = Color(0.45, 0.25, 0.6, 1)
+glyph = "룡"
+radius = 52.0
+base_stats = {
+"armor": 70.0,
+"attack": 170.0,
+"attack_speed": 0.9,
+"magic_resist": 70.0,
+"max_hp": 16000.0,
+"move_speed": 220.0
+}
+attack_range = 120.0
+leash_radius = 560.0
+skills = Array[Resource]([ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4")])
+skill_min_phase = PackedInt32Array(0, 0, 0, 1)
+enrage_hp_ratio = 0.5
+enrage_modifiers = Array[Resource]([SubResource("StatModifier_1"), SubResource("StatModifier_2")])
+skill_interval = 2.5
+xp = 0.0
+gold = 0

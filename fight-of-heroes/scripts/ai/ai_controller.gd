@@ -19,10 +19,15 @@ const FOLLOW_DISTANCE := 200.0
 const REGROUP_DISTANCE := 450.0
 ## 플레이어 팀의 AI 는 플레이어에게서 이 거리보다 먼 적은 쫓지 않는다 (아군을 공격 중인 적은 예외).
 const PLAYER_LEASH := 800.0
+const DODGE_MARGIN := 40.0
+const COMMIT_RANGE := 450.0
 
 var _think_left := 0.0
 var _unstick_left := 0.0
 var _unstick_dir := Vector2.ZERO
+var _dodging := false
+var objective = null  # 지금 노리는 몬스터·보스 (FARM / BOSS_FIGHT)
+var dodge_count := 0  # 시험용
 
 
 func setup(p: AIProfile, home_pos: Vector2, rally: Vector2, seed_value := 0) -> void:
@@ -33,6 +38,72 @@ func setup(p: AIProfile, home_pos: Vector2, rally: Vector2, seed_value := 0) -> 
 		rng.seed = seed_value
 	else:
 		rng.randomize()
+
+
+func _ready() -> void:
+	if hero != null:
+		hero.skill_points_changed.connect(func(_p): auto_learn())
+		auto_learn()
+
+
+## 스킬 포인트를 모두 쓴다: R 이 열리면 R, 아니면 데이터의 우선순위대로.
+func auto_learn() -> void:
+	var order: Array = [Enums.Slot.R]
+	for i in hero.data.ai_skill_priority:
+		order.append(i)
+	for i in [0, 1, 2]:
+		if not order.has(i):
+			order.append(i)
+	var guard := 0
+	while hero.skill_points > 0 and guard < 20:
+		guard += 1
+		var learned := false
+		# 아직 배우지 않은 기본 스킬이 있으면 먼저 하나씩 배운다.
+		for slot in order:
+			if slot != Enums.Slot.R and hero.skill_caster.ranks[slot] == 0 and hero.learn(slot):
+				learned = true
+				break
+		if not learned:
+			for slot in order:
+				if hero.learn(slot):
+					learned = true
+					break
+		if not learned:
+			break
+
+
+## 위험 지역 안에 있으면 경계보다 조금 더 멀리 피하고, 발동할 때까지 근처에서 기다린다.
+## 반응 간격만큼 늦게 알아챈다.
+func _dodge() -> bool:
+	if not profile.dodge_telegraphs:
+		return false
+	var hold := false
+	for z in get_tree().get_nodes_in_group("telegraphs"):
+		if z.elapsed() < profile.reaction_time:
+			continue
+		if z.threatens(hero, DODGE_MARGIN):
+			if not _dodging:
+				dodge_count += 1
+			_dodging = true
+			hero.attack_order = null
+			hero.nav_goal = null
+			hero.move_input = z.escape_dir(hero)
+			return true
+		if z.threatens(hero, DODGE_MARGIN * 3.0):
+			hold = true
+	if hold:
+		# 다시 걸어 들어가지 않도록 멈춰 기다린다. 원거리라면 그 자리에서 공격은 한다.
+		_dodging = true
+		hero.nav_goal = null
+		hero.move_input = Vector2.ZERO
+		if hero.attack_order != null and not hero.attack.in_range(hero.attack_order):
+			hero.attack_order = null
+		return true
+	if _dodging:
+		_dodging = false
+		hero.move_input = Vector2.ZERO
+		_think_left = 0.0
+	return false
 
 
 func _set_state(s: int) -> void:
@@ -52,6 +123,8 @@ func _physics_process(delta: float) -> void:
 	if state == State.DEAD:
 		_set_state(State.RESPAWN)
 		_think_left = 0.0
+	if _dodge():
+		return
 	# 벽에 끼면 옆으로 비켜 선다.
 	if _unstick_left > 0.0:
 		_unstick_left -= delta
@@ -95,8 +168,21 @@ func think() -> void:
 	if state != State.RETREAT:
 		if help_target != null and not enemies.has(help_target):
 			enemies.append(help_target)
-		target = _choose_target(enemies, help_target)
-		if target != null:
+		# 보스에 도전 중이면 가까이 온 적 영웅이나 우리를 공격 중인 적에게만 대응한다.
+		var committed := _committed()
+		var prev_objective = objective
+		var hero_enemies: Array = []
+		for e in enemies:
+			if e is Hero and (not committed or e == help_target or pos.distance_to(e.global_position) < COMMIT_RANGE):
+				hero_enemies.append(e)
+		objective = null
+		target = _choose_target(hero_enemies, help_target)
+		if target == null:
+			target = _monster_target(enemies, help_target)
+		if target is Monster and target.is_boss():
+			objective = target
+			_set_state(State.BOSS_FIGHT)
+		elif target != null:
 			_set_state(State.ATTACK if hero.attack.in_range(target) else State.CHASE)
 		else:
 			var lead = manager.leader(hero.team) if manager != null else null
@@ -105,9 +191,103 @@ func think() -> void:
 			elif _allies_far():
 				_set_state(State.IDLE)
 			else:
-				_set_state(State.MOVE)
+				objective = prev_objective if prev_objective is Monster and is_instance_valid(prev_objective) and not prev_objective.is_dead and state == State.BOSS_FIGHT else _pick_objective()
+				if objective == null:
+					_set_state(State.MOVE)
+				elif objective is Vector2:
+					_set_state(State.FARM)
+				else:
+					_set_state(State.BOSS_FIGHT)
 	_use_skills(enemies)
 	_apply_orders()
+
+
+## 나 또는 AI 리더가 보스와 싸우는 중인지
+func _committed() -> bool:
+	if state == State.BOSS_FIGHT and objective != null and is_instance_valid(objective) and not objective.is_dead:
+		return true
+	var lead = manager.leader(hero.team) if manager != null else null
+	if lead != null and lead != hero and lead.controller is AIController:
+		var lc: AIController = lead.controller
+		return lc.state == State.BOSS_FIGHT and lc.objective != null and is_instance_valid(lc.objective) and not lc.objective.is_dead
+	return false
+
+
+## 적 영웅이 없을 때 공격할 몬스터: 우리 팀을 공격 중인 몬스터, 리더가 공격 중인 몬스터,
+## 리더라면 사냥·보스 목표 주변의 몬스터. 체력이 적은 것부터.
+func _monster_target(enemies: Array, help_target):
+	if help_target is Monster:
+		return help_target
+	var lead = manager.leader(hero.team) if manager != null else null
+	if lead != null and lead != hero and lead.attack_order is Monster and Targeting.is_valid(lead.attack_order, hero.team, Enums.TargetTeam.ENEMY):
+		if lead.attack_order.global_position.distance_to(hero.global_position) <= profile.sight_range * 1.2:
+			return lead.attack_order
+	var best = null
+	var best_score := INF
+	var is_leader: bool = lead == null or lead == hero
+	for e in enemies:
+		if not (e is Monster):
+			continue
+		var aggro_on_us: bool = e.target != null and is_instance_valid(e.target) and e.target.team == hero.team
+		if not aggro_on_us and not is_leader:
+			continue
+		if not aggro_on_us and e.is_boss() and not _boss_ready(e):
+			continue
+		var score: float = e.health.hp + hero.global_position.distance_to(e.global_position)
+		if aggro_on_us:
+			score -= 5000.0
+		if score < best_score:
+			best_score = score
+			best = e
+	return best
+
+
+## 팀이 보스에 도전할 준비가 됐는지: 2명 이상 살아 있고 체력이 넉넉해야 한다.
+## 중립 보스는 평균 6레벨, 최종 보스는 평균 8레벨 이상. 상대 팀이 1명 이하만 살아 있으면 레벨과 상관없이 도전한다.
+func _boss_ready(boss) -> bool:
+	if manager == null:
+		return false
+	var mates: Array = [hero] + manager.allies_of(hero)
+	if mates.size() < 2:
+		return false
+	var hp := 0.0
+	var lv := 0.0
+	for m in mates:
+		hp += m.health.ratio()
+		lv += m.level
+	hp /= mates.size()
+	lv /= mates.size()
+	if hp < 0.5:
+		return false
+	var enemy_team: int = Enums.Team.RED if hero.team == Enums.Team.BLUE else Enums.Team.BLUE
+	if manager.alive_count(enemy_team) <= 1:
+		return true
+	return lv >= (8.0 if boss.is_final_boss() else 6.0)
+
+
+## 리더의 목표: 최종 보스 → 중립 보스 → 가까운 사냥터 → 없음(돌아다니기)
+func _pick_objective():
+	var mm = manager.monster_manager if manager != null else null
+	if mm == null:
+		return null
+	var fb = mm.final_boss()
+	if fb != null and _boss_ready(fb):
+		return fb
+	var best_boss = null
+	for b in mm.bosses():
+		if not b.is_final_boss() and _boss_ready(b):
+			if best_boss == null or hero.global_position.distance_to(b.global_position) < hero.global_position.distance_to(best_boss.global_position):
+				best_boss = b
+	if best_boss != null:
+		return best_boss
+	var best_spot = null
+	var best_d := INF
+	for p in mm.farm_spots():
+		var d: float = hero.global_position.distance_to(p) + p.distance_to(home) * 0.5
+		if d < best_d:
+			best_d = d
+			best_spot = p
+	return best_spot
 
 
 func _nearby_allies(dist: float) -> int:
@@ -188,6 +368,14 @@ func _apply_orders() -> void:
 			hero.attack_order = null
 			hero.move_input = Vector2.ZERO
 			hero.nav_goal = null
+		State.FARM:
+			hero.attack_order = null
+			hero.move_input = Vector2.ZERO
+			hero.nav_goal = _reachable(objective)
+		State.BOSS_FIGHT:
+			hero.move_input = Vector2.ZERO
+			hero.nav_goal = null
+			hero.attack_order = objective
 
 
 ## 리더 뒤쪽 양옆에 선다.

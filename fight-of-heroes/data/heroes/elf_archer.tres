@@ -18,13 +18,13 @@ glyph = "궁"
 weapon = "bow"
 base_stats = {
 "armor": 20.0,
-"attack": 58.0,
-"attack_speed": 0.9,
+"attack": 52.0,
+"attack_speed": 0.85,
 "crit_chance": 0.15,
 "crit_damage": 1.75,
 "hp_regen": 2.5,
 "magic_resist": 25.0,
-"max_hp": 540.0,
+"max_hp": 520.0,
 "max_mp": 320.0,
 "move_speed": 225.0,
 "mp_regen": 2.8
@@ -39,7 +39,7 @@ growth_stats = {
 "max_mp": 25.0,
 "mp_regen": 0.15
 }
-attack_range = 420.0
+attack_range = 400.0
 is_ranged = true
 projectile_speed = 1000.0
 passive_description = "(PHASE 5) 같은 대상을 연속으로 맞히면 공격 속도 증가"

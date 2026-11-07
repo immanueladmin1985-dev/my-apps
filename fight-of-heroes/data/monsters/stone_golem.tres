@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Resource" path="res://data/skills/golem_slam.tres" id="1"]
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+id = "stone_golem"
+display_name = "바위 골렘"
+tier = "elite"
+color = Color(0.6, 0.5, 0.4, 1)
+glyph = "골"
+radius = 26.0
+base_stats = {
+"armor": 40.0,
+"attack": 55.0,
+"attack_speed": 0.7,
+"magic_resist": 30.0,
+"max_hp": 1900.0,
+"move_speed": 200.0
+}
+attack_range = 55.0
+leash_radius = 420.0
+skills = Array[Resource]([ExtResource("1")])
+skill_interval = 6.0
+xp = 160.0
+gold = 120

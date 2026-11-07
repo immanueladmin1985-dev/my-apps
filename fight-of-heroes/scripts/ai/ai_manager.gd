@@ -8,6 +8,7 @@ const FOCUS_REFRESH := 0.5
 var profile: AIProfile
 var controllers: Array = []
 var hero_manager: HeroManager
+var monster_manager: MonsterManager
 ## 팀마다 플레이어가 조작하는 영웅 (없으면 null)
 var player_heroes: Dictionary = {}
 
@@ -104,8 +105,9 @@ func attacker_of_allies(hero, window := 2.0):
 	var best = null
 	var best_t := now - window
 	for a in allies_of(hero):
-		for u in a.recent_attackers:
-			var t: float = a.recent_attackers[u]
+		for pair in a.valid_attackers():
+			var u = pair[0]
+			var t: float = pair[1]
 			if t > best_t and Targeting.is_valid(u, hero.team, Enums.TargetTeam.ENEMY):
 				best_t = t
 				best = u

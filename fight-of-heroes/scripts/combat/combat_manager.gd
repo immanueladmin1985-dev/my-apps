@@ -44,6 +44,7 @@ static func apply_damage(target, info: DamageInfo) -> float:
 	target.health.take(rest)
 	info.final_amount = amt
 	target.register_attacker(info.source)
+	target.on_damaged(info.source if is_instance_valid(info.source) else null, amt)
 	EventBus.unit_damaged.emit(target, info, amt)
 	if target.health.hp <= 0.0:
 		target.die(info.source if is_instance_valid(info.source) else null)

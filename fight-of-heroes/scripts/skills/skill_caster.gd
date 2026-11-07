@@ -3,6 +3,7 @@ extends Node
 ## 영웅의 Q/W/E/R. 시전 가능 여부(단계, 쿨타임, 마나, 기절, 사거리)를 검사하고 효과를 실행한다.
 
 signal cast_done(slot: int, skill: SkillData)
+signal ranks_changed
 
 var skills: Array = [null, null, null, null]
 var ranks: Array = [0, 0, 0, 0]
@@ -17,6 +18,19 @@ func setup(list: Array, start_rank := 0) -> void:
 		skills[i] = list[i] if i < list.size() else null
 		ranks[i] = start_rank if skills[i] != null else 0
 		cooldowns[i] = 0.0
+
+
+## 이 레벨에서 slot 을 한 단계 올릴 수 있는지 (스킬 포인트는 따로 검사한다).
+func can_level(slot: int, level: int) -> bool:
+	var s := get_skill(slot)
+	if s == null:
+		return false
+	return ranks[slot] < DataRegistry.progression().rank_cap(slot, level, s.max_rank)
+
+
+func level_up(slot: int) -> void:
+	ranks[slot] += 1
+	ranks_changed.emit()
 
 
 func get_skill(slot: int) -> SkillData:
@@ -65,6 +79,8 @@ func cast(slot: int, aim: CastAim = null) -> int:
 	cooldowns[slot] = s.get_cooldown(rank)
 	cast_counts[slot] += 1
 	unit.attack.cancel_windup()
+	if s.cast_lock > 0.0:
+		unit.cast_lock_left = s.cast_lock
 	var ctx := _build_context(s, rank, aim)
 	if s.custom_script != null:
 		var runner = s.custom_script.new()

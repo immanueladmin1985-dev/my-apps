@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="2"]
+
+[sub_resource type="Resource" id="StatModifier_3"]
+script = ExtResource("1")
+stat = "max_hp"
+flat = 0.0
+percent = 0.1
+
+[sub_resource type="Resource" id="StatModifier_2"]
+script = ExtResource("1")
+stat = "magic_resist"
+flat = 25.0
+percent = 0.0
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("1")
+stat = "armor"
+flat = 25.0
+percent = 0.0
+
+[resource]
+script = ExtResource("2")
+id = "lava_might"
+display_name = "용암의 힘"
+kind = 3
+color = Color(1, 0.6, 0.3, 1)
+stat_modifiers = Array[Resource]([SubResource("StatModifier_1"), SubResource("StatModifier_2"), SubResource("StatModifier_3")])

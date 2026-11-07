@@ -18,5 +18,7 @@ extends Resource
 @export var smart_ultimate: bool = true
 ## 팀이 같은 대상을 함께 공격하는지 (PHASE 2)
 @export var focus_fire: bool = false
+## 보스·정예 몬스터의 위험 지역 예고를 보고 피하는지
+@export var dodge_telegraphs: bool = true
 ## 적을 찾는 거리
 @export var sight_range: float = 900.0

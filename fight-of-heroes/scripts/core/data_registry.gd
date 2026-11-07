@@ -9,6 +9,7 @@ const DIRS := {
 	"config": "res://data/config",
 	"ai": "res://data/ai",
 	"maps": "res://data/maps",
+	"monsters": "res://data/monsters",
 }
 
 var load_errors: PackedStringArray = []
@@ -85,6 +86,15 @@ func combat_config() -> CombatConfig:
 func ai_profile(id: String) -> AIProfile:
 	var p := get_item("ai", id) as AIProfile
 	return p if p != null else AIProfile.new()
+
+
+func progression() -> ProgressionConfig:
+	var c := get_item("config", "progression") as ProgressionConfig
+	return c if c != null else ProgressionConfig.new()
+
+
+func monster(id: String) -> MonsterData:
+	return get_item("monsters", id) as MonsterData
 
 
 func map_data(id: String) -> MapData:

@@ -39,6 +39,8 @@ extends Resource
 @export_group("AI 성향")
 ## 0~1. 높을수록 체력이 낮아도 싸운다.
 @export var ai_aggression: float = 0.5
+## 스킬 포인트를 올리는 순서(R 은 열리면 항상 먼저). 0=Q, 1=W, 2=E
+@export var ai_skill_priority: PackedInt32Array = PackedInt32Array([0, 1, 2])
 
 
 func get_skill(slot: int) -> SkillData:

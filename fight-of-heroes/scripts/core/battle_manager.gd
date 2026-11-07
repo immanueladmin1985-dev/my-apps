@@ -34,13 +34,11 @@ func _on_unit_died(victim, killer) -> void:
 	if not (victim is Hero):
 		return
 	victim.deaths += 1
-	var credit = killer
-	if credit == null or not is_instance_valid(credit) or not Enums.is_enemy(credit.team, victim.team):
-		credit = _last_enemy_attacker(victim)
+	# 몬스터나 우물에게 죽으면 최근에 때린 적 영웅이 처치를 인정받는다. 없으면 점수 없음.
+	var credit = ExperienceManager.credit_hero(victim, killer)
 	if credit == null:
 		return
-	if credit is Hero:
-		credit.kills += 1
+	credit.kills += 1
 	var helpers := assisters(victim, credit)
 	for a in helpers:
 		a.assists += 1
@@ -57,22 +55,13 @@ func _on_unit_died(victim, killer) -> void:
 func assisters(victim, killer) -> Array:
 	var out: Array = []
 	var since := Unit.now() - ASSIST_WINDOW
-	for u in victim.recent_attackers:
-		if u == killer or not is_instance_valid(u) or not (u is Hero):
+	for pair in victim.valid_attackers():
+		var u = pair[0]
+		if u == killer or not (u is Hero):
 			continue
-		if Enums.is_enemy(u.team, victim.team) and victim.recent_attackers[u] >= since:
+		if Enums.is_enemy(u.team, victim.team) and pair[1] >= since:
 			out.append(u)
 	return out
-
-
-func _last_enemy_attacker(victim):
-	var best = null
-	var best_t := Unit.now() - 10.0
-	for u in victim.recent_attackers:
-		if is_instance_valid(u) and Enums.is_enemy(u.team, victim.team) and victim.recent_attackers[u] > best_t:
-			best = u
-			best_t = victim.recent_attackers[u]
-	return best
 
 
 func finish(team: int, reason: String) -> void:

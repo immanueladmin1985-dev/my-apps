@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ProgressionConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/progression_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "progression"
+max_level = 15
+xp_base = 100.0
+xp_growth = 60.0
+ultimate_levels = PackedInt32Array(6, 11, 15)
+hero_xp_base = 80.0
+hero_xp_per_level = 30.0
+hero_xp_radius = 1200.0
+monster_xp_radius = 900.0
+group_bonus = 0.15
+start_gold = 0
+passive_gold_per_sec = 2.0
+hero_kill_gold = 250
+hero_kill_gold_per_level = 20
+assist_gold_ratio = 0.5

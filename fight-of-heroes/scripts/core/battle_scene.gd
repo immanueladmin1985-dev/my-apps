@@ -14,6 +14,9 @@ var follow_target: Node2D = null
 @onready var battle_manager: BattleManager = $BattleManager
 @onready var hero_manager: HeroManager = $HeroManager
 @onready var ai_manager: AIManager = $AIManager
+@onready var monster_manager: MonsterManager = $MonsterManager
+@onready var boss_manager: BossManager = $BossManager
+@onready var experience_manager: ExperienceManager = $ExperienceManager
 
 
 func _ready() -> void:
@@ -51,6 +54,10 @@ func _ready() -> void:
 				h.get_node("Visual").is_player = true
 	follow_target = player_hero if player_hero != null else (hero_manager.heroes[0] if not hero_manager.heroes.is_empty() else null)
 	battle_manager.setup(config)
+	monster_manager.setup(world, map, config)
+	boss_manager.setup(battle_manager, hero_manager, monster_manager)
+	experience_manager.setup(hero_manager)
+	ai_manager.monster_manager = monster_manager
 	camera.limit_left = int(-80)
 	camera.limit_top = int(-80)
 	camera.limit_right = int(map.size.x + 80)
@@ -60,9 +67,13 @@ func _ready() -> void:
 		camera.reset_smoothing()
 	$AimIndicator.setup(player_hero, player_controller)
 	hud.setup(player_hero, player_controller, battle_manager)
-	hud.setup_overview(map, hero_manager, camera)
+	hud.setup_overview(map, hero_manager, camera, monster_manager)
 
 
 func _process(_delta: float) -> void:
+	if GameManager.dev_args.has("follow_boss"):
+		var b := get_tree().get_first_node_in_group("bosses")
+		if b != null:
+			follow_target = b
 	if follow_target != null and is_instance_valid(follow_target):
 		camera.global_position = follow_target.global_position

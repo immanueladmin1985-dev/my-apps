@@ -70,6 +70,11 @@ func _draw() -> void:
 		var c := Enums.team_color(team)
 		draw_circle(map.spawn_of(team), cfg.fountain_radius, Color(c, 0.1))
 		draw_arc(map.spawn_of(team), cfg.fountain_radius, 0, TAU, 64, Color(c, 0.5), 3.0)
+	for c: CampData in map.camps:
+		var big := c.is_final_boss or c.first_spawn >= 120.0
+		var cr := 150.0 if c.is_final_boss else (110.0 if big else 70.0)
+		draw_circle(c.position, cr, Color(0, 0, 0, 0.14))
+		draw_arc(c.position, cr, 0, TAU, 48, Color(0.8, 0.5, 1.0, 0.35) if big else Color(1, 1, 1, 0.12), 2.0)
 	for r in map.obstacles:
 		draw_rect(r.grow(4), Color(0, 0, 0, 0.3))
 		draw_rect(r, map.obstacle_color)

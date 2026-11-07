@@ -50,11 +50,13 @@ func go_main() -> void:
 	get_tree().change_scene_to_file(MAIN_SCENE)
 
 
-## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--autoplay]
+## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--autoplay] [--boss_time=초] [--follow_boss]
 func _screenshot_later() -> void:
 	if dev_args.has("battle"):
 		var c := default_config(dev_args["battle"], int(dev_args.get("size", "3")))
 		c.autoplay = dev_args.has("autoplay")
+		if dev_args.has("boss_time"):
+			c.final_boss_time = float(dev_args["boss_time"])
 		start_match(c)
 	var wait := float(dev_args.get("wait", "3"))
 	await get_tree().create_timer(wait, true, false, true).timeout

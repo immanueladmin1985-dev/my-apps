@@ -18,6 +18,7 @@ func before_each() -> void:
 	await frames(2)
 	hud = battle.hud
 	hero = battle.player_hero
+	hero.skill_caster.setup(hero.data.skills, 1)
 	enemy = battle.hero_manager.team_heroes(Enums.Team.RED)[0]
 	enemy.controller.set_physics_process(false)
 	enemy.clear_orders()

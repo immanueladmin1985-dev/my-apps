@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "wolf_alpha"
+display_name = "우두머리 늑대"
+tier = "normal"
+color = Color(0.45, 0.45, 0.55, 1)
+glyph = "두"
+radius = 18.0
+base_stats = {
+"armor": 15.0,
+"attack": 32.0,
+"attack_speed": 0.9,
+"magic_resist": 15.0,
+"max_hp": 650.0,
+"move_speed": 260.0
+}
+attack_range = 45.0
+leash_radius = 380.0
+xp = 55.0
+gold = 40

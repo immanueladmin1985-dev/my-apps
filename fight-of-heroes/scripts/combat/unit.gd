@@ -27,6 +27,10 @@ var max_stuck_time := 0.0
 var wants_move := false
 
 var _dash: Dictionary = {}
+var _prune_left := 1.0
+const ATTACKER_MEMORY := 15.0
+## 시전 준비 동작으로 멈춰 있는 남은 시간
+var cast_lock_left := 0.0
 
 @onready var stats: StatsComponent = $Stats
 @onready var health: HealthComponent = $Health
@@ -49,11 +53,11 @@ static func now() -> float:
 
 
 func can_move() -> bool:
-	return not is_dead and _dash.is_empty() and not status.is_stunned()
+	return not is_dead and _dash.is_empty() and cast_lock_left <= 0.0 and not status.is_stunned()
 
 
 func can_act() -> bool:
-	return not is_dead and _dash.is_empty() and not status.is_stunned()
+	return not is_dead and _dash.is_empty() and cast_lock_left <= 0.0 and not status.is_stunned()
 
 
 func is_dashing() -> bool:
@@ -80,6 +84,29 @@ func register_attacker(src) -> void:
 		recent_attackers[src] = now()
 
 
+## 지워진 유닛(처치된 몬스터 등)과 오래된 기록을 뺀다.
+## 지워진 객체가 Dictionary 키로 남아 있으면 그 키로 값을 읽을 때 멈출 수 있다.
+func prune_attackers() -> void:
+	var old := now() - ATTACKER_MEMORY
+	for u in recent_attackers.keys():
+		if not is_instance_valid(u) or recent_attackers[u] < old:
+			recent_attackers.erase(u)
+
+
+## 유효한 공격자만 [유닛, 시각] 쌍으로 돌려준다.
+func valid_attackers() -> Array:
+	var out: Array = []
+	for u in recent_attackers.keys():
+		if is_instance_valid(u):
+			out.append([u, recent_attackers[u]])
+	return out
+
+
+## 피해를 받은 뒤 불린다. 몬스터는 이것으로 위협(어그로)을 쌓는다.
+func on_damaged(_src, _amount: float) -> void:
+	pass
+
+
 func clear_orders() -> void:
 	move_input = Vector2.ZERO
 	attack_order = null
@@ -91,6 +118,12 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 		wants_move = false
 		return
+	if cast_lock_left > 0.0:
+		cast_lock_left -= delta
+	_prune_left -= delta
+	if _prune_left <= 0.0:
+		_prune_left = 1.0
+		prune_attackers()
 	if not _dash.is_empty():
 		_process_dash(delta)
 		return
@@ -202,6 +235,7 @@ func die(killer = null) -> void:
 	is_dead = true
 	health.hp = 0.0
 	_dash = {}
+	cast_lock_left = 0.0
 	clear_orders()
 	attack.cancel_windup()
 	status.clear_all()

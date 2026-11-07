@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(140.0)
+ad_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 1
+radius = 100.0
+delay = 1.2
+count = 6
+scatter = 320.0
+color = Color(1, 0.4, 0.1, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_2")])
+
+[resource]
+script = ExtResource("3")
+id = "lava_boss_rain"
+display_name = "불비"
+glyph = "비"
+description = "넓은 지역 여러 곳에 위험 지역을 표시하고 1.2초 뒤 피해를 줍니다. 분노한 뒤에만 씁니다."
+max_rank = 1
+mana_cost = PackedFloat32Array(0.0)
+cooldown = PackedFloat32Array(10.0)
+target_mode = 3
+cast_range = 500.0
+radius = 320.0
+width = 0.0
+cast_lock = 1.0
+color = Color(1, 0.5, 0.3, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

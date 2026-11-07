@@ -23,6 +23,7 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 	GameManager.match_config = cfg
 	GameManager.dev_args["seed"] = str(seed_value)
 	CombatManager.rng.seed = seed_value
+	seed(seed_value)
 	var casts := {}
 	var on_cast := func(caster, slot, _s): casts["%s:%d" % [caster.data.id, slot]] = casts.get("%s:%d" % [caster.data.id, slot], 0) + 1
 	var respawns := [0]
@@ -31,7 +32,11 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 	EventBus.hero_respawned.connect(on_respawn)
 	var battle := BATTLE.instantiate()
 	add_child(battle)
-	await frames(SECONDS * 60)
+	await frames((SECONDS - 60) * 60)
+	var learned := {}
+	for h in battle.hero_manager.heroes:
+		learned[h] = h.skill_caster.ranks.duplicate()
+	await frames(60 * 60)
 	EventBus.skill_cast.disconnect(on_cast)
 	EventBus.hero_respawned.disconnect(on_respawn)
 	GameManager.dev_args.erase("seed")
@@ -42,9 +47,10 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 		for slot in 4:
 			var n: int = casts.get("%s:%d" % [h.data.id, slot], 0)
 			used.append(n)
-			check(n >= 1, "%s 의 %s 스킬을 한 번도 쓰지 않음" % [h.display_name, Enums.SLOT_KEYS[slot]])
+			if learned[h][slot] > 0:
+				check(n >= 1, "%s 이(가) 배운 %s 스킬을 한 번도 쓰지 않음" % [h.display_name, Enums.SLOT_KEYS[slot]])
 		check(h.max_stuck_time < 2.0, "%s 이(가) %.1f초 동안 끼어 있었음" % [h.display_name, h.max_stuck_time])
-		report.append("%s 킬 %d 데스 %d 스킬 %s 최대 끼임 %.2f초" % [h.display_name, h.kills, h.deaths, str(used), h.max_stuck_time])
+		report.append("%s Lv%d 킬 %d 데스 %d 스킬 %s 최대 끼임 %.2f초" % [h.display_name, h.level, h.kills, h.deaths, str(used), h.max_stuck_time])
 	var total_deaths: int = heroes.reduce(func(acc, h): return acc + h.deaths, 0)
 	check(total_deaths >= 1, "180초 동안 사망이 한 번도 없음")
 	check(respawns[0] >= 1, "부활이 한 번도 없음")

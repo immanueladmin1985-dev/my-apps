@@ -8,6 +8,7 @@ var value := 0.0
 var max_value := 1.0
 var extra := 0.0  # 보호막
 var fill := Color(0.3, 0.85, 0.4)
+var show_text := true
 
 
 func set_values(v: float, m: float, e := 0.0) -> void:
@@ -27,6 +28,8 @@ func _draw() -> void:
 		var ew := minf((size.x - 2) * extra / max_value, size.x - 2)
 		var ex := minf(1 + (size.x - 2) * ratio, size.x - 1 - ew)
 		draw_rect(Rect2(ex, 1, ew, size.y - 2), Color(0.95, 0.95, 0.95, 0.8))
+	if not show_text:
+		return
 	var text := "%d / %d" % [roundi(value), roundi(max_value)]
 	var fs := int(size.y * 0.72)
 	var tw := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x

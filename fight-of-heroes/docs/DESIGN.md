@@ -4,7 +4,7 @@
 
 ## 0. 현재 상태와 작업 환경
 
-> PHASE 0·1·2 를 마쳤습니다. 결과는 `docs/PHASE1_REPORT.md`, `docs/PHASE2_REPORT.md` 에 있습니다. 구현하면서 바뀐 점:
+> PHASE 0~3 을 마쳤습니다. 결과는 `docs/PHASE1_REPORT.md` ~ `docs/PHASE3_REPORT.md` 에 있습니다. 구현하면서 바뀐 점:
 > Godot 4.7 에 기본 `VirtualJoystick` 클래스가 생겨 조이스틱은 `TouchJoystick` 으로, CombatManager 는 상태가 없는 정적 클래스로 만들었습니다.
 
 - 이 저장소(`my-apps`)에는 Godot 프로젝트 파일(`project.godot`, `.tscn`, `.gd`)이 없습니다. 보존해야 할 기존 게임 파일은 없으며, 다른 앱 폴더는 건드리지 않습니다.

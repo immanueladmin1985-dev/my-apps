@@ -18,7 +18,7 @@ var _hit_flash := 0.0
 func setup(u) -> void:
 	unit = u
 	if u.get("data") != null:
-		var d: HeroData = u.data
+		var d = u.data
 		body_color = d.color
 		glyph = d.glyph
 		weapon = d.weapon
@@ -105,7 +105,7 @@ func _draw_placeholder(r: float, team_c: Color, alpha: float) -> void:
 
 
 func _draw_bars(r: float, team_c: Color) -> void:
-	var w := 52.0
+	var w := maxf(52.0, r * 3.2)
 	var y := -r - 20.0
 	var hp_ratio: float = unit.health.ratio()
 	var shield: float = unit.health.shield_total()
@@ -118,7 +118,7 @@ func _draw_bars(r: float, team_c: Color) -> void:
 		draw_rect(Rect2(sx, y, sw, 7), Color(0.95, 0.95, 0.95, 0.85))
 	if unit.get("mana") != null and unit.mana.max_mp() > 0.0:
 		draw_rect(Rect2(-w * 0.5, y + 8, w * clampf(unit.mana.mp / unit.mana.max_mp(), 0, 1), 3), Color(0.35, 0.55, 1.0))
-	if unit.get("level") != null:
+	if unit.get("level") != null and unit is Hero:
 		draw_string(FONT, Vector2(-w * 0.5 - 16, y + 8), str(unit.level), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.9))
 
 

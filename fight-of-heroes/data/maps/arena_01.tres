@@ -1,6 +1,88 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
 [ext_resource type="Script" path="res://scripts/map/map_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/map/camp_data.gd" id="2"]
+
+[sub_resource type="Resource" id="blue_wolves_top"]
+script = ExtResource("2")
+id = "blue_wolves_top"
+position = Vector2(560, 360)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="blue_wolves_bottom"]
+script = ExtResource("2")
+id = "blue_wolves_bottom"
+position = Vector2(640, 1110)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="red_wolves_bottom"]
+script = ExtResource("2")
+id = "red_wolves_bottom"
+position = Vector2(1840, 1040)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="red_wolves_top"]
+script = ExtResource("2")
+id = "red_wolves_top"
+position = Vector2(1760, 290)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="blue_golem"]
+script = ExtResource("2")
+id = "blue_golem"
+position = Vector2(820, 760)
+monsters = PackedStringArray("stone_golem")
+first_spawn = 60.0
+respawn = 90.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="red_golem"]
+script = ExtResource("2")
+id = "red_golem"
+position = Vector2(1580, 640)
+monsters = PackedStringArray("stone_golem")
+first_spawn = 60.0
+respawn = 90.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="forest_guardian"]
+script = ExtResource("2")
+id = "forest_guardian"
+position = Vector2(1200, 160)
+monsters = PackedStringArray("forest_guardian")
+first_spawn = 180.0
+respawn = 240.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="lava_giant"]
+script = ExtResource("2")
+id = "lava_giant"
+position = Vector2(1200, 1240)
+monsters = PackedStringArray("lava_giant")
+first_spawn = 180.0
+respawn = 240.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="ancient_dragon"]
+script = ExtResource("2")
+id = "ancient_dragon"
+position = Vector2(1200, 700)
+monsters = PackedStringArray("ancient_dragon")
+first_spawn = 600.0
+respawn = 0.0
+is_final_boss = true
 
 [resource]
 script = ExtResource("1")
@@ -9,6 +91,7 @@ display_name = "시험용 아레나"
 size = Vector2(2400, 1400)
 blue_spawn = Vector2(220, 700)
 red_spawn = Vector2(2180, 700)
-obstacles = Array[Rect2]([Rect2(640, 240, 180, 140), Rect2(1580, 1020, 180, 140), Rect2(980, 960, 140, 180), Rect2(1280, 260, 140, 180), Rect2(420, 980, 120, 120), Rect2(1860, 300, 120, 120), Rect2(1110, 640, 180, 120)])
+obstacles = Array[Rect2]([Rect2(760, 200, 160, 110), Rect2(1480, 1090, 160, 110), Rect2(380, 980, 130, 120), Rect2(1890, 300, 130, 120), Rect2(980, 420, 120, 150), Rect2(1300, 830, 120, 150), Rect2(1000, 1010, 150, 100), Rect2(1250, 290, 150, 100)])
+camps = Array[Resource]([SubResource("blue_wolves_top"), SubResource("blue_wolves_bottom"), SubResource("red_wolves_bottom"), SubResource("red_wolves_top"), SubResource("blue_golem"), SubResource("red_golem"), SubResource("forest_guardian"), SubResource("lava_giant"), SubResource("ancient_dragon")])
 ground_color = Color(0.2, 0.29, 0.21, 1)
 obstacle_color = Color(0.36, 0.34, 0.31, 1)

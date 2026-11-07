@@ -29,7 +29,7 @@ func _physics_process(_delta: float) -> void:
 	if attack_held or Input.is_physical_key_pressed(KEY_SPACE):
 		var t = selected
 		if t == null or hero.global_position.distance_to(t.global_position) > hero.attack.attack_range + 350.0:
-			t = Targeting.nearest(get_tree(), hero.global_position, hero.attack.attack_range + 250.0, hero.team, Enums.TargetTeam.ENEMY)
+			t = _nearest_prefer_hero(hero.attack.attack_range + 250.0)
 		if t != null:
 			_select(t)
 			hero.attack_order = t
@@ -38,6 +38,18 @@ func _physics_process(_delta: float) -> void:
 	if mv.length() > 0.05:
 		hero.attack_order = null
 	hero.move_input = mv
+
+
+## 사거리 근처에 적 영웅이 있으면 영웅을, 없으면 가장 가까운 몬스터를 고른다.
+func _nearest_prefer_hero(dist: float):
+	var best = null
+	var best_d := dist
+	for u in Targeting.in_radius(get_tree(), hero.global_position, dist, hero.team, Enums.TargetTeam.ENEMY):
+		var d: float = hero.global_position.distance_to(u.global_position) - (10000.0 if u is Hero else 0.0)
+		if best == null or d < best_d:
+			best_d = d
+			best = u
+	return best
 
 
 func _select(t) -> void:
@@ -108,7 +120,7 @@ func auto_aim(slot: int) -> CastAim:
 func _target_within(dist: float):
 	if selected != null and hero.global_position.distance_to(selected.global_position) <= dist:
 		return selected
-	return Targeting.nearest(get_tree(), hero.global_position, dist, hero.team, Enums.TargetTeam.ENEMY)
+	return _nearest_prefer_hero(dist)
 
 
 func manual_aim(slot: int, vec: Vector2) -> CastAim:
@@ -140,5 +152,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			hero.attack_order = t
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var idx := [KEY_Q, KEY_W, KEY_E, KEY_R].find(event.physical_keycode)
-		if idx >= 0 and not Input.is_physical_key_pressed(KEY_SHIFT):
+		if idx >= 0 and event.ctrl_pressed:
+			hero.learn(idx)
+		elif idx >= 0 and not Input.is_physical_key_pressed(KEY_SHIFT):
 			try_cast(idx, auto_aim(idx))

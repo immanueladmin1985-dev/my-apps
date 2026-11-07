@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="2"]
+
+[sub_resource type="Resource" id="StatModifier_3"]
+script = ExtResource("1")
+stat = "hp_regen"
+flat = 4.0
+percent = 0.0
+
+[sub_resource type="Resource" id="StatModifier_2"]
+script = ExtResource("1")
+stat = "ability_power"
+flat = 0.0
+percent = 0.15
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("1")
+stat = "attack"
+flat = 0.0
+percent = 0.15
+
+[resource]
+script = ExtResource("2")
+id = "forest_blessing"
+display_name = "숲의 축복"
+kind = 3
+color = Color(0.5, 1, 0.5, 1)
+stat_modifiers = Array[Resource]([SubResource("StatModifier_1"), SubResource("StatModifier_2"), SubResource("StatModifier_3")])

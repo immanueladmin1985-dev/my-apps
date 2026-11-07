@@ -22,6 +22,8 @@ extends Resource
 @export var effects: Array[Resource] = []
 ## 효과 조합으로 만들 수 없는 스킬은 execute(ctx) 를 가진 스크립트를 연결한다.
 @export var custom_script: Script
+## 시전 뒤 이 시간(초) 동안 시전자가 움직이거나 공격하지 못한다 (보스 패턴 준비 동작).
+@export var cast_lock: float = 0.0
 ## 빠르게 눌러 쓸 때 가장 가까운 적의 반대쪽으로 조준한다 (후퇴 스킬)
 @export var auto_aim_away: bool = false
 @export var ai_use: Enums.AIUse = Enums.AIUse.OFFENSE
