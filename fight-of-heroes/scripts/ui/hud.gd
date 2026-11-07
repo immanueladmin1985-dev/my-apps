@@ -30,6 +30,10 @@ var pause_panel: Control
 var result_panel: Control
 var result_title: Label
 var result_detail: Label
+var minimap: Minimap
+var blue_status: TeamStatus
+var red_status: TeamStatus
+var kill_feed: VBoxContainer
 
 var _message_left := 0.0
 
@@ -47,6 +51,7 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	battle = bm
 	EventBus.kill_score_changed.connect(_on_score)
 	EventBus.notice.connect(show_message)
+	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
 	for n in [joystick, attack_button, hp_bar, mp_bar, name_label] + skill_buttons:
@@ -75,6 +80,18 @@ func _exit_tree() -> void:
 		EventBus.kill_score_changed.disconnect(_on_score)
 	if EventBus.notice.is_connected(show_message):
 		EventBus.notice.disconnect(show_message)
+	if EventBus.hero_killed.is_connected(_on_hero_killed):
+		EventBus.hero_killed.disconnect(_on_hero_killed)
+
+
+## 미니맵과 팀 상태 표시를 연결한다.
+func setup_overview(map: MapData, hm: HeroManager, cam: Camera2D) -> void:
+	minimap.setup(map, hm, hero, cam)
+	var h := 120.0
+	minimap.offset_bottom = minimap.offset_top + h
+	minimap.offset_right = minimap.offset_left + h * map.size.x / map.size.y
+	blue_status.setup(hm.team_heroes(Enums.Team.BLUE), Enums.Team.BLUE, hero, false)
+	red_status.setup(hm.team_heroes(Enums.Team.RED), Enums.Team.RED, hero, true)
 
 
 # ---- 화면 구성 ----
@@ -119,7 +136,7 @@ func _build() -> void:
 	cancel_zone.add_theme_stylebox_override("panel", cz_style)
 	var cz_label := _label("여기서 놓으면 취소", 18, HORIZONTAL_ALIGNMENT_CENTER)
 	cancel_zone.add_child(cz_label)
-	_place(cancel_zone, Vector2(1, 0), Vector2(-250, 80), Vector2(200, 70))
+	_place(cancel_zone, Vector2(1, 0), Vector2(-250, 200), Vector2(200, 70))
 	cancel_zone.visible = false
 	root.add_child(cancel_zone)
 	for b in skill_buttons:
@@ -144,9 +161,27 @@ func _build() -> void:
 	time_label = _label("00:00", 18, HORIZONTAL_ALIGNMENT_CENTER)
 	_place(time_label, Vector2(0.5, 0), Vector2(-100, 44), Vector2(200, 26))
 	root.add_child(time_label)
-	fps_label = _label("", 14, HORIZONTAL_ALIGNMENT_LEFT)
-	_place(fps_label, Vector2(0, 0), Vector2(14, 8), Vector2(200, 22))
+	blue_status = TeamStatus.new()
+	blue_status.name = "BlueStatus"
+	_place(blue_status, Vector2(0, 0), Vector2(8, 6), Vector2(170, 52))
+	root.add_child(blue_status)
+	red_status = TeamStatus.new()
+	red_status.name = "RedStatus"
+	_place(red_status, Vector2(1, 0), Vector2(-268, 6), Vector2(170, 52))
+	root.add_child(red_status)
+	minimap = Minimap.new()
+	minimap.name = "Minimap"
+	_place(minimap, Vector2(0, 0), Vector2(12, 66), Vector2(206, 120))
+	root.add_child(minimap)
+	fps_label = _label("", 13, HORIZONTAL_ALIGNMENT_LEFT)
+	_place(fps_label, Vector2(0, 0), Vector2(14, 188), Vector2(200, 20))
 	root.add_child(fps_label)
+	kill_feed = VBoxContainer.new()
+	kill_feed.name = "KillFeed"
+	kill_feed.alignment = BoxContainer.ALIGNMENT_BEGIN
+	kill_feed.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place(kill_feed, Vector2(1, 0), Vector2(-430, 76), Vector2(420, 120))
+	root.add_child(kill_feed)
 	message_label = _label("", 22, HORIZONTAL_ALIGNMENT_CENTER)
 	_place(message_label, Vector2(0.5, 0), Vector2(-320, 92), Vector2(640, 36))
 	root.add_child(message_label)
@@ -273,6 +308,23 @@ func show_message(text: String) -> void:
 	message_label.text = text
 	message_label.modulate.a = 1.0
 	_message_left = 1.6
+
+
+func _on_hero_killed(victim, killer, helpers: Array) -> void:
+	var kname: String = ("%s %s" % [Enums.team_name(killer.team), killer.display_name]) if killer != null else "?"
+	var text := "%s  ▶  %s %s" % [kname, Enums.team_name(victim.team), victim.display_name]
+	if not helpers.is_empty():
+		text += "  (도움 %d)" % helpers.size()
+	var l := _label(text, 17, HORIZONTAL_ALIGNMENT_RIGHT)
+	l.add_theme_color_override("font_color", Enums.team_color(killer.team if killer != null else Enums.Team.NEUTRAL).lightened(0.3))
+	kill_feed.add_child(l)
+	while kill_feed.get_child_count() > 4:
+		kill_feed.get_child(0).free()
+	get_tree().create_timer(5.0).timeout.connect(l.queue_free)
+	if hero != null and victim == hero:
+		show_message("처치당했습니다. 우물에서 부활합니다")
+	elif hero != null and killer == hero:
+		show_message("%s 처치!" % victim.display_name)
 
 
 func _on_score(blue: int, red: int) -> void:

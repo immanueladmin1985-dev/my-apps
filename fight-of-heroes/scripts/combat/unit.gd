@@ -43,8 +43,9 @@ func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 
 
+## 게임 시간(초). 물리 프레임 수로 세므로 시험을 빠르게 돌려도 게임 안의 시간과 맞는다.
 static func now() -> float:
-	return Time.get_ticks_msec() / 1000.0
+	return float(Engine.get_physics_frames()) / Engine.physics_ticks_per_second
 
 
 func can_move() -> bool:
@@ -114,9 +115,28 @@ func _physics_process(delta: float) -> void:
 		facing = want.normalized()
 	wants_move = want.length() > 0.05
 	velocity = want * get_move_speed()
+	if can_move():
+		velocity += _separation() * 90.0
 	var before := global_position
 	move_and_slide()
 	_track_stuck(before, delta)
+
+
+## 같은 팀 유닛끼리 겹치지 않도록 서로 살짝 밀어낸다.
+func _separation() -> Vector2:
+	var push := Vector2.ZERO
+	for u in get_tree().get_nodes_in_group("units"):
+		if u == self or u.is_dead or u.team != team:
+			continue
+		var d: Vector2 = global_position - u.global_position
+		var min_d: float = (radius + u.radius) * 1.1
+		var len := d.length()
+		if len < min_d:
+			if len < 0.01:
+				d = Vector2.from_angle(float(get_instance_id() % 628) / 100.0)
+				len = 0.01
+			push += d / len * (1.0 - len / min_d)
+	return push.limit_length(1.0)
 
 
 func _track_stuck(before: Vector2, delta: float) -> void:

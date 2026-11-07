@@ -17,10 +17,18 @@ func _ready() -> void:
 		_screenshot_later.call_deferred()
 
 
-func default_config(player_hero := "blade_master") -> MatchConfig:
+## 기본 경기: 플레이어 영웅 + 나머지는 무작위로 채운 3대3. 같은 영웅이 여러 명 나올 수 있다.
+func default_config(player_hero := "blade_master", team_size := 3) -> MatchConfig:
 	var c := MatchConfig.new()
-	c.blue_heroes = PackedStringArray([player_hero])
-	c.red_heroes = PackedStringArray(["elf_archer" if player_hero != "elf_archer" else "blade_master"])
+	var pool: Array = DataRegistry.ids("heroes")
+	var blue := [player_hero]
+	var red := []
+	for i in team_size - 1:
+		blue.append(pool.pick_random())
+	for i in team_size:
+		red.append(pool.pick_random())
+	c.blue_heroes = PackedStringArray(blue)
+	c.red_heroes = PackedStringArray(red)
 	c.player_index = 0
 	c.difficulty = SaveManager.get_setting("difficulty", "normal")
 	c.kill_target = int(SaveManager.get_setting("kill_target", 15))
@@ -45,7 +53,7 @@ func go_main() -> void:
 ## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--autoplay]
 func _screenshot_later() -> void:
 	if dev_args.has("battle"):
-		var c := default_config(dev_args["battle"])
+		var c := default_config(dev_args["battle"], int(dev_args.get("size", "3")))
 		c.autoplay = dev_args.has("autoplay")
 		start_match(c)
 	var wait := float(dev_args.get("wait", "3"))

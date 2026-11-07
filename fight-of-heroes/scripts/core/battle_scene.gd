@@ -24,7 +24,7 @@ func _ready() -> void:
 	map = DataRegistry.map_data(config.map_id)
 	arena.build(map)
 	hero_manager.setup(world, map)
-	ai_manager.setup(config.difficulty)
+	ai_manager.setup(config.difficulty, hero_manager)
 	var center := map.size * 0.5
 	var seed_base := 0
 	if GameManager.dev_args.has("seed"):
@@ -47,6 +47,7 @@ func _ready() -> void:
 				ai_manager.attach(h, map.spawn_of(team), center, s)
 			if is_player:
 				player_hero = h
+				ai_manager.set_player(team, h)
 				h.get_node("Visual").is_player = true
 	follow_target = player_hero if player_hero != null else (hero_manager.heroes[0] if not hero_manager.heroes.is_empty() else null)
 	battle_manager.setup(config)
@@ -59,6 +60,7 @@ func _ready() -> void:
 		camera.reset_smoothing()
 	$AimIndicator.setup(player_hero, player_controller)
 	hud.setup(player_hero, player_controller, battle_manager)
+	hud.setup_overview(map, hero_manager, camera)
 
 
 func _process(_delta: float) -> void:

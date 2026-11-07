@@ -10,7 +10,7 @@ var enemy: Hero
 
 
 func before_each() -> void:
-	var cfg := GameManager.default_config("blade_master")
+	var cfg := GameManager.default_config("blade_master", 1)
 	cfg.kill_target = 999
 	GameManager.match_config = cfg
 	battle = BATTLE.instantiate()

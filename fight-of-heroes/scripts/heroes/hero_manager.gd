@@ -18,7 +18,10 @@ func spawn(data: HeroData, team: int, index: int) -> Hero:
 	var h: Hero = HERO_SCENE.instantiate()
 	h.name = "%s_%s" % [Enums.team_name(team), data.id]
 	world.add_child(h)
-	var offset := Vector2(0, (index - 1) * 70.0) if index > 0 else Vector2.ZERO
+	var offsets := [Vector2.ZERO, Vector2(-40, -80), Vector2(-40, 80), Vector2(-80, 0), Vector2(-80, -160)]
+	var offset: Vector2 = offsets[index % offsets.size()]
+	if team == Enums.Team.RED:
+		offset.x = -offset.x
 	h.spawn_point = map.spawn_of(team) + offset
 	h.global_position = h.spawn_point
 	h.setup(data, team)
@@ -29,6 +32,18 @@ func spawn(data: HeroData, team: int, index: int) -> Hero:
 
 func _on_hero_died(_killer, h: Hero) -> void:
 	h.respawn_left = DataRegistry.combat_config().respawn_time(h.level)
+
+
+var _fountain_tick: Dictionary = {}
+
+
+## pos 가 unit 에게 상대 팀 우물 안인지.
+func in_enemy_fountain(unit, pos: Vector2, margin := 0.0) -> bool:
+	var r := DataRegistry.combat_config().fountain_radius + margin
+	for team in [Enums.Team.BLUE, Enums.Team.RED]:
+		if Enums.is_enemy(team, unit.team) and pos.distance_to(map.spawn_of(team)) <= r:
+			return true
+	return false
 
 
 func team_heroes(team: int) -> Array:
@@ -47,3 +62,9 @@ func _physics_process(delta: float) -> void:
 		elif h.global_position.distance_to(map.spawn_of(h.team)) <= cfg.fountain_radius:
 			h.health.heal(h.health.max_hp() * cfg.fountain_regen_ratio * delta)
 			h.mana.restore(h.mana.max_mp() * cfg.fountain_regen_ratio * delta)
+		elif in_enemy_fountain(h, h.global_position):
+			_fountain_tick[h] = _fountain_tick.get(h, 0.0) + delta
+			if _fountain_tick[h] >= 0.25:
+				var dmg: float = h.health.max_hp() * cfg.fountain_damage_ratio * _fountain_tick[h]
+				_fountain_tick[h] = 0.0
+				CombatManager.apply_damage(h, DamageInfo.new(null, dmg, Enums.DamageType.TRUE))

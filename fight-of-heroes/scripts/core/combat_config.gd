@@ -17,6 +17,8 @@ extends Resource
 ## 팀 시작 지점(우물) 근처에서는 초당 최대 체력·마나의 일정 비율을 회복한다.
 @export var fountain_radius: float = 260.0
 @export var fountain_regen_ratio: float = 0.1
+## 상대 우물 안에 들어온 영웅은 초당 최대 체력의 이 비율만큼 고정 피해를 받는다 (부활 지점 지키기 방지).
+@export var fountain_damage_ratio: float = 0.2
 
 
 func respawn_time(level: int) -> float:

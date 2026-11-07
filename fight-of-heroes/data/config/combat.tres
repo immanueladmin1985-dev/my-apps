@@ -14,3 +14,4 @@ respawn_per_level = 1.5
 respawn_max = 25.0
 fountain_radius = 260.0
 fountain_regen_ratio = 0.1
+fountain_damage_ratio = 0.2

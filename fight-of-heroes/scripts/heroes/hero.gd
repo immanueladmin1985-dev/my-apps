@@ -9,6 +9,7 @@ var spawn_point := Vector2.ZERO
 var respawn_left := 0.0
 var kills := 0
 var deaths := 0
+var assists := 0
 
 @onready var skill_caster: SkillCaster = $SkillCaster
 

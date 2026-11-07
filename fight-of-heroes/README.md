@@ -3,7 +3,7 @@
 오프라인 3대3 2D 모바일 AOS 게임입니다. Godot 4.7, GDScript, 안드로이드 가로 화면용입니다.
 
 - 설계: [docs/DESIGN.md](docs/DESIGN.md)
-- PHASE 1 보고서: [docs/PHASE1_REPORT.md](docs/PHASE1_REPORT.md)
+- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md)
 
 ## 실행과 시험
 
