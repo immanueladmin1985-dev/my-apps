@@ -17,6 +17,8 @@ var match_config: MatchConfig
 var dev_args: Dictionary = {}
 ## 마지막 경기 요약 (결과 화면이 읽는다)
 var last_summary: Dictionary = {}
+## 이어 하기로 전투 화면을 열 때 되돌릴 저장 내용 (전투 화면이 읽고 비운다)
+var resume_snapshot: Dictionary = {}
 
 
 func _ready() -> void:
@@ -59,6 +61,9 @@ func default_config(player_hero := "blade_master", team_size := 3) -> MatchConfi
 
 func start_match(config: MatchConfig) -> void:
 	match_config = config
+	# 새 경기를 시작하면 이어 하던 전투는 버린다.
+	resume_snapshot = {}
+	SaveManager.clear_battle()
 	get_tree().paused = false
 	get_tree().change_scene_to_file(BATTLE_SCENE)
 
@@ -68,6 +73,28 @@ func restart_match() -> void:
 
 
 func go_main() -> void:
+	goto(MAIN_SCENE)
+
+
+## 저장해 둔 전투를 이어 한다. 저장 내용이 없거나 맞지 않으면 지우고 false.
+func resume_battle() -> bool:
+	var snap := SaveManager.load_battle()
+	var cfg := BattleSnapshot.make_config(snap)
+	if cfg == null:
+		SaveManager.clear_battle()
+		return false
+	match_config = cfg
+	resume_snapshot = snap
+	get_tree().paused = false
+	get_tree().change_scene_to_file(BATTLE_SCENE)
+	return true
+
+
+## 전투 중에 처음 화면으로 나간다. 나중에 이어 할 수 있게 전투를 저장한다.
+func leave_battle() -> void:
+	var s := get_tree().current_scene
+	if s != null and s.has_method("save_snapshot"):
+		s.save_snapshot()
 	goto(MAIN_SCENE)
 
 
@@ -85,6 +112,7 @@ func apply_settings() -> void:
 ## 전투가 끝나면 부른다. 기록을 저장하고, 전투 화면이 지금 화면이면 잠시 뒤 결과 화면으로 간다.
 func on_match_finished(summary: Dictionary, battle: Node) -> void:
 	last_summary = summary
+	SaveManager.clear_battle()
 	if summary.get("mode", "team") != "watch":
 		SaveManager.record_match(summary)
 	match_finished.emit(summary)
@@ -125,6 +153,7 @@ func _flow_test() -> void:
 		print("FLOW %s %s (%s)" % ["[통과]" if good else "[실패]", name, cur])
 		return good
 	SaveManager.reset_records()
+	SaveManager.clear_battle()
 	ok = await step.call("메인 메뉴", MAIN_SCENE, 5.0) and ok
 	get_tree().current_scene.open(NEW_GAME_SCENE)
 	ok = await step.call("새 게임 화면", NEW_GAME_SCENE, 5.0) and ok
@@ -142,6 +171,31 @@ func _flow_test() -> void:
 	ok = await step.call("전투 2 (다시 하기)", BATTLE_SCENE, 5.0) and ok
 	ok = await step.call("결과 2", RESULTS_SCENE, 600.0) and ok
 	ok = ok and SaveManager.records().games == 2
+	get_tree().current_scene.on_back()
+	ok = await step.call("메인 메뉴로", MAIN_SCENE, 5.0) and ok
+	# 이어 하기: 사람이 조작하는 경기를 저장하고 나갔다가 메인 메뉴에서 다시 연다.
+	start_match(default_config("monk"))
+	ok = await step.call("전투 3 (이어 하기용)", BATTLE_SCENE, 5.0) and ok
+	await get_tree().create_timer(3.0, false, true).timeout
+	var saved_time: float = get_tree().current_scene.battle_manager.elapsed
+	leave_battle()
+	ok = await step.call("저장하고 처음 화면", MAIN_SCENE, 5.0) and ok
+	var has_resume: bool = get_tree().current_scene.find_child("이어 하기", true, false) != null
+	print("FLOW %s 메인 메뉴에 이어 하기 버튼" % ("[통과]" if has_resume else "[실패]"))
+	ok = ok and has_resume
+	get_tree().current_scene.resume()
+	ok = await step.call("이어 하기", BATTLE_SCENE, 5.0) and ok
+	await get_tree().process_frame
+	var b = get_tree().current_scene
+	var restored: bool = b.resumed and b.battle_manager.elapsed >= saved_time - 0.01 and get_tree().paused
+	print("FLOW %s 전투 되돌림 (저장 %.1f초, 불러온 뒤 %.1f초, 일시정지 %s)" % ["[통과]" if restored else "[실패]", saved_time, b.battle_manager.elapsed, get_tree().paused])
+	ok = ok and restored
+	get_tree().paused = false
+	b.battle_manager.finish(Enums.Team.BLUE, "kills")
+	ok = await step.call("결과 3", RESULTS_SCENE, 10.0) and ok
+	var cleared: bool = not SaveManager.has_battle() and SaveManager.records().games == 3
+	print("FLOW %s 경기가 끝나면 저장한 전투를 지움" % ("[통과]" if cleared else "[실패]"))
+	ok = ok and cleared
 	get_tree().current_scene.on_back()
 	ok = await step.call("메인 메뉴로", MAIN_SCENE, 5.0) and ok
 	for path in [HERO_CODEX_SCENE, ITEM_CODEX_SCENE, RECORDS_SCENE, SETTINGS_SCENE]:
@@ -163,7 +217,7 @@ func _selfcheck() -> void:
 	get_tree().quit(1 if not errors.is_empty() else 0)
 
 
-## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--autoplay] [--boss_time=초] [--follow_boss]
+## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--resume] [--autoplay] [--boss_time=초] [--follow_boss]
 func _screenshot_later() -> void:
 	if dev_args.has("battle"):
 		var c := default_config(dev_args["battle"], int(dev_args.get("size", "3")))
@@ -175,6 +229,8 @@ func _screenshot_later() -> void:
 		start_match(c)
 	if dev_args.has("scene"):
 		goto(dev_args["scene"])
+	if dev_args.has("resume"):
+		resume_battle()
 	var wait := float(dev_args.get("wait", "3"))
 	await get_tree().create_timer(wait, true, false, true).timeout
 	await RenderingServer.frame_post_draw

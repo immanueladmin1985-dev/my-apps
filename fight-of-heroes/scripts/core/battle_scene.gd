@@ -6,6 +6,11 @@ var map: MapData
 var player_hero: Hero = null
 var player_controller: PlayerController = null
 var follow_target: Node2D = null
+## 이어 하기로 연 전투인지
+var resumed := false
+## 자동 저장 간격(초, 경기 시간 기준)
+const AUTOSAVE_INTERVAL := 15.0
+var _autosave_left := AUTOSAVE_INTERVAL
 
 @onready var arena: Arena = $Arena
 @onready var world: Node2D = $World
@@ -80,6 +85,19 @@ func _ready() -> void:
 	hud.shop = shop_manager
 	hud.setup(player_hero, player_controller, battle_manager)
 	hud.setup_overview(map, hero_manager, camera, monster_manager)
+	if not GameManager.resume_snapshot.is_empty():
+		var snap := GameManager.resume_snapshot
+		GameManager.resume_snapshot = {}
+		resumed = BattleSnapshot.apply(self, snap)
+		if not resumed:
+			push_warning("저장한 전투를 되돌리지 못했습니다")
+		elif follow_target != null:
+			camera.global_position = follow_target.global_position
+			camera.reset_smoothing()
+		if resumed and player_controller != null:
+			# 바로 싸움이 이어지지 않도록 일시정지한 채로 시작한다.
+			hud.set_paused(true)
+			hud.show_message("저장한 전투를 불러왔습니다. 계속하기를 누르세요")
 	if GameManager.dev_args.has("open_shop") and player_hero != null:
 		# 개발용: 상점 화면 확인. 아이템 몇 개를 미리 산 상태로 연다.
 		player_hero.gold = 3000
@@ -88,6 +106,24 @@ func _ready() -> void:
 		if GameManager.dev_args["open_shop"] != "closed":
 			hud.toggle_shop()
 			hud.shop_panel._select_item(ItemManager.get_item("hero_sword"))
+
+
+## 이어 하기용으로 전투를 저장한다. 끝난 경기와 시험용 자동 진행 경기는 저장하지 않는다.
+func can_save() -> bool:
+	return battle_manager != null and not battle_manager.match_over and config != null and not config.autoplay
+
+
+func save_snapshot() -> bool:
+	if not can_save():
+		return false
+	return SaveManager.save_battle(BattleSnapshot.capture(self))
+
+
+func _physics_process(delta: float) -> void:
+	_autosave_left -= delta
+	if _autosave_left <= 0.0:
+		_autosave_left = AUTOSAVE_INTERVAL
+		save_snapshot()
 
 
 func _process(_delta: float) -> void:
@@ -123,5 +159,6 @@ func on_back() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		SaveManager.save_data()
+		save_snapshot()
 		if hud != null and battle_manager != null and not battle_manager.match_over and not get_tree().paused and OS.has_feature("mobile"):
 			hud.set_paused(true)

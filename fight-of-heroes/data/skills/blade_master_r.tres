@@ -9,7 +9,7 @@
 [sub_resource type="Resource" id="DamageEffect_1"]
 script = ExtResource("2")
 damage_type = 0
-base = PackedFloat32Array(180.0, 280.0, 380.0)
+base = PackedFloat32Array(160.0, 250.0, 340.0)
 ad_ratio = 1.4
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]

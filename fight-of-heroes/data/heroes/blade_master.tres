@@ -37,7 +37,7 @@ glyph = "검"
 weapon = "sword"
 base_stats = {
 "armor": 32.0,
-"attack": 62.0,
+"attack": 59.0,
 "attack_speed": 0.85,
 "crit_chance": 0.1,
 "crit_damage": 1.75,

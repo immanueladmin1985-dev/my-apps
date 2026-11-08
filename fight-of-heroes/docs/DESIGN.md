@@ -4,7 +4,7 @@
 
 ## 0. 현재 상태와 작업 환경
 
-> PHASE 0~6 을 마쳤습니다(PHASE 3 보완: 맵 개편·역할 AI 포함). 결과는 `docs/PHASE1_REPORT.md` ~ `docs/PHASE6_REPORT.md`, `docs/PHASE3B_REPORT.md` 에 있습니다. 맵과 아군 AI 는 1-2 의 기본값 대신 PHASE3B 보고서의 설계(영웅의 계곡, 역할 AI)를 따릅니다. 구현하면서 바뀐 점:
+> PHASE 0~7 을 마쳤습니다(PHASE 3 보완: 맵 개편·역할 AI 포함, PHASE 7: 전투 이어 하기·밸런스 측정 확대). 결과는 `docs/PHASE1_REPORT.md` ~ `docs/PHASE7_REPORT.md`, `docs/PHASE3B_REPORT.md` 에 있습니다. 맵과 아군 AI 는 1-2 의 기본값 대신 PHASE3B 보고서의 설계(영웅의 계곡, 역할 AI)를 따릅니다. 구현하면서 바뀐 점:
 > Godot 4.7 에 기본 `VirtualJoystick` 클래스가 생겨 조이스틱은 `TouchJoystick` 으로, CombatManager 는 상태가 없는 정적 클래스로 만들었습니다.
 
 - 이 저장소(`my-apps`)에는 Godot 프로젝트 파일(`project.godot`, `.tscn`, `.gd`)이 없습니다. 보존해야 할 기존 게임 파일은 없으며, 다른 앱 폴더는 건드리지 않습니다.

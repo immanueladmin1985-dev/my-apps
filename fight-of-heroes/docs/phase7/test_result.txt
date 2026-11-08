@@ -1,0 +1,193 @@
+■ test_attack.gd
+  [통과] test_attack_interval (13 ms)
+  [통과] test_moves_into_range (9 ms)
+  [통과] test_ranged_projectile (4 ms)
+  [통과] test_projectile_target_dies (3 ms)
+  [통과] test_wall_blocks_attacks (24 ms)
+  [통과] test_dash_dodges_homing_attack (5 ms)
+  [통과] test_homing_attack_gives_up_out_of_range (6 ms)
+■ test_combat.gd
+  [통과] test_mitigation_formula (1 ms)
+  [통과] test_physical_and_magic_damage (0 ms)
+  [통과] test_penetration (1 ms)
+  [통과] test_critical_hit (0 ms)
+  [통과] test_shield_absorbs_first (0 ms)
+  [통과] test_shield_expires (2 ms)
+  [통과] test_death_once (0 ms)
+■ test_data.gd
+  [통과] test_registry_has_no_errors (1 ms)
+  [통과] test_packed_defaults_are_not_plain_arrays (2 ms)
+  [통과] test_heroes_are_valid (1 ms)
+  [통과] test_skills_are_valid (0 ms)
+  [통과] test_config_files_exist (0 ms)
+■ test_heroes.gd
+  [통과] test_ten_heroes (1 ms)
+  [통과] test_every_hero_casts_every_skill (308 ms)
+  [통과] test_passives_trigger (143 ms)
+  [통과] test_paladin_aura_and_saint_blessing (36 ms)
+  [통과] test_assassin_teleport_and_stealth (9 ms)
+  [통과] test_summoner_summons_fight_and_expire (77 ms)
+  [통과] test_summon_kill_credits_owner (1 ms)
+  [통과] test_dragon_form (5 ms)
+  [통과] test_saint_heals_ally_and_ai_uses_support (2 ms)
+  [통과] test_teams_have_no_duplicates (0 ms)
+■ test_input.gd
+  [통과] test_joystick_moves_hero (29 ms)
+  [통과] test_joystick_and_skill_together (17 ms)
+  [통과] test_drag_aim_and_cancel (29 ms)
+  [통과] test_attack_button_targets_nearest (51 ms)
+  [통과] test_tap_enemy_selects (14 ms)
+  [통과] test_hud_buttons_work_while_moving (20 ms)
+■ test_items.gd
+  [통과] test_all_items_valid (0 ms)
+  [통과] test_buy_applies_stats (1 ms)
+  [통과] test_shop_only_at_base (0 ms)
+  [통과] test_not_enough_gold (0 ms)
+  [통과] test_combine_pays_difference (1 ms)
+  [통과] test_deep_combine (0 ms)
+  [통과] test_full_inventory (1 ms)
+  [통과] test_sell_returns_gold_and_removes_stats (0 ms)
+  [통과] test_one_boots_only (0 ms)
+  [통과] test_potion_stacks_and_heals (5 ms)
+  [통과] test_cooldown_reduction (0 ms)
+  [통과] test_life_steal (6 ms)
+  [통과] test_recall (7 ms)
+  [통과] test_items_make_hero_stronger (60 ms)
+  [통과] test_ai_buys_its_build (1 ms)
+■ test_monsters.gd
+  [통과] test_camp_fights_back_together (5 ms)
+  [통과] test_leash_and_reset (17 ms)
+  [통과] test_camp_respawn_and_rewards (8 ms)
+  [통과] test_boss_slam_telegraph (6 ms)
+  [통과] test_boss_charge_line (8 ms)
+  [통과] test_boss_enrage_unlocks_pattern (3 ms)
+  [통과] test_boss_rewards_and_final_victory (33 ms)
+  [통과] test_ai_dodges_telegraph (6 ms)
+■ test_phase6.gd
+  [통과] test_record_match (2 ms)
+  [통과] test_watch_mode_is_not_recorded (1 ms)
+  [통과] test_history_is_capped (13 ms)
+  [통과] test_migrate_version_1 (0 ms)
+  [통과] test_bounty_on_streak (2 ms)
+  [통과] test_catch_up_xp (2 ms)
+  [통과] test_summary_and_mvp (1 ms)
+  [통과] test_audio_sounds_exist_and_play (1 ms)
+  [통과] test_menu_screens_build (123 ms)
+  [통과] test_new_game_manual_team (8 ms)
+■ test_progression.gd
+  [통과] test_curve_and_caps (0 ms)
+  [통과] test_level_up_grows_stats (1 ms)
+  [통과] test_learning_rules (0 ms)
+  [통과] test_all_points_fit_at_max_level (0 ms)
+  [통과] test_ai_auto_learns_ultimate_first (1 ms)
+  [통과] test_passive_gold (9 ms)
+  [통과] test_hero_kill_rewards (1 ms)
+■ test_resume.gd
+  [통과] test_snapshot_roundtrip (1183 ms)
+  [통과] test_save_file_and_menu_button (32 ms)
+  [통과] test_autosave_and_finish_clears (670 ms)
+WARNING: 저장한 전투를 되돌리지 못했습니다
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _ready (res://scripts/core/battle_scene.gd:93)
+         [1] _open (res://tests/unit/test_resume.gd:39)
+         [2] test_bad_snapshots_are_rejected (res://tests/unit/test_resume.gd:161)
+         [3] _ready (res://tests/test_runner.gd:64)
+         [4] after_each (res://tests/unit/test_resume.gd:21)
+         [5] after_each (res://tests/test_case.gd:44)
+  [통과] test_bad_snapshots_are_rejected (10 ms)
+■ test_skills.gd
+  [통과] test_no_mana_changes_nothing (1 ms)
+  [통과] test_cast_spends_mana_and_starts_cooldown (1 ms)
+  [통과] test_unit_target_range (1 ms)
+  [통과] test_dash_damages_enemies_on_path (3 ms)
+  [통과] test_area_damage_and_slow (1 ms)
+  [통과] test_piercing_projectile (4 ms)
+  [통과] test_delayed_trap_stuns (3 ms)
+  [통과] test_point_is_clamped_to_range (3 ms)
+  [통과] test_lingering_area_ticks (14 ms)
+  [통과] test_shield_and_haste_on_self (0 ms)
+  [통과] test_escape_leap (3 ms)
+■ test_stats.gd
+  [통과] test_level_growth (0 ms)
+  [통과] test_modifiers_add_and_remove (1 ms)
+  [통과] test_defaults_and_clamps (0 ms)
+■ test_status.gd
+  [통과] test_stun_blocks_everything (5 ms)
+  [통과] test_slow_and_haste (2 ms)
+  [통과] test_duration_refresh (1 ms)
+■ test_team.gd
+  [통과] test_kill_and_assist (1 ms)
+  [통과] test_assist_window_expires (1 ms)
+  [통과] test_kill_by_status_credits_last_attacker (0 ms)
+  [통과] test_victory_once (1 ms)
+  [통과] test_allies_do_not_overlap (10 ms)
+  [통과] test_gather_brings_allies (148 ms)
+  [통과] test_allies_do_not_follow_player (798 ms)
+  [통과] test_roles_are_distinct (11 ms)
+  [통과] test_roles_go_to_their_areas (802 ms)
+  [통과] test_allies_join_player_on_boss (52 ms)
+  [통과] test_ally_supports_attacked_player (44 ms)
+  [통과] test_focus_target_is_weakest_near (21 ms)
+  [통과] test_enemy_fountain_hurts (26 ms)
+■ test_sim_boss.gd
+       최종 보스: 72초 만에 처치, 영웅 사망 0, 피하기 22번
+  [통과] test_ai_team_kills_final_boss (1815 ms)
+       중립 보스: 50초 만에 처치, 영웅 사망 0, 피하기 29번
+  [통과] test_ai_team_kills_neutral_boss (1604 ms)
+■ test_sim_duel.gd
+       normal: 검성 Lv1 킬 0 데스 0 스킬 [16, 0, 0, 0] 최대 끼임 0.00초 | 엘프 궁수 Lv1 킬 0 데스 0 스킬 [21, 0, 0, 0] 최대 끼임 0.00초 / 점수 0:0 / 부활 0 / 최저 체력 [4, 9]
+  [통과] test_duel_normal (9664 ms)
+       hard: 엘프 궁수 Lv1 킬 0 데스 1 스킬 [21, 0, 0, 0] 최대 끼임 0.00초 | 검성 Lv2 킬 1 데스 0 스킬 [15, 1, 0, 0] 최대 끼임 0.00초 / 점수 0:1 / 부활 0 / 최저 체력 [0, 4]
+  [통과] test_duel_hard_mirror_side (10011 ms)
+■ test_sim_game.gd
+       normal: 결과 레드(kills) 444초, 점수 4:15, 레벨 ["6/4", "5/2", "5/2", "8/3", "7/4", "6/2"], 몬스터 98, 보스 []
+         120초 레벨 [3, 2, 2, 3, 3, 3] 점수 1:3
+         240초 레벨 [4, 3, 3, 5, 5, 5] 점수 2:7
+         360초 레벨 [5, 5, 5, 6, 6, 5] 점수 3:11
+  [통과] test_full_match_kills (26715 ms)
+       hard: 결과 블루(kills) 583초, 점수 15:9, 레벨 ["9/5", "10/4", "9/4", "7/4", "7/3", "7/2"], 몬스터 135, 보스 ["forest_guardian→블루", "lava_giant→블루"]
+         120초 레벨 [2, 2, 2, 1, 1, 1] 점수 5:0
+         240초 레벨 [4, 4, 4, 4, 4, 4] 점수 7:3
+         360초 레벨 [5, 6, 5, 6, 5, 5] 점수 8:7
+         480초 레벨 [7, 8, 7, 7, 6, 6] 점수 12:8
+  [통과] test_full_match_hard (37973 ms)
+■ test_sim_team.gd
+       normal: 점수 13:2, 킬/데스/도움 블검 Lv4 6/1/4 블궁 Lv4 1/0/7 블검 Lv4 6/1/3 레궁 Lv2 1/4/1 레검 Lv3 1/5/1 레궁 Lv2 0/4/2, 부활 14
+  [통과] test_team_battle_normal (17252 ms)
+       hard: 점수 3:7, 킬/데스/도움 블궁 Lv4 2/2/1 블궁 Lv4 1/2/2 블검 Lv4 0/3/2 레검 Lv5 3/1/3 레검 Lv4 3/1/2 레궁 Lv5 1/1/5, 부활 10
+  [통과] test_team_battle_hard (13191 ms)
+       normal: 점수 5:5, 킬/데스/도움 블화 Lv4 1/2/4 블성 Lv4 0/1/5 블무 Lv4 4/2/1 레암 Lv4 2/2/2 레녀 Lv4 1/2/4 레용 Lv4 2/1/2, 부활 9
+  [통과] test_team_battle_new_heroes_a (13966 ms)
+       hard: 점수 11:2, 킬/데스/도움 블소 Lv5 2/1/9 블빙 Lv6 7/0/4 블검 Lv5 2/1/8 레궁 Lv3 0/3/1 레무 Lv4 1/4/1 레성 Lv3 1/4/0, 부활 12
+  [통과] test_team_battle_new_heroes_b (16479 ms)
+       목표 킬 3: 블루 팀 승리, 경기 시간 20초
+  [통과] test_match_ends_at_kill_target (729 ms)
+시험 120개 중 120개 통과, 실패 0건 (154.9초)
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+FLOW [통과] 메인 메뉴 (res://scenes/menu/main_menu.tscn)
+FLOW [통과] 새 게임 화면 (res://scenes/selection/new_game.tscn)
+FLOW [통과] 전투 1 (res://scenes/battlefield/battle.tscn)
+FLOW [통과] 결과 1 (res://scenes/results/results.tscn)
+FLOW [통과] 기록 저장 (경기 1)
+FLOW [통과] 전투 2 (다시 하기) (res://scenes/battlefield/battle.tscn)
+FLOW [통과] 결과 2 (res://scenes/results/results.tscn)
+FLOW [통과] 메인 메뉴로 (res://scenes/menu/main_menu.tscn)
+FLOW [통과] 전투 3 (이어 하기용) (res://scenes/battlefield/battle.tscn)
+FLOW [통과] 저장하고 처음 화면 (res://scenes/menu/main_menu.tscn)
+FLOW [통과] 메인 메뉴에 이어 하기 버튼
+FLOW [통과] 이어 하기 (res://scenes/battlefield/battle.tscn)
+FLOW [통과] 전투 되돌림 (저장 3.0초, 불러온 뒤 3.0초, 일시정지 true)
+FLOW [통과] 결과 3 (res://scenes/results/results.tscn)
+FLOW [통과] 경기가 끝나면 저장한 전투를 지움
+FLOW [통과] 메인 메뉴로 (res://scenes/menu/main_menu.tscn)
+FLOW [통과] 열기 hero_codex.tscn (res://scenes/menu/hero_codex.tscn)
+FLOW [통과] 뒤로 (res://scenes/menu/main_menu.tscn)
+FLOW [통과] 열기 item_codex.tscn (res://scenes/menu/item_codex.tscn)
+FLOW [통과] 뒤로 (res://scenes/menu/main_menu.tscn)
+FLOW [통과] 열기 records.tscn (res://scenes/menu/records.tscn)
+FLOW [통과] 뒤로 (res://scenes/menu/main_menu.tscn)
+FLOW [통과] 열기 settings.tscn (res://scenes/menu/settings.tscn)
+FLOW [통과] 뒤로 (res://scenes/menu/main_menu.tscn)
+FLOW 결과: 성공

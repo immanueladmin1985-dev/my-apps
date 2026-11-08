@@ -45,6 +45,17 @@ func _ready() -> void:
 	menu.alignment = BoxContainer.ALIGNMENT_CENTER
 	menu.add_theme_constant_override("separation", 12)
 	right.add_child(menu)
+	var snap := SaveManager.load_battle()
+	if BattleSnapshot.make_config(snap) != null:
+		var t := int(snap.get("elapsed", 0.0))
+		var k: Array = snap.get("kills", [0, 0])
+		var cont := UiKit.button("이어 하기", Vector2(340, 70), 26)
+		cont.name = "이어 하기"
+		cont.pressed.connect(resume)
+		menu.add_child(cont)
+		var info := UiKit.label("%d:%02d · 블루 %d : %d 레드" % [t / 60, t % 60, int(k[0]), int(k[1])], 17, UiKit.MUTED)
+		info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		menu.add_child(info)
 	for m in MENU:
 		var b := UiKit.button(m[0], Vector2(340, 70), 26)
 		b.name = m[0]
@@ -53,6 +64,11 @@ func _ready() -> void:
 	var q := UiKit.button("게임 종료", Vector2(340, 62), 22)
 	q.pressed.connect(on_back)
 	menu.add_child(q)
+
+
+func resume() -> void:
+	if not GameManager.resume_battle():
+		UiKit.confirm(self, "저장한 전투를 불러오지 못했습니다.", "확인", func(): GameManager.go_main())
 
 
 func open(path: String) -> void:

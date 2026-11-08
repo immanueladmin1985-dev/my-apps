@@ -67,6 +67,38 @@ func save_data() -> bool:
 	return true
 
 
+## 진행 중인 전투 저장 (이어 하기). 설정·기록과 따로 <저장 파일 이름>_battle.json 에 둔다.
+func battle_path() -> String:
+	return save_path.get_basename() + "_battle.json"
+
+
+func save_battle(snap: Dictionary) -> bool:
+	var f := FileAccess.open(battle_path(), FileAccess.WRITE)
+	if f == null:
+		return false
+	f.store_string(JSON.stringify(snap))
+	return true
+
+
+func load_battle() -> Dictionary:
+	if not FileAccess.file_exists(battle_path()):
+		return {}
+	var f := FileAccess.open(battle_path(), FileAccess.READ)
+	if f == null:
+		return {}
+	var parsed = JSON.parse_string(f.get_as_text())
+	return parsed if parsed is Dictionary else {}
+
+
+func has_battle() -> bool:
+	return not load_battle().is_empty()
+
+
+func clear_battle() -> void:
+	if FileAccess.file_exists(battle_path()):
+		DirAccess.remove_absolute(battle_path())
+
+
 func get_setting(key: String, default_value = null):
 	return data.get("settings", {}).get(key, default_value)
 

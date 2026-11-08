@@ -107,7 +107,7 @@ func _ready() -> void:
 	brow.add_child(UiKit.spacer())
 	var go := UiKit.button("시작", Vector2(200, 60), 26)
 	go.name = "StartButton"
-	go.pressed.connect(start)
+	go.pressed.connect(start_pressed)
 	brow.add_child(go)
 
 	var last: String = SaveManager.get_setting("last_hero", "blade_master")
@@ -217,6 +217,14 @@ func build_config() -> MatchConfig:
 	elif mode == "practice":
 		c.kill_target = mini(c.kill_target, 10)
 	return c
+
+
+## 시작 버튼. 이어 할 전투가 저장돼 있으면 사라진다고 먼저 묻는다.
+func start_pressed() -> void:
+	if SaveManager.has_battle():
+		UiKit.confirm(self, "저장해 둔 전투가 있습니다. 새 게임을 시작하면 저장한 전투는 사라집니다.", "새 게임 시작", start)
+	else:
+		start()
 
 
 func start() -> void:

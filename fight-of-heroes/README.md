@@ -3,7 +3,7 @@
 오프라인 3대3 2D 모바일 AOS 게임입니다. Godot 4.7, GDScript, 안드로이드 가로 화면용입니다.
 
 - 설계: [docs/DESIGN.md](docs/DESIGN.md)
-- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md), [PHASE 3 보완](docs/PHASE3B_REPORT.md), [PHASE 4](docs/PHASE4_REPORT.md), [PHASE 5](docs/PHASE5_REPORT.md), [PHASE 6](docs/PHASE6_REPORT.md)
+- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md), [PHASE 3 보완](docs/PHASE3B_REPORT.md), [PHASE 4](docs/PHASE4_REPORT.md), [PHASE 5](docs/PHASE5_REPORT.md), [PHASE 6](docs/PHASE6_REPORT.md), [PHASE 7](docs/PHASE7_REPORT.md)
 
 ## 실행과 시험
 
@@ -11,6 +11,7 @@
 # Godot 4.7.2 실행 파일 경로를 GODOT 에 넣는다
 GODOT=/경로/godot tools/run_tests.sh            # 전체 자동 시험 (시뮬레이션과 전체 흐름 시험 포함)
 GODOT=/경로/godot tools/run_tests.sh --balance --games=40   # 밸런스 측정 (영웅별 승률)
+GODOT=/경로/godot tools/balance.sh 120 4       # 밸런스 측정을 프로세스 4개로 나눠 120판
 GODOT=/경로/godot tools/run_tests.sh --fast     # 시뮬레이션 빼고
 GODOT=/경로/godot tools/run_tests.sh --only=test_skills
 

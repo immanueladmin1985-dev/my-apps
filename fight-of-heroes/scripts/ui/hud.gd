@@ -256,7 +256,7 @@ func _build() -> void:
 	pause_panel = _make_dialog("일시정지", [
 		["계속하기", set_paused.bind(false)],
 		["다시 시작", func(): GameManager.restart_match()],
-		["처음 화면", func(): GameManager.go_main()],
+		["저장하고 처음 화면", func(): GameManager.leave_battle()],
 	])
 	result_panel = _make_dialog("", [
 		["다시 하기", func(): GameManager.restart_match()],

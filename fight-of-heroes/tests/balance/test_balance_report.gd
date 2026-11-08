@@ -1,16 +1,19 @@
 extends TestCase
 ## 밸런스 측정: 무작위 3대3 경기를 AI 끼리 여러 판 돌려 영웅별 승률·평균 킬/데스를 출력한다.
-## 실행: tools/run_tests.sh --balance [--games=40]  (기본 시험에는 들어가지 않는다)
+## 실행: tools/run_tests.sh --balance [--games=40] [--first=0]  (기본 시험에는 들어가지 않는다)
+## 여러 프로세스로 나눠 돌리고 합치려면 tools/balance.sh 를 쓴다 (BALANCE_RAW 줄을 합친다).
 
 const BATTLE := preload("res://scenes/battlefield/battle.tscn")
 
 
 func test_balance_report() -> void:
 	var games := int(GameManager.dev_args.get("games", "30"))
+	var first := int(GameManager.dev_args.get("first", "0"))
 	var stat := {}
 	var lengths: Array = []
 	var stomps := 0
-	for g in games:
+	for i in games:
+		var g := first + i
 		var pool: Array = DataRegistry.ids("heroes")
 		seed(1000 + g)
 		pool.shuffle()
@@ -48,6 +51,8 @@ func test_balance_report() -> void:
 	var ids: Array = stat.keys()
 	ids.sort_custom(func(a, b): return float(stat[a].wins) / stat[a].games > float(stat[b].wins) / stat[b].games)
 	print("BALANCE %d판, 평균 길이 %.0f초, 일방적인 경기(진 팀 3킬 이하) %d판" % [games, lengths.reduce(func(a, b): return a + b, 0.0) / maxf(1, games), stomps])
+	print("BALANCE_RAW_GAMES %d %d %d" % [games, roundi(lengths.reduce(func(a, b): return a + b, 0.0)), stomps])
 	for id in ids:
 		var e: Dictionary = stat[id]
+		print("BALANCE_RAW %s %d %d %d %d %d" % [id, e.games, e.wins, e.kills, e.deaths, roundi(e.damage)])
 		print("BALANCE %-14s 승률 %3d%% (%d판)  킬 %.1f  데스 %.1f  영웅 피해 %d" % [id, roundi(100.0 * e.wins / e.games), e.games, float(e.kills) / e.games, float(e.deaths) / e.games, roundi(e.damage / e.games)])
