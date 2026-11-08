@@ -6,3 +6,4 @@ build/
 *.keystore
 *.idsig
 export_credentials.cfg
+__pycache__/
