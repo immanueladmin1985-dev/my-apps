@@ -34,7 +34,11 @@ jobs:
         run: |
           mkdir -p "$HOME/godot-bin"
           if [ ! -x "$HOME/godot-bin/godot" ]; then
-            curl -fsSL --retry 6 --retry-delay 15 --retry-all-errors -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+            F="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+            get() { curl -fsSL --retry 3 --retry-delay 10 --retry-all-errors -o godot.zip "$1"; }
+            get "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/$F" \
+              || get "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/$F" \
+              || get "https://downloads.godotengine.org/?version=${GODOT_VERSION}&flavor=stable&slug=linux.x86_64.zip&platform=linux.64"
             unzip -q godot.zip
             mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/godot-bin/godot"
             rm godot.zip
@@ -51,7 +55,11 @@ jobs:
         run: |
           T="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
           if [ ! -f "$T/android_release.apk" ]; then
-            curl -fsSL --retry 6 --retry-delay 15 --retry-all-errors -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+            F="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+            get() { curl -fsSL --retry 3 --retry-delay 10 --retry-all-errors -o templates.tpz "$1"; }
+            get "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/$F" \
+              || get "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/$F" \
+              || get "https://downloads.godotengine.org/?version=${GODOT_VERSION}&flavor=stable&slug=export_templates.tpz&platform=templates"
             unzip -q templates.tpz 'templates/android_*' 'templates/version.txt'
             mkdir -p "$T"
             mv templates/* "$T/"
