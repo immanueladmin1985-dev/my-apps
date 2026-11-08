@@ -46,6 +46,14 @@ func _on_unit_damaged(target, info, amount: float) -> void:
 		damage_to_heroes[src] = damage_to_heroes.get(src, 0.0) + amount
 
 
+## team 이 상대보다 킬 점수가 뒤진 만큼 (앞서거나 같으면 0)
+func deficit(team: int) -> int:
+	if not kills.has(team):
+		return 0
+	var other: int = Enums.Team.BLUE + Enums.Team.RED - team
+	return maxi(0, kills[other] - kills[team])
+
+
 ## 처치당한 영웅의 현상금: 연속 처치 2번째부터 1번마다 60 골드 (최대 300)
 func bounty_of(victim) -> int:
 	var st: int = streaks.get(victim, 0)

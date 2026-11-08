@@ -69,7 +69,8 @@ func _ready() -> void:
 	battle_manager.ended.connect(func(_w, _r): GameManager.on_match_finished(battle_manager.summary(), self))
 	monster_manager.setup(world, map, config)
 	boss_manager.setup(battle_manager, hero_manager, monster_manager)
-	experience_manager.setup(hero_manager)
+	experience_manager.setup(hero_manager, battle_manager)
+	hero_manager.battle = battle_manager
 	ai_manager.monster_manager = monster_manager
 	shop_manager.setup(map)
 	ai_manager.shop = shop_manager

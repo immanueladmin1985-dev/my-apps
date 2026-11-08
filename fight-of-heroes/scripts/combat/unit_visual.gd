@@ -1,6 +1,7 @@
 class_name UnitVisual
 extends Node2D
-## 유닛 그림. 실제 스프라이트(SpriteFrames)가 있으면 그것을 쓰고, 없으면 도형으로 임시 그림을 그린다.
+## 유닛 그림. 실제 스프라이트(SpriteFrames)가 있으면 그것을 쓰고, 그다음으로 그림 한 장(assets/heroes·monsters/<id>.png)을,
+## 둘 다 없으면 도형으로 임시 그림을 그린다.
 ## 머리 위 체력·마나 막대, 보호막, 기절·둔화 표시도 여기서 그린다.
 
 const FONT := preload("res://assets/fonts/NotoSansKR-SemiBold-subset.ttf")
@@ -13,6 +14,16 @@ var is_player := false
 var sprite: AnimatedSprite2D = null
 var _swing := 0.0
 var _hit_flash := 0.0
+## 그림 한 장 방식: 기본 그림과 변신했을 때 그림 (없으면 null)
+var art: Texture2D = null
+var art_alt: Texture2D = null
+var art_alt_status := ""
+var _flip := false
+## 머리 위치 (체력 막대·상태 표시 기준). 도형이면 -radius, 그림이면 그림 위쪽.
+var _head_y := 0.0
+## 그림 높이 = 반지름 × 이 값
+const HERO_ART_SCALE := 4.2
+const MONSTER_ART_SCALE := 3.4
 
 
 func setup(u) -> void:
@@ -26,6 +37,12 @@ func setup(u) -> void:
 			sprite = AnimatedSprite2D.new()
 			sprite.sprite_frames = d.sprite_frames
 			add_child(sprite)
+		else:
+			var kind := "heroes" if u is Hero else "monsters"
+			art = Art.texture(kind, d.id)
+			if u is Hero:
+				art_alt = Art.texture(kind, d.id + "_dragon")
+				art_alt_status = "dragon_form"
 	u.attack.attack_started.connect(func(_t): _swing = 1.0)
 	u.health.changed.connect(_on_health_changed)
 
@@ -79,15 +96,59 @@ func _draw() -> void:
 	draw_set_transform(Vector2(0, r * 0.75), 0.0, Vector2(1.0, 0.4))
 	draw_circle(Vector2.ZERO, r * 1.1, Color(0, 0, 0, 0.35 * alpha))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if is_player:
-		draw_arc(Vector2.ZERO, r + 7.0, 0, TAU, 40, Color(1, 0.95, 0.4, 0.9 * alpha), 2.0)
-	if sprite == null:
-		_draw_placeholder(r, team_c, alpha)
+	_head_y = -r
+	var tex := _current_art()
+	if tex != null and sprite == null:
+		_draw_art(tex, r, team_c, alpha)
+	else:
+		if is_player:
+			draw_arc(Vector2.ZERO, r + 7.0, 0, TAU, 40, Color(1, 0.95, 0.4, 0.9 * alpha), 2.0)
+		if sprite == null:
+			_draw_placeholder(r, team_c, alpha)
 	if unit.is_dead:
 		_draw_dead_label(r)
 		return
 	_draw_status(r)
 	_draw_bars(r, team_c)
+
+
+func _current_art() -> Texture2D:
+	if art_alt != null and unit.status.has(art_alt_status):
+		return art_alt
+	return art
+
+
+## 그림 한 장 방식: 발밑에 팀 고리, 그 위에 그림. 바라보는 방향에 따라 좌우를 뒤집고, 움직이면 살짝 튀고, 공격하면 기울인다.
+func _draw_art(tex: Texture2D, r: float, team_c: Color, alpha: float) -> void:
+	var feet := r * 0.75
+	draw_set_transform(Vector2(0, feet), 0.0, Vector2(1.0, 0.42))
+	if unit.team != Enums.Team.NEUTRAL:
+		draw_arc(Vector2.ZERO, r * 1.25, 0, TAU, 40, Color(team_c, 0.95 * alpha), 4.0)
+	if is_player:
+		draw_arc(Vector2.ZERO, r * 1.25 + 7.0, 0, TAU, 40, Color(1, 0.95, 0.4, 0.9 * alpha), 3.0)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if unit.facing.x < -0.15:
+		_flip = true
+	elif unit.facing.x > 0.15:
+		_flip = false
+	var h := r * (HERO_ART_SCALE if unit is Hero else MONSTER_ART_SCALE)
+	var w := h * tex.get_width() / maxf(1.0, tex.get_height())
+	var bob := 0.0
+	if not unit.is_dead and unit.velocity.length() > 5.0:
+		bob = absf(sin(Time.get_ticks_msec() / 1000.0 * 11.0)) * h * 0.04
+	var lean := (_swing * 0.22) * (-1.0 if _flip else 1.0)
+	if unit.is_dead:
+		lean = PI * 0.5 * (-1.0 if _flip else 1.0)
+	var m := Color(1, 1, 1, alpha)
+	var tint: Color = unit.status.visual_tint()
+	if tint.a > 0.0:
+		m = Color(m.lerp(Color(tint, 1.0), tint.a * 0.6), alpha)
+	if _hit_flash > 0.0:
+		m = Color(1.0, 1.0 - _hit_flash * 0.55, 1.0 - _hit_flash * 0.55, alpha)
+	draw_set_transform(Vector2(0, feet - bob), lean, Vector2(-1.0 if _flip else 1.0, 1.0))
+	draw_texture_rect(tex, Rect2(-w * 0.5, -h, w, h), false, m)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_head_y = feet - h * 0.92
 
 
 func _draw_placeholder(r: float, team_c: Color, alpha: float) -> void:
@@ -138,7 +199,7 @@ func _draw_placeholder(r: float, team_c: Color, alpha: float) -> void:
 
 func _draw_bars(r: float, team_c: Color) -> void:
 	var w := maxf(52.0, r * 3.2)
-	var y := -r - 20.0
+	var y := _head_y - 20.0
 	var hp_ratio: float = unit.health.ratio()
 	var shield: float = unit.health.shield_total()
 	var max_hp: float = unit.health.max_hp()
@@ -159,7 +220,7 @@ func _draw_status(r: float) -> void:
 		var t := Time.get_ticks_msec() / 1000.0
 		for i in 3:
 			var a := t * 4.0 + i * TAU / 3.0
-			draw_circle(Vector2(cos(a) * 14.0, -r - 30.0 + sin(a) * 4.0), 3.5, Color(1, 0.9, 0.2))
+			draw_circle(Vector2(cos(a) * 14.0, _head_y - 30.0 + sin(a) * 4.0), 3.5, Color(1, 0.9, 0.2))
 	if unit.status.is_slowed():
 		draw_arc(Vector2.ZERO, r + 3.0, 0, TAU, 32, Color(0.4, 0.8, 1.0, 0.8), 2.0)
 
@@ -168,4 +229,4 @@ func _draw_dead_label(r: float) -> void:
 	var left = unit.get("respawn_left")
 	if left != null and left > 0.0:
 		var s := "%d" % ceili(left)
-		draw_string(FONT, Vector2(-6, -r - 8), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(1, 1, 1, 0.9))
+		draw_string(FONT, Vector2(-6, _head_y - 8), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(1, 1, 1, 0.9))

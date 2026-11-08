@@ -44,9 +44,13 @@ func _draw() -> void:
 		draw_rect(r, Color(0, 0, 0, 0.5))
 		if it != null:
 			draw_rect(r.grow(-3), it.color.darkened(0.3))
-			var fs := 20
-			var w := FONT.get_string_size(it.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-			draw_string(FONT, r.position + Vector2((SLOT - w) * 0.5, SLOT * 0.5 + fs * 0.36), it.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE)
+			var icon := Art.item_icon(it)
+			if icon != null:
+				draw_texture_rect(icon, r.grow(-4), false)
+			else:
+				var fs := 20
+				var w := FONT.get_string_size(it.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+				draw_string(FONT, r.position + Vector2((SLOT - w) * 0.5, SLOT * 0.5 + fs * 0.36), it.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE)
 			var n: int = hero.inventory.count_at(i)
 			if n > 1:
 				draw_string_outline(FONT, r.position + Vector2(SLOT - 15, SLOT - 5), str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 3, Color(0, 0, 0, 0.8))

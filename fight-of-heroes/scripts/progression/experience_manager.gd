@@ -3,11 +3,13 @@ extends Node
 ## 경험치와 골드 분배. 처치 보상과 시간당 골드를 준다. AI 와 플레이어에게 같은 규칙을 쓴다.
 
 var hero_manager: HeroManager
-var _gold_carry := 0.0
+var battle: BattleManager = null
+var _gold_carry := {}
 
 
-func setup(hm: HeroManager) -> void:
+func setup(hm: HeroManager, bm: BattleManager = null) -> void:
 	hero_manager = hm
+	battle = bm
 	EventBus.unit_died.connect(_on_unit_died)
 	EventBus.hero_killed.connect(_on_hero_killed)
 
@@ -38,12 +40,21 @@ static func credit_hero(victim, killer):
 func _physics_process(delta: float) -> void:
 	if hero_manager == null:
 		return
-	_gold_carry += DataRegistry.progression().passive_gold_per_sec * delta
-	if _gold_carry >= 1.0:
-		var g := int(_gold_carry)
-		_gold_carry -= g
-		for h in hero_manager.heroes:
-			h.add_gold(g)
+	# 시간당 골드. 킬 점수가 뒤진 팀은 더 받는다.
+	var cfg := DataRegistry.progression()
+	for team in [Enums.Team.BLUE, Enums.Team.RED]:
+		var carry: float = _gold_carry.get(team, 0.0) + cfg.passive_gold_per_sec * cfg.comeback_gold(_deficit(team)) * delta
+		if carry >= 1.0:
+			var g := int(carry)
+			carry -= g
+			for h in hero_manager.heroes:
+				if h.team == team:
+					h.add_gold(g)
+		_gold_carry[team] = carry
+
+
+func _deficit(team: int) -> int:
+	return battle.deficit(team) if battle != null else 0
 
 
 func give(h: Hero, xp: float, gold: int) -> void:
@@ -94,6 +105,7 @@ func _on_hero_killed(victim, killer, helpers: Array) -> void:
 	if gap > 0.0:
 		total *= 1.0 + minf(gap * 0.15, 0.6)
 	var kill_gold: int = cfg.hero_kill_gold + cfg.hero_kill_gold_per_level * victim.level
+	kill_gold = int(kill_gold * cfg.comeback_gold(_deficit(team)))
 	var assist_gold := int(kill_gold * cfg.assist_gold_ratio / maxf(1, helpers.size())) if not helpers.is_empty() else 0
 	for h in group:
 		var g: int = kill_gold if h == killer else (assist_gold if helpers.has(h) else 0)

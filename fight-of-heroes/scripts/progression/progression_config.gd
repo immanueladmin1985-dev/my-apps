@@ -25,6 +25,23 @@ extends Resource
 @export var hero_kill_gold_per_level: int = 20
 ## 영웅 처치 골드의 이 비율을 도움 영웅들이 나눠 받는다.
 @export var assist_gold_ratio: float = 0.5
+@export_group("따라잡기 (킬 점수가 뒤진 팀)")
+## 킬 차이 1마다 시간당 골드·영웅 처치 골드를 이만큼 더 준다.
+@export var comeback_gold_per_kill: float = 0.08
+@export var comeback_gold_max: float = 0.5
+## 킬 차이 1마다 부활 시간을 이만큼 줄인다.
+@export var comeback_respawn_per_kill: float = 0.06
+@export var comeback_respawn_max: float = 0.4
+
+
+## 킬 차이(뒤진 만큼)에 따른 골드 배율
+func comeback_gold(deficit: int) -> float:
+	return 1.0 + minf(maxf(0, deficit) * comeback_gold_per_kill, comeback_gold_max)
+
+
+## 킬 차이(뒤진 만큼)에 따른 부활 시간 배율
+func comeback_respawn(deficit: int) -> float:
+	return 1.0 - minf(maxf(0, deficit) * comeback_respawn_per_kill, comeback_respawn_max)
 
 
 func xp_to_next(level: int) -> float:

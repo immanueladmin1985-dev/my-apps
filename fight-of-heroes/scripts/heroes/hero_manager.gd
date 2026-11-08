@@ -5,6 +5,7 @@ extends Node
 const HERO_SCENE := preload("res://scenes/heroes/hero.tscn")
 
 var heroes: Array = []
+var battle: BattleManager = null
 var world: Node2D
 var map: MapData
 
@@ -31,7 +32,10 @@ func spawn(data: HeroData, team: int, index: int) -> Hero:
 
 
 func _on_hero_died(_killer, h: Hero) -> void:
-	h.respawn_left = DataRegistry.combat_config().respawn_time(h.level)
+	var t := DataRegistry.combat_config().respawn_time(h.level)
+	if battle != null:
+		t *= DataRegistry.progression().comeback_respawn(battle.deficit(h.team))
+	h.respawn_left = t
 
 
 var _fountain_tick: Dictionary = {}

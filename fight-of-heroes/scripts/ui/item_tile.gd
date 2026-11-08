@@ -41,8 +41,9 @@ func _draw() -> void:
 	if selected:
 		style.border_color = Color(1, 1, 1)
 	draw_style_box(style, r)
-	if item.icon != null:
-		draw_texture_rect(item.icon, r.grow(-8), false)
+	var icon := Art.item_icon(item)
+	if icon != null:
+		draw_texture_rect(icon, r.grow(-8), false, Color(1, 1, 1, 0.45 if dimmed else 1.0))
 	else:
 		var fs := int(size.y * 0.38)
 		var w := FONT.get_string_size(item.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x

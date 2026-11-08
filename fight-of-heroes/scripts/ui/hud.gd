@@ -357,6 +357,11 @@ func _process(delta: float) -> void:
 			var fb := int(ceil(monster_manager.time_to_final_boss()))
 			if fb > 0:
 				time_label.text += "  ·  최종 보스 %d:%02d" % [fb / 60, fb % 60]
+		if hero != null:
+			var d: int = battle.deficit(hero.team)
+			if d > 0:
+				var cfg := DataRegistry.progression()
+				time_label.text += "  ·  역전 보너스 골드 +%d%% 부활 -%d%%" % [roundi((cfg.comeback_gold(d) - 1.0) * 100.0), roundi((1.0 - cfg.comeback_respawn(d)) * 100.0)]
 	_update_boss_bar()
 	if hero != null and controller != null:
 		hp_bar.set_values(hero.health.hp, hero.health.max_hp(), hero.health.shield_total())
