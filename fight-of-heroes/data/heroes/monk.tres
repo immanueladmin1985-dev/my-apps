@@ -47,12 +47,12 @@ glyph = "무"
 weapon = "fist"
 base_stats = {
 "armor": 30.0,
-"attack": 57.0,
+"attack": 54.0,
 "attack_speed": 1.0,
 "crit_chance": 0.1,
 "hp_regen": 3.0,
 "magic_resist": 28.0,
-"max_hp": 660.0,
+"max_hp": 640.0,
 "max_mp": 280.0,
 "move_speed": 240.0,
 "mp_regen": 2.4
