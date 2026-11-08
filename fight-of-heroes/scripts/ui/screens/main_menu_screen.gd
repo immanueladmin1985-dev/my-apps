@@ -26,7 +26,7 @@ func _ready() -> void:
 	left.add_child(box)
 	box.add_child(UiKit.label("FIGHT OF HEROES", 56, UiKit.ACCENT))
 	box.add_child(UiKit.label("오프라인 3대3 영웅 대전", 22, UiKit.MUTED))
-	box.add_child(UiKit.spacer(false))
+	box.add_child(_lineup())
 	var r := SaveManager.records()
 	var total := int(r.games)
 	var rate := (100.0 * int(r.wins) / total) if total > 0 else 0.0
@@ -64,6 +64,43 @@ func _ready() -> void:
 	var q := UiKit.button("게임 종료", Vector2(340, 62), 22)
 	q.pressed.connect(on_back)
 	menu.add_child(q)
+
+
+## 영웅 그림 줄 세우기 (최근 영웅이 가운데, 그림이 없으면 빈 자리)
+func _lineup() -> Control:
+	var c := Control.new()
+	c.name = "Lineup"
+	c.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ids: Array = DataRegistry.ids("heroes").filter(func(id): return Art.has("heroes", id))
+	var last: String = SaveManager.get_setting("last_hero", "")
+	ids.erase(last)
+	ids.sort()
+	var picks: Array = ids.slice(0, 4)
+	if Art.has("heroes", last):
+		picks.insert(2 if picks.size() >= 2 else picks.size(), last)
+	c.draw.connect(func():
+		if picks.is_empty():
+			return
+		var n := picks.size()
+		# 높이는 남는 세로 공간과 가로 폭 중 작은 쪽에 맞춘다 (태블릿에서 메뉴 버튼을 가리지 않게).
+		var base := minf(c.size.y, c.size.x * 0.42)
+		var step := minf(c.size.x / (n + 0.6), base * 0.62)
+		for i in n:
+			# 가운데(최근 영웅)가 가장 크고 앞에 오도록, 바깥부터 그린다.
+			var order: int = [0, n - 1, 1, n - 2, n / 2][i] if n == 5 else i
+			var tex := Art.texture("heroes", picks[order])
+			var center := order == n / 2 and n == 5
+			var h := base * (0.98 if center else 0.8)
+			var w := h * tex.get_width() / float(tex.get_height())
+			var x := c.size.x * 0.5 + (order - (n - 1) * 0.5) * step - w * 0.5
+			var y := c.size.y - h
+			c.draw_set_transform(Vector2(x + w * 0.5, c.size.y), 0.0, Vector2(1, 0.25))
+			c.draw_circle(Vector2.ZERO, w * 0.35, Color(0, 0, 0, 0.35))
+			c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			c.draw_texture_rect(tex, Rect2(x, y, w, h), false, Color.WHITE if center else Color(0.82, 0.82, 0.85)))
+	return c
 
 
 func resume() -> void:

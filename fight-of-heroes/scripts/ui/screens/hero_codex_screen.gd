@@ -6,6 +6,8 @@ const STAT_ORDER := ["max_hp", "max_mp", "attack", "ability_power", "armor", "ma
 
 var list_buttons: Array = []
 var detail: VBoxContainer
+## 오른쪽 전신 그림 (그림이 없으면 숨김)
+var art_rect: TextureRect
 
 
 func _ready() -> void:
@@ -40,6 +42,13 @@ func _ready() -> void:
 	detail.add_theme_constant_override("separation", 8)
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ds.add_child(detail)
+	art_rect = TextureRect.new()
+	art_rect.name = "HeroArt"
+	art_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art_rect.custom_minimum_size = Vector2(380, 0)
+	art_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(art_rect)
 	show_hero(heroes[0].id)
 
 
@@ -49,6 +58,8 @@ func show_hero(id: String) -> void:
 	for c in detail.get_children():
 		c.queue_free()
 	var h := DataRegistry.hero(id)
+	art_rect.texture = Art.texture("heroes", h.id)
+	art_rect.visible = art_rect.texture != null
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 14)
 	detail.add_child(top)

@@ -80,20 +80,21 @@ func _draw() -> void:
 		var dirt := Art.texture("map", "ground_dirt")
 		if dirt != null:
 			_draw_textured_circle(pos, cfg.fountain_radius * 1.35, dirt)
-		draw_circle(pos, cfg.fountain_radius, Color(c, 0.1))
-		_draw_object("base_fountain", pos, cfg.fountain_radius * 2.0)
+		if not _draw_object("base_fountain", pos, cfg.fountain_radius * 2.0):
+			_draw_plain_fountain(pos, cfg.fountain_radius, c)
 		draw_arc(pos, cfg.fountain_radius, 0, TAU, 64, Color(c, 0.6), 4.0)
 		var toward_edge := -1.0 if pos.x < map.size.x * 0.5 else 1.0
-		_draw_object("shop", pos + Vector2(toward_edge * cfg.fountain_radius * 0.15, -cfg.fountain_radius * 0.95), 150.0)
+		var shop_pos := pos + Vector2(toward_edge * cfg.fountain_radius * 0.15, -cfg.fountain_radius * 0.95)
+		if not _draw_object("shop", shop_pos, 150.0):
+			_draw_plain_shop(shop_pos)
 	var wall := Art.texture("map", "wall_rock")
 	for r in map.obstacles:
-		draw_rect(r.grow(4), Color(0, 0, 0, 0.3))
 		if wall != null:
+			draw_rect(r.grow(4), Color(0, 0, 0, 0.3))
 			draw_texture_rect(wall, r, true)
 			draw_rect(r, Color(0, 0, 0, 0.35), false, 3.0)
 		else:
-			draw_rect(r, map.obstacle_color)
-			draw_rect(r, map.obstacle_color.lightened(0.25), false, 3.0)
+			_draw_plain_rock(r)
 	draw_rect(Rect2(Vector2.ZERO, map.size), Color(0.5, 0.45, 0.35), false, 6.0)
 
 
@@ -127,10 +128,90 @@ func _draw_camp(c: CampData) -> void:
 		draw_arc(c.position, cr, 0, TAU, 48, Color(0.8, 0.5, 1.0, 0.35) if big else Color(1, 1, 1, 0.12), 2.0)
 
 
-func _draw_object(id: String, center: Vector2, size: float) -> void:
+func _draw_object(id: String, center: Vector2, size: float) -> bool:
 	var tex := Art.texture("map", id)
 	if tex != null:
 		draw_texture_rect(tex, Rect2(center - Vector2(size, size) * 0.5, Vector2(size, size)), false)
+		return true
+	return false
+
+
+# ---- 그림이 없을 때 쓰는 모양 (그림과 비슷한 밝은 색감, 굵은 외곽선) ----
+
+const OUTLINE := Color(0.16, 0.13, 0.12)
+
+
+## 바위 벽: 그림자, 옆면(어두움), 윗면(밝음), 돌 조각, 이끼. 벽마다 정해진 무늬.
+func _draw_plain_rock(r: Rect2) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector4(r.position.x, r.position.y, r.size.x, r.size.y))
+	var side := minf(14.0, r.size.y * 0.25)
+	_round_box(Rect2(r.position + Vector2(6, 10), r.size), Color(0, 0, 0, 0.28), Color(0, 0, 0, 0), 0.0)
+	_round_box(r, Color(0.36, 0.32, 0.29), OUTLINE, 3.0)
+	var top := Rect2(r.position + Vector2(3, 3), r.size - Vector2(6, 6 + side))
+	_round_box(top, Color(0.56, 0.52, 0.46), Color(0, 0, 0, 0), 0.0)
+	# 돌 조각
+	var n := int(clampf(r.get_area() / 2600.0, 3.0, 60.0))
+	for i in n:
+		var p := Vector2(rng.randf_range(top.position.x + 10.0, top.end.x - 10.0), rng.randf_range(top.position.y + 8.0, top.end.y - 8.0))
+		var rad := rng.randf_range(5.0, minf(16.0, minf(top.size.x, top.size.y) * 0.3))
+		var tone := rng.randf_range(-0.08, 0.06)
+		draw_set_transform(p, rng.randf_range(0.0, PI), Vector2(1.0, rng.randf_range(0.55, 0.85)))
+		draw_circle(Vector2.ZERO, rad, Color(0.6 + tone, 0.56 + tone, 0.5 + tone))
+		draw_arc(Vector2.ZERO, rad, PI * 0.1, PI * 1.1, 10, Color(0.3, 0.27, 0.25, 0.8), 1.5)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# 이끼
+	for i in int(clampf(r.size.x / 90.0, 1.0, 8.0)):
+		var mp := Vector2(rng.randf_range(r.position.x + 8.0, r.end.x - 8.0), top.position.y + rng.randf_range(0.0, 6.0))
+		draw_set_transform(mp, 0.0, Vector2(1.0, 0.5))
+		draw_circle(Vector2.ZERO, rng.randf_range(6.0, 13.0), Color(0.38, 0.55, 0.25, 0.9))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _round_box(r: Rect2, fill: Color, border: Color, width: float) -> void:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = fill
+	sb.border_color = border
+	sb.set_border_width_all(int(width))
+	sb.set_corner_radius_all(int(clampf(minf(r.size.x, r.size.y) * 0.3, 2.0, 14.0)))
+	sb.anti_aliasing = true
+	draw_style_box(sb, r)
+
+
+## 기지: 돌 광장, 계단 고리, 가운데 팀 색 수정
+func _draw_plain_fountain(pos: Vector2, radius: float, team_c: Color) -> void:
+	draw_circle(pos + Vector2(0, 8), radius * 0.62, Color(0, 0, 0, 0.2))
+	draw_circle(pos, radius * 0.62, Color(0.72, 0.69, 0.63))
+	draw_arc(pos, radius * 0.62, 0, TAU, 48, OUTLINE, 3.0)
+	draw_arc(pos, radius * 0.5, 0, TAU, 48, Color(0.55, 0.52, 0.47), 3.0)
+	draw_circle(pos, radius * 0.3, Color(0.45, 0.65, 0.85))
+	draw_arc(pos, radius * 0.3, 0, TAU, 40, OUTLINE, 3.0)
+	var h := radius * 0.22
+	var pts := PackedVector2Array([pos + Vector2(0, -h * 1.6), pos + Vector2(h * 0.6, -h * 0.2), pos + Vector2(0, h * 0.5), pos + Vector2(-h * 0.6, -h * 0.2)])
+	draw_colored_polygon(pts, team_c.lightened(0.3))
+	pts.append(pts[0])
+	draw_polyline(pts, OUTLINE, 2.5)
+	draw_line(pos + Vector2(0, -h * 1.6), pos + Vector2(0, h * 0.5), Color(1, 1, 1, 0.5), 2.0)
+
+
+## 상점: 줄무늬 천막과 상자
+func _draw_plain_shop(pos: Vector2) -> void:
+	var w := 92.0
+	var h := 40.0
+	_round_box(Rect2(pos + Vector2(-w * 0.5 + 6, -4 + 8), Vector2(w, h)), Color(0, 0, 0, 0.25), Color(0, 0, 0, 0), 0.0)
+	_round_box(Rect2(pos + Vector2(-w * 0.5, -4), Vector2(w, h)), Color(0.55, 0.38, 0.22), OUTLINE, 3.0)
+	var top := pos.y - 34.0
+	for i in 4:
+		var x0 := pos.x - w * 0.5 - 6.0 + i * (w + 12.0) / 4.0
+		var x1 := x0 + (w + 12.0) / 4.0
+		var poly := PackedVector2Array([Vector2(x0, top), Vector2(x1, top), Vector2(x1, pos.y), Vector2(x0, pos.y)])
+		draw_colored_polygon(poly, Color(0.9, 0.3, 0.25) if i % 2 == 0 else Color(0.96, 0.92, 0.82))
+	draw_rect(Rect2(pos.x - w * 0.5 - 6.0, top, w + 12.0, 34.0), OUTLINE, false, 3.0)
+	for i in 2:
+		var cx := pos.x - 22.0 + i * 30.0
+		_round_box(Rect2(cx, pos.y + 6.0, 18.0, 16.0), Color(0.7, 0.5, 0.3), OUTLINE, 2.0)
+	draw_circle(pos + Vector2(34, 16), 7.0, Color(0.85, 0.25, 0.25))
+	draw_arc(pos + Vector2(34, 16), 7.0, 0, TAU, 16, OUTLINE, 2.0)
 
 
 ## 반복 무늬로 채운 원 (무늬는 맵 좌표에 맞춰 이어진다)

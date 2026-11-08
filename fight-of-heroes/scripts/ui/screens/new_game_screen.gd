@@ -23,6 +23,8 @@ var slot_buttons: Array = []
 var diff_buttons: Array = []
 var kill_buttons: Array = []
 var info: Label
+var skills_label: Label
+var art_rect: TextureRect
 var slot_row: HBoxContainer
 
 
@@ -86,7 +88,24 @@ func _ready() -> void:
 		slot_row.add_child(b)
 		slot_buttons.append(b)
 
-	box.add_child(UiKit.spacer(false))
+	# 남는 자리: 고른 영웅의 전신 그림과 스킬 목록 (그림이 없으면 스킬 목록만)
+	var preview := HBoxContainer.new()
+	preview.name = "Preview"
+	preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	preview.add_theme_constant_override("separation", 20)
+	box.add_child(preview)
+	art_rect = TextureRect.new()
+	art_rect.name = "HeroArt"
+	art_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art_rect.custom_minimum_size = Vector2(220, 0)
+	art_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	preview.add_child(art_rect)
+	preview.resized.connect(func(): art_rect.custom_minimum_size.x = clampf(preview.size.y * 0.8, 160.0, 520.0))
+	skills_label = UiKit.wrap_label("", 15, UiKit.MUTED)
+	skills_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	skills_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	preview.add_child(skills_label)
 	var brow := HBoxContainer.new()
 	brow.add_theme_constant_override("separation", 8)
 	box.add_child(brow)
@@ -190,8 +209,25 @@ func _refresh() -> void:
 	var h := DataRegistry.hero(slots[shown_slot]) if slots[shown_slot] != "" else null
 	if h == null:
 		info.text = "이 칸은 무작위 영웅으로 채웁니다. 영웅을 누르면 이 칸에 넣습니다."
+		art_rect.texture = null
+		skills_label.text = ""
 	else:
 		info.text = "%s · %s · 난이도 %s · 기본 역할 %s\n패시브 %s" % [h.display_name, h.role, "★".repeat(h.difficulty), ROLE_NAMES.get(h.preferred_role, ""), h.passive_description]
+		art_rect.texture = Art.texture("heroes", h.id)
+		art_rect.visible = art_rect.texture != null
+		skills_label.text = _skill_lines(h)
+
+
+func _skill_lines(h: HeroData) -> String:
+	var lines: Array = [h.lore, ""]
+	var keys := ["Q", "W", "E", "R"]
+	for i in mini(4, h.skills.size()):
+		var sk: SkillData = h.skills[i]
+		if sk == null:
+			continue
+		var d: String = sk.description if sk.get("description") != null else ""
+		lines.append("%s  %s%s" % [keys[i], sk.display_name, (" · " + d) if d != "" else ""])
+	return "\n".join(lines)
 
 
 func build_config() -> MatchConfig:
