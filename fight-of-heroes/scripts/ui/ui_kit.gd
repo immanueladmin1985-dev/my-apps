@@ -192,9 +192,7 @@ static func hero_badge(h: HeroData, size := 44.0) -> Control:
 		var r := size * 0.5
 		c.draw_circle(Vector2(r, r), r, Color(0, 0, 0, 0.5))
 		c.draw_circle(Vector2(r, r), r - 3.0, h.color)
-		var face := Art.texture("heroes", h.id)
-		if face != null:
-			Art.draw_portrait(c, face, Vector2(r, r), r - 3.0)
+		if Art.draw_hero_face(c, h.id, Vector2(r, r), r - 3.0):
 			return
 		var fs := int(size * 0.45)
 		var w := FONT.get_string_size(h.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x

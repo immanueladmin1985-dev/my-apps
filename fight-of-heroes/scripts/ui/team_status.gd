@@ -39,9 +39,7 @@ func _draw() -> void:
 			draw_arc(center, R + 6.0, 0, TAU, 32, Color(1, 0.95, 0.4, 0.9), 2.0)
 		var text := h.data.glyph
 		var fs := 18
-		var face := Art.texture("heroes", h.data.id)
-		if face != null:
-			Art.draw_portrait(self, face, center, R - 2.0, Color(0.45, 0.45, 0.45) if h.is_dead else Color.WHITE)
+		if Art.draw_hero_face(self, h.data.id, center, R - 2.0, Color(0.45, 0.45, 0.45) if h.is_dead else Color.WHITE):
 			text = ""
 		if h.is_dead:
 			text = str(ceili(h.respawn_left))

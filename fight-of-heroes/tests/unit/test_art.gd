@@ -18,11 +18,22 @@ func _tex(w := 64, h := 128, c := Color(0.8, 0.3, 0.3)) -> Texture2D:
 
 func test_no_art_uses_shapes() -> void:
 	check(Art.texture("heroes", "no_such_hero") == null, "없는 그림은 null")
+	Art.set_override("heroes", "blade_master", null)
+	Art.set_override("items", "dagger", null)
 	var h := spawn_hero("blade_master", Enums.Team.BLUE, Vector2(300, 300))
 	await frames(2)
 	var v: UnitVisual = h.get_node("Visual")
 	check(v.art == null, "그림이 없으면 도형으로 그림")
 	check(Art.item_icon(ItemManager.get_item("dagger")) == null, "아이콘이 없으면 글자로 그림")
+
+
+func test_real_art_files() -> void:
+	# 저장소에 들어 있는 그림: 영웅 10명은 모두 그림과 얼굴 그림이 있어야 한다.
+	for id in DataRegistry.ids("heroes"):
+		check(Art.has("heroes", id), "영웅 그림: " + id)
+		check(Art.has("heroes", id + "_face"), "얼굴 그림: " + id)
+	for id in DataRegistry.ids("monsters"):
+		check(Art.has("monsters", id), "몬스터 그림: " + id)
 
 
 func test_hero_and_monster_art() -> void:
