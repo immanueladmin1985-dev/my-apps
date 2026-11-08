@@ -47,7 +47,7 @@ color = Color(1.0, 0.95, 0.75, 1)
 glyph = "녀"
 weapon = "staff"
 base_stats = {
-"ability_power": 35.0,
+"ability_power": 42.0,
 "armor": 24.0,
 "attack": 50.0,
 "attack_speed": 0.75,
