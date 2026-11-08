@@ -24,13 +24,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Godot 캐시
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-bin
+          key: godot-bin-${{ env.GODOT_VERSION }}
+
       - name: Godot 받기
         run: |
-          mkdir -p "$HOME/bin"
-          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
-          unzip -q godot.zip
-          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/bin/godot"
-          echo "$HOME/bin" >> "$GITHUB_PATH"
+          mkdir -p "$HOME/godot-bin"
+          if [ ! -x "$HOME/godot-bin/godot" ]; then
+            curl -fsSL --retry 6 --retry-delay 15 --retry-all-errors -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+            unzip -q godot.zip
+            mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/godot-bin/godot"
+            rm godot.zip
+          fi
+          echo "$HOME/godot-bin" >> "$GITHUB_PATH"
 
       - name: 내보내기 템플릿 캐시
         uses: actions/cache@v4
@@ -42,7 +51,7 @@ jobs:
         run: |
           T="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
           if [ ! -f "$T/android_release.apk" ]; then
-            curl -sSL -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+            curl -fsSL --retry 6 --retry-delay 15 --retry-all-errors -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
             unzip -q templates.tpz 'templates/android_*' 'templates/version.txt'
             mkdir -p "$T"
             mv templates/* "$T/"
