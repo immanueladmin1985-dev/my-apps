@@ -125,7 +125,10 @@ const Shorts = (() => {
     $('#sh-file').onchange = e => { const f = e.target.files && e.target.files[0]; if (f) load(f); };
     if (!X.file) return;
     v.src = X.url;
-    v.addEventListener('loadedmetadata', () => {
+    v.addEventListener('loadedmetadata', async () => {
+      if (!isFinite(v.duration)){   // 길이 정보가 없는 영상: 끝으로 한 번 가 봐서 길이를 알아냄
+        await new Promise(ok => { const f = () => { if (isFinite(v.duration)){ v.removeEventListener('durationchange', f); ok(); } }; v.addEventListener('durationchange', f); v.currentTime = 1e9; setTimeout(ok, 4000); });
+      }
       X.dur = isFinite(v.duration) ? v.duration : 0;
       if (!(X.b > X.a) || X.b > X.dur){ X.a = 0; X.b = Math.min(X.dur, MAXLEN); }
       ui(); seekPaint(X.a + 0.05);
@@ -190,12 +193,17 @@ const Shorts = (() => {
       await v.play();
       const o = { title: X.title, church: O.church, foot: O.foot, zoom: +O.zoom, px: +O.px, py: +O.py }, len = X.b - X.a;
       await new Promise(done => {
+        let fin = false;
+        const end = () => { if (fin) return; fin = true; clearInterval(iv); done(); };
+        v.onended = end;
+        const iv = setInterval(() => { if (X.stop || v.ended || v.currentTime >= X.b) end(); }, 200);   // 끝나면 새 프레임 신호가 오지 않으므로 따로 살핌
         const step = () => {
+          if (fin) return;
           draw(g, v, o);
           shown.drawImage(cv, 0, 0);
           const t = v.currentTime - X.a, pct = Math.min(100, t / len * 100);
           $('#sh-bar').style.width = pct.toFixed(1) + '%'; $('#sh-ptxt').textContent = `만드는 중 ${tm(t)} / ${tm(len)}`;
-          if (X.stop || v.ended || v.currentTime >= X.b) return done();
+          if (X.stop || v.ended || v.currentTime >= X.b) return end();
           if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(step); else requestAnimationFrame(step);
         };
         if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(step); else requestAnimationFrame(step);
