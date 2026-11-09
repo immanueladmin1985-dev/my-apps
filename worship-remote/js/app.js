@@ -188,9 +188,10 @@ function autoHtml(st){
   else if (!T.list.length) body = '<div class="dim">쇼츠를 만들 예배가 없습니다. 다 만들어 올렸습니다.</div>';
   else body = `${T.list.length > 1 ? `<button class="btn pri wide" data-c="vmAuto" data-a='{"key":"all"}' data-ms="60000" data-ask="남은 예배 ${T.list.length}개를 오래된 것부터 차례로 할까요?\n영상·자막 받기 → 클로드로 장면 고르기 → 쇼츠 자르기 → 유튜브 예약 올리기까지 PC가 알아서 합니다.">남은 예배 ${T.list.length}개 모두 차례로</button>` : ''}
       ${T.list.map(t => `<div class="li"><div class="t"><b>${esc(t.label)}</b></div><button class="btn sm" data-c="vmAuto" data-a='${esc(JSON.stringify({ key: t.key }))}' data-ms="60000" data-ask="'${esc(t.label)}' 쇼츠를 처음부터 끝까지 알아서 할까요?">시작</button></div>`).join('')}`;
+  const warn = T.warn && !T.loading ? `<div class="warnbox">⚠️ ${esc(T.warn)}</div>` : '';
   return `<div class="card"><h2>쇼츠 처음부터 끝까지 알아서<span style="flex:1"></span>${T.list && !T.loading ? '<button class="btn sm" data-x="vmLoad">새로 고침</button>' : ''}</h2>
     <div class="dim" style="margin-bottom:10px">영상·자막 받기 → 클로드로 장면 고르기 → 세로 쇼츠 만들기 → 유튜브 예약 올리기. 이미 한 단계는 건너뜁니다. PC에서 클로드 창은 숨긴 채로 하고, 유튜브 올리기는 OBS가 꺼진 뒤 저절로 합니다.</div>
-    ${body}${done}${last}</div>`;
+    ${warn}${body}${done}${last}</div>`;
 }
 function upHtml(st){
   const L = st.up || [];
@@ -214,7 +215,7 @@ function upHtml(st){
 function vmHtml(st){ return autoHtml(st) + upHtml(st); }
 async function vmLoad(){
   V.vmt.loading = true; V.vmt.err = ''; render();
-  try{ V.vmt.list = await send('vmTargets', {}, 90000); }catch(e){ V.vmt.err = e.message; }
+  try{ const r = await send('vmTargets', {}, 90000); V.vmt.list = Array.isArray(r) ? r : (r && r.list) || []; V.vmt.warn = (r && r.warn) || ''; }catch(e){ V.vmt.err = e.message; }
   V.vmt.loading = false; if (S.tab === 'up') render();
 }
 
