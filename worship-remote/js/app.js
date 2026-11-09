@@ -179,7 +179,7 @@ function autoHtml(st){
       ${A.results && A.results.length ? `<div class="dim" style="margin-top:8px">지금까지 ${A.results.length}/${A.n}<br>${A.results.map(r => `${r.ok ? '✅' : '⚠️'} ${esc(r.label)} — ${esc(r.note)}`).join('<br>')}</div>` : ''}
       <button class="btn wide" style="margin-top:12px" data-c="vmStop" ${A.stop ? 'disabled' : ''}>${A.stop ? '이 예배까지 하고 멈춥니다' : '이 예배까지만 하고 멈추기'}</button></div>`;
   }
-  const last = A.last && A.last.res && A.last.res.length ? `<div class="dim" style="margin-top:10px">지난 자동 작업 (${esc(new Date(A.last.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }))})<br>${A.last.res.map(r => `${r.ok ? '✅' : '⚠️'} ${esc(r.label)}${r.ok ? '' : ' — ' + esc(r.note)}`).join('<br>')}</div>` : '';
+  const last = A.last && A.last.res && A.last.res.length ? `<div class="dim" style="margin-top:10px">지난 자동 작업 (${esc(new Date(A.last.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }))})<br>${A.last.res.slice(-5).reverse().map(r => `${r.ok ? '✅' : '⚠️'} ${esc(r.label)}${r.ok ? '' : ' — ' + esc(r.note)}`).join('<br>')}${A.last.res.length > 5 ? `<br>… 그 밖에 ${A.last.res.length - 5}개 (✅ ${A.last.res.filter(r => r.ok).length}개 · ⚠️ ${A.last.res.filter(r => !r.ok).length}개)` : ''}</div>` : '';
   const done = A.results && A.results.length ? `<div class="dim" style="margin-top:10px">방금 한 일<br>${A.results.map(r => `${r.ok ? '✅' : '⚠️'} ${esc(r.label)} — ${esc(r.note)}`).join('<br>')}</div>` : '';
   let body;
   if (T.loading) body = '<div class="dim">쇼츠를 아직 다 못 만든 예배를 찾는 중… (라이브 목록을 읽느라 30초쯤 걸릴 수 있습니다)</div>';
