@@ -97,23 +97,25 @@ async function act(c, a, o = {}){
 }
 
 /* ---------- 화면 그리기 ---------- */
-const TABS = { show: '화면 넘기기', yt: '유튜브', setup: '예배 세팅', up: '영상' };
+const TABS = { show: '화면 넘기기', yt: '유튜브', setup: '예배 세팅', up: '영상', shorts: '쇼츠 만들기' };
 function paintPc(){
   const box = $('#pcSt'); box.classList.toggle('hidden', V.screen !== 'main');
   const on = !!(V.pc && V.pc.on); $('#pcDot').className = 'dot ' + (on ? 'on' : 'off'); $('#pcTxt').textContent = on ? 'PC 켜짐' : 'PC 꺼짐';
 }
 function render(){
   paintPc();
-  $('#tabs').classList.toggle('hidden', V.screen !== 'main');
+  const shortsOn = S.tab === 'shorts' && (V.screen === 'main' || V.shortsOnly);
+  $('#tabs').classList.toggle('hidden', V.screen !== 'main' && !V.shortsOnly);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
   const m = $('#main');
+  if (shortsOn){ if (!m.querySelector('#sh-root')){ m.innerHTML = Shorts.html(); Shorts.mount(m.querySelector('#sh-root').parentNode, toast); } return; }
   if (V.screen === 'boot'){ m.innerHTML = '<div class="pair"><p class="dim">연결하는 중…</p></div>'; return; }
   if (V.screen === 'err'){ m.innerHTML = `<div class="pair"><h2>연결하지 못했습니다</h2><p class="dim">${esc(V.err)}</p><button class="btn pri" data-x="retry">다시 해 보기</button></div>`; return; }
-  if (V.screen === 'need'){ m.innerHTML = `<div class="pair"><h2>PC와 연결하기</h2><p class="dim">PC의 <b>예배 준비 도우미</b> 왼쪽 아래 <b>[핸드폰]</b> 단추를 누르고<br>[켜기]를 누른 뒤 나오는 <b>QR 코드를 핸드폰 카메라로 찍어</b> 주세요.</p></div>`; return; }
+  if (V.screen === 'need'){ m.innerHTML = `<div class="pair"><h2>PC와 연결하기</h2><p class="dim">PC의 <b>예배 준비 도우미</b> 왼쪽 아래 <b>[핸드폰]</b> 단추를 누르고<br>[켜기]를 누른 뒤 나오는 <b>QR 코드를 핸드폰 카메라로 찍어</b> 주세요.</p>${shortsLink()}</div>`; return; }
   if (V.screen === 'pair'){
     m.innerHTML = V.req
       ? `<div class="pair"><h2>PC의 허락을 기다리는 중</h2><p class="dim">PC 화면에 뜬 창에서 이 번호를 확인하고 <b>[허락]</b>을 눌러 주세요.</p><div class="code">${code4(V.uid)}</div><p class="dim">PC 창이 안 보이면 프로그램이 트레이에 숨어 있을 수 있습니다.</p><button class="btn" data-x="join">요청 다시 보내기</button></div>`
-      : `<div class="pair"><h2>이 핸드폰 연결하기</h2><p class="dim">PC에 보일 이 핸드폰 이름</p><input type="text" id="nm" maxlength="40" value="${esc(S.name || guessName())}"><button class="btn pri wide" data-x="join">PC에 연결 요청</button><p class="dim" style="margin-top:16px">확인 번호: <b>${code4(V.uid)}</b></p></div>`;
+      : `<div class="pair"><h2>이 핸드폰 연결하기</h2><p class="dim">PC에 보일 이 핸드폰 이름</p><input type="text" id="nm" maxlength="40" value="${esc(S.name || guessName())}"><button class="btn pri wide" data-x="join">PC에 연결 요청</button><p class="dim" style="margin-top:16px">확인 번호: <b>${code4(V.uid)}</b></p>${shortsLink()}</div>`;
     return;
   }
   const st = V.st;
@@ -124,6 +126,7 @@ function render(){
   const pl = m.querySelector('.pl');
   if (pl){ if (top != null && V.plKeep) pl.scrollTop = top; else { const c = pl.querySelector('.cur'); if (c) pl.scrollTop = c.offsetTop - pl.clientHeight / 2; } V.plKeep = false; }
 }
+function shortsLink(){ return '<div style="margin-top:28px"><button class="btn wide" data-x="shorts">PC 없이 쇼츠 만들기</button></div>'; }
 function showHtml(st){
   const s = st.show;
   if (!s.showing){
@@ -246,7 +249,7 @@ async function ytLoad(){
 }
 $('#main').addEventListener('click', async e => {
   const x = e.target.closest('[data-x]');
-  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); else if (k === 'vmLoad') vmLoad(); else if (k === 'rsLoad') rsLoad(); return; }
+  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'shorts'){ V.shortsOnly = true; S.tab = 'shorts'; save(); render(); } else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); else if (k === 'vmLoad') vmLoad(); else if (k === 'rsLoad') rsLoad(); return; }
   const g = e.target.closest('[data-go]'); if (g){ V.plKeep = true; act('go', { i: +g.dataset.go }).catch(() => {}); return; }
   const b = e.target.closest('[data-c]'); if (!b || b.disabled) return;
   if (b.dataset.arm && !b.classList.contains('arm')){ const t = b.textContent; b.classList.add('arm'); b.textContent = b.dataset.arm; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = t; } }, 4000); return; }
@@ -257,7 +260,7 @@ $('#main').addEventListener('click', async e => {
   try{ await act(b.dataset.c, a, { ms: +b.dataset.ms || undefined, quiet: quick }); if (b.dataset.yt) setTimeout(ytLoad, 1500); if (b.dataset.c === 'vmAuto') V.vmt.list = null; if (b.dataset.c === 'vmRsApply') V.rs.plan = null; }catch(err){}
   if (!quick && b.isConnected){ b.disabled = false; b.innerHTML = label; }
 });
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; save(); render(); window.scrollTo(0, 0); if (S.tab === 'yt' && !V.yt.list && !V.yt.loading) ytLoad(); });
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = async () => { if (S.tab === 'shorts' && b.dataset.tab !== 'shorts' && Shorts.busy){ if (!(await modal('<p class="msg">쇼츠를 만드는 중입니다. 그만둘까요?</p>', [{ label: '계속 만들기', val: false }, { label: '그만두기', val: true, cls: 'pri' }]))) return; Shorts.stop(); } if (b.dataset.tab !== 'shorts' && V.shortsOnly && V.screen !== 'main'){ V.shortsOnly = false; S.tab = 'show'; save(); render(); return; } S.tab = b.dataset.tab; save(); render(); window.scrollTo(0, 0); if (S.tab === 'yt' && !V.yt.list && !V.yt.loading) ytLoad(); });
 // 볼륨 단추·키보드(블루투스 리모컨)로도 넘김
 document.addEventListener('keydown', e => {
   if (V.screen !== 'main' || S.tab !== 'show' || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
