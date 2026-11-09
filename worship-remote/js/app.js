@@ -9,7 +9,7 @@ const KEY = 'worshipRemote';
 const S = Object.assign({ room: '', name: '', tab: 'show', autoFS: true, installDismissed: false }, (() => { try{ return JSON.parse(localStorage.getItem(KEY) || '{}'); }catch(e){ return {}; } })());
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const code4 = uid => { let h = 0; for (const c of String(uid)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return String(h % 10000).padStart(4, '0'); };   // PC 창에도 같은 번호가 보임
-const V = { screen: 'boot', uid: '', db: null, pc: null, st: null, pages: [], thumb: null, offs: [], wait: {}, yt: { list: null, loading: false, err: '' }, vmt: { list: null, loading: false, err: '' }, noteAt: 0, req: null, err: '' };
+const V = { screen: 'boot', uid: '', db: null, pc: null, st: null, pages: [], thumb: null, offs: [], wait: {}, yt: { list: null, loading: false, err: '' }, vmt: { list: null, loading: false, err: '' }, rs: { plan: null, loading: false, err: '' }, noteAt: 0, req: null, err: '' };
 
 /* ---------- 주소의 방 이름 (#r=…) ---------- */
 (() => {
@@ -212,7 +212,26 @@ function upHtml(st){
     ${paused > 1 || dn ? `<div class="row" style="margin-bottom:6px">${paused > 1 ? `<button class="btn sm pri" data-c="upResume" data-ask="${esc('멈춘 ' + paused + '개를 모두 ' + NOW)}">멈춘 ${paused}개 모두 지금 올리기</button>` : ''}${dn ? `<button class="btn sm" data-c="upClear">다 올린 것 지우기</button>` : ''}</div>` : ''}
     ${L.length ? L.map(j => `<div class="li col"><div class="t"><b>${esc(j.title)}</b><small>${esc(lab[j.st] || j.st)}${j.st === 'uploading' || j.st === 'paused' ? ' ' + j.pct + '%' : ''}${esc(when(j.at))}</small>${j.msg && j.st !== 'done' ? `<div class="dim">${esc(j.msg)}</div>` : ''}${j.st !== 'done' ? `<div class="bar"><i style="width:${j.pct}%"></i></div>` : ''}</div>${btns(j)}</div>`).join('') : '<div class="dim">올리는 영상이 없습니다.</div>'}</div>`;
 }
-function vmHtml(st){ return autoHtml(st) + upHtml(st); }
+function rsHtml(){
+  const R = V.rs, P = R.plan;
+  const w = iso => { const d = new Date(iso); return d.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
+  let body;
+  if (R.loading) body = '<div class="dim">채널의 예약을 읽는 중…</div>';
+  else if (!P) body = '<button class="btn wide" data-x="rsLoad">미리 보기</button>';
+  else if (!P.items.length) body = '<div class="dim">공개 예약이 걸린 쇼츠가 없습니다.</div>';
+  else body = `<div class="dim">${P.channel ? '채널: <b>' + esc(P.channel) + '</b> · ' : ''}쇼츠 ${P.items.length}개를 순서는 그대로 <b>${P.perDay > 1 ? '하루에 두 개씩 (' + esc(P.times.join(' · ')) + ')' : '하루에 하나씩 (' + esc(P.times[0]) + ')'}</b>${P.fixed ? ` · 올리는 중인 ${P.fixed}개는 그대로` : ''}</div>
+      ${P.items.map(x => `<div class="li"><div class="t"><b>${esc(x.title)}</b><small>${x.kind === 'yt' ? '유튜브' : '올릴 것'} · ${esc(w(x.from))}${x.change ? ' → <span style="color:#a5b4fc">' + esc(w(x.to)) + '</span>' : ' (그대로)'}</small></div></div>`).join('')}
+      ${P.changes ? `<button class="btn pri wide" style="margin-top:10px" data-c="vmRsApply" data-a='${esc(JSON.stringify({ id: P.id }))}' data-ms="180000" data-ask="쇼츠 ${P.changes}개의 공개 시각을 바꿀까요?">${P.changes}개 바꾸기</button>` : '<div class="dim" style="margin-top:8px">바꿀 것이 없습니다.</div>'}`;
+  return `<div class="card"><h2>예약 다시 짜기<span style="flex:1"></span>${P && !R.loading ? '<button class="btn sm" data-x="rsLoad">새로 고침</button>' : ''}</h2>
+    <div class="dim" style="margin-bottom:10px">공개 예약이 걸린 쇼츠를 PC [영상 관리] 설정의 하루 개수·시각대로 다시 배치합니다. 이미 올라간 것은 공개 시각만 바꿉니다.</div>
+    ${R.err ? `<div class="warnbox">⚠️ ${esc(R.err)}</div>` : ''}${body}</div>`;
+}
+async function rsLoad(){
+  V.rs.loading = true; V.rs.err = ''; render();
+  try{ V.rs.plan = await send('vmRsPlan', {}, 60000); }catch(e){ V.rs.err = e.message; V.rs.plan = null; }
+  V.rs.loading = false; if (S.tab === 'up') render();
+}
+function vmHtml(st){ return autoHtml(st) + rsHtml() + upHtml(st); }
 async function vmLoad(){
   V.vmt.loading = true; V.vmt.err = ''; render();
   try{ const r = await send('vmTargets', {}, 90000); V.vmt.list = Array.isArray(r) ? r : (r && r.list) || []; V.vmt.warn = (r && r.warn) || ''; }catch(e){ V.vmt.err = e.message; }
@@ -227,7 +246,7 @@ async function ytLoad(){
 }
 $('#main').addEventListener('click', async e => {
   const x = e.target.closest('[data-x]');
-  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); else if (k === 'vmLoad') vmLoad(); return; }
+  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); else if (k === 'vmLoad') vmLoad(); else if (k === 'rsLoad') rsLoad(); return; }
   const g = e.target.closest('[data-go]'); if (g){ V.plKeep = true; act('go', { i: +g.dataset.go }).catch(() => {}); return; }
   const b = e.target.closest('[data-c]'); if (!b || b.disabled) return;
   if (b.dataset.arm && !b.classList.contains('arm')){ const t = b.textContent; b.classList.add('arm'); b.textContent = b.dataset.arm; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = t; } }, 4000); return; }
@@ -235,7 +254,7 @@ $('#main').addEventListener('click', async e => {
   let a = {}; try{ a = JSON.parse(b.dataset.a || '{}'); }catch(err){}
   const quick = ['next', 'prev', 'go', 'black', 'rep', 'mute'].includes(b.dataset.c);
   const label = b.innerHTML; if (!quick){ b.disabled = true; b.textContent = '하는 중…'; }
-  try{ await act(b.dataset.c, a, { ms: +b.dataset.ms || undefined, quiet: quick }); if (b.dataset.yt) setTimeout(ytLoad, 1500); if (b.dataset.c === 'vmAuto') V.vmt.list = null; }catch(err){}
+  try{ await act(b.dataset.c, a, { ms: +b.dataset.ms || undefined, quiet: quick }); if (b.dataset.yt) setTimeout(ytLoad, 1500); if (b.dataset.c === 'vmAuto') V.vmt.list = null; if (b.dataset.c === 'vmRsApply') V.rs.plan = null; }catch(err){}
   if (!quick && b.isConnected){ b.disabled = false; b.innerHTML = label; }
 });
 document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; save(); render(); window.scrollTo(0, 0); if (S.tab === 'yt' && !V.yt.list && !V.yt.loading) ytLoad(); });
