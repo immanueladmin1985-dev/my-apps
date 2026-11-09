@@ -70,6 +70,13 @@ main{flex:1;overflow:auto;padding:14px 14px calc(84px + env(safe-area-inset-bott
 .li .t b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis}
 .li .t small{color:var(--dim);font-size:12px}
 .live{color:#f87171;font-weight:800}
+.li.col{flex-direction:column;align-items:stretch;gap:6px}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.steps{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.step{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.step small{display:block;color:var(--dim);font-size:12px;margin-top:2px}
+.step.wait{opacity:.5}
+.step.err b{color:#fca5a5}
 .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
 .bar i{display:block;height:100%;background:var(--ok)}
 .log{font-size:12.5px;line-height:1.6;max-height:180px;overflow:auto;background:#0a0f1c;border-radius:10px;padding:8px 10px;margin-top:10px}
@@ -122,7 +129,7 @@ input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid var
   <button data-tab="show"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>화면</button>
   <button data-tab="yt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/></svg>유튜브</button>
   <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c-1 1-1.5 4-1.5 4s3-.5 4-1.5M9 12l3 3M14.5 4.5c2-2 5.5-2 5.5-2s0 3.5-2 5.5l-6 6-3.5-3.5z"/></svg>세팅</button>
-  <button data-tab="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>영상 올리기</button>
+  <button data-tab="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>영상</button>
 </nav>
 <div id="toast"></div>
 <div id="modal" class="hidden"><div class="box" id="modalBox"></div></div>

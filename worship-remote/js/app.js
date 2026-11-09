@@ -9,7 +9,7 @@ const KEY = 'worshipRemote';
 const S = Object.assign({ room: '', name: '', tab: 'show', autoFS: true, installDismissed: false }, (() => { try{ return JSON.parse(localStorage.getItem(KEY) || '{}'); }catch(e){ return {}; } })());
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const code4 = uid => { let h = 0; for (const c of String(uid)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return String(h % 10000).padStart(4, '0'); };   // PC 창에도 같은 번호가 보임
-const V = { screen: 'boot', uid: '', db: null, pc: null, st: null, pages: [], thumb: null, offs: [], wait: {}, yt: { list: null, loading: false, err: '' }, noteAt: 0, req: null, err: '' };
+const V = { screen: 'boot', uid: '', db: null, pc: null, st: null, pages: [], thumb: null, offs: [], wait: {}, yt: { list: null, loading: false, err: '' }, vmt: { list: null, loading: false, err: '' }, noteAt: 0, req: null, err: '' };
 
 /* ---------- 주소의 방 이름 (#r=…) ---------- */
 (() => {
@@ -97,7 +97,7 @@ async function act(c, a, o = {}){
 }
 
 /* ---------- 화면 그리기 ---------- */
-const TABS = { show: '화면 넘기기', yt: '유튜브', setup: '예배 세팅', up: '영상 올리기' };
+const TABS = { show: '화면 넘기기', yt: '유튜브', setup: '예배 세팅', up: '영상' };
 function paintPc(){
   const box = $('#pcSt'); box.classList.toggle('hidden', V.screen !== 'main');
   const on = !!(V.pc && V.pc.on); $('#pcDot').className = 'dot ' + (on ? 'on' : 'off'); $('#pcTxt').textContent = on ? 'PC 켜짐' : 'PC 꺼짐';
@@ -120,7 +120,7 @@ function render(){
   if (!st){ m.innerHTML = `<div class="pair"><p class="dim">${V.pc && V.pc.on ? 'PC 상태를 받는 중…' : 'PC 프로그램이 꺼져 있습니다.<br>PC에서 예배 준비 도우미를 켜면 여기에 바로 나타납니다.'}</p></div>`; return; }
   const off = !(V.pc && V.pc.on) ? `<div class="card" style="border-color:#7f1d1d"><b style="color:#fca5a5">PC 프로그램이 꺼져 있습니다</b><div class="dim">아래는 마지막으로 받은 상태입니다. PC에서 프로그램을 켜면 다시 조작할 수 있습니다.</div></div>` : '';
   const top = S.tab === 'show' ? (m.querySelector('.pl') || {}).scrollTop : null;
-  m.innerHTML = off + ({ show: showHtml, yt: ytHtml, setup: setupHtml, up: upHtml }[S.tab] || showHtml)(st);
+  m.innerHTML = off + ({ show: showHtml, yt: ytHtml, setup: setupHtml, up: vmHtml }[S.tab] || showHtml)(st);
   const pl = m.querySelector('.pl');
   if (pl){ if (top != null && V.plKeep) pl.scrollTop = top; else { const c = pl.querySelector('.cur'); if (c) pl.scrollTop = c.offsetTop - pl.clientHeight / 2; } V.plKeep = false; }
 }
@@ -169,11 +169,53 @@ function setupHtml(st){
     <div class="card"><h2>Zoom</h2><div class="grid2"><button class="btn" data-c="zoom" data-a='{"op":"start"}' data-ms="60000" data-ask="Zoom 새 회의를 열까요?">새 회의 열기</button><button class="btn" data-c="zoom" data-a='{"op":"secure"}' data-ms="60000">참가자 권한 끄기</button></div></div>
     ${nx ? `<div class="card"><h2>다음 예약</h2><div><b>${esc(nx.name)}</b> · ${esc(whenTxt(nx.at))}</div><div class="dim">${esc(nx.what || '')}</div></div>` : ''}`;
 }
+function autoHtml(st){
+  const A = st.vm; if (!A) return '';
+  const ic = { wait: '○', run: '⏳', ok: '✅', skip: '⏭', err: '⚠️' };
+  const T = V.vmt;
+  if (A.busy){
+    return `<div class="card"><h2>쇼츠 알아서 만드는 중</h2><div class="dim">${esc(A.title)}</div>
+      <div class="steps">${A.steps.map(s => `<div class="step ${esc(s.state)}"><span>${ic[s.state] || '○'}</span><div><b>${esc(s.label)}</b>${s.note ? `<small>${esc(s.note)}</small>` : ''}</div></div>`).join('')}</div>
+      ${A.results && A.results.length ? `<div class="dim" style="margin-top:8px">지금까지 ${A.results.length}/${A.n}<br>${A.results.map(r => `${r.ok ? '✅' : '⚠️'} ${esc(r.label)} — ${esc(r.note)}`).join('<br>')}</div>` : ''}
+      <button class="btn wide" style="margin-top:12px" data-c="vmStop" ${A.stop ? 'disabled' : ''}>${A.stop ? '이 예배까지 하고 멈춥니다' : '이 예배까지만 하고 멈추기'}</button></div>`;
+  }
+  const last = A.last && A.last.res && A.last.res.length ? `<div class="dim" style="margin-top:10px">지난 자동 작업 (${esc(new Date(A.last.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }))})<br>${A.last.res.map(r => `${r.ok ? '✅' : '⚠️'} ${esc(r.label)}${r.ok ? '' : ' — ' + esc(r.note)}`).join('<br>')}</div>` : '';
+  const done = A.results && A.results.length ? `<div class="dim" style="margin-top:10px">방금 한 일<br>${A.results.map(r => `${r.ok ? '✅' : '⚠️'} ${esc(r.label)} — ${esc(r.note)}`).join('<br>')}</div>` : '';
+  let body;
+  if (T.loading) body = '<div class="dim">쇼츠를 아직 다 못 만든 예배를 찾는 중… (라이브 목록을 읽느라 30초쯤 걸릴 수 있습니다)</div>';
+  else if (T.err) body = `<div class="dim" style="color:#fca5a5">${esc(T.err)}</div>`;
+  else if (!T.list) body = '<button class="btn pri wide" data-x="vmLoad">할 일 남은 예배 불러오기</button>';
+  else if (!T.list.length) body = '<div class="dim">쇼츠를 만들 예배가 없습니다. 다 만들어 올렸습니다.</div>';
+  else body = `${T.list.length > 1 ? `<button class="btn pri wide" data-c="vmAuto" data-a='{"key":"all"}' data-ms="60000" data-ask="남은 예배 ${T.list.length}개를 오래된 것부터 차례로 할까요?\n영상·자막 받기 → 클로드로 장면 고르기 → 쇼츠 자르기 → 유튜브 예약 올리기까지 PC가 알아서 합니다.">남은 예배 ${T.list.length}개 모두 차례로</button>` : ''}
+      ${T.list.map(t => `<div class="li"><div class="t"><b>${esc(t.label)}</b></div><button class="btn sm" data-c="vmAuto" data-a='${esc(JSON.stringify({ key: t.key }))}' data-ms="60000" data-ask="'${esc(t.label)}' 쇼츠를 처음부터 끝까지 알아서 할까요?">시작</button></div>`).join('')}`;
+  return `<div class="card"><h2>쇼츠 처음부터 끝까지 알아서<span style="flex:1"></span>${T.list && !T.loading ? '<button class="btn sm" data-x="vmLoad">새로 고침</button>' : ''}</h2>
+    <div class="dim" style="margin-bottom:10px">영상·자막 받기 → 클로드로 장면 고르기 → 세로 쇼츠 만들기 → 유튜브 예약 올리기. 이미 한 단계는 건너뜁니다. PC에서 클로드 창은 숨긴 채로 하고, 유튜브 올리기는 OBS가 꺼진 뒤 저절로 합니다.</div>
+    ${body}${done}${last}</div>`;
+}
 function upHtml(st){
   const L = st.up || [];
   const lab = { uploading: '올리는 중', queued: '기다리는 중', paused: '멈춤', error: '오류', done: '다 올림' };
   const when = iso => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? '' : ' · 공개 ' + d.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
-  return `<div class="card"><h2>유튜브 영상 올리기</h2>${L.length ? L.map(j => `<div class="li"><div class="t"><b>${esc(j.title)}</b><small>${esc(lab[j.st] || j.st)}${j.st === 'uploading' || j.st === 'paused' ? ' ' + j.pct + '%' : ''}${esc(when(j.at))}</small>${j.msg && j.st !== 'done' ? `<div class="dim">${esc(j.msg)}</div>` : ''}${j.st !== 'done' ? `<div class="bar"><i style="width:${j.pct}%"></i></div>` : ''}</div>${j.url ? `<a class="btn sm" href="${esc(j.url)}" target="_blank" rel="noopener">보기</a>` : ''}</div>`).join('') : '<div class="dim">올리는 영상이 없습니다.</div>'}</div>`;
+  const paused = L.filter(j => j.st === 'paused' || j.st === 'error').length, dn = L.filter(j => j.st === 'done').length;
+  const NOW = '지금 올릴까요?\n방송 중이라면 올리는 동안 방송이 끊길 수 있습니다.';
+  const btns = j => {
+    const id = esc(JSON.stringify({ id: j.id }));
+    const b = [];
+    if (j.st === 'paused' || j.st === 'error') b.push(`<button class="btn sm pri" data-c="upResume" data-a='${id}' data-ask="${esc(NOW)}">지금 올리기</button>`);
+    if (j.st === 'uploading' || j.st === 'queued') b.push(`<button class="btn sm" data-c="upPause" data-a='${id}'>멈춤</button>`);
+    if (j.st !== 'done') b.push(`<button class="btn sm" data-c="upRemove" data-a='${id}' data-arm="한 번 더">빼기</button>`);
+    if (j.url) b.push(`<a class="btn sm" href="${esc(j.url)}" target="_blank" rel="noopener">보기</a>`);
+    return b.length ? `<div class="row">${b.join('')}</div>` : '';
+  };
+  return `<div class="card"><h2>유튜브 영상 올리기</h2>
+    ${paused > 1 || dn ? `<div class="row" style="margin-bottom:6px">${paused > 1 ? `<button class="btn sm pri" data-c="upResume" data-ask="${esc('멈춘 ' + paused + '개를 모두 ' + NOW)}">멈춘 ${paused}개 모두 지금 올리기</button>` : ''}${dn ? `<button class="btn sm" data-c="upClear">다 올린 것 지우기</button>` : ''}</div>` : ''}
+    ${L.length ? L.map(j => `<div class="li col"><div class="t"><b>${esc(j.title)}</b><small>${esc(lab[j.st] || j.st)}${j.st === 'uploading' || j.st === 'paused' ? ' ' + j.pct + '%' : ''}${esc(when(j.at))}</small>${j.msg && j.st !== 'done' ? `<div class="dim">${esc(j.msg)}</div>` : ''}${j.st !== 'done' ? `<div class="bar"><i style="width:${j.pct}%"></i></div>` : ''}</div>${btns(j)}</div>`).join('') : '<div class="dim">올리는 영상이 없습니다.</div>'}</div>`;
+}
+function vmHtml(st){ return autoHtml(st) + upHtml(st); }
+async function vmLoad(){
+  V.vmt.loading = true; V.vmt.err = ''; render();
+  try{ V.vmt.list = await send('vmTargets', {}, 90000); }catch(e){ V.vmt.err = e.message; }
+  V.vmt.loading = false; if (S.tab === 'up') render();
 }
 
 /* ---------- 누르기 ---------- */
@@ -184,7 +226,7 @@ async function ytLoad(){
 }
 $('#main').addEventListener('click', async e => {
   const x = e.target.closest('[data-x]');
-  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); return; }
+  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); else if (k === 'vmLoad') vmLoad(); return; }
   const g = e.target.closest('[data-go]'); if (g){ V.plKeep = true; act('go', { i: +g.dataset.go }).catch(() => {}); return; }
   const b = e.target.closest('[data-c]'); if (!b || b.disabled) return;
   if (b.dataset.arm && !b.classList.contains('arm')){ const t = b.textContent; b.classList.add('arm'); b.textContent = b.dataset.arm; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = t; } }, 4000); return; }
@@ -192,7 +234,7 @@ $('#main').addEventListener('click', async e => {
   let a = {}; try{ a = JSON.parse(b.dataset.a || '{}'); }catch(err){}
   const quick = ['next', 'prev', 'go', 'black', 'rep', 'mute'].includes(b.dataset.c);
   const label = b.innerHTML; if (!quick){ b.disabled = true; b.textContent = '하는 중…'; }
-  try{ await act(b.dataset.c, a, { ms: +b.dataset.ms || undefined, quiet: quick }); if (b.dataset.yt) setTimeout(ytLoad, 1500); }catch(err){}
+  try{ await act(b.dataset.c, a, { ms: +b.dataset.ms || undefined, quiet: quick }); if (b.dataset.yt) setTimeout(ytLoad, 1500); if (b.dataset.c === 'vmAuto') V.vmt.list = null; }catch(err){}
   if (!quick && b.isConnected){ b.disabled = false; b.innerHTML = label; }
 });
 document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; save(); render(); window.scrollTo(0, 0); if (S.tab === 'yt' && !V.yt.list && !V.yt.loading) ytLoad(); });
