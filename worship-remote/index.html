@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>예배 리모컨</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="예배 리모컨">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{--bg:#0b1120;--card:#111a2e;--card2:#18233b;--line:#22304d;--tx:#e5e7eb;--dim:#94a3b8;--pri:#6366f1;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--yt:#dc2626}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",Pretendard,sans-serif;font-size:16px}
+body{min-height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
+.hidden{display:none!important}
+header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+header h1{font-size:17px;margin:0;display:flex;align-items:center;gap:8px}
+header .grow{flex:1}
+.ib{width:38px;height:38px;border-radius:10px;background:transparent;display:grid;place-items:center;color:var(--dim)}
+.ib svg{width:22px;height:22px}
+.pc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim)}
+.dot{width:9px;height:9px;border-radius:50%;background:#64748b}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(16,185,129,.25)}
+.dot.off{background:var(--err)}
+#banner{margin:10px 14px 0;padding:12px;border-radius:14px;background:#1e1b4b;display:flex;flex-direction:column;gap:8px;font-size:14px}
+#banner .row{display:flex;gap:8px}
+main{flex:1;overflow:auto;padding:14px 14px calc(84px + env(safe-area-inset-bottom))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.dim{color:var(--dim);font-size:13px;line-height:1.5}
+.btn{padding:12px 14px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.red{background:var(--yt);border-color:var(--yt);color:#fff}
+.btn.on{background:#312e81;border-color:#6366f1}
+.btn.sm{padding:8px 10px;font-size:13px;border-radius:10px}
+.btn:disabled{opacity:.45}
+.btn.arm{background:var(--err);color:#fff}
+.wide{width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.grid4 .btn{flex-direction:column;font-size:12px;padding:10px 4px;gap:4px}
+.grid4 .btn b{font-size:18px}
+/* 화면 넘기기 */
+.thumb{aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;display:grid;place-items:center;color:#475569;font-size:13px;position:relative}
+.thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.thumb .blk{position:absolute;inset:auto 8px 8px auto;background:rgba(0,0,0,.7);color:#fbbf24;font-size:12px;padding:3px 8px;border-radius:8px}
+.now{margin:10px 2px 2px}
+.now b{font-size:17px}
+.now .sec{color:var(--dim);font-size:13px}
+.nx{color:var(--dim);font-size:14px;margin:4px 2px 12px}
+.nx b{color:#cbd5e1}
+.big{display:grid;grid-template-columns:1fr 1.6fr;gap:10px;margin-bottom:10px}
+.big .btn{height:96px;font-size:20px;border-radius:16px}
+.pos{font-variant-numeric:tabular-nums;color:var(--dim);font-size:13px}
+.pl{max-height:50vh;overflow:auto;margin:0 -6px}
+.pl .sh{font-size:12px;color:#818cf8;font-weight:800;padding:10px 8px 4px;position:sticky;top:0;background:var(--card)}
+.pl button{display:flex;width:100%;text-align:left;padding:10px 8px;border-radius:10px;background:transparent;gap:8px;font-size:14px}
+.pl button.cur{background:#312e81}
+.pl button small{color:var(--dim);font-variant-numeric:tabular-nums;min-width:26px}
+/* 목록 */
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li .t{flex:1;min-width:0}
+.li .t b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.li .t small{color:var(--dim);font-size:12px}
+.live{color:#f87171;font-weight:800}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--ok)}
+.log{font-size:12.5px;line-height:1.6;max-height:180px;overflow:auto;background:#0a0f1c;border-radius:10px;padding:8px 10px;margin-top:10px}
+.log .err{color:#fca5a5}.log .ok{color:#86efac}.log .move{color:#93c5fd}
+.sw{display:flex;align-items:center;gap:10px;padding:8px 0}
+.sw .t{flex:1;font-size:14px}
+.tg{width:48px;height:28px;border-radius:14px;background:#334155;position:relative;flex:none}
+.tg::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.15s}
+.tg.on{background:var(--ok)}.tg.on::after{left:23px}
+/* 아래 탭 */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:#0d1526;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{background:transparent;padding:9px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--dim);font-weight:700}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button.on{color:#a5b4fc}
+/* 연결 */
+.pair{max-width:420px;margin:30px auto;text-align:center}
+.pair .code{font-size:44px;font-weight:800;letter-spacing:10px;margin:14px 0;font-variant-numeric:tabular-nums}
+input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);font:inherit;margin:8px 0 12px}
+/* 알림 · 창 */
+#toast{position:fixed;left:14px;right:14px;bottom:calc(80px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:30}
+#toast div{background:#1e293b;border:1px solid var(--line);border-left:4px solid var(--pri);padding:10px 12px;border-radius:12px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:tin .2s}
+#toast div.ok{border-left-color:var(--ok)}#toast div.warn{border-left-color:var(--warn)}#toast div.err{border-left-color:var(--err)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px;z-index:40}
+#modal .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;width:100%;max-width:420px;max-height:85vh;overflow:auto}
+#modal h3{margin:0 0 10px;font-size:17px}
+#modal .msg{white-space:pre-line;color:#cbd5e1;font-size:14px;line-height:1.6;margin:0 0 10px}
+#modal ol{padding-left:20px;line-height:1.8;font-size:14px}
+#modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.kbd{display:inline-block;padding:1px 6px;border-radius:6px;background:var(--card2);border:1px solid var(--line);font-size:13px}
+@media (min-width:700px){main{max-width:680px;margin:0 auto;width:100%}}
+@media (orientation:landscape) and (max-height:500px){.big .btn{height:70px}}
+</style>
+</head>
+<body>
+<header>
+  <h1><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>예배 리모컨</h1>
+  <span class="grow"></span>
+  <span class="pc hidden" id="pcSt"><span class="dot" id="pcDot"></span><span id="pcTxt">PC</span></span>
+  <button class="ib hidden" id="hInst" aria-label="홈 화면에 설치" title="홈 화면에 설치"></button>
+  <button class="ib" id="hFS" aria-label="전체화면" title="전체화면"></button>
+  <button class="ib" id="hSet" aria-label="설정" title="설정"></button>
+</header>
+<div id="banner" class="hidden">
+  <div><b>홈 화면에 설치하면</b> 아이콘으로 바로 열리고 화면을 넓게 씁니다.</div>
+  <div class="row"><button class="btn sm pri" id="bInst">설치하기</button><button class="btn sm" id="bFs">전체화면</button><span style="flex:1"></span><button class="btn sm" id="bLater">다음에</button></div>
+</div>
+<main id="main"></main>
+<nav class="tabs hidden" id="tabs">
+  <button data-tab="show"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>화면</button>
+  <button data-tab="yt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/></svg>유튜브</button>
+  <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c-1 1-1.5 4-1.5 4s3-.5 4-1.5M9 12l3 3M14.5 4.5c2-2 5.5-2 5.5-2s0 3.5-2 5.5l-6 6-3.5-3.5z"/></svg>세팅</button>
+  <button data-tab="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>영상 올리기</button>
+</nav>
+<div id="toast"></div>
+<div id="modal" class="hidden"><div class="box" id="modalBox"></div></div>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
