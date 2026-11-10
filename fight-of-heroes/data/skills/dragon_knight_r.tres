@@ -15,7 +15,7 @@ to_caster = true
 [sub_resource type="Resource" id="ApplyStatusEffect_1"]
 script = ExtResource("1")
 status = ExtResource("2")
-duration = PackedFloat32Array(10.0, 12.0, 14.0)
+duration = PackedFloat32Array(8.0, 10.0, 12.0)
 magnitude = PackedFloat32Array(0.0)
 to_caster = true
 ad_ratio = 0.0
@@ -26,7 +26,7 @@ script = ExtResource("4")
 id = "dragon_knight_r"
 display_name = "용 변신"
 glyph = "변"
-description = "12~16초 동안 용으로 변신합니다. 체력·공격력·방어력이 크게 오르고, 기본 공격이 멀리 날아가는 화염이 됩니다."
+description = "8~12초 동안 용으로 변신합니다. 체력·공격력·방어력이 크게 오르고, 기본 공격이 멀리 날아가는 화염이 됩니다."
 max_rank = 3
 mana_cost = PackedFloat32Array(100.0)
 cooldown = PackedFloat32Array(80.0, 70.0, 60.0)
