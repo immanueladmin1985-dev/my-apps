@@ -37,7 +37,7 @@ glyph = "암"
 weapon = "dagger"
 base_stats = {
 "armor": 24.0,
-"attack": 61.0,
+"attack": 58.0,
 "attack_speed": 0.9,
 "crit_chance": 0.2,
 "hp_regen": 2.8,

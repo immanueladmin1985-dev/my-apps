@@ -44,7 +44,7 @@ base_stats = {
 "attack_speed": 0.8,
 "hp_regen": 3.2,
 "magic_resist": 28.0,
-"max_hp": 700.0,
+"max_hp": 670.0,
 "max_mp": 300.0,
 "move_speed": 230.0,
 "mp_regen": 2.5
