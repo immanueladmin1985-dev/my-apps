@@ -25,7 +25,7 @@ func _defaults() -> Dictionary:
 		"version": SAVE_VERSION,
 		"settings": {
 			"difficulty": "normal", "kill_target": 15, "show_fps": false, "sfx_volume": 0.8,
-			"damage_numbers": true, "battery_saver": false, "last_hero": "blade_master", "team_mode": "random",
+			"damage_numbers": true, "fog_of_war": true, "battery_saver": false, "last_hero": "blade_master", "team_mode": "random",
 		},
 		"records": {"games": 0, "wins": 0, "losses": 0, "best_kills": 0, "heroes": {}, "history": []},
 	}

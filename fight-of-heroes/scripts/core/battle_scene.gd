@@ -8,6 +8,8 @@ var player_controller: PlayerController = null
 var follow_target: Node2D = null
 ## 이어 하기로 연 전투인지
 var resumed := false
+## 전장의 안개 (관전·자동 진행이거나 설정에서 끄면 없음)
+var fog: FogOfWar = null
 ## 자동 저장 간격(초, 경기 시간 기준)
 const AUTOSAVE_INTERVAL := 15.0
 var _autosave_left := AUTOSAVE_INTERVAL
@@ -63,6 +65,13 @@ func _ready() -> void:
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		ai_manager.assign_roles(team)
 	UnitVisual.viewer_team = player_hero.team if player_hero != null else Enums.Team.BLUE
+	var want_fog: bool = (not config.autoplay or GameManager.dev_args.has("fog")) and bool(SaveManager.get_setting("fog_of_war", true))
+	if player_hero != null and want_fog and not GameManager.dev_args.has("overview"):
+		fog = FogOfWar.new()
+		fog.name = "FogOfWar"
+		add_child(fog)
+		move_child(fog, world.get_index() + 1)
+		fog.setup(map, hero_manager, player_hero.team)
 	AudioManager.player_unit = player_hero if not config.autoplay else null
 	follow_target = player_hero if player_hero != null else (hero_manager.heroes[0] if not hero_manager.heroes.is_empty() else null)
 	battle_manager.setup(config, hero_manager)

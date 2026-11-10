@@ -50,6 +50,8 @@ func test_snapshot_roundtrip() -> void:
 	var heroes: Array = a.hero_manager.heroes
 	# 눈에 띄는 상태를 일부러 만든다.
 	var monk: Hero = heroes[0]
+	if monk.is_dead:
+		monk.respawn_at(monk.spawn_point)
 	monk.add_xp(5000.0)
 	monk.add_gold(3000)
 	monk.inventory.add(ItemManager.get_item("dagger"))

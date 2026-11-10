@@ -14,6 +14,8 @@ const CATEGORIES := [
 var hero = null
 var shop: ShopManager = null
 var category := "recommend"
+## 고른 아이템의 재료 칸 (누르면 그 재료를 고른다)
+var parts_row: HBoxContainer
 var selected: ItemData = null
 var selected_slot := -1
 
@@ -108,6 +110,10 @@ func build() -> void:
 	detail_parts.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_parts.custom_minimum_size = Vector2(330, 0)
 	detail.add_child(detail_parts)
+	parts_row = HBoxContainer.new()
+	parts_row.name = "PartsRow"
+	parts_row.add_theme_constant_override("separation", 6)
+	detail.add_child(parts_row)
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	detail.add_child(spacer)
@@ -185,11 +191,10 @@ func _items_for(cat: String) -> Array:
 	var all := ItemManager.all_items()
 	match cat:
 		"recommend":
+			# 추천 완성품마다 재료를 먼저(재료의 재료부터) 늘어놓아, 재료부터 사 모을 수 있게 한다.
 			var out: Array = []
 			for fid in hero.data.ai_build:
-				var f := ItemManager.get_item(fid)
-				if f != null:
-					out.append(f)
+				_add_with_parts(ItemManager.get_item(fid), out)
 			for pid in ["health_potion", "mana_potion", "recall_scroll"]:
 				var p := ItemManager.get_item(pid)
 				if p != null:
@@ -200,6 +205,14 @@ func _items_for(cat: String) -> Array:
 		"potion":
 			return all.filter(func(it): return it.category == "potion" or it.category == "special")
 	return all.filter(func(it): return it.category == cat)
+
+
+func _add_with_parts(it: ItemData, out: Array) -> void:
+	if it == null or out.has(it):
+		return
+	for cid in it.components:
+		_add_with_parts(ItemManager.get_item(cid), out)
+	out.append(it)
 
 
 func _set_category(cat: String) -> void:
@@ -262,6 +275,8 @@ func _refresh_detail(in_shop: bool) -> void:
 		detail_info.text = ""
 		detail_stats.text = ""
 		detail_parts.text = ""
+		for c in parts_row.get_children():
+			c.queue_free()
 		price_label.text = ""
 		buy_button.disabled = true
 		sell_button.disabled = true
@@ -280,6 +295,24 @@ func _refresh_detail(in_shop: bool) -> void:
 			if c != null:
 				names.append(c.display_name + (" (보유)" if hero.inventory.count_of(cid) > 0 else ""))
 		parts.append("재료: " + ", ".join(names) + " + 조합 %d G" % ItemManager.combine_fee(it))
+	for c in parts_row.get_children():
+		c.queue_free()
+	if not it.components.is_empty():
+		parts.append("재료를 눌러 먼저 살 수 있습니다.")
+		for cid in it.components:
+			var comp := ItemManager.get_item(cid)
+			if comp == null:
+				continue
+			var t := ItemTile.new()
+			t.custom_minimum_size = Vector2(62, 62)
+			t.show_price = true
+			t.set_item(comp)
+			var cplan := shop.check_buy(hero, comp)
+			t.price = cplan.price
+			t.dimmed = cplan.price > hero.gold
+			t.owned_mark = hero.inventory.count_of(cid) > 0
+			t.pressed.connect(_select_item.bind(comp))
+			parts_row.add_child(t)
 	var ups := ItemManager.builds_into(it.id)
 	if not ups.is_empty():
 		parts.append("만들 수 있는 아이템: " + ", ".join(ups.map(func(u): return u.display_name)))

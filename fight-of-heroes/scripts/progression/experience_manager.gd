@@ -85,9 +85,11 @@ func _on_unit_died(victim, killer) -> void:
 	var group := _alive_near(credit.team, victim.global_position, cfg.monster_xp_radius)
 	if not group.has(credit):
 		group.append(credit)
-	var total := d.xp * (1.0 + cfg.group_bonus * (group.size() - 1))
+	var mult: float = victim.reward_mult
+	var total: float = d.xp * mult * (1.0 + cfg.group_bonus * (group.size() - 1))
+	var gold := roundi(d.gold * mult)
 	for h in group:
-		give(h, total / group.size(), d.gold if h == credit else 0)
+		give(h, total / group.size(), gold if h == credit else 0)
 
 
 func _on_hero_killed(victim, killer, helpers: Array) -> void:

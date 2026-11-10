@@ -86,6 +86,9 @@ func _draw() -> void:
 		return
 	var vs: float = unit.status.visual_scale()
 	scale = Vector2(vs, vs)
+	# 전장의 안개: 보이지 않는 곳의 적·몬스터는 그리지 않는다.
+	if not FogOfWar.can_see(unit):
+		return
 	var r: float = unit.radius
 	var team_c := Enums.team_color(unit.team)
 	var alpha := 0.35 if unit.is_dead else 1.0

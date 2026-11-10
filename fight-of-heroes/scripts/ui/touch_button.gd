@@ -12,6 +12,11 @@ var font_size := 20
 var bg := Color(0.12, 0.14, 0.18, 0.85)
 var fg := Color(1, 1, 1)
 var _down := -1
+## 둘째 줄 글자 (상점 버튼의 골드 등)
+var sub_text := ""
+var sub_color := Color(1, 0.85, 0.3)
+## 테두리 강조 (상점에서 살 수 있을 때 등)
+var highlight := false
 
 
 func setup(label: String, size_px := 20, color := Color(0.12, 0.14, 0.18, 0.85)) -> void:
@@ -42,8 +47,16 @@ func _draw() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg.lightened(0.25) if _down >= 0 else bg
 	style.set_corner_radius_all(10)
-	style.border_color = Color(1, 1, 1, 0.35)
-	style.set_border_width_all(2)
+	style.border_color = Color(1, 0.85, 0.3, 0.95) if highlight else Color(1, 1, 1, 0.35)
+	style.set_border_width_all(4 if highlight else 2)
 	draw_style_box(style, r)
 	var w := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(FONT, Vector2((size.x - w) * 0.5, size.y * 0.5 + font_size * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, fg)
+	if sub_text == "":
+		draw_string(FONT, Vector2((size.x - w) * 0.5, size.y * 0.5 + font_size * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, fg)
+		return
+	draw_string(FONT, Vector2((size.x - w) * 0.5, size.y * 0.3 + font_size * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, fg)
+	var ss := font_size + 4
+	var sw := FONT.get_string_size(sub_text, HORIZONTAL_ALIGNMENT_LEFT, -1, ss).x
+	var sp := Vector2((size.x - sw) * 0.5, size.y * 0.72 + ss * 0.36)
+	draw_string_outline(FONT, sp, sub_text, HORIZONTAL_ALIGNMENT_LEFT, -1, ss, 4, Color(0, 0, 0, 0.8))
+	draw_string(FONT, sp, sub_text, HORIZONTAL_ALIGNMENT_LEFT, -1, ss, sub_color)

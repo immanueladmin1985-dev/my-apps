@@ -229,7 +229,7 @@ func _draw_textured_circle(center: Vector2, radius: float, tex: Texture2D) -> vo
 ## 장식(나무·바위 등): 그림이 있을 때만, 맵 id 로 정한 같은 자리에 흩어 놓는다. 충돌은 없다.
 func decoration_spots() -> Array:
 	var ids: Array = []
-	for id in ["tree_1", "tree_2", "bush", "rock_1", "rock_2", "crystal", "torch"]:
+	for id in ["tree_1", "tree_2", "bush", "rock_1", "rock_2", "crystal", "torch", "pillar", "barrel", "crate"]:
 		if Art.has("map", id):
 			ids.append(id)
 	var out: Array = []

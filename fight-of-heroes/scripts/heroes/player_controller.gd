@@ -45,6 +45,8 @@ func _nearest_prefer_hero(dist: float):
 	var best = null
 	var best_d := dist
 	for u in Targeting.in_radius(get_tree(), hero.global_position, dist, hero.team, Enums.TargetTeam.ENEMY):
+		if not FogOfWar.can_see(u):
+			continue
 		var d: float = hero.global_position.distance_to(u.global_position) - (10000.0 if u is Hero else 0.0)
 		if best == null or d < best_d:
 			best_d = d
@@ -163,7 +165,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and event.pressed:
 		var world_pos: Vector2 = hero.get_canvas_transform().affine_inverse() * event.position
 		var t = Targeting.nearest(get_tree(), world_pos, TAP_PICK_RADIUS, hero.team, Enums.TargetTeam.ENEMY)
-		if t != null:
+		if t != null and FogOfWar.can_see(t):
 			_select(t)
 			hero.attack_order = t
 	elif event is InputEventKey and event.pressed and not event.echo:

@@ -1,16 +1,19 @@
 class_name SkillButton
 extends Control
 ## 둥근 스킬 버튼. 짧게 누르면 자동 조준, 끌면 직접 조준, 취소 영역에서 떼면 취소한다.
+## 끌지 않고 꾹 누르고 있으면(HOLD_INFO 초) 스킬 설명을 보여 주고, 그대로 떼면 쓰지 않는다.
 ## slot 이 -1 이면 기본 공격 버튼(누르고 있는 동안 공격)으로 동작한다.
 
 signal pressed_down(slot: int)
 signal aim_changed(slot: int, vec: Vector2)
 signal released(slot: int, vec: Vector2, dragged: bool, cancelled: bool)
 signal learn_pressed(slot: int)
+signal info_requested(slot: int, show: bool)
 
 const FONT := preload("res://assets/fonts/NotoSansKR-SemiBold-subset.ttf")
 const DEADZONE := 24.0
 const DRAG_MAX := 110.0
+const HOLD_INFO := 0.45
 
 var slot := 0
 var key_label := "Q"
@@ -26,6 +29,8 @@ var touch_index := -1
 var press_pos := Vector2.ZERO
 var drag_vec := Vector2.ZERO
 var dragged := false
+var info_shown := false
+var _held := 0.0
 
 
 func configure(s: int, label: String, glyph_text: String, r: float, color: Color) -> void:
@@ -68,10 +73,18 @@ func _input(event: InputEvent) -> void:
 			press_pos = event.position
 			drag_vec = Vector2.ZERO
 			dragged = false
+			info_shown = false
+			_held = 0.0
 			pressed_down.emit(slot)
 			get_viewport().set_input_as_handled()
 		elif not event.pressed and event.index == touch_index:
 			var cancelled := dragged and cancel_zone != null and cancel_zone.visible and cancel_zone.get_global_rect().has_point(event.position)
+			# 설명만 보고 끌지 않고 뗐으면 쓰지 않는다.
+			if info_shown and not dragged:
+				cancelled = true
+			if info_shown:
+				info_shown = false
+				info_requested.emit(slot, false)
 			touch_index = -1
 			released.emit(slot, drag_vec, dragged, cancelled)
 			get_viewport().set_input_as_handled()
@@ -79,13 +92,21 @@ func _input(event: InputEvent) -> void:
 		var off: Vector2 = event.position - press_pos
 		if off.length() > DEADZONE:
 			dragged = true
+			if info_shown:
+				info_shown = false
+				info_requested.emit(slot, false)
 		if dragged:
 			drag_vec = (off / DRAG_MAX).limit_length(1.0)
 			aim_changed.emit(slot, drag_vec)
 		get_viewport().set_input_as_handled()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if touch_index >= 0:
+		_held += delta
+	if touch_index >= 0 and not dragged and not info_shown and slot >= 0 and _held >= HOLD_INFO:
+		info_shown = true
+		info_requested.emit(slot, true)
 	queue_redraw()
 
 

@@ -54,8 +54,8 @@ static func capture(battle) -> Dictionary:
 		for m in camp.units:
 			if is_instance_valid(m) and not m.is_dead:
 				units.append({"id": m.data.id, "x": m.global_position.x, "y": m.global_position.y,
-					"hx": m.home.x, "hy": m.home.y, "hp": m.health.hp, "phase": m.phase})
-		out.camps.append({"id": camp.data.id, "left": camp.left, "spawned": camp.spawned, "warned": camp.warned, "units": units})
+					"hx": m.home.x, "hy": m.home.y, "hp": m.health.hp, "phase": m.phase, "tier": m.tier})
+		out.camps.append({"id": camp.data.id, "left": camp.left, "spawned": camp.spawned, "warned": camp.warned, "tier": camp.get("tier", 1), "units": units})
 	return out
 
 
@@ -97,6 +97,7 @@ static func apply(battle, snap: Dictionary) -> bool:
 	bm.kills[Enums.Team.RED] = int(k[1])
 	for i in heroes.size():
 		_apply_hero(heroes[i], saved[i], bm)
+	battle.monster_manager.elapsed = bm.elapsed
 	_apply_camps(battle.monster_manager, snap.get("camps", []))
 	EventBus.kill_score_changed.emit(bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED])
 	return true
@@ -160,6 +161,7 @@ static func _apply_camps(mm: MonsterManager, saved: Array) -> void:
 		camp.left = float(s.get("left", camp.left))
 		camp.spawned = int(s.get("spawned", camp.spawned))
 		camp.warned = bool(s.get("warned", false))
+		camp.tier = int(s.get("tier", 1))
 		var units: Array = []
 		var n := 0
 		for u in s.get("units", []):
@@ -171,6 +173,8 @@ static func _apply_camps(mm: MonsterManager, saved: Array) -> void:
 			n += 1
 			mm.world.add_child(m)
 			m.setup(d, Vector2(float(u.hx), float(u.hy)))
+			var c: CampData = camp.data
+			m.empower(int(u.get("tier", 1)), c.wave_stat_growth, c.wave_reward_growth)
 			m.global_position = Vector2(float(u.x), float(u.y))
 			m.health.hp = clampf(float(u.hp), 1.0, m.health.max_hp())
 			# 분노 단계는 체력을 보고 다시 판정한다 (능력치 변화도 그때 붙는다).

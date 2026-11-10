@@ -24,7 +24,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 MAP_TILES = ["ground_grass", "ground_dirt", "ground_stone", "ground_dungeon", "ground_lava", "ground_forest", "wall_rock"]
 MAP_OBJECTS = ["base_fountain", "shop", "center_stage", "camp_ring", "boss_altar",
-               "tree_1", "tree_2", "bush", "rock_1", "rock_2", "crystal", "torch"]
+               "tree_1", "tree_2", "bush", "rock_1", "rock_2", "crystal", "torch", "pillar", "barrel", "crate"]
+
+# 게임은 캐릭터가 오른쪽을 본다고 보고 왼쪽으로 갈 때 뒤집는다. 왼쪽을 보고 그려진 그림은 넣을 때 뒤집는다.
+FACING_LEFT = {"saint", "frost_mage"}
 
 KINDS = {
     "heroes": ("assets/heroes", 384),
@@ -272,11 +275,13 @@ def square(img: Image.Image, side: int, margin: float = 0.06) -> Image.Image:
     return canvas
 
 
-def process(img: Image.Image, kind: str, cell: bool = False) -> Image.Image:
+def process(img: Image.Image, kind: str, cell: bool = False, id_: str = "") -> Image.Image:
     size = KINDS[kind][1]
     if kind == "map_tile":
         return img.convert("RGB").resize((size, size), Image.LANCZOS)
     img = trim(remove_background(img, cell=cell))
+    if kind in ("heroes", "monsters") and id_ in FACING_LEFT:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
     if kind in ("heroes", "monsters"):
         return fit(img, size)
     return square(img, size)
@@ -319,7 +324,7 @@ def cmd_sheet(args: list) -> int:
         kind, real = cat.get(norm(id_), ("items", id_))
         c, r = n % cols, n // cols
         cell = sheet.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
-        out = save(process(cell, kind, True), kind, real)
+        out = save(process(cell, kind, True, real), kind, real)
         print("넣음:", f"{path.name} [{r + 1}줄 {c + 1}칸] -> {out.relative_to(ROOT)}")
     return 0
 
@@ -357,7 +362,7 @@ def main() -> int:
         if dry:
             done.append(f"{p.name} -> {KINDS[kind][0]}/{id_}.png")
             continue
-        out = save(process(Image.open(p), kind), kind, id_)
+        out = save(process(Image.open(p), kind, id_=id_), kind, id_)
         done.append(f"{p.name} -> {out.relative_to(ROOT)}")
     for d in done:
         print("넣음:", d)

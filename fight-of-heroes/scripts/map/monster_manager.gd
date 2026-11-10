@@ -10,6 +10,8 @@ var world: Node2D
 var map: MapData
 var camps: Array = []  # [{data, units, left, alive, spawned, warned}]
 var final_boss_time := 600.0
+## 경기 시작 뒤 지난 시간 (주기 소환 성장 단계 계산)
+var elapsed := 0.0
 
 
 func setup(world_node: Node2D, map_data: MapData, cfg: MatchConfig) -> void:
@@ -19,7 +21,7 @@ func setup(world_node: Node2D, map_data: MapData, cfg: MatchConfig) -> void:
 		final_boss_time = cfg.final_boss_time
 	for c: CampData in map.camps:
 		var first := final_boss_time if c.is_final_boss else c.first_spawn
-		camps.append({"data": c, "units": [], "left": first, "alive": false, "spawned": 0, "warned": false})
+		camps.append({"data": c, "units": [], "left": first, "alive": false, "spawned": 0, "warned": false, "tier": 1})
 
 
 func is_boss_camp(camp: Dictionary) -> bool:
@@ -31,6 +33,7 @@ func is_boss_camp(camp: Dictionary) -> bool:
 
 
 func _physics_process(delta: float) -> void:
+	elapsed += delta
 	for camp in camps:
 		if camp.data.wave_interval > 0.0:
 			_tick_wave(camp, delta)
@@ -72,10 +75,15 @@ func _tick_wave(camp: Dictionary, delta: float) -> void:
 	if camp.left > 0.0:
 		return
 	camp.left = c.wave_interval
-	var room := c.wave_max - alive.size()
+	var tier := c.wave_tier(elapsed - c.first_spawn)
+	if tier > int(camp.get("tier", 1)):
+		camp.tier = tier
+		EventBus.notice.emit("중앙 미니언이 강해졌습니다 (%d단계): 수 증가, 체력·공격력 +%d%%, 보상 +%d%%" % [tier, roundi(c.wave_stat_growth * (tier - 1) * 100.0), roundi(c.wave_reward_growth * (tier - 1) * 100.0)])
+	var names := c.wave_group(tier)
+	var room := c.wave_max + c.wave_max_growth * (tier - 1) - alive.size()
 	var group: Array = []
-	for i in mini(room, c.monsters.size()):
-		var d := DataRegistry.monster(c.monsters[i])
+	for i in mini(room, names.size()):
+		var d := DataRegistry.monster(names[i])
 		if d == null:
 			continue
 		var m: Monster = SCENE.instantiate()
@@ -83,6 +91,7 @@ func _tick_wave(camp: Dictionary, delta: float) -> void:
 		world.add_child(m)
 		var pos := c.position + Vector2.from_angle(randf() * TAU) * randf_range(60.0, 220.0)
 		m.setup(d, pos)
+		m.empower(tier, c.wave_stat_growth, c.wave_reward_growth)
 		group.append(m)
 	for m in group:
 		m.camp_mates = group

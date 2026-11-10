@@ -18,6 +18,9 @@ var returning := false
 var owner_unit = null
 var life_left := 0.0
 var expired := false
+## 주기 소환 성장 단계 (1 = 기본). 보상 배율은 처치 보상에 곱한다.
+var tier := 1
+var reward_mult := 1.0
 
 const SUMMON_GUARD := 520.0
 const SUMMON_FOLLOW := 140.0
@@ -53,6 +56,17 @@ func setup(d: MonsterData, pos: Vector2) -> void:
 	if is_boss():
 		add_to_group("bosses")
 	$Visual.setup(self)
+
+
+## 성장 단계만큼 체력·공격력을 올리고 보상 배율을 정한다.
+func empower(t: int, stat_growth: float, reward_growth: float) -> void:
+	tier = maxi(1, t)
+	reward_mult = 1.0 + reward_growth * (tier - 1)
+	if tier <= 1:
+		return
+	var p := stat_growth * (tier - 1)
+	stats.add_modifiers("wave_tier", [StatModifier.make("max_hp", 0.0, p), StatModifier.make("attack", 0.0, p), StatModifier.make("armor", 2.0 * (tier - 1), 0.0)])
+	health.reset_full()
 
 
 func setup_summon(d: MonsterData, owner, pos: Vector2, seconds: float) -> void:

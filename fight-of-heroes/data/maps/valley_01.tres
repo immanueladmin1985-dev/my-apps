@@ -103,6 +103,12 @@ respawn = 0.0
 is_final_boss = false
 wave_interval = 30.0
 wave_max = 12
+wave_growth_interval = 100.0
+wave_max_tier = 6
+wave_stat_growth = 0.3
+wave_reward_growth = 0.35
+wave_extra_monsters = PackedStringArray("skeleton", "goblin", "skeleton", "bone_golem", "skeleton")
+wave_max_growth = 2
 
 [sub_resource type="Resource" id="ancient_dragon"]
 script = ExtResource("2")

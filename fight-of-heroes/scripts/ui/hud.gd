@@ -69,7 +69,7 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
-	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, gold_label, name_label, gather_button, shop_button, inventory_bar] + skill_buttons:
+	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, name_label, gather_button, shop_button, inventory_bar] + skill_buttons:
 		n.visible = playable
 	if not playable:
 		return
@@ -85,13 +85,17 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	attack_button.released.connect(func(_s, _v, _d, _c): controller.attack_held = false)
 	for b in skill_buttons:
 		b.show_learn = true
-		b.learn_pressed.connect(func(slot): hero.learn(slot))
+		b.learn_pressed.connect(func(slot):
+			hero.learn(slot)
+			_show_skill_info(slot, 2.5))
 		b.pressed_down.connect(_on_skill_down)
 		b.aim_changed.connect(_on_skill_aim)
 		b.released.connect(_on_skill_released)
+		b.info_requested.connect(_on_skill_info)
 	controller.cast_failed.connect(show_message)
 	hero.leveled_up.connect(func(lv): show_message("레벨 %d! 스킬 버튼의 + 를 눌러 스킬을 올리세요" % lv))
 	name_label.text = "%s · %s" % [hero.display_name, hero.data.role]
+	show_message("스킬 버튼을 꾹 누르면 설명이 나옵니다")
 
 
 func _exit_tree() -> void:
@@ -161,6 +165,7 @@ func _build() -> void:
 	root.add_child(cancel_zone)
 	for b in skill_buttons:
 		b.cancel_zone = cancel_zone
+	_build_skill_info()
 
 	name_label = _label("", 18, HORIZONTAL_ALIGNMENT_CENTER)
 	_place(name_label, Vector2(0.5, 1), Vector2(-200, -96), Vector2(400, 28))
@@ -180,9 +185,11 @@ func _build() -> void:
 	xp_bar.show_text = false
 	_place(xp_bar, Vector2(0.5, 1), Vector2(-200, -18), Vector2(400, 8))
 	root.add_child(xp_bar)
+	# 골드는 상점 버튼 안에 크게 보여 준다. 이 글자는 체력 막대 옆의 보조 표시.
 	gold_label = _label("0 G", 20, HORIZONTAL_ALIGNMENT_LEFT)
 	gold_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
 	_place(gold_label, Vector2(0.5, 1), Vector2(208, -66), Vector2(140, 28))
+	gold_label.visible = false
 	root.add_child(gold_label)
 	boss_label = _label("", 18, HORIZONTAL_ALIGNMENT_CENTER)
 	_place(boss_label, Vector2(0.5, 0), Vector2(-200, 70), Vector2(400, 24))
@@ -242,8 +249,9 @@ func _build() -> void:
 
 	shop_button = TouchButton.new()
 	shop_button.name = "ShopButton"
-	shop_button.setup("상점", 19, Color(0.35, 0.28, 0.1, 0.9))
-	_place(shop_button, Vector2(1, 0), Vector2(-84, 136), Vector2(70, 52))
+	shop_button.setup("상점", 17, Color(0.35, 0.28, 0.1, 0.92))
+	# 아이템 칸 왼쪽: "모여!" 버튼과 떨어뜨리고, 골드를 크게 보여 준다.
+	_place(shop_button, Vector2(0.5, 1), Vector2(-264, -160), Vector2(104, 64))
 	shop_button.pressed.connect(toggle_shop)
 	root.add_child(shop_button)
 
@@ -363,11 +371,18 @@ func _process(delta: float) -> void:
 				var cfg := DataRegistry.progression()
 				time_label.text += "  ·  역전 보너스 골드 +%d%% 부활 -%d%%" % [roundi((cfg.comeback_gold(d) - 1.0) * 100.0), roundi((1.0 - cfg.comeback_respawn(d)) * 100.0)]
 	_update_boss_bar()
+	if _skill_info_left > 0.0:
+		_skill_info_left -= delta
+		if _skill_info_left <= 0.0 and skill_info != null:
+			skill_info.visible = false
 	if hero != null and controller != null:
 		hp_bar.set_values(hero.health.hp, hero.health.max_hp(), hero.health.shield_total())
 		mp_bar.set_values(hero.mana.mp, hero.mana.max_mp())
 		xp_bar.set_values(hero.xp_ratio(), 1.0)
 		gold_label.text = "%d G" % hero.gold
+		shop_button.sub_text = "%d G" % hero.gold
+		shop_button.highlight = shop != null and shop.can_shop(hero)
+		shop_button.queue_redraw()
 		cancel_zone.visible = controller.aiming_slot >= 0 and controller.aim_dragged
 		if hero.is_dead:
 			name_label.text = "부활까지 %d초" % ceili(hero.respawn_left)
@@ -425,6 +440,66 @@ func _on_hero_killed(victim, killer, helpers: Array) -> void:
 
 func _on_score(blue: int, red: int) -> void:
 	score_label.text = "블루 %d : %d 레드" % [blue, red]
+
+
+## ---- 스킬 설명 (스킬 버튼을 꾹 누르거나 + 로 배울 때) ----
+
+var skill_info: PanelContainer
+var skill_info_label: Label
+var _skill_info_left := 0.0
+
+
+func _build_skill_info() -> void:
+	skill_info = PanelContainer.new()
+	skill_info.name = "SkillInfo"
+	skill_info.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.06, 0.07, 0.1, 0.92)
+	st.border_color = Color(1, 0.85, 0.3, 0.8)
+	st.set_border_width_all(2)
+	st.set_corner_radius_all(12)
+	st.set_content_margin_all(14)
+	skill_info.add_theme_stylebox_override("panel", st)
+	skill_info_label = _label("", 17, HORIZONTAL_ALIGNMENT_LEFT)
+	skill_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	skill_info_label.custom_minimum_size = Vector2(440, 0)
+	skill_info.add_child(skill_info_label)
+	_place(skill_info, Vector2(1, 1), Vector2(-770, -330), Vector2(470, 0))
+	skill_info.visible = false
+	root.add_child(skill_info)
+
+
+## 스킬 설명 글: 이름·단계, 마나·쿨타임·사거리(지금 단계 기준), 설명
+static func skill_text(h: Hero, slot: int) -> String:
+	var s: SkillData = h.skill_caster.get_skill(slot)
+	if s == null:
+		return ""
+	var keys := ["Q", "W", "E", "R"]
+	var rank: int = h.skill_caster.ranks[slot]
+	var i := clampi(rank - 1, 0, s.max_rank - 1)
+	var cd: float = s.cooldown[mini(i, s.cooldown.size() - 1)] if not s.cooldown.is_empty() else 0.0
+	var mp: float = s.mana_cost[mini(i, s.mana_cost.size() - 1)] if not s.mana_cost.is_empty() else 0.0
+	var head := "%s  %s  (%s)" % [keys[slot], s.display_name, ("%d/%d단계" % [rank, s.max_rank]) if rank > 0 else "아직 배우지 않음"]
+	var parts: Array = ["마나 %d" % roundi(mp), "쿨타임 %s초" % str(snappedf(cd, 0.1))]
+	if s.cast_range > 0.0:
+		parts.append("사거리 %d" % roundi(s.cast_range))
+	return "%s\n%s\n%s" % [head, " · ".join(parts), s.description]
+
+
+func _show_skill_info(slot: int, seconds := 0.0) -> void:
+	if skill_info == null or hero == null:
+		return
+	skill_info_label.text = skill_text(hero, slot)
+	skill_info.visible = skill_info_label.text != ""
+	skill_info.reset_size()
+	_skill_info_left = seconds
+
+
+func _on_skill_info(slot: int, show: bool) -> void:
+	if show:
+		_show_skill_info(slot)
+	elif skill_info != null:
+		skill_info.visible = false
 
 
 func _on_skill_down(slot: int) -> void:
