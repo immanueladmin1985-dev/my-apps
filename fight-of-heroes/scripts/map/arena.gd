@@ -80,7 +80,7 @@ func _draw() -> void:
 		var dirt := Art.texture("map", "ground_dirt")
 		if dirt != null:
 			_draw_textured_circle(pos, cfg.fountain_radius * 1.35, dirt)
-		if not _draw_object("base_fountain", pos, cfg.fountain_radius * 2.0):
+		if not _draw_object("base_fountain", pos, cfg.fountain_radius * 1.6):
 			_draw_plain_fountain(pos, cfg.fountain_radius, c)
 		draw_arc(pos, cfg.fountain_radius, 0, TAU, 64, Color(c, 0.6), 4.0)
 		var toward_edge := -1.0 if pos.x < map.size.x * 0.5 else 1.0
