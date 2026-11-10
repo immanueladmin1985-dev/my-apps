@@ -35,7 +35,11 @@ KINDS = {
     "items": ("assets/items", 128),
     "map_tile": ("assets/backgrounds", 512),
     "map_object": ("assets/backgrounds", 512),
+    "skills": ("assets/skills", 128),
 }
+
+# 스킬 아이콘 묶음 그림 (영웅 한 명당 3x2): 윗줄 Q·W·E, 아랫줄 R·패시브·빈칸
+SKILL_SHEET_ORDER = ["q", "w", "e", "r", "passive", "-"]
 
 
 def norm(name: str) -> str:
@@ -55,6 +59,39 @@ def data_entries(folder: str) -> list:
     return out
 
 
+def hero_skill_entries() -> list:
+    """(영웅 id, 영웅 이름, 패시브 id)"""
+    out = []
+    for f in sorted((ROOT / "data" / "heroes").glob("*.tres")):
+        text = f.read_text(encoding="utf-8")
+        res = text[text.find("[resource]"):]
+        hid = re.search(r'^id = "([^"]+)"', res, re.M)
+        name = re.search(r'^display_name = "([^"]+)"', res, re.M)
+        # 패시브는 영웅 파일 앞쪽(하위 리소스)에 있다: 처음 나오는 id 가 패시브 id.
+        sub = text[:text.find("[resource]")]
+        m = re.search(r'^id = "([^"]+)"', sub, re.M) if "passive_data.gd" in sub else None
+        pid = m.group(1) if m else None
+        if hid:
+            out.append((hid.group(1), name.group(1) if name else "", pid))
+    return out
+
+
+def import_skill_sheet(path: Path, hid: str, passive: str) -> list:
+    """영웅 스킬 아이콘 묶음 그림을 칸별로 잘라 넣는다."""
+    sheet = Image.open(path).convert("RGBA")
+    cw, ch = sheet.width / 3, sheet.height / 2
+    done = []
+    for n, k in enumerate(SKILL_SHEET_ORDER):
+        if k == "-" or (k == "passive" and not passive):
+            continue
+        sid = passive if k == "passive" else f"{hid}_{k}"
+        c, r = n % 3, n // 3
+        cell = sheet.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
+        out = save(process(cell, "skills", True, sid), "skills", sid)
+        done.append(f"{path.name} [{r + 1}줄 {c + 1}칸] -> {out.relative_to(ROOT)}")
+    return done
+
+
 def catalog() -> dict:
     """정규화한 이름 → (종류, id)"""
     cat = {}
@@ -68,6 +105,14 @@ def catalog() -> dict:
                 if name:
                     cat[norm(name + "(변신)")] = (kind, i + "_dragon")
                     cat[norm(name + "변신")] = (kind, i + "_dragon")
+    for hid, hname, passive in hero_skill_entries():
+        for k in ("q", "w", "e", "r"):
+            cat[norm(f"{hid}_{k}")] = ("skills", f"{hid}_{k}")
+        if passive:
+            cat[norm(passive)] = ("skills", passive)
+        cat[norm(hid + "_skills")] = ("skill_sheet", hid)
+        if hname:
+            cat[norm(hname + " 스킬")] = ("skill_sheet", hid)
     for i in MAP_TILES:
         cat[norm(i)] = ("map_tile", i)
     for i in MAP_OBJECTS:
@@ -284,6 +329,8 @@ def process(img: Image.Image, kind: str, cell: bool = False, id_: str = "") -> I
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
     if kind in ("heroes", "monsters"):
         return fit(img, size)
+    if kind == "skills":
+        return square(img, size, 0.0)
     return square(img, size)
 
 
@@ -359,6 +406,11 @@ def main() -> int:
             unknown.append(p.name)
             continue
         kind, id_ = hit
+        if kind == "skill_sheet":
+            if not dry:
+                passive = {h: p for h, _n, p in hero_skill_entries()}.get(id_)
+                done += import_skill_sheet(p, id_, passive)
+            continue
         if dry:
             done.append(f"{p.name} -> {KINDS[kind][0]}/{id_}.png")
             continue
@@ -368,7 +420,7 @@ def main() -> int:
         print("넣음:", d)
     if unknown:
         print("어디에 쓸지 모르는 파일 (이름을 확인해 주세요):", ", ".join(unknown))
-    ids = sorted({v for v in cat.values() if not v[1].endswith("_dragon")})
+    ids = sorted({v for v in cat.values() if not v[1].endswith("_dragon") and v[0] != "skill_sheet"})
     missing = [i for k, i in ids if not (ROOT / KINDS[k][0] / (i + ".png")).exists()]
     print(f"넣은 파일 {len(done)}개, 아직 없는 그림 {len(missing)}개")
     if missing and "--missing" in argv:

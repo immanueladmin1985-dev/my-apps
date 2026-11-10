@@ -58,6 +58,22 @@ func test_hero_and_monster_art() -> void:
 	check(h.is_dead, "쓰러진 영웅도 그림으로 그려짐")
 
 
+func test_skill_icon() -> void:
+	var s: SkillData = DataRegistry.hero("blade_master").skills[0]
+	Art.set_override("skills", s.id, null)
+	check(Art.skill_icon(s) == null, "아이콘이 없으면 글자로 그림")
+	var tex := _tex(32, 32)
+	Art.set_override("skills", s.id, tex)
+	eq(Art.skill_icon(s), tex, "assets/skills/<스킬 id>.png 를 씀")
+	var h := spawn_hero("blade_master", Enums.Team.BLUE, Vector2(300, 300))
+	var b := SkillButton.new()
+	b.configure(0, "Q", "돌", 46.0, Color.GRAY)
+	b.hero = h
+	add_child(b)
+	await frames(2)
+	b.queue_free()
+
+
 func test_item_icon_and_map_art() -> void:
 	Art.set_override("items", "dagger", _tex(32, 32))
 	check(Art.item_icon(ItemManager.get_item("dagger")) != null, "아이템 아이콘")

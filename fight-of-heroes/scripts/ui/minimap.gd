@@ -69,7 +69,7 @@ func _draw() -> void:
 ## 미니맵에도 안개를 어둡게 칠한다 (칸을 몇 개씩 묶어 그린다).
 func _draw_fog() -> void:
 	var fog: FogOfWar = FogOfWar.current
-	if fog == null:
+	if fog == null or fog.viewer_team < 0:
 		return
 	var step := 2
 	var cw: float = size.x / fog.cols * step

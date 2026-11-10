@@ -9,6 +9,7 @@ const DIRS := {
 	"monsters": "res://assets/monsters",
 	"items": "res://assets/items",
 	"map": "res://assets/backgrounds",
+	"skills": "res://assets/skills",
 }
 
 static var _cache: Dictionary = {}
@@ -63,6 +64,26 @@ static func draw_hero_face(ci: CanvasItem, hero_id: String, center: Vector2, rad
 		return false
 	draw_portrait(ci, tex, center, radius, modulate, texture("heroes", hero_id + "_face"))
 	return true
+
+
+## 스킬 아이콘: 데이터에 넣은 icon, 없으면 assets/skills/<id>.png
+static func skill_icon(skill) -> Texture2D:
+	if skill == null:
+		return null
+	if skill.icon != null:
+		return skill.icon
+	return texture("skills", skill.id)
+
+
+## 원 안에 그림을 채워 그린다 (스킬 버튼 등)
+static func draw_in_circle(ci: CanvasItem, tex: Texture2D, center: Vector2, radius: float, modulate := Color.WHITE) -> void:
+	var pts := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	for i in 40:
+		var d := Vector2.from_angle(TAU * i / 40.0)
+		pts.append(center + d * radius)
+		uvs.append(Vector2(0.5, 0.5) + d * 0.5)
+	ci.draw_colored_polygon(pts, modulate, uvs, tex)
 
 
 ## 아이템 아이콘: 데이터에 넣은 icon, 없으면 assets/items/<id>.png

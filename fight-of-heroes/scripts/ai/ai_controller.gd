@@ -161,13 +161,16 @@ func think() -> void:
 	# 죽어서 사라진 소환수·몬스터를 가리키고 있으면 비운다.
 	if target != null and not is_instance_valid(target):
 		target = null
+	# 안개: 시야에서 사라진 적은 더 쫓지 않는다.
+	if target != null and not FogOfWar.team_can_see(hero.team, target):
+		target = null
 	if objective != null and typeof(objective) == TYPE_OBJECT and not is_instance_valid(objective):
 		objective = null
 	var pos: Vector2 = hero.global_position
 	var hp: float = hero.health.ratio()
 	_shop_if_possible()
 	_drink_if_needed(hp)
-	var enemies := Targeting.in_radius(get_tree(), pos, profile.sight_range, hero.team, Enums.TargetTeam.ENEMY)
+	var enemies := Targeting.in_radius(get_tree(), pos, profile.sight_range, hero.team, Enums.TargetTeam.ENEMY).filter(func(e): return FogOfWar.team_can_see(hero.team, e))
 	var help_target = manager.attacker_of_allies(hero) if manager != null else null
 	if help_target != null and not is_instance_valid(help_target):
 		help_target = null
@@ -556,7 +559,13 @@ func _use_skills(enemies: Array) -> void:
 func _aim_for(s: SkillData, enemies: Array) -> CastAim:
 	var pos: Vector2 = hero.global_position
 	var hp: float = hero.health.ratio()
-	var nearest = Targeting.nearest(get_tree(), pos, 2000.0, hero.team, Enums.TargetTeam.ENEMY)
+	var nearest = null
+	var nd0 := INF
+	for e in Targeting.in_radius(get_tree(), pos, 2000.0, hero.team, Enums.TargetTeam.ENEMY):
+		var d0: float = pos.distance_to(e.global_position)
+		if d0 < nd0 and FogOfWar.team_can_see(hero.team, e):
+			nd0 = d0
+			nearest = e
 	var nd: float = pos.distance_to(nearest.global_position) if nearest != null else INF
 	match s.ai_use:
 		Enums.AIUse.ESCAPE:

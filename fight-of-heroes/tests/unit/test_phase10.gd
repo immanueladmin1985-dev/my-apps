@@ -159,9 +159,30 @@ func test_fog_of_war() -> void:
 	check(not battle.player_controller._nearest_prefer_hero(3000.0) == enemy, "보이지 않는 적은 자동으로 노리지 않음")
 
 
+func test_ai_follows_fog() -> void:
+	await _open(true)
+	var blue_ai: AIController = hero.controller
+	hero.global_position = Vector2(1500, 1300)
+	enemy.global_position = Vector2(1500 + 900, 1300)
+	await frames(8)
+	check(not FogOfWar.team_can_see(hero.team, enemy), "블루 시야 밖의 적")
+	blue_ai.target = enemy
+	blue_ai.think()
+	check(blue_ai.target != enemy, "AI 는 시야 밖의 적을 노리지 않음")
+	enemy.global_position = Vector2(1500 + 350, 1300)
+	await frames(8)
+	check(FogOfWar.team_can_see(hero.team, enemy), "가까이 오면 보임")
+	blue_ai.think()
+	eq(blue_ai.target, enemy, "보이면 노림")
+	check(FogOfWar.team_can_see(enemy.team, hero), "레드도 블루를 봄")
+
+
 func test_fog_off_for_watch_and_setting() -> void:
 	await _open(true)
-	check(battle.fog == null and FogOfWar.current == null, "관전·자동 진행에는 안개가 없음")
+	check(battle.fog != null and battle.fog.viewer_team == -1, "관전·자동 진행: 안개는 계산만 하고 화면에는 그리지 않음")
+	enemy.global_position = hero.global_position + Vector2(2500, 0)
+	await frames(4)
+	check(FogOfWar.can_see(enemy), "관전 화면에서는 모두 보임")
 	battle.queue_free()
 	await frames(2)
 	SaveManager.data.settings.fog_of_war = false

@@ -57,7 +57,7 @@ func alive_count(team: int) -> int:
 ## 팀의 집중 공격 대상: 아군 근처에서 처치하기 쉬운 적 영웅.
 func focus_target(team: int):
 	var t = _focus.get(team)
-	if t != null and Targeting.is_valid(t, team, Enums.TargetTeam.ENEMY):
+	if t != null and Targeting.is_valid(t, team, Enums.TargetTeam.ENEMY) and FogOfWar.team_can_see(team, t):
 		return t
 	return null
 
@@ -180,7 +180,7 @@ func _pick_focus(team: int):
 	if mates.is_empty():
 		return null
 	for e in hero_manager.heroes:
-		if not Targeting.is_valid(e, team, Enums.TargetTeam.ENEMY):
+		if not Targeting.is_valid(e, team, Enums.TargetTeam.ENEMY) or not FogOfWar.team_can_see(team, e):
 			continue
 		var near := INF
 		for m in mates:
@@ -204,7 +204,7 @@ func attacker_of_allies(hero, window := 2.0):
 		for pair in a.valid_attackers():
 			var u = pair[0]
 			var t: float = pair[1]
-			if t > best_t and Targeting.is_valid(u, hero.team, Enums.TargetTeam.ENEMY):
+			if t > best_t and Targeting.is_valid(u, hero.team, Enums.TargetTeam.ENEMY) and FogOfWar.team_can_see(hero.team, u):
 				best_t = t
 				best = u
 	return best

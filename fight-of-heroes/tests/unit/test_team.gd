@@ -266,6 +266,7 @@ func test_enemy_fountain_hurts() -> void:
 	ai.think()
 	check(ai.target != red, "AI 는 상대 우물 안의 적을 쫓지 않음")
 	red.global_position = red.spawn_point - Vector2(600, 0)
+	await frames(8)  # 안개(시야) 갱신
 	ai.think()
 	eq(ai.target, red, "우물 밖으로 나오면 다시 노림")
 	battle.queue_free()

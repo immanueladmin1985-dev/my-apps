@@ -89,7 +89,20 @@ func show_hero(id: String) -> void:
 	for i in h.skills.size():
 		var s: SkillData = h.skills[i]
 		var line := "%s  %s  (최대 %d단계, 마나 %s, 쿨타임 %s초%s)" % [Enums.SLOT_KEYS[i], s.display_name, s.max_rank, _arr(s.mana_cost), _arr(s.cooldown), (", 사거리 %d" % roundi(s.cast_range)) if s.cast_range > 0.0 else ""]
-		detail.add_child(UiKit.label(line, 18, Color(0.75, 0.9, 1.0)))
+		var icon := Art.skill_icon(s)
+		if icon != null:
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 10)
+			var tr := TextureRect.new()
+			tr.texture = icon
+			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.custom_minimum_size = Vector2(44, 44)
+			row.add_child(tr)
+			row.add_child(UiKit.label(line, 18, Color(0.75, 0.9, 1.0)))
+			detail.add_child(row)
+		else:
+			detail.add_child(UiKit.label(line, 18, Color(0.75, 0.9, 1.0)))
 		detail.add_child(UiKit.wrap_label(s.description, 16))
 	detail.add_child(UiKit.label("추천 아이템", 22, UiKit.ACCENT))
 	var names := PackedStringArray()

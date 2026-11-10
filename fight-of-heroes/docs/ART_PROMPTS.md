@@ -175,12 +175,52 @@ Square 1024x1024 PNG.
 
 ---
 
-## 5. 우선순위
 
-전부 만들기 부담스러우면 아래 순서로 만들어 주세요. 앞쪽부터 게임 화면에 미치는 효과가 큽니다.
+## 5. 스킬 아이콘 (영웅마다 한 장, 50개)
 
-1. 영웅 10장
-2. `ground_grass.png`, `wall_rock.png`, `base_fountain.png`, `shop.png`, `center_stage.png`
-3. 몬스터 9장
-4. 아이템 39장
-5. 나머지 바닥 무늬와 장식
+영웅 한 명당 그림 한 장에 6칸(가로 3 × 세로 2)으로 만듭니다. 칸 순서는 **윗줄 Q·W·E, 아랫줄 R·패시브·빈칸** 입니다.
+파일 이름을 `<영웅 id>_skills.png` (예: `blade_master_skills.png`) 또는 `<영웅 이름> 스킬.png` (예: `검성 스킬.png`) 로 저장하면 정리 도구가 칸별로 잘라 넣습니다.
+
+### 공통 앞부분
+
+```
+Original fantasy game skill icon sheet (not copied from any existing game).
+A 3x2 grid of six square skill icons on a flat magenta (#FF00FF) background, with a clear magenta gap between icons.
+Top row: icons 1, 2, 3. Bottom row: icons 4, 5, and an empty magenta cell.
+Each icon is a rounded-square tile with its own painted dark background and a bold symbol in the center, readable at 64x64 pixels.
+Bright hand-painted style matching cel-shaded chibi heroes, bold outline, glowing effects. No text, no numbers, no letters.
+Square 1536x1024 PNG.
+```
+
+### 영웅별 뒷부분
+
+| 파일 이름 | 영웅 | 뒷부분 |
+|---|---|---|
+| `assassin_skills.png` | 암살자 | `Theme color: matches the hero "암살자". 1 (Q, 그림자 찌르기): a shadowy figure stabbing from behind with a purple dagger. 2 (W, 독칼 던지기): a green poison-dripping throwing knife in flight. 3 (E, 그림자 숨기): a fading purple silhouette dissolving into smoke. 4 (R, ultimate, 처형): a crimson dagger slash with a skull, execution strike, more dramatic and golden-framed. 5 (passive, 급소): a glowing red weak point target mark on armor, with a subtle circular frame.` |
+| `blade_master_skills.png` | 검성 | `Theme color: matches the hero "검성". 1 (Q, 돌진 베기): a golden blade dashing forward leaving a speed trail. 2 (W, 회전베기): a spinning sword whirlwind circle. 3 (E, 검기 방어): a translucent golden sword-energy shield. 4 (R, ultimate, 일섬): a single blinding white-gold flash slash across the icon, more dramatic and golden-framed. 5 (passive, 검의 길): three crossed sword strikes with a golden glow, with a subtle circular frame.` |
+| `dragon_knight_skills.png` | 용기사 | `Theme color: matches the hero "용기사". 1 (Q, 창 찌르기): a long red spear thrusting forward. 2 (W, 화염 숨결): a dragon head breathing a wide cone of fire. 3 (E, 용비늘): overlapping red dragon scales forming a shield. 4 (R, ultimate, 용 변신): a red knight transforming into a fiery dragon silhouette, more dramatic and golden-framed. 5 (passive, 용의 피): a drop of glowing dragon blood with flames, with a subtle circular frame.` |
+| `elf_archer_skills.png` | 엘프 궁수 | `Theme color: matches the hero "엘프 궁수". 1 (Q, 관통 화살): a green arrow piercing through several targets in a line. 2 (W, 가시 덫): a hidden thorn trap with vines and spikes. 3 (E, 후퇴 도약): an elf leaping backward with wind swirls. 4 (R, ultimate, 화살비): a rain of arrows falling from the sky onto the ground, more dramatic and golden-framed. 5 (passive, 바람의 가호): a swirl of green wind feathers, with a subtle circular frame.` |
+| `fire_mage_skills.png` | 화염술사 | `Theme color: matches the hero "화염술사". 1 (Q, 화염구): a blazing fireball. 2 (W, 불기둥): a pillar of fire erupting from the ground. 3 (E, 화염 도약): a burst of flame teleport with fire sparks. 4 (R, ultimate, 메테오): a huge meteor falling with a fiery tail, more dramatic and golden-framed. 5 (passive, 점화): a small ember igniting into flame, with a subtle circular frame.` |
+| `frost_mage_skills.png` | 빙결술사 | `Theme color: matches the hero "빙결술사". 1 (Q, 얼음 창): a sharp ice spear flying forward. 2 (W, 서리 지대): a frozen ground area with frost crystals. 3 (E, 얼음 갑옷): a body covered in icy crystal armor. 4 (R, ultimate, 절대 영도): a giant blue snowflake freezing everything, absolute zero, more dramatic and golden-framed. 5 (passive, 냉기): a cold blue frost breath swirl, with a subtle circular frame.` |
+| `monk_skills.png` | 무투가 | `Theme color: matches the hero "무투가". 1 (Q, 붕권): a powerful straight punch with an impact shockwave. 2 (W, 연환격): a flurry of many fists striking. 3 (E, 철벽 자세): a calm fighting stance with an iron wall aura. 4 (R, ultimate, 천붕권): a falling sky punch with a huge ground shockwave, more dramatic and golden-framed. 5 (passive, 연타): rapid triple jab motion lines, with a subtle circular frame.` |
+| `paladin_skills.png` | 성기사 | `Theme color: matches the hero "성기사". 1 (Q, 심판의 망치): a glowing holy hammer striking down. 2 (W, 신성한 방패): a golden holy shield with a sun emblem. 3 (E, 돌격): a shield charge rushing forward. 4 (R, ultimate, 신의 가호): golden wings of divine protection over allies, more dramatic and golden-framed. 5 (passive, 수호의 맹세): a golden aura ring with a sun symbol, with a subtle circular frame.` |
+| `saint_skills.png` | 성녀 | `Theme color: matches the hero "성녀". 1 (Q, 빛의 화살): a small arrow made of white holy light. 2 (W, 치유): a green-gold healing cross with sparkles. 3 (E, 정화의 빛): a gentle purifying white light wave. 4 (R, ultimate, 부활의 기도): praying hands with a bright halo and rising light, more dramatic and golden-framed. 5 (passive, 축복): a soft blessing light falling from above, with a subtle circular frame.` |
+| `summoner_skills.png` | 소환술사 | `Theme color: matches the hero "소환술사". 1 (Q, 해골 소환): two skeleton warriors rising from a purple portal. 2 (W, 저주): a purple cursed skull mark. 3 (E, 뼈 감옥): a cage made of bones trapping the ground. 4 (R, ultimate, 뼈 골렘): a large bone golem rising, more dramatic and golden-framed. 5 (passive, 영혼 수확): a purple soul flame being harvested, with a subtle circular frame.` |
+
+참고용 스킬 설명:
+
+- **암살자**: Q 그림자 찌르기 / W 독칼 던지기 / E 그림자 숨기 / R 처형 / 패시브 급소
+- **검성**: Q 돌진 베기 / W 회전베기 / E 검기 방어 / R 일섬 / 패시브 검의 길
+- **용기사**: Q 창 찌르기 / W 화염 숨결 / E 용비늘 / R 용 변신 / 패시브 용의 피
+- **엘프 궁수**: Q 관통 화살 / W 가시 덫 / E 후퇴 도약 / R 화살비 / 패시브 바람의 가호
+- **화염술사**: Q 화염구 / W 불기둥 / E 화염 도약 / R 메테오 / 패시브 점화
+- **빙결술사**: Q 얼음 창 / W 서리 지대 / E 얼음 갑옷 / R 절대 영도 / 패시브 냉기
+- **무투가**: Q 붕권 / W 연환격 / E 철벽 자세 / R 천붕권 / 패시브 연타
+- **성기사**: Q 심판의 망치 / W 신성한 방패 / E 돌격 / R 신의 가호 / 패시브 수호의 맹세
+- **성녀**: Q 빛의 화살 / W 치유 / E 정화의 빛 / R 부활의 기도 / 패시브 축복
+- **소환술사**: Q 해골 소환 / W 저주 / E 뼈 감옥 / R 뼈 골렘 / 패시브 영혼 수확
+
+## 6. 진행 상황
+
+- 넣음: 영웅 10명과 용기사 변신, 몬스터 9종, 아이템 39개, 바닥 무늬 7개, 맵 물건·장식 전부.
+- 남음: 스킬 아이콘 50개 (5번 항목). 영웅 한 명씩 만들어 주셔도 됩니다. 아이콘이 없는 스킬은 지금처럼 글자로 그립니다.

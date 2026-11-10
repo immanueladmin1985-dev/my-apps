@@ -122,8 +122,14 @@ func _draw() -> void:
 	draw_circle(c, r - 3.0, Color(col, 0.92))
 	var text := glyph
 	var fs := int(r * 0.62)
-	var tw := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-	draw_string(FONT, c + Vector2(-tw * 0.5, fs * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, 0.95))
+	var icon := Art.skill_icon(s)
+	if icon != null:
+		# 아직 배우지 않은 스킬은 어둡게
+		var learned: bool = caster != null and caster.ranks[slot] > 0
+		Art.draw_in_circle(self, icon, c, r - 4.0, Color.WHITE if learned else Color(0.45, 0.45, 0.45))
+	else:
+		var tw := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		draw_string(FONT, c + Vector2(-tw * 0.5, fs * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, 0.95))
 	if s != null and hero != null:
 		if not hero.mana.has(caster.mana_cost(slot)):
 			draw_circle(c, r - 3.0, Color(0.1, 0.2, 0.6, 0.55))

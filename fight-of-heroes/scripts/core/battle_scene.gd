@@ -65,13 +65,15 @@ func _ready() -> void:
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		ai_manager.assign_roles(team)
 	UnitVisual.viewer_team = player_hero.team if player_hero != null else Enums.Team.BLUE
-	var want_fog: bool = (not config.autoplay or GameManager.dev_args.has("fog")) and bool(SaveManager.get_setting("fog_of_war", true))
-	if player_hero != null and want_fog and not GameManager.dev_args.has("overview"):
+	# 안개는 늘 계산한다 (AI 도 자기 팀 시야만 본다). 화면에는 사람이 하는 팀의 시야만 그린다.
+	# 설정에서 끄면 모두가 모든 것을 본다.
+	if bool(SaveManager.get_setting("fog_of_war", true)) and not GameManager.dev_args.has("no_fog"):
 		fog = FogOfWar.new()
 		fog.name = "FogOfWar"
 		add_child(fog)
 		move_child(fog, world.get_index() + 1)
-		fog.setup(map, hero_manager, player_hero.team)
+		var show: bool = player_hero != null and (not config.autoplay or GameManager.dev_args.has("fog")) and not GameManager.dev_args.has("overview")
+		fog.setup(map, hero_manager, player_hero.team if show else -1)
 	AudioManager.player_unit = player_hero if not config.autoplay else null
 	follow_target = player_hero if player_hero != null else (hero_manager.heroes[0] if not hero_manager.heroes.is_empty() else null)
 	battle_manager.setup(config, hero_manager)
