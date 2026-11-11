@@ -185,7 +185,7 @@ function gridPaint(scroll){
   if (ov.dataset.k !== G.key || !ov.querySelector('.gg')){
     let sec = null, h = '';
     P.forEach((p, i) => { if (p[1] && p[1] !== sec) h += `<div class="gs">${esc(sec = p[1])}</div>`; h += `<div class="gc" role="button" tabindex="0" data-gi="${i}"><div class="gt">${G.th[i] ? `<img src="${G.th[i]}" alt="">` : ''}<span class="gn">${i + 1}</span></div><div class="gl"><b>${esc(p[0])}</b>${p[2] ? `<em>${esc(p[2])}</em>` : ''}</div></div>`; });
-    ov.innerHTML = `<div class="gh"><b>모든 슬라이드</b><span class="dim">${P.length}장 · 누르면 그 장으로</span><span style="flex:1"></span><button class="btn sm" data-gx="1">닫기</button></div><div class="gg">${h || '<div class="dim">띄우는 장이 없습니다.</div>'}</div>`;
+    ov.innerHTML = `<div class="gh"><b>모든 슬라이드</b><span class="dim">${P.length}장 · 누르면 그 장으로</span><span style="flex:1"></span><button class="btn sm" data-gx="1">닫기</button></div><div class="gg"><div class="ggi">${h || '<div class="dim">띄우는 장이 없습니다.</div>'}</div></div>`;
     ov.dataset.k = G.key;
   }
   ov.querySelectorAll('.gc').forEach(b => b.classList.toggle('cur', +b.dataset.gi === cur));
