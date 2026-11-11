@@ -64,10 +64,14 @@ function startMain(){
     const v = s.val(); let st = null; try{ st = v ? JSON.parse(v.j) : null; }catch(e){}
     const first = !V.st; V.st = st;
     if (st && st.notes){ if (first) V.noteAt = Math.max(0, ...st.notes.map(n => n.at)); else for (const n of st.notes) if (n.at > V.noteAt){ V.noteAt = n.at; toast('PC: ' + n.t, n.k); } }
-    render();
+    render(); gridPaint();
   });
-  listen(P('pages'), 'value', s => { const v = s.val(); try{ V.pages = v ? JSON.parse(v.j) : []; }catch(e){ V.pages = []; } if (S.tab === 'show') render(); });
-  listen(P('thumb'), 'value', s => { V.thumb = s.val(); const im = $('#thImg'); if (im && V.thumb && V.thumb.d) im.src = V.thumb.d; else if (S.tab === 'show') render(); });
+  listen(P('pages'), 'value', s => { const v = s.val(); try{ V.pages = v ? JSON.parse(v.j) : []; }catch(e){ V.pages = []; } gridReset(); if (S.tab === 'show') render(); gridPaint(); });
+  listen(P('thumb'), 'value', s => {
+    V.thumb = s.val(); const im = $('#thImg'), nx = $('#thN');
+    if (im && V.thumb && V.thumb.d){ im.src = V.thumb.d; if (nx){ if (V.thumb.nd) nx.src = V.thumb.nd; else nx.removeAttribute('src'); } }
+    else if (S.tab === 'show') render();
+  });
   listen(P('res/' + V.uid), 'child_added', s => {
     const v = s.val(), w = V.wait[s.key]; V.db.ref(P('res/' + V.uid + '/' + s.key)).remove().catch(() => {});
     if (!w) return; delete V.wait[s.key]; clearTimeout(w.tm);
@@ -134,23 +138,71 @@ function showHtml(st){
       ${s.canStart ? '<button class="btn pri wide" data-c="showStart" data-ms="60000">이번 주 예배 PPT 띄우기</button>' : '<p class="dim">PC에 이번 주 예배 순서가 아직 없습니다.</p>'}</div>`;
   }
   const th = V.thumb && V.thumb.d ? `<img id="thImg" src="${V.thumb.d}" alt="">` : '<img id="thImg" alt="">';
+  const thn = V.thumb && V.thumb.nd ? `<img id="thN" src="${V.thumb.nd}" alt="">` : '<img id="thN" alt="">';
   let sec = null;
-  const list = (V.pages || []).map((p, i) => { const h = p[1] && p[1] !== sec ? `<div class="sh">${esc(sec = p[1])}</div>` : ''; return `${h}<button data-go="${i}" class="${i === s.idx ? 'cur' : ''}"><small>${i + 1}</small><span>${esc(p[0])}</span></button>`; }).join('');
-  return `<div class="card">
-      <div class="thumb">${th}${s.black ? '<span class="blk">검은 화면</span>' : ''}</div>
-      <div class="now"><div class="sec">${esc(s.sec || s.title)}</div><b>${esc(s.cur)}</b> <span class="pos">${s.idx + 1} / ${s.n}</span></div>
-      <div class="nx">다음: <b>${esc(s.next || '끝')}</b>${s.nsec && s.nsec !== s.sec ? ` <span class="dim">(${esc(s.nsec)})</span>` : ''}</div>
-      <div class="big"><button class="btn" data-c="prev">◀ 이전</button><button class="btn pri" data-c="next">다음 ▶</button></div>
-      <div class="grid4">
-        <button class="btn ${s.black ? 'on' : ''}" data-c="black"><b>■</b>검은 화면</button>
-        <button class="btn" data-c="next" data-a='{"skip":1}' title="자막을 건너뛰고 다음 장"><b>⇣</b>다음 장</button>
-        ${st.show.on ? `<button class="btn ${s.rep === 1 ? 'on' : ''}" data-c="rep" ${s.song || s.rep === 1 ? '' : 'disabled'}><b>↻</b>곡 반복</button>
-        <button class="btn ${s.rep === 2 ? 'on' : ''}" data-c="rep" data-a='{"cho":1}' ${s.song || s.rep === 2 ? '' : 'disabled'}><b>↺</b>후렴 반복</button>` : '<span></span><span></span>'}
+  // v10.40 목록: 순서 이름과 함께 그 장에 들어간 글 앞부분 (찬양은 가사, 말씀은 본문)
+  const list = (V.pages || []).map((p, i) => { const h = p[1] && p[1] !== sec ? `<div class="sh">${esc(sec = p[1])}</div>` : ''; return `${h}<button data-go="${i}" class="${i === s.idx ? 'cur' : ''}"><small>${i + 1}</small><span class="pt"><b>${esc(p[0])}</b>${p[2] ? `<em>${esc(p[2])}</em>` : ''}</span></button>`; }).join('');
+  return `<div class="card showc">
+      <div class="sc-l">
+        <div class="thumb">${th}${s.black ? '<span class="blk">검은 화면</span>' : ''}</div>
+        <div class="now"><div class="sec">${esc(s.sec || s.title)}</div><b>${esc(s.cur)}</b> <span class="pos">${s.idx + 1} / ${s.n}</span></div>
       </div>
-      ${st.show.on && s.obs ? `<div class="sw" style="margin-top:6px"><span class="t">OBS 자막 숨기기</span><button class="tg ${s.mute ? 'on' : ''}" data-c="mute" aria-label="OBS 자막 숨기기"></button></div>` : ''}
+      <div class="sc-r">
+        <div class="nxrow"><div class="thumb sm">${thn}</div><div class="nx"><span class="dim">다음</span><b>${esc(s.next || '끝')}</b>${s.nsec && s.nsec !== s.sec ? `<span class="dim">${esc(s.nsec)}</span>` : ''}</div></div>
+        <div class="big"><button class="btn" data-c="prev">◀ 이전</button><button class="btn pri" data-c="next">다음 ▶</button></div>
+        <button class="btn wide gridbtn" data-x="grid">▦ 모든 슬라이드 보기</button>
+        <div class="grid4">
+          <button class="btn ${s.black ? 'on' : ''}" data-c="black"><b>■</b>검은 화면</button>
+          <button class="btn" data-c="next" data-a='{"skip":1}' title="자막을 건너뛰고 다음 장"><b>⇣</b>다음 장</button>
+          ${st.show.on ? `<button class="btn ${s.rep === 1 ? 'on' : ''}" data-c="rep" ${s.song || s.rep === 1 ? '' : 'disabled'}><b>↻</b>곡 반복</button>
+          <button class="btn ${s.rep === 2 ? 'on' : ''}" data-c="rep" data-a='{"cho":1}' ${s.song || s.rep === 2 ? '' : 'disabled'}><b>↺</b>후렴 반복</button>` : '<span></span><span></span>'}
+        </div>
+        ${st.show.on && s.obs ? `<div class="sw" style="margin-top:6px"><span class="t">OBS 자막 숨기기</span><button class="tg ${s.mute ? 'on' : ''}" data-c="mute" aria-label="OBS 자막 숨기기"></button></div>` : ''}
+      </div>
     </div>
     ${list ? `<div class="card"><h2>장으로 바로 가기</h2><div class="pl">${list}</div></div>` : ''}
     ${st.show.on ? '<div class="card"><button class="btn wide" data-c="showClose" data-arm="띄우기를 끝낼까요? 한 번 더 누르세요">띄우기 끝내기</button></div>' : ''}`;
+}
+/* ---------- v10.40 모든 슬라이드 보기 (발표자 화면처럼 카드로 · 누르면 그 장으로) ---------- */
+const G = { open: false, th: {}, key: '', loading: false };
+function gridKey(){ return (V.pages || []).map(p => p[0] + '|' + (p[2] || '')).join('\n'); }
+function gridReset(){ const k = gridKey(); if (k !== G.key){ G.key = k; G.th = {}; if (G.open) gridLoad(); } }
+function gridOpen(){
+  G.open = true; let ov = $('#gridOv');
+  if (!ov){ ov = document.createElement('div'); ov.id = 'gridOv'; document.body.appendChild(ov);
+    ov.addEventListener('click', e => {
+      if (e.target.closest('[data-gx]')) return gridClose();
+      const b = e.target.closest('[data-gi]'); if (!b) return;
+      act('go', { i: +b.dataset.gi }, { quiet: true }).catch(() => {}); gridClose();
+    });
+  }
+  ov.classList.remove('hidden'); gridPaint(true); gridLoad();
+}
+function gridClose(){ G.open = false; const ov = $('#gridOv'); if (ov) ov.classList.add('hidden'); }
+function gridPaint(scroll){
+  const ov = $('#gridOv'); if (!ov || !G.open) return;
+  const P = V.pages || [], cur = V.st && V.st.show ? V.st.show.idx : -1;
+  if (ov.dataset.k !== G.key || !ov.querySelector('.gg')){
+    let sec = null, h = '';
+    P.forEach((p, i) => { if (p[1] && p[1] !== sec) h += `<div class="gs">${esc(sec = p[1])}</div>`; h += `<button class="gc" data-gi="${i}"><div class="gt">${G.th[i] ? `<img src="${G.th[i]}" alt="">` : ''}<span class="gn">${i + 1}</span></div><div class="gl"><b>${esc(p[0])}</b>${p[2] ? `<em>${esc(p[2])}</em>` : ''}</div></button>`; });
+    ov.innerHTML = `<div class="gh"><b>모든 슬라이드</b><span class="dim">${P.length}장 · 누르면 그 장으로</span><span style="flex:1"></span><button class="btn sm" data-gx="1">닫기</button></div><div class="gg">${h || '<div class="dim">띄우는 장이 없습니다.</div>'}</div>`;
+    ov.dataset.k = G.key;
+  }
+  ov.querySelectorAll('.gc').forEach(b => b.classList.toggle('cur', +b.dataset.gi === cur));
+  if (scroll){ const c = ov.querySelector('.gc.cur'); if (c) c.scrollIntoView({ block: 'center' }); }
+}
+async function gridLoad(){
+  if (G.loading) return; G.loading = true;
+  try{
+    const N = (V.pages || []).length, key = G.key;
+    for (let from = 0; from < N && G.open && key === G.key; from += 12){
+      if ([...Array(Math.min(12, N - from)).keys()].every(k => G.th[from + k])) continue;
+      const r = await send('thumbs', { from, n: 12 }, 30000);
+      if (key !== G.key) break;
+      for (const x of (r && r.list) || []){ if (!x.d) continue; G.th[x.i] = x.d; const t = document.querySelector(`#gridOv [data-gi="${x.i}"] .gt`); if (t && !t.querySelector('img')) t.insertAdjacentHTML('afterbegin', `<img src="${x.d}" alt="">`); }
+    }
+  }catch(e){ if (G.open) toast('그림을 다 받지 못했습니다: ' + e.message, 'warn'); }
+  G.loading = false;
 }
 function ytHtml(st){
   const Y = V.yt, L = Y.list;
@@ -249,7 +301,7 @@ async function ytLoad(){
 }
 $('#main').addEventListener('click', async e => {
   const x = e.target.closest('[data-x]');
-  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'shorts'){ V.shortsOnly = true; S.tab = 'shorts'; save(); render(); } else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); else if (k === 'vmLoad') vmLoad(); else if (k === 'rsLoad') rsLoad(); return; }
+  if (x){ const k = x.dataset.x; if (k === 'retry') boot(); else if (k === 'shorts'){ V.shortsOnly = true; S.tab = 'shorts'; save(); render(); } else if (k === 'join') askJoin(); else if (k === 'ytLoad') ytLoad(); else if (k === 'vmLoad') vmLoad(); else if (k === 'rsLoad') rsLoad(); else if (k === 'grid') gridOpen(); return; }
   const g = e.target.closest('[data-go]'); if (g){ V.plKeep = true; act('go', { i: +g.dataset.go }).catch(() => {}); return; }
   const b = e.target.closest('[data-c]'); if (!b || b.disabled) return;
   if (b.dataset.arm && !b.classList.contains('arm')){ const t = b.textContent; b.classList.add('arm'); b.textContent = b.dataset.arm; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = t; } }, 4000); return; }
@@ -264,6 +316,7 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = async () => {
 // 볼륨 단추·키보드(블루투스 리모컨)로도 넘김
 document.addEventListener('keydown', e => {
   if (V.screen !== 'main' || S.tab !== 'show' || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  if (e.key === 'Escape' && G.open){ gridClose(); return; }
   if (['ArrowRight', 'PageDown', ' '].includes(e.key)){ e.preventDefault(); act('next').catch(() => {}); }
   else if (['ArrowLeft', 'PageUp'].includes(e.key)){ e.preventDefault(); act('prev').catch(() => {}); }
 });
