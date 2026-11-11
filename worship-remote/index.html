@@ -130,14 +130,14 @@ input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid var
 #gridOv .gh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
 #gridOv .gg{flex:1;overflow:auto;padding:10px 12px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
 #gridOv .gs{grid-column:1/-1;font-size:12px;color:#818cf8;font-weight:800;padding:8px 2px 0}
-#gridOv .gc{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:0;overflow:hidden;text-align:left;display:flex;flex-direction:column}
+#gridOv .gc{display:block;background:var(--card);border:2px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;min-width:0}
 #gridOv .gc.cur{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.3)}
-#gridOv .gt{aspect-ratio:16/9;background:#000;position:relative}
-#gridOv .gt img{width:100%;height:100%;object-fit:contain;display:block}
+#gridOv .gt{display:block;position:relative;width:100%;height:0;padding-top:56.25%;background:#000}
+#gridOv .gt img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;display:block}
 #gridOv .gn{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;font-weight:800;padding:1px 6px;border-radius:6px}
-#gridOv .gl{padding:6px 8px 8px;display:flex;flex-direction:column;gap:2px;min-width:0}
-#gridOv .gl b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#gridOv .gl em{font-style:normal;font-size:11.5px;color:var(--dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
+#gridOv .gl{display:block;padding:6px 8px 8px;min-width:0}
+#gridOv .gl b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gridOv .gl em{margin-top:2px;font-style:normal;font-size:11.5px;color:var(--dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
 @media (min-width:700px){main{max-width:680px;margin:0 auto;width:100%}}
 @media (orientation:landscape) and (max-height:500px){.big .btn{height:70px}}
 /* v10.40 가로 화면: 발표자 화면처럼 왼쪽 지금 화면 크게 · 오른쪽 다음 화면과 단추 */
