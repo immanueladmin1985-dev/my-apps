@@ -316,6 +316,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       plans: DEF_PLANS.map(function(p){ return { id: uid(), area: p[0], when: p[1], then: p[2] }; }),
       focusLog: [], estLog: [], checkins: {}, thoughts: [], session: null,
       routine: JSON.parse(JSON.stringify(DEF_ROUTINE)), sos: JSON.parse(JSON.stringify(DEF_SOS)), urges: [], routineAcks: {},
+      meds: [], medLog: {}, clinics: [], appts: [], inbox: [],
       lists: DEF_LISTS.map(function(l){ return { id: l.id, name: l.name, items: l.items.map(function(t){ return { id: uid(), text: t, on: false }; }) }; })
     };
   }
@@ -347,12 +348,13 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
   var state = freshState();
   try{ var s0 = JSON.parse(localStorage.getItem(KEY)); if(s0 && typeof s0 === 'object') for(var k0 in s0) state[k0] = s0[k0]; }catch(e){}
   // 예전 버전에서 저장한 기록에 새 항목 채우기
-  (function(){ var f = freshState(); ['plans', 'focusLog', 'estLog', 'thoughts', 'sos', 'urges'].forEach(function(k){ if(!Array.isArray(state[k])) state[k] = f[k]; }); ['checkins', 'routineAcks'].forEach(function(k){ if(!state[k] || typeof state[k] !== 'object') state[k] = {}; }); if(!state.routine || typeof state.routine !== 'object') state.routine = f.routine; })();
+  (function(){ var f = freshState(); ['plans', 'focusLog', 'estLog', 'thoughts', 'sos', 'urges', 'meds', 'clinics', 'appts', 'inbox'].forEach(function(k){ if(!Array.isArray(state[k])) state[k] = f[k]; }); ['checkins', 'routineAcks', 'medLog'].forEach(function(k){ if(!state[k] || typeof state[k] !== 'object') state[k] = {}; }); if(!state.routine || typeof state.routine !== 'object') state.routine = f.routine; })();
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} nativeSync(); }
 
-  var ui = { tab: 'today', mem: 'notes', autoFS: true, installDismissed: false, theme: 'auto', font: 0, vib: true, sound: true, talkSec: 45, talkSound: false, focusMin: 20, autoTalk: false, autoSens: 1, voice: null, feat: {} };
+  var ui = { tab: 'today', mem: 'notes', autoFS: true, installDismissed: false, theme: 'auto', font: 0, vib: true, sound: true, talkSec: 45, talkSound: false, focusMin: 20, autoTalk: false, autoSens: 1, voice: null, feat: {}, msgSrc: {} };
   try{ var u0 = JSON.parse(localStorage.getItem(UIKEY)); if(u0) for(var k1 in u0) ui[k1] = u0[k1]; }catch(e){}
   if(!ui.feat || typeof ui.feat !== 'object') ui.feat = {};
+  if(!ui.msgSrc || typeof ui.msgSrc !== 'object') ui.msgSrc = {};
   function saveUI(){ try{ localStorage.setItem(UIKEY, JSON.stringify(ui)); }catch(e){} }
   function applyLook(){
     var r = document.documentElement;
@@ -376,9 +378,14 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
         reminders: state.reminders.filter(function(r){ return !r.done; }).map(function(r){ return { id: r.id, text: r.text, at: r.at, daily: !!r.daily }; }),
         lists: state.lists.map(function(l){ return { id: l.id, name: l.name, items: l.items.map(function(i){ return { id: i.id, text: i.text, on: !!i.on }; }) }; }),
         notes: state.notes.length,
-        feat: { routine: F('routine'), sos: F('sos'), urge: F('urge'), focus: F('focus'), checkin: F('checkin'), plans: F('plans') },
+        feat: { routine: F('routine'), sos: F('sos'), urge: F('urge'), focus: F('focus'), checkin: F('checkin'), plans: F('plans'), meds: F('meds'), clinic: F('clinic'), msg: F('msg') },
+        clinics: state.clinics.map(function(c){ return { id: c.id, name: c.name, keys: c.keys || [], purpose: c.purpose || '', every: +c.every || 0, lead: +c.lead || 7 }; }),
+        msgSrc: { sms: ui.msgSrc.sms !== false, kakao: ui.msgSrc.kakao !== false },
         // 워치가 스스로 알람을 걸 수 있도록 일과 설정을 통째로 보냄
-        routine: Object.assign({}, state.routine, { on: !!state.routine.on && F('routine') }),
+        routine: Object.assign({}, state.routine, { on: !!state.routine.on && F('routine'),
+          meds: F('meds') ? state.meds.filter(function(md){ return md.on !== false; }) : [],
+          // 웹 화면에서 이미 확인한 알림(먹었다고 누른 약 등)은 휴대폰·워치가 울리지 않게
+          done: Object.keys(state.medLog).concat(Object.keys(state.routineAcks)).filter(function(k){ return k.slice(0, 8) >= todayKey(Date.now() - DAY).replace(/-/g, ''); }) }),
         flows: { sos: F('sos') ? sosSteps() : [], urge: F('urge') ? urgeSteps('food') : [] }
       };
       try{ NATIVE.sync(JSON.stringify(snap)); }catch(e){}
@@ -394,6 +401,11 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       case 'listReset': l = state.lists.find(function(x){ return x.id === a.list; }); if(l) l.items.forEach(function(x){ x.on = false; }); break;
       case 'note': if(a.text) state.notes.push({ id: uid(), text: String(a.text), t: a.t || Date.now(), from: a.from || '' }); break;
       case 'focus': if(state.tasks.some(function(x){ return x.id === a.id; })) state.focus = a.id; break;
+      case 'appt': addAppt(a); break;
+      case 'apptCancel': cancelAppt(a.id); break;
+      case 'visit': { var vc = state.clinics.find(function(x){ return x.id === (a.clinicId || a.id); }); if(vc){ vc.last = a.at; vc.visits = (vc.visits || []).concat([a.at]).slice(-12); addRems(a.rems || [], 'visit'); } break; }
+      case 'inbox': if(!state.inbox.some(function(x){ return x.id === a.id; })){ state.inbox.push({ id: a.id, t: a.t || Date.now(), src: a.src, from: a.from || '', raw: a.raw || '', p: a.p || {} }); if(state.inbox.length > 50) state.inbox.shift(); } break;
+      case 'medTaken': if(a.key) medTaken(a.key, a.t); break;
       case 'flowDone': state.urges.push({ id: uid(), t: a.t || Date.now(), kind: a.kind === 'sos' ? 'anger' : 'food', outcome: a.outcome || 'passed', from: a.from || 'watch' }); break;
       case 'talkLog': if(a.dur > 15000){ state.talks.push({ id: uid(), t: a.t, dur: a.dur, me: a.me, longest: a.longest, alerts: a.alerts, from: 'watch' }); if(state.talks.length > 100) state.talks.shift(); } break;
     }
@@ -422,6 +434,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       case 'mind': ui.tab = 'mind'; render(); break;
       case 'talk': talkStart(); break;
       case 'lists': ui.tab = 'mem'; ui.mem = 'lists'; render(); break;
+      case 'appts': case 'clinics': case 'inbox': case 'meds': ui.tab = 'today'; render(); break;
       case 'rem': ui.tab = 'mem'; ui.mem = 'rem'; render(); break;
       case 'notes': ui.tab = 'mem'; ui.mem = 'notes'; render(); break;
       default: ui.tab = 'today'; render();
@@ -588,6 +601,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       '<div class="capto"><button class="c-indigo" data-a="cap" data-to="note">📝 메모</button><button class="c-green" data-a="cap" data-to="task">✅ 할 일</button><button class="c-amber" data-a="cap" data-to="rem">⏰ 알림</button></div>' +
       '<p class="note">일단 적어 두면 머릿속에서 내려놓을 수 있어요. 정리는 나중에 ‘기억’에서 해요.</p></div>';
 
+    h += inboxCard();
     if(state.session) h += '<button class="fbar wide" data-a="focusOpen">⏱ <span>집중 중 · ' + esc(state.session.text) + '</span><b id="fbLeft">' + mmss(state.session.end - Date.now()) + '</b></button>';
     var f = state.tasks.find(function(t){ return t.id === state.focus && !t.done; });
     h += '<div class="card">' + head('🎯', 'amber', '지금 할 일 하나', f ? '<button class="link" data-a="pickFocus">바꾸기</button>' : '');
@@ -601,7 +615,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
     else h += '<div class="list">' + up.slice(0, 4).map(remItem).join('') + '</div>' + (up.length > 4 ? '<button class="more" data-a="goMem" data-sub="rem">알림 ' + up.length + '개 모두 보기 ›</button>' : '');
     h += '</div>';
 
-    h += routineCard() + (F('focus') ? focusCard() : '') + (F('checkin') ? checkinCard() : '');
+    h += medCard() + clinicCard() + routineCard() + (F('focus') ? focusCard() : '') + (F('checkin') ? checkinCard() : '');
     h += '<div class="card">' + head('🧾', 'sky', '챙길 것') + '<div class="chips">' + state.lists.map(function(l){
       var n = l.items.filter(function(i){ return i.on; }).length;
       return '<button class="chip" data-a="openList" data-id="' + l.id + '">' + esc(l.name) + ' <span class="sub">' + n + '/' + l.items.length + '</span></button>';
@@ -620,7 +634,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
   function remItem(r){
     var due = r.at <= Date.now();
     return '<div class="item' + (due ? ' due' : '') + '"><div class="tx">' + esc(r.text) +
-      '<small>' + (due ? '⏰ ' + fmtAt(r.at) + ' · 시간이 됐어요' : fmtAt(r.at) + ' · ' + fmtLeft(r.at)) + (r.daily ? ' · 매일' : '') + '</small></div>' +
+      '<small>' + (due ? '⏰ ' + fmtAt(r.at) + ' · 시간이 됐어요' : fmtAt(r.at) + ' · ' + dLeft(r.at)) + (r.daily ? ' · 매일' : '') + '</small></div>' +
       (due ? '<button class="mini txt" data-a="remOk" data-id="' + r.id + '">확인</button>' : (NATIVE ? '' : '<button class="mini" data-a="remIcs" data-id="' + r.id + '" title="캘린더에 넣기">📅</button>')) +
       '<button class="mini" data-a="remDel" data-id="' + r.id + '" aria-label="지우기">✕</button></div>';
   }
@@ -1473,7 +1487,10 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
     ['urge', '🌊 충동이 올 때', '먹고·사고·보고 싶은 충동을 10분 미루기'],
     ['focus', '⏱ 집중 타이머', '집중할 만큼 하고 쉬기, 딴생각 적어 두기'],
     ['checkin', '📋 오늘 체크인', '약·잠·운동 기록'],
-    ['plans', '🧭 만약-그러면 계획', '그 순간 할 행동을 미리 정해 두기']
+    ['plans', '🧭 만약-그러면 계획', '그 순간 할 행동을 미리 정해 두기'],
+    ['meds', '💊 약 챙기기', '약 먹을 시간마다 확인할 때까지 알림'],
+    ['clinic', '🏥 병원 · 예약', '병원 다시 갈 때, 예약 문자 일정 넣기'],
+    ['msg', '📩 문자·카톡에서 일정 찾기', '안드로이드 앱에서 알림으로 온 글을 읽어 일정·준비물 찾기']
   ];
   function F(k){ return !ui.feat || ui.feat[k] !== false; }
   function featSheet(){
@@ -1491,8 +1508,8 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
   var WDN = ['일', '월', '화', '수', '목', '금', '토'];
   function hm2m(s){ var p = String(s || '').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
   function routineEvents(day){
-    var r = state.routine, out = [];
-    if(!r || !r.on || !F('routine')) return out;
+    var r = state.routine, out = [], meds = medEvents(day);
+    if(!r || !r.on || !F('routine')) return meds.sort(function(a, b){ return a.at - b.at; });
     var d0 = new Date(day); d0.setHours(0, 0, 0, 0);
     var base = d0.getTime(), dow = d0.getDay(), key = todayKey(base).replace(/-/g, '');
     var al = r.alerts || {}, on = function(k){ return al[k] !== false; };
@@ -1500,7 +1517,12 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
     if(r.workOn !== false && (r.days || []).indexOf(dow) >= 0){
       var s = hm2m(r.start), e = hm2m(r.end), l1 = hm2m(r.lunch), l2 = hm2m(r.lunchEnd), w = +r.focus || 0, rest = +r.rest || 0;
       if(e > s){
-        if(on('start')) add(s, 'start', '🏢', '출근 시간이에요', '오늘 할 일 하나를 정하고 시작해요');
+        // 출근·퇴근은 미리 알려 줌 (기본: 출근 30분 전 준비, 퇴근 10분 전 마무리)
+        var leadS = Math.min(180, Math.max(0, r.leadStart == null ? 30 : +r.leadStart)), leadE = Math.min(120, Math.max(0, r.leadEnd == null ? 10 : +r.leadEnd));
+        if(on('start')){
+          if(leadS > 0) add(s - leadS, 'start', '🏢', '출근 준비할 시간이에요', hm(new Date(base + s * MIN)) + ' 출근까지 ' + leadS + '분 남았어요. 챙길 것 확인하고 출발해요');
+          else add(s, 'start', '🏢', '출근 시간이에요', '오늘 할 일 하나를 정하고 시작해요');
+        }
         var lunchDone = !(l2 > l1 && l1 > s && l2 < e), t = s, k = 0;
         var lunch = function(){ if(on('lunch')){ add(l1, 'lunch', '🍚', '점심시간이에요', '일어나서 밥 먹으러 가요. 약 먹는 날도 점심은 꼭 챙겨요'); add(l2, 'lunchEnd', '💼', '점심시간 끝', '다시 시작해요. 할 일 하나만 골라요'); } };
         while(k < 40 && w > 0 && rest > 0){
@@ -1512,7 +1534,10 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
           t = b + rest;
         }
         if(!lunchDone) lunch();
-        if(on('end')) add(e, 'end', '🏠', '퇴근 시간이에요', '오늘도 수고했어요. 내일 첫 할 일 하나만 적어 두세요');
+        if(on('end')){
+          if(leadE > 0) add(e - leadE, 'end', '🏠', '퇴근 ' + leadE + '분 전이에요', '하던 일을 마무리하고, 내일 첫 할 일 하나만 적어 두세요');
+          else add(e, 'end', '🏠', '퇴근 시간이에요', '오늘도 수고했어요. 내일 첫 할 일 하나만 적어 두세요');
+        }
       }
     }
     (r.events || []).forEach(function(ev){
@@ -1521,7 +1546,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       if(+ev.before > 0) add(tm - ev.before, 'ev-' + ev.id + '-b', emo, ev.name + ' ' + ev.before + '분 전', ev.msg || '준비하고 출발해요');
       add(tm, 'ev-' + ev.id, emo, ev.name + ' 시간이에요', ev.msg || '');
     });
-    return out.sort(function(a, b){ return a.at - b.at; });
+    return out.concat(meds).sort(function(a, b){ return a.at - b.at; });
   }
   function routineUpcoming(n){
     var now = Date.now(), res = [];
@@ -1553,6 +1578,8 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       '<div class="srow"><span>출근~퇴근 시간 알림<small>쉬는 시간을 저절로 계산해요</small></span><label class="switch"><input type="checkbox" id="rtWork"' + (r.workOn !== false ? ' checked' : '') + '><span></span></label></div>' +
       '<label class="f">일하는 요일</label><div class="chips" id="rtDays">' + WDN.map(function(n, i){ return '<button class="chip' + (r.days.indexOf(i) >= 0 ? ' on' : '') + '" data-v="' + i + '">' + n + '</button>'; }).join('') + '</div>' +
       '<label class="f">시간</label><div class="row" style="flex-wrap:wrap">' + tin('rtS', '출근', r.start) + tin('rtE', '퇴근', r.end) + '</div><div class="row" style="flex-wrap:wrap;margin-top:8px">' + tin('rtL1', '점심 시작', r.lunch) + tin('rtL2', '점심 끝', r.lunchEnd) + '</div>' +
+      '<label class="f">출근 알림</label><div class="chips" id="rtLs">' + [[0, '출근 시각에'], [15, '15분 전'], [30, '30분 전'], [45, '45분 전'], [60, '1시간 전'], [90, '1시간 30분 전']].map(function(x){ return '<button class="chip' + ((r.leadStart == null ? 30 : +r.leadStart) === x[0] ? ' on' : '') + '" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      '<label class="f">퇴근 알림</label><div class="chips" id="rtLe">' + [[0, '퇴근 시각에'], [10, '10분 전'], [30, '30분 전']].map(function(x){ return '<button class="chip' + ((r.leadEnd == null ? 10 : +r.leadEnd) === x[0] ? ' on' : '') + '" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
       '<label class="f">집중하고 쉬는 리듬</label><div class="chips" id="rtRh">' + RH.map(function(x){ return '<button class="chip' + (+r.focus === x[0] && +r.rest === x[1] ? ' on' : '') + '" data-f="' + x[0] + '" data-r="' + x[1] + '">' + x[0] + '분 일하고 ' + x[1] + '분 쉬기</button>'; }).join('') + '</div>' +
       '<label class="f">알릴 것</label><div class="chips" id="rtAl">' + AL.map(function(a){ return '<button class="chip' + ((r.alerts || {})[a[0]] !== false ? ' on' : '') + '" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>' +
       (NATIVE ? '<label class="f">알림 받을 곳</label><div class="chips" id="rtTg">' + TG.map(function(t){ return '<button class="chip' + (r.target === t[0] ? ' on' : '') + '" data-v="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><p class="note">워치를 고르면 휴대폰은 울리지 않아요. 워치와 연결이 끊겨 있으면 ‘둘 다’가 안전해요.</p>' : '') +
@@ -1567,6 +1594,8 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       var rh = m.querySelector('#rtRh .on'); if(rh){ r.focus = +rh.getAttribute('data-f'); r.rest = +rh.getAttribute('data-r'); }
       r.alerts = {}; AL.forEach(function(a){ r.alerts[a[0]] = !!m.querySelector('#rtAl [data-v="' + a[0] + '"].on'); });
       var tg = m.querySelector('#rtTg .on'); if(tg) r.target = tg.getAttribute('data-v');
+      var ls = m.querySelector('#rtLs .on'); if(ls) r.leadStart = +ls.getAttribute('data-v');
+      var le = m.querySelector('#rtLe .on'); if(le) r.leadEnd = +le.getAttribute('data-v');
     }
     function preview(){
       read();
@@ -1577,7 +1606,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
     m.addEventListener('click', function(e){
       var c = e.target.closest('.chip');
       if(c && c.parentNode.id === 'rtDays' || c && c.parentNode.id === 'rtAl'){ c.classList.toggle('on'); preview(); return; }
-      if(c && (c.parentNode.id === 'rtRh' || c.parentNode.id === 'rtTg')){ [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); }); preview(); return; }
+      if(c && (c.parentNode.id === 'rtRh' || c.parentNode.id === 'rtTg' || c.parentNode.id === 'rtLs' || c.parentNode.id === 'rtLe')){ [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); }); preview(); return; }
       var eb = e.target.closest('[data-ev]');
       if(eb){ read(); eventSheet(r, eb.getAttribute('data-ev'), function(){ m.querySelector('#rtEv').innerHTML = evList(); preview(); }); return; }
       if(e.target.closest('[data-ok]')){
@@ -1620,19 +1649,20 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
   // 웹으로만 쓸 때: 화면이 열려 있으면 확인을 누를 때까지 진동·소리로 알림 (앱에서는 휴대폰·워치가 대신 울림)
   var rtShown = {};
   function routineCheck(){
-    if(NATIVE || !state.routine.on || !F('routine')) return;
+    if(NATIVE) return;
     var now = Date.now();
     routineEvents(now).forEach(function(ev){
-      if(ev.at > now || ev.at < now - 15 * MIN || state.routineAcks[ev.key] || rtShown[ev.key]) return;
+      if(ev.at > now || ev.at < now - 15 * MIN || state.routineAcks[ev.key] || state.medLog[ev.key] || rtShown[ev.key]) return;
       rtShown[ev.key] = 1;
       var iv = setInterval(function(){ buzz([500, 300, 500]); beep(2, 740); }, 4000);
       buzz([500, 300, 500]); beep(2, 740);
       var m = openModal('<div style="font-size:3.5rem;text-align:center">' + ev.e + '</div><h3 style="text-align:center">' + esc(ev.t) + '</h3><p style="text-align:center">' + esc(ev.b) + '</p><button class="btn good block" data-ok style="height:3.4rem">확인</button>', function(){ clearInterval(iv); });
-      m.querySelector('[data-ok]').onclick = function(){ routineAck(ev.key); m.close(); };
+      m.querySelector('[data-ok]').onclick = function(){ routineAck(ev.key); m.close(); render(); };
     });
   }
   function routineAck(key){
     state.routineAcks[key] = 1;
+    if(isMedKey(key)) medTaken(key);
     var cut = todayKey(Date.now() - 3 * DAY).replace(/-/g, '');
     Object.keys(state.routineAcks).forEach(function(k){ if(k.slice(0, 8) < cut) delete state.routineAcks[k]; });
     save();
@@ -1792,6 +1822,297 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
     list();
   }
 
+  // ===== 약 챙기기 =====
+  // 약 먹을 시간마다 확인을 누를 때까지 알림(워치 진동). 확인하면 ‘먹었음’으로 기록하고 오늘 체크인의 약도 채운다.
+  function medEvents(day){
+    var out = [];
+    if(!F('meds')) return out;
+    var d0 = new Date(day); d0.setHours(0, 0, 0, 0);
+    var base = d0.getTime(), dow = d0.getDay(), key = todayKey(base).replace(/-/g, '');
+    state.meds.forEach(function(md){
+      if(md.on === false || (md.days || []).indexOf(dow) < 0) return;
+      (md.times || []).forEach(function(tm){
+        out.push({ key: key + ':med-' + md.id + '-' + tm.replace(':', ''), at: base + hm2m(tm) * MIN, e: '💊', t: md.name + ' 먹을 시간이에요', b: '먹었으면 확인을 눌러요. 오늘 약 기록에 남아요', med: md });
+      });
+    });
+    return out;
+  }
+  function isMedKey(k){ return k.indexOf(':med-') > 0; }
+  function medTaken(key, t){
+    state.medLog[key] = t || Date.now();
+    var d = key.slice(0, 4) + '-' + key.slice(4, 6) + '-' + key.slice(6, 8);
+    var c = state.checkins[d] = state.checkins[d] || {}; c.med = 'y';
+    var cut = todayKey(Date.now() - 40 * DAY).replace(/-/g, '');
+    Object.keys(state.medLog).forEach(function(k){ if(k.slice(0, 8) < cut) delete state.medLog[k]; });
+  }
+  function medCard(){
+    if(!F('meds')) return '';
+    var h = '<div class="card">' + head('💊', 'green', '오늘 약', '<button class="link" data-a="medSet">' + (state.meds.length ? '고치기' : '넣기') + '</button>');
+    if(!state.meds.length) return h + '<p class="sub">먹는 약과 시간을 넣어 두면, 그 시간마다 ' + (NATIVE ? '워치가 ' : '') + '확인을 누를 때까지 알려 줘요.</p><button class="btn primary block" data-a="medSet">약 넣기</button></div>';
+    var now = Date.now(), evs = medEvents(now);
+    if(!evs.length) h += '<p class="empty">오늘은 먹을 약이 없어요.</p>';
+    else h += '<div class="list">' + evs.map(function(ev){
+      var tk = state.medLog[ev.key], late = !tk && ev.at <= now;
+      return '<div class="item' + (late ? ' due' : '') + '"><div class="tx">' + esc(ev.med.name) + '<small>' + hm(new Date(ev.at)) + ' · ' + (tk ? '✅ ' + hm(new Date(tk)) + '에 먹었어요' : late ? '아직 안 먹었어요' : fmtLeft(ev.at)) + '</small></div>' +
+        (tk ? '<span class="check on">✓</span>' : '<button class="mini txt" data-a="medTake" data-id="' + ev.key + '">먹었어요</button>') + '</div>';
+    }).join('') + '</div>';
+    // 최근 7일 챙긴 비율
+    var all = 0, ok = 0;
+    for(var i = 1; i <= 7; i++) medEvents(now - i * DAY).forEach(function(ev){ if(ev.at < dayStart(ev.med.since || 0)) return; all++; if(state.medLog[ev.key]) ok++; });
+    if(all) h += '<p class="note">지난 7일 ' + all + '번 중 ' + ok + '번 챙겼어요.' + (ok === all ? ' 👏' : '') + '</p>';
+    return h + '</div>';
+  }
+  function medSheet(){
+    var meds = JSON.parse(JSON.stringify(state.meds));
+    var m = openModal('<h3>💊 약 챙기기</h3><p class="sub">약 이름과 먹는 시간을 넣어 두면 그 시간마다 확인할 때까지 알려 줘요.</p><div id="mdL"></div><button class="btn soft block" data-x="add">+ 약 추가</button>' +
+      '<div class="btns"><button class="btn" data-close>취소</button><button class="btn primary" data-x="ok">저장</button></div>');
+    function list(){
+      m.querySelector('#mdL').innerHTML = meds.length ? meds.map(function(md, i){
+        return '<div class="card" style="box-shadow:none;background:var(--field);margin-top:10px;padding:12px" data-i="' + i + '">' +
+          '<div class="row"><input data-k="name" value="' + esc(md.name) + '" placeholder="예: 혈압약, ADHD 약" style="background:var(--card)"><label class="switch"><input type="checkbox" data-k="on"' + (md.on !== false ? ' checked' : '') + '><span></span></label></div>' +
+          '<div class="chips" style="margin-top:8px">' + md.times.map(function(tm, j){ return '<span class="chip" style="display:inline-flex;align-items:center;gap:4px;padding-right:.3rem"><input type="time" data-t="' + j + '" value="' + esc(tm) + '" style="padding:0;background:none;width:6.2rem"><button data-x="tdel" data-j="' + j + '" style="padding:0 .3rem">✕</button></span>'; }).join('') + '<button class="chip" data-x="tadd">+ 시간</button></div>' +
+          '<div class="chips" style="margin-top:8px">' + WDN.map(function(n, d){ return '<button class="chip' + (md.days.indexOf(d) >= 0 ? ' on' : '') + '" data-x="day" data-d="' + d + '">' + n + '</button>'; }).join('') + '</div>' +
+          '<button class="more" data-x="del" style="color:var(--warn)">이 약 지우기</button></div>';
+      }).join('') : '<p class="empty">아직 넣은 약이 없어요.</p>';
+    }
+    function read(){
+      [].forEach.call(m.querySelectorAll('[data-i]'), function(box){
+        var md = meds[+box.getAttribute('data-i')];
+        md.name = box.querySelector('[data-k="name"]').value.trim();
+        md.on = box.querySelector('[data-k="on"]').checked;
+        md.times = [].map.call(box.querySelectorAll('[data-t]'), function(x){ return x.value; }).filter(Boolean);
+      });
+    }
+    m.addEventListener('click', function(e){
+      var b = e.target.closest('[data-x]'); if(!b) return;
+      read();
+      var box = b.closest('[data-i]'), md = box ? meds[+box.getAttribute('data-i')] : null, x = b.getAttribute('data-x');
+      if(x === 'add') meds.push({ id: uid(), name: '', times: ['08:00'], days: [0, 1, 2, 3, 4, 5, 6], on: true, since: Date.now() });
+      else if(x === 'tadd') md.times.push('20:00');
+      else if(x === 'tdel') md.times.splice(+b.getAttribute('data-j'), 1);
+      else if(x === 'day'){ var d = +b.getAttribute('data-d'), k = md.days.indexOf(d); if(k >= 0) md.days.splice(k, 1); else md.days.push(d); }
+      else if(x === 'del') meds.splice(+box.getAttribute('data-i'), 1);
+      else if(x === 'ok'){
+        var bad = meds.some(function(z){ return !z.name || !z.times.length || !z.days.length; });
+        if(bad){ toast('약 이름, 시간, 요일을 모두 정해 주세요'); return; }
+        meds.forEach(function(z){ z.times.sort(); });
+        state.meds = meds; save(); m.close(); render(); toast('저장했어요. 약 먹을 시간마다 알려 줄게요'); askNotifSoft(); return;
+      }
+      list();
+    });
+    list();
+  }
+
+  // ===== 병원 다시 가기 · 예약 일정 =====
+  // 자주 가는 병원을 등록해 두면 결제 문자로 다녀온 것을 알아채고(“다녀오셨나요?”) 다음에 갈 때를 알려 준다.
+  // 예약 문자는 날짜·시간을 읽어 전날 저녁과 1시간 전에 알려 준다. 계산은 android/shared/.../MsgParse.kt 와 같다.
+  function addRems(rems, src){
+    (rems || []).forEach(function(r){
+      state.reminders = state.reminders.filter(function(x){ return x.id !== r.id; });
+      state.reminders.push({ id: r.id, text: r.text, at: r.at, daily: false, done: false, fired: false, src: src || '' });
+    });
+  }
+  function visitRem(c, visitAt){
+    if(!(+c.every > 0)) return null;
+    var lead = Math.min(Math.max(+c.lead || 0, 0), +c.every);
+    var at = dayStart(visitAt + (c.every - lead) * DAY) + 10 * HOUR;
+    if(at < Date.now()) at = dayStart(Date.now() + DAY) + 10 * HOUR;
+    var due = new Date(dayStart(visitAt + c.every * DAY));
+    return { id: 'visit-' + c.id, text: '🏥 ' + c.name + ' 갈 때가 됐어요' + (c.purpose ? ' · ' + c.purpose : '') + ' (' + (due.getMonth() + 1) + '/' + due.getDate() + '쯤까지)', at: at };
+  }
+  function apptRemsJs(id, title, at, items){
+    var out = [], now = Date.now(), prep = items && items.length ? ' · 준비물 ' + items.length + '개' : '';
+    var eve = dayStart(at) - DAY + 20 * HOUR;
+    if(eve > now && at - eve > 3 * HOUR) out.push({ id: id + '-d1', text: '📅 내일 ' + hm(new Date(at)) + ' ' + title + prep, at: eve });
+    if(at - HOUR > now) out.push({ id: id + '-h1', text: '📅 1시간 뒤 ' + title + ' · 출발 준비해요' + prep, at: at - HOUR });
+    else if(at > now) out.push({ id: id + '-h0', text: '📅 곧 ' + title + prep, at: at });
+    return out;
+  }
+  function clinicFor(text){
+    return state.clinics.find(function(c){ return [c.name].concat(c.keys || []).some(function(k){ return k && String(text || '').indexOf(k) >= 0; }); });
+  }
+  function recordVisit(c, at){
+    c.last = at;
+    c.visits = (c.visits || []).concat([at]).slice(-12);
+    var r = visitRem(c, at);
+    if(r) addRems([r], 'visit');
+  }
+  function addAppt(a){
+    if(state.appts.some(function(x){ return x.id === a.id; })) return;
+    var c = a.clinicId ? state.clinics.find(function(x){ return x.id === a.clinicId; }) : clinicFor(a.org || a.title);
+    var ap = { id: a.id, at: a.at, title: a.title, org: a.org || '', items: a.items || [], clinicId: c ? c.id : '', src: a.src || '', raw: a.raw || '', t: Date.now(), done: '' };
+    state.appts.push(ap);
+    if(state.appts.length > 200) state.appts.shift();
+    addRems(a.rems || apptRemsJs(a.id, a.title, a.at, ap.items), 'appt');
+    if(ap.items.length){
+      var d = new Date(a.at);
+      state.lists.push({ id: 'appt-' + a.id, name: '🗓 ' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + a.title, items: ap.items.map(function(t){ return { id: uid(), text: t, on: false }; }) });
+    }
+  }
+  function cancelAppt(id){
+    state.appts = state.appts.filter(function(x){ return x.id !== id; });
+    state.reminders = state.reminders.filter(function(r){ return r.id.indexOf(id + '-') !== 0; });
+    state.lists = state.lists.filter(function(l){ return l.id !== 'appt-' + id; });
+  }
+  // 남은 때: 하루 안이면 ‘3시간 20분 뒤’, 그보다 멀면 ‘D-5’
+  function dLeft(at){ var dd = Math.round((dayStart(at) - dayStart(Date.now())) / DAY); return dd >= 1 ? 'D-' + dd : fmtLeft(at); }
+  function clinicCard(){
+    if(!F('clinic')) return '';
+    var now = Date.now(), h = '<div class="card">' + head('🏥', 'rose', '병원 · 예약', '<button class="link" data-a="clinicSet">' + (state.clinics.length ? '병원 고치기' : '병원 등록') + '</button>');
+    var rows = '';
+    // 지난 예약: 다녀오셨나요?
+    state.appts.filter(function(a){ return !a.done && a.at < now - HOUR && a.at > now - 7 * DAY; }).forEach(function(a){
+      rows += '<div class="item due"><div class="tx">' + esc(a.title) + ' 다녀오셨나요?<small>' + fmtAt(a.at) + '</small></div><button class="mini txt" data-a="apptYes" data-id="' + a.id + '">다녀왔어요</button><button class="mini" data-a="apptNo" data-id="' + a.id + '">못 갔어요</button></div>';
+    });
+    // 다가오는 예약
+    state.appts.filter(function(a){ return a.at > now - HOUR; }).sort(function(a, b){ return a.at - b.at; }).slice(0, 3).forEach(function(a){
+      rows += '<div class="item"><div class="tx">📅 ' + esc(a.title) + '<small>' + fmtAt(a.at) + ' · ' + dLeft(a.at) + (a.items.length ? ' · 준비물 ' + esc(a.items.join(', ')) : '') + '</small></div><button class="mini" data-a="apptDel" data-id="' + a.id + '" aria-label="빼기">✕</button></div>';
+    });
+    // 주기적으로 가는 병원
+    state.clinics.filter(function(c){ return +c.every > 0; }).forEach(function(c){
+      if(!c.last){ rows += '<div class="item"><div class="tx">🏥 ' + esc(c.name) + '<small>마지막으로 다녀온 날을 넣어 주세요</small></div><button class="mini txt" data-a="clinicEdit" data-id="' + c.id + '">넣기</button></div>'; return; }
+      var due = dayStart(c.last + c.every * DAY), dd = Math.round((due - dayStart(now)) / DAY), soon = dd <= (+c.lead || 7), dt = new Date(due);
+      rows += '<div class="item' + (soon ? ' due' : '') + '"><div class="tx">🏥 ' + esc(c.name) + (c.purpose ? ' · ' + esc(c.purpose) : '') + '<small>' + (dt.getMonth() + 1) + '/' + dt.getDate() + '쯤 가야 해요 · ' + (dd > 0 ? 'D-' + dd : dd === 0 ? '오늘' : Math.abs(dd) + '일 지났어요') + '</small></div><button class="mini txt" data-a="clinicVisit" data-id="' + c.id + '">다녀왔어요</button></div>';
+    });
+    if(!rows) rows = '<p class="sub">자주 가는 병원을 등록하면, 결제·예약 문자를 보고 다음에 갈 때를 알려 줘요.' + (NATIVE ? '' : ' (문자 자동 인식은 안드로이드 앱에서 돼요)') + '</p>';
+    h += '<div class="list">' + rows + '</div>';
+    if(NATIVE) h += '<div class="btns"><button class="btn soft" data-a="msgPaste">📩 문자·카톡 붙여넣기</button></div>';
+    return h + '</div>';
+  }
+  function inboxCard(){
+    if(!state.inbox.length) return '';
+    return '<div class="card wide">' + head('📩', 'violet', '문자·카톡에서 찾은 것 <small>' + state.inbox.length + '개</small>') + '<div class="list">' + state.inbox.slice().reverse().map(function(x){
+      var p = x.p || {}, srcName = { sms: '문자', kakao: '카톡', share: '공유' }[x.src] || '';
+      var line = p.kind === 'pay' ? '🏥 ' + esc(p.merchant) + '에서 결제 (' + fmtAt(p.payAt) + ')' : esc(p.title || '') + '<small>' + (p.at ? fmtAt(p.at) : '') + (p.items && p.items.length ? ' · 준비물 ' + esc(p.items.join(', ')) : '') + '</small>';
+      return '<div class="item"><div class="tx">' + line + '<small>' + srcName + (x.from ? ' · ' + esc(x.from) : '') + ' · ' + fmtAgo(x.t) + '</small></div>' +
+        '<button class="mini txt" data-a="inboxUse" data-id="' + x.id + '">' + (p.kind === 'pay' ? '병원 등록' : '넣기') + '</button><button class="mini" data-a="inboxDel" data-id="' + x.id + '" aria-label="버리기">✕</button></div>';
+    }).join('') + '</div></div>';
+  }
+  function clinicSheet(editId, preset){
+    var cs = JSON.parse(JSON.stringify(state.clinics));
+    var cur = editId ? cs.find(function(c){ return c.id === editId; }) : null;
+    if(!cur && preset){ cur = Object.assign({ id: uid(), name: '', keys: [], purpose: '', every: 60, lead: 7, last: 0 }, preset); cs.push(cur); }
+    var m;
+    function listHtml(){
+      return '<h3>🏥 자주 가는 병원</h3><p class="sub">병원 이름을 등록해 두면 결제·예약 문자에서 알아봐요. 약 받으러 가는 병원은 며칠마다 가는지 정해 두세요.</p>' +
+        (cs.length ? cs.map(function(c){ return '<div class="plan"><div class="tx"><b>' + esc(c.name) + '</b>' + (c.purpose ? ' · ' + esc(c.purpose) : '') + '<br>' + (+c.every > 0 ? c.every + '일마다' : '예약 문자로만') + (c.last ? ' · 지난 방문 ' + fmtAt(c.last).replace(/ 오[전후].*/, '') : '') + '</div><button class="mini txt" data-e="' + c.id + '">고치기</button></div>'; }).join('') : '<p class="empty">아직 등록한 병원이 없어요.</p>') +
+        '<button class="btn soft block" data-e="new">+ 병원 등록</button><div class="btns"><button class="btn" data-close>취소</button><button class="btn primary" data-x="save">저장</button></div>';
+    }
+    function editHtml(c){
+      var EV = [[0, '예약 문자로만'], [30, '30일'], [60, '60일'], [90, '90일']];
+      return '<h3>' + (c.name ? esc(c.name) : '병원 등록') + '</h3>' +
+        '<label class="f">병원 이름</label><input id="cN" value="' + esc(c.name) + '" placeholder="예: ○○내과">' +
+        '<label class="f">문자에 나오는 이름 (쉼표로 여러 개)</label><input id="cK" value="' + esc((c.keys || []).join(', ')) + '" placeholder="예: ○○내과의원, ○○내과">' +
+        '<label class="f">무엇 때문에 가나요? (선택)</label><input id="cP" value="' + esc(c.purpose || '') + '" placeholder="예: 혈압약 받기">' +
+        '<label class="f">얼마마다 가나요?</label><div class="chips" id="cE">' + EV.map(function(x){ return '<button class="chip' + (+c.every === x[0] ? ' on' : '') + '" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '<input id="cEx" type="number" min="1" max="365" placeholder="직접(일)" value="' + (EV.some(function(x){ return x[0] === +c.every; }) ? '' : c.every) + '" style="width:6.5rem;padding:.45rem .7rem"></div>' +
+        '<label class="f">며칠 전에 알려 줄까요?</label><div class="chips" id="cL">' + [3, 7, 14].map(function(x){ return '<button class="chip' + (+c.lead === x ? ' on' : '') + '" data-v="' + x + '">' + x + '일 전</button>'; }).join('') + '</div>' +
+        '<label class="f">마지막으로 다녀온 날</label><input type="date" id="cD" value="' + (c.lastNew || c.last ? todayKey(c.lastNew || c.last) : '') + '">' +
+        '<p class="note">약이 떨어지기 전에 갈 수 있게, 정한 날짜보다 며칠 먼저 알려 줘요. 결제 문자가 오면 “다녀오셨나요?”라고 물어보고 다음 방문 알림을 다시 맞춰요.</p>' +
+        '<div class="btns"><button class="btn warn" data-x="del">지우기</button><button class="btn" data-x="back">목록으로</button><button class="btn primary" data-x="keep">확인</button></div>';
+    }
+    function show(c){ m.querySelector('.isheet').innerHTML = c ? editHtml(c) : listHtml(); m._cur = c; }
+    m = openModal('');
+    show(cur);
+    m.addEventListener('click', function(e){
+      var ch = e.target.closest('#cE .chip, #cL .chip');
+      if(ch){ [].forEach.call(ch.parentNode.querySelectorAll('.chip'), function(x){ x.classList.toggle('on', x === ch); }); if(ch.parentNode.id === 'cE') m.querySelector('#cEx').value = ''; return; }
+      var ed = e.target.closest('[data-e]');
+      if(ed){ var id = ed.getAttribute('data-e'), c = id === 'new' ? null : cs.find(function(x){ return x.id === id; }); if(!c){ c = { id: uid(), name: '', keys: [], purpose: '', every: 60, lead: 7, last: 0 }; cs.push(c); } show(c); return; }
+      var b = e.target.closest('[data-x]'); if(!b) return;
+      var x = b.getAttribute('data-x'), c2 = m._cur;
+      if(x === 'del'){ cs = cs.filter(function(z){ return z !== c2; }); show(null); return; }
+      if(x === 'back'){ if(c2 && !c2.name) cs = cs.filter(function(z){ return z !== c2; }); show(null); return; }
+      if(x === 'keep'){
+        var name = m.querySelector('#cN').value.trim(); if(!name){ toast('병원 이름을 넣어 주세요'); return; }
+        c2.name = name;
+        c2.keys = m.querySelector('#cK').value.split(/[,，]/).map(function(s){ return s.trim(); }).filter(Boolean);
+        c2.purpose = m.querySelector('#cP').value.trim();
+        var ex = +m.querySelector('#cEx').value, on = m.querySelector('#cE .on');
+        c2.every = ex > 0 ? ex : on ? +on.getAttribute('data-v') : 0;
+        var ld = m.querySelector('#cL .on'); c2.lead = ld ? +ld.getAttribute('data-v') : 7;
+        var dv = m.querySelector('#cD').value; c2.lastNew = dv ? new Date(dv + 'T12:00').getTime() : 0;
+        show(null); return;
+      }
+      if(x === 'save'){
+        var old = state.clinics;
+        state.clinics = cs.map(function(c){
+          var o = old.find(function(z){ return z.id === c.id; });
+          var nl = c.lastNew; delete c.lastNew;
+          if(nl && nl !== (o && o.last)){ recordVisit(c, nl); }
+          else if(c.last && (!o || o.every !== c.every || o.lead !== c.lead || o.name !== c.name || o.purpose !== c.purpose)){ var r = visitRem(c, c.last); if(r) addRems([r], 'visit'); }
+          return c;
+        });
+        // 지운 병원의 다음 방문 알림도 지움
+        old.forEach(function(o){ if(!state.clinics.some(function(c){ return c.id === o.id; })) state.reminders = state.reminders.filter(function(r){ return r.id !== 'visit-' + o.id; }); });
+        save(); m.close(); render(); toast('저장했어요');
+      }
+    });
+  }
+  // 문자·카톡 글을 읽어 일정(알림)·할 일·준비물로 넣기
+  function parseText(text){
+    if(!NATIVE || !NATIVE.parseMsg) return null;
+    try{ return JSON.parse(NATIVE.parseMsg(text)); }catch(e){ return null; }
+  }
+  function msgSheet(text, src, inboxId){
+    var m = openModal('<h3>📩 문자·카톡에서 일정 넣기</h3><p class="sub">문자나 카톡 내용을 붙여 넣으면 날짜·시간·준비물을 찾아 줘요. 카톡·문자에서 길게 눌러 ‘공유 → 하루 도우미’로 보내도 돼요.</p>' +
+      '<textarea id="mgT" placeholder="예: 다음주 화요일 오후 2시 강남역, 신분증 꼭 챙겨오세요" style="min-height:5rem">' + esc(text || '') + '</textarea>' +
+      '<div class="btns"><button class="btn soft" data-x="read">읽기</button></div><div id="mgR"></div>');
+    function read(){
+      var t = m.querySelector('#mgT').value.trim(), r = m.querySelector('#mgR');
+      if(!t){ r.innerHTML = ''; return; }
+      var p = parseText(t) || { kind: 'none', items: [] };
+      m._p = p; m._t = t;
+      if(p.kind === 'pay'){
+        var c = p.clinicId && state.clinics.find(function(z){ return z.id === p.clinicId; });
+        r.innerHTML = '<div class="plan"><div class="tx">🏥 결제 문자예요<br><b>' + esc(p.merchant || '가게 이름을 못 찾았어요') + '</b> ' + (p.amount ? p.amount.toLocaleString() + '원' : '') + ' · ' + fmtAt(p.payAt) + '</div></div>' +
+          '<div class="btns">' + (c ? '<button class="btn primary" data-x="visit">' + esc(c.name) + ' 다녀온 걸로 기록</button>' : '<button class="btn primary" data-x="reg">자주 가는 병원으로 등록</button>') + '</div>';
+        return;
+      }
+      var items = (p.items || []).join('\n');
+      r.innerHTML = (p.at ? '' : '<p class="note">날짜와 시간을 찾지 못했어요. 직접 고르거나 할 일·메모로 넣어요.</p>') +
+        '<label class="f">제목</label><input id="mgN" value="' + esc(p.title || t.slice(0, 24)) + '">' +
+        '<label class="f">날짜와 시간</label><input type="datetime-local" id="mgD" value="' + (p.at ? localInput(p.at) : '') + '">' +
+        '<label class="f">준비물 (한 줄에 하나, 있으면 ‘챙길 것’ 목록으로 만들어요)</label><textarea id="mgI" style="min-height:3.5rem">' + esc(items) + '</textarea>' +
+        '<label class="f">미리 알림</label><div class="chips" id="mgA"><button class="chip on" data-v="d1">전날 저녁 8시</button><button class="chip on" data-v="h1">1시간 전</button><button class="chip" data-v="h0">제시간</button></div>' +
+        '<div class="btns"><button class="btn" data-x="task">할 일로</button><button class="btn" data-x="note">메모로</button><button class="btn primary" data-x="appt">일정으로 넣기</button></div>';
+    }
+    function done(msg){ if(inboxId) state.inbox = state.inbox.filter(function(x){ return x.id !== inboxId; }); save(); m.close(); render(); toast(msg); }
+    m.addEventListener('click', function(e){
+      var ch = e.target.closest('#mgA .chip'); if(ch){ ch.classList.toggle('on'); return; }
+      var b = e.target.closest('[data-x]'); if(!b) return;
+      var x = b.getAttribute('data-x'), p = m._p || {};
+      if(x === 'read'){ read(); return; }
+      if(x === 'visit'){ var c = state.clinics.find(function(z){ return z.id === p.clinicId; }); if(c) recordVisit(c, p.payAt || Date.now()); done('기록했어요. 다음에 갈 때 알려 줄게요'); return; }
+      if(x === 'reg'){ var nm = (p.merchant || '').trim(); done('병원 정보를 넣어 주세요'); clinicSheet(null, { name: nm.replace(/의원$/, ''), keys: nm ? [nm] : [], last: 0, lastNew: p.payAt || 0 }); return; }
+      var title = m.querySelector('#mgN').value.trim() || '일정', dv = m.querySelector('#mgD').value;
+      var items2 = m.querySelector('#mgI').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      if(x === 'note'){ state.notes.push({ id: uid(), text: m._t, t: Date.now(), from: 'msg' }); done('메모함에 넣었어요'); return; }
+      if(x === 'task'){
+        var tk = addTask(title + (dv ? ' (' + fmtAt(new Date(dv).getTime()) + ')' : ''));
+        if(items2.length) state.lists.push({ id: 'task-' + tk.id, name: '🧾 ' + title, items: items2.map(function(t){ return { id: uid(), text: t, on: false }; }) });
+        done('할 일에 넣었어요'); return;
+      }
+      if(x === 'appt'){
+        if(!dv){ toast('날짜와 시간을 골라 주세요'); return; }
+        var at = new Date(dv).getTime(), id = 'm' + uid(), want = [].map.call(m.querySelectorAll('#mgA .on'), function(z){ return z.getAttribute('data-v'); });
+        var rems = apptRemsJs(id, title, at, items2).filter(function(r){ return want.indexOf(r.id.slice(id.length + 1)) >= 0; });
+        if(want.indexOf('h0') >= 0 && at > Date.now()) rems.push({ id: id + '-h0', text: '📅 지금 ' + title + (items2.length ? ' · 준비물 ' + items2.length + '개' : ''), at: at });
+        addAppt({ id: id, at: at, title: title, org: p.org || '', items: items2, clinicId: p.clinicId || '', src: src || 'paste', raw: m._t, rems: rems });
+        done('일정에 넣었어요' + (items2.length ? ' · 준비물 목록도 만들었어요' : ''));
+        askNotifSoft();
+      }
+    });
+    if(text) read();
+  }
+  window.haruShare = function(text){ closeOver(); $('sheetRoot').innerHTML = ''; ui.tab = 'today'; render(); msgSheet(text, 'share'); };
+  function msgSetupRow(){
+    if(!NATIVE || !NATIVE.msgAccess) return '';
+    var ok = false; try{ ok = NATIVE.msgAccess(); }catch(e){}
+    var src = ui.msgSrc || {};
+    return '<div class="srow"><span>📩 문자·카톡에서 일정 찾기<small>' + (ok ? '켜짐 · 알림으로 온 문자·카톡에서 예약·약속·병원 결제를 찾아요. 내용은 휴대폰 안에서만 읽어요.' : '휴대폰 설정에서 ‘하루 도우미 일정 찾기’의 알림 접근을 허용해야 해요') + '</small></span>' + (ok ? '' : '<button class="btn soft" data-x="msgAccess">허용하러 가기</button>') + '</div>' +
+      (ok ? '<div class="ckrow"><b>읽을 곳</b><button class="chip' + (src.sms !== false ? ' on' : '') + '" data-src="sms">문자</button><button class="chip' + (src.kakao !== false ? ' on' : '') + '" data-src="kakao">카톡</button></div>' : '');
+  }
+
   // ===== 챙길 것 목록 =====
   function findList(id){ return state.lists.find(function(l){ return l.id === id; }); }
   function listSheet(id){
@@ -1850,6 +2171,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       var ns = 'granted', ex = true; try{ ns = NATIVE.notifState(); ex = NATIVE.exactAlarmOk(); }catch(e){}
       h += '<div class="srow"><span>알림 권한<small>' + (ns === 'granted' ? '허용됨' : '꺼져 있어요 · 알림이 울리지 않아요') + '</small></span>' + (ns === 'granted' ? '' : '<button class="btn soft" data-x="nnotif">허용하기</button>') + '</div>';
       h += '<div class="srow"><span>정확한 시간 알림<small>' + (ex ? '허용됨' : '꺼져 있어요 · 알림이 몇 분 늦을 수 있어요') + '</small></span>' + (ex ? '' : '<button class="btn soft" data-x="nalarm">허용하기</button>') + '</div>';
+      h += msgSetupRow();
       h += '<div class="srow"><span>홈 화면 위젯<small>' + (widgetCount() ? '홈 화면에 ' + widgetCount() + '개 놓여 있어요' : '아직 놓지 않았어요') + '</small></span><button class="btn soft" data-x="pin">추가</button></div>';
       h += '<div class="srow"><span>워치<small>워치 화면을 옆으로 넘겨 타일 추가에서 ‘하루 도우미’를 고르고, 시계 화면을 길게 눌러 컴플리케이션으로도 놓을 수 있어요.</small></span></div>';
     } else if('Notification' in window){
@@ -1870,6 +2192,8 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
     var bind = function(id, key){ var el = m.querySelector('#' + id); if(el) el.addEventListener('change', function(){ ui[key] = el.checked; saveUI(); nativeSync(); }); };
     bind('sVib', 'vib'); bind('sSnd', 'sound'); bind('sTalkSnd', 'talkSound'); bind('sFs', 'autoFS');
     m.addEventListener('click', function(e){
+      var sc = e.target.closest('[data-src]');
+      if(sc){ sc.classList.toggle('on'); ui.msgSrc[sc.getAttribute('data-src')] = sc.classList.contains('on'); saveUI(); nativeSync(); return; }
       var c = e.target.closest('#sTheme .chip, #sFont .chip, #sFocus .chip');
       if(c){
         [].forEach.call(c.parentNode.children, function(x){ x.classList.toggle('on', x === c); });
@@ -1890,6 +2214,7 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       else if(x === 'pin') pinWidget();
       else if(x === 'feat') featSheet();
       else if(x === 'routine') routineSheet();
+      else if(x === 'msgAccess'){ try{ NATIVE.openMsgAccess(); }catch(err){} }
     });
   }
   function exportData(){
@@ -1971,6 +2296,20 @@ details summary{list-style:none} details summary::-webkit-details-marker{display
       case 'sosEdit': sosEditSheet(); break;
       case 'urge': urgeRun(b.getAttribute('data-k')); break;
       case 'routineSet': routineSheet(); break;
+      case 'medSet': medSheet(); break;
+      case 'medTake': medTaken(id); routineAck(id); render(); buzz(30); toast('먹었어요 ✅ 잘 챙겼어요'); break;
+      case 'clinicSet': clinicSheet(); break;
+      case 'clinicEdit': clinicSheet(id); break;
+      case 'clinicVisit': { var cv = state.clinics.find(function(x){ return x.id === id; }); if(cv){ recordVisit(cv, Date.now()); save(); render(); toast('기록했어요. ' + (visitRem(cv, Date.now()) ? fmtAt(visitRem(cv, Date.now()).at).replace(/ 오[전후].*/, '') + '에 다음 방문을 알려 줄게요' : '')); } break; }
+      case 'apptYes': { var ay = state.appts.find(function(x){ return x.id === id; }); if(ay){ ay.done = 'yes'; var ac = ay.clinicId && state.clinics.find(function(x){ return x.id === ay.clinicId; }); if(ac) recordVisit(ac, ay.at); save(); render(); toast(ac && +ac.every > 0 ? '기록했어요. 다음에 갈 때 알려 줄게요' : '잘 다녀왔어요. 다음 예약 문자가 오면 일정에 넣을게요'); } break; }
+      case 'apptNo': { var an = state.appts.find(function(x){ return x.id === id; }); if(an){ an.done = 'no'; addTask('📞 ' + (an.org || an.title) + ' 다시 예약하기'); save(); render(); toast('할 일에 ‘다시 예약하기’를 넣었어요'); } break; }
+      case 'apptDel': withUndo('일정을 뺐어요', function(){ cancelAppt(id); }); break;
+      case 'inboxDel': state.inbox = state.inbox.filter(function(x){ return x.id !== id; }); save(); render(); break;
+      case 'inboxUse': { var ib = state.inbox.find(function(x){ return x.id === id; }); if(!ib) break;
+        if(ib.p && ib.p.kind === 'pay'){ var mn = (ib.p.merchant || '').trim(); state.inbox = state.inbox.filter(function(x){ return x.id !== id; }); save(); clinicSheet(null, { name: mn.replace(/의원$/, ''), keys: mn ? [mn] : [], lastNew: ib.p.payAt || 0 }); }
+        else msgSheet(ib.raw, ib.src, ib.id);
+        break; }
+      case 'msgPaste': msgSheet('', 'paste'); break;
       case 'kitchen': { var kev = state.routine.events.find(function(x){ return x.id === 'kitchen'; }); if(kev){ kev.on = !!b.checked; if(kev.on) state.routine.on = true; save(); render(); toast(kev.on ? '매일 ' + kev.time + '에 알려 줄게요' : '주방 마감 알림을 껐어요'); } break; }
       case 'stop': stopRun(); break;
       case 'reframe': reframeSheet(); break;

@@ -40,6 +40,7 @@ class MainActivity : Activity() {
     private var fileCb: ValueCallback<Array<Uri>>? = null
     private var saveText: String? = null
     private var micRequest: PermissionRequest? = null
+    private var pendingShare: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +68,8 @@ class MainActivity : Activity() {
                     ready = true
                     pendingOpen?.let { open(it) }
                     pendingOpen = null
+                    pendingShare?.let { share(it) }
+                    pendingShare = null
                 }
             }
             webChromeClient = object : WebChromeClient() {
@@ -99,13 +102,23 @@ class MainActivity : Activity() {
         }
         setContentView(web)
         pendingOpen = intent?.getStringExtra("open")
+        pendingShare = shareText(intent)
         web.loadUrl(URL)
         if (notifState() == "default") requestNotif()
+    }
+
+    /** 카톡·문자에서 ‘공유’로 보낸 글. */
+    private fun shareText(i: Intent?): String? =
+        if (i?.action == Intent.ACTION_SEND) i.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() } else null
+
+    private fun share(text: String) {
+        web.evaluateJavascript("window.haruShare && haruShare(${JSONObject.quote(text)})", null)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        shareText(intent)?.let { if (ready) share(it) else pendingShare = it; return }
         val what = intent.getStringExtra("open") ?: return
         if (ready) open(what) else pendingOpen = what
     }
@@ -259,6 +272,22 @@ class Bridge(private val a: MainActivity) {
     @JavascriptInterface fun exactAlarmOk(): Boolean = a.exactAlarmOk()
     @JavascriptInterface fun openAlarmSettings() = a.runOnUiThread { a.openAlarmSettings() }
     @JavascriptInterface fun widgetCount(): Int = a.widgetCount()
+
+    /** 문자·카톡 글에서 일정·결제 찾기 (MsgParse). 병원 목록은 지금 요약에서. */
+    @JavascriptInterface fun parseMsg(text: String): String =
+        MsgParse.parse(text, System.currentTimeMillis(), Store.snap(ctx).clinics).toJson().toString()
+
+    /** 예약 일정 알림 계획 (전날 저녁, 1시간 전). */
+    @JavascriptInterface fun apptRems(id: String, title: String, at: Double, items: String): String {
+        val list = runCatching { org.json.JSONArray(items) }.getOrNull()
+        val its = if (list == null) emptyList() else (0 until list.length()).map { list.optString(it) }
+        return MsgParse.apptRems(id, title, at.toLong(), its, System.currentTimeMillis()).toString()
+    }
+
+    @JavascriptInterface fun msgAccess(): Boolean = MsgListener.enabled(ctx)
+    @JavascriptInterface fun openMsgAccess() = a.runOnUiThread {
+        runCatching { a.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")) }
+    }
     @JavascriptInterface fun pinWidget(): Boolean = a.pinWidget()
 
     @JavascriptInterface fun copy(text: String) = a.runOnUiThread {

@@ -49,6 +49,9 @@ object WRoutine {
         val am = ctx.getSystemService(AlarmManager::class.java) ?: return
         PendingIntent.getBroadcast(ctx, 7, intent(ctx, FIRE, null), PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)?.let { am.cancel(it); it.cancel() }
         val cfg = WStore.snap(ctx).routine ?: return
+        // 폰(웹 화면)에서 이미 확인한 알림은 워치에서도 끔
+        val acked = set(ctx, "rAcked")
+        Routine.doneKeys(cfg).filter { it !in acked }.forEach { ack(ctx, it, false) }
         if (cfg.optString("target", "watch") == "phone") return
         val now = System.currentTimeMillis()
         val ev = Routine.next(cfg, now, set(ctx, "rFired") + set(ctx, "rAcked")) ?: return
@@ -63,7 +66,7 @@ object WRoutine {
     }
 
     fun nag(ctx: Context, key: String, e: String, t: String, b: String, n: Int) {
-        val p = PendingIntent.getBroadcast(ctx, 8, intent(ctx, NAG, key, e, t, b, n), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val p = PendingIntent.getBroadcast(ctx, key.hashCode(), intent(ctx, NAG, key, e, t, b, n).setData(Uri.parse("haru://nag/" + Uri.encode(key))), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         exact(ctx, System.currentTimeMillis() + NAG_MS, p)
     }
 
@@ -72,7 +75,7 @@ object WRoutine {
         sp(ctx).edit().putStringSet("rAcked", set(ctx, "rAcked").apply { add(key) }).apply()
         ctx.getSystemService(NotificationManager::class.java)?.cancel(key.hashCode())
         val am = ctx.getSystemService(AlarmManager::class.java)
-        PendingIntent.getBroadcast(ctx, 8, intent(ctx, NAG, null), PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)?.let { am?.cancel(it); it.cancel() }
+        PendingIntent.getBroadcast(ctx, key.hashCode(), intent(ctx, NAG, null).setData(Uri.parse("haru://nag/" + Uri.encode(key))), PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)?.let { am?.cancel(it); it.cancel() }
         RoutineAlertActivity.closeFor(key)
         if (tellPhone) {
             val app = ctx.applicationContext

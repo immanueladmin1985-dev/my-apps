@@ -29,7 +29,7 @@ object Routine {
 
     /** 그날(anyTime 이 속한 날) 울릴 알림 목록, 시간 순서. */
     fun events(cfg: JSONObject?, anyTime: Long): List<Ev> {
-        if (cfg == null || !cfg.optBoolean("on")) return emptyList()
+        if (cfg == null) return emptyList()
         val base = dayStart(anyTime)
         val c = Calendar.getInstance().apply { timeInMillis = base }
         val dow = c.get(Calendar.DAY_OF_WEEK) - 1
@@ -39,7 +39,8 @@ object Routine {
             out += Ev("$day:$code", base + m * Snap.MIN, e, t, b)
         }
 
-        if (cfg.optBoolean("workOn", true) && has(cfg.optJSONArray("days"), dow)) {
+        val on = cfg.optBoolean("on")
+        if (on && cfg.optBoolean("workOn", true) && has(cfg.optJSONArray("days"), dow)) {
             val s = mins(cfg.optString("start", "09:00"))
             val e = mins(cfg.optString("end", "18:00"))
             val l1 = mins(cfg.optString("lunch", "12:00"))
@@ -49,7 +50,13 @@ object Routine {
             val al = cfg.optJSONObject("alerts")
             fun on(k: String) = al?.optBoolean(k, true) ?: true
             if (e > s) {
-                if (on("start")) add(s, "start", "🏢", "출근 시간이에요", "오늘 할 일 하나를 정하고 시작해요")
+                // 출근·퇴근은 미리 알려 준다 (출근 30분 전 준비, 퇴근 10분 전 마무리가 기본)
+                val leadS = cfg.optInt("leadStart", 30).coerceIn(0, 180)
+                val leadE = cfg.optInt("leadEnd", 10).coerceIn(0, 120)
+                if (on("start")) {
+                    if (leadS > 0) add(s - leadS, "start", "🏢", "출근 준비할 시간이에요", "${Fmt.hm(base + s * Snap.MIN)} 출근까지 ${leadS}분 남았어요. 챙길 것 확인하고 출발해요")
+                    else add(s, "start", "🏢", "출근 시간이에요", "오늘 할 일 하나를 정하고 시작해요")
+                }
                 var lunchDone = !(l2 > l1 && l1 > s && l2 < e)
                 fun lunch() {
                     if (on("lunch")) {
@@ -73,11 +80,26 @@ object Routine {
                     t = b + rest
                 }
                 if (!lunchDone) lunch()
-                if (on("end")) add(e, "end", "🏠", "퇴근 시간이에요", "오늘도 수고했어요. 내일 첫 할 일 하나만 적어 두세요")
+                if (on("end")) {
+                    if (leadE > 0) add(e - leadE, "end", "🏠", "퇴근 ${leadE}분 전이에요", "하던 일을 마무리하고, 내일 첫 할 일 하나만 적어 두세요")
+                    else add(e, "end", "🏠", "퇴근 시간이에요", "오늘도 수고했어요. 내일 첫 할 일 하나만 적어 두세요")
+                }
             }
         }
 
-        val evs = cfg.optJSONArray("events")
+        // 약 먹을 시간 (일과 알림을 꺼도 따로 울림)
+        val meds = cfg.optJSONArray("meds")
+        if (meds != null) for (i in 0 until meds.length()) {
+            val md = meds.optJSONObject(i) ?: continue
+            if (!md.optBoolean("on", true) || !has(md.optJSONArray("days"), dow)) continue
+            val times = md.optJSONArray("times") ?: continue
+            for (j in 0 until times.length()) {
+                val tm = times.optString(j)
+                add(mins(tm), "med-${md.optString("id")}-${tm.replace(":", "")}", "💊", "${md.optString("name")} 먹을 시간이에요", "먹었으면 확인을 눌러요. 오늘 약 기록에 남아요")
+            }
+        }
+
+        val evs = if (on) cfg.optJSONArray("events") else null
         if (evs != null) for (i in 0 until evs.length()) {
             val ev = evs.optJSONObject(i) ?: continue
             if (!ev.optBoolean("on") || !has(ev.optJSONArray("days"), dow)) continue
@@ -94,10 +116,19 @@ object Routine {
     }
 
     /** now 이후(1분 전까지 포함) 가장 먼저 울릴 알림. done 에 있는 키는 건너뛴다. */
-    fun next(cfg: JSONObject?, now: Long, done: Set<String>): Ev? {
+    fun next(cfg: JSONObject?, now: Long, done0: Set<String>): Ev? {
+        val done = done0 + doneKeys(cfg)
         for (d in 0..7) {
             events(cfg, now + d * Snap.DAY).firstOrNull { it.at > now - 60_000 && it.key !in done }?.let { return it }
         }
         return null
     }
+
+    /** 웹 화면에서 이미 확인한(약을 먹었다고 누른) 알림 키. */
+    fun doneKeys(cfg: JSONObject?): Set<String> {
+        val a = cfg?.optJSONArray("done") ?: return emptySet()
+        return (0 until a.length()).map { a.optString(it) }.filter { it.isNotBlank() }.toSet()
+    }
+
+    fun isMed(key: String) = key.contains(":med-")
 }

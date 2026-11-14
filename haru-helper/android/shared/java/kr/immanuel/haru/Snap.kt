@@ -48,6 +48,17 @@ class Snap(val o: JSONObject) {
         Step(it.optString("id"), it.optString("e"), it.optString("t"), it.optString("b"), it.optString("ok"), it.optString("alt"), it.optInt("timer"), it.optInt("breath"))
     }
 
+    /** 자주 가는 병원 (문자에서 이름을 찾을 때 씀). */
+    val clinics: List<MsgParse.Clinic>
+        get() = objs("clinics").map { c ->
+            val keys = c.optJSONArray("keys")
+            MsgParse.Clinic(c.optString("id"), c.optString("name"), if (keys == null) emptyList() else (0 until keys.length()).map { keys.optString(it) },
+                c.optString("purpose"), c.optInt("every"), c.optInt("lead", 7))
+        }
+
+    /** 문자·카톡 알림에서 일정을 찾을지 (web: 설정 → 문자·카톡에서 일정 찾기). */
+    fun msgSource(k: String): Boolean = feat("msg") && (o.optJSONObject("msgSrc")?.optBoolean(k, true) ?: true)
+
     /** 지금 보여 줄 할 일: 정해 둔 ‘지금 할 일’, 없으면 첫 할 일. */
     val current: Task? get() = focus ?: tasks.firstOrNull()
 
@@ -82,6 +93,23 @@ class Snap(val o: JSONObject) {
                 objs(l.optJSONArray("items")).forEach { it.put("on", false) }
             }
             "note" -> o.put("notes", noteCount + 1)
+            // 문자에서 찾은 예약·병원 다음 방문: 함께 온 알림(rems)을 그대로 넣음
+            "appt", "visit", "addRems" -> {
+                val arr = o.optJSONArray("reminders") ?: JSONArray().also { o.put("reminders", it) }
+                objs(a.optJSONArray("rems")).forEach { r ->
+                    removeById(arr, r.optString("id"))
+                    arr.put(JSONObject().put("id", r.optString("id")).put("text", r.optString("text")).put("at", r.optLong("at")).put("daily", false))
+                }
+            }
+            "apptCancel" -> {
+                val arr = o.optJSONArray("reminders") ?: return
+                for (i in arr.length() - 1 downTo 0) if (arr.optJSONObject(i)?.optString("id")?.startsWith("$id-") == true) arr.remove(i)
+            }
+            "medTaken" -> {
+                val r = o.optJSONObject("routine") ?: return
+                val d = r.optJSONArray("done") ?: JSONArray().also { r.put("done", it) }
+                d.put(a.optString("key"))
+            }
         }
     }
 

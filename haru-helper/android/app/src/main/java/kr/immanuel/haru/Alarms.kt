@@ -86,6 +86,21 @@ class ActionReceiver : BroadcastReceiver() {
         val type = intent.getStringExtra("type") ?: return
         val id = intent.getStringExtra("id") ?: ""
         if (type == "ack") { RoutineAlarms.ack(ctx, id, true); return }
+        when (type) {
+            "visitYes" -> {
+                MsgListener.visit(ctx, intent.getStringExtra("clinic") ?: id, intent.getLongExtra("payAt", System.currentTimeMillis()))
+                MsgListener.cancel(ctx, ("visit" + id).hashCode())
+                android.widget.Toast.makeText(ctx, "기록했어요. 다음에 갈 때 알려 줄게요", android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+            "visitNo" -> { MsgListener.cancel(ctx, ("visit" + id).hashCode()); return }
+            "apptCancel" -> {
+                Store.act(ctx, JSONObject().put("type", "apptCancel").put("id", id))
+                MsgListener.cancel(ctx, id.hashCode())
+                android.widget.Toast.makeText(ctx, "일정을 뺐어요", android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
         val a = JSONObject().put("type", type).put("id", id)
         if (type == "remSnooze") a.put("at", System.currentTimeMillis() + intent.getIntExtra("min", 10) * Snap.MIN)
         Store.act(ctx, a)
@@ -161,6 +176,11 @@ object RoutineAlarms {
         val am = ctx.getSystemService(AlarmManager::class.java) ?: return
         pending(ctx, null, PendingIntent.FLAG_NO_CREATE)?.let { am.cancel(it); it.cancel() }
         val cfg = Store.snap(ctx).routine ?: return
+        val acked = set(ctx, "rAcked")
+        Routine.doneKeys(cfg).filter { it !in acked }.forEach { k ->
+            Store.sp(ctx).edit().putStringSet("rAcked", set(ctx, "rAcked").apply { add(k) }).apply()
+            ctx.getSystemService(NotificationManager::class.java)?.cancel(k.hashCode())
+        }
         if (cfg.optString("target", "watch") == "watch") return
         val now = System.currentTimeMillis()
         val ev = Routine.next(cfg, now, set(ctx, "rFired") + set(ctx, "rAcked")) ?: return
@@ -178,7 +198,10 @@ object RoutineAlarms {
 
     /** 확인: 알림을 끄고, 다른 기기(워치)에도 알린다. */
     fun ack(ctx: Context, key: String, tellWatch: Boolean) {
+        val first = key !in set(ctx, "rAcked")
         Store.sp(ctx).edit().putStringSet("rAcked", set(ctx, "rAcked").apply { add(key) }).apply()
+        // 약 알림을 확인했으면 ‘먹었음’으로 기록
+        if (first && Routine.isMed(key)) Store.act(ctx, JSONObject().put("type", "medTaken").put("key", key))
         ctx.getSystemService(NotificationManager::class.java)?.cancel(key.hashCode())
         if (tellWatch) WatchSync.sendAck(ctx, key)
     }
