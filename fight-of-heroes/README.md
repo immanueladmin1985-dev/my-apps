@@ -3,7 +3,7 @@
 오프라인 3대3 2D 모바일 AOS 게임입니다. Godot 4.7, GDScript, 안드로이드 가로 화면용입니다.
 
 - 설계: [docs/DESIGN.md](docs/DESIGN.md)
-- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md), [PHASE 3 보완](docs/PHASE3B_REPORT.md), [PHASE 4](docs/PHASE4_REPORT.md), [PHASE 5](docs/PHASE5_REPORT.md), [PHASE 6](docs/PHASE6_REPORT.md), [PHASE 7](docs/PHASE7_REPORT.md), [PHASE 8](docs/PHASE8_REPORT.md), [PHASE 9](docs/PHASE9_REPORT.md), [PHASE 10](docs/PHASE10_REPORT.md), [PHASE 11](docs/PHASE11_REPORT.md)
+- PHASE 보고서: [PHASE 1](docs/PHASE1_REPORT.md), [PHASE 2](docs/PHASE2_REPORT.md), [PHASE 3](docs/PHASE3_REPORT.md), [PHASE 3 보완](docs/PHASE3B_REPORT.md), [PHASE 4](docs/PHASE4_REPORT.md), [PHASE 5](docs/PHASE5_REPORT.md), [PHASE 6](docs/PHASE6_REPORT.md), [PHASE 7](docs/PHASE7_REPORT.md), [PHASE 8](docs/PHASE8_REPORT.md), [PHASE 9](docs/PHASE9_REPORT.md), [PHASE 10](docs/PHASE10_REPORT.md), [PHASE 11](docs/PHASE11_REPORT.md), [PHASE 12](docs/PHASE12_REPORT.md)
 
 ## 실행과 시험
 
@@ -53,6 +53,10 @@ python3 baseball-relay/tools/sign_apk.py <폴더>/fight-of-heroes-unsigned.apk <
 - 요청 프롬프트와 파일 이름: `docs/ART_PROMPTS.md`
 - 받은 그림 폴더를 정리해 넣기: `python3 tools/import_art.py <그림 폴더> [--missing]` (마젠타 배경 제거, 여백 자르기, 크기 줄이기, `assets/heroes|monsters|items|backgrounds/<id>.png` 로 저장)
 - 그림이 있으면 그림을, 없으면 지금처럼 도형을 그립니다 (`scripts/core/art.gd`). 코드나 데이터는 고치지 않아도 됩니다.
+
+## 소리 만들기
+
+- `python3 tools/gen_audio.py` 가 효과음(`assets/sounds/sfx/`)과 배경 음악(`assets/sounds/music/`)을 합성합니다. 스킬 소리 이름은 `data/skills/*.tres` 의 `sound` 값입니다.
 
 ## 라이선스
 

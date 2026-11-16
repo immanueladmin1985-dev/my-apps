@@ -30,6 +30,8 @@ extends Resource
 ## AI 가 사용을 판단하는 거리. 0 이면 사거리 + 범위
 @export var ai_range: float = 0.0
 @export var color: Color = Color(1, 1, 1)
+## 쓸 때 나는 소리 (assets/sounds/sfx/<sound>.wav, 비우면 기본 스킬 소리)
+@export var sound: String = ""
 
 
 static func at(values: PackedFloat32Array, rank: int) -> float:

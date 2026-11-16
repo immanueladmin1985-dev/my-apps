@@ -41,6 +41,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("AreaEffec
 
 [resource]
 script = ExtResource("4")
+sound = "fire"
 id = "fire_mage_q"
 display_name = "화염구"
 glyph = "구"

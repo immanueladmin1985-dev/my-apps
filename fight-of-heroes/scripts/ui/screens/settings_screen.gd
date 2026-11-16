@@ -61,6 +61,24 @@ func _ready() -> void:
 	volume_label = UiKit.label("%d%%" % roundi(slider.value * 100.0), 20)
 	vrow.add_child(volume_label)
 
+	grid.add_child(UiKit.label("음악 크기", 20))
+	var mrow := HBoxContainer.new()
+	mrow.add_theme_constant_override("separation", 12)
+	grid.add_child(mrow)
+	var ms := HSlider.new()
+	ms.name = "MusicVolume"
+	ms.min_value = 0.0
+	ms.max_value = 1.0
+	ms.step = 0.05
+	ms.custom_minimum_size = Vector2(360, 48)
+	ms.value = float(SaveManager.get_setting("music_volume", 0.5))
+	var ml := UiKit.label("%d%%" % roundi(ms.value * 100.0), 20)
+	ms.value_changed.connect(func(v):
+		SaveManager.set_setting("music_volume", v)
+		ml.text = "%d%%" % roundi(v * 100.0))
+	mrow.add_child(ms)
+	mrow.add_child(ml)
+
 	for opt in [["fog_of_war", "전장의 안개 (우리 팀이 비춘 곳만 보임)", true], ["damage_numbers", "피해 숫자 표시", true], ["show_fps", "FPS 표시", false], ["battery_saver", "배터리 절약 (30fps)", false]]:
 		grid.add_child(UiKit.label(opt[1], 20))
 		var c := CheckButton.new()

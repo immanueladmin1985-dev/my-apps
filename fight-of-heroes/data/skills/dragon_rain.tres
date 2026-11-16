@@ -22,6 +22,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
 script = ExtResource("3")
+sound = "meteor"
 id = "dragon_rain"
 display_name = "불비"
 glyph = "비"

@@ -43,6 +43,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("6")
+sound = "poison"
 id = "assassin_w"
 display_name = "독칼 던지기"
 glyph = "독"

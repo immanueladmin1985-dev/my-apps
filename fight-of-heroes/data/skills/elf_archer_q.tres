@@ -20,6 +20,7 @@ effects = Array[Resource]([SubResource("DamageEffect_1")])
 
 [resource]
 script = ExtResource("3")
+sound = "arrow"
 id = "elf_archer_q"
 display_name = "관통 화살"
 glyph = "관"

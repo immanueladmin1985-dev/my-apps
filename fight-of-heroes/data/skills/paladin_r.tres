@@ -33,6 +33,7 @@ effects = Array[Resource]([SubResource("ShieldEffect_2"), SubResource("HealEffec
 
 [resource]
 script = ExtResource("4")
+sound = "holy"
 id = "paladin_r"
 display_name = "신의 가호"
 glyph = "가"

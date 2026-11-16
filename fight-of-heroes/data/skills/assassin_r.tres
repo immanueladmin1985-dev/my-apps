@@ -19,6 +19,7 @@ arrive_effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
 script = ExtResource("3")
+sound = "stab"
 id = "assassin_r"
 display_name = "처형"
 glyph = "처"

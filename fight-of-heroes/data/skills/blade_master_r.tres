@@ -28,6 +28,7 @@ path_effects = Array[Resource]([SubResource("DamageEffect_1"), SubResource("Appl
 
 [resource]
 script = ExtResource("5")
+sound = "slash"
 id = "blade_master_r"
 display_name = "일섬"
 glyph = "섬"

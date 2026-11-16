@@ -12,6 +12,7 @@ to_caster = false
 
 [resource]
 script = ExtResource("2")
+sound = "heal"
 id = "saint_w"
 display_name = "치유"
 glyph = "치"

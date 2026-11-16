@@ -35,6 +35,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
+sound = "dark"
 id = "summoner_e"
 display_name = "뼈 감옥"
 glyph = "감"

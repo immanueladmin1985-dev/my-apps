@@ -177,3 +177,22 @@ func test_new_game_manual_team() -> void:
 	sc._set_mode("watch")
 	check(sc.build_config().autoplay, "관전은 모두 AI")
 	sc._set_team_mode("random")
+
+
+func test_sound_files_and_skill_sounds() -> void:
+	for id in DataRegistry.ids("skills"):
+		var s: SkillData = DataRegistry.get_item("skills", id)
+		check(s.sound != "", "스킬 소리 이름: " + id)
+		check(AudioManager.sounds.has(s.sound), "스킬 소리 파일: %s → %s" % [id, s.sound])
+	check(AudioManager.sounds.get("slash") is AudioStreamWAV, "파일에서 읽은 소리")
+	for m in ["menu", "battle", "boss"]:
+		var st = AudioManager._music_stream(m)
+		check(st != null, "음악: " + m)
+		if st != null:
+			eq(st.loop_mode, AudioStreamWAV.LOOP_FORWARD, "음악 반복: " + m)
+	var h := spawn_hero("fire_mage", Enums.Team.BLUE, Vector2(400, 400))
+	h.skill_caster.setup(h.data.skills, 1)
+	AudioManager.player_unit = h
+	h.skill_caster.cast(0, CastAim.toward(Vector2.RIGHT))
+	eq(AudioManager.last_played, "fire", "화염구는 불 소리")
+	AudioManager.player_unit = null

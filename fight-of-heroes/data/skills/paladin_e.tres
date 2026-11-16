@@ -32,6 +32,7 @@ end_effects = Array[Resource]([])
 
 [resource]
 script = ExtResource("5")
+sound = "dash"
 id = "paladin_e"
 display_name = "돌격"
 glyph = "돌"

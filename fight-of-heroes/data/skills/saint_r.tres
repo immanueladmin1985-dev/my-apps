@@ -24,6 +24,7 @@ effects = Array[Resource]([SubResource("HealEffect_2")])
 
 [resource]
 script = ExtResource("3")
+sound = "heal"
 id = "saint_r"
 display_name = "부활의 기도"
 glyph = "기"

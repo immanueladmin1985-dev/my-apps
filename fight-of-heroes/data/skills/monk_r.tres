@@ -51,6 +51,7 @@ end_effects = Array[Resource]([SubResource("AreaEffect_4")])
 
 [resource]
 script = ExtResource("6")
+sound = "slam"
 id = "monk_r"
 display_name = "천붕권"
 glyph = "천"

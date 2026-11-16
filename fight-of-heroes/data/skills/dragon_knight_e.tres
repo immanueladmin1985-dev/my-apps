@@ -13,6 +13,7 @@ to_caster = true
 
 [resource]
 script = ExtResource("2")
+sound = "shield"
 id = "dragon_knight_e"
 display_name = "용비늘"
 glyph = "비"

@@ -35,6 +35,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
+sound = "ice"
 id = "frost_mage_w"
 display_name = "서리 지대"
 glyph = "서"

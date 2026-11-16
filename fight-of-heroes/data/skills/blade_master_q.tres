@@ -20,6 +20,7 @@ path_effects = Array[Resource]([SubResource("DamageEffect_1")])
 
 [resource]
 script = ExtResource("3")
+sound = "dash"
 id = "blade_master_q"
 display_name = "돌진 베기"
 glyph = "돌"

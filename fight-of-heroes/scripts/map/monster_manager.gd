@@ -78,6 +78,7 @@ func _tick_wave(camp: Dictionary, delta: float) -> void:
 	var tier := c.wave_tier(elapsed - c.first_spawn)
 	if tier > int(camp.get("tier", 1)):
 		camp.tier = tier
+		AudioManager.play("minion_up")
 		EventBus.notice.emit("중앙 미니언이 강해졌습니다 (%d단계): 수 증가, 체력·공격력 +%d%%, 보상 +%d%%" % [tier, roundi(c.wave_stat_growth * (tier - 1) * 100.0), roundi(c.wave_reward_growth * (tier - 1) * 100.0)])
 	var names := c.wave_group(tier)
 	var room := c.wave_max + c.wave_max_growth * (tier - 1) - alive.size()

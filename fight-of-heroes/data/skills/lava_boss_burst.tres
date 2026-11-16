@@ -28,6 +28,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
+sound = "explosion"
 id = "lava_boss_burst"
 display_name = "표적 폭발"
 glyph = "폭"

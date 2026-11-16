@@ -28,6 +28,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
+sound = "slam"
 id = "golem_slam"
 display_name = "땅 울리기"
 glyph = "울"

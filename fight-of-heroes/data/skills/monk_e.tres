@@ -25,6 +25,7 @@ ap_ratio = 0.0
 
 [resource]
 script = ExtResource("4")
+sound = "shield"
 id = "monk_e"
 display_name = "철벽 자세"
 glyph = "철"
