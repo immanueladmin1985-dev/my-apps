@@ -22,6 +22,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
 script = ExtResource("3")
+vfx = "holy"
 sound = "holy"
 id = "saint_q"
 display_name = "빛의 화살"

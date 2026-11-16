@@ -14,3 +14,4 @@ func apply(ctx: SkillContext) -> void:
 	if t == null or not is_instance_valid(t) or t.is_dead:
 		return
 	t.health.add_shield(scaled(ctx, base, ad_ratio, ap_ratio), SkillData.at(duration, ctx.rank))
+	SkillFx.sparkle(t, SkillFx.style_of(ctx.skill) if ctx.skill != null else "holy", 10)

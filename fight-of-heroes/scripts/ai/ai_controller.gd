@@ -197,6 +197,13 @@ func think() -> void:
 		for e in enemies:
 			if e is Hero and (not committed or e == help_target or pos.distance_to(e.global_position) < COMMIT_RANGE):
 				hero_enemies.append(e)
+		# 주변 적 영웅이 우리 쪽보다 훨씬 강하면(레벨·체력) 싸움을 피한다. 거의 다 잡은 적은 예외.
+		if not hero_enemies.is_empty() and _outmatched(hero_enemies) and not _can_finish(hero_enemies, hp):
+			var close := hero_enemies.filter(func(e): return pos.distance_to(e.global_position) < 420.0)
+			hero_enemies = []
+			if not close.is_empty() and profile.can_retreat:
+				_set_state(State.RETREAT)
+				return
 		objective = null
 		target = _choose_target(hero_enemies, help_target)
 		if target == null:
@@ -443,6 +450,25 @@ func _nearby_allies(dist: float) -> int:
 		if a.global_position.distance_to(hero.global_position) <= dist:
 			n += 1
 	return n
+
+
+## 싸움 힘: 레벨 × (체력 비율의 절반 + 0.5)
+static func _power(u) -> float:
+	return float(u.level) * (0.5 + 0.5 * u.health.ratio())
+
+
+## 보이는 적 영웅의 힘이 나와 가까운 아군(600 안)의 힘보다 1.5배 넘게 크면 true.
+func _outmatched(hero_enemies: Array) -> bool:
+	var theirs := 0.0
+	for e in hero_enemies:
+		if e is Hero:
+			theirs += _power(e)
+	var mine := _power(hero)
+	if manager != null:
+		for a in manager.allies_of(hero):
+			if a.global_position.distance_to(hero.global_position) <= 600.0:
+				mine += _power(a)
+	return theirs > mine * 1.5
 
 
 ## 가까운 적이 나보다 체력 비율이 낮으면(이기고 있으면) 물러나지 않는다.

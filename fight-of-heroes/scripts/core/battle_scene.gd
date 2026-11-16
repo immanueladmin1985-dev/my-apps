@@ -110,6 +110,10 @@ func _ready() -> void:
 			# 바로 싸움이 이어지지 않도록 일시정지한 채로 시작한다.
 			hud.set_paused(true)
 			hud.show_message("저장한 전투를 불러왔습니다. 계속하기를 누르세요")
+	if GameManager.dev_args.has("fx_demo") and player_hero != null:
+		var demo = load("res://scripts/dev/fx_demo.gd").new()
+		demo.name = "FxDemo"
+		add_child(demo)
 	if GameManager.dev_args.has("open_shop") and player_hero != null:
 		# 개발용: 상점 화면 확인. 아이템 몇 개를 미리 산 상태로 연다.
 		player_hero.gold = 3000

@@ -35,4 +35,4 @@ func apply(ctx: SkillContext) -> void:
 		m.setup_summon(d, c, pos, SkillData.at(duration, ctx.rank))
 		m.stats.add_modifiers("summon", [StatModifier.make("max_hp", ap * hp_per_ap, k - 1.0), StatModifier.make("attack", ap * attack_per_ap, k - 1.0)])
 		m.health.reset_full()
-		Vfx.circle(c, pos, 36.0, Color(0.6, 0.4, 1, 0.5), 0.4)
+		SkillFx.puff(c, pos, 50.0, "dark")

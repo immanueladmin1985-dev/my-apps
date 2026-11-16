@@ -28,6 +28,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
+vfx = "impact"
 sound = "slam"
 id = "forest_boss_slam"
 display_name = "내려찍기"

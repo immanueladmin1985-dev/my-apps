@@ -11,3 +11,5 @@ extends SkillEffect
 func apply(ctx: SkillContext) -> void:
 	var t = ctx.caster if to_caster else ctx.target_unit
 	CombatManager.heal(t, scaled(ctx, base, ad_ratio, ap_ratio), ctx.caster)
+	if t != null and is_instance_valid(t) and not t.is_dead and ctx.skill != null:
+		SkillFx.sparkle(t, "heal", 12)

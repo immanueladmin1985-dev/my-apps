@@ -11,6 +11,7 @@ duration = PackedFloat32Array(14.0)
 
 [resource]
 script = ExtResource("2")
+vfx = "dark"
 sound = "summon"
 id = "summoner_q"
 display_name = "해골 소환"

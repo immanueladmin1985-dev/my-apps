@@ -219,6 +219,9 @@ func _selfcheck() -> void:
 
 ## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--resume] [--autoplay] [--boss_time=초] [--follow_boss]
 func _screenshot_later() -> void:
+	if dev_args.has("fx_demo"):
+		dev_args["battle"] = dev_args["fx_demo"]
+		dev_args["no_fog"] = "1"
 	if dev_args.has("battle"):
 		var c := default_config(dev_args["battle"], int(dev_args.get("size", "3")))
 		if dev_args.has("kills"):

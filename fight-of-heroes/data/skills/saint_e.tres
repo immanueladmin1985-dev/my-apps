@@ -45,6 +45,7 @@ effects = Array[Resource]([SubResource("ShieldEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
+vfx = "holy"
 sound = "shield"
 id = "saint_e"
 display_name = "정화의 빛"

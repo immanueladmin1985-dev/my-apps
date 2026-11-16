@@ -21,5 +21,6 @@ func apply(ctx: SkillContext) -> void:
 	p.setup_line(ctx.caster, ctx.direction, speed, dist, width, pierce, func(u): SkillEffect.apply_list(list, ctx.with_target(u)))
 	p.affects = affects
 	p.color = color
+	p.style = SkillFx.style_of(ctx.skill)
 	Targeting.effects_parent(ctx.caster).add_child(p)
 	p.global_position = ctx.caster.global_position

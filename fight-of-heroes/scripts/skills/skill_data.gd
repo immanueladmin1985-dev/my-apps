@@ -32,6 +32,8 @@ extends Resource
 @export var color: Color = Color(1, 1, 1)
 ## 쓸 때 나는 소리 (assets/sounds/sfx/<sound>.wav, 비우면 기본 스킬 소리)
 @export var sound: String = ""
+## 효과 그림 종류 (SkillFx.STYLES: fire ice holy heal poison dark nature steel impact arcane)
+@export var vfx: String = ""
 
 
 static func at(values: PackedFloat32Array, rank: int) -> float:

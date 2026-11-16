@@ -27,6 +27,7 @@ effects = Array[Resource]([SubResource("DamageEffect_1"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
+vfx = "steel"
 sound = "spin"
 id = "blade_master_w"
 display_name = "회전베기"

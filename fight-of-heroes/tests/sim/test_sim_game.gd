@@ -54,6 +54,10 @@ func _play(difficulty: String, kill_target: int, boss_time: float, seed_value: i
 			for h in battle.hero_manager.heroes:
 				lv.append(h.level)
 			timeline.append("%d초 레벨 %s 점수 %d:%d" % [t / 60, str(lv), bm.kills[1], bm.kills[2]])
+		if OS.has_environment("SIM_DEBUG") and (t / 60) % 20 == 0:
+			for h in battle.hero_manager.heroes:
+				var c = h.controller
+				print("DBG %d %s pos=%s dead=%s st=%s role=%s xp=%.0f gold=%d tgt=%s obj=%s" % [t / 60, h.name, str(h.global_position.round()), h.is_dead, AIController.State.keys()[c.state] if c is AIController else "-", c.role if c is AIController else "-", h.xp, h.gold, str(c.target) if c is AIController else "", str(c.objective) if c is AIController else ""])
 	await frames(90)
 	get_tree().paused = false
 	EventBus.unit_died.disconnect(on_died)

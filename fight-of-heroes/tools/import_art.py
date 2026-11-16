@@ -36,7 +36,13 @@ KINDS = {
     "map_tile": ("assets/backgrounds", 512),
     "map_object": ("assets/backgrounds", 512),
     "skills": ("assets/skills", 128),
+    "effects": ("assets/effects", 256),
 }
+
+# 스킬 효과 그림 묶음 (효과 종류마다 가로 3칸: 바닥 무늬, 터짐, 투사체)
+FX_STYLES = {"fire": "불", "ice": "얼음", "holy": "빛", "heal": "치유", "poison": "독", "dark": "어둠",
+             "nature": "자연", "steel": "칼날", "impact": "충격", "arcane": "기본"}
+FX_PARTS = ["ground", "burst", "projectile"]
 
 # 스킬 아이콘 묶음 그림 (영웅 한 명당 3x2): 윗줄 Q·W·E, 아랫줄 R·패시브·빈칸
 SKILL_SHEET_ORDER = ["q", "w", "e", "r", "passive", "-"]
@@ -113,6 +119,11 @@ def catalog() -> dict:
         cat[norm(hid + "_skills")] = ("skill_sheet", hid)
         if hname:
             cat[norm(hname + " 스킬")] = ("skill_sheet", hid)
+    for st, ko in FX_STYLES.items():
+        cat[norm(st + "_fx")] = ("fx_sheet", st)
+        cat[norm(ko + " 효과")] = ("fx_sheet", st)
+        for part in FX_PARTS:
+            cat[norm(f"{st}_{part}")] = ("effects", f"{st}_{part}")
     for i in MAP_TILES:
         cat[norm(i)] = ("map_tile", i)
     for i in MAP_OBJECTS:
@@ -406,6 +417,15 @@ def main() -> int:
             unknown.append(p.name)
             continue
         kind, id_ = hit
+        if kind == "fx_sheet":
+            if not dry:
+                sheet = Image.open(p).convert("RGBA")
+                cw = sheet.width / 3
+                for n, part in enumerate(FX_PARTS):
+                    cell = sheet.crop((round(n * cw), 0, round((n + 1) * cw), sheet.height))
+                    out = save(process(cell, "effects", True, f"{id_}_{part}"), "effects", f"{id_}_{part}")
+                    done.append(f"{p.name} [{n + 1}칸] -> {out.relative_to(ROOT)}")
+            continue
         if kind == "skill_sheet":
             if not dry:
                 passive = {h: p for h, _n, p in hero_skill_entries()}.get(id_)
@@ -420,7 +440,7 @@ def main() -> int:
         print("넣음:", d)
     if unknown:
         print("어디에 쓸지 모르는 파일 (이름을 확인해 주세요):", ", ".join(unknown))
-    ids = sorted({v for v in cat.values() if not v[1].endswith("_dragon") and v[0] != "skill_sheet"})
+    ids = sorted({v for v in cat.values() if not v[1].endswith("_dragon") and v[0] not in ("skill_sheet", "fx_sheet", "effects")})
     missing = [i for k, i in ids if not (ROOT / KINDS[k][0] / (i + ".png")).exists()]
     print(f"넣은 파일 {len(done)}개, 아직 없는 그림 {len(missing)}개")
     if missing and "--missing" in argv:

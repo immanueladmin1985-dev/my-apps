@@ -35,7 +35,7 @@ func apply(ctx: SkillContext) -> void:
 	for pos in positions(ctx):
 		if delay <= 0.0 and duration <= 0.0:
 			hit(ctx, pos)
-			Vfx.circle(ctx.caster, pos, radius, color, 0.35)
+			SkillFx.burst(ctx.caster, pos, radius, SkillFx.style_of(ctx.skill))
 			continue
 		var zone := AreaZone.new()
 		zone.setup(self, ctx, pos)

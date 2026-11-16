@@ -16,6 +16,9 @@ var homing_target = null
 var on_hit: Callable
 var basic_attack := false
 var color := Color(1, 1, 0.8)
+## 스킬 투사체의 효과 종류 (기본 공격은 "")
+var style := ""
+var _trail: CPUParticles2D = null
 
 var _traveled := 0.0
 var _target_dash := 0
@@ -64,13 +67,13 @@ func _physics_process(delta: float) -> void:
 	if _lost_at != null:
 		var to_lost: Vector2 = _lost_at - global_position
 		if to_lost.length() <= step:
-			queue_free()
+			_finish()
 			return
 		_move(to_lost.normalized() * step)
 		return
 	if homing_target != null:
 		if not is_instance_valid(homing_target) or homing_target.is_dead:
-			queue_free()
+			_finish()
 			return
 		if homing_target.dash_count != _target_dash:
 			_lost_at = homing_target.global_position
@@ -85,7 +88,7 @@ func _physics_process(delta: float) -> void:
 		direction = to.normalized()
 		if to.length() <= step + homing_target.radius:
 			_deliver(homing_target)
-			queue_free()
+			_finish()
 			return
 		if not _move(direction * step):
 			return
@@ -98,16 +101,16 @@ func _physics_process(delta: float) -> void:
 				continue
 			_hit_units[u] = true
 			if not _deliver(u):
-				queue_free()
+				_finish()
 				return
 			if not pierce:
-				queue_free()
+				_finish()
 				return
 	_traveled += step
 	rotation = direction.angle()
 	queue_redraw()
 	if _traveled >= max_distance:
-		queue_free()
+		_finish()
 
 
 ## 맞은 대상에게 효과를 준다. 쏜 쪽이 사라졌으면 false.
@@ -127,7 +130,7 @@ func _deliver(u) -> bool:
 func _move(v: Vector2) -> bool:
 	var to := global_position + v
 	if not Targeting.has_line_of_sight(self, global_position, to):
-		queue_free()
+		_finish()
 		return false
 	global_position = to
 	direction = v.normalized() if v.length() > 0.001 else direction
@@ -136,7 +139,42 @@ func _move(v: Vector2) -> bool:
 	return true
 
 
+func _ready() -> void:
+	if style == "":
+		return
+	# 스킬 투사체: 지나간 자리에 입자 꼬리
+	_trail = SkillFx._particles(style, 18, 0.35)
+	_trail.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	_trail.emission_sphere_radius = width * 0.25
+	_trail.direction = Vector2.LEFT
+	_trail.spread = 25.0
+	_trail.initial_velocity_min = 10.0
+	_trail.initial_velocity_max = 40.0
+	_trail.scale_amount_min = 0.25 + width / 200.0
+	_trail.scale_amount_max = 0.45 + width / 120.0
+	add_child(_trail)
+	_trail.emitting = true
+
+
+## 사라진다. 스킬 투사체는 그 자리에서 작게 터진다.
+func _finish() -> void:
+	if style != "" and _started and is_inside_tree():
+		SkillFx.burst(self, global_position, maxf(30.0, width * 1.2), style)
+	queue_free()
+
+
 func _draw() -> void:
 	var len := 26.0 if homing_target == null else 16.0
+	if style != "":
+		var img := SkillFx.art(style, "projectile")
+		var s := maxf(36.0, width * 1.8)
+		if img != null:
+			draw_texture_rect(img, Rect2(Vector2(-s * 0.7, -s * 0.5), Vector2(s * 1.4, s)), false)
+			return
+		var sc := SkillFx.colors(style)
+		draw_texture_rect(SkillFx.tex("dot"), Rect2(-Vector2(s, s) * 0.6, Vector2(s, s) * 1.2), false, Color(sc.b, 0.9))
+		draw_line(Vector2(-s * 0.9, 0), Vector2.ZERO, Color(sc.b, 0.6), maxf(4.0, width * 0.4))
+		draw_circle(Vector2.ZERO, maxf(5.0, width * 0.22), sc.a)
+		return
 	draw_line(Vector2(-len, 0), Vector2.ZERO, Color(color, 0.5), maxf(3.0, width * 0.35))
 	draw_circle(Vector2.ZERO, maxf(4.0, width * 0.25), color)

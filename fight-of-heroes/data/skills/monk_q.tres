@@ -21,6 +21,7 @@ end_effects = Array[Resource]([])
 
 [resource]
 script = ExtResource("3")
+vfx = "impact"
 sound = "punch"
 id = "monk_q"
 display_name = "붕권"

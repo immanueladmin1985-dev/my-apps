@@ -23,6 +23,6 @@ func apply(ctx: SkillContext) -> void:
 	var on_pass := func(u): SkillEffect.apply_list(path, ctx.with_target(u))
 	var on_end := func():
 		if is_instance_valid(caster):
-			Vfx.line(caster, start, caster.global_position, width * 0.6, trail_color, 0.35)
+			SkillFx.line(caster, start, caster.global_position, width * 0.6, SkillFx.style_of(ctx.skill))
 			SkillEffect.apply_list(ends, ctx.with_target(caster))
 	ctx.caster.start_dash(dir, distance, speed, width, on_pass, on_end)

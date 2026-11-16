@@ -11,6 +11,7 @@ duration = PackedFloat32Array(25.0, 30.0, 35.0)
 
 [resource]
 script = ExtResource("2")
+vfx = "dark"
 sound = "summon"
 id = "summoner_r"
 display_name = "뼈 골렘"

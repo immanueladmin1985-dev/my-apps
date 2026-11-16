@@ -220,7 +220,40 @@ Square 1536x1024 PNG.
 - **성녀**: Q 빛의 화살 / W 치유 / E 정화의 빛 / R 부활의 기도 / 패시브 축복
 - **소환술사**: Q 해골 소환 / W 저주 / E 뼈 감옥 / R 뼈 골렘 / 패시브 영혼 수확
 
-## 6. 진행 상황
+## 6. 스킬 효과 그림 (선택, 효과 종류마다 한 장, 10장)
+
+지금은 효과를 코드로 그린 입자로 보여 줍니다. 아래 그림을 주면 그 그림으로 바뀝니다(없는 종류는 지금처럼 입자).
+효과 종류마다 그림 한 장에 가로 3칸(**바닥 무늬 · 터짐 · 투사체**)으로 만들고, `불 효과.png` 처럼 `<종류 이름> 효과.png` 로 저장합니다.
+
+### 공통 앞부분
+
+```
+Original 2D game visual effect sprite sheet for a top-down mobile action game (not copied from any existing game).
+Three separate effects side by side in a 3x1 row on a flat magenta (#FF00FF) background, with a clear magenta gap between them. Seen from directly above.
+1 (left): a circular magic ground decal / area-of-effect circle, seen from straight above, glowing edges and inner pattern, fills its cell.
+2 (middle): a bright circular explosion burst seen from above, radiating outward, glowing core.
+3 (right): a small projectile flying to the RIGHT (pointing right), with a short glowing trail on its left side.
+Bright hand-painted glowing style matching cel-shaded chibi heroes. No text, no characters.
+Wide 1536x512 PNG.
+```
+
+### 종류별 뒷부분
+
+| 파일 이름 | 종류 | 쓰는 스킬 | 뒷부분 |
+|---|---|---|---|
+| `불 효과.png` | fire | 화염술사, 용기사 숨결, 용암 거인 | `Theme: fire and lava. Orange-yellow flames, embers, a burning rune circle, a fiery explosion, a fireball.` |
+| `얼음 효과.png` | ice | 빙결술사 | `Theme: ice and frost. Pale blue frozen ground with frost crystals, an icy shatter burst, an ice spear.` |
+| `빛 효과.png` | holy | 성녀·성기사·검성 방어 | `Theme: holy light. Golden-white sacred circle with sun runes, a radiant light burst, a small arrow of light.` |
+| `치유 효과.png` | heal | 성녀 치유·부활 | `Theme: healing. Soft green and gold circle with leaves and sparkles, a gentle healing bloom, a green light orb.` |
+| `독 효과.png` | poison | 암살자 독칼 | `Theme: poison. Bubbling toxic green puddle, a green toxic splash, a poison-dripping dagger.` |
+| `어둠 효과.png` | dark | 암살자·소환술사·고대 흑룡 | `Theme: dark magic. Purple-black cursed circle with skull runes, a dark purple shadow burst, a dark purple orb.` |
+| `자연 효과.png` | nature | 엘프 궁수·숲의 수호정령 | `Theme: nature and wind. Green leafy thorny circle, a burst of leaves and wind, a green glowing arrow.` |
+| `칼날 효과.png` | steel | 검성·용기사 창 | `Theme: blade energy. Golden-white sword slash marks in a circle, a crossed slash burst, a flying blade wave.` |
+| `충격 효과.png` | impact | 무투가·성기사 돌격·골렘 | `Theme: ground impact. Cracked earth circle with dust, a shockwave dust burst, a small flying rock.` |
+| `기본 효과.png` | arcane | 그 밖 | `Theme: arcane magic. Blue-white rune circle, an arcane sparkle burst, a blue magic bolt.` |
+
+## 7. 진행 상황
 
 - 넣음: 영웅 10명과 용기사 변신, 몬스터 9종, 아이템 39개, 바닥 무늬 7개, 맵 물건·장식 전부.
-- 스킬 아이콘 50개도 넣었습니다. 모든 그림이 들어가 있습니다.
+- 스킬 아이콘 50개도 넣었습니다.
+- 남음(선택): 스킬 효과 그림 10장 (7번 항목).

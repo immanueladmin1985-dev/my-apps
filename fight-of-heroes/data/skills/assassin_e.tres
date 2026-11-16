@@ -25,6 +25,7 @@ ap_ratio = 0.0
 
 [resource]
 script = ExtResource("4")
+vfx = "dark"
 sound = "stealth"
 id = "assassin_e"
 display_name = "그림자 숨기"

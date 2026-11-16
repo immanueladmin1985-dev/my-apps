@@ -23,6 +23,7 @@ ap_ratio = 0.0
 
 [resource]
 script = ExtResource("4")
+vfx = "fire"
 sound = "roar"
 id = "dragon_knight_r"
 display_name = "용 변신"

@@ -10,6 +10,7 @@ const DIRS := {
 	"items": "res://assets/items",
 	"map": "res://assets/backgrounds",
 	"skills": "res://assets/skills",
+	"effects": "res://assets/effects",
 }
 
 static var _cache: Dictionary = {}

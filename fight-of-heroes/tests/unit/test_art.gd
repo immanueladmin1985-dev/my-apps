@@ -101,3 +101,22 @@ func test_item_icon_and_map_art() -> void:
 				ok = false
 	check(ok, "장식이 벽 위에 놓이지 않음")
 	battle.queue_free()
+
+
+func test_skill_fx() -> void:
+	for id in DataRegistry.ids("skills"):
+		var s: SkillData = DataRegistry.get_item("skills", id)
+		check(SkillFx.STYLES.has(s.vfx), "효과 종류: %s → %s" % [id, s.vfx])
+	for name in ["dot", "flame", "shard", "streak", "star", "ring"]:
+		check(SkillFx.tex(name) != null, "입자 그림: " + name)
+	var fx := SkillFx.burst(world, Vector2(300, 300), 120.0, "fire")
+	check(fx.get_child_count() > 0, "터짐 입자")
+	var ln := SkillFx.line(world, Vector2(100, 100), Vector2(400, 100), 40.0, "ice")
+	check(ln != null, "직선 효과")
+	var h := spawn_hero("saint", Enums.Team.BLUE, Vector2(500, 300))
+	SkillFx.sparkle(h, "heal")
+	await frames(100)
+	check(not is_instance_valid(fx), "터짐 효과는 잠시 뒤 사라짐")
+	# 그림 파일이 있으면 그 그림을 쓴다
+	Art.set_override("effects", "fire_ground", _tex(32, 32))
+	check(SkillFx.art("fire", "ground") != null, "효과 그림 파일")

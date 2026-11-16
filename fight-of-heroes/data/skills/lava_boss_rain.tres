@@ -22,6 +22,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
 script = ExtResource("3")
+vfx = "fire"
 sound = "meteor"
 id = "lava_boss_rain"
 display_name = "불비"

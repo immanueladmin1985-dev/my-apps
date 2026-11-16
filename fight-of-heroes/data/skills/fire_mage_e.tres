@@ -11,6 +11,7 @@ arrive_effects = Array[Resource]([])
 
 [resource]
 script = ExtResource("2")
+vfx = "fire"
 sound = "teleport"
 id = "fire_mage_e"
 display_name = "화염 도약"

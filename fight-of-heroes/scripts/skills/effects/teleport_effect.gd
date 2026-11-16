@@ -36,6 +36,6 @@ func apply(ctx: SkillContext) -> void:
 	c.dash_count += 1
 	c.attack.cancel_windup()
 	c.nav_goal = null
-	Vfx.circle(c, from, 34.0, color, 0.35)
-	Vfx.circle(c, dest, 40.0, color, 0.35)
+	SkillFx.puff(c, from, 50.0, SkillFx.style_of(ctx.skill))
+	SkillFx.puff(c, dest, 60.0, SkillFx.style_of(ctx.skill))
 	SkillEffect.apply_list(arrive_effects, ctx.with_target(target if target != null else c))

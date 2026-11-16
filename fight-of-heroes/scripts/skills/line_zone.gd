@@ -72,13 +72,14 @@ func _physics_process(delta: float) -> void:
 	else:
 		for u in Targeting.on_segment(get_tree(), from, end_point(), effect.width, ctx.team(), effect.affects):
 			SkillEffect.apply_list(list, ctx.with_target(u))
-		Vfx.line(ctx.caster, from, end_point(), effect.width, effect.color, 0.3)
+		SkillFx.line(ctx.caster, from, end_point(), effect.width, SkillFx.style_of(ctx.skill))
 	queue_free()
 
 
 func _draw() -> void:
 	var t := 1.0 - clampf(_left / _total, 0.0, 1.0)
 	var h := effect.width * 0.5
-	draw_rect(Rect2(0, -h, effect.length, effect.width), Color(effect.color, 0.12))
-	draw_rect(Rect2(0, -h, effect.length * t, effect.width), Color(effect.color, 0.3))
-	draw_rect(Rect2(0, -h, effect.length, effect.width), Color(1, 0.3, 0.2, 0.9), false, 2.5)
+	var sc := SkillFx.colors(SkillFx.style_of(ctx.skill))
+	draw_rect(Rect2(0, -h, effect.length, effect.width), Color(sc.c, 0.18))
+	draw_rect(Rect2(0, -h, effect.length * t, effect.width), Color(sc.b, 0.4))
+	draw_rect(Rect2(0, -h, effect.length, effect.width), Color(1, 0.25, 0.2, 0.9), false, 2.5)

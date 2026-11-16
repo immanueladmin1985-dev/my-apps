@@ -25,6 +25,7 @@ ap_ratio = 0.15
 
 [resource]
 script = ExtResource("4")
+vfx = "dark"
 sound = "dark"
 id = "summoner_w"
 display_name = "저주"

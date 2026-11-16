@@ -8,6 +8,8 @@ var _delay_left := 0.0
 var _life_left := 0.0
 var _tick_left := 0.0
 var _started := false
+var _style := "arcane"
+var _t := 0.0
 
 
 func _ready() -> void:
@@ -41,6 +43,7 @@ func setup(e: AreaEffect, c: SkillContext, _pos: Vector2) -> void:
 	_delay_left = e.delay
 	_life_left = e.duration
 	_tick_left = 0.0
+	_style = SkillFx.style_of(c.skill)
 
 
 func _physics_process(delta: float) -> void:
@@ -54,9 +57,11 @@ func _physics_process(delta: float) -> void:
 			remove_from_group("telegraphs")
 			if effect.duration <= 0.0:
 				effect.hit(ctx, global_position)
-				Vfx.circle(self, global_position, effect.radius, effect.color, 0.35)
+				SkillFx.burst(self, global_position, effect.radius, _style)
 				queue_free()
 				return
+			SkillFx.burst(self, global_position, effect.radius, _style)
+			SkillFx.persistent(self, effect.radius, _style)
 	else:
 		_tick_left -= delta
 		if _tick_left <= 0.0:
@@ -66,16 +71,19 @@ func _physics_process(delta: float) -> void:
 		if _life_left <= 0.0:
 			queue_free()
 			return
+	_t += delta
 	queue_redraw()
 
 
 func _draw() -> void:
-	var c := effect.color
+	var sc := SkillFx.colors(_style)
 	if not _started:
+		# 예고: 효과 색으로 안쪽이 차오르고, 테두리는 위험을 알리는 빨강
 		var t := 1.0 - clampf(_delay_left / maxf(0.01, effect.delay), 0.0, 1.0)
-		draw_circle(Vector2.ZERO, effect.radius, Color(c, 0.12))
-		draw_circle(Vector2.ZERO, effect.radius * t, Color(c, 0.3))
-		draw_arc(Vector2.ZERO, effect.radius, 0, TAU, 48, Color(1, 0.3, 0.2, 0.9), 2.5)
+		draw_circle(Vector2.ZERO, effect.radius, Color(sc.c, 0.18))
+		draw_texture_rect(SkillFx.tex("dot"), Rect2(-Vector2.ONE * effect.radius * t, Vector2.ONE * effect.radius * t * 2.0), false, Color(sc.b, 0.55))
+		draw_arc(Vector2.ZERO, effect.radius * t, 0, TAU, 48, Color(sc.a, 0.7), 2.0)
+		draw_arc(Vector2.ZERO, effect.radius, 0, TAU, 56, Color(1, 0.25, 0.2, 0.75 + 0.25 * sin(_t * 14.0)), 3.0)
 	else:
-		draw_circle(Vector2.ZERO, effect.radius, Color(c, c.a))
-		draw_arc(Vector2.ZERO, effect.radius, 0, TAU, 48, Color(c, 0.9), 2.0)
+		var fade := clampf(_life_left / 0.3, 0.0, 1.0)
+		SkillFx.draw_ground(self, effect.radius, _style, fade, _t)

@@ -22,6 +22,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
 script = ExtResource("3")
+vfx = "steel"
 sound = "stab"
 id = "dragon_knight_q"
 display_name = "창 찌르기"

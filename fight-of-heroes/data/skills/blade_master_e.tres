@@ -21,6 +21,7 @@ to_caster = true
 
 [resource]
 script = ExtResource("4")
+vfx = "holy"
 sound = "shield"
 id = "blade_master_e"
 display_name = "검기 방어"
