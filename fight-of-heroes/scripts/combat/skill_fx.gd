@@ -138,6 +138,18 @@ static func burst(parent_of: Node, pos: Vector2, radius: float, style: String) -
 	return fx
 
 
+## 넓은 오라·패시브: 옅게 퍼지는 고리 하나 (그림·입자 없이)
+static func aura(parent_of: Node, pos: Vector2, radius: float, style: String) -> SkillFx:
+	var fx := SkillFx.new()
+	fx._kind = "aura"
+	fx._radius = radius
+	fx._style = style
+	fx._life = 0.6
+	Targeting.effects_parent(parent_of).add_child(fx)
+	fx.global_position = pos
+	return fx
+
+
 ## 직선 범위가 터질 때: 밝은 띠 + 길을 따라 흩어지는 입자
 static func line(parent_of: Node, a: Vector2, b: Vector2, width: float, style: String) -> SkillFx:
 	var fx := SkillFx.new()
@@ -289,6 +301,9 @@ func _draw() -> void:
 			draw_texture_rect(tex("dot"), Rect2(-Vector2(_radius, _radius) * 1.3, Vector2(_radius, _radius) * 2.6), false, Color(c.a, 0.85 * flash * flash))
 			draw_arc(Vector2.ZERO, _radius * (0.4 + 0.75 * t), 0, TAU, 56, Color(c.b, flash), 6.0 * flash + 1.0)
 			draw_arc(Vector2.ZERO, _radius * (0.2 + 0.5 * t), 0, TAU, 40, Color(c.a, flash * 0.7), 3.0 * flash + 1.0)
+		"aura":
+			var f := 1.0 - t
+			draw_arc(Vector2.ZERO, _radius * (0.3 + 0.7 * t), 0, TAU, 64, Color(c.b, 0.35 * f), 3.0)
 		"line":
 			var flash := 1.0 - t
 			var n := _to.normalized().orthogonal()

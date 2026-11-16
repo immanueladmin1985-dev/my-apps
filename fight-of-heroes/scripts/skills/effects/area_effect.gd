@@ -35,7 +35,11 @@ func apply(ctx: SkillContext) -> void:
 	for pos in positions(ctx):
 		if delay <= 0.0 and duration <= 0.0:
 			hit(ctx, pos)
-			SkillFx.burst(ctx.caster, pos, radius, SkillFx.style_of(ctx.skill))
+			# 패시브(스킬 없음)나 아주 넓은 오라는 화면을 덮지 않게 옅은 고리만
+			if ctx.skill == null or radius >= 350.0:
+				SkillFx.aura(ctx.caster, pos, radius, SkillFx.style_of(ctx.skill) if ctx.skill != null else "holy")
+			else:
+				SkillFx.burst(ctx.caster, pos, radius, SkillFx.style_of(ctx.skill))
 			continue
 		var zone := AreaZone.new()
 		zone.setup(self, ctx, pos)

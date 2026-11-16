@@ -311,6 +311,37 @@ def _defringe(img: Image.Image, bgs: list) -> Image.Image:
     return Image.frombytes("RGBA", (w, h), bytes(raw))
 
 
+# 배경(마젠타)과 색이 가까운 효과
+FX_FLOOD = {"dark"}
+
+
+def color_to_alpha(img: Image.Image) -> Image.Image:
+    """빛나는 효과 그림용: 배경색(가장자리 색, 보통 마젠타)이 섞인 만큼 정확히 투명하게 만든다 (GIMP 의 color to alpha).
+    부드러운 빛 번짐이 분홍빛 없이 반투명으로 남는다. 이미 투명한 그림은 그대로 둔다."""
+    import numpy as np
+    a = np.asarray(img.convert("RGBA"), dtype=np.float32) / 255.0
+    border = np.concatenate([a[0], a[-1], a[:, 0], a[:, -1]])
+    if (border[:, 3] < 0.06).mean() > 0.5:
+        return img.convert("RGBA")
+    m = np.median(border[:, :3], axis=0)
+    c = a[..., :3]
+    alpha = np.zeros(c.shape[:2], dtype=np.float32)
+    for k in range(3):
+        mk = m[k]
+        up = np.where(c[..., k] > mk, (c[..., k] - mk) / max(1e-4, 1.0 - mk), 0.0)
+        down = np.where(c[..., k] < mk, (mk - c[..., k]) / max(1e-4, mk), 0.0)
+        alpha = np.maximum(alpha, np.maximum(up, down))
+    alpha = np.clip(alpha, 0.0, 1.0)
+    safe = np.maximum(alpha, 1e-4)[..., None]
+    fg = np.clip((c - m) / safe + m, 0.0, 1.0)
+    # 배경색이 고르지 않아 남는 옅은 값(바탕의 네모)을 지운다: 가장자리에서 잰 잡음보다 약한 값은 0, 나머지는 다시 펼친다.
+    edge = np.concatenate([alpha[0], alpha[-1], alpha[:, 0], alpha[:, -1]])
+    floor = float(min(0.35, np.percentile(edge, 99) + 0.04))
+    alpha = np.clip((alpha - floor) / (1.0 - floor), 0.0, 1.0)
+    out = np.dstack([fg, alpha * a[..., 3]])
+    return Image.fromarray((out * 255).astype(np.uint8), "RGBA")
+
+
 def trim(img: Image.Image) -> Image.Image:
     box = img.split()[-1].point(lambda v: 255 if v > 8 else 0).getbbox()
     return img.crop(box) if box else img
@@ -335,7 +366,12 @@ def process(img: Image.Image, kind: str, cell: bool = False, id_: str = "") -> I
     size = KINDS[kind][1]
     if kind == "map_tile":
         return img.convert("RGB").resize((size, size), Image.LANCZOS)
-    img = trim(remove_background(img, cell=cell))
+    if kind == "effects":
+        style = id_.split("_")[0]
+        # 보라·분홍처럼 배경색에 가까운 효과는 가장자리에서부터 배경만 지운다 (color to alpha 는 너무 옅어진다).
+        img = trim(remove_background(img, cell=cell) if style in FX_FLOOD else color_to_alpha(img))
+    else:
+        img = trim(remove_background(img, cell=cell))
     if kind in ("heroes", "monsters") and id_ in FACING_LEFT:
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
     if kind in ("heroes", "monsters"):
