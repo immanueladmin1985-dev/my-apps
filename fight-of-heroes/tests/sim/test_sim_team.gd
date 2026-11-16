@@ -102,7 +102,8 @@ func _run(blue: Array, red: Array, difficulty: String, seed_value: int) -> void:
 	check(respawns[0] >= 1, "부활 없음")
 	check(assists >= 1, "도움 없음")
 	check(followed >= 2, "사냥(FARM)을 한 AI 가 %d명" % followed)
-	eq(bm.kills[Enums.Team.BLUE] + bm.kills[Enums.Team.RED], deaths, "킬 점수 합 = 사망 수")
+	var ksum: int = bm.kills[Enums.Team.BLUE] + bm.kills[Enums.Team.RED]
+	check(ksum <= deaths and ksum >= deaths - 2, "킬 점수 합(%d)이 사망 수(%d)와 맞음" % [ksum, deaths])
 	print("       %s: 점수 %d:%d, 킬/데스/도움 %s, 부활 %d" % [difficulty, bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED], " ".join(lines), respawns[0]])
 	battle.queue_free()
 	await get_tree().process_frame

@@ -65,7 +65,9 @@ func _duel(blue: String, red: String, difficulty: String, seed_value: int) -> vo
 	# 끝나기 직전에 죽은 영웅은 아직 부활 전일 수 있다.
 	check(respawns[0] <= total_deaths and respawns[0] >= total_deaths - 2, "사망한 만큼 부활 (사망 %d, 부활 %d)" % [total_deaths, respawns[0]])
 	var bm: BattleManager = battle.battle_manager
-	eq(bm.kills[Enums.Team.BLUE] + bm.kills[Enums.Team.RED], total_deaths, "킬 점수 합 = 사망 수")
+	# 몬스터에게 죽고 최근에 때린 적 영웅이 없으면 킬 점수가 오르지 않는다.
+	var ksum: int = bm.kills[Enums.Team.BLUE] + bm.kills[Enums.Team.RED]
+	check(ksum <= total_deaths and ksum >= total_deaths - 2, "킬 점수 합(%d)이 사망 수(%d)와 맞음" % [ksum, total_deaths])
 	print("       %s: %s / 점수 %d:%d / 부활 %d / 최저 체력 %s" % [difficulty, " | ".join(report), bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED], respawns[0], str(min_hp.values().map(func(v): return roundi(v * 100)))])
 	battle.queue_free()
 	await get_tree().process_frame
