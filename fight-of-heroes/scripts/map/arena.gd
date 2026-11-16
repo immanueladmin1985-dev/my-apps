@@ -84,7 +84,7 @@ func _draw() -> void:
 		var dirt := Art.texture("map", "ground_dirt")
 		if dirt != null:
 			_draw_soft_circle(pos, cfg.fountain_radius * 1.35, 60.0, dirt, Color.WHITE)
-		if not _draw_object("base_fountain", pos, cfg.fountain_radius * 1.6):
+		if not _draw_object("base_fountain", pos, cfg.fountain_radius * 1.6, true, false):
 			_draw_plain_fountain(pos, cfg.fountain_radius, c)
 		draw_arc(pos, cfg.fountain_radius, 0, TAU, 64, Color(c, 0.6), 4.0)
 		var toward_edge := -1.0 if pos.x < map.size.x * 0.5 else 1.0
@@ -92,15 +92,43 @@ func _draw() -> void:
 		if not _draw_object("shop", shop_pos, 150.0):
 			_draw_plain_shop(shop_pos)
 	var wall := Art.texture("map", "wall_rock")
-	for r in map.obstacles:
+	# 기울어진 시점에서는 아래쪽(앞쪽)에 있는 벽을 나중에 그려야 앞면이 뒤 벽을 가린다.
+	var walls: Array = Array(map.obstacles)
+	walls.sort_custom(func(a, b): return a.end.y < b.end.y)
+	for r in walls:
 		# 벽 둘레에 부드러운 그림자를 깔아 바닥과 자연스럽게 이어지게 한다.
 		_draw_soft_rect(r.grow(6), 34.0, null, Color(0.05, 0.05, 0.03, 0.35))
 		if wall != null:
-			draw_texture_rect(wall, r, true)
-			draw_rect(r, Color(0, 0, 0, 0.35), false, 3.0)
+			if View.tilt < 1.0:
+				_draw_raised_wall(r, wall)
+			else:
+				draw_texture_rect(wall, r, true)
+				draw_rect(r, Color(0, 0, 0, 0.35), false, 3.0)
 		else:
 			_draw_plain_rock(r)
 	_draw_edge_shade()
+
+
+## 기울어진 시점의 벽: 윗면을 WALL_HEIGHT 만큼 위로 올리고, 그 아래에 어두운 앞면을 그려 높이가 있어 보이게 한다.
+## 충돌 판정은 원래 사각형 그대로다 (앞면의 아래 끝 = 실제 벽의 아래 끝).
+const WALL_HEIGHT := 34.0
+
+
+func _draw_raised_wall(r: Rect2, wall: Texture2D) -> void:
+	var h := minf(WALL_HEIGHT, r.size.y * 0.8)
+	var top := Rect2(r.position - Vector2(0, h), r.size)
+	var face := Rect2(r.position.x, r.end.y - h, r.size.x, h)
+	var ts := Vector2(wall.get_width(), wall.get_height())
+	# 앞면: 아래로 갈수록 어두워지는 바위
+	var pts := PackedVector2Array([face.position, Vector2(face.end.x, face.position.y), face.end, Vector2(face.position.x, face.end.y)])
+	var uvs := PackedVector2Array([pts[0] / ts, pts[1] / ts, pts[2] / ts, pts[3] / ts])
+	var upper := Color(0.62, 0.58, 0.54)
+	var lower := Color(0.32, 0.29, 0.27)
+	draw_polygon(pts, PackedColorArray([upper, upper, lower, lower]), uvs, wall)
+	# 윗면
+	draw_texture_rect(wall, top, true)
+	draw_line(Vector2(top.position.x, top.end.y), top.end, Color(1, 1, 1, 0.22), 2.0)
+	draw_rect(Rect2(top.position, Vector2(r.size.x, r.size.y + h)), Color(0, 0, 0, 0.4), false, 3.0)
 
 
 ## 캠프 자리: 종류에 따라 바닥 무늬와 장식을 고른다. 그림이 없으면 반투명 원.
@@ -133,10 +161,18 @@ func _draw_camp(c: CampData) -> void:
 		draw_arc(c.position, cr, 0, TAU, 48, Color(0.8, 0.5, 1.0, 0.35) if big else Color(1, 1, 1, 0.12), 2.0)
 
 
-func _draw_object(id: String, center: Vector2, size: float) -> bool:
+## 서 있는 물건(나무·기지·상점 등)은 기울어진 시점에서도 아래쪽을 기준으로 세워 그린다.
+## 바닥에 깔린 것(캠프 고리·제단)은 upright=false 로 바닥과 함께 눕힌다.
+## 넓은 받침이 있는 것(기지 분수)은 anchor_bottom=false 로 가운데를 기준으로 세워 바닥 고리와 맞춘다.
+func _draw_object(id: String, center: Vector2, size: float, upright := true, anchor_bottom := true) -> bool:
 	var tex := Art.texture("map", id)
 	if tex != null:
-		draw_texture_rect(tex, Rect2(center - Vector2(size, size) * 0.5, Vector2(size, size)), false)
+		var k := View.upright() if upright else 1.0
+		var pivot := center + Vector2(0, size * 0.5) if anchor_bottom else center
+		var top_left := Vector2(-size * 0.5, -size) if anchor_bottom else Vector2(-size, -size) * 0.5
+		draw_set_transform(pivot, 0.0, Vector2(1.0, k))
+		draw_texture_rect(tex, Rect2(top_left, Vector2(size, size)), false)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		return true
 	return false
 

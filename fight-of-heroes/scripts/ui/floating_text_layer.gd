@@ -93,6 +93,9 @@ func _draw() -> void:
 	for it in items:
 		var a := 1.0 - clampf((it.age - LIFE * 0.5) / (LIFE * 0.5), 0.0, 1.0)
 		var w := FONT.get_string_size(it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, it.size).x
-		var p: Vector2 = it.pos - Vector2(w * 0.5, 0)
+		# 기울어진 시점에서도 글자는 세워서 그린다.
+		draw_set_transform(it.pos, 0.0, Vector2(1.0, View.upright()))
+		var p := Vector2(-w * 0.5, 0)
 		draw_string_outline(FONT, p, it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, it.size, 4, Color(0, 0, 0, 0.7 * a))
 		draw_string(FONT, p, it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, it.size, Color(it.color, a))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

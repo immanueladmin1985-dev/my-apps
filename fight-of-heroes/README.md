@@ -18,7 +18,7 @@ GODOT=/경로/godot tools/run_tests.sh --only=test_skills
 
 # 화면 캡처 (Xvfb)
 xvfb-run -a -s "-screen 0 2400x1080x24" godot --path . --rendering-driver opengl3 --windowed --resolution 2400x1080 \
-  -- --screenshot=/tmp/shot.png --wait=7 --battle=blade_master [--autoplay] [--seed=3] [--size=3] [--boss_time=3 --follow_boss] [--overview] [--look=x,y]
+  -- --screenshot=/tmp/shot.png --wait=7 --battle=blade_master [--autoplay] [--seed=3] [--size=3] [--boss_time=3 --follow_boss] [--overview] [--look=x,y] [--ping=attack]
 ```
 
 시험 실행기는 20초 동안 프레임이 진행되지 않으면 멈춘 것으로 보고 실패로 끝냅니다.

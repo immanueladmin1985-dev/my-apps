@@ -22,6 +22,29 @@ var _plan_left := 0.0
 ## 팀 계획: team -> {kind: "none" | "boss" | "gather", target, pos, until}
 var plans: Dictionary = {}
 
+## 신호(핑). 명령이 아니라 참고 정보다: 아군 AI 가 각자 상황(체력·거리·성향)을 보고 따를지 정한다.
+## kind: "attack"(공격) "danger"(위험·후퇴) "gather"(모여)
+const PING_SECONDS := 10.0
+const PING_KINDS := {"attack": "공격", "danger": "위험", "gather": "모여"}
+var pings: Array = []  # {id, team, kind, pos, until}
+var _ping_id := 0
+
+
+func add_ping(team: int, kind: String, pos: Vector2) -> Dictionary:
+	_ping_id += 1
+	# 같은 팀의 같은 종류 신호는 새 것으로 바꾼다.
+	pings = pings.filter(func(p): return not (p.team == team and p.kind == kind))
+	var p := {"id": _ping_id, "team": team, "kind": kind, "pos": pos, "until": Unit.now() + PING_SECONDS}
+	pings.append(p)
+	return p
+
+
+## 아직 살아 있는 우리 팀 신호
+func pings_for(team: int) -> Array:
+	var now := Unit.now()
+	pings = pings.filter(func(p): return p.until > now)
+	return pings.filter(func(p): return p.team == team)
+
 
 func setup(difficulty: String, hm: HeroManager = null) -> void:
 	profile = DataRegistry.ai_profile(difficulty)

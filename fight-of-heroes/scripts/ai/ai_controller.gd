@@ -205,7 +205,29 @@ func think() -> void:
 				_set_state(State.RETREAT)
 				return
 		objective = null
+		# 위험 신호 근처의 적은 쫓지 않고, 그 근처에 있으면 빠져나온다 (바로 옆에서 싸우는 중이면 예외).
+		var danger = _ping_near("danger", 700.0)
+		if danger != null:
+			hero_enemies = hero_enemies.filter(func(e): return pos.distance_to(e.global_position) < 260.0 or e == help_target)
+			if hero_enemies.is_empty():
+				var away: Vector2 = pos - danger.pos
+				if away.length() < 40.0:
+					away = home - pos
+				objective = _reachable(pos + away.normalized() * 600.0 + (home - pos).normalized() * 200.0)
+				_set_state(State.FOLLOW)
+				_use_skills(enemies)
+				_apply_orders()
+				return
 		target = _choose_target(hero_enemies, help_target)
+		if target == null and not committed:
+			# 공격·모여 신호: 따르기로 했으면 사냥보다 먼저 신호 자리로 간다.
+			var ping = _accepted_ping(hp)
+			if ping != null and pos.distance_to(ping.pos) > 260.0:
+				objective = _reachable(ping.pos)
+				_set_state(State.FOLLOW)
+				_use_skills(enemies)
+				_apply_orders()
+				return
 		if target == null:
 			target = _monster_target(enemies, help_target, plan)
 		if target is Monster and target.is_boss():
@@ -225,6 +247,44 @@ func think() -> void:
 			_role_think()
 	_use_skills(enemies)
 	_apply_orders()
+
+
+# ---- 신호(핑) ----
+
+## 신호마다 한 번만 따를지 정한다 (id -> bool).
+var _ping_choice: Dictionary = {}
+
+
+func _ping_near(kind: String, dist: float):
+	if manager == null:
+		return null
+	for p in manager.pings_for(hero.team):
+		if p.kind == kind and hero.global_position.distance_to(p.pos) < dist:
+			return p
+	return null
+
+
+## 따르기로 한 공격·모여 신호 (없으면 null). 멀수록, 체력이 낮을수록, 겁이 많을수록 덜 따른다.
+func _accepted_ping(hp: float):
+	if manager == null:
+		return null
+	for p in manager.pings_for(hero.team):
+		if p.kind == "danger":
+			continue
+		if not _ping_choice.has(p.id):
+			var d: float = hero.global_position.distance_to(p.pos)
+			var chance: float = (0.85 if p.kind == "gather" else 0.7) * (0.6 + 0.6 * hero.data.ai_aggression)
+			chance *= clampf(1.3 - d / 3500.0, 0.2, 1.0)
+			if hp < 0.4:
+				chance *= 0.3
+			_ping_choice[p.id] = rng.randf() < chance
+		if _ping_choice[p.id] and hp >= 0.3:
+			return p
+	return null
+
+
+func follows_ping(id: int) -> bool:
+	return _ping_choice.get(id, false)
 
 
 # ---- 아이템 ----

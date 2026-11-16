@@ -36,6 +36,8 @@ func _ready() -> void:
 		config = GameManager.default_config()
 		GameManager.match_config = config
 	map = DataRegistry.map_data(config.map_id)
+	View.setup_from_settings()
+	camera.zoom = Vector2(camera.zoom.x, camera.zoom.x * View.tilt)
 	arena.build(map)
 	hero_manager.setup(world, map)
 	ai_manager.setup(config.difficulty, hero_manager)
@@ -124,6 +126,11 @@ func _ready() -> void:
 		var xy: PackedStringArray = str(GameManager.dev_args["look"]).split(",")
 		if xy.size() == 2:
 			look_at_point(Vector2(float(xy[0]), float(xy[1])))
+	if GameManager.dev_args.has("ping") and player_hero != null:
+		# 개발용: --ping=attack|danger|gather 로 내 영웅 앞에 신호를 찍고 신호 창을 연다.
+		hud.choose_ping(str(GameManager.dev_args["ping"]))
+		hud.place_ping(player_hero.global_position + Vector2(280, -60))
+		hud.toggle_ping_menu()
 	if GameManager.dev_args.has("fx_demo") and player_hero != null:
 		var demo = load("res://scripts/dev/fx_demo.gd").new()
 		demo.name = "FxDemo"
@@ -160,8 +167,8 @@ func _process(_delta: float) -> void:
 	if GameManager.dev_args.has("overview"):
 		# 개발용: 맵 전체를 한 화면에 본다.
 		var vp := get_viewport_rect().size
-		var z := minf(vp.x / (map.size.x + 200.0), vp.y / (map.size.y + 200.0))
-		camera.zoom = Vector2(z, z)
+		var z := minf(vp.x / (map.size.x + 200.0), vp.y / ((map.size.y + 200.0) * View.tilt))
+		camera.zoom = Vector2(z, z * View.tilt)
 		camera.position_smoothing_enabled = false
 		camera.limit_left = -100000
 		camera.limit_top = -100000
@@ -249,3 +256,7 @@ func _notification(what: int) -> void:
 		save_snapshot()
 		if hud != null and battle_manager != null and not battle_manager.match_over and not get_tree().paused and OS.has_feature("mobile"):
 			hud.set_paused(true)
+
+
+func _exit_tree() -> void:
+	View.tilt = 1.0

@@ -25,33 +25,64 @@ func _physics_process(_delta: float) -> void:
 	var kb := Vector2(
 		float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
 		float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)))
-	var mv := joystick if joystick.length() > 0.05 else kb.limit_length(1.0)
+	# 조이스틱은 화면 방향이므로 기울어진 시점에서는 맵 방향으로 바꾼다 (손가락 방향과 화면 속 이동 방향이 같게).
+	var mv := View.screen_to_world(joystick if joystick.length() > 0.05 else kb.limit_length(1.0))
+	var moving := mv.length() > 0.05
 	if attack_held or Input.is_physical_key_pressed(KEY_SPACE):
-		var t = selected
-		if t == null or hero.global_position.distance_to(t.global_position) > hero.attack.attack_range + 350.0:
-			t = _nearest_prefer_hero(hero.attack.attack_range + 250.0)
+		var t = pick_attack_target()
+		if t != null and moving:
+			# 움직이는 중에는 이동이 먼저다. 사거리 안의 적에게 바로 쏠 수 있을 때만 한 번 쏘고 다시 움직인다
+			# (사거리 밖 적을 쫓아가느라 도망가다 멈추지 않는다).
+			if not (hero.attack.in_range(t) and hero.attack.can_attack()) and not hero.attack.is_winding_up():
+				t = null
 		if t != null:
 			_select(t)
 			hero.attack_order = t
 			hero.move_input = Vector2.ZERO
 			return
-	if mv.length() > 0.05:
+	if moving:
 		hero.attack_order = null
 	hero.move_input = mv
 
 
-## 사거리 근처에 적 영웅이 있으면 영웅을, 없으면 가장 가까운 몬스터를 고른다.
-func _nearest_prefer_hero(dist: float):
+## 공격 버튼의 대상: 사거리 안에 적이 있으면 그중에서 고르고(영웅 우선), 사거리 안에 아무도 없을 때만
+## 조금 떨어진 적에게 다가간다. 가까운 적을 두고 멀리 있는 적을 고르지 않는다.
+func pick_attack_target():
+	var near: float = hero.attack.total_range() + 250.0
+	var in_range: Array = []
+	for u in Targeting.in_radius(get_tree(), hero.global_position, near, hero.team, Enums.TargetTeam.ENEMY):
+		if FogOfWar.can_see(u) and hero.attack.in_range(u):
+			in_range.append(u)
+	if not in_range.is_empty():
+		if selected != null and in_range.has(selected):
+			return selected
+		return _best_of(in_range)
+	return _best_target(near)
+
+
+## 거리 점수가 가장 낮은 적. 영웅은 150, 내가 고른 적은 100 만큼 가깝게 친다.
+func _best_of(list: Array):
 	var best = null
-	var best_d := dist
-	for u in Targeting.in_radius(get_tree(), hero.global_position, dist, hero.team, Enums.TargetTeam.ENEMY):
-		if not FogOfWar.can_see(u):
-			continue
-		var d: float = hero.global_position.distance_to(u.global_position) - (10000.0 if u is Hero else 0.0)
-		if best == null or d < best_d:
-			best_d = d
+	var best_s := INF
+	for u in list:
+		var sc: float = hero.global_position.distance_to(u.global_position) - (150.0 if u is Hero else 0.0) - (100.0 if u == selected else 0.0)
+		if sc < best_s:
+			best_s = sc
 			best = u
 	return best
+
+
+func _best_target(dist: float):
+	var list: Array = []
+	for u in Targeting.in_radius(get_tree(), hero.global_position, dist, hero.team, Enums.TargetTeam.ENEMY):
+		if FogOfWar.can_see(u):
+			list.append(u)
+	return _best_of(list)
+
+
+## 거리 안에서 가장 알맞은 적 (가까울수록, 영웅일수록 우선. 멀리 있는 영웅보다 바로 앞의 몬스터를 고를 수 있다)
+func _nearest_prefer_hero(dist: float):
+	return _best_target(dist)
 
 
 func _select(t) -> void:
@@ -105,10 +136,7 @@ func auto_aim(slot: int) -> CastAim:
 		Enums.TargetMode.UNIT:
 			if s.target_team == Enums.TargetTeam.ALLY:
 				return CastAim.at_unit(_weakest_ally(reach))
-			var t = selected if selected != null and pos.distance_to(selected.global_position) <= reach + selected.radius else null
-			if t == null:
-				t = _nearest_prefer_hero(reach)
-			return CastAim.at_unit(t)
+			return CastAim.at_unit(_best_target(reach + 20.0))
 		Enums.TargetMode.DIRECTION:
 			if s.auto_aim_away:
 				var e = Targeting.nearest(tree, pos, 600.0, hero.team, Enums.TargetTeam.ENEMY)
@@ -131,15 +159,14 @@ func _weakest_ally(reach: float):
 
 
 func _target_within(dist: float):
-	if selected != null and hero.global_position.distance_to(selected.global_position) <= dist:
-		return selected
-	return _nearest_prefer_hero(dist)
+	return _best_target(dist)
 
 
 func manual_aim(slot: int, vec: Vector2) -> CastAim:
 	var s := _skill(slot)
 	if s == null:
 		return null
+	vec = View.screen_to_world(vec)
 	var pos: Vector2 = hero.global_position
 	match s.target_mode:
 		Enums.TargetMode.DIRECTION:
@@ -164,6 +191,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch and event.pressed:
 		var world_pos: Vector2 = hero.get_canvas_transform().affine_inverse() * event.position
+		if hud != null and hud.ping_mode != "":
+			hud.place_ping(world_pos)
+			get_viewport().set_input_as_handled()
+			return
 		var t = Targeting.nearest(get_tree(), world_pos, TAP_PICK_RADIUS, hero.team, Enums.TargetTeam.ENEMY)
 		if t != null and FogOfWar.can_see(t):
 			_select(t)

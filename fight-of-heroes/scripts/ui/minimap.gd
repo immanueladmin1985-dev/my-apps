@@ -12,6 +12,7 @@ var map: MapData
 var hero_manager: HeroManager
 var player = null
 var camera: Camera2D
+var ai_manager = null
 var _finger := -1
 
 
@@ -37,6 +38,12 @@ func _input(event: InputEvent) -> void:
 			return
 	if event is InputEventScreenTouch:
 		if event.pressed and _finger < 0 and get_global_rect().has_point(event.position):
+			var hud_node = get_tree().get_first_node_in_group("hud")
+			if hud_node != null and hud_node.ping_mode != "":
+				# 신호를 찍는 중이면 카메라를 옮기지 않고 그 자리에 신호를 찍는다.
+				hud_node.place_ping(to_world(event.position))
+				get_viewport().set_input_as_handled()
+				return
 			_finger = event.index
 			look_requested.emit(to_world(event.position))
 			get_viewport().set_input_as_handled()
@@ -100,7 +107,19 @@ func _draw() -> void:
 			if h == player:
 				draw_circle(p, 6.5, Color(1, 0.95, 0.4))
 			draw_circle(p, 5.0, c)
+	_draw_pings()
 	draw_rect(Rect2(Vector2.ZERO, size), Color(1, 1, 1, 0.35), false, 1.5)
+
+
+func _draw_pings() -> void:
+	if ai_manager == null or player == null:
+		return
+	var t := Time.get_ticks_msec() / 1000.0
+	for p in ai_manager.pings_for(player.team):
+		var mp := _to_mini(p.pos)
+		var c := PingMarker.color_of(p.kind)
+		draw_arc(mp, 5.0 + fmod(t * 8.0, 6.0), 0, TAU, 20, Color(c, 0.9), 1.5)
+		draw_circle(mp, 3.5, c)
 
 
 ## 미니맵에도 안개를 어둡게 칠한다 (칸을 몇 개씩 묶어 그린다).

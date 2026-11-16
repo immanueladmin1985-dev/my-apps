@@ -43,6 +43,10 @@ var boss_bar: StatBar
 var monster_manager: MonsterManager
 var ai_manager: AIManager
 var gather_button: TouchButton
+## 신호(핑): 버튼 → 종류 고르기 → 미니맵이나 화면을 눌러 찍기
+var ping_button: TouchButton
+var ping_menu: Control
+var ping_mode := ""
 var shop_button: TouchButton
 var shop: ShopManager
 var shop_panel: ShopPanel
@@ -71,7 +75,7 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
-	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, name_label, gather_button, shop_button, inventory_bar] + skill_buttons:
+	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, name_label, gather_button, ping_button, shop_button, inventory_bar] + skill_buttons:
 		n.visible = playable
 	if not playable:
 		return
@@ -113,6 +117,7 @@ func _exit_tree() -> void:
 func setup_overview(map: MapData, hm: HeroManager, cam: Camera2D, mm: MonsterManager = null) -> void:
 	monster_manager = mm
 	minimap.setup(map, hm, hero, cam)
+	minimap.ai_manager = ai_manager
 	var h := 120.0
 	minimap.offset_bottom = minimap.offset_top + h
 	minimap.offset_right = minimap.offset_left + h * map.size.x / map.size.y
@@ -254,6 +259,27 @@ func _build() -> void:
 	_place(gather_button, Vector2(1, 0), Vector2(-84, 76), Vector2(70, 52))
 	gather_button.pressed.connect(call_gather)
 	root.add_child(gather_button)
+
+	ping_button = TouchButton.new()
+	ping_button.name = "PingButton"
+	ping_button.setup("신호", 19, Color(0.3, 0.2, 0.12, 0.88))
+	_place(ping_button, Vector2(1, 0), Vector2(-84, 134), Vector2(70, 52))
+	ping_button.pressed.connect(toggle_ping_menu)
+	root.add_child(ping_button)
+	ping_menu = Control.new()
+	ping_menu.name = "PingMenu"
+	ping_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place(ping_menu, Vector2(1, 0), Vector2(-84 - 3 * 78, 134), Vector2(3 * 78, 52))
+	ping_menu.visible = false
+	root.add_child(ping_menu)
+	var kinds := ["attack", "danger", "gather"]
+	for i in kinds.size():
+		var b := TouchButton.new()
+		b.name = "Ping_" + kinds[i]
+		b.setup(AIManager.PING_KINDS[kinds[i]], 18, PingMarker.color_of(kinds[i]).darkened(0.45))
+		_place(b, Vector2(0, 0), Vector2(i * 78, 0), Vector2(72, 52))
+		b.pressed.connect(choose_ping.bind(kinds[i]))
+		ping_menu.add_child(b)
 
 	shop_button = TouchButton.new()
 	shop_button.name = "ShopButton"
@@ -546,6 +572,33 @@ func _on_inventory_slot(i: int) -> void:
 			show_message(ShopManager.RESULT_TEXT.get(r, ""))
 	else:
 		show_message("%s: %s" % [it.display_name, ", ".join(it.stat_lines())])
+
+
+## 신호 버튼: 종류 고르는 창을 열고 닫는다. 찍을 곳을 고르는 중이면 취소한다.
+func toggle_ping_menu() -> void:
+	if ping_mode != "":
+		ping_mode = ""
+		show_message("신호를 취소했습니다")
+		return
+	ping_menu.visible = not ping_menu.visible
+
+
+func choose_ping(kind: String) -> void:
+	ping_menu.visible = false
+	ping_mode = kind
+	show_message("미니맵이나 화면을 눌러 '%s' 신호를 찍으세요" % AIManager.PING_KINDS[kind])
+
+
+## 고른 종류의 신호를 pos 에 찍는다. 아군 AI 는 이 신호를 참고해 움직일지 정한다.
+func place_ping(pos: Vector2) -> void:
+	var kind := ping_mode
+	ping_mode = ""
+	if ai_manager == null or hero == null or kind == "":
+		return
+	ai_manager.add_ping(hero.team, kind, pos)
+	PingMarker.spawn(hero, pos, kind, AIManager.PING_SECONDS)
+	AudioManager.play("skill", 0.1, 0.6)
+	show_message("'%s' 신호를 찍었습니다" % AIManager.PING_KINDS[kind])
 
 
 ## 아군 AI 를 플레이어 자리로 부른다.

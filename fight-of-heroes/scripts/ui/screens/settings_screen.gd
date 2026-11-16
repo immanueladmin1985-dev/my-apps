@@ -79,7 +79,7 @@ func _ready() -> void:
 	mrow.add_child(ms)
 	mrow.add_child(ml)
 
-	for opt in [["fog_of_war", "전장의 안개 (우리 팀이 비춘 곳만 보임)", true], ["damage_numbers", "피해 숫자 표시", true], ["show_fps", "FPS 표시", false], ["battery_saver", "배터리 절약 (30fps)", false]]:
+	for opt in [["fog_of_war", "전장의 안개 (우리 팀이 비춘 곳만 보임)", true], ["tilt_view", "기울어진 시점 (2.5D)", true], ["damage_numbers", "피해 숫자 표시", true], ["show_fps", "FPS 표시", false], ["battery_saver", "배터리 절약 (30fps)", false]]:
 		grid.add_child(UiKit.label(opt[1], 20))
 		var c := CheckButton.new()
 		c.name = opt[0]
