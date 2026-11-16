@@ -35,12 +35,12 @@ glyph = "사"
 weapon = "spear"
 base_stats = {
 "armor": 30.0,
-"attack": 60.0,
+"attack": 62.0,
 "attack_speed": 0.82,
 "hp_regen": 3.0,
 "life_steal": 0.06,
 "magic_resist": 26.0,
-"max_hp": 670.0,
+"max_hp": 700.0,
 "max_mp": 290.0,
 "move_speed": 232.0,
 "mp_regen": 2.5

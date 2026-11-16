@@ -37,12 +37,12 @@ glyph = "별"
 weapon = "staff"
 base_stats = {
 "ability_power": 46.0,
-"armor": 20.0,
+"armor": 24.0,
 "attack": 48.0,
 "attack_speed": 0.75,
 "hp_regen": 2.4,
 "magic_resist": 30.0,
-"max_hp": 610.0,
+"max_hp": 650.0,
 "max_mp": 420.0,
 "move_speed": 228.0,
 "mp_regen": 3.8

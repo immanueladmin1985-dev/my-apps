@@ -36,8 +36,8 @@ glyph = "총"
 weapon = "bow"
 base_stats = {
 "armor": 20.0,
-"attack": 50.0,
-"attack_speed": 0.9,
+"attack": 47.0,
+"attack_speed": 0.85,
 "crit_chance": 0.1,
 "hp_regen": 2.5,
 "magic_resist": 25.0,
