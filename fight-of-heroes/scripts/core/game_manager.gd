@@ -76,13 +76,14 @@ func pick_order(player_hero: String) -> Array:
 	return fresh + seen
 
 
-## 이번에 만난 상대를 기록한다 (최근 9명).
+## 이번에 만난 상대를 기록한다. 영웅 수만큼 기억해서, 아직 안 만난 영웅부터 다 만난 뒤에야
+## 가장 오래전에 만난 영웅이 다시 나온다 (무작위에 따라 같은 영웅이 자주 나오지 않게).
 func remember_enemies(config: MatchConfig) -> void:
 	var recent: Array = SaveManager.get_setting("recent_enemies", [])
 	for id in config.red_heroes:
 		recent.erase(id)
 		recent.append(id)
-	while recent.size() > 9:
+	while recent.size() > maxi(9, DataRegistry.ids("heroes").size() - 1):
 		recent.pop_front()
 	SaveManager.set_setting("recent_enemies", recent)
 

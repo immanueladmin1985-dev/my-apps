@@ -29,7 +29,7 @@ func test_enemy_teams_vary() -> void:
 			seen[id] = true
 		last = red
 		GameManager.remember_enemies(c)
-	check(seen.size() >= 13, "5판 동안 서로 다른 상대 %d명" % seen.size())
+	check(seen.size() >= 15, "5판 동안 서로 다른 상대 %d명 (아직 안 만난 영웅부터)" % seen.size())
 	eq(GameManager.default_config("monk").map_id, "valley_02", "새 게임은 큰 맵")
 	check(GameManager.default_config("monk").random_teams, "무작위 팀 표시")
 
