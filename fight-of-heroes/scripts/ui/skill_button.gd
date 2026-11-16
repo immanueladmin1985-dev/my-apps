@@ -126,7 +126,7 @@ func _draw() -> void:
 	if icon != null:
 		# 아직 배우지 않은 스킬은 어둡게
 		var learned: bool = caster != null and caster.ranks[slot] > 0
-		Art.draw_in_circle(self, icon, c, r - 4.0, Color.WHITE if learned else Color(0.45, 0.45, 0.45))
+		Art.draw_in_circle(self, icon, c, r - 4.0, Color.WHITE if learned else Color(0.6, 0.6, 0.6))
 	else:
 		var tw := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		draw_string(FONT, c + Vector2(-tw * 0.5, fs * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, 0.95))
