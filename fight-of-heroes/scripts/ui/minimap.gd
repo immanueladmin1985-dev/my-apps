@@ -1,6 +1,10 @@
 class_name Minimap
 extends Control
 ## 미니맵: 지형, 우물, 영웅 위치(팀 색), 현재 카메라가 보는 범위.
+## 누르거나 끌면 그 자리를 보라고 알린다(look_requested). 손을 떼면 look_released.
+
+signal look_requested(world_pos: Vector2)
+signal look_released
 
 const FONT := preload("res://assets/fonts/NotoSansKR-SemiBold-subset.ttf")
 
@@ -8,6 +12,7 @@ var map: MapData
 var hero_manager: HeroManager
 var player = null
 var camera: Camera2D
+var _finger := -1
 
 
 func setup(map_data: MapData, hm: HeroManager, player_hero, cam: Camera2D) -> void:
@@ -20,6 +25,38 @@ func setup(map_data: MapData, hm: HeroManager, player_hero, cam: Camera2D) -> vo
 
 func _process(_delta: float) -> void:
 	queue_redraw()
+
+
+## 다른 손가락으로 조이스틱을 잡고 있어도 쓸 수 있게 화면 터치를 직접 받는다.
+func _input(event: InputEvent) -> void:
+	if map == null or not is_visible_in_tree():
+		return
+	if event is InputEventScreenTouch and event.pressed:
+		var hud_node = get_tree().get_first_node_in_group("hud")
+		if get_tree().paused or (hud_node != null and hud_node.shop_open):
+			return
+	if event is InputEventScreenTouch:
+		if event.pressed and _finger < 0 and get_global_rect().has_point(event.position):
+			_finger = event.index
+			look_requested.emit(to_world(event.position))
+			get_viewport().set_input_as_handled()
+		elif not event.pressed and event.index == _finger:
+			_finger = -1
+			look_released.emit()
+			get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag and event.index == _finger:
+		look_requested.emit(to_world(event.position))
+		get_viewport().set_input_as_handled()
+
+
+## 화면 좌표(미니맵 위) → 맵 좌표
+func to_world(screen_pos: Vector2) -> Vector2:
+	var local := (screen_pos - get_global_rect().position) / get_global_rect().size
+	return (local.clamp(Vector2.ZERO, Vector2.ONE)) * map.size
+
+
+func is_held() -> bool:
+	return _finger >= 0
 
 
 func _to_mini(p: Vector2) -> Vector2:

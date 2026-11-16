@@ -1,6 +1,9 @@
 class_name TeamStatus
 extends Control
 ## 한 팀 영웅들의 상태: 글자 아이콘, 체력 고리, 사망 시 부활까지 남은 초.
+## 얼굴을 누르면 그 영웅을 비추라고 알린다(hero_selected).
+
+signal hero_selected(hero)
 
 const FONT := preload("res://assets/fonts/NotoSansKR-SemiBold-subset.ttf")
 const SLOT := 52.0
@@ -24,12 +27,30 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 
+func _slot_center(i: int) -> Vector2:
+	var x := (size.x - SLOT * (i + 0.5)) if mirror else SLOT * (i + 0.5)
+	return Vector2(x, size.y * 0.5)
+
+
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or not (event is InputEventScreenTouch) or not event.pressed:
+		return
+	var hud_node = get_tree().get_first_node_in_group("hud")
+	if get_tree().paused or (hud_node != null and hud_node.shop_open):
+		return
+	var local: Vector2 = event.position - get_global_rect().position
+	for i in heroes.size():
+		if local.distance_to(_slot_center(i)) <= R + 8.0:
+			hero_selected.emit(heroes[i])
+			get_viewport().set_input_as_handled()
+			return
+
+
 func _draw() -> void:
 	var c := Enums.team_color(team)
 	for i in heroes.size():
 		var h: Hero = heroes[i]
-		var x := (size.x - SLOT * (i + 0.5)) if mirror else SLOT * (i + 0.5)
-		var center := Vector2(x, size.y * 0.5)
+		var center := _slot_center(i)
 		draw_circle(center, R + 3.0, Color(0, 0, 0, 0.55))
 		var body := h.data.color if not h.is_dead else Color(0.3, 0.3, 0.3)
 		draw_circle(center, R - 2.0, body)

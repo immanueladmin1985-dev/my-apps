@@ -12,6 +12,9 @@ var resumed := false
 var fog: FogOfWar = null
 ## 자동 저장 간격(초, 경기 시간 기준)
 const AUTOSAVE_INTERVAL := 15.0
+## 카메라가 영웅을 따라가지 않고 한 자리를 볼 때 (미니맵을 눌렀거나 관전 중 화면을 끌었을 때)
+var free_look := false
+var free_pos := Vector2.ZERO
 var _autosave_left := AUTOSAVE_INTERVAL
 
 @onready var arena: Arena = $Arena
@@ -97,6 +100,12 @@ func _ready() -> void:
 	hud.shop = shop_manager
 	hud.setup(player_hero, player_controller, battle_manager)
 	hud.setup_overview(map, hero_manager, camera, monster_manager)
+	hud.minimap.look_requested.connect(look_at_point)
+	hud.blue_status.hero_selected.connect(focus_hero)
+	hud.red_status.hero_selected.connect(focus_hero)
+	hud.focus_button.pressed.connect(return_to_player)
+	if player_controller == null:
+		hud.show_message("미니맵을 누르면 그곳을, 위쪽 얼굴을 누르면 그 영웅을 비춥니다. 화면을 끌어도 움직입니다")
 	if not GameManager.resume_snapshot.is_empty():
 		var snap := GameManager.resume_snapshot
 		GameManager.resume_snapshot = {}
@@ -110,6 +119,11 @@ func _ready() -> void:
 			# 바로 싸움이 이어지지 않도록 일시정지한 채로 시작한다.
 			hud.set_paused(true)
 			hud.show_message("저장한 전투를 불러왔습니다. 계속하기를 누르세요")
+	if GameManager.dev_args.has("look"):
+		# 개발용: --look=x,y 로 맵의 한 자리를 비춘다.
+		var xy: PackedStringArray = str(GameManager.dev_args["look"]).split(",")
+		if xy.size() == 2:
+			look_at_point(Vector2(float(xy[0]), float(xy[1])))
 	if GameManager.dev_args.has("fx_demo") and player_hero != null:
 		var demo = load("res://scripts/dev/fx_demo.gd").new()
 		demo.name = "FxDemo"
@@ -159,8 +173,65 @@ func _process(_delta: float) -> void:
 		var b := get_tree().get_first_node_in_group("bosses")
 		if b != null:
 			follow_target = b
-	if follow_target != null and is_instance_valid(follow_target):
-		camera.global_position = follow_target.global_position
+	_update_camera()
+
+
+# ---- 카메라: 영웅 따라가기 / 원하는 곳 보기 ----
+
+## 미니맵을 누른 곳처럼 맵의 한 자리를 본다.
+func look_at_point(p: Vector2) -> void:
+	free_look = true
+	free_pos = p.clamp(Vector2.ZERO, map.size)
+
+
+## 영웅 얼굴을 눌렀을 때: 그 영웅을 따라간다. 안개 속의 적은 볼 수 없다.
+func focus_hero(h) -> void:
+	if h == null or not is_instance_valid(h):
+		return
+	if not FogOfWar.can_see(h):
+		hud.show_message("%s 은(는) 지금 시야 밖에 있습니다" % h.display_name)
+		return
+	free_look = false
+	follow_target = h
+	if h.is_dead:
+		look_at_point(h.global_position)
+
+
+func return_to_player() -> void:
+	if player_hero != null:
+		free_look = false
+		follow_target = player_hero
+
+
+## 카메라가 내 영웅을 떠나 있는지 (직접 조작하는 경기에서만)
+func camera_away() -> bool:
+	return player_controller != null and (free_look or follow_target != player_hero)
+
+
+func _update_camera() -> void:
+	if camera_away() and not hud.minimap.is_held():
+		# 움직이거나 공격·스킬을 쓰면 바로 내 영웅으로 돌아온다.
+		var c := player_controller
+		if c.joystick.length() > 0.3 or c.attack_held or c.aiming_slot >= 0:
+			return_to_player()
+	hud.focus_button.visible = camera_away()
+	if not free_look and follow_target != null and is_instance_valid(follow_target):
+		if follow_target is Unit and not FogOfWar.can_see(follow_target):
+			# 따라가던 적이 안개 속으로 사라지면 그 자리에 멈춘다.
+			look_at_point(follow_target.global_position)
+		else:
+			camera.global_position = follow_target.global_position
+	if free_look:
+		camera.global_position = free_pos
+
+
+## 관전할 때는 화면을 손가락으로 끌어 둘러볼 수 있다.
+func _unhandled_input(event: InputEvent) -> void:
+	if player_controller != null or map == null:
+		return
+	if event is InputEventScreenDrag:
+		var from := free_pos if free_look else camera.get_screen_center_position()
+		look_at_point(from - event.relative / camera.zoom)
 
 
 ## 안드로이드 뒤로 가기: 일시정지 / 계속

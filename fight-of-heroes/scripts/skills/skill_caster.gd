@@ -91,6 +91,7 @@ func cast(slot: int, aim: CastAim = null) -> int:
 		runner.execute(ctx)
 	else:
 		SkillEffect.apply_list(s.effects, ctx)
+		_direct_hit_fx(s, ctx)
 	cast_done.emit(slot, s)
 	EventBus.skill_cast.emit(unit, slot, s)
 	return Enums.CastResult.OK
@@ -136,3 +137,17 @@ func _physics_process(delta: float) -> void:
 	for i in 4:
 		if cooldowns[i] > 0.0:
 			cooldowns[i] = maxf(0.0, cooldowns[i] - delta)
+
+
+## 대상 하나에 바로 거는 스킬(속박·사슬·심판 등)은 범위나 투사체 그림이 없으므로,
+## 시전자에서 대상까지 빛줄기를 긋고 대상 자리에서 터지는 효과를 보여 준다.
+func _direct_hit_fx(s: SkillData, ctx: SkillContext) -> void:
+	if s.target_mode != Enums.TargetMode.UNIT or ctx.target_unit == null or not is_instance_valid(ctx.target_unit):
+		return
+	for e in s.effects:
+		if e is AreaEffect or e is ProjectileEffect or e is DashEffect or e is LineZoneEffect or e is TeleportEffect or e is SummonEffect or e is BarrageEffect:
+			return
+	var style := SkillFx.style_of(s)
+	var to: Vector2 = ctx.target_unit.global_position
+	SkillFx.line(unit, unit.global_position, to, 22.0, style)
+	SkillFx.burst(unit, to, 60.0, style)

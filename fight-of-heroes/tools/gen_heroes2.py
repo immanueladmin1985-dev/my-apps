@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hero_gen import *  # noqa: F401,F403
-from hero_gen import C, D, P, area, dash, dmg, heal, hero, mana, monster, proj, shield, slow, status, status_file, stun, summon, tele
+from hero_gen import C, D, P, area, barrage, dash, dmg, heal, hero, mana, monster, proj, shield, slow, status, status_file, stun, summon, tele
 
 
 def linez(length, width, effects, delay=0.6, color=C(1, 0.5, 0.2, 0.35)):
@@ -76,15 +76,16 @@ hero("gunslinger", "총잡이", "원거리 연사 딜러", 2, "황야를 떠도�
            effects=[area(1, 130, [dmg((60, 95, 130, 165), 0, ad=0.5), stun((1.0,))], delay=0.5)], vfx="bullet", sound="explosion", color=C(1, 1, 0.8, 1)),
       dict(name="구르기", glyph="구", desc="조준한 방향으로 굴러 이동하고 3초 동안 공격 속도가 35% 빨라집니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 구릅니다.", mode=2, mana_cost=(40,), cd=(11, 10, 9, 8), rng=300,
            effects=[dash(300, speed=1100), status("overdrive", (3,), to_caster=True)], ai=3, away=True, vfx="bullet", sound="dash", color=C(0.9, 0.7, 0.4, 1)),
-      dict(name="총알 세례", glyph="세", desc="0.5초 뒤 앞쪽 넓은 직선에 총알을 퍼부어 큰 물리 피해를 주고 둔화시킵니다.", mode=2, mana_cost=(100,), cd=(60, 50, 40), rng=850, width=150, max_rank=3,
-           effects=[linez(850, 150, [dmg((220, 330, 440), 0, ad=1.3), slow((2.0,), (0.4,))], delay=0.5)], vfx="bullet", sound="arrow_rain", color=C(1, 0.8, 0.4, 1))],
-     aggr=0.5, pspeed=1500.0)
+      dict(name="총알 세례", glyph="세", desc="2.4초 동안 조준한 방향으로 쌍권총을 난사합니다. 총알 16발이 부채꼴로 흩어지며 한 발마다 물리 피해를 주고 맞은 적을 잠깐 둔화시킵니다. 쏘는 동안에는 느리게 움직입니다.", mode=2, mana_cost=(100,), cd=(60, 50, 40), rng=820, width=120, max_rank=3,
+           effects=[barrage([proj([dmg((22, 32, 42), 0, ad=0.15), slow((0.6,), (0.2,))], speed=1900, width=30, rng=820)], 16, 0.15, spread=11, slow=0.35, sound="arrow")],
+           vfx="bullet", sound="arrow", color=C(1, 0.8, 0.4, 1))],
+     aggr=0.5, pspeed=1500.0, avfx="bullet")
 
 # ── 기공사: 기를 모아 한 방에 쏟아내는 근접·마법 혼합형 ──
-hero("ki_master", "기공사", "기 폭발 격투가", 2, "산에서 수련한 무도가. 기를 모아 장풍을 쏘고, 모은 기를 거대한 기공파로 터뜨린다.",
+hero("ki_master", "기공사", "기공 원거리 격투가", 2, "산에서 수련한 무도가. 주먹으로 기탄을 날려 떨어진 적을 치고, 모은 기를 거대한 기공파로 터뜨린다.",
      (1.0, 0.75, 0.25), "기", "fist",
-     dict(max_hp=620, max_mp=320, attack=50, ability_power=18, armor=28, magic_resist=28, attack_speed=0.9, move_speed=235, hp_regen=3.0, mp_regen=2.8),
-     HYBRID_G, 60, False, "fighter", ["swift_boots", "hero_sword", "chrono_scepter", "guardian_plate", "archmage_crown", "dragon_shield"],
+     dict(max_hp=590, max_mp=320, attack=48, ability_power=18, armor=25, magic_resist=26, attack_speed=0.85, move_speed=235, hp_regen=2.8, mp_regen=2.8),
+     HYBRID_G, 320, True, "fighter", ["swift_boots", "hero_sword", "chrono_scepter", "guardian_plate", "archmage_crown", "dragon_shield"],
      dict(id="fighting_spirit", display_name="투지", description="체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다).", trigger="attack_hit", every=1,
           self_below_hp=0.4, cooldown=20.0, effects=[shield((90, 150, 210, 270), (4,), ap=0.5)]),
      [dict(name="장풍", glyph="장", desc="기 덩어리를 쏴 처음 맞은 적과 주변에 마법 피해를 줍니다.", mode=2, mana_cost=(45,), cd=(6, 5.5, 5, 4.5), rng=600, width=50,
@@ -95,7 +96,7 @@ hero("ki_master", "기공사", "기 폭발 격투가", 2, "산에서 수련한 �
            effects=[mana((60, 80, 100, 120)), status("ki_charge", (5,), to_caster=True)], ai=2, vfx="ki", sound="holy", color=C(1, 0.95, 0.5, 1)),
       dict(name="천지 기공파", glyph="파", desc="0.9초 동안 기를 모은 뒤 앞으로 거대한 기공파를 쏴 큰 마법 피해를 줍니다.", mode=2, mana_cost=(120,), cd=(70, 60, 50), rng=1000, width=170, max_rank=3,
            effects=[linez(1000, 170, [dmg((260, 400, 540), 1, ad=0.5, ap=1.0)], delay=0.9)], vfx="ki", sound="meteor", color=C(1, 0.9, 0.4, 1))],
-     aggr=0.65)
+     aggr=0.6, pspeed=1100.0, avfx="ki")
 
 # ── 마법소녀: 별빛으로 아군을 북돋우고 적을 묶는 지원 마법사 ──
 hero("star_girl", "별빛 마법소녀", "지원형 마법사", 2, "별의 힘을 빌린 마법소녀. 리본으로 적을 묶고, 응원으로 아군을 북돋우며, 별빛을 쏟아붓는다.",
@@ -112,7 +113,7 @@ hero("star_girl", "별빛 마법소녀", "지원형 마법사", 2, "별의 힘�
            effects=[area(0, 420, [status("cheer", (4,)), status("haste", (4,), (0.2,))], affects=1, color=C(1, 0.7, 0.9, 0.25))], team=1, ai=4, vfx="star", sound="heal", color=C(1, 0.7, 0.85, 1)),
       dict(name="별빛 폭격", glyph="폭", desc="지정한 지역에 0.8초 뒤 별 5개를 떨어뜨려 각각 마법 피해를 줍니다.", mode=3, mana_cost=(120,), cd=(70, 60, 50), rng=750, radius=260, max_rank=3,
            effects=[multi_area(1, 120, [dmg((120, 180, 240), 1, ap=0.45)], 5, 190, delay=0.8)], vfx="star", sound="meteor", color=C(1, 0.8, 0.95, 1))],
-     aggr=0.4)
+     aggr=0.4, avfx="star")
 
 # ── 사신: 싸울수록 살아나는 흡혈 근접 전사 ──
 hero("reaper", "사신", "흡혈 근접 전사", 2, "영혼을 거두는 낫잡이. 적을 벨수록 체력을 되찾고, 죽어 가는 적을 놓치지 않는다.",
@@ -147,6 +148,6 @@ hero("mechanic", "기계공", "포탑 설치 지원", 2, "무엇이든 만들어
                     shield((70, 110, 150, 190), (3,), ap=0.45)], team=1, ai=4, vfx="tech", sound="shield", color=C(0.5, 0.85, 1, 1)),
       dict(name="궤도 폭격", glyph="궤", desc="지정한 지역에 1초 뒤 포탄 3발을 떨어뜨려 큰 마법 피해를 주고 1초 동안 기절시킵니다.", mode=3, mana_cost=(120,), cd=(75, 65, 55), rng=800, radius=250, max_rank=3,
            effects=[multi_area(1, 150, [dmg((150, 225, 300), 1, ap=0.55), stun((1.0,))], 3, 150, delay=1.0)], vfx="tech", sound="meteor", color=C(1, 0.5, 0.3, 1))],
-     aggr=0.4)
+     aggr=0.4, avfx="tech")
 
 print("만든 영웅:", ", ".join(["ninja", "gunslinger", "ki_master", "star_girl", "reaper", "mechanic"]))

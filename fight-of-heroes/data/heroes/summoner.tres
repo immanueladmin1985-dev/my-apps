@@ -65,6 +65,7 @@ growth_stats = {
 }
 attack_range = 380.0
 is_ranged = true
+attack_vfx = "dark"
 projectile_speed = 1000.0
 passive = SubResource("PassiveData_1")
 passive_description = "영혼 수확: 적을 처치하면(소환수가 처치해도) 체력과 마나를 회복합니다."

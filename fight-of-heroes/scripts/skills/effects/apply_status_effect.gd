@@ -19,3 +19,9 @@ func apply(ctx: SkillContext) -> void:
 		return
 	var mag := scaled(ctx, magnitude, ad_ratio, ap_ratio)
 	t.status.apply(status, SkillData.at(duration, ctx.rank), mag, ctx.caster)
+	# 강화(공격력·속도·회복·은신)는 받은 유닛 위에 효과를 보여 준다. 스킬이 아닌 곳(아이템·패시브)에서 건 것은 그리지 않는다.
+	if ctx.skill != null and status != null and not [Enums.StatusKind.STUN, Enums.StatusKind.SLOW, Enums.StatusKind.DOT].has(status.kind):
+		if t == ctx.caster:
+			SkillFx.power_up(t, SkillFx.style_of(ctx.skill))
+		else:
+			SkillFx.sparkle(t, SkillFx.style_of(ctx.skill), 14)

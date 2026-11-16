@@ -31,20 +31,20 @@ effects = Array[Resource]([SubResource("ShieldEffect_2")])
 script = ExtResource("7")
 id = "ki_master"
 display_name = "기공사"
-role = "기 폭발 격투가"
+role = "기공 원거리 격투가"
 difficulty = 2
-lore = "산에서 수련한 무도가. 기를 모아 장풍을 쏘고, 모은 기를 거대한 기공파로 터뜨린다."
+lore = "산에서 수련한 무도가. 주먹으로 기탄을 날려 떨어진 적을 치고, 모은 기를 거대한 기공파로 터뜨린다."
 color = Color(1.0, 0.75, 0.25, 1)
 glyph = "기"
 weapon = "fist"
 base_stats = {
 "ability_power": 18.0,
-"armor": 28.0,
-"attack": 50.0,
-"attack_speed": 0.9,
-"hp_regen": 3.0,
-"magic_resist": 28.0,
-"max_hp": 620.0,
+"armor": 25.0,
+"attack": 48.0,
+"attack_speed": 0.85,
+"hp_regen": 2.8,
+"magic_resist": 26.0,
+"max_hp": 590.0,
 "max_mp": 320.0,
 "move_speed": 235.0,
 "mp_regen": 2.8
@@ -60,13 +60,14 @@ growth_stats = {
 "max_mp": 28.0,
 "mp_regen": 0.18
 }
-attack_range = 60.0
-is_ranged = false
-projectile_speed = 1000.0
+attack_range = 320.0
+is_ranged = true
+projectile_speed = 1100.0
 passive = SubResource("PassiveData_1")
 passive_description = "투지: 체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다)."
 skills = Array[Resource]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
 preferred_role = "fighter"
 ai_build = PackedStringArray("swift_boots", "hero_sword", "chrono_scepter", "guardian_plate", "archmage_crown", "dragon_shield")
 ai_skill_priority = PackedInt32Array(0, 1, 2)
-ai_aggression = 0.65
+ai_aggression = 0.6
+attack_vfx = "ki"

@@ -67,3 +67,4 @@ preferred_role = "support"
 ai_build = PackedStringArray("mage_boots", "chrono_scepter", "archmage_crown", "immortal_amulet", "spirit_king_robe", "dragon_shield")
 ai_skill_priority = PackedInt32Array(0, 1, 2)
 ai_aggression = 0.4
+attack_vfx = "tech"

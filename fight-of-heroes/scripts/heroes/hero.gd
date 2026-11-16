@@ -37,6 +37,7 @@ func setup(hero_data: HeroData, hero_team: int) -> void:
 	attack.is_ranged = hero_data.is_ranged
 	attack.projectile_speed = hero_data.projectile_speed
 	attack.projectile_color = hero_data.color.lightened(0.4)
+	attack.projectile_style = hero_data.attack_vfx
 	skill_caster.setup(hero_data.skills, 0)
 	skill_points = 1
 	gold = DataRegistry.progression().start_gold

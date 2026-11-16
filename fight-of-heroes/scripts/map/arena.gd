@@ -55,7 +55,7 @@ func _draw() -> void:
 	if map == null:
 		return
 	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	draw_rect(Rect2(Vector2(-WALL, -WALL), map.size + Vector2(WALL, WALL) * 2), Color(0.07, 0.08, 0.08))
+	draw_rect(Rect2(Vector2(-WALL, -WALL), map.size + Vector2(WALL, WALL) * 2), Color(0.04, 0.05, 0.04))
 	var ground := Art.texture("map", "ground_grass")
 	if ground != null:
 		draw_texture_rect(ground, Rect2(Vector2.ZERO, map.size), true)
@@ -73,10 +73,8 @@ func _draw() -> void:
 	var cfg := DataRegistry.combat_config()
 	var lava := Art.texture("map", "ground_lava")
 	for r in map.lava_areas:
-		if lava != null:
-			draw_texture_rect(lava, r, true)
-		else:
-			draw_rect(r, Color(0.3, 0.12, 0.08))
+		# 가장자리는 풀밭과 섞이도록 고르지 않게 흐려진다.
+		_draw_soft_rect(r, 70.0, lava, Color.WHITE if lava != null else Color(0.3, 0.12, 0.08))
 	for c: CampData in map.camps:
 		_draw_camp(c)
 	_draw_decorations()
@@ -85,7 +83,7 @@ func _draw() -> void:
 		var pos := map.spawn_of(team)
 		var dirt := Art.texture("map", "ground_dirt")
 		if dirt != null:
-			_draw_textured_circle(pos, cfg.fountain_radius * 1.35, dirt)
+			_draw_soft_circle(pos, cfg.fountain_radius * 1.35, 60.0, dirt, Color.WHITE)
 		if not _draw_object("base_fountain", pos, cfg.fountain_radius * 1.6):
 			_draw_plain_fountain(pos, cfg.fountain_radius, c)
 		draw_arc(pos, cfg.fountain_radius, 0, TAU, 64, Color(c, 0.6), 4.0)
@@ -95,13 +93,14 @@ func _draw() -> void:
 			_draw_plain_shop(shop_pos)
 	var wall := Art.texture("map", "wall_rock")
 	for r in map.obstacles:
+		# 벽 둘레에 부드러운 그림자를 깔아 바닥과 자연스럽게 이어지게 한다.
+		_draw_soft_rect(r.grow(6), 34.0, null, Color(0.05, 0.05, 0.03, 0.35))
 		if wall != null:
-			draw_rect(r.grow(4), Color(0, 0, 0, 0.3))
 			draw_texture_rect(wall, r, true)
 			draw_rect(r, Color(0, 0, 0, 0.35), false, 3.0)
 		else:
 			_draw_plain_rock(r)
-	draw_rect(Rect2(Vector2.ZERO, map.size), Color(0.5, 0.45, 0.35), false, 6.0)
+	_draw_edge_shade()
 
 
 ## 캠프 자리: 종류에 따라 바닥 무늬와 장식을 고른다. 그림이 없으면 반투명 원.
@@ -126,7 +125,7 @@ func _draw_camp(c: CampData) -> void:
 	var floor_tex := Art.texture("map", floor_id)
 	var obj_tex := Art.texture("map", obj)
 	if floor_tex != null:
-		_draw_textured_circle(c.position, cr * 1.25, floor_tex)
+		_draw_soft_circle(c.position, cr * 1.25, cr * 0.45, floor_tex, Color.WHITE)
 	if obj_tex != null:
 		draw_texture_rect(obj_tex, Rect2(c.position - Vector2(cr, cr) * 1.15, Vector2(cr, cr) * 2.3), false)
 	if floor_tex == null and obj_tex == null:
@@ -218,6 +217,121 @@ func _draw_plain_shop(pos: Vector2) -> void:
 		_round_box(Rect2(cx, pos.y + 6.0, 18.0, 16.0), Color(0.7, 0.5, 0.3), OUTLINE, 2.0)
 	draw_circle(pos + Vector2(34, 16), 7.0, Color(0.85, 0.25, 0.25))
 	draw_arc(pos + Vector2(34, 16), 7.0, 0, TAU, 16, OUTLINE, 2.0)
+
+
+# ---- 부드러운 경계 (디졸브) ----
+# 안쪽은 그대로 칠하고, 바깥 띠는 점마다 투명도가 1 → 0 으로 줄어든다.
+# 띠의 바깥 끝은 위치에 따라 들쭉날쭉해서 반듯한 선으로 보이지 않는다.
+
+## 위치마다 정해진 0.45~1.0 사이 값 (가장자리를 들쭉날쭉하게)
+static func _wobble(p: Vector2) -> float:
+	var v := sin(p.x * 0.021 + p.y * 0.013) * 0.5 + sin(p.x * 0.047 - p.y * 0.031 + 1.7) * 0.3 + sin(p.y * 0.083 + p.x * 0.011 + 4.1) * 0.2
+	return 0.72 + 0.28 * v
+
+
+## inner[i] 와 outer[i] 가 짝인 띠를 그린다 (안쪽 불투명, 바깥 투명).
+func _draw_feather(inner: PackedVector2Array, outer: PackedVector2Array, tex: Texture2D, tint: Color) -> void:
+	var n := inner.size()
+	var ts := Vector2(tex.get_width(), tex.get_height()) if tex != null else Vector2.ONE
+	var clear := Color(tint, 0.0)
+	for i in n:
+		var j := (i + 1) % n
+		# 삼각형 두 개로 그린다 (모서리에서는 안쪽 점이 겹쳐 사각형이 찌그러지므로).
+		_tri(inner[i], inner[j], outer[j], tint, tint, clear, tex, ts)
+		_tri(inner[i], outer[j], outer[i], tint, clear, clear, tex, ts)
+
+
+func _tri(a: Vector2, b: Vector2, c: Vector2, ca: Color, cb: Color, cc: Color, tex: Texture2D, ts: Vector2) -> void:
+	if a.is_equal_approx(b) or b.is_equal_approx(c) or a.is_equal_approx(c):
+		return
+	var pts := PackedVector2Array([a, b, c])
+	var cols := PackedColorArray([ca, cb, cc])
+	if tex != null:
+		draw_primitive(pts, cols, PackedVector2Array([a / ts, b / ts, c / ts]), tex)
+	else:
+		draw_primitive(pts, cols, PackedVector2Array())
+
+
+func _fill(pts: PackedVector2Array, tex: Texture2D, tint: Color) -> void:
+	if tex != null:
+		var ts := Vector2(tex.get_width(), tex.get_height())
+		var uvs := PackedVector2Array()
+		for p in pts:
+			uvs.append(p / ts)
+		draw_colored_polygon(pts, tint, uvs, tex)
+	else:
+		draw_colored_polygon(pts, tint)
+
+
+## 가장자리가 흐려지는 원. radius 는 흐림 띠의 가운데쯤이다.
+func _draw_soft_circle(center: Vector2, radius: float, feather: float, tex: Texture2D, tint: Color) -> void:
+	var n := 48
+	var inner := PackedVector2Array()
+	var outer := PackedVector2Array()
+	for i in n:
+		var d := Vector2.from_angle(TAU * i / n)
+		inner.append(center + d * maxf(4.0, radius - feather * 0.5))
+		var p := center + d * radius
+		outer.append(center + d * (radius + feather * _wobble(p)))
+	_fill(inner, tex, tint)
+	_draw_feather(inner, outer, tex, tint)
+
+
+## 가장자리가 흐려지는 사각형 (모서리는 둥글게 퍼진다).
+func _draw_soft_rect(r: Rect2, feather: float, tex: Texture2D, tint: Color) -> void:
+	# 맵 끝에 붙은 변은 흐리지 않는다: 그 변을 밖으로 늘린 뒤 맵 안으로 잘라 낸다.
+	var m := Rect2(Vector2.ZERO, map.size)
+	if r.position.x <= 1.0: r = r.grow_side(SIDE_LEFT, feather * 2.0)
+	if r.position.y <= 1.0: r = r.grow_side(SIDE_TOP, feather * 2.0)
+	if r.end.x >= m.end.x - 1.0: r = r.grow_side(SIDE_RIGHT, feather * 2.0)
+	if r.end.y >= m.end.y - 1.0: r = r.grow_side(SIDE_BOTTOM, feather * 2.0)
+	var f := minf(feather * 0.5, minf(r.size.x, r.size.y) * 0.45)
+	var core := r.grow(-f)
+	var inner := PackedVector2Array()
+	var outer := PackedVector2Array()
+	var step := 48.0
+	var corners := [core.position, Vector2(core.end.x, core.position.y), core.end, Vector2(core.position.x, core.end.y)]
+	var normals := [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
+	for k in 4:
+		var a: Vector2 = corners[k]
+		var b: Vector2 = corners[(k + 1) % 4]
+		var cnt := maxi(1, int(a.distance_to(b) / step))
+		for i in cnt:
+			var p := a.lerp(b, float(i) / cnt)
+			var nrm: Vector2 = normals[k]
+			if i == 0:
+				# 모서리: 앞 변과 이 변의 바깥 방향 사이를 부채꼴로 채운다.
+				var prev: Vector2 = normals[(k + 3) % 4]
+				for s in 4:
+					var dn := prev.slerp(nrm, s / 4.0).normalized()
+					inner.append(p)
+					outer.append(p + dn * (f + feather * _wobble(p + dn * 50.0)))
+				continue
+			inner.append(p)
+			outer.append(p + nrm * (f + feather * _wobble(p)))
+	core = core.intersection(m)
+	for i in inner.size():
+		inner[i] = inner[i].clamp(m.position, m.end)
+		outer[i] = outer[i].clamp(m.position, m.end)
+	if core.has_area():
+		_fill(PackedVector2Array([core.position, Vector2(core.end.x, core.position.y), core.end, Vector2(core.position.x, core.end.y)]), tex, tint)
+	_draw_feather(inner, outer, tex, tint)
+
+
+## 맵 가장자리: 반듯한 테두리 대신 안쪽으로 어둡게 흐려진다.
+func _draw_edge_shade() -> void:
+	var w := 200.0
+	var dark := Color(0.04, 0.05, 0.04, 0.95)
+	var clear := Color(dark, 0.0)
+	var s := map.size
+	var bands := [
+		[Vector2(0, 0), Vector2(s.x, 0), Vector2(s.x - w, w), Vector2(w, w)],
+		[Vector2(s.x, 0), Vector2(s.x, s.y), Vector2(s.x - w, s.y - w), Vector2(s.x - w, w)],
+		[Vector2(s.x, s.y), Vector2(0, s.y), Vector2(w, s.y - w), Vector2(s.x - w, s.y - w)],
+		[Vector2(0, s.y), Vector2(0, 0), Vector2(w, w), Vector2(w, s.y - w)],
+	]
+	for b in bands:
+		draw_polygon(PackedVector2Array(b), PackedColorArray([dark, dark, clear, clear]))
 
 
 ## 반복 무늬로 채운 원 (무늬는 맵 좌표에 맞춰 이어진다)

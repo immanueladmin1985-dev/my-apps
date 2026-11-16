@@ -12,3 +12,5 @@ func apply(ctx: SkillContext) -> void:
 	if t == null or not is_instance_valid(t) or t.is_dead:
 		return
 	t.mana.restore(scaled(ctx, base, 0.0, ap_ratio))
+	if ctx.skill != null:
+		SkillFx.sparkle(t, SkillFx.style_of(ctx.skill), 10)

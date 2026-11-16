@@ -62,6 +62,7 @@ growth_stats = {
 }
 attack_range = 400.0
 is_ranged = true
+attack_vfx = "ice"
 projectile_speed = 1000.0
 passive = SubResource("PassiveData_1")
 passive_description = "냉기: 기본 공격이 1초 동안 적을 둔화시킵니다."

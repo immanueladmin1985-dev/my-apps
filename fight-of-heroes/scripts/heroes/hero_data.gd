@@ -28,6 +28,8 @@ extends Resource
 @export var attack_range: float = 70.0
 @export var is_ranged: bool = false
 @export var projectile_speed: float = 900.0
+## 원거리 기본 공격 투사체의 효과 종류 (SkillFx.STYLES, "" 이면 단순한 점)
+@export var attack_vfx: String = ""
 
 @export_group("스킬")
 ## PHASE 5 에서 패시브 데이터를 연결한다.

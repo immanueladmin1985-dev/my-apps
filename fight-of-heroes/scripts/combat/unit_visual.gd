@@ -99,6 +99,8 @@ func _draw() -> void:
 	draw_set_transform(Vector2(0, r * 0.75), 0.0, Vector2(1.0, 0.4))
 	draw_circle(Vector2.ZERO, r * 1.1, Color(0, 0, 0, 0.35 * alpha))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if not unit.is_dead:
+		_draw_buff_ground(r, alpha)
 	_head_y = -r
 	var tex := _current_art()
 	if tex != null and sprite == null:
@@ -226,6 +228,28 @@ func _draw_status(r: float) -> void:
 			draw_circle(Vector2(cos(a) * 14.0, _head_y - 30.0 + sin(a) * 4.0), 3.5, Color(1, 0.9, 0.2))
 	if unit.status.is_slowed():
 		draw_arc(Vector2.ZERO, r + 3.0, 0, TAU, 32, Color(0.4, 0.8, 1.0, 0.8), 2.0)
+
+
+## 강화 상태가 걸려 있는 동안 발밑에 그 상태 색의 고리가 은은하게 돈다 (여러 개면 바깥으로 겹친다).
+const BUFF_KINDS := [Enums.StatusKind.STAT_BUFF, Enums.StatusKind.HASTE, Enums.StatusKind.HEAL_OVER_TIME, Enums.StatusKind.MANA_OVER_TIME]
+
+
+func _draw_buff_ground(r: float, alpha: float) -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	var n := 0
+	for e in unit.status.active.values():
+		if n >= 3 or not BUFF_KINDS.has(e.data.kind):
+			continue
+		var c: Color = e.data.color
+		var rr := r * (1.25 + 0.22 * n)
+		var pulse := 0.5 + 0.5 * sin(t * 5.0 + n)
+		draw_set_transform(Vector2(0, r * 0.75), 0.0, Vector2(1.0, 0.42))
+		draw_circle(Vector2.ZERO, rr, Color(c, 0.12 * alpha))
+		var a0 := t * 2.2 + n
+		draw_arc(Vector2.ZERO, rr, a0, a0 + PI * 0.75, 20, Color(c, (0.55 + 0.3 * pulse) * alpha), 3.0)
+		draw_arc(Vector2.ZERO, rr, a0 + PI, a0 + PI * 1.75, 20, Color(c, (0.55 + 0.3 * pulse) * alpha), 3.0)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		n += 1
 
 
 func _draw_dead_label(r: float) -> void:

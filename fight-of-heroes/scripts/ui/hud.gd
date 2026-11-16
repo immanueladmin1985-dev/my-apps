@@ -31,6 +31,8 @@ var result_panel: Control
 var result_title: Label
 var result_detail: Label
 var minimap: Minimap
+## 카메라가 내 영웅을 떠나 있을 때 보이는 "내 영웅 보기" 버튼
+var focus_button: TouchButton
 var blue_status: TeamStatus
 var red_status: TeamStatus
 var kill_feed: VBoxContainer
@@ -220,8 +222,14 @@ func _build() -> void:
 	minimap.name = "Minimap"
 	_place(minimap, Vector2(0, 0), Vector2(12, 66), Vector2(206, 120))
 	root.add_child(minimap)
+	focus_button = TouchButton.new()
+	focus_button.name = "FocusButton"
+	focus_button.setup("내 영웅 보기", 16, Color(0.2, 0.3, 0.45, 0.9))
+	_place(focus_button, Vector2(0, 0), Vector2(12, 192), Vector2(130, 46))
+	focus_button.visible = false
+	root.add_child(focus_button)
 	fps_label = _label("", 13, HORIZONTAL_ALIGNMENT_LEFT)
-	_place(fps_label, Vector2(0, 0), Vector2(14, 188), Vector2(200, 20))
+	_place(fps_label, Vector2(0, 0), Vector2(14, 244), Vector2(200, 20))
 	root.add_child(fps_label)
 	kill_feed = VBoxContainer.new()
 	kill_feed.name = "KillFeed"

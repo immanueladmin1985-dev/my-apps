@@ -143,7 +143,7 @@ func _ready() -> void:
 	if style == "":
 		return
 	# 스킬 투사체: 지나간 자리에 입자 꼬리
-	_trail = SkillFx._particles(style, 18, 0.35)
+	_trail = SkillFx._particles(style, 8 if basic_attack else 18, 0.35)
 	_trail.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
 	_trail.emission_sphere_radius = width * 0.25
 	_trail.direction = Vector2.LEFT
@@ -159,7 +159,7 @@ func _ready() -> void:
 ## 사라진다. 스킬 투사체는 그 자리에서 작게 터진다.
 func _finish() -> void:
 	if style != "" and _started and is_inside_tree():
-		SkillFx.burst(self, global_position, maxf(30.0, width * 1.2), style)
+		SkillFx.burst(self, global_position, 26.0 if basic_attack else maxf(30.0, width * 1.2), style)
 	queue_free()
 
 
@@ -167,7 +167,7 @@ func _draw() -> void:
 	var len := 26.0 if homing_target == null else 16.0
 	if style != "":
 		var img := SkillFx.art(style, "projectile")
-		var s := maxf(36.0, width * 1.8)
+		var s := 30.0 if basic_attack else maxf(36.0, width * 1.8)
 		if img != null:
 			draw_texture_rect(img, Rect2(Vector2(-s * 0.7, -s * 0.5), Vector2(s * 1.4, s)), false)
 			return

@@ -63,6 +63,7 @@ growth_stats = {
 }
 attack_range = 400.0
 is_ranged = true
+attack_vfx = "nature"
 projectile_speed = 1000.0
 passive = SubResource("p_passive")
 passive_description = "바람의 가호: 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다."

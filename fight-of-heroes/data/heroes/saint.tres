@@ -71,6 +71,7 @@ growth_stats = {
 }
 attack_range = 380.0
 is_ranged = true
+attack_vfx = "holy"
 projectile_speed = 1000.0
 passive = SubResource("PassiveData_1")
 passive_description = "축복: 5초마다 주변 아군(자신 포함)의 체력을 회복시킵니다."

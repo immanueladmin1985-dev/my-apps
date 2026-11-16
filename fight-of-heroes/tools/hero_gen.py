@@ -7,7 +7,7 @@ SCRIPTS = {k: "res://scripts/%s.gd" % v for k, v in {
  "SkillData": "skills/skill_data", "DamageEffect": "skills/effects/damage_effect", "ApplyStatusEffect": "skills/effects/apply_status_effect",
  "ShieldEffect": "skills/effects/shield_effect", "HealEffect": "skills/effects/heal_effect", "AreaEffect": "skills/effects/area_effect",
  "ProjectileEffect": "skills/effects/projectile_effect", "DashEffect": "skills/effects/dash_effect", "LineZoneEffect": "skills/effects/line_zone_effect",
- "TeleportEffect": "skills/effects/teleport_effect", "SummonEffect": "skills/effects/summon_effect", "ManaEffect": "skills/effects/mana_effect",
+ "TeleportEffect": "skills/effects/teleport_effect", "SummonEffect": "skills/effects/summon_effect", "ManaEffect": "skills/effects/mana_effect", "BarrageEffect": "skills/effects/barrage_effect",
  "MonsterData": "map/monster_data", "StatusEffectData": "combat/status_effect_data", "StatModifier": "combat/stat_modifier",
  "HeroData": "heroes/hero_data", "PassiveData": "heroes/passive_data"}.items()}
 
@@ -78,6 +78,8 @@ def dash(dist, effects=(), end=(), speed=1000.0, width=60.0):
     return dict(cls="DashEffect", distance=float(dist), speed=float(speed), width=float(width), path_effects=list(effects), end_effects=list(end))
 def tele(dist=300.0, arrive=(), behind=40.0): return dict(cls="TeleportEffect", distance=float(dist), behind=float(behind), arrive_effects=list(arrive))
 def summon(mid, count, dur): return dict(cls="SummonEffect", monster_id=mid, count=PI(*count), duration=P(*dur))
+def barrage(effects, shots, interval, spread=12.0, slow=0.4, sound=""):
+    return dict(cls="BarrageEffect", shots=int(shots), interval=float(interval), spread=float(spread), caster_status=st("slow"), slow_caster=float(slow), shot_sound=sound, effects=list(effects))
 def mana(base, ap=0.0): return dict(cls="ManaEffect", base=P(*base), ap_ratio=ap, to_caster=True)
 
 # 0 SELF 1 UNIT 2 DIRECTION 3 POINT / team: 0 ENEMY 1 ALLY / ai: 0 OFF 1 ENGAGE 2 DEF 3 ESCAPE 4 SUPPORT 5 SUMMON / area center: 0 CASTER 1 POINT 2 TARGET
@@ -98,7 +100,7 @@ def status_file(id, name, kind, color, mods=(), tick=0.5, dtype=1, scale=1.0, ti
 def monster(id, **f): build("%s/monsters/%s.tres" % (ROOT, id), "MonsterData", dict(id=id, **f))
 
 heroes = []
-def hero(id, name, role, diff, lore, color, glyph, weapon, base, growth, rng, ranged, pref, build_items, passive, skills, prio=(0, 1, 2), aggr=0.5, pspeed=1000.0):
+def hero(id, name, role, diff, lore, color, glyph, weapon, base, growth, rng, ranged, pref, build_items, passive, skills, prio=(0, 1, 2), aggr=0.5, pspeed=1000.0, avfx=""):
     heroes.append(id)
     ids = []
     for i, s in enumerate(skills):
@@ -106,10 +108,11 @@ def hero(id, name, role, diff, lore, color, glyph, weapon, base, growth, rng, ra
         skill(sid, **s)
         ids.append("res://data/skills/%s.tres" % sid)
     pas = dict(cls="PassiveData", **passive)
+    extra = dict(attack_vfx=avfx) if avfx else {}
     build("%s/heroes/%s.tres" % (ROOT, id), "HeroData", dict(id=id, display_name=name, role=role, difficulty=diff, lore=lore, color=C(*color, 1),
         glyph=glyph, weapon=weapon, base_stats=D(**base), growth_stats=D(**growth), attack_range=float(rng), is_ranged=ranged,
         projectile_speed=float(pspeed), passive=pas, passive_description="%s: %s" % (passive["display_name"], passive["description"]),
-        skills=ids, preferred_role=pref, ai_build=PS(*build_items), ai_skill_priority=PI(*prio), ai_aggression=float(aggr)))
+        skills=ids, preferred_role=pref, ai_build=PS(*build_items), ai_skill_priority=PI(*prio), ai_aggression=float(aggr), **extra))
 
 MELEE_G = dict(max_hp=85, max_mp=25, attack=4, armor=3.5, magic_resist=1.5, attack_speed=0.02, hp_regen=0.3, mp_regen=0.15)
 MAGE_G = dict(max_hp=72, max_mp=32, attack=2.5, ability_power=5, armor=2.8, magic_resist=1.5, attack_speed=0.015, hp_regen=0.25, mp_regen=0.2)

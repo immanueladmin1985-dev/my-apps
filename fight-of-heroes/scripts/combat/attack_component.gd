@@ -10,6 +10,8 @@ var attack_range: float = 70.0
 var is_ranged := false
 var projectile_speed: float = 900.0
 var projectile_color := Color(1, 1, 0.8)
+## 기본 공격 투사체의 효과 종류 ("" 이면 단순한 점)
+var projectile_style := ""
 
 var cooldown_left := 0.0
 var windup_left := -1.0
@@ -78,6 +80,7 @@ func _release() -> void:
 		var p := Projectile.new()
 		p.setup_basic_attack(unit, t, projectile_speed, total_range() * 1.35 + 60.0)
 		p.color = projectile_color
+		p.style = projectile_style
 		Targeting.effects_parent(unit).add_child(p)
 		p.global_position = unit.global_position
 	elif in_range(t, DataRegistry.combat_config().melee_leeway):

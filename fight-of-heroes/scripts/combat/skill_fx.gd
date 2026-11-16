@@ -224,6 +224,35 @@ static func sparkle(unit: Node2D, style: String, amount := 14) -> void:
 	p.emitting = true
 
 
+## 자기 강화(기 모으기·과부하 등): 발밑에 무늬가 펼쳐지고, 고리가 몸쪽으로 모이며, 입자가 기둥처럼 솟는다.
+static func power_up(unit: Node2D, style: String) -> void:
+	if unit == null or not is_instance_valid(unit) or not unit.is_inside_tree():
+		return
+	var fx := SkillFx.new()
+	fx._kind = "powerup"
+	fx._style = style
+	fx._radius = 80.0
+	fx._life = 0.8
+	fx._follow = unit
+	Targeting.effects_parent(unit).add_child(fx)
+	fx.global_position = unit.global_position
+	var p := _particles(style, 26, 0.8)
+	p.one_shot = true
+	p.explosiveness = 0.35
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE_SURFACE
+	p.emission_sphere_radius = 40.0
+	p.direction = Vector2.UP
+	p.spread = 12.0
+	p.initial_velocity_min = 90.0
+	p.initial_velocity_max = 170.0
+	p.gravity = Vector2(0, -60)
+	p.scale_amount_min = 0.3
+	p.scale_amount_max = 0.6
+	p.local_coords = true
+	fx.add_child(p)
+	p.emitting = true
+
+
 ## 계속 남는 범위(불바다·서리·화살비 등)에 붙이는 입자. 범위가 사라지면 같이 사라진다.
 static func persistent(zone: Node2D, radius: float, style: String) -> CPUParticles2D:
 	var c := colors(style)
@@ -309,6 +338,22 @@ func _draw() -> void:
 			draw_texture_rect(tex("dot"), Rect2(-Vector2(_radius, _radius) * 1.3, Vector2(_radius, _radius) * 2.6), false, Color(c.a, 0.85 * flash * flash))
 			draw_arc(Vector2.ZERO, _radius * (0.4 + 0.75 * t), 0, TAU, 56, Color(c.b, flash), 6.0 * flash + 1.0)
 			draw_arc(Vector2.ZERO, _radius * (0.2 + 0.5 * t), 0, TAU, 40, Color(c.a, flash * 0.7), 3.0 * flash + 1.0)
+		"powerup":
+			var f := 1.0 - t
+			var g := art(_style, "ground")
+			var gr := _radius * (0.55 + 0.45 * t)
+			if g != null:
+				draw_set_transform(Vector2(0, 14), _age * 2.0, Vector2(1.0, 0.55))
+				draw_texture_rect(g, Rect2(-Vector2(gr, gr), Vector2(gr, gr) * 2.0), false, Color(1, 1, 1, 0.9 * f))
+				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			else:
+				draw_set_transform(Vector2(0, 14), 0.0, Vector2(1.0, 0.55))
+				draw_texture_rect(tex("dot"), Rect2(-Vector2(gr, gr) * 1.2, Vector2(gr, gr) * 2.4), false, Color(c.b, 0.7 * f))
+				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			# 몸쪽으로 모이는 고리 두 개
+			draw_arc(Vector2.ZERO, _radius * (1.0 - t) + 18.0, 0, TAU, 48, Color(c.a, 0.8 * f), 3.0)
+			draw_arc(Vector2.ZERO, _radius * 1.4 * (1.0 - t) + 10.0, 0, TAU, 48, Color(c.b, 0.5 * f), 2.0)
+			draw_texture_rect(tex("dot"), Rect2(-Vector2(40, 40), Vector2(80, 80)), false, Color(c.a, 0.5 * f * f))
 		"aura":
 			var f := 1.0 - t
 			draw_arc(Vector2.ZERO, _radius * (0.3 + 0.7 * t), 0, TAU, 64, Color(c.b, 0.35 * f), 3.0)

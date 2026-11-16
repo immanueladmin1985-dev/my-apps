@@ -66,3 +66,4 @@ preferred_role = "hunter"
 ai_build = PackedStringArray("berserker_boots", "storm_bow", "hero_sword", "blood_blade", "dragon_shield", "immortal_amulet")
 ai_skill_priority = PackedInt32Array(0, 1, 2)
 ai_aggression = 0.5
+attack_vfx = "bullet"
