@@ -20,6 +20,7 @@ func _play(difficulty: String, kill_target: int, boss_time: float, seed_value: i
 	cfg.kill_target = kill_target
 	cfg.final_boss_time = boss_time
 	cfg.autoplay = true
+	cfg.map_id = GameManager.DEFAULT_MAP
 	GameManager.match_config = cfg
 	GameManager.dev_args["seed"] = str(seed_value)
 	CombatManager.rng.seed = seed_value

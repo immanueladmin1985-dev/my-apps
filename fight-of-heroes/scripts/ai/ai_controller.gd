@@ -353,6 +353,9 @@ func _pick_camp(order: Array):
 		for c in mm.farm_camps():
 			if _camp_side(c) != side:
 				continue
+			# 센 던전(용의 둥지)은 레벨이 충분할 때만 사냥하러 간다.
+			if int(c.get("tier", 1)) > 1 and hero.level < 3 + int(c.tier) * 2:
+				continue
 			var d: float = hero.global_position.distance_to(c.position)
 			if d < best_d:
 				best_d = d

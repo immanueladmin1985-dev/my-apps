@@ -246,6 +246,7 @@ func build_config() -> MatchConfig:
 			red.append(slots[i] if slots[i] != "" else pool.pop_back())
 		c.blue_heroes = PackedStringArray(blue)
 		c.red_heroes = PackedStringArray(red)
+		c.random_teams = false
 	c.mode = mode
 	c.autoplay = mode == "watch" or flow_autoplay
 	if kill_target_override > 0:

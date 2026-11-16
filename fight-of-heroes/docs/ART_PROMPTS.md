@@ -252,8 +252,41 @@ Wide 1536x512 PNG.
 | `충격 효과.png` | impact | 무투가·성기사 돌격·골렘 | `Theme: ground impact. Cracked earth circle with dust, a shockwave dust burst, a small flying rock.` |
 | `기본 효과.png` | arcane | 그 밖 | `Theme: arcane magic. Blue-white rune circle, an arcane sparkle burst, a blue magic bolt.` |
 
-## 7. 진행 상황
+## 7. 새 영웅 6명 (PHASE 14)
 
-- 넣음: 영웅 10명과 용기사 변신, 몬스터 9종, 아이템 39개, 바닥 무늬 7개, 맵 물건·장식 전부.
-- 스킬 아이콘 50개도 넣었습니다.
-- 남음(선택): 스킬 효과 그림 10장 (7번 항목).
+모두 이 게임을 위해 새로 만든 오리지널 캐릭터입니다. 기존 작품의 캐릭터와 닮지 않게 그려 주세요.
+기존 영웅 그림 한 장(예: 검성)을 첨부하고 "같은 화풍, 같은 시점, 같은 크기 비율로"라고 덧붙이면 화풍이 맞습니다. **캐릭터는 오른쪽 아래를 보게** 해 주세요.
+
+### 7-1. 영웅 그림 (1번 항목의 공통 앞부분을 그대로 붙임)
+
+| 파일 이름 | 영웅 | 프롬프트 뒷부분 |
+|---|---|---|
+| `그림자 닌자.png` | 그림자 닌자 | `Character: "Shadow Ninja", an original ninja in dark slate-blue (#59668C) outfit with a short tattered scarf, a metal forehead guard with a plain crescent mark, holding a kunai in each hand, low agile stance, faint shadow wisps.` |
+| `총잡이.png` | 총잡이 | `Character: "Gunslinger", an original wild-west style sharpshooter with a wide-brim hat, tan duster coat (#D9995A), red bandana, holding two revolvers, confident grin.` |
+| `기공사.png` | 기공사 | `Character: "Ki Master", an original martial artist in a golden-yellow and white training gi (#FFBF40) with a dark belt, long braided hair, palms gathering a glowing golden energy orb.` |
+| `별빛 마법소녀.png` | 별빛 마법소녀 | `Character: "Starlight Magical Girl", an original magical girl in a pink and white frilled dress (#FF99CC) with star ornaments and ribbons, twin tails, holding a star-tipped wand, cheerful pose.` |
+| `사신.png` | 사신 | `Character: "Reaper", an original grim reaper style warrior in a dark purple hooded cloak (#804D99), pale face with glowing eyes, holding a large curved scythe, purple soul wisps.` |
+| `기계공.png` | 기계공 | `Character: "Mechanic", an original inventor with goggles on the forehead, teal work overalls (#73BFD9), a big wrench in one hand and a small hovering drone beside, tool belt.` |
+
+소환수 2종 (2번 항목의 몬스터 공통 앞부분을 붙임):
+
+| 파일 이름 | 소환수 | 프롬프트 뒷부분 |
+|---|---|---|
+| `그림자 분신.png` | 그림자 분신 | `Monster: a semi-transparent dark shadow copy of a ninja, featureless face with two glowing white eyes, holding a kunai, smoky edges.` |
+| `자동 포탑.png` | 자동 포탑 | `Monster: a small stationary auto-turret on three metal legs with a single barrel and a teal glowing lens.` |
+
+### 7-2. 스킬 아이콘 (5번 항목의 공통 앞부분을 그대로 붙임)
+
+| 파일 이름 | 영웅 | 뒷부분 |
+|---|---|---|
+| `그림자 닌자 스킬.png` | 그림자 닌자 | `Theme color: dark slate blue and purple. 1 (Q): three shuriken flying in a fan. 2 (W): one ninja splitting into three shadow clones. 3 (E): a wooden log in a puff of smoke, substitution trick. 4 (R, ultimate): many shadow figures slashing from all sides, more dramatic and golden-framed. 5 (passive): a fading afterimage silhouette, with a subtle circular frame.` |
+| `총잡이 스킬.png` | 총잡이 | `Theme color: tan and gold. 1 (Q): a bullet piercing through in a straight glowing line. 2 (W): a flashbang grenade bursting with white light. 3 (E): a figure doing a combat roll with dust. 4 (R, ultimate): two revolvers firing a storm of bullets, more dramatic and golden-framed. 5 (passive): a crosshair over a skull, with a subtle circular frame.` |
+| `기공사 스킬.png` | 기공사 | `Theme color: golden yellow. 1 (Q): a palm shooting a glowing energy ball. 2 (W): a blurred figure appearing behind with a punch. 3 (E): a figure in a power stance surrounded by a rising golden aura. 4 (R, ultimate): a huge golden energy beam fired from two hands, more dramatic and golden-framed. 5 (passive): a burning fist with a shield glow, with a subtle circular frame.` |
+| `별빛 마법소녀 스킬.png` | 별빛 마법소녀 | `Theme color: pink and white. 1 (Q): a shooting star with a sparkling trail. 2 (W): pink ribbons wrapping tightly in a knot. 3 (E): a pink megaphone with hearts and stars, cheering. 4 (R, ultimate): many stars raining down from the sky, more dramatic and golden-framed. 5 (passive): a star-shaped shield, with a subtle circular frame.` |
+| `사신 스킬.png` | 사신 | `Theme color: dark purple. 1 (Q): a scythe sweeping in a wide crescent. 2 (W): glowing purple chains binding a soul. 3 (E): a ghostly hooded figure dashing forward. 4 (R, ultimate): a scythe dropping over a skull, death sentence, more dramatic and golden-framed. 5 (passive): a hand harvesting a small glowing soul, with a subtle circular frame.` |
+| `기계공 스킬.png` | 기계공 | `Theme color: teal and steel. 1 (Q): a small auto-turret being deployed. 2 (W): a rocket with a flame trail. 3 (E): a device projecting a teal dome shield. 4 (R, ultimate): shells falling from the sky onto a target marker, more dramatic and golden-framed. 5 (passive): a wrench crossed with a gear and a green plus, with a subtle circular frame.` |
+
+## 8. 진행 상황
+
+- 넣음: 영웅 10명과 용기사 변신, 몬스터 9종, 아이템 39개, 바닥 무늬 7개, 맵 물건·장식 전부, 스킬 아이콘 50개, 스킬 효과 그림 30장.
+- 남음: 새 영웅 6명의 그림과 스킬 아이콘, 소환수 2종 (7번 항목). 그림이 없는 동안은 색 원과 글자로 나옵니다.

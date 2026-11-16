@@ -71,6 +71,12 @@ func _draw() -> void:
 			draw_line(Vector2(0, y), Vector2(map.size.x, y), grid, 1.0)
 			y += 100.0
 	var cfg := DataRegistry.combat_config()
+	var lava := Art.texture("map", "ground_lava")
+	for r in map.lava_areas:
+		if lava != null:
+			draw_texture_rect(lava, r, true)
+		else:
+			draw_rect(r, Color(0.3, 0.12, 0.08))
 	for c: CampData in map.camps:
 		_draw_camp(c)
 	_draw_decorations()
@@ -239,7 +245,8 @@ func decoration_spots() -> Array:
 	rng.seed = hash(map.id)
 	var cfg := DataRegistry.combat_config()
 	var tries := 0
-	while out.size() < 46 and tries < 2000:
+	var want := int(46.0 * map.size.x * map.size.y / (4200.0 * 2600.0))
+	while out.size() < want and tries < 4000:
 		tries += 1
 		var p := Vector2(rng.randf_range(60.0, map.size.x - 60.0), rng.randf_range(60.0, map.size.y - 60.0))
 		if not _deco_free(p, cfg, out):
@@ -253,6 +260,9 @@ func decoration_spots() -> Array:
 func _deco_free(p: Vector2, cfg: CombatConfig, placed: Array) -> bool:
 	for r in map.obstacles:
 		if r.grow(70.0).has_point(p):
+			return false
+	for r in map.lava_areas:
+		if r.has_point(p):
 			return false
 	for c: CampData in map.camps:
 		if p.distance_to(c.position) < 300.0:

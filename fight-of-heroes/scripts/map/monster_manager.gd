@@ -114,6 +114,9 @@ func spawn_camp(camp: Dictionary) -> void:
 		world.add_child(m)
 		var offset := Vector2.ZERO if i == 0 else Vector2.from_angle(TAU * i / maxf(1, c.monsters.size() - 1)) * 55.0
 		m.setup(d, c.position + offset)
+		m.aggro_radius = c.aggro_radius
+		if c.power_tier > 1:
+			m.empower(c.power_tier, 0.3, 0.35)
 		units.append(m)
 		if m.is_boss():
 			EventBus.boss_spawned.emit(m)
@@ -148,7 +151,7 @@ func farm_camps() -> Array:
 	var out: Array = []
 	for camp in camps:
 		if camp.alive and not is_boss_camp(camp):
-			out.append({"position": camp.data.position, "id": camp.data.id, "wave": camp.data.wave_interval > 0.0})
+			out.append({"position": camp.data.position, "id": camp.data.id, "wave": camp.data.wave_interval > 0.0, "tier": camp.data.power_tier})
 	return out
 
 

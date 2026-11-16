@@ -10,6 +10,8 @@ const RECORDS_SCENE := "res://scenes/menu/records.tscn"
 const SETTINGS_SCENE := "res://scenes/menu/settings.tscn"
 const RESULTS_SCENE := "res://scenes/results/results.tscn"
 const RESULTS_DELAY := 2.0
+## 새 게임에서 쓰는 맵
+const DEFAULT_MAP := "valley_02"
 
 signal match_finished(summary: Dictionary)
 
@@ -42,25 +44,53 @@ func _ready() -> void:
 ## 기본 경기: 플레이어 영웅 + 나머지는 무작위로 채운 3대3. 영웅이 모자라지 않으면 같은 영웅은 한 번만 나온다.
 func default_config(player_hero := "blade_master", team_size := 3) -> MatchConfig:
 	var c := MatchConfig.new()
-	var pool: Array = DataRegistry.ids("heroes")
-	pool.shuffle()
-	pool.erase(player_hero)
+	var pool: Array = pick_order(player_hero)
 	var blue := [player_hero]
 	var red := []
+	# 상대 팀을 먼저 뽑는다 (최근에 덜 만난 영웅부터).
+	for i in team_size:
+		red.append(pool.pop_front() if not pool.is_empty() else DataRegistry.ids("heroes").pick_random())
+	pool.shuffle()
 	for i in team_size - 1:
 		blue.append(pool.pop_back() if not pool.is_empty() else DataRegistry.ids("heroes").pick_random())
-	for i in team_size:
-		red.append(pool.pop_back() if not pool.is_empty() else DataRegistry.ids("heroes").pick_random())
 	c.blue_heroes = PackedStringArray(blue)
 	c.red_heroes = PackedStringArray(red)
 	c.player_index = 0
+	c.map_id = DEFAULT_MAP
+	c.random_teams = true
 	c.difficulty = SaveManager.get_setting("difficulty", "normal")
 	c.kill_target = int(SaveManager.get_setting("kill_target", 15))
 	return c
 
 
+## 무작위로 뽑을 영웅 순서: 섞은 뒤, 최근에 상대로 만난 영웅을 뒤로 보낸다 (매번 다른 상대를 만나도록).
+func pick_order(player_hero: String) -> Array:
+	var pool: Array = DataRegistry.ids("heroes")
+	pool.shuffle()
+	pool.erase(player_hero)
+	var recent: Array = SaveManager.get_setting("recent_enemies", [])
+	var fresh: Array = pool.filter(func(id): return not recent.has(id))
+	var seen: Array = pool.filter(func(id): return recent.has(id))
+	# 오래전에 만난 영웅이 먼저 오도록
+	seen.sort_custom(func(a, b): return recent.find(a) < recent.find(b))
+	return fresh + seen
+
+
+## 이번에 만난 상대를 기록한다 (최근 9명).
+func remember_enemies(config: MatchConfig) -> void:
+	var recent: Array = SaveManager.get_setting("recent_enemies", [])
+	for id in config.red_heroes:
+		recent.erase(id)
+		recent.append(id)
+	while recent.size() > 9:
+		recent.pop_front()
+	SaveManager.set_setting("recent_enemies", recent)
+
+
 func start_match(config: MatchConfig) -> void:
 	match_config = config
+	if not dev_args.has("flow_test") and not config.autoplay:
+		remember_enemies(config)
 	# 새 경기를 시작하면 이어 하던 전투는 버린다.
 	resume_snapshot = {}
 	SaveManager.clear_battle()
@@ -68,8 +98,22 @@ func start_match(config: MatchConfig) -> void:
 	get_tree().change_scene_to_file(BATTLE_SCENE)
 
 
+## 다시 하기: 무작위 팀이면 내 영웅만 두고 아군·상대를 다시 뽑는다.
 func restart_match() -> void:
-	start_match(match_config if match_config != null else default_config())
+	var old := match_config
+	if old == null:
+		start_match(default_config())
+		return
+	if old.random_teams and old.player_index >= 0 and old.player_index < old.blue_heroes.size():
+		var c := default_config(old.blue_heroes[old.player_index], old.blue_heroes.size())
+		c.difficulty = old.difficulty
+		c.kill_target = old.kill_target
+		c.mode = old.mode
+		c.autoplay = old.autoplay
+		c.final_boss_time = old.final_boss_time
+		start_match(c)
+		return
+	start_match(old)
 
 
 func go_main() -> void:

@@ -14,6 +14,10 @@ extends Resource
 @export var wave_interval: float = 0.0
 ## 주기 소환으로 동시에 살아 있을 수 있는 최대 수
 @export var wave_max: int = 12
+## 1 보다 크면 이 캠프의 몬스터가 그만큼 세다 (체력·공격력 +30%/단계, 보상 +35%/단계). 가장 어려운 던전용.
+@export var power_tier: int = 1
+## 0 보다 크면 이 거리 안(캠프 자리 기준)에 들어온 영웅을 먼저 공격한다.
+@export var aggro_radius: float = 0.0
 @export_group("주기 소환 성장")
 ## 0 보다 크면 첫 소환부터 이 간격(초)마다 단계가 오른다. 단계가 오를수록 수가 늘고 세지고 보상도 커진다.
 @export var wave_growth_interval: float = 0.0

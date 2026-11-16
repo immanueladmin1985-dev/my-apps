@@ -20,6 +20,8 @@ var life_left := 0.0
 var expired := false
 ## 주기 소환 성장 단계 (1 = 기본). 보상 배율은 처치 보상에 곱한다.
 var tier := 1
+## 0 보다 크면 캠프 자리에서 이 거리 안에 들어온 적을 먼저 공격한다.
+var aggro_radius := 0.0
 var reward_mult := 1.0
 
 const SUMMON_GUARD := 520.0
@@ -166,6 +168,10 @@ func _think() -> void:
 	for u in threat.keys():
 		if not is_instance_valid(u) or not Targeting.is_valid(u, team, Enums.TargetTeam.ENEMY) or u.global_position.distance_to(home) > leash * 1.3:
 			threat.erase(u)
+	if threat.is_empty() and aggro_radius > 0.0:
+		for u in Targeting.in_radius(get_tree(), home, aggro_radius, team, Enums.TargetTeam.ENEMY):
+			if u.team != Enums.Team.NEUTRAL:
+				threat[u] = 1.0
 	if threat.is_empty():
 		target = null
 		attack_order = null

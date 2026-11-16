@@ -10,6 +10,8 @@ extends Resource
 @export var obstacles: Array[Rect2] = []
 ## 몬스터 캠프와 보스 자리 (CampData)
 @export var camps: Array[Resource] = []
+## 용암 바닥으로 칠할 구역 (가장 어려운 던전)
+@export var lava_areas: Array[Rect2] = []
 @export var ground_color: Color = Color(0.2, 0.3, 0.22)
 @export var obstacle_color: Color = Color(0.35, 0.33, 0.3)
 

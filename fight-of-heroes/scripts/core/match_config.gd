@@ -15,3 +15,5 @@ extends Resource
 @export var mode: String = "team"
 ## 시험용: 플레이어 영웅도 AI 가 조작한다.
 @export var autoplay: bool = false
+## 무작위로 채운 팀인지 ("다시 하기" 때 플레이어 영웅만 두고 다시 뽑는다)
+@export var random_teams: bool = false

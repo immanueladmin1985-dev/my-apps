@@ -1,0 +1,235 @@
+[gd_resource type="Resource" script_class="MapData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/map_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/map/camp_data.gd" id="2"]
+
+[sub_resource type="Resource" id="dungeon_11_golem"]
+script = ExtResource("2")
+id = "dungeon_11_golem"
+position = Vector2(1350, 550)
+monsters = PackedStringArray("stone_golem")
+first_spawn = 60.0
+respawn = 90.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="dungeon_1_golem"]
+script = ExtResource("2")
+id = "dungeon_1_golem"
+position = Vector2(4250, 550)
+monsters = PackedStringArray("stone_golem")
+first_spawn = 60.0
+respawn = 90.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="dungeon_11_wolves"]
+script = ExtResource("2")
+id = "dungeon_11_wolves"
+position = Vector2(1190, 655)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="dungeon_1_wolves"]
+script = ExtResource("2")
+id = "dungeon_1_wolves"
+position = Vector2(4410, 655)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="dungeon_7_golem"]
+script = ExtResource("2")
+id = "dungeon_7_golem"
+position = Vector2(1350, 2850)
+monsters = PackedStringArray("stone_golem")
+first_spawn = 60.0
+respawn = 90.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="dungeon_5_golem"]
+script = ExtResource("2")
+id = "dungeon_5_golem"
+position = Vector2(4250, 2850)
+monsters = PackedStringArray("stone_golem")
+first_spawn = 60.0
+respawn = 90.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="dungeon_7_wolves"]
+script = ExtResource("2")
+id = "dungeon_7_wolves"
+position = Vector2(1190, 2745)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="dungeon_5_wolves"]
+script = ExtResource("2")
+id = "dungeon_5_wolves"
+position = Vector2(4410, 2745)
+monsters = PackedStringArray("wolf_alpha", "wolf", "wolf")
+first_spawn = 20.0
+respawn = 45.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="skeletons_nw"]
+script = ExtResource("2")
+id = "skeletons_nw"
+position = Vector2(1950, 1150)
+monsters = PackedStringArray("skeleton", "skeleton", "goblin")
+first_spawn = 30.0
+respawn = 50.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="skeletons_ne"]
+script = ExtResource("2")
+id = "skeletons_ne"
+position = Vector2(3650, 1150)
+monsters = PackedStringArray("skeleton", "skeleton", "goblin")
+first_spawn = 30.0
+respawn = 50.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="skeletons_sw"]
+script = ExtResource("2")
+id = "skeletons_sw"
+position = Vector2(1750, 2250)
+monsters = PackedStringArray("skeleton", "skeleton", "goblin")
+first_spawn = 30.0
+respawn = 50.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="skeletons_se"]
+script = ExtResource("2")
+id = "skeletons_se"
+position = Vector2(3850, 2250)
+monsters = PackedStringArray("skeleton", "skeleton", "goblin")
+first_spawn = 30.0
+respawn = 50.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="forest_guardian"]
+script = ExtResource("2")
+id = "forest_guardian"
+position = Vector2(2800, 300)
+monsters = PackedStringArray("forest_guardian")
+first_spawn = 180.0
+respawn = 240.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="center_wave"]
+script = ExtResource("2")
+id = "center_wave"
+position = Vector2(2800, 1700)
+monsters = PackedStringArray("goblin", "goblin", "goblin")
+first_spawn = 15.0
+respawn = 0.0
+is_final_boss = false
+wave_interval = 30.0
+wave_max = 12
+wave_growth_interval = 100.0
+wave_max_tier = 6
+wave_stat_growth = 0.3
+wave_reward_growth = 0.35
+wave_extra_monsters = PackedStringArray("skeleton", "goblin", "skeleton", "bone_golem", "skeleton")
+wave_max_growth = 2
+
+[sub_resource type="Resource" id="lair_gate_l"]
+script = ExtResource("2")
+id = "lair_gate_l"
+position = Vector2(2220, 2440)
+monsters = PackedStringArray("stone_golem", "skeleton", "skeleton", "skeleton")
+first_spawn = 60.0
+respawn = 150.0
+is_final_boss = false
+power_tier = 2
+aggro_radius = 330.0
+
+[sub_resource type="Resource" id="lair_gate_r"]
+script = ExtResource("2")
+id = "lair_gate_r"
+position = Vector2(3380, 2440)
+monsters = PackedStringArray("stone_golem", "skeleton", "skeleton", "skeleton")
+first_spawn = 60.0
+respawn = 150.0
+is_final_boss = false
+power_tier = 2
+aggro_radius = 330.0
+
+[sub_resource type="Resource" id="lava_giant"]
+script = ExtResource("2")
+id = "lava_giant"
+position = Vector2(2800, 2470)
+monsters = PackedStringArray("lava_giant")
+first_spawn = 240.0
+respawn = 300.0
+is_final_boss = false
+
+[sub_resource type="Resource" id="lair_wolves_l"]
+script = ExtResource("2")
+id = "lair_wolves_l"
+position = Vector2(2470, 2900)
+monsters = PackedStringArray("wolf_alpha", "wolf_alpha", "wolf", "wolf")
+first_spawn = 60.0
+respawn = 150.0
+is_final_boss = false
+power_tier = 3
+aggro_radius = 300.0
+
+[sub_resource type="Resource" id="lair_wolves_r"]
+script = ExtResource("2")
+id = "lair_wolves_r"
+position = Vector2(3130, 2900)
+monsters = PackedStringArray("wolf_alpha", "wolf_alpha", "wolf", "wolf")
+first_spawn = 60.0
+respawn = 150.0
+is_final_boss = false
+power_tier = 3
+aggro_radius = 300.0
+
+[sub_resource type="Resource" id="lair_inner_l"]
+script = ExtResource("2")
+id = "lair_inner_l"
+position = Vector2(2160, 3120)
+monsters = PackedStringArray("bone_golem", "stone_golem", "skeleton", "skeleton")
+first_spawn = 60.0
+respawn = 150.0
+is_final_boss = false
+power_tier = 3
+aggro_radius = 330.0
+
+[sub_resource type="Resource" id="lair_inner_r"]
+script = ExtResource("2")
+id = "lair_inner_r"
+position = Vector2(3440, 3120)
+monsters = PackedStringArray("bone_golem", "stone_golem", "skeleton", "skeleton")
+first_spawn = 60.0
+respawn = 150.0
+is_final_boss = false
+power_tier = 3
+aggro_radius = 330.0
+
+[sub_resource type="Resource" id="ancient_dragon"]
+script = ExtResource("2")
+id = "ancient_dragon"
+position = Vector2(2800, 3150)
+monsters = PackedStringArray("ancient_dragon")
+first_spawn = 600.0
+respawn = 0.0
+is_final_boss = true
+
+[resource]
+script = ExtResource("1")
+id = "valley_02"
+display_name = "용의 협곡"
+size = Vector2(5600, 3400)
+blue_spawn = Vector2(320, 1700)
+red_spawn = Vector2(5280, 1700)
+obstacles = Array[Rect2]([Rect2(1030, 380, 640, 50), Rect2(3930, 380, 640, 50), Rect2(1030, 810, 190, 50), Rect2(4380, 810, 190, 50), Rect2(1480, 810, 190, 50), Rect2(3930, 810, 190, 50), Rect2(1030, 380, 50, 480), Rect2(4520, 380, 50, 480), Rect2(1620, 380, 50, 480), Rect2(3930, 380, 50, 480), Rect2(1030, 2540, 190, 50), Rect2(4380, 2540, 190, 50), Rect2(1480, 2540, 190, 50), Rect2(3930, 2540, 190, 50), Rect2(1030, 2970, 640, 50), Rect2(3930, 2970, 640, 50), Rect2(1030, 2540, 50, 480), Rect2(4520, 2540, 50, 480), Rect2(1620, 2540, 50, 480), Rect2(3930, 2540, 50, 480), Rect2(2420, 50, 760, 50), Rect2(2420, 560, 220, 50), Rect2(2960, 560, 220, 50), Rect2(2960, 560, 220, 50), Rect2(2420, 560, 220, 50), Rect2(2420, 50, 50, 560), Rect2(3130, 50, 50, 560), Rect2(3130, 50, 50, 560), Rect2(2420, 50, 50, 560), Rect2(1850, 2150, 760, 60), Rect2(2990, 2150, 760, 60), Rect2(1850, 2150, 60, 1250), Rect2(3690, 2150, 60, 1250), Rect2(1850, 2720, 790, 60), Rect2(2960, 2720, 790, 60), Rect2(1050, 1200, 150, 170), Rect2(4400, 1200, 150, 170), Rect2(1100, 2050, 170, 140), Rect2(4330, 2050, 170, 140), Rect2(2050, 1560, 130, 130), Rect2(3420, 1560, 130, 130), Rect2(1550, 1650, 100, 100), Rect2(3950, 1650, 100, 100), Rect2(700, 300, 150, 120), Rect2(4750, 300, 150, 120), Rect2(700, 2950, 150, 120), Rect2(4750, 2950, 150, 120), Rect2(2250, 900, 140, 110), Rect2(3210, 900, 140, 110), Rect2(1250, 1500, 90, 90), Rect2(4260, 1500, 90, 90), Rect2(2300, 1900, 110, 100), Rect2(3190, 1900, 110, 100)])
+lava_areas = Array[Rect2]([Rect2(1850, 2150, 1900, 1250)])
+camps = Array[Resource]([SubResource("dungeon_11_golem"), SubResource("dungeon_1_golem"), SubResource("dungeon_11_wolves"), SubResource("dungeon_1_wolves"), SubResource("dungeon_7_golem"), SubResource("dungeon_5_golem"), SubResource("dungeon_7_wolves"), SubResource("dungeon_5_wolves"), SubResource("skeletons_nw"), SubResource("skeletons_ne"), SubResource("skeletons_sw"), SubResource("skeletons_se"), SubResource("forest_guardian"), SubResource("center_wave"), SubResource("lair_gate_l"), SubResource("lair_gate_r"), SubResource("lava_giant"), SubResource("lair_wolves_l"), SubResource("lair_wolves_r"), SubResource("lair_inner_l"), SubResource("lair_inner_r"), SubResource("ancient_dragon")])
+ground_color = Color(0.2, 0.29, 0.21, 1)
+obstacle_color = Color(0.36, 0.34, 0.31, 1)

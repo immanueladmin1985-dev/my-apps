@@ -23,6 +23,7 @@ func test_balance_report() -> void:
 		cfg.difficulty = "normal"
 		cfg.kill_target = 10
 		cfg.autoplay = true
+		cfg.map_id = GameManager.DEFAULT_MAP
 		GameManager.match_config = cfg
 		GameManager.dev_args["seed"] = str(1000 + g)
 		var battle := BATTLE.instantiate()
