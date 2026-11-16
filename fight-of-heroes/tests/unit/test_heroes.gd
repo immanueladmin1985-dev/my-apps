@@ -17,7 +17,7 @@ func _learned(id: String, team: int, pos: Vector2, level := 1) -> Hero:
 
 func test_ten_heroes() -> void:
 	var heroes := DataRegistry.get_all("heroes")
-	eq(heroes.size(), 10, "영웅 10명")
+	eq(heroes.size(), 16, "영웅 16명")
 	var roles := {}
 	for h: HeroData in heroes:
 		roles[h.preferred_role] = roles.get(h.preferred_role, 0) + 1
@@ -34,6 +34,8 @@ func test_every_hero_casts_every_skill() -> void:
 		var pc := PlayerController.new()
 		h.set_controller(pc)
 		for slot in 4:
+			# 도약·바꿔치기로 멀어졌으면 제자리로 (다음 스킬의 사거리 확인용)
+			h.global_position = Vector2(400, 500)
 			var r := h.skill_caster.cast(slot, pc.auto_aim(slot))
 			eq(r, Enums.CastResult.OK, "%s %s 스킬" % [data.display_name, Enums.SLOT_KEYS[slot]])
 			await frames(70)

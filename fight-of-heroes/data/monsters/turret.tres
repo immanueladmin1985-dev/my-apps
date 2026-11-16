@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "turret"
+display_name = "자동 포탑"
+tier = "normal"
+color = Color(0.5, 0.75, 0.85, 1)
+glyph = "포"
+radius = 16.0
+weapon = "staff"
+base_stats = {
+"armor": 25.0,
+"attack": 34.0,
+"attack_speed": 1.0,
+"magic_resist": 25.0,
+"max_hp": 420.0,
+"move_speed": 1.0
+}
+attack_range = 420.0
+is_ranged = true
+projectile_speed = 1300.0
+xp = 10.0
+gold = 8

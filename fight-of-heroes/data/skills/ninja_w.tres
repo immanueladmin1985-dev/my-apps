@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/summon_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
+
+[sub_resource type="Resource" id="SummonEffect_1"]
+script = ExtResource("1")
+monster_id = "shadow_clone"
+count = PackedInt32Array(2, 2, 3, 3)
+duration = PackedFloat32Array(12.0)
+
+[resource]
+script = ExtResource("2")
+vfx = "dark"
+sound = "summon"
+id = "ninja_w"
+display_name = "분신술"
+glyph = "분"
+description = "12초 동안 함께 싸우는 그림자 분신 2~3명을 만듭니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(16.0, 15.0, 14.0, 13.0)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 5
+ai_range = 0.0
+color = Color(0.4, 0.4, 0.55, 1)
+effects = Array[Resource]([SubResource("SummonEffect_1")])

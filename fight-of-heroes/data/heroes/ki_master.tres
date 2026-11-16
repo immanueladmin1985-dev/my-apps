@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/skills/ki_master_q.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/ki_master_w.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/ki_master_e.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/ki_master_r.tres" id="6"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="7"]
+
+[sub_resource type="Resource" id="ShieldEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(90.0, 150.0, 210.0, 270.0)
+duration = PackedFloat32Array(4.0)
+ad_ratio = 0.0
+ap_ratio = 0.5
+to_caster = true
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "fighting_spirit"
+display_name = "투지"
+description = "체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다)."
+trigger = "attack_hit"
+every = 1
+self_below_hp = 0.4
+cooldown = 20.0
+effects = Array[Resource]([SubResource("ShieldEffect_2")])
+
+[resource]
+script = ExtResource("7")
+id = "ki_master"
+display_name = "기공사"
+role = "기 폭발 격투가"
+difficulty = 2
+lore = "산에서 수련한 무도가. 기를 모아 장풍을 쏘고, 모은 기를 거대한 기공파로 터뜨린다."
+color = Color(1.0, 0.75, 0.25, 1)
+glyph = "기"
+weapon = "fist"
+base_stats = {
+"ability_power": 20.0,
+"armor": 28.0,
+"attack": 54.0,
+"attack_speed": 0.9,
+"hp_regen": 3.0,
+"magic_resist": 28.0,
+"max_hp": 650.0,
+"max_mp": 320.0,
+"move_speed": 235.0,
+"mp_regen": 2.8
+}
+growth_stats = {
+"ability_power": 3.5,
+"armor": 3.3,
+"attack": 3.5,
+"attack_speed": 0.02,
+"hp_regen": 0.3,
+"magic_resist": 1.5,
+"max_hp": 82.0,
+"max_mp": 28.0,
+"mp_regen": 0.18
+}
+attack_range = 60.0
+is_ranged = false
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "투지: 체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다)."
+skills = Array[Resource]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+preferred_role = "fighter"
+ai_build = PackedStringArray("swift_boots", "hero_sword", "chrono_scepter", "guardian_plate", "archmage_crown", "dragon_shield")
+ai_skill_priority = PackedInt32Array(0, 1, 2)
+ai_aggression = 0.65

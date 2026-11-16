@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/status_effect_data.gd" id="2"]
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("1")
+stat = "life_steal"
+flat = 0.15
+percent = 0.0
+
+[resource]
+script = ExtResource("2")
+id = "reaper_mark"
+display_name = "사신의 낫"
+kind = 3
+color = Color(0.5, 0.2, 0.6, 1)
+tick_interval = 0.5
+damage_type = 1
+stat_modifiers = Array[Resource]([SubResource("StatModifier_1")])

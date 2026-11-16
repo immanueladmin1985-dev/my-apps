@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="ShieldEffect_3"]
+script = ExtResource("2")
+base = PackedFloat32Array(70.0, 110.0, 150.0, 190.0)
+duration = PackedFloat32Array(3.0)
+ad_ratio = 0.0
+ap_ratio = 0.45
+to_caster = true
+
+[sub_resource type="Resource" id="ShieldEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(70.0, 110.0, 150.0, 190.0)
+duration = PackedFloat32Array(3.0)
+ad_ratio = 0.0
+ap_ratio = 0.45
+to_caster = false
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 400.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 1
+color = Color(0.5, 0.9, 1, 0.25)
+effects = Array[Resource]([SubResource("ShieldEffect_2")])
+
+[resource]
+script = ExtResource("3")
+vfx = "ice"
+sound = "shield"
+id = "mechanic_e"
+display_name = "방어막 발생기"
+glyph = "방"
+description = "주변 아군(자신 포함)에게 3초 동안 피해를 막는 보호막을 씌웁니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(70.0)
+cooldown = PackedFloat32Array(16.0, 15.0, 14.0, 13.0)
+target_mode = 0
+target_team = 1
+cast_range = 0.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 4
+ai_range = 0.0
+color = Color(0.5, 0.85, 1, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1"), SubResource("ShieldEffect_3")])

@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/skills/star_girl_q.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/star_girl_w.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/star_girl_e.tres" id="5"]
+[ext_resource type="Resource" path="res://data/skills/star_girl_r.tres" id="6"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="7"]
+
+[sub_resource type="Resource" id="ShieldEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(40.0, 65.0, 90.0, 115.0)
+duration = PackedFloat32Array(3.0)
+ad_ratio = 0.0
+ap_ratio = 0.3
+to_caster = true
+
+[sub_resource type="Resource" id="PassiveData_1"]
+script = ExtResource("1")
+id = "star_guard"
+display_name = "별의 가호"
+description = "스킬을 쓰면 3초 동안 피해를 막는 보호막을 얻습니다 (6초마다)."
+trigger = "skill_cast"
+cooldown = 6.0
+effects = Array[Resource]([SubResource("ShieldEffect_2")])
+
+[resource]
+script = ExtResource("7")
+id = "star_girl"
+display_name = "별빛 마법소녀"
+role = "지원형 마법사"
+difficulty = 2
+lore = "별의 힘을 빌린 마법소녀. 리본으로 적을 묶고, 응원으로 아군을 북돋우며, 별빛을 쏟아붓는다."
+color = Color(1.0, 0.6, 0.8, 1)
+glyph = "별"
+weapon = "staff"
+base_stats = {
+"ability_power": 40.0,
+"armor": 20.0,
+"attack": 46.0,
+"attack_speed": 0.75,
+"hp_regen": 2.4,
+"magic_resist": 30.0,
+"max_hp": 560.0,
+"max_mp": 420.0,
+"move_speed": 228.0,
+"mp_regen": 3.8
+}
+growth_stats = {
+"ability_power": 5.0,
+"armor": 2.8,
+"attack": 2.5,
+"attack_speed": 0.015,
+"hp_regen": 0.25,
+"magic_resist": 1.5,
+"max_hp": 72.0,
+"max_mp": 32.0,
+"mp_regen": 0.2
+}
+attack_range = 400.0
+is_ranged = true
+projectile_speed = 1000.0
+passive = SubResource("PassiveData_1")
+passive_description = "별의 가호: 스킬을 쓰면 3초 동안 피해를 막는 보호막을 얻습니다 (6초마다)."
+skills = Array[Resource]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+preferred_role = "support"
+ai_build = PackedStringArray("mage_boots", "chrono_scepter", "archmage_crown", "immortal_amulet", "spirit_king_robe", "dragon_shield")
+ai_skill_priority = PackedInt32Array(0, 1, 2)
+ai_aggression = 0.4

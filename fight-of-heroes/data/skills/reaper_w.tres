@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(2.0)
+magnitude = PackedFloat32Array(0.45)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_1"]
+script = ExtResource("1")
+damage_type = 1
+base = PackedFloat32Array(50.0, 80.0, 110.0, 140.0)
+ad_ratio = 0.4
+ap_ratio = 0.0
+
+[resource]
+script = ExtResource("4")
+vfx = "dark"
+sound = "dark"
+id = "reaper_w"
+display_name = "영혼 사슬"
+glyph = "슬"
+description = "대상을 사슬로 옭아매 마법 피해를 주고 2초 동안 크게 둔화시킵니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(55.0)
+cooldown = PackedFloat32Array(11.0, 10.5, 10.0, 9.5)
+target_mode = 1
+target_team = 0
+cast_range = 480.0
+radius = 0.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(0.5, 0.25, 0.65, 1)
+effects = Array[Resource]([SubResource("DamageEffect_1"), SubResource("ApplyStatusEffect_2")])

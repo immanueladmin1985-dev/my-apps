@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(120.0, 180.0, 240.0)
+ad_ratio = 0.0
+ap_ratio = 0.45
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 1
+radius = 120.0
+delay = 0.8
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.8, 0.4, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_2")])
+count = 5
+scatter = 190.0
+
+[resource]
+script = ExtResource("3")
+vfx = "arcane"
+sound = "meteor"
+id = "star_girl_r"
+display_name = "별빛 폭격"
+glyph = "폭"
+description = "지정한 지역에 0.8초 뒤 별 5개를 떨어뜨려 각각 마법 피해를 줍니다."
+max_rank = 3
+mana_cost = PackedFloat32Array(120.0)
+cooldown = PackedFloat32Array(70.0, 60.0, 50.0)
+target_mode = 3
+target_team = 0
+cast_range = 750.0
+radius = 260.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(1, 0.8, 0.95, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

@@ -29,10 +29,14 @@ func test_no_art_uses_shapes() -> void:
 
 func test_real_art_files() -> void:
 	# 저장소에 들어 있는 그림: 영웅 10명은 모두 그림과 얼굴 그림이 있어야 한다.
+	# 그림이 있는 영웅은 얼굴 그림도 있어야 한다. 처음 10명과 몬스터 9종은 그림이 들어 있다.
+	var with_art := 0
 	for id in DataRegistry.ids("heroes"):
-		check(Art.has("heroes", id), "영웅 그림: " + id)
-		check(Art.has("heroes", id + "_face"), "얼굴 그림: " + id)
-	for id in DataRegistry.ids("monsters"):
+		if Art.has("heroes", id):
+			with_art += 1
+			check(Art.has("heroes", id + "_face"), "얼굴 그림: " + id)
+	check(with_art >= 10, "영웅 그림 %d개" % with_art)
+	for id in ["ancient_dragon", "bone_golem", "forest_guardian", "goblin", "lava_giant", "skeleton", "stone_golem", "wolf", "wolf_alpha"]:
 		check(Art.has("monsters", id), "몬스터 그림: " + id)
 
 

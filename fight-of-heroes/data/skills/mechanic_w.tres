@@ -1,0 +1,73 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="4"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="6"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_5"]
+script = ExtResource("4")
+status = ExtResource("5")
+duration = PackedFloat32Array(1.5)
+magnitude = PackedFloat32Array(0.3)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_4"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(30.0, 45.0, 60.0, 75.0)
+ad_ratio = 0.0
+ap_ratio = 0.25
+
+[sub_resource type="Resource" id="AreaEffect_3"]
+script = ExtResource("3")
+center = 2
+radius = 120.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.6, 0.3, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_4"), SubResource("ApplyStatusEffect_5")])
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(75.0, 115.0, 155.0, 195.0)
+ad_ratio = 0.0
+ap_ratio = 0.6
+
+[sub_resource type="Resource" id="ProjectileEffect_1"]
+script = ExtResource("1")
+speed = 1100.0
+width = 44.0
+pierce = false
+max_range = 0.0
+color = Color(1, 1, 0.7, 1)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("AreaEffect_3")])
+
+[resource]
+script = ExtResource("6")
+vfx = "fire"
+sound = "explosion"
+id = "mechanic_w"
+display_name = "로켓"
+glyph = "로"
+description = "로켓을 쏴 처음 맞은 적과 주변에 마법 피해를 주고 1.5초 동안 둔화시킵니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(55.0)
+cooldown = PackedFloat32Array(8.0, 7.5, 7.0, 6.5)
+target_mode = 2
+target_team = 0
+cast_range = 720.0
+radius = 0.0
+width = 44.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 0.0
+color = Color(1, 0.6, 0.3, 1)
+effects = Array[Resource]([SubResource("ProjectileEffect_1")])

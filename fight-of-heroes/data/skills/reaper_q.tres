@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/bleed.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(10.0, 16.0, 22.0, 28.0)
+to_caster = false
+ad_ratio = 0.1
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(60.0, 95.0, 130.0, 165.0)
+ad_ratio = 0.75
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 190.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.6, 0.3, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+
+[resource]
+script = ExtResource("5")
+vfx = "dark"
+sound = "spin"
+id = "reaper_q"
+display_name = "낫 휩쓸기"
+glyph = "낫"
+description = "낫을 크게 휘둘러 주변 적에게 물리 피해를 주고 3초 동안 출혈시킵니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(45.0)
+cooldown = PackedFloat32Array(7.0, 6.5, 6.0, 5.5)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 190.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 170.0
+color = Color(0.6, 0.3, 0.7, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

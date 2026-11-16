@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
+[ext_resource type="Resource" path="res://data/status/stealth.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(1.5)
+magnitude = PackedFloat32Array(0.0)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="TeleportEffect_1"]
+script = ExtResource("1")
+distance = 360.0
+behind = 40.0
+arrive_effects = Array[Resource]([])
+
+[resource]
+script = ExtResource("4")
+vfx = "dark"
+sound = "teleport"
+id = "ninja_e"
+display_name = "바꿔치기"
+glyph = "바"
+description = "조준한 방향으로 순간이동하고 1.5초 동안 은신합니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 갑니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(45.0)
+cooldown = PackedFloat32Array(13.0, 12.0, 11.0, 10.0)
+target_mode = 2
+target_team = 0
+cast_range = 360.0
+radius = 0.0
+width = 0.0
+auto_aim_away = true
+ai_use = 3
+ai_range = 0.0
+color = Color(0.5, 0.5, 0.6, 1)
+effects = Array[Resource]([SubResource("TeleportEffect_1"), SubResource("ApplyStatusEffect_2")])
