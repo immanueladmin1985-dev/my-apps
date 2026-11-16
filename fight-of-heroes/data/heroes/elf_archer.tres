@@ -40,13 +40,13 @@ glyph = "궁"
 weapon = "bow"
 base_stats = {
 "armor": 20.0,
-"attack": 55.0,
+"attack": 57.0,
 "attack_speed": 0.85,
 "crit_chance": 0.15,
 "crit_damage": 1.75,
 "hp_regen": 2.5,
 "magic_resist": 25.0,
-"max_hp": 540.0,
+"max_hp": 570.0,
 "max_mp": 320.0,
 "move_speed": 225.0,
 "mp_regen": 2.8

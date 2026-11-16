@@ -66,7 +66,7 @@ hero("ninja", "그림자 닌자", "분신 교란 암습", 3, "그림자 마을�
 # ── 총잡이: 먼 거리에서 꾸준히 쏘고, 구르기로 거리를 벌린다 ──
 hero("gunslinger", "총잡이", "원거리 연사 딜러", 2, "황야를 떠도는 명사수. 쌍권총으로 쉴 새 없이 쏘아대고, 위험하면 굴러서 빠져나간다.",
      (0.85, 0.6, 0.35), "총", "bow",
-     dict(max_hp=540, max_mp=300, attack=54, armor=20, magic_resist=25, attack_speed=0.9, move_speed=230, crit_chance=0.1, hp_regen=2.5, mp_regen=2.6),
+     dict(max_hp=510, max_mp=300, attack=50, armor=20, magic_resist=25, attack_speed=0.9, move_speed=230, crit_chance=0.1, hp_regen=2.5, mp_regen=2.6),
      RANGED_G, 440, True, "hunter", AD_RANGED,
      dict(id="headshot", display_name="헤드샷", description="네 번째 기본 공격마다 추가 물리 피해를 줍니다.", trigger="attack_hit", every=4,
           effects=[dmg((35, 60, 85, 110), 0, ad=0.5)]),
@@ -83,7 +83,7 @@ hero("gunslinger", "총잡이", "원거리 연사 딜러", 2, "황야를 떠도�
 # ── 기공사: 기를 모아 한 방에 쏟아내는 근접·마법 혼합형 ──
 hero("ki_master", "기공사", "기 폭발 격투가", 2, "산에서 수련한 무도가. 기를 모아 장풍을 쏘고, 모은 기를 거대한 기공파로 터뜨린다.",
      (1.0, 0.75, 0.25), "기", "fist",
-     dict(max_hp=650, max_mp=320, attack=54, ability_power=20, armor=28, magic_resist=28, attack_speed=0.9, move_speed=235, hp_regen=3.0, mp_regen=2.8),
+     dict(max_hp=620, max_mp=320, attack=50, ability_power=18, armor=28, magic_resist=28, attack_speed=0.9, move_speed=235, hp_regen=3.0, mp_regen=2.8),
      HYBRID_G, 60, False, "fighter", ["swift_boots", "hero_sword", "chrono_scepter", "guardian_plate", "archmage_crown", "dragon_shield"],
      dict(id="fighting_spirit", display_name="투지", description="체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다).", trigger="attack_hit", every=1,
           self_below_hp=0.4, cooldown=20.0, effects=[shield((90, 150, 210, 270), (4,), ap=0.5)]),
@@ -100,7 +100,7 @@ hero("ki_master", "기공사", "기 폭발 격투가", 2, "산에서 수련한 �
 # ── 마법소녀: 별빛으로 아군을 북돋우고 적을 묶는 지원 마법사 ──
 hero("star_girl", "별빛 마법소녀", "지원형 마법사", 2, "별의 힘을 빌린 마법소녀. 리본으로 적을 묶고, 응원으로 아군을 북돋우며, 별빛을 쏟아붓는다.",
      (1.0, 0.6, 0.8), "별", "staff",
-     dict(max_hp=560, max_mp=420, attack=46, ability_power=40, armor=20, magic_resist=30, attack_speed=0.75, move_speed=228, hp_regen=2.4, mp_regen=3.8),
+     dict(max_hp=610, max_mp=420, attack=48, ability_power=46, armor=20, magic_resist=30, attack_speed=0.75, move_speed=228, hp_regen=2.4, mp_regen=3.8),
      MAGE_G, 400, True, "support", AP,
      dict(id="star_guard", display_name="별의 가호", description="스킬을 쓰면 3초 동안 피해를 막는 보호막을 얻습니다 (6초마다).", trigger="skill_cast", cooldown=6.0,
           effects=[shield((40, 65, 90, 115), (3,), ap=0.3)]),

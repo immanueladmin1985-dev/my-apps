@@ -38,13 +38,13 @@ color = Color(1.0, 0.75, 0.25, 1)
 glyph = "기"
 weapon = "fist"
 base_stats = {
-"ability_power": 20.0,
+"ability_power": 18.0,
 "armor": 28.0,
-"attack": 54.0,
+"attack": 50.0,
 "attack_speed": 0.9,
 "hp_regen": 3.0,
 "magic_resist": 28.0,
-"max_hp": 650.0,
+"max_hp": 620.0,
 "max_mp": 320.0,
 "move_speed": 235.0,
 "mp_regen": 2.8
