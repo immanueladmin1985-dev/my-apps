@@ -22,7 +22,7 @@ to_caster = true
 
 [resource]
 script = ExtResource("4")
-vfx = "holy"
+vfx = "ki"
 sound = "holy"
 id = "ki_master_e"
 display_name = "기 모으기"

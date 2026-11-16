@@ -26,7 +26,7 @@ scatter = 190.0
 
 [resource]
 script = ExtResource("3")
-vfx = "arcane"
+vfx = "star"
 sound = "meteor"
 id = "star_girl_r"
 display_name = "별빛 폭격"

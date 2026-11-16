@@ -37,7 +37,7 @@ scatter = 150.0
 
 [resource]
 script = ExtResource("5")
-vfx = "fire"
+vfx = "tech"
 sound = "meteor"
 id = "mechanic_r"
 display_name = "궤도 폭격"

@@ -22,7 +22,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
 script = ExtResource("3")
-vfx = "steel"
+vfx = "bullet"
 sound = "arrow"
 id = "gunslinger_q"
 display_name = "관통탄"

@@ -33,7 +33,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
-vfx = "steel"
+vfx = "shadow"
 sound = "arrow"
 id = "ninja_q"
 display_name = "수리검 난사"

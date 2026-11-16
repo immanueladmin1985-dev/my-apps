@@ -37,7 +37,7 @@ effects = Array[Resource]([SubResource("ApplyStatusEffect_2"), SubResource("Appl
 
 [resource]
 script = ExtResource("5")
-vfx = "heal"
+vfx = "star"
 sound = "heal"
 id = "star_girl_e"
 display_name = "응원"

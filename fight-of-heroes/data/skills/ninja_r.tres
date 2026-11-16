@@ -38,7 +38,7 @@ arrive_effects = Array[Resource]([SubResource("AreaEffect_2"), SubResource("Summ
 
 [resource]
 script = ExtResource("5")
-vfx = "dark"
+vfx = "shadow"
 sound = "slash"
 id = "ninja_r"
 display_name = "그림자 난무"

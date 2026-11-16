@@ -35,7 +35,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStat
 
 [resource]
 script = ExtResource("5")
-vfx = "dark"
+vfx = "soul"
 sound = "spin"
 id = "reaper_q"
 display_name = "낫 휩쓸기"

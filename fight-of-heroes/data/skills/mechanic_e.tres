@@ -33,7 +33,7 @@ effects = Array[Resource]([SubResource("ShieldEffect_2")])
 
 [resource]
 script = ExtResource("3")
-vfx = "ice"
+vfx = "tech"
 sound = "shield"
 id = "mechanic_e"
 display_name = "방어막 발생기"

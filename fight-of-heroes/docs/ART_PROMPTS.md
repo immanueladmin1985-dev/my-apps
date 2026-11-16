@@ -286,7 +286,21 @@ Wide 1536x512 PNG.
 | `사신 스킬.png` | 사신 | `Theme color: dark purple. 1 (Q): a scythe sweeping in a wide crescent. 2 (W): glowing purple chains binding a soul. 3 (E): a ghostly hooded figure dashing forward. 4 (R, ultimate): a scythe dropping over a skull, death sentence, more dramatic and golden-framed. 5 (passive): a hand harvesting a small glowing soul, with a subtle circular frame.` |
 | `기계공 스킬.png` | 기계공 | `Theme color: teal and steel. 1 (Q): a small auto-turret being deployed. 2 (W): a rocket with a flame trail. 3 (E): a device projecting a teal dome shield. 4 (R, ultimate): shells falling from the sky onto a target marker, more dramatic and golden-framed. 5 (passive): a wrench crossed with a gear and a green plus, with a subtle circular frame.` |
 
+### 7-3. 새 영웅 전용 스킬 효과 (6번 항목의 공통 앞부분을 그대로 붙임, 선택)
+
+새 영웅의 스킬은 그림이 없으면 영웅 색에 맞춘 입자로 나옵니다. 아래 그림을 주면 그 그림으로 바뀝니다. 가로 3칸(바닥 무늬 · 터짐 · 투사체)입니다.
+**보라·분홍 계열은 마젠타 배경과 색이 비슷하니, 가능하면 진한 초록(#00FF00) 배경으로** 만들어 주세요(공통 앞부분의 magenta (#FF00FF) 를 green (#00FF00) 로 바꿈).
+
+| 파일 이름 | 종류 | 쓰는 영웅 | 배경 | 뒷부분 |
+|---|---|---|---|---|
+| `별빛 효과.png` | star | 별빛 마법소녀 | 초록 | `Theme: cute starlight magic. Pink and white circle with stars, hearts and ribbons, a sparkling pink star burst, a pink shooting star with a glitter trail.` |
+| `기공 효과.png` | ki | 기공사 | 마젠타 | `Theme: martial ki energy. Golden-yellow swirling energy circle with a yin-yang style spiral, a golden energy shockwave burst, a golden energy ball with a blazing trail.` |
+| `총알 효과.png` | bullet | 총잡이 | 마젠타 | `Theme: gunfire. Circle of bullet casings and a crosshair scorch mark, a white-yellow muzzle flash burst with sparks, a glowing brass bullet with a speed streak.` |
+| `그림자 효과.png` | shadow | 그림자 닌자 | 초록 | `Theme: ninja shadow. Dark blue-gray smoke circle with a shuriken mark, a dark smoke puff burst with flying leaves, a spinning steel shuriken with a dark trail.` |
+| `영혼 효과.png` | soul | 사신 | 초록 | `Theme: reaper souls. Dark purple circle with pale teal ghost flames and a scythe mark, a burst of wailing teal soul wisps, a curved purple scythe-slash wave.` |
+| `기계 효과.png` | tech | 기계공 | 마젠타 | `Theme: sci-fi gadgets. Teal hexagon hologram grid circle with a target marker, an electric teal explosion with bolts and gears, a small rocket with a flame trail.` |
+
 ## 8. 진행 상황
 
 - 넣음: 영웅 10명과 용기사 변신, 몬스터 9종, 아이템 39개, 바닥 무늬 7개, 맵 물건·장식 전부, 스킬 아이콘 50개, 스킬 효과 그림 30장.
-- 남음: 새 영웅 6명의 그림과 스킬 아이콘, 소환수 2종 (7번 항목). 그림이 없는 동안은 색 원과 글자로 나옵니다.
+- 남음: 새 영웅 6명의 그림과 스킬 아이콘, 소환수 2종, 전용 스킬 효과 6장(선택) (7번 항목). 그림이 없는 동안은 색 원과 글자로 나옵니다.

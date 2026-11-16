@@ -22,7 +22,7 @@ color = Color(1, 0.5, 0.2, 0.35)
 
 [resource]
 script = ExtResource("3")
-vfx = "holy"
+vfx = "ki"
 sound = "meteor"
 id = "ki_master_r"
 display_name = "천지 기공파"

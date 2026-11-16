@@ -38,7 +38,7 @@ arrive_effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("Ar
 
 [resource]
 script = ExtResource("4")
-vfx = "dark"
+vfx = "soul"
 sound = "slash"
 id = "reaper_r"
 display_name = "사형 선고"

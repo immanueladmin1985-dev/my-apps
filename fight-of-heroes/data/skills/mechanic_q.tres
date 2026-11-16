@@ -11,7 +11,7 @@ duration = PackedFloat32Array(20.0)
 
 [resource]
 script = ExtResource("2")
-vfx = "arcane"
+vfx = "tech"
 sound = "summon"
 id = "mechanic_q"
 display_name = "포탑 설치"

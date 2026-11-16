@@ -54,13 +54,13 @@ hero("ninja", "그림자 닌자", "분신 교란 암습", 3, "그림자 마을�
      dict(id="afterimage", display_name="잔상", description="네 번째 기본 공격마다 분신 하나가 4초 동안 나타나 함께 싸웁니다.", trigger="attack_hit", every=4,
           effects=[summon("shadow_clone", (1,), (4,))]),
      [dict(name="수리검 난사", glyph="수", desc="적을 꿰뚫는 수리검을 던져 물리 피해를 주고 1.5초 동안 둔화시킵니다.", mode=2, mana_cost=(40,), cd=(6, 5.5, 5, 4.5), rng=650, width=50,
-           effects=[proj([dmg((65, 100, 135, 170), 0, ad=0.7), slow((1.5,), (0.25,))], speed=1500, width=50, pierce=True)], vfx="steel", sound="arrow", color=C(0.7, 0.75, 0.9, 1)),
+           effects=[proj([dmg((65, 100, 135, 170), 0, ad=0.7), slow((1.5,), (0.25,))], speed=1500, width=50, pierce=True)], vfx="shadow", sound="arrow", color=C(0.7, 0.75, 0.9, 1)),
       dict(name="분신술", glyph="분", desc="12초 동안 함께 싸우는 그림자 분신 2~3명을 만듭니다.", mode=0, mana_cost=(60,), cd=(16, 15, 14, 13),
-           effects=[summon("shadow_clone", (2, 2, 3, 3), (12,))], ai=5, vfx="dark", sound="summon", color=C(0.4, 0.4, 0.55, 1)),
+           effects=[summon("shadow_clone", (2, 2, 3, 3), (12,))], ai=5, vfx="shadow", sound="summon", color=C(0.4, 0.4, 0.55, 1)),
       dict(name="바꿔치기", glyph="바", desc="조준한 방향으로 순간이동하고 1.5초 동안 은신합니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 갑니다.", mode=2, mana_cost=(45,), cd=(13, 12, 11, 10), rng=360,
-           effects=[tele(360), status("stealth", (1.5,), to_caster=True)], ai=3, away=True, vfx="dark", sound="teleport", color=C(0.5, 0.5, 0.6, 1)),
+           effects=[tele(360), status("stealth", (1.5,), to_caster=True)], ai=3, away=True, vfx="shadow", sound="teleport", color=C(0.5, 0.5, 0.6, 1)),
       dict(name="그림자 난무", glyph="난", desc="대상 뒤로 순간이동해 주변 적 모두에게 큰 물리 피해를 주고, 분신 3명을 남깁니다.", mode=1, mana_cost=(100,), cd=(60, 50, 40), rng=420, max_rank=3,
-           effects=[tele(0, [area(0, 170, [dmg((170, 260, 350), 0, ad=1.1)]), summon("shadow_clone", (3,), (8,))], behind=30)], ai=1, vfx="dark", sound="slash", color=C(0.45, 0.35, 0.7, 1))],
+           effects=[tele(0, [area(0, 170, [dmg((170, 260, 350), 0, ad=1.1)]), summon("shadow_clone", (3,), (8,))], behind=30)], ai=1, vfx="shadow", sound="slash", color=C(0.45, 0.35, 0.7, 1))],
      aggr=0.7)
 
 # ── 총잡이: 먼 거리에서 꾸준히 쏘고, 구르기로 거리를 벌린다 ──
@@ -71,13 +71,13 @@ hero("gunslinger", "총잡이", "원거리 연사 딜러", 2, "황야를 떠도�
      dict(id="headshot", display_name="헤드샷", description="네 번째 기본 공격마다 추가 물리 피해를 줍니다.", trigger="attack_hit", every=4,
           effects=[dmg((35, 60, 85, 110), 0, ad=0.5)]),
      [dict(name="관통탄", glyph="관", desc="일직선의 적을 모두 꿰뚫는 탄환을 쏴 물리 피해를 줍니다.", mode=2, mana_cost=(45,), cd=(7, 6.5, 6, 5.5), rng=800, width=40,
-           effects=[proj([dmg((70, 110, 150, 190), 0, ad=0.8)], speed=1900, width=40, pierce=True)], vfx="steel", sound="arrow", color=C(1, 0.85, 0.5, 1)),
+           effects=[proj([dmg((70, 110, 150, 190), 0, ad=0.8)], speed=1900, width=40, pierce=True)], vfx="bullet", sound="arrow", color=C(1, 0.85, 0.5, 1)),
       dict(name="섬광탄", glyph="섬", desc="지정한 곳에 0.5초 뒤 섬광탄을 터뜨려 물리 피해를 주고 1초 동안 기절시킵니다.", mode=3, mana_cost=(65,), cd=(13, 12, 11, 10), rng=600, radius=130,
-           effects=[area(1, 130, [dmg((60, 95, 130, 165), 0, ad=0.5), stun((1.0,))], delay=0.5)], vfx="holy", sound="explosion", color=C(1, 1, 0.8, 1)),
+           effects=[area(1, 130, [dmg((60, 95, 130, 165), 0, ad=0.5), stun((1.0,))], delay=0.5)], vfx="bullet", sound="explosion", color=C(1, 1, 0.8, 1)),
       dict(name="구르기", glyph="구", desc="조준한 방향으로 굴러 이동하고 3초 동안 공격 속도가 35% 빨라집니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 구릅니다.", mode=2, mana_cost=(40,), cd=(11, 10, 9, 8), rng=300,
-           effects=[dash(300, speed=1100), status("overdrive", (3,), to_caster=True)], ai=3, away=True, vfx="impact", sound="dash", color=C(0.9, 0.7, 0.4, 1)),
+           effects=[dash(300, speed=1100), status("overdrive", (3,), to_caster=True)], ai=3, away=True, vfx="bullet", sound="dash", color=C(0.9, 0.7, 0.4, 1)),
       dict(name="총알 세례", glyph="세", desc="0.5초 뒤 앞쪽 넓은 직선에 총알을 퍼부어 큰 물리 피해를 주고 둔화시킵니다.", mode=2, mana_cost=(100,), cd=(60, 50, 40), rng=850, width=150, max_rank=3,
-           effects=[linez(850, 150, [dmg((220, 330, 440), 0, ad=1.3), slow((2.0,), (0.4,))], delay=0.5)], vfx="steel", sound="arrow_rain", color=C(1, 0.8, 0.4, 1))],
+           effects=[linez(850, 150, [dmg((220, 330, 440), 0, ad=1.3), slow((2.0,), (0.4,))], delay=0.5)], vfx="bullet", sound="arrow_rain", color=C(1, 0.8, 0.4, 1))],
      aggr=0.5, pspeed=1500.0)
 
 # ── 기공사: 기를 모아 한 방에 쏟아내는 근접·마법 혼합형 ──
@@ -88,13 +88,13 @@ hero("ki_master", "기공사", "기 폭발 격투가", 2, "산에서 수련한 �
      dict(id="fighting_spirit", display_name="투지", description="체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다).", trigger="attack_hit", every=1,
           self_below_hp=0.4, cooldown=20.0, effects=[shield((90, 150, 210, 270), (4,), ap=0.5)]),
      [dict(name="장풍", glyph="장", desc="기 덩어리를 쏴 처음 맞은 적과 주변에 마법 피해를 줍니다.", mode=2, mana_cost=(45,), cd=(6, 5.5, 5, 4.5), rng=600, width=50,
-           effects=[proj([dmg((70, 110, 150, 190), 1, ad=0.4, ap=0.6), area(2, 100, [dmg((25, 40, 55, 70), 1, ap=0.3)])], speed=1200, width=50)], vfx="holy", sound="fire", color=C(1, 0.9, 0.4, 1)),
+           effects=[proj([dmg((70, 110, 150, 190), 1, ad=0.4, ap=0.6), area(2, 100, [dmg((25, 40, 55, 70), 1, ap=0.3)])], speed=1200, width=50)], vfx="ki", sound="fire", color=C(1, 0.9, 0.4, 1)),
       dict(name="순보", glyph="순", desc="대상 뒤로 순식간에 이동해 물리 피해를 주고 0.75초 동안 기절시킵니다.", mode=1, mana_cost=(55,), cd=(12, 11, 10, 9), rng=420,
-           effects=[tele(0, [dmg((55, 85, 115, 145), 0, ad=0.8), stun((0.75,))], behind=30)], ai=1, vfx="impact", sound="punch", color=C(1, 0.8, 0.5, 1)),
+           effects=[tele(0, [dmg((55, 85, 115, 145), 0, ad=0.8), stun((0.75,))], behind=30)], ai=1, vfx="ki", sound="punch", color=C(1, 0.8, 0.5, 1)),
       dict(name="기 모으기", glyph="모", desc="기를 모아 마나를 회복하고, 5초 동안 공격력 +25, 주문력 +40, 공격 속도 +20% 를 얻습니다.", mode=0, mana_cost=(0,), cd=(18, 17, 16, 15),
-           effects=[mana((60, 80, 100, 120)), status("ki_charge", (5,), to_caster=True)], ai=2, vfx="holy", sound="holy", color=C(1, 0.95, 0.5, 1)),
+           effects=[mana((60, 80, 100, 120)), status("ki_charge", (5,), to_caster=True)], ai=2, vfx="ki", sound="holy", color=C(1, 0.95, 0.5, 1)),
       dict(name="천지 기공파", glyph="파", desc="0.9초 동안 기를 모은 뒤 앞으로 거대한 기공파를 쏴 큰 마법 피해를 줍니다.", mode=2, mana_cost=(120,), cd=(70, 60, 50), rng=1000, width=170, max_rank=3,
-           effects=[linez(1000, 170, [dmg((260, 400, 540), 1, ad=0.5, ap=1.0)], delay=0.9)], vfx="holy", sound="meteor", color=C(1, 0.9, 0.4, 1))],
+           effects=[linez(1000, 170, [dmg((260, 400, 540), 1, ad=0.5, ap=1.0)], delay=0.9)], vfx="ki", sound="meteor", color=C(1, 0.9, 0.4, 1))],
      aggr=0.65)
 
 # ── 마법소녀: 별빛으로 아군을 북돋우고 적을 묶는 지원 마법사 ──
@@ -105,13 +105,13 @@ hero("star_girl", "별빛 마법소녀", "지원형 마법사", 2, "별의 힘�
      dict(id="star_guard", display_name="별의 가호", description="스킬을 쓰면 3초 동안 피해를 막는 보호막을 얻습니다 (6초마다).", trigger="skill_cast", cooldown=6.0,
           effects=[shield((40, 65, 90, 115), (3,), ap=0.3)]),
      [dict(name="별똥별", glyph="똥", desc="적을 꿰뚫는 별을 쏴 마법 피해를 줍니다.", mode=2, mana_cost=(50,), cd=(6,), rng=720, width=46,
-           effects=[proj([dmg((85, 125, 165, 205), 1, ap=0.65)], speed=1300, width=46, pierce=True)], vfx="arcane", sound="holy", color=C(1, 0.7, 0.9, 1)),
+           effects=[proj([dmg((85, 125, 165, 205), 1, ap=0.65)], speed=1300, width=46, pierce=True)], vfx="star", sound="holy", color=C(1, 0.7, 0.9, 1)),
       dict(name="리본 속박", glyph="리", desc="대상을 리본으로 묶어 마법 피해를 주고 1.2~1.5초 동안 기절시킵니다.", mode=1, mana_cost=(70,), cd=(13, 12, 11, 10), rng=520,
-           effects=[dmg((60, 95, 130, 165), 1, ap=0.5), stun((1.2, 1.3, 1.4, 1.5))], vfx="arcane", sound="ice", color=C(1, 0.5, 0.75, 1)),
+           effects=[dmg((60, 95, 130, 165), 1, ap=0.5), stun((1.2, 1.3, 1.4, 1.5))], vfx="star", sound="ice", color=C(1, 0.5, 0.75, 1)),
       dict(name="응원", glyph="응", desc="주변 아군(자신 포함)에게 4초 동안 공격력 +15, 주문력 +25, 이동 속도 +20% 를 줍니다.", mode=0, mana_cost=(60,), cd=(15, 14, 13, 12),
-           effects=[area(0, 420, [status("cheer", (4,)), status("haste", (4,), (0.2,))], affects=1, color=C(1, 0.7, 0.9, 0.25))], team=1, ai=4, vfx="heal", sound="heal", color=C(1, 0.7, 0.85, 1)),
+           effects=[area(0, 420, [status("cheer", (4,)), status("haste", (4,), (0.2,))], affects=1, color=C(1, 0.7, 0.9, 0.25))], team=1, ai=4, vfx="star", sound="heal", color=C(1, 0.7, 0.85, 1)),
       dict(name="별빛 폭격", glyph="폭", desc="지정한 지역에 0.8초 뒤 별 5개를 떨어뜨려 각각 마법 피해를 줍니다.", mode=3, mana_cost=(120,), cd=(70, 60, 50), rng=750, radius=260, max_rank=3,
-           effects=[multi_area(1, 120, [dmg((120, 180, 240), 1, ap=0.45)], 5, 190, delay=0.8)], vfx="arcane", sound="meteor", color=C(1, 0.8, 0.95, 1))],
+           effects=[multi_area(1, 120, [dmg((120, 180, 240), 1, ap=0.45)], 5, 190, delay=0.8)], vfx="star", sound="meteor", color=C(1, 0.8, 0.95, 1))],
      aggr=0.4)
 
 # ── 사신: 싸울수록 살아나는 흡혈 근접 전사 ──
@@ -122,13 +122,13 @@ hero("reaper", "사신", "흡혈 근접 전사", 2, "영혼을 거두는 낫잡�
      dict(id="soul_reap", display_name="영혼 거두기", description="적을 처치하면 체력을 회복합니다.", trigger="kill",
           effects=[heal((40, 70, 100, 130), ad=0.3, to_caster=True)]),
      [dict(name="낫 휩쓸기", glyph="낫", desc="낫을 크게 휘둘러 주변 적에게 물리 피해를 주고 3초 동안 출혈시킵니다.", mode=0, mana_cost=(45,), cd=(7, 6.5, 6, 5.5), radius=190,
-           effects=[area(0, 190, [dmg((60, 95, 130, 165), 0, ad=0.75), status("bleed", (3,), (10, 16, 22, 28), ad=0.1)])], ai_range=170, vfx="dark", sound="spin", color=C(0.6, 0.3, 0.7, 1)),
+           effects=[area(0, 190, [dmg((60, 95, 130, 165), 0, ad=0.75), status("bleed", (3,), (10, 16, 22, 28), ad=0.1)])], ai_range=170, vfx="soul", sound="spin", color=C(0.6, 0.3, 0.7, 1)),
       dict(name="영혼 사슬", glyph="슬", desc="대상을 사슬로 옭아매 마법 피해를 주고 2초 동안 크게 둔화시킵니다.", mode=1, mana_cost=(55,), cd=(11, 10.5, 10, 9.5), rng=480,
-           effects=[dmg((50, 80, 110, 140), 1, ad=0.4), slow((2.0,), (0.45,))], vfx="dark", sound="dark", color=C(0.5, 0.25, 0.65, 1)),
+           effects=[dmg((50, 80, 110, 140), 1, ad=0.4), slow((2.0,), (0.45,))], vfx="soul", sound="dark", color=C(0.5, 0.25, 0.65, 1)),
       dict(name="망령 걸음", glyph="망", desc="4초 동안 이동 속도가 30% 빨라지고 흡혈이 15% 늘어납니다.", mode=0, mana_cost=(45,), cd=(15, 14, 13, 12),
-           effects=[status("haste", (4,), (0.3,), to_caster=True), status("reaper_mark", (4,), to_caster=True)], ai=1, ai_range=650, vfx="dark", sound="stealth", color=C(0.45, 0.3, 0.6, 1)),
+           effects=[status("haste", (4,), (0.3,), to_caster=True), status("reaper_mark", (4,), to_caster=True)], ai=1, ai_range=650, vfx="soul", sound="stealth", color=C(0.45, 0.3, 0.6, 1)),
       dict(name="사형 선고", glyph="형", desc="대상에게 순간이동해 큰 물리 피해를 주고, 준 만큼의 일부를 주변 적에게도 퍼뜨립니다.", mode=1, mana_cost=(100,), cd=(60, 50, 40), rng=400, max_rank=3,
-           effects=[tele(0, [dmg((190, 290, 390), 0, ad=1.0), area(0, 160, [dmg((70, 105, 140), 0, ad=0.4)])], behind=30)], ai=1, vfx="dark", sound="slash", color=C(0.65, 0.2, 0.5, 1))],
+           effects=[tele(0, [dmg((190, 290, 390), 0, ad=1.0), area(0, 160, [dmg((70, 105, 140), 0, ad=0.4)])], behind=30)], ai=1, vfx="soul", sound="slash", color=C(0.65, 0.2, 0.5, 1))],
      aggr=0.75)
 
 # ── 기계공: 포탑과 방어막으로 진지를 만드는 원거리 지원형 ──
@@ -139,14 +139,14 @@ hero("mechanic", "기계공", "포탑 설치 지원", 2, "무엇이든 만들어
      dict(id="auto_repair", display_name="자가 수리", description="6초마다 자신의 체력을 회복합니다.", trigger="periodic", interval=6.0,
           effects=[heal((20, 32, 44, 56), ap=0.1, to_caster=True)]),
      [dict(name="포탑 설치", glyph="포", desc="20초 동안 근처의 적을 쏘는 자동 포탑을 설치합니다. 포탑은 움직이지 않습니다.", mode=3, mana_cost=(60,), cd=(13, 12, 11, 10), rng=350,
-           effects=[summon("turret", (1,), (20,))], ai=5, vfx="arcane", sound="summon", color=C(0.5, 0.8, 0.9, 1)),
+           effects=[summon("turret", (1,), (20,))], ai=5, vfx="tech", sound="summon", color=C(0.5, 0.8, 0.9, 1)),
       dict(name="로켓", glyph="로", desc="로켓을 쏴 처음 맞은 적과 주변에 마법 피해를 주고 1.5초 동안 둔화시킵니다.", mode=2, mana_cost=(55,), cd=(8, 7.5, 7, 6.5), rng=720, width=44,
-           effects=[proj([dmg((75, 115, 155, 195), 1, ap=0.6), area(2, 120, [dmg((30, 45, 60, 75), 1, ap=0.25), slow((1.5,), (0.3,))])], speed=1100, width=44)], vfx="fire", sound="explosion", color=C(1, 0.6, 0.3, 1)),
+           effects=[proj([dmg((75, 115, 155, 195), 1, ap=0.6), area(2, 120, [dmg((30, 45, 60, 75), 1, ap=0.25), slow((1.5,), (0.3,))])], speed=1100, width=44)], vfx="tech", sound="explosion", color=C(1, 0.6, 0.3, 1)),
       dict(name="방어막 발생기", glyph="방", desc="주변 아군(자신 포함)에게 3초 동안 피해를 막는 보호막을 씌웁니다.", mode=0, mana_cost=(70,), cd=(16, 15, 14, 13),
            effects=[area(0, 400, [shield((70, 110, 150, 190), (3,), ap=0.45, to_caster=False)], affects=1, color=C(0.5, 0.9, 1, 0.25)),
-                    shield((70, 110, 150, 190), (3,), ap=0.45)], team=1, ai=4, vfx="ice", sound="shield", color=C(0.5, 0.85, 1, 1)),
+                    shield((70, 110, 150, 190), (3,), ap=0.45)], team=1, ai=4, vfx="tech", sound="shield", color=C(0.5, 0.85, 1, 1)),
       dict(name="궤도 폭격", glyph="궤", desc="지정한 지역에 1초 뒤 포탄 3발을 떨어뜨려 큰 마법 피해를 주고 1초 동안 기절시킵니다.", mode=3, mana_cost=(120,), cd=(75, 65, 55), rng=800, radius=250, max_rank=3,
-           effects=[multi_area(1, 150, [dmg((150, 225, 300), 1, ap=0.55), stun((1.0,))], 3, 150, delay=1.0)], vfx="fire", sound="meteor", color=C(1, 0.5, 0.3, 1))],
+           effects=[multi_area(1, 150, [dmg((150, 225, 300), 1, ap=0.55), stun((1.0,))], 3, 150, delay=1.0)], vfx="tech", sound="meteor", color=C(1, 0.5, 0.3, 1))],
      aggr=0.4)
 
 print("만든 영웅:", ", ".join(["ninja", "gunslinger", "ki_master", "star_girl", "reaper", "mechanic"]))

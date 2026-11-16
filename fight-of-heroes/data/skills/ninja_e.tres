@@ -22,7 +22,7 @@ arrive_effects = Array[Resource]([])
 
 [resource]
 script = ExtResource("4")
-vfx = "dark"
+vfx = "shadow"
 sound = "teleport"
 id = "ninja_e"
 display_name = "바꿔치기"

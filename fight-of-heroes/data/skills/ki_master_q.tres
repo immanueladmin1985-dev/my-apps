@@ -41,7 +41,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("AreaEffec
 
 [resource]
 script = ExtResource("4")
-vfx = "holy"
+vfx = "ki"
 sound = "fire"
 id = "ki_master_q"
 display_name = "장풍"

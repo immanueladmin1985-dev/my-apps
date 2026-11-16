@@ -23,7 +23,7 @@ ap_ratio = 0.5
 
 [resource]
 script = ExtResource("4")
-vfx = "arcane"
+vfx = "star"
 sound = "ice"
 id = "star_girl_w"
 display_name = "리본 속박"

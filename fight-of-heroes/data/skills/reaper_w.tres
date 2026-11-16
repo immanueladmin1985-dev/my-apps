@@ -23,7 +23,7 @@ ap_ratio = 0.0
 
 [resource]
 script = ExtResource("4")
-vfx = "dark"
+vfx = "soul"
 sound = "dark"
 id = "reaper_w"
 display_name = "영혼 사슬"

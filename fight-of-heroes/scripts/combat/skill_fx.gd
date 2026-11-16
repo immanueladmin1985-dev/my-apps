@@ -4,6 +4,7 @@ extends Node2D
 ## 그림 파일(assets/effects/<종류>_ground.png, _burst.png, _projectile.png)이 있으면 그 그림을 쓰고,
 ## 없으면 코드로 만든 부드러운 입자 그림으로 그린다.
 ##
+## 영웅 전용: star(별빛) ki(기공) bullet(총알) shadow(그림자) soul(영혼) tech(기계)
 ## 종류: fire(불) ice(얼음) holy(빛) heal(치유) poison(독) dark(어둠) nature(자연·화살) steel(칼날) impact(충격) arcane(기본)
 
 const STYLES := {
@@ -16,6 +17,13 @@ const STYLES := {
 	"nature": {"a": Color(0.9, 1.0, 0.6), "b": Color(0.5, 0.85, 0.3), "c": Color(0.25, 0.45, 0.15), "rise": 0.0, "tex": "streak"},
 	"steel": {"a": Color(1.0, 1.0, 1.0), "b": Color(1.0, 0.9, 0.55), "c": Color(0.7, 0.6, 0.4), "rise": 0.0, "tex": "streak"},
 	"impact": {"a": Color(1.0, 0.95, 0.8), "b": Color(0.9, 0.7, 0.45), "c": Color(0.45, 0.35, 0.25), "rise": -10.0, "tex": "dot"},
+	# 영웅 전용
+	"star": {"a": Color(1.0, 1.0, 1.0), "b": Color(1.0, 0.6, 0.85), "c": Color(0.7, 0.4, 0.9), "rise": -40.0, "tex": "star"},
+	"ki": {"a": Color(1.0, 1.0, 0.8), "b": Color(1.0, 0.8, 0.25), "c": Color(0.95, 0.5, 0.1), "rise": -50.0, "tex": "flame"},
+	"bullet": {"a": Color(1.0, 1.0, 0.9), "b": Color(1.0, 0.75, 0.35), "c": Color(0.5, 0.4, 0.3), "rise": 0.0, "tex": "streak"},
+	"shadow": {"a": Color(0.8, 0.85, 1.0), "b": Color(0.4, 0.45, 0.7), "c": Color(0.08, 0.08, 0.15), "rise": -20.0, "tex": "dot"},
+	"soul": {"a": Color(0.85, 1.0, 0.95), "b": Color(0.6, 0.35, 0.85), "c": Color(0.2, 0.05, 0.25), "rise": -60.0, "tex": "flame"},
+	"tech": {"a": Color(0.9, 1.0, 1.0), "b": Color(0.35, 0.85, 0.95), "c": Color(0.15, 0.35, 0.5), "rise": -10.0, "tex": "shard"},
 	"arcane": {"a": Color(1.0, 1.0, 1.0), "b": Color(0.7, 0.8, 1.0), "c": Color(0.4, 0.4, 0.8), "rise": -20.0, "tex": "dot"},
 }
 
@@ -92,7 +100,7 @@ static func _particles(style: String, amount: int, life: float) -> CPUParticles2
 	p.local_coords = false
 	p.gravity = Vector2(0, c.rise)
 	var mat := CanvasItemMaterial.new()
-	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD if style != "dark" and style != "poison" else CanvasItemMaterial.BLEND_MODE_MIX
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD if not ["dark", "poison", "shadow", "soul"].has(style) else CanvasItemMaterial.BLEND_MODE_MIX
 	p.material = mat
 	return p
 

@@ -41,7 +41,8 @@ KINDS = {
 
 # 스킬 효과 그림 묶음 (효과 종류마다 가로 3칸: 바닥 무늬, 터짐, 투사체)
 FX_STYLES = {"fire": "불", "ice": "얼음", "holy": "빛", "heal": "치유", "poison": "독", "dark": "어둠",
-             "nature": "자연", "steel": "칼날", "impact": "충격", "arcane": "기본"}
+             "nature": "자연", "steel": "칼날", "impact": "충격", "arcane": "기본",
+             "star": "별빛", "ki": "기공", "bullet": "총알", "shadow": "그림자", "soul": "영혼", "tech": "기계"}
 FX_PARTS = ["ground", "burst", "projectile"]
 
 # 스킬 아이콘 묶음 그림 (영웅 한 명당 3x2): 윗줄 Q·W·E, 아랫줄 R·패시브·빈칸
@@ -312,7 +313,7 @@ def _defringe(img: Image.Image, bgs: list) -> Image.Image:
 
 
 # 배경(마젠타)과 색이 가까운 효과
-FX_FLOOD = {"dark"}
+FX_FLOOD = {"dark", "star", "soul", "shadow"}
 
 
 def color_to_alpha(img: Image.Image) -> Image.Image:
@@ -369,7 +370,10 @@ def process(img: Image.Image, kind: str, cell: bool = False, id_: str = "") -> I
     if kind == "effects":
         style = id_.split("_")[0]
         # 보라·분홍처럼 배경색에 가까운 효과는 가장자리에서부터 배경만 지운다 (color to alpha 는 너무 옅어진다).
-        img = trim(remove_background(img, cell=cell) if style in FX_FLOOD else color_to_alpha(img))
+        # 단, 초록 배경으로 만든 그림은 색이 겹치지 않으므로 color to alpha 를 쓴다.
+        r0, g0, b0 = img.convert("RGB").getpixel((2, 2))
+        green_bg = g0 > 150 and r0 < 110 and b0 < 110
+        img = trim(remove_background(img, cell=cell) if style in FX_FLOOD and not green_bg else color_to_alpha(img))
     else:
         img = trim(remove_background(img, cell=cell))
     if kind in ("heroes", "monsters") and id_ in FACING_LEFT:

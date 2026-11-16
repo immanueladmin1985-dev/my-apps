@@ -25,7 +25,7 @@ ap_ratio = 0.0
 
 [resource]
 script = ExtResource("4")
-vfx = "dark"
+vfx = "soul"
 sound = "stealth"
 id = "reaper_e"
 display_name = "망령 걸음"

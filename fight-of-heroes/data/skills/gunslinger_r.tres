@@ -33,7 +33,7 @@ color = Color(1, 0.5, 0.2, 0.35)
 
 [resource]
 script = ExtResource("5")
-vfx = "steel"
+vfx = "bullet"
 sound = "arrow_rain"
 id = "gunslinger_r"
 display_name = "총알 세례"

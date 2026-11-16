@@ -22,7 +22,7 @@ effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
 script = ExtResource("3")
-vfx = "arcane"
+vfx = "star"
 sound = "holy"
 id = "star_girl_q"
 display_name = "별똥별"
