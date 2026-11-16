@@ -44,14 +44,14 @@ func _ready() -> void:
 		mode_buttons.append(b)
 
 	var grid := GridContainer.new()
-	grid.columns = 5
+	grid.columns = 6
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
 	box.add_child(grid)
 	var heroes: Array = DataRegistry.get_all("heroes")
 	heroes.sort_custom(func(a, b): return a.display_name < b.display_name)
 	for h: HeroData in heroes:
-		var b := UiKit.toggle("", Vector2(236, 64), 17)
+		var b := UiKit.toggle("", Vector2(196, 60), 15)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.set_meta("id", h.id)
 		b.pressed.connect(_on_hero.bind(h.id))

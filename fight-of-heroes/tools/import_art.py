@@ -27,7 +27,7 @@ MAP_OBJECTS = ["base_fountain", "shop", "center_stage", "camp_ring", "boss_altar
                "tree_1", "tree_2", "bush", "rock_1", "rock_2", "crystal", "torch", "pillar", "barrel", "crate"]
 
 # 게임은 캐릭터가 오른쪽을 본다고 보고 왼쪽으로 갈 때 뒤집는다. 왼쪽을 보고 그려진 그림은 넣을 때 뒤집는다.
-FACING_LEFT = {"saint", "frost_mage"}
+FACING_LEFT = {"saint", "frost_mage", "ninja", "gunslinger", "mechanic"}
 
 KINDS = {
     "heroes": ("assets/heroes", 384),
@@ -337,7 +337,7 @@ def color_to_alpha(img: Image.Image) -> Image.Image:
     fg = np.clip((c - m) / safe + m, 0.0, 1.0)
     # 배경색이 고르지 않아 남는 옅은 값(바탕의 네모)을 지운다: 가장자리에서 잰 잡음보다 약한 값은 0, 나머지는 다시 펼친다.
     edge = np.concatenate([alpha[0], alpha[-1], alpha[:, 0], alpha[:, -1]])
-    floor = float(min(0.35, np.percentile(edge, 99) + 0.04))
+    floor = float(min(0.35, np.percentile(edge, 99.7) + 0.07))
     alpha = np.clip((alpha - floor) / (1.0 - floor), 0.0, 1.0)
     out = np.dstack([fg, alpha * a[..., 3]])
     return Image.fromarray((out * 255).astype(np.uint8), "RGBA")
@@ -385,7 +385,12 @@ def process(img: Image.Image, kind: str, cell: bool = False, id_: str = "") -> I
     return square(img, size)
 
 
-def make_face(img: Image.Image, side: int = 128) -> Image.Image:
+# 자세가 넓어 머리를 자동으로 못 찾는 영웅의 얼굴 가운데 (그림 너비·높이에 대한 비율, 뒤집은 뒤 기준)
+FACE_CENTER = {"ninja": (0.36, 0.27), "reaper": (0.4, 0.3), "ki_master": (0.42, 0.2), "gunslinger": (0.42, 0.24),
+               "mechanic": (0.6, 0.22), "star_girl": (0.47, 0.27)}
+
+
+def make_face(img: Image.Image, side: int = 128, hero_id: str = "") -> Image.Image:
     """전신 그림에서 머리 부분을 찾아 정사각형 얼굴 그림을 만든다 (팀 현황·영웅 선택 칸용).
     위쪽 25% 줄에서 불투명한 픽셀의 가운데를 머리 가운데로 본다."""
     w, h = img.size
@@ -395,6 +400,8 @@ def make_face(img: Image.Image, side: int = 128) -> Image.Image:
     cx = xs[len(xs) // 2] if xs else w // 2
     size = int(h * 0.42)
     cy = int(h * 0.2)
+    if hero_id in FACE_CENTER:
+        cx, cy = int(w * FACE_CENTER[hero_id][0]), int(h * FACE_CENTER[hero_id][1])
     box = (cx - size // 2, max(0, cy - size // 2), cx + size // 2, max(0, cy - size // 2) + size)
     face = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     face.paste(img.crop(box), (0, 0))
@@ -406,7 +413,7 @@ def save(img: Image.Image, kind: str, id_: str) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     img.save(out, optimize=True)
     if kind == "heroes" and not id_.endswith("_dragon"):
-        make_face(img).save(out.with_name(id_ + "_face.png"), optimize=True)
+        make_face(img, hero_id=id_).save(out.with_name(id_ + "_face.png"), optimize=True)
     return out
 
 
