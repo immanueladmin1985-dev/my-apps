@@ -48,12 +48,12 @@ glyph = "녀"
 weapon = "staff"
 base_stats = {
 "ability_power": 42.0,
-"armor": 24.0,
+"armor": 28.0,
 "attack": 50.0,
 "attack_speed": 0.75,
 "hp_regen": 2.5,
 "magic_resist": 30.0,
-"max_hp": 600.0,
+"max_hp": 660.0,
 "max_mp": 420.0,
 "move_speed": 225.0,
 "mp_regen": 3.8
@@ -65,7 +65,7 @@ growth_stats = {
 "attack_speed": 0.015,
 "hp_regen": 0.25,
 "magic_resist": 1.5,
-"max_hp": 72.0,
+"max_hp": 80.0,
 "max_mp": 32.0,
 "mp_regen": 0.2
 }

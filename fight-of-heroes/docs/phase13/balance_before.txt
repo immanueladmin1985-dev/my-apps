@@ -1,0 +1,12 @@
+BALANCE 120판, 평균 길이 437초, 일방적인 경기(진 팀 3킬 이하) 25판
+BALANCE monk           승률  59% (70판)  킬 3.8  데스 3.1  영웅 피해 7656
+BALANCE assassin       승률  58% (67판)  킬 4.1  데스 3.1  영웅 피해 6740
+BALANCE summoner       승률  58% (81판)  킬 2.7  데스 2.7  영웅 피해 8459
+BALANCE blade_master   승률  58% (80판)  킬 3.5  데스 2.8  영웅 피해 6954
+BALANCE dragon_knight  승률  55% (65판)  킬 2.6  데스 2.2  영웅 피해 7174
+BALANCE paladin        승률  55% (78판)  킬 1.4  데스 2.2  영웅 피해 4699
+BALANCE elf_archer     승률  47% (68판)  킬 2.8  데스 2.5  영웅 피해 7989
+BALANCE fire_mage      승률  45% (71판)  킬 2.5  데스 3.0  영웅 피해 7768
+BALANCE frost_mage     승률  41% (69판)  킬 2.0  데스 2.7  영웅 피해 7059
+BALANCE saint          승률  23% (71판)  킬 1.2  데스 2.9  영웅 피해 5887
+BALANCE 스크립트 오류 0개
