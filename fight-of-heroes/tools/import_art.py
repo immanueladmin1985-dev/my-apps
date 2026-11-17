@@ -126,6 +126,9 @@ def catalog() -> dict:
         cat[norm(hid + "_skills")] = ("skill_sheet", hid)
         if hname:
             cat[norm(hname + " 스킬")] = ("skill_sheet", hid)
+    # 변신 스킬처럼 Q/W/E/R 칸 밖에 있는 스킬도 스킬 id 로 넣을 수 있다.
+    for f in sorted((ROOT / "data" / "skills").glob("*.tres")):
+        cat.setdefault(norm(f.stem), ("skills", f.stem))
     for st, ko in FX_STYLES.items():
         cat[norm(st + "_fx")] = ("fx_sheet", st)
         cat[norm(ko + " 효과")] = ("fx_sheet", st)
