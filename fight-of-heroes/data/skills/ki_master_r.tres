@@ -7,9 +7,9 @@
 [sub_resource type="Resource" id="DamageEffect_2"]
 script = ExtResource("2")
 damage_type = 1
-base = PackedFloat32Array(220.0, 340.0, 460.0)
-ad_ratio = 0.5
-ap_ratio = 0.9
+base = PackedFloat32Array(200.0, 310.0, 420.0)
+ad_ratio = 0.45
+ap_ratio = 0.85
 gauge_bonus = 0.008
 consume_gauge = true
 

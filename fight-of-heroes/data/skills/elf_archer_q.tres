@@ -18,7 +18,7 @@ width = 34.0
 pierce = true
 max_range = 0.0
 color = Color(0.8, 1, 0.6, 1)
-distance_bonus = 1.0
+distance_bonus = 0.7
 effects = Array[Resource]([SubResource("DamageEffect_2")])
 
 [resource]
@@ -28,7 +28,7 @@ sound = "arrow"
 id = "elf_archer_q"
 display_name = "바람 화살"
 glyph = "바"
-description = "멀리 날아가는 화살을 쏩니다. 적을 꿰뚫고, 멀리 날아가 맞을수록 피해가 늘어납니다(끝에서 2배)."
+description = "멀리 날아가는 화살을 쏩니다. 적을 꿰뚫고, 멀리 날아가 맞을수록 피해가 늘어납니다(끝에서 1.7배)."
 max_rank = 4
 mana_cost = PackedFloat32Array(45.0, 50.0, 55.0, 60.0)
 cooldown = PackedFloat32Array(8.0, 7.5, 7.0, 6.5)

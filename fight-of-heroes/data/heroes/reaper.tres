@@ -19,7 +19,7 @@ to_caster = true
 script = ExtResource("1")
 id = "soul_reap"
 display_name = "영혼 거두기"
-description = "적 영웅을 처치하면 영혼 2개, 도와주면 1개를 얻습니다(최대 30). 영혼 하나당 공격력 +3이고, 죽으면 영혼의 절반을 잃습니다. 적을 처치하면 체력을 회복합니다."
+description = "적 영웅을 처치하면 영혼 2개, 도와주면 1개를 얻습니다(최대 30). 영혼 하나당 공격력 +4이고, 죽으면 영혼의 절반을 잃습니다. 적을 처치하면 체력을 회복합니다."
 trigger = "kill"
 effects = Array[Resource]([SubResource("HealEffect_2")])
 
@@ -34,13 +34,13 @@ color = Color(0.5, 0.3, 0.6, 1)
 glyph = "사"
 weapon = "spear"
 base_stats = {
-"armor": 30.0,
+"armor": 34.0,
 "attack": 62.0,
 "attack_speed": 0.82,
 "hp_regen": 3.0,
 "life_steal": 0.06,
 "magic_resist": 26.0,
-"max_hp": 700.0,
+"max_hp": 750.0,
 "max_mp": 290.0,
 "move_speed": 232.0,
 "mp_regen": 2.5
@@ -59,7 +59,7 @@ attack_range = 75.0
 is_ranged = false
 projectile_speed = 1000.0
 passive = SubResource("PassiveData_1")
-passive_description = "영혼 거두기: 적 영웅을 처치하면 영혼 2개, 도와주면 1개를 얻습니다(최대 30). 영혼 하나당 공격력 +3이고, 죽으면 영혼의 절반을 잃습니다. 적을 처치하면 체력을 회복합니다."
+passive_description = "영혼 거두기: 적 영웅을 처치하면 영혼 2개, 도와주면 1개를 얻습니다(최대 30). 영혼 하나당 공격력 +4이고, 죽으면 영혼의 절반을 잃습니다. 적을 처치하면 체력을 회복합니다."
 skills = Array[Resource]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
 preferred_role = "fighter"
 ai_build = PackedStringArray("swift_boots", "blood_blade", "hero_sword", "guardian_plate", "conqueror_axe", "spirit_king_robe")
@@ -72,5 +72,5 @@ gauge_on_assist = 1.0
 gauge_decay = 0.0
 gauge_keep_on_death = 0.5
 gauge_stat = "attack"
-gauge_stat_per = 3.0
+gauge_stat_per = 4.0
 gauge_color = Color(0.7, 0.4, 0.9, 1)

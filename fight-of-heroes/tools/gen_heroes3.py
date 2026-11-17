@@ -155,7 +155,7 @@ patch("assassin_r", res=dict(reset_on_kill=True, description="대상에게 순�
 # ── 용기사: 분노를 채워야 변신하고, 변신하면 스킬이 바뀐다 ──
 set_passive("dragon_knight", dict(id="dragon_rage", display_name="용의 분노", description="공격하고 맞을수록 분노가 찹니다. 분노가 가득 차야 용으로 변신할 수 있고, 변신하면 Q·W·E 가 용의 스킬로 바뀝니다. 체력이 35% 아래면 방어력·마법 저항력 +30.",
                                   trigger="periodic", interval=0.5, self_below_hp=0.35, effects=[status("dragon_blood", (1.0,), to_caster=True)]),
-            dict(gauge_name="분노", gauge_max=100.0, gauge_on_hit=9.0, gauge_on_damaged=3.5, gauge_on_cast=10.0, gauge_decay_delay=10.0, gauge_decay=2.0, gauge_color=C(1, 0.35, 0.2, 1),
+            dict(gauge_name="분노", gauge_max=100.0, gauge_on_hit=8.0, gauge_on_damaged=3.0, gauge_on_cast=9.0, gauge_decay_delay=8.0, gauge_decay=2.5, gauge_color=C(1, 0.35, 0.2, 1),
                  alt_status="dragon_form"),
             alt_skills=["dragon_knight_tail", "dragon_knight_breath", "dragon_knight_soar"])
 patch("dragon_knight_r", res=dict(requires_gauge=100.0, description="분노가 가득 차면 쓸 수 있습니다. 8~12초 동안 용으로 변신해 체력·공격력·방어력이 크게 오르고, 기본 공격이 멀리 날아가는 화염이 되며, Q·W·E 가 꼬리치기·용의 숨결·비상으로 바뀝니다."))
@@ -171,8 +171,8 @@ skill("dragon_knight_soar", "비상", "비", "날아올라 지정한 곳으로 �
 set_passive("elf_archer", dict(id="hawk_eye", display_name="매의 눈", description="멀리 있는 적을 맞힐수록 기본 공격 피해가 늘어납니다(사거리 끝에서 +20%). 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다.",
                                trigger="attack_hit", every=1, effects=[status("haste", (1.5,), (0.1, 0.12, 0.14, 0.16), to_caster=True)]),
             dict(far_bonus=0.2))
-skill("elf_archer_q", "바람 화살", "바", "멀리 날아가는 화살을 쏩니다. 적을 꿰뚫고, 멀리 날아가 맞을수록 피해가 늘어납니다(끝에서 2배).", 2, (45, 50, 55, 60), (8, 7.5, 7, 6.5),
-      [dict(cls="ProjectileEffect", speed=1700.0, width=34.0, pierce=True, max_range=0.0, color=C(0.8, 1, 0.6, 1), distance_bonus=1.0, effects=[dmg((55, 85, 115, 145), 0, ad=0.8)])],
+skill("elf_archer_q", "바람 화살", "바", "멀리 날아가는 화살을 쏩니다. 적을 꿰뚫고, 멀리 날아가 맞을수록 피해가 늘어납니다(끝에서 1.7배).", 2, (45, 50, 55, 60), (8, 7.5, 7, 6.5),
+      [dict(cls="ProjectileEffect", speed=1700.0, width=34.0, pierce=True, max_range=0.0, color=C(0.8, 1, 0.6, 1), distance_bonus=0.7, effects=[dmg((55, 85, 115, 145), 0, ad=0.8)])],
       rng=1000, width=34, ai_range=900, vfx="nature", sound="arrow", color=C(0.7, 1, 0.5, 1))
 skill("elf_archer_w", "가시 덫", "덫", "지정한 곳에 덫을 숨겨 둡니다(최대 3개, 40초). 적이 밟으면 터져 마법 피해를 주고 기절시킵니다. 적에게는 보이지 않습니다.", 3, (55,), (10, 9, 8, 7),
       [dict(cls="TrapEffect", radius=100.0, lifetime=40.0, arm_time=0.6, max_traps=3, effects=[dmg((50, 80, 110, 140), 1, ad=0.4), stun((1.1, 1.2, 1.3, 1.4))])],

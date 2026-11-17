@@ -38,12 +38,12 @@ glyph = "닌"
 weapon = "dagger"
 base_stats = {
 "armor": 24.0,
-"attack": 56.0,
+"attack": 53.0,
 "attack_speed": 0.95,
 "crit_chance": 0.15,
 "hp_regen": 2.8,
 "magic_resist": 26.0,
-"max_hp": 590.0,
+"max_hp": 580.0,
 "max_mp": 300.0,
 "move_speed": 250.0,
 "mp_regen": 2.6

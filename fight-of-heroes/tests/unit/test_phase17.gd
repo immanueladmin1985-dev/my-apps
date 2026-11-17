@@ -21,8 +21,8 @@ func test_ninja_single_clone_mirrors_and_swaps() -> void:
 	var clones := _summons(n, "shadow_clone")
 	eq(clones.size(), 1, "분신 하나")
 	var c: Monster = clones[0]
-	near(c.health.max_hp(), n.health.max_hp() * 0.55, 1.0, "4단계: 본체 체력의 55%")
-	near(c.stats.get_stat("attack"), n.stats.get_stat("attack") * 0.55, 0.5, "공격력도 55%")
+	near(c.health.max_hp(), n.health.max_hp() * 0.48, 1.0, "4단계: 본체 체력의 48%")
+	near(c.stats.get_stat("attack"), n.stats.get_stat("attack") * 0.48, 0.5, "공격력도 48%")
 	# 수리검 부채: 분신도 따라 던진다
 	c.global_position = Vector2(400, 600)
 	var before := get_tree().get_nodes_in_group("effects_layer")[0].get_children().filter(func(p): return p is Projectile and p.owner_unit == c).size()
@@ -274,7 +274,7 @@ func test_reaper_souls_and_execute() -> void:
 	var victim := _hero("blade_master", Vector2(600, 5900), Enums.Team.RED)
 	EventBus.hero_killed.emit(victim, r, [])
 	eq(r.gauge, 2.0, "처치하면 영혼 2개")
-	near(r.stats.get_stat("attack"), atk0 + 6.0, 0.01, "영혼 하나당 공격력 +3")
+	near(r.stats.get_stat("attack"), atk0 + 8.0, 0.01, "영혼 하나당 공격력 +4")
 	r.die(null)
 	eq(r.gauge, 1.0, "죽으면 절반을 잃음")
 	r.respawn_at(Vector2(400, 5900))

@@ -66,7 +66,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_unit_died(victim, killer) -> void:
-	if not (victim is Hero):
+	# 경기가 끝난 뒤(결과 화면이 뜨기 전)에 쓰러진 것은 점수에 넣지 않는다.
+	if not (victim is Hero) or match_over:
 		return
 	victim.deaths += 1
 	var bounty := bounty_of(victim)
