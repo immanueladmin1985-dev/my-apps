@@ -27,7 +27,7 @@ MAP_OBJECTS = ["base_fountain", "shop", "center_stage", "camp_ring", "boss_altar
                "tree_1", "tree_2", "bush", "rock_1", "rock_2", "crystal", "torch", "pillar", "barrel", "crate"]
 
 # 게임은 캐릭터가 오른쪽을 본다고 보고 왼쪽으로 갈 때 뒤집는다. 왼쪽을 보고 그려진 그림은 넣을 때 뒤집는다.
-FACING_LEFT = {"saint", "frost_mage", "gunslinger", "mechanic"}
+FACING_LEFT = {"reaper", "star_girl"}
 
 KINDS = {
     "heroes": ("assets/heroes", 384),
