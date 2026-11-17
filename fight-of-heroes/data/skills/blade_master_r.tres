@@ -11,7 +11,7 @@ script = ExtResource("2")
 damage_type = 0
 base = PackedFloat32Array(160.0, 250.0, 340.0)
 ad_ratio = 1.4
-gauge_bonus = 0.2
+gauge_bonus = 0.25
 consume_gauge = true
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]
@@ -35,7 +35,7 @@ sound = "slash"
 id = "blade_master_r"
 display_name = "일섬"
 glyph = "섬"
-description = "한 줄기 섬광처럼 멀리 돌진해 지나간 적에게 큰 물리 피해를 주고 기절시킵니다. 검기 하나당 피해가 20% 늘고, 검기를 모두 씁니다."
+description = "한 줄기 섬광처럼 멀리 돌진해 지나간 적에게 큰 물리 피해를 주고 기절시킵니다. 검기 하나당 피해가 25% 늘고, 검기를 모두 씁니다."
 max_rank = 3
 mana_cost = PackedFloat32Array(100.0, 110.0, 120.0)
 cooldown = PackedFloat32Array(60.0, 50.0, 40.0)

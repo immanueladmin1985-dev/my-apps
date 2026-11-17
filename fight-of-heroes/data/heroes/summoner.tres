@@ -42,13 +42,13 @@ color = Color(0.6, 0.45, 0.85, 1)
 glyph = "소"
 weapon = "book"
 base_stats = {
-"ability_power": 25.0,
+"ability_power": 28.0,
 "armor": 18.0,
 "attack": 45.0,
 "attack_speed": 0.75,
 "hp_regen": 2.2,
 "magic_resist": 28.0,
-"max_hp": 520.0,
+"max_hp": 560.0,
 "max_mp": 400.0,
 "move_speed": 225.0,
 "mp_regen": 3.6
@@ -69,7 +69,7 @@ is_ranged = true
 attack_vfx = "dark"
 projectile_speed = 1000.0
 passive = ExtResource("pz1")
-passive_description = "망자의 부름: 근처(650)에서 적이나 몬스터가 쓰러지면 그 자리에서 해골 전사를 일으킵니다(2초마다, 해골은 최대 6마리)."
+passive_description = "망자의 부름: 근처(700)에서 적이나 몬스터가 쓰러지면 그 자리에서 해골 전사를 일으킵니다(1.5초마다, 해골은 최대 6마리)."
 skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("mage_boots", "chrono_scepter", "archmage_crown", "immortal_amulet", "spirit_king_robe", "dragon_shield")

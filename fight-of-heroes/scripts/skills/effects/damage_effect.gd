@@ -49,7 +49,7 @@ func apply(ctx: SkillContext) -> void:
 	var boss: bool = t is Monster and t.is_boss()
 	if ex > 0.0 and not boss and t.health.ratio() <= ex:
 		# 처형: 남은 체력과 보호막을 넘는 피해로 쓰러뜨린다.
-		info.amount = 999999.0
+		info.amount = t.health.hp + t.health.shield_total() + 1.0
 		info.type = Enums.DamageType.TRUE
 		if c is Hero and c.controller is PlayerController:
 			EventBus.notice.emit("처형!")

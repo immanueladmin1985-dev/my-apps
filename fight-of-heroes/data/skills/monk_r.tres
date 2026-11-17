@@ -13,7 +13,7 @@ damage_type = 0
 base = PackedFloat32Array(80.0, 120.0, 160.0)
 ad_ratio = 0.5
 ap_ratio = 0.0
-gauge_bonus = 0.15
+gauge_bonus = 0.1
 
 [sub_resource type="Resource" id="AreaEffect_4"]
 script = ExtResource("5")
@@ -41,7 +41,7 @@ damage_type = 0
 base = PackedFloat32Array(180.0, 270.0, 360.0)
 ad_ratio = 1.2
 ap_ratio = 0.0
-gauge_bonus = 0.15
+gauge_bonus = 0.1
 
 [sub_resource type="Resource" id="DashEffect_1"]
 script = ExtResource("1")

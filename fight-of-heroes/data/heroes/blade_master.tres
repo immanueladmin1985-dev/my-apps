@@ -37,13 +37,13 @@ glyph = "검"
 weapon = "sword"
 base_stats = {
 "armor": 32.0,
-"attack": 59.0,
+"attack": 63.0,
 "attack_speed": 0.85,
 "crit_chance": 0.1,
 "crit_damage": 1.75,
 "hp_regen": 3.0,
 "magic_resist": 25.0,
-"max_hp": 680.0,
+"max_hp": 720.0,
 "max_mp": 300.0,
 "move_speed": 230.0,
 "mp_regen": 2.5
@@ -62,7 +62,7 @@ attack_range = 60.0
 is_ranged = false
 projectile_speed = 900.0
 passive = ExtResource("pz1")
-passive_description = "검기: 기본 공격이 맞을 때마다 검기가 1 쌓입니다(최대 5, 6초 동안 공격하지 않으면 줄어듦). 일섬은 검기 하나당 20% 더 세지고 검기를 모두 씁니다."
+passive_description = "검기: 기본 공격이 맞을 때마다 검기가 1 쌓입니다(최대 5, 6초 동안 공격하지 않으면 줄어듦). 일섬은 검기 하나당 25% 더 세지고 검기를 모두 씁니다."
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 preferred_role = "fighter"
 ai_build = PackedStringArray("plated_boots", "blood_blade", "guardian_plate", "hero_sword", "conqueror_axe", "spirit_king_robe")

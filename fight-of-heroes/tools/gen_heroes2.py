@@ -60,13 +60,13 @@ hero("ninja", "그림자 닌자", "분신 교란 암습", 3, "그림자 마을�
      (0.35, 0.4, 0.55), "닌", "dagger",
      dict(max_hp=590, max_mp=300, attack=56, armor=24, magic_resist=26, attack_speed=0.95, move_speed=250, crit_chance=0.15, hp_regen=2.8, mp_regen=2.6),
      MELEE_G, 55, False, "hunter", AD_MELEE,
-     dict(id="shadow_blade", display_name="그림자 칼날", description="세 번째 기본 공격마다 추가 물리 피해를 줍니다. 분신이 살아 있으면 피해가 2배입니다.", trigger="attack_hit", every=3,
-          effects=[dmg((30, 50, 70, 90), 0, ad=0.4) | dict(summon_bonus_id="shadow_clone", summon_bonus=1.0)]),
+     dict(id="shadow_blade", display_name="그림자 칼날", description="세 번째 기본 공격마다 추가 물리 피해를 줍니다. 분신이 살아 있으면 피해가 50% 늘어납니다.", trigger="attack_hit", every=3,
+          effects=[dmg((30, 50, 70, 90), 0, ad=0.4) | dict(summon_bonus_id="shadow_clone", summon_bonus=0.5)]),
      [dict(name="수리검 부채", glyph="수", desc="수리검 3개를 부채꼴로 던져 각각 물리 피해를 주고 1초 동안 둔화시킵니다. 분신도 같은 곳을 향해 함께 던집니다.", mode=2, mana_cost=(40,), cd=(6, 5.5, 5, 4.5), rng=650, width=60,
            effects=[fan([proj([dmg((45, 70, 95, 120), 0, ad=0.5), slow((1.0,), (0.25,))], speed=1500, width=34)], 3, 14)], vfx="shadow", sound="arrow", color=C(0.7, 0.75, 0.9, 1)),
-      dict(name="분신술", glyph="분", desc="25초 동안 본체를 닮은 분신 하나를 만듭니다. 분신은 본체 능력치의 40/50/60/70%를 가지고, 본체가 수리검 부채·그림자 난무를 쓰면 따라 씁니다. 6초 안에 다시 누르면 분신과 자리를 바꿉니다.",
-           mode=0, mana_cost=(60,), cd=(18, 17, 16, 15),
-           effects=[summon("shadow_clone", (1,), (25,)) | dict(owner_stat_ratio=P(0.4, 0.5, 0.6, 0.7), max_alive=1, mirror_slots=PI(0, 3))], ai=5, vfx="shadow", sound="summon", color=C(0.4, 0.4, 0.55, 1),
+      dict(name="분신술", glyph="분", desc="20초 동안 본체를 닮은 분신 하나를 만듭니다. 분신은 본체 능력치의 30/38/46/55%를 가지고, 본체가 수리검 부채·그림자 난무를 쓰면 따라 씁니다. 6초 안에 다시 누르면 분신과 자리를 바꿉니다.",
+           mode=0, mana_cost=(60,), cd=(20, 19, 18, 17),
+           effects=[summon("shadow_clone", (1,), (20,)) | dict(owner_stat_ratio=P(0.3, 0.38, 0.46, 0.55), max_alive=1, mirror_slots=PI(0, 3))], ai=5, vfx="shadow", sound="summon", color=C(0.4, 0.4, 0.55, 1),
            recast_effects=[dict(cls="TeleportEffect", distance=0.0, behind=0.0, destination="summon:shadow_clone", arrive_effects=[])], recast_window=6.0, recast_requires="summon:shadow_clone"),
       dict(name="바꿔치기", glyph="바", desc="조준한 방향으로 순간이동하고 1.5초 동안 은신합니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 갑니다.", mode=2, mana_cost=(45,), cd=(13, 12, 11, 10), rng=360,
            effects=[tele(360), status("stealth", (1.5,), to_caster=True)], ai=3, away=True, vfx="shadow", sound="teleport", color=C(0.5, 0.5, 0.6, 1)),
@@ -77,9 +77,9 @@ hero("ninja", "그림자 닌자", "분신 교란 암습", 3, "그림자 마을�
 # ── 총잡이: 먼 거리에서 꾸준히 쏘고, 구르기로 거리를 벌린다 ──
 hero("gunslinger", "총잡이", "원거리 연사 딜러", 2, "황야를 떠도는 명사수. 쌍권총으로 쉴 새 없이 쏘아대고, 위험하면 굴러서 빠져나간다.",
      (0.85, 0.6, 0.35), "총", "bow",
-     dict(max_hp=510, max_mp=300, attack=47, armor=20, magic_resist=25, attack_speed=0.85, move_speed=230, crit_chance=0.1, hp_regen=2.5, mp_regen=2.6),
+     dict(max_hp=530, max_mp=300, attack=50, armor=20, magic_resist=25, attack_speed=0.85, move_speed=230, crit_chance=0.1, hp_regen=2.5, mp_regen=2.6),
      RANGED_G, 440, True, "hunter", AD_RANGED,
-     dict(id="six_shooter", display_name="육연발", description="탄창에 6발이 들어 있습니다. 6발을 다 쏘면 1.2초 동안 재장전하고, 마지막 한 발은 2배 피해입니다. 구르기를 쓰면 바로 재장전합니다.", trigger="attack_hit", every=1, effects=[]),
+     dict(id="six_shooter", display_name="육연발", description="탄창에 6발이 들어 있습니다. 6발을 다 쏘면 0.9초 동안 재장전하고, 마지막 한 발은 2.5배 피해입니다. 구르기를 쓰면 바로 재장전합니다.", trigger="attack_hit", every=1, effects=[]),
      [dict(name="조준 사격", glyph="조", desc="0.6초 동안 멈춰 조준한 뒤, 아주 먼 곳까지 한 줄로 꿰뚫는 저격탄을 쏴 큰 물리 피해를 줍니다.", mode=2, mana_cost=(50,), cd=(9, 8.5, 8, 7.5), rng=1300, width=44,
            effects=[linez(1300, 44, [dmg((90, 140, 190, 240), 0, ad=1.0)], delay=0.6, color=C(1, 0.9, 0.5, 0.4))], ai_range=1100, cast_lock=0.6, vfx="bullet", sound="arrow", color=C(1, 0.85, 0.5, 1)),
       dict(name="섬광탄", glyph="섬", desc="지정한 곳에 0.5초 뒤 섬광탄을 터뜨려 물리 피해를 주고 1초 동안 기절시킵니다.", mode=3, mana_cost=(65,), cd=(13, 12, 11, 10), rng=600, radius=130,
@@ -90,14 +90,14 @@ hero("gunslinger", "총잡이", "원거리 연사 딜러", 2, "황야를 떠도�
            effects=[barrage([proj([dmg((22, 32, 42), 0, ad=0.15), slow((0.6,), (0.2,))], speed=1900, width=30, rng=820)], 16, 0.15, spread=11, slow=0.35, sound="arrow")],
            vfx="bullet", sound="arrow", color=C(1, 0.8, 0.4, 1))],
      aggr=0.5, pspeed=1500.0, avfx="bullet",
-     extra=dict(magazine_size=6, reload_time=1.2, last_shot_mult=2.0, gauge_pips=True))
+     extra=dict(magazine_size=6, reload_time=0.9, last_shot_mult=2.5))
 
 # ── 기공사: 기를 모아 한 방에 쏟아내는 근접·마법 혼합형 ──
 hero("ki_master", "기공사", "기공 원거리 격투가", 2, "산에서 수련한 무도가. 주먹으로 기탄을 날려 떨어진 적을 치고, 모은 기를 거대한 기공파로 터뜨린다.",
      (1.0, 0.75, 0.25), "기", "fist",
      dict(max_hp=590, max_mp=320, attack=48, ability_power=18, armor=25, magic_resist=26, attack_speed=0.85, move_speed=235, hp_regen=2.8, mp_regen=2.8),
      HYBRID_G, 320, True, "fighter", ["swift_boots", "hero_sword", "chrono_scepter", "guardian_plate", "archmage_crown", "dragon_shield"],
-     dict(id="fighting_spirit", display_name="기와 투지", description="공격이 맞으면 기가 찹니다(최대 100, 기본 공격 10, 장풍 15). 가까운 적(130 안)은 기탄 대신 주먹으로 25% 세게 칩니다. 체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다).", trigger="attack_hit", every=1,
+     dict(id="fighting_spirit", display_name="기와 투지", description="공격이 맞으면 기가 찹니다(최대 100, 기본 공격 10, 장풍 15). 가까운 적(130 안)은 기탄 대신 주먹으로 15% 세게 칩니다. 체력이 40% 아래일 때 기본 공격이 맞으면 보호막을 얻습니다 (20초마다).", trigger="attack_hit", every=1,
           self_below_hp=0.4, cooldown=20.0, effects=[shield((90, 150, 210, 270), (4,), ap=0.5)]),
      [dict(name="장풍", glyph="장", desc="기 덩어리를 쏴 처음 맞은 적과 주변에 마법 피해를 줍니다.", mode=2, mana_cost=(45,), cd=(6, 5.5, 5, 4.5), rng=600, width=50,
            effects=[proj([dmg((70, 110, 150, 190), 1, ad=0.4, ap=0.6), area(2, 100, [dmg((25, 40, 55, 70), 1, ap=0.3)]), stack("gauge", 15)], speed=1200, width=50)], vfx="ki", sound="fire", color=C(1, 0.9, 0.4, 1)),
@@ -109,7 +109,7 @@ hero("ki_master", "기공사", "기공 원거리 격투가", 2, "산에서 수�
            effects=[linez(1000, 170, [dmg((220, 340, 460), 1, ad=0.5, ap=0.9) | dict(gauge_bonus=0.008, consume_gauge=True)], delay=0.9)], vfx="ki", sound="meteor", color=C(1, 0.9, 0.4, 1))],
      aggr=0.6, pspeed=1100.0, avfx="ki",
      extra=dict(gauge_name="기", gauge_max=100.0, gauge_on_hit=10.0, gauge_decay_delay=5.0, gauge_decay=6.0, gauge_color=C(1, 0.85, 0.3, 1),
-                close_melee_range=130.0, close_mult=1.25))
+                close_melee_range=130.0, close_mult=1.15))
 
 # ── 마법소녀: 별빛으로 아군을 북돋우고 적을 묶는 지원 마법사 ──
 hero("star_girl", "별빛 마법소녀", "지원형 마법사", 2, "별의 힘을 빌린 마법소녀. 리본으로 적을 묶고, 응원으로 아군을 북돋우며, 별빛을 쏟아붓는다.",

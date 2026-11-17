@@ -20,7 +20,7 @@ damage_type = 0
 base = PackedFloat32Array(70.0, 105.0, 140.0, 175.0)
 ad_ratio = 0.7
 ap_ratio = 0.0
-gauge_bonus = 0.15
+gauge_bonus = 0.1
 
 [sub_resource type="Resource" id="DashEffect_1"]
 script = ExtResource("1")

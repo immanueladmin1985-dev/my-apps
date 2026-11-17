@@ -131,12 +131,12 @@ status_def("ribbon_link", "리본 연결", 3, (1, 0.6, 0.85, 1), [("attack", 20,
 GOLD = (1, 0.85, 0.3, 1)
 
 # ── 검성: 검기를 쌓아 일섬으로 터뜨린다. 돌진 베기로 처치하면 바로 다시 쓴다 ──
-set_passive("blade_master", dict(id="sword_qi", display_name="검기", description="기본 공격이 맞을 때마다 검기가 1 쌓입니다(최대 5, 6초 동안 공격하지 않으면 줄어듦). 일섬은 검기 하나당 20% 더 세지고 검기를 모두 씁니다.",
+set_passive("blade_master", dict(id="sword_qi", display_name="검기", description="기본 공격이 맞을 때마다 검기가 1 쌓입니다(최대 5, 6초 동안 공격하지 않으면 줄어듦). 일섬은 검기 하나당 25% 더 세지고 검기를 모두 씁니다.",
                                  trigger="attack_hit", every=1, effects=[]),
             dict(gauge_name="검기", gauge_max=5.0, gauge_on_hit=1.0, gauge_decay_delay=6.0, gauge_decay=1.0, gauge_pips=True, gauge_color=C(0.6, 0.85, 1, 1)))
 patch("blade_master_q", res=dict(reset_on_kill=True, description="바라보는 방향으로 빠르게 돌진하며 지나가는 길의 적에게 물리 피해를 줍니다. 이 스킬로 적을 처치하면 바로 다시 쓸 수 있습니다."))
-patch("blade_master_r", res=dict(description="한 줄기 섬광처럼 멀리 돌진해 지나간 적에게 큰 물리 피해를 주고 기절시킵니다. 검기 하나당 피해가 20% 늘고, 검기를 모두 씁니다."),
-      subs={"DamageEffect*": dict(gauge_bonus=0.2, consume_gauge=True)})
+patch("blade_master_r", res=dict(description="한 줄기 섬광처럼 멀리 돌진해 지나간 적에게 큰 물리 피해를 주고 기절시킵니다. 검기 하나당 피해가 25% 늘고, 검기를 모두 씁니다."),
+      subs={"DamageEffect*": dict(gauge_bonus=0.25, consume_gauge=True)})
 
 # ── 암살자: 뒤에서 치면 세고, 표식 단검으로 파고들며, 처형으로 처치하면 바로 다시 쓴다 ──
 set_passive("assassin", dict(id="backstab", display_name="뒤치기", description="적의 뒤쪽에서 주는 모든 피해가 40% 늘어납니다.",
@@ -155,7 +155,7 @@ patch("assassin_r", res=dict(reset_on_kill=True, description="대상에게 순�
 # ── 용기사: 분노를 채워야 변신하고, 변신하면 스킬이 바뀐다 ──
 set_passive("dragon_knight", dict(id="dragon_rage", display_name="용의 분노", description="공격하고 맞을수록 분노가 찹니다. 분노가 가득 차야 용으로 변신할 수 있고, 변신하면 Q·W·E 가 용의 스킬로 바뀝니다. 체력이 35% 아래면 방어력·마법 저항력 +30.",
                                   trigger="periodic", interval=0.5, self_below_hp=0.35, effects=[status("dragon_blood", (1.0,), to_caster=True)]),
-            dict(gauge_name="분노", gauge_max=100.0, gauge_on_hit=7.0, gauge_on_damaged=2.5, gauge_on_cast=8.0, gauge_decay_delay=8.0, gauge_decay=3.0, gauge_color=C(1, 0.35, 0.2, 1),
+            dict(gauge_name="분노", gauge_max=100.0, gauge_on_hit=9.0, gauge_on_damaged=3.5, gauge_on_cast=10.0, gauge_decay_delay=10.0, gauge_decay=2.0, gauge_color=C(1, 0.35, 0.2, 1),
                  alt_status="dragon_form"),
             alt_skills=["dragon_knight_tail", "dragon_knight_breath", "dragon_knight_soar"])
 patch("dragon_knight_r", res=dict(requires_gauge=100.0, description="분노가 가득 차면 쓸 수 있습니다. 8~12초 동안 용으로 변신해 체력·공격력·방어력이 크게 오르고, 기본 공격이 멀리 날아가는 화염이 되며, Q·W·E 가 꼬리치기·용의 숨결·비상으로 바뀝니다."))
@@ -168,9 +168,9 @@ skill("dragon_knight_soar", "비상", "비", "날아올라 지정한 곳으로 �
       [tele(0, arrive=[area(0, 170, [dmg((90, 135, 180, 225), 0, ad=0.7), knock(160)])])], rng=550, radius=170, ai=1, vfx="fire", sound="explosion", color=C(1, 0.55, 0.25, 1))
 
 # ── 엘프 궁수: 멀리서 쏠수록 세고, 덫을 깔아 둔다 ──
-set_passive("elf_archer", dict(id="hawk_eye", display_name="매의 눈", description="멀리 있는 적을 맞힐수록 기본 공격 피해가 늘어납니다(사거리 끝에서 +30%). 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다.",
+set_passive("elf_archer", dict(id="hawk_eye", display_name="매의 눈", description="멀리 있는 적을 맞힐수록 기본 공격 피해가 늘어납니다(사거리 끝에서 +20%). 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다.",
                                trigger="attack_hit", every=1, effects=[status("haste", (1.5,), (0.1, 0.12, 0.14, 0.16), to_caster=True)]),
-            dict(far_bonus=0.3))
+            dict(far_bonus=0.2))
 skill("elf_archer_q", "바람 화살", "바", "멀리 날아가는 화살을 쏩니다. 적을 꿰뚫고, 멀리 날아가 맞을수록 피해가 늘어납니다(끝에서 2배).", 2, (45, 50, 55, 60), (8, 7.5, 7, 6.5),
       [dict(cls="ProjectileEffect", speed=1700.0, width=34.0, pierce=True, max_range=0.0, color=C(0.8, 1, 0.6, 1), distance_bonus=1.0, effects=[dmg((55, 85, 115, 145), 0, ad=0.8)])],
       rng=1000, width=34, ai_range=900, vfx="nature", sound="arrow", color=C(0.7, 1, 0.5, 1))
@@ -180,7 +180,7 @@ skill("elf_archer_w", "가시 덫", "덫", "지정한 곳에 덫을 숨겨 둡�
 
 # ── 화염술사: 화상을 터뜨리고 불바다를 남긴다 ──
 set_passive("fire_mage", dict(id="ignite", display_name="점화", description="기본 공격이 3초 동안 적을 불태웁니다. 불타는 적에게 화염구·메테오를 맞히면 화상을 터뜨려 추가 피해를 줍니다.",
-                              trigger="attack_hit", every=1, effects=[status("burn", (3,), (8, 14, 20, 26))]))
+                              trigger="attack_hit", every=1, effects=[status("burn", (3,), (12, 18, 24, 30))]))
 patch("fire_mage_q", res=dict(description="화염구를 던집니다. 처음 맞은 적과 주변에 마법 피해를 주고, 불타는 적은 화상이 터져 피해가 60% 늘어납니다."),
       subs={"DamageEffect*": dict(status_bonus_id="burn", status_bonus=0.6, status_consume=True)})
 skill("fire_mage_w", "불기둥", "기", "지정한 곳에 0.6초 뒤 불기둥을 세워 마법 피해를 주고 불태웁니다. 그 자리에 3초 동안 불길이 남아 계속 피해를 줍니다.", 3, (70,), (10, 9.5, 9, 8.5),
@@ -200,13 +200,13 @@ skill("frost_mage_e", "얼음벽", "벽", "지정한 곳에 길을 막는 얼음
       [dict(cls="WallEffect", length=300.0, thickness=36.0, duration=P(2.5, 3.0, 3.5, 4.0), style="ice")], rng=600, radius=150, ai=3, vfx="ice", sound="ice", color=C(0.7, 0.9, 1, 1))
 
 # ── 무투가: 스킬을 이어 쓸수록 세고, 철산고로 벽에 처박는다 ──
-set_passive("monk", dict(id="flurry", display_name="연타·연계", description="세 번째 공격마다 추가 물리 피해를 주고 3초 동안 공격 속도가 30% 빨라집니다. 스킬을 쓸 때마다 연계가 1 쌓여(최대 3, 2.5초) 다음 스킬 피해가 하나당 15% 늘어납니다.",
+set_passive("monk", dict(id="flurry", display_name="연타·연계", description="세 번째 공격마다 추가 물리 피해를 주고 3초 동안 공격 속도가 30% 빨라집니다. 스킬을 쓸 때마다 연계가 1 쌓여(최대 3, 2.5초) 다음 스킬 피해가 하나당 10% 늘어납니다.",
                          trigger="attack_hit", every=3, effects=[dmg((20, 35, 50, 65), 0, ad=0.3), status("monk_flow", (3,), to_caster=True)]),
             dict(gauge_name="연계", gauge_max=3.0, gauge_on_cast=1.0, gauge_decay_delay=2.5, gauge_decay=3.0, gauge_pips=True, gauge_color=C(1, 0.7, 0.3, 1)))
 for sid in ["monk_q", "monk_w", "monk_r"]:
-    patch(sid, subs={"DamageEffect*": dict(gauge_bonus=0.15)})
+    patch(sid, subs={"DamageEffect*": dict(gauge_bonus=0.1)})
 skill("monk_e", "철산고", "철", "어깨로 짧게 들이받아 물리 피해를 주고 멀리 밀쳐냅니다. 벽에 부딪힌 적은 1.2초 동안 기절합니다.", 2, (45,), (11, 10, 9, 8),
-      [dash(160, [dmg((70, 105, 140, 175), 0, ad=0.7, ap=0.0) | dict(gauge_bonus=0.15), knock(260, wall="stun", wall_duration=1.2)], speed=1300, width=70)],
+      [dash(160, [dmg((70, 105, 140, 175), 0, ad=0.7, ap=0.0) | dict(gauge_bonus=0.1), knock(260, wall="stun", wall_duration=1.2)], speed=1300, width=70)],
       rng=160, width=70, ai=0, ai_range=220, vfx="impact", sound="punch", color=C(1, 0.75, 0.4, 1))
 
 # ── 성기사: 도발로 적을 끌고, 수호로 아군의 피해를 나눠 받는다 (패시브는 그대로) ──
@@ -225,8 +225,8 @@ skill("saint_r", "부활의 기도", "부", "가장 최근에 쓰러진 아군 �
       radius=650, team=1, ai=4, max_rank=3, vfx="holy", sound="heal", color=C(1, 1, 0.7, 1))
 
 # ── 소환술사: 해골 군단을 거느리고, 근처에서 쓰러진 적 자리에서 해골을 일으킨다 ──
-set_passive("summoner", dict(id="raise_dead", display_name="망자의 부름", description="근처(650)에서 적이나 몬스터가 쓰러지면 그 자리에서 해골 전사를 일으킵니다(2초마다, 해골은 최대 6마리).",
-                             trigger="nearby_death", radius=650.0, cooldown=2.0,
+set_passive("summoner", dict(id="raise_dead", display_name="망자의 부름", description="근처(700)에서 적이나 몬스터가 쓰러지면 그 자리에서 해골 전사를 일으킵니다(1.5초마다, 해골은 최대 6마리).",
+                             trigger="nearby_death", radius=700.0, cooldown=1.5,
                              effects=[dict(cls="SummonEffect", monster_id="skeleton", count=PI(1), duration=P(14), at_context_point=True, max_alive=6)]))
 patch("summoner_q", res=dict(description="14초 동안 해골 전사 2~3마리를 부릅니다. 해골은 최대 6마리까지 거느릴 수 있습니다."), subs={"SummonEffect*": dict(max_alive=6)})
 

@@ -11,7 +11,7 @@
 script = ExtResource("1")
 id = "six_shooter"
 display_name = "육연발"
-description = "탄창에 6발이 들어 있습니다. 6발을 다 쏘면 1.2초 동안 재장전하고, 마지막 한 발은 2배 피해입니다. 구르기를 쓰면 바로 재장전합니다."
+description = "탄창에 6발이 들어 있습니다. 6발을 다 쏘면 0.9초 동안 재장전하고, 마지막 한 발은 2.5배 피해입니다. 구르기를 쓰면 바로 재장전합니다."
 trigger = "attack_hit"
 every = 1
 effects = Array[Resource]([])
@@ -28,12 +28,12 @@ glyph = "총"
 weapon = "bow"
 base_stats = {
 "armor": 20.0,
-"attack": 47.0,
+"attack": 50.0,
 "attack_speed": 0.85,
 "crit_chance": 0.1,
 "hp_regen": 2.5,
 "magic_resist": 25.0,
-"max_hp": 510.0,
+"max_hp": 530.0,
 "max_mp": 300.0,
 "move_speed": 230.0,
 "mp_regen": 2.6
@@ -52,14 +52,13 @@ attack_range = 440.0
 is_ranged = true
 projectile_speed = 1500.0
 passive = SubResource("PassiveData_1")
-passive_description = "육연발: 탄창에 6발이 들어 있습니다. 6발을 다 쏘면 1.2초 동안 재장전하고, 마지막 한 발은 2배 피해입니다. 구르기를 쓰면 바로 재장전합니다."
+passive_description = "육연발: 탄창에 6발이 들어 있습니다. 6발을 다 쏘면 0.9초 동안 재장전하고, 마지막 한 발은 2.5배 피해입니다. 구르기를 쓰면 바로 재장전합니다."
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("berserker_boots", "storm_bow", "hero_sword", "blood_blade", "dragon_shield", "immortal_amulet")
 ai_skill_priority = PackedInt32Array(0, 1, 2)
 ai_aggression = 0.5
 magazine_size = 6
-reload_time = 1.2
-last_shot_mult = 2.0
-gauge_pips = true
+reload_time = 0.9
+last_shot_mult = 2.5
 attack_vfx = "bullet"

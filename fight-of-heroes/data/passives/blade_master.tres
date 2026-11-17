@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "sword_qi"
 display_name = "검기"
-description = "기본 공격이 맞을 때마다 검기가 1 쌓입니다(최대 5, 6초 동안 공격하지 않으면 줄어듦). 일섬은 검기 하나당 20% 더 세지고 검기를 모두 씁니다."
+description = "기본 공격이 맞을 때마다 검기가 1 쌓입니다(최대 5, 6초 동안 공격하지 않으면 줄어듦). 일섬은 검기 하나당 25% 더 세지고 검기를 모두 씁니다."
 trigger = "attack_hit"
 every = 1
 effects = Array[Resource]([])

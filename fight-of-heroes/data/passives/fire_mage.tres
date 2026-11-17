@@ -8,7 +8,7 @@
 script = ExtResource("1")
 status = ExtResource("2")
 duration = PackedFloat32Array(3.0)
-magnitude = PackedFloat32Array(8.0, 14.0, 20.0, 26.0)
+magnitude = PackedFloat32Array(12.0, 18.0, 24.0, 30.0)
 to_caster = false
 ad_ratio = 0.0
 ap_ratio = 0.0

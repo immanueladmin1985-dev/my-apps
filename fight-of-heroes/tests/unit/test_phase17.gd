@@ -21,8 +21,8 @@ func test_ninja_single_clone_mirrors_and_swaps() -> void:
 	var clones := _summons(n, "shadow_clone")
 	eq(clones.size(), 1, "분신 하나")
 	var c: Monster = clones[0]
-	near(c.health.max_hp(), n.health.max_hp() * 0.7, 1.0, "4단계: 본체 체력의 70%")
-	near(c.stats.get_stat("attack"), n.stats.get_stat("attack") * 0.7, 0.5, "공격력도 70%")
+	near(c.health.max_hp(), n.health.max_hp() * 0.55, 1.0, "4단계: 본체 체력의 55%")
+	near(c.stats.get_stat("attack"), n.stats.get_stat("attack") * 0.55, 0.5, "공격력도 55%")
 	# 수리검 부채: 분신도 따라 던진다
 	c.global_position = Vector2(400, 600)
 	var before := get_tree().get_nodes_in_group("effects_layer")[0].get_children().filter(func(p): return p is Projectile and p.owner_unit == c).size()
@@ -125,7 +125,7 @@ func test_dragon_tail_knocks_into_wall() -> void:
 
 func test_elf_far_bonus_and_traps() -> void:
 	var el := _hero("elf_archer", Vector2(400, 2500))
-	near(el.attack.far_bonus, 0.3, 0.001, "거리 보너스")
+	near(el.attack.far_bonus, 0.2, 0.001, "거리 보너스")
 	var t := _hero("elf_archer", Vector2(1400, 2500))
 	t.skill_caster.setup(t.data.skills, 1)
 	for i in 4:

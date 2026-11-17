@@ -10,7 +10,7 @@ damage_type = 0
 base = PackedFloat32Array(20.0, 30.0, 40.0, 50.0)
 ad_ratio = 0.35
 ap_ratio = 0.0
-gauge_bonus = 0.15
+gauge_bonus = 0.1
 
 [sub_resource type="Resource" id="AreaEffect_1"]
 script = ExtResource("1")
