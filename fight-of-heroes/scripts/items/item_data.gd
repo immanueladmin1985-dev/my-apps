@@ -18,6 +18,9 @@ extends Resource
 @export var modifiers: Array[Resource] = []
 ## 한 영웅이 가질 수 있는 최대 개수 (0 = 제한 없음). 신발은 1.
 @export var max_owned: int = 0
+## 영구 비약: 사면 바로 마셔 modifiers 가 영구히 붙는다. 칸을 차지하지 않고, 마실 때마다 값이 cost_step 씩 오른다.
+@export var permanent: bool = false
+@export var cost_step: int = 0
 @export_group("사용 아이템")
 @export var consumable: bool = false
 @export var max_stack: int = 1

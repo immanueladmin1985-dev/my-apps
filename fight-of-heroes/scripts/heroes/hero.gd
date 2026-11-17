@@ -56,6 +56,24 @@ func setup(hero_data: HeroData, hero_team: int) -> void:
 			EventBus.unit_died.connect(_on_unit_died_gauge)
 
 
+# ---- 영구 비약 ----
+
+## 마신 비약: id -> 횟수
+var elixirs: Dictionary = {}
+
+
+func drink_elixir(item: ItemData, times := 1) -> void:
+	var n: int = int(elixirs.get(item.id, 0)) + times
+	elixirs[item.id] = n
+	var mods: Array = []
+	for m in item.modifiers:
+		if m is StatModifier:
+			mods.append(StatModifier.make(m.stat, m.flat * n, m.percent * n))
+	stats.add_modifiers("elixir:" + item.id, mods)
+	if is_inside_tree():
+		SkillFx.power_up(self, "holy")
+
+
 # ---- 고유 게이지 (검기·기·분노·영혼) ----
 
 var gauge := 0.0

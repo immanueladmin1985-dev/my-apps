@@ -200,7 +200,7 @@ static func hero_badge(h: HeroData, size := 44.0) -> Control:
 	return c
 
 
-## 목표 킬 정하기: [−] 숫자 [+] (1~100). 누를 때마다 설정에 저장한다.
+## 목표 킬 정하기: [−] 숫자 [+] (0~100, 0 은 무제한). 누를 때마다 설정에 저장한다.
 static func kill_stepper(btn := Vector2(60, 54)) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "KillStepper"
@@ -209,14 +209,15 @@ static func kill_stepper(btn := Vector2(60, 54)) -> HBoxContainer:
 	minus.name = "Minus"
 	var value := label("", 24)
 	value.name = "Value"
-	value.custom_minimum_size = Vector2(52, 0)
+	value.custom_minimum_size = Vector2(80, 0)
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := button("+", btn, 26)
 	plus.name = "Plus"
 	var show := func():
-		value.text = str(int(SaveManager.get_setting("kill_target", 15)))
+		var k := int(SaveManager.get_setting("kill_target", 15))
+		value.text = str(k) if k > 0 else "무제한"
 	var change := func(d: int):
-		var k := clampi(int(SaveManager.get_setting("kill_target", 15)) + d, 1, 100)
+		var k := clampi(int(SaveManager.get_setting("kill_target", 15)) + d, 0, 100)
 		SaveManager.set_setting("kill_target", k)
 		show.call()
 	minus.pressed.connect(change.bind(-1))

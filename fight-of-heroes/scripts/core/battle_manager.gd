@@ -89,7 +89,8 @@ func _on_unit_died(victim, killer) -> void:
 	kills[credit.team] += 1
 	EventBus.hero_killed.emit(victim, credit, helpers)
 	EventBus.kill_score_changed.emit(kills[Enums.Team.BLUE], kills[Enums.Team.RED])
-	if kills[credit.team] >= config.kill_target:
+	# 목표 킬이 0 이면 무제한: 최종 보스를 잡아야 끝난다.
+	if config.kill_target > 0 and kills[credit.team] >= config.kill_target:
 		finish(credit.team, "kills")
 
 

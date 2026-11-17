@@ -12,7 +12,7 @@ SCRIPTS = {k: "res://scripts/%s.gd" % v for k, v in {
  "HeroData": "heroes/hero_data", "PassiveData": "heroes/passive_data",
  "StackEffect": "skills/effects/stack_effect", "KnockbackEffect": "skills/effects/knockback_effect", "ReviveEffect": "skills/effects/revive_effect",
  "ChainEffect": "skills/effects/chain_effect", "ReloadEffect": "skills/effects/reload_effect", "WallEffect": "skills/effects/wall_effect",
- "TrapEffect": "skills/effects/trap_effect"}.items()}
+ "TrapEffect": "skills/effects/trap_effect", "ItemData": "items/item_data"}.items()}
 
 def pf(v): return "PackedFloat32Array(%s)" % ", ".join(repr(float(x)) for x in v)
 def val(v):

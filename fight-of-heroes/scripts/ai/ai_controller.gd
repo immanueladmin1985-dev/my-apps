@@ -334,7 +334,17 @@ func next_purchase() -> ItemData:
 		if step != null:
 			return step
 		return null
-	return null
+	# 아이템을 다 갖췄으면 남는 골드로 영구 비약을 마신다 (공격형은 힘·마력, 번갈아 생명).
+	return _next_elixir()
+
+
+func _next_elixir() -> ItemData:
+	var drunk := 0
+	for n in hero.elixirs.values():
+		drunk += int(n)
+	var main := "arcane_elixir" if hero.stats.get_stat("ability_power") > hero.stats.get_stat("attack") else "strength_elixir"
+	var ids := [main, "vitality_elixir", main, "guard_elixir"]
+	return ItemManager.get_item(ids[drunk % ids.size()])
 
 
 func _step_toward(item: ItemData, depth: int):
@@ -364,7 +374,9 @@ func _wants_to_shop() -> bool:
 	for fid in hero.data.ai_build:
 		if hero.inventory.count_of(fid) == 0:
 			return true
-	return false
+	# 다 갖췄으면 비약 값만큼 모였을 때 기지로 간다.
+	var e := _next_elixir()
+	return e != null and _shop().check_buy(hero, e).price <= hero.gold and not _shop().can_shop(hero)
 
 
 func _drink_if_needed(hp: float) -> void:

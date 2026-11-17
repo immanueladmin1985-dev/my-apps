@@ -322,6 +322,8 @@ func _refresh_detail(in_shop: bool) -> void:
 	var plan := shop.check_buy(hero, it)
 	var reason: String = ShopManager.RESULT_TEXT.get(plan.result, "")
 	price_label.text = "가격 %d G" % plan.price + ("" if plan.price == it.cost else " (원래 %d G)" % it.cost)
+	if it.permanent:
+		price_label.text += "\n지금까지 %d번 마심" % int(hero.elixirs.get(it.id, 0))
 	if reason != "":
 		price_label.text += "\n" + reason
 	buy_button.disabled = plan.result != ShopManager.Result.OK

@@ -7,6 +7,7 @@ extends Resource
 ## 블루 팀에서 플레이어가 조작하는 영웅의 순번. -1 이면 모두 AI (관전·시험용)
 @export var player_index: int = 0
 @export var difficulty: String = "normal"
+## 0 이면 무제한 (최종 보스를 잡아야 끝남)
 @export var kill_target: int = 15
 @export var map_id: String = "valley_01"
 ## 최종 보스가 나타나는 시각(초). 0 이하이면 맵 데이터 값을 쓴다.

@@ -330,7 +330,19 @@ Square 1024x1024 PNG.
 | `mechanic_e.png` | 기계공 · 정비 드론 | `Theme color: teal and steel. A small hovering repair drone with a wrench arm, beaming green repair light onto a turret.` |
 | `ninja_w.png` | 그림자 닌자 · 분신술 | `Theme color: dark slate blue and purple. A ninja and one identical shadow clone standing back to back, with a swap arrow circling between them.` |
 
-## 9. 진행 상황
+## 9. 영구 비약 아이콘 (PHASE 18, 5장)
+
+3번 항목(아이템 아이콘)의 공통 앞부분을 그대로 붙입니다. 투명 배경이 어려우면 마젠타(#FF00FF) 배경도 됩니다.
+
+| 파일 이름 | 아이템 | 뒷부분 |
+|---|---|---|
+| `strength_elixir.png` | 힘의 비약 | `Item: an ornate crystal potion bottle filled with glowing crimson liquid, a golden fist emblem on the bottle, sparks rising.` |
+| `arcane_elixir.png` | 마력의 비약 | `Item: an ornate crystal potion bottle filled with swirling violet magic liquid, a golden star emblem, small arcane runes floating around.` |
+| `vitality_elixir.png` | 생명의 비약 | `Item: an ornate crystal potion bottle filled with bright green glowing liquid, a golden heart emblem, a small leaf sprouting from the cork.` |
+| `guard_elixir.png` | 강철의 비약 | `Item: a heavy steel-banded potion bottle filled with silvery liquid, a golden shield emblem, metallic shine.` |
+| `swift_elixir.png` | 신속의 비약 | `Item: a slim crystal potion bottle filled with glowing golden-yellow liquid, a golden wing emblem, wind swirls around it.` |
+
+## 10. 진행 상황
 
 - PHASE 17 스킬 아이콘 10장(8번 항목)도 넣었습니다.
 

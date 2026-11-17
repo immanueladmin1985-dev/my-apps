@@ -32,6 +32,14 @@ func can_shop(hero) -> bool:
 func check_buy(hero, item: ItemData) -> Dictionary:
 	if item == null:
 		return {"result": Result.UNKNOWN, "price": 0, "consume": []}
+	if item.permanent:
+		var price: int = item.cost + item.cost_step * int(hero.elixirs.get(item.id, 0))
+		var p := {"result": Result.OK, "price": price, "consume": []}
+		if not can_shop(hero):
+			p.result = Result.NOT_IN_SHOP
+		elif hero.gold < price:
+			p.result = Result.NO_GOLD
+		return p
 	var plan := ItemManager.purchase_plan(item, hero.inventory)
 	plan["result"] = Result.OK
 	if not can_shop(hero):
@@ -74,6 +82,10 @@ func buy(hero, id: String) -> int:
 	if plan.result != Result.OK:
 		return plan.result
 	hero.add_gold(-plan.price)
+	if item.permanent:
+		hero.drink_elixir(item)
+		EventBus.item_bought.emit(hero, item)
+		return Result.OK
 	var consume: Array = plan.consume
 	consume.sort()
 	consume.reverse()

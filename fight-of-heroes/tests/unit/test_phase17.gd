@@ -338,9 +338,9 @@ func test_kill_target_stepper() -> void:
 	row.get_node("Plus").pressed.emit()
 	eq(int(SaveManager.get_setting("kill_target", 0)), 17, "+ 를 누르면 1씩 늘어남")
 	eq(row.get_node("Value").text, "17", "숫자 표시")
-	SaveManager.set_setting("kill_target", 1)
+	SaveManager.set_setting("kill_target", 0)
 	row.get_node("Minus").pressed.emit()
-	eq(int(SaveManager.get_setting("kill_target", 0)), 1, "1 아래로는 내려가지 않음")
+	eq(int(SaveManager.get_setting("kill_target", -1)), 0, "무제한(0) 아래로는 내려가지 않음")
 	row.queue_free()
 	SaveManager.set_setting("kill_target", old)
 
@@ -358,3 +358,50 @@ func test_round_pillars_block() -> void:
 	await frames(40)
 	check(runner.global_position.distance_to(Vector2(pl.x, pl.y)) > pl.z, "기둥을 지나가지 못함")
 	check(not Targeting.has_line_of_sight(runner, Vector2(pl.x - pl.z - 50.0, pl.y), Vector2(pl.x + pl.z + 50.0, pl.y)), "기둥 너머는 보이지 않음 (투사체가 막힘)")
+
+
+func test_permanent_elixir() -> void:
+	var h := _hero("blade_master", Vector2(400, 7400))
+	var shop := ShopManager.new()
+	add_child(shop)
+	h.gold = 5000
+	var atk0 := h.stats.get_stat("attack")
+	var e := ItemManager.get_item("strength_elixir")
+	check(e != null and e.permanent, "힘의 비약")
+	eq(shop.check_buy(h, e).price, 1500, "처음 값")
+	eq(shop.buy(h, "strength_elixir"), ShopManager.Result.OK, "사기")
+	near(h.stats.get_stat("attack"), atk0 + 10.0, 0.01, "공격력이 영구히 +10")
+	eq(h.inventory.count_of("strength_elixir"), 0, "칸을 차지하지 않음")
+	eq(shop.check_buy(h, e).price, 1750, "마실 때마다 값이 오름")
+	shop.buy(h, "strength_elixir")
+	near(h.stats.get_stat("attack"), atk0 + 20.0, 0.01, "두 번 마시면 +20")
+	h.die(null)
+	h.respawn_at(Vector2(400, 7400))
+	near(h.stats.get_stat("attack"), atk0 + 20.0, 0.01, "죽어도 남음")
+	shop.queue_free()
+
+
+func test_unlimited_kills() -> void:
+	var old: int = int(SaveManager.get_setting("kill_target", 15))
+	SaveManager.set_setting("kill_target", 1)
+	var row := UiKit.kill_stepper()
+	add_child(row)
+	row.get_node("Minus").pressed.emit()
+	eq(int(SaveManager.get_setting("kill_target", -1)), 0, "1 에서 − 를 누르면 무제한(0)")
+	eq(row.get_node("Value").text, "무제한", "무제한 표시")
+	row.queue_free()
+	SaveManager.set_setting("kill_target", old)
+	var bm := BattleManager.new()
+	add_child(bm)
+	var cfg := MatchConfig.new()
+	cfg.kill_target = 0
+	var hm := HeroManager.new()
+	add_child(hm)
+	bm.setup(cfg, hm)
+	bm.kills[Enums.Team.BLUE] = 999
+	var a := _hero("blade_master", Vector2(400, 7700))
+	var v := _hero("blade_master", Vector2(500, 7700), Enums.Team.RED)
+	v.die(a)
+	check(not bm.match_over, "무제한이면 킬 수로 끝나지 않음")
+	bm.queue_free()
+	hm.queue_free()

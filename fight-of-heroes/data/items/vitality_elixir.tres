@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="2"]
+
+[sub_resource type="Resource" id="StatModifier_2"]
+script = ExtResource("1")
+stat = "hp_regen"
+flat = 1.5
+percent = 0.0
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("1")
+stat = "max_hp"
+flat = 150.0
+percent = 0.0
+
+[resource]
+script = ExtResource("2")
+id = "vitality_elixir"
+display_name = "생명의 비약"
+category = "potion"
+tier = 3
+glyph = "생"
+color = Color(0.35, 0.8, 0.4, 1)
+cost = 1500
+description = "사면 그 자리에서 마셔 능력치가 영구히 오릅니다 (최대 체력 +150, 체력 회복 +1.5). 아이템 칸을 차지하지 않고 몇 번이든 마실 수 있지만, 마실 때마다 값이 250 골드씩 오릅니다."
+modifiers = Array[Resource]([SubResource("StatModifier_1"), SubResource("StatModifier_2")])
+permanent = true
+cost_step = 250
