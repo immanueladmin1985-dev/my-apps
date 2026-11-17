@@ -70,6 +70,24 @@ func _on_cast(_slot: int, _s) -> void:
 func _on_unit_died(victim, killer) -> void:
 	if passive.trigger == "kill" and Targeting.hero_of(killer) == hero and victim != hero and _ready_to_fire(null):
 		_fire(null)
+	elif passive.trigger == "nearby_death" and is_instance_valid(victim) and victim.team != hero.team and not (victim is Monster and victim.is_summon()):
+		if victim.global_position.distance_to(hero.global_position) <= passive.radius and _ready_to_fire(null):
+			_fire_at(victim.global_position)
+	elif passive.trigger == "summon_died" and victim is Monster and victim.owner_unit == hero and _ready_to_fire(null):
+		_fire(null)
+
+
+## 효과를 pos 자리에서 실행한다 (쓰러진 적 자리에서 해골 일으키기).
+func _fire_at(pos: Vector2) -> void:
+	_cooldown_left = passive.cooldown
+	procs += 1
+	var ctx := SkillContext.new()
+	ctx.caster = hero
+	ctx.rank = rank()
+	ctx.target_unit = hero
+	ctx.point = pos
+	ctx.direction = hero.facing
+	SkillEffect.apply_list(passive.effects, ctx)
 
 
 func _physics_process(delta: float) -> void:

@@ -7,7 +7,7 @@
 [ext_resource type="Resource" path="res://data/skills/blade_master_r.tres" id="5"]
 [ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="p100"]
 [ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="p101"]
-
+[ext_resource type="Resource" path="res://data/passives/blade_master.tres" id="pz1"]
 
 [sub_resource type="Resource" id="p_DamageEffect_1"]
 script = ExtResource("p100")
@@ -61,9 +61,16 @@ growth_stats = {
 attack_range = 60.0
 is_ranged = false
 projectile_speed = 900.0
-passive = SubResource("p_passive")
-passive_description = "검의 길: 세 번째 공격마다 추가 물리 피해를 줍니다."
+passive = ExtResource("pz1")
+passive_description = "검기: 기본 공격이 맞을 때마다 검기가 1 쌓입니다(최대 5, 6초 동안 공격하지 않으면 줄어듦). 일섬은 검기 하나당 20% 더 세지고 검기를 모두 씁니다."
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 preferred_role = "fighter"
 ai_build = PackedStringArray("plated_boots", "blood_blade", "guardian_plate", "hero_sword", "conqueror_axe", "spirit_king_robe")
 ai_aggression = 0.7
+gauge_name = "검기"
+gauge_max = 5.0
+gauge_on_hit = 1.0
+gauge_decay_delay = 6.0
+gauge_decay = 1.0
+gauge_pips = true
+gauge_color = Color(0.6, 0.85, 1, 1)

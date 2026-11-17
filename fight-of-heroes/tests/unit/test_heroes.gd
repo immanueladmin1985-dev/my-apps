@@ -36,6 +36,8 @@ func test_every_hero_casts_every_skill() -> void:
 		for slot in 4:
 			# 도약·바꿔치기로 멀어졌으면 제자리로 (다음 스킬의 사거리 확인용)
 			h.global_position = Vector2(400, 500)
+			if h.has_gauge():
+				h.set_gauge(h.data.gauge_max)  # 용 변신처럼 게이지가 필요한 스킬
 			var r := h.skill_caster.cast(slot, pc.auto_aim(slot))
 			eq(r, Enums.CastResult.OK, "%s %s 스킬" % [data.display_name, Enums.SLOT_KEYS[slot]])
 			await frames(70)
@@ -48,10 +50,9 @@ func test_every_hero_casts_every_skill() -> void:
 
 
 func test_passives_trigger() -> void:
-	for id in ["blade_master", "elf_archer", "fire_mage", "frost_mage", "monk", "assassin"]:
+	for id in ["blade_master", "elf_archer", "fire_mage", "frost_mage", "monk", "ninja"]:
 		var h := _learned(id, Enums.Team.BLUE, Vector2(400, 500))
 		var e := spawn_dummy(Enums.Team.RED, h.global_position + Vector2(h.attack.attack_range * 0.8, 0), {"max_hp": 20000.0})
-		e.health.hp = 8000.0  # 암살자 패시브: 체력 절반 아래
 		h.attack_order = e
 		await frames(400)
 		check(h.get_node("Passive").procs >= 1, "%s 패시브 발동 (%d)" % [h.display_name, h.get_node("Passive").procs])
@@ -77,9 +78,15 @@ func test_paladin_aura_and_saint_blessing() -> void:
 func test_assassin_teleport_and_stealth() -> void:
 	var a := _learned("assassin", Enums.Team.BLUE, Vector2(300, 500))
 	var e := spawn_dummy(Enums.Team.RED, Vector2(650, 500), {"max_hp": 5000.0})
-	eq(a.skill_caster.cast(0, CastAim.at_unit(e)), Enums.CastResult.OK, "그림자 찌르기")
-	check(a.global_position.x > 650.0, "대상 뒤로 순간이동 (%.0f)" % a.global_position.x)
+	eq(a.skill_caster.cast(0, CastAim.toward(Vector2.RIGHT)), Enums.CastResult.OK, "표식 단검")
+	await frames(30)
 	check(e.health.hp < 5000.0, "피해")
+	check(e.status.has("assassin_mark"), "표식")
+	check(a.skill_caster.is_recasting(0), "다시 누를 수 있음")
+	await frames(20)
+	eq(a.skill_caster.cast(0, CastAim.new()), Enums.CastResult.OK, "표식으로 이동")
+	check(a.global_position.x > 650.0, "대상 뒤로 순간이동 (%.0f)" % a.global_position.x)
+	check(a.skill_caster.cooldowns[0] > 3.0, "재사용 뒤 재사용 대기시간")
 	a.global_position = Vector2(300, 500)
 	a.skill_caster.cast(2, CastAim.new())
 	check(a.status.is_stealthed(), "은신")
@@ -101,7 +108,8 @@ func test_summoner_summons_fight_and_expire() -> void:
 		eq(m.team, Enums.Team.BLUE, "소환수는 아군")
 	await frames(600)
 	check(e.is_dead, "소환수가 적을 처치")
-	await frames(300)
+	check(s.get_node("Passive").procs >= 1, "쓰러진 적 자리에서 해골을 일으킴")
+	await frames(960)
 	eq(get_tree().get_nodes_in_group("summons").filter(func(m): return is_instance_valid(m) and not m.is_dead).size(), 0, "14초 뒤 사라짐")
 
 
@@ -118,7 +126,11 @@ func test_dragon_form() -> void:
 	var d := _learned("dragon_knight", Enums.Team.BLUE, Vector2(400, 500), 6)
 	var range0 := d.attack.total_range()
 	var hp0 := d.health.max_hp()
+	eq(d.skill_caster.cast(3, CastAim.new()), Enums.CastResult.NOT_READY, "분노가 모자라면 변신할 수 없음")
+	d.set_gauge(100.0)
 	eq(d.skill_caster.cast(3, CastAim.new()), Enums.CastResult.OK, "용 변신")
+	check(d.gauge <= 10.0, "분노를 씀 (시전으로 다시 조금 참)")
+	eq(d.skill_caster.get_skill(0).id, "dragon_knight_tail", "변신하면 Q 가 꼬리치기")
 	near(d.attack.total_range(), range0 + 160.0, 0.01, "사거리 +160")
 	near(d.health.max_hp(), hp0 + 300.0, 0.01, "최대 체력 +300")
 	check(d.status.visual_scale() > 1.3, "몸이 커짐")

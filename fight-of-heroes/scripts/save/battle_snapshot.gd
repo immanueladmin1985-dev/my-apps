@@ -39,7 +39,7 @@ static func capture(battle) -> Dictionary:
 		out.heroes.append({
 			"id": h.data.id, "team": h.team,
 			"x": h.global_position.x, "y": h.global_position.y,
-			"level": h.level, "xp": h.xp, "gold": h.gold, "skill_points": h.skill_points,
+			"level": h.level, "xp": h.xp, "gold": h.gold, "skill_points": h.skill_points, "gauge": h.gauge,
 			"kills": h.kills, "deaths": h.deaths, "assists": h.assists,
 			"hp": h.health.hp, "mp": h.mana.mp,
 			"dead": h.is_dead, "respawn_left": h.respawn_left,
@@ -112,6 +112,7 @@ static func _apply_hero(h: Hero, s: Dictionary, bm: BattleManager) -> void:
 	h.deaths = int(s.deaths)
 	h.assists = int(s.assists)
 	h.skill_points = int(s.skill_points)
+	h.set_gauge(float(s.get("gauge", 0.0)))
 	var ranks: Array = s.get("ranks", [])
 	var cds: Array = s.get("cooldowns", [])
 	var max_cds: Array = s.get("max_cooldowns", [])

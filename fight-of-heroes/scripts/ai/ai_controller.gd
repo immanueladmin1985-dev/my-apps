@@ -634,7 +634,19 @@ func _use_skills(enemies: Array) -> void:
 	var caster: SkillCaster = hero.skill_caster
 	for slot in 4:
 		var s := caster.get_skill(slot)
-		if s == null or caster.cooldowns[slot] > 0.0 or not hero.mana.has(caster.mana_cost(slot)):
+		if s == null or caster.cooldowns[slot] > 0.0:
+			continue
+		if caster.is_recasting(slot):
+			if _wants_recast(s) and caster.cast(slot, CastAim.new()) == Enums.CastResult.OK:
+				return
+			continue
+		if not hero.mana.has(caster.mana_cost(slot)):
+			continue
+		if s.requires_gauge > 0.0 and hero.gauge < s.requires_gauge:
+			continue
+		if _revive_skill(s):
+			if ReviveEffect.candidate(hero, 0.0) != null and caster.cast(slot, CastAim.new()) == Enums.CastResult.OK:
+				return
 			continue
 		var aim := _aim_for(s, enemies)
 		if aim == null:
@@ -643,6 +655,23 @@ func _use_skills(enemies: Array) -> void:
 			continue
 		if caster.cast(slot, aim) == Enums.CastResult.OK:
 			return
+
+
+func _revive_skill(s: SkillData) -> bool:
+	for e in s.effects:
+		if e is ReviveEffect:
+			return true
+	return false
+
+
+## 재사용을 쓸지: 표식 이동은 싸우는 중에, 분신·연결 이동은 도망칠 때.
+func _wants_recast(s: SkillData) -> bool:
+	var d = TeleportEffect.find_destination(hero, s.recast_requires) if s.recast_requires != "" else null
+	if s.recast_requires.begins_with("mark:"):
+		return d != null and (state == State.ATTACK or state == State.CHASE) and d.health.ratio() < 0.75
+	if s.recast_requires.begins_with("summon:") or s.recast_requires.begins_with("link:"):
+		return d != null and state == State.RETREAT and d.global_position.distance_to(home) < hero.global_position.distance_to(home)
+	return state == State.ATTACK
 
 
 func _aim_for(s: SkillData, enemies: Array) -> CastAim:

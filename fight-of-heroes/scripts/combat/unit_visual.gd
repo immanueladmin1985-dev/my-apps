@@ -218,6 +218,32 @@ func _draw_bars(r: float, team_c: Color) -> void:
 		draw_rect(Rect2(-w * 0.5, y + 8, w * clampf(unit.mana.mp / unit.mana.max_mp(), 0, 1), 3), Color(0.35, 0.55, 1.0))
 	if unit.get("level") != null and unit is Hero:
 		draw_string(FONT, Vector2(-w * 0.5 - 16, y + 8), str(unit.level), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.9))
+		_draw_gauge(unit, w, y + 13)
+
+
+## 영웅 고유 게이지(검기·기·분노·영혼)와 탄창을 체력 막대 아래에 그린다.
+func _draw_gauge(h, w: float, y: float) -> void:
+	if h.has_gauge():
+		var col: Color = h.data.gauge_color
+		if h.data.gauge_pips:
+			var n := int(h.data.gauge_max)
+			var gap := w / n
+			for i in n:
+				var on := i < int(floorf(h.gauge))
+				draw_rect(Rect2(-w * 0.5 + i * gap + 1, y, gap - 2, 4), col if on else Color(0, 0, 0, 0.6))
+		else:
+			draw_rect(Rect2(-w * 0.5 - 1, y - 1, w + 2, 6), Color(0, 0, 0, 0.7))
+			var ratio: float = h.gauge_ratio()
+			var full := ratio >= 0.999
+			var c2 := col.lightened(0.35 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 120.0))) if full else col
+			draw_rect(Rect2(-w * 0.5, y, w * ratio, 4), c2)
+		y += 7.0
+	var a = h.attack
+	if a.magazine > 0:
+		var gap2: float = w / a.magazine
+		for i in a.magazine:
+			var loaded: bool = not a.reloading and i < a.ammo
+			draw_rect(Rect2(-w * 0.5 + i * gap2 + 1, y, gap2 - 2, 4), Color(1, 0.8, 0.35) if loaded else Color(0, 0, 0, 0.6))
 
 
 func _draw_status(r: float) -> void:
@@ -228,6 +254,16 @@ func _draw_status(r: float) -> void:
 			draw_circle(Vector2(cos(a) * 14.0, _head_y - 30.0 + sin(a) * 4.0), 3.5, Color(1, 0.9, 0.2))
 	if unit.status.is_slowed():
 		draw_arc(Vector2.ZERO, r + 3.0, 0, TAU, 32, Color(0.4, 0.8, 1.0, 0.8), 2.0)
+	# 냉기 쌓기: 머리 위 얼음 점
+	var frost: float = unit.stack("frost")
+	if frost > 0.0:
+		for i in int(frost):
+			draw_circle(Vector2(-10 + i * 10, _head_y - 32.0), 4.0, Color(0.6, 0.9, 1.0))
+			draw_arc(Vector2(-10 + i * 10, _head_y - 32.0), 4.0, 0, TAU, 12, Color(1, 1, 1, 0.9), 1.5)
+	# 도발: 머리 위 느낌표
+	if unit.status.taunt_source() != null:
+		draw_string_outline(FONT, Vector2(-5, _head_y - 26.0), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, 4, Color(0, 0, 0, 0.8))
+		draw_string(FONT, Vector2(-5, _head_y - 26.0), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 0.5, 0.2))
 
 
 ## 강화 상태가 걸려 있는 동안 발밑에 그 상태 색의 고리가 은은하게 돈다 (여러 개면 바깥으로 겹친다).

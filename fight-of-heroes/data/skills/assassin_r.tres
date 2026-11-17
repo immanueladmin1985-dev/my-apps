@@ -10,6 +10,7 @@ damage_type = 0
 base = PackedFloat32Array(170.0, 260.0, 350.0)
 ad_ratio = 1.5
 ap_ratio = 0.0
+missing_hp_bonus = 1.0
 
 [sub_resource type="Resource" id="TeleportEffect_1"]
 script = ExtResource("1")
@@ -24,7 +25,7 @@ sound = "stab"
 id = "assassin_r"
 display_name = "처형"
 glyph = "처"
-description = "대상에게 순간이동해 큰 물리 피해를 줍니다."
+description = "대상에게 순간이동해 큰 물리 피해를 줍니다. 대상이 잃은 체력만큼 피해가 늘어나고(최대 2배), 처치하면 바로 다시 쓸 수 있습니다."
 max_rank = 3
 mana_cost = PackedFloat32Array(100.0)
 cooldown = PackedFloat32Array(55.0, 45.0, 35.0)
@@ -38,3 +39,4 @@ ai_use = 0
 ai_range = 0.0
 color = Color(0.8, 0.2, 0.3, 1)
 effects = Array[Resource]([SubResource("TeleportEffect_1")])
+reset_on_kill = true

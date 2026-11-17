@@ -14,10 +14,39 @@ var projectile_color := Color(1, 1, 0.8)
 var projectile_style := ""
 
 var cooldown_left := 0.0
+## 탄창 (magazine 이 0 이면 없음)
+var magazine := 0
+var ammo := 0
+var reload_time := 1.2
+var last_shot_mult := 2.0
+var reloading := false
+## 멀리서 맞힐수록 피해 증가, 가까운 적은 주먹
+var far_bonus := 0.0
+var close_melee_range := 0.0
+var close_mult := 1.2
 var windup_left := -1.0
 var windup_target = null
 
 @onready var unit = get_parent()
+
+
+func setup_hero(d) -> void:
+	magazine = d.magazine_size
+	ammo = magazine
+	reload_time = d.reload_time
+	last_shot_mult = d.last_shot_mult
+	far_bonus = d.far_bonus
+	close_melee_range = d.close_melee_range
+	close_mult = d.close_mult
+
+
+## 탄창을 가득 채운다 (구르기 등)
+func reload_now() -> void:
+	if magazine > 0:
+		ammo = magazine
+		if reloading:
+			reloading = false
+			cooldown_left = 0.0
 
 
 func interval() -> float:
@@ -65,6 +94,8 @@ func cancel_windup() -> void:
 
 func _physics_process(delta: float) -> void:
 	cooldown_left = maxf(0.0, cooldown_left - delta)
+	if reloading and cooldown_left <= 0.0:
+		reloading = false
 	if windup_left >= 0.0:
 		windup_left -= delta
 		if windup_left < 0.0:
@@ -76,21 +107,38 @@ func _release() -> void:
 	windup_target = null
 	if t == null or not is_instance_valid(t) or t.is_dead or unit.is_dead:
 		return
+	var power := 1.0
+	if magazine > 0:
+		ammo -= 1
+		if ammo <= 0:
+			# 마지막 탄: 세게 맞히고 재장전에 들어간다.
+			power = last_shot_mult
+			ammo = magazine
+			reloading = true
+			cooldown_left = maxf(cooldown_left, reload_time)
+	if close_melee_range > 0.0 and unit.global_position.distance_to(t.global_position) <= close_melee_range + t.radius:
+		# 가까운 적은 주먹으로 바로 친다.
+		SkillFx.burst(unit, t.global_position, 28.0, projectile_style if projectile_style != "" else "impact")
+		_hit(t, power * close_mult)
+		return
 	if is_ranged or unit.stats.get_stat("attack_range") > 100.0:
 		var p := Projectile.new()
+		p.power = power
 		p.setup_basic_attack(unit, t, projectile_speed, total_range() * 1.35 + 60.0)
 		p.color = projectile_color
 		p.style = projectile_style
 		Targeting.effects_parent(unit).add_child(p)
 		p.global_position = unit.global_position
 	elif in_range(t, DataRegistry.combat_config().melee_leeway):
-		_hit(t)
+		_hit(t, power)
 
 
-func _hit(target) -> void:
+func _hit(target, power := 1.0) -> void:
 	if not is_instance_valid(unit):
 		return
-	var info := DamageInfo.new(unit, unit.stats.get_stat("attack"), Enums.DamageType.PHYSICAL)
+	if far_bonus > 0.0 and is_instance_valid(target):
+		power *= 1.0 + far_bonus * clampf(unit.global_position.distance_to(target.global_position) / maxf(1.0, total_range()), 0.0, 1.0)
+	var info := DamageInfo.new(unit, unit.stats.get_stat("attack") * power, Enums.DamageType.PHYSICAL)
 	info.can_crit = true
 	info.is_basic_attack = true
 	var dealt := CombatManager.apply_damage(target, info)

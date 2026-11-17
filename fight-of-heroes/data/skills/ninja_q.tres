@@ -1,44 +1,53 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
-[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
-[ext_resource type="Resource" path="res://data/status/slow.tres" id="4"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/effects/barrage_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="4"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="6"]
 
-[sub_resource type="Resource" id="ApplyStatusEffect_3"]
-script = ExtResource("3")
-status = ExtResource("4")
-duration = PackedFloat32Array(1.5)
+[sub_resource type="Resource" id="ApplyStatusEffect_4"]
+script = ExtResource("4")
+status = ExtResource("5")
+duration = PackedFloat32Array(1.0)
 magnitude = PackedFloat32Array(0.25)
 to_caster = false
 ad_ratio = 0.0
 ap_ratio = 0.0
 
-[sub_resource type="Resource" id="DamageEffect_2"]
-script = ExtResource("2")
+[sub_resource type="Resource" id="DamageEffect_3"]
+script = ExtResource("3")
 damage_type = 0
-base = PackedFloat32Array(65.0, 100.0, 135.0, 170.0)
-ad_ratio = 0.7
+base = PackedFloat32Array(45.0, 70.0, 95.0, 120.0)
+ad_ratio = 0.5
 ap_ratio = 0.0
 
-[sub_resource type="Resource" id="ProjectileEffect_1"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="ProjectileEffect_2"]
+script = ExtResource("2")
 speed = 1500.0
-width = 50.0
-pierce = true
+width = 34.0
+pierce = false
 max_range = 0.0
 color = Color(1, 1, 0.7, 1)
-effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+effects = Array[Resource]([SubResource("DamageEffect_3"), SubResource("ApplyStatusEffect_4")])
+
+[sub_resource type="Resource" id="BarrageEffect_1"]
+script = ExtResource("1")
+shots = 3
+interval = 0.0
+spread = 14.0
+slow_caster = 0.0
+effects = Array[Resource]([SubResource("ProjectileEffect_2")])
 
 [resource]
-script = ExtResource("5")
+script = ExtResource("6")
 vfx = "shadow"
 sound = "arrow"
 id = "ninja_q"
-display_name = "수리검 난사"
+display_name = "수리검 부채"
 glyph = "수"
-description = "적을 꿰뚫는 수리검을 던져 물리 피해를 주고 1.5초 동안 둔화시킵니다."
+description = "수리검 3개를 부채꼴로 던져 각각 물리 피해를 주고 1초 동안 둔화시킵니다. 분신도 같은 곳을 향해 함께 던집니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(40.0)
 cooldown = PackedFloat32Array(6.0, 5.5, 5.0, 4.5)
@@ -46,9 +55,9 @@ target_mode = 2
 target_team = 0
 cast_range = 650.0
 radius = 0.0
-width = 50.0
+width = 60.0
 auto_aim_away = false
 ai_use = 0
 ai_range = 0.0
 color = Color(0.7, 0.75, 0.9, 1)
-effects = Array[Resource]([SubResource("ProjectileEffect_1")])
+effects = Array[Resource]([SubResource("BarrageEffect_1")])

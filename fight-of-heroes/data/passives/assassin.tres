@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="PassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="2"]
+
+[sub_resource type="Resource" id="StatModifier_1"]
+script = ExtResource("1")
+stat = "backstab"
+flat = 0.4
+percent = 0.0
+
+[resource]
+script = ExtResource("2")
+id = "backstab"
+display_name = "뒤치기"
+description = "적의 뒤쪽에서 주는 모든 피해가 40% 늘어납니다."
+trigger = "always"
+stat_modifiers = Array[Resource]([SubResource("StatModifier_1")])

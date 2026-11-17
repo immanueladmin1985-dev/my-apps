@@ -29,6 +29,7 @@ damage_type = 0
 base = PackedFloat32Array(190.0, 290.0, 390.0)
 ad_ratio = 1.0
 ap_ratio = 0.0
+execute_below = PackedFloat32Array(0.15, 0.2, 0.25)
 
 [sub_resource type="Resource" id="TeleportEffect_1"]
 script = ExtResource("1")
@@ -43,7 +44,7 @@ sound = "slash"
 id = "reaper_r"
 display_name = "사형 선고"
 glyph = "형"
-description = "대상에게 순간이동해 큰 물리 피해를 주고, 준 만큼의 일부를 주변 적에게도 퍼뜨립니다."
+description = "대상에게 순간이동해 큰 물리 피해를 주고 주변 적에게도 피해를 퍼뜨립니다. 대상의 체력이 15/20/25% 아래면 그대로 쓰러뜨립니다."
 max_rank = 3
 mana_cost = PackedFloat32Array(100.0)
 cooldown = PackedFloat32Array(60.0, 50.0, 40.0)

@@ -122,6 +122,8 @@ func _draw() -> void:
 	draw_circle(c, r - 3.0, Color(col, 0.92))
 	var text := glyph
 	var fs := int(r * 0.62)
+	if s != null and s.glyph != "":
+		text = s.glyph
 	var icon := Art.skill_icon(s)
 	if icon != null:
 		# 아직 배우지 않은 스킬은 어둡게
@@ -147,6 +149,20 @@ func _draw() -> void:
 			draw_string(FONT, c + Vector2(-sw * 0.5, fs * 0.35), secs, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1))
 		if hero.is_dead or hero.status.is_stunned() or caster.ranks[slot] == 0:
 			draw_circle(c, r - 3.0, Color(0.15, 0.15, 0.15, 0.6))
+		# 게이지가 모자라 아직 못 쓰는 스킬 (용 변신의 분노 등): 차오르는 만큼 밝아지는 고리
+		if s.requires_gauge > 0.0 and hero is Hero and hero.has_gauge() and hero.gauge < s.requires_gauge:
+			draw_circle(c, r - 3.0, Color(0.1, 0.05, 0.05, 0.55))
+			draw_arc(c, r - 5.0, -PI / 2.0, -PI / 2.0 + TAU * hero.gauge / s.requires_gauge, 40, hero.data.gauge_color, 5.0)
+		# 재사용을 기다리는 중: 반짝이는 테두리와 남은 시간 고리
+		if caster.is_recasting(slot):
+			var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() / 100.0)
+			draw_arc(c, r + 2.0, 0, TAU, 48, Color(1, 0.95, 0.4, pulse), 5.0)
+			var left: float = caster.recast_left[slot] / maxf(0.1, s.recast_window)
+			draw_arc(c, r - 8.0, -PI / 2.0, -PI / 2.0 + TAU * left, 40, Color(1, 1, 1, 0.8), 3.0)
+			var rs := int(maxf(12.0, r * 0.3))
+			var rw := FONT.get_string_size("재사용", HORIZONTAL_ALIGNMENT_LEFT, -1, rs).x
+			draw_string_outline(FONT, c + Vector2(-rw * 0.5, -r * 0.35), "재사용", HORIZONTAL_ALIGNMENT_LEFT, -1, rs, 4, Color(0, 0, 0, 0.9))
+			draw_string(FONT, c + Vector2(-rw * 0.5, -r * 0.35), "재사용", HORIZONTAL_ALIGNMENT_LEFT, -1, rs, Color(1, 0.95, 0.5))
 		# 단계 점
 		var n: int = s.max_rank
 		for i in n:

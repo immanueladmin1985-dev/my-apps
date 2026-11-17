@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/skills/frost_mage_e.tres" id="6"]
 [ext_resource type="Resource" path="res://data/skills/frost_mage_r.tres" id="7"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+[ext_resource type="Resource" path="res://data/passives/frost_mage.tres" id="pz1"]
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]
 script = ExtResource("2")
@@ -64,8 +65,8 @@ attack_range = 400.0
 is_ranged = true
 attack_vfx = "ice"
 projectile_speed = 1000.0
-passive = SubResource("PassiveData_1")
-passive_description = "냉기: 기본 공격이 1초 동안 적을 둔화시킵니다."
+passive = ExtResource("pz1")
+passive_description = "냉기: 기본 공격과 얼음 창이 적에게 냉기를 쌓습니다. 냉기가 3번 쌓이면 1초 동안 얼어붙습니다(기절)."
 skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("mage_boots", "archmage_crown", "chrono_scepter", "dragon_shield", "spirit_king_robe", "immortal_amulet")

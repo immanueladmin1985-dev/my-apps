@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="PassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/haste.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="3"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(1.5)
+magnitude = PackedFloat32Array(0.1, 0.12, 0.14, 0.16)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[resource]
+script = ExtResource("3")
+id = "hawk_eye"
+display_name = "매의 눈"
+description = "멀리 있는 적을 맞힐수록 기본 공격 피해가 늘어납니다(사거리 끝에서 +30%). 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다."
+trigger = "attack_hit"
+every = 1
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1")])

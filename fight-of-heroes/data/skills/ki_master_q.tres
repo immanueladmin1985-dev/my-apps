@@ -3,7 +3,16 @@
 [ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/stack_effect.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="StackEffect_5"]
+script = ExtResource("4")
+key = "gauge"
+amount = 15.0
+max_value = 3.0
+duration = 0.0
+to_caster = false
 
 [sub_resource type="Resource" id="DamageEffect_4"]
 script = ExtResource("2")
@@ -37,10 +46,10 @@ width = 50.0
 pierce = false
 max_range = 0.0
 color = Color(1, 1, 0.7, 1)
-effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("AreaEffect_3")])
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("AreaEffect_3"), SubResource("StackEffect_5")])
 
 [resource]
-script = ExtResource("4")
+script = ExtResource("5")
 vfx = "ki"
 sound = "fire"
 id = "ki_master_q"

@@ -3,7 +3,16 @@
 [ext_resource type="Script" path="res://scripts/skills/effects/mana_effect.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
 [ext_resource type="Resource" path="res://data/status/ki_charge.tres" id="3"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/stack_effect.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="StackEffect_3"]
+script = ExtResource("4")
+key = "gauge"
+amount = 40.0
+max_value = 3.0
+duration = 0.0
+to_caster = false
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]
 script = ExtResource("2")
@@ -21,13 +30,13 @@ ap_ratio = 0.0
 to_caster = true
 
 [resource]
-script = ExtResource("4")
+script = ExtResource("5")
 vfx = "ki"
 sound = "holy"
 id = "ki_master_e"
 display_name = "기 모으기"
 glyph = "모"
-description = "기를 모아 마나를 회복하고, 5초 동안 공격력 +25, 주문력 +40, 공격 속도 +20% 를 얻습니다."
+description = "단숨에 기를 40 모으고 마나를 회복하며, 5초 동안 공격력 +25, 주문력 +40, 공격 속도 +20% 를 얻습니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(0.0)
 cooldown = PackedFloat32Array(18.0, 17.0, 16.0, 15.0)
@@ -40,4 +49,4 @@ auto_aim_away = false
 ai_use = 2
 ai_range = 0.0
 color = Color(1, 0.95, 0.5, 1)
-effects = Array[Resource]([SubResource("ManaEffect_1"), SubResource("ApplyStatusEffect_2")])
+effects = Array[Resource]([SubResource("ManaEffect_1"), SubResource("ApplyStatusEffect_2"), SubResource("StackEffect_3")])

@@ -33,6 +33,10 @@ const ATTACKER_MEMORY := 15.0
 var cast_lock_left := 0.0
 ## 돌진할 때마다 1 씩 늘어난다. 따라가던 투사체가 이 값이 바뀌면 대상을 놓친다.
 var dash_count := 0
+## 마지막 돌진(밀려남 포함)이 벽에 막혀 끝났는지
+var last_dash_blocked := false
+## 쌓기 (냉기·표식 등): key -> {"v": 값, "until": 사라지는 시각(0 이면 계속)}
+var stacks: Dictionary = {}
 
 @onready var stats: StatsComponent = $Stats
 @onready var health: HealthComponent = $Health
@@ -109,6 +113,32 @@ func on_damaged(_src, _amount: float) -> void:
 	pass
 
 
+# ---- 쌓기 ----
+
+func stack(key: String) -> float:
+	var e = stacks.get(key)
+	if e == null:
+		return 0.0
+	if e.until > 0.0 and now() > e.until:
+		stacks.erase(key)
+		return 0.0
+	return e.v
+
+
+## amount 만큼 쌓는다 (최대 max_v). duration 초 뒤 사라진다 (0 이면 계속). 쌓인 값을 돌려준다.
+func add_stack(key: String, amount: float, max_v: float, duration := 0.0) -> float:
+	var v := clampf(stack(key) + amount, 0.0, max_v if max_v > 0.0 else INF)
+	set_stack(key, v, duration)
+	return v
+
+
+func set_stack(key: String, v: float, duration := 0.0) -> void:
+	if v <= 0.0:
+		stacks.erase(key)
+	else:
+		stacks[key] = {"v": v, "until": now() + duration if duration > 0.0 else 0.0}
+
+
 func clear_orders() -> void:
 	move_input = Vector2.ZERO
 	attack_order = null
@@ -130,6 +160,10 @@ func _physics_process(delta: float) -> void:
 		_process_dash(delta)
 		return
 	var want := Vector2.ZERO
+	# 도발: 도발한 적만 공격한다 (조작과 상관없이).
+	var taunter = status.taunt_source()
+	if taunter != null and Targeting.is_valid(taunter, team, Enums.TargetTeam.ENEMY):
+		attack_order = taunter
 	if attack_order != null and not Targeting.is_valid(attack_order, team, Enums.TargetTeam.ENEMY):
 		attack_order = null
 	if can_move():
@@ -225,6 +259,7 @@ func _process_dash(delta: float) -> void:
 				_dash.on_pass.call(u)
 	# 벽에 막혀 거의 움직이지 못하면 돌진을 끝낸다.
 	if _dash.left <= 0.5 or moved < step * 0.2:
+		last_dash_blocked = _dash.left > 0.5
 		var end: Callable = _dash.on_end
 		_dash = {}
 		velocity = Vector2.ZERO

@@ -9,7 +9,10 @@ SCRIPTS = {k: "res://scripts/%s.gd" % v for k, v in {
  "ProjectileEffect": "skills/effects/projectile_effect", "DashEffect": "skills/effects/dash_effect", "LineZoneEffect": "skills/effects/line_zone_effect",
  "TeleportEffect": "skills/effects/teleport_effect", "SummonEffect": "skills/effects/summon_effect", "ManaEffect": "skills/effects/mana_effect", "BarrageEffect": "skills/effects/barrage_effect",
  "MonsterData": "map/monster_data", "StatusEffectData": "combat/status_effect_data", "StatModifier": "combat/stat_modifier",
- "HeroData": "heroes/hero_data", "PassiveData": "heroes/passive_data"}.items()}
+ "HeroData": "heroes/hero_data", "PassiveData": "heroes/passive_data",
+ "StackEffect": "skills/effects/stack_effect", "KnockbackEffect": "skills/effects/knockback_effect", "ReviveEffect": "skills/effects/revive_effect",
+ "ChainEffect": "skills/effects/chain_effect", "ReloadEffect": "skills/effects/reload_effect", "WallEffect": "skills/effects/wall_effect",
+ "TrapEffect": "skills/effects/trap_effect"}.items()}
 
 def pf(v): return "PackedFloat32Array(%s)" % ", ".join(repr(float(x)) for x in v)
 def val(v):
@@ -83,10 +86,11 @@ def barrage(effects, shots, interval, spread=12.0, slow=0.4, sound=""):
 def mana(base, ap=0.0): return dict(cls="ManaEffect", base=P(*base), ap_ratio=ap, to_caster=True)
 
 # 0 SELF 1 UNIT 2 DIRECTION 3 POINT / team: 0 ENEMY 1 ALLY / ai: 0 OFF 1 ENGAGE 2 DEF 3 ESCAPE 4 SUPPORT 5 SUMMON / area center: 0 CASTER 1 POINT 2 TARGET
-def skill(id, name, glyph, desc, mode, mana_cost, cd, effects, rng=0.0, radius=0.0, width=0.0, team=0, ai=0, ai_range=0.0, max_rank=4, color=C(1,0.7,0.4,1), away=False, vfx="arcane", sound=""):
+def skill(id, name, glyph, desc, mode, mana_cost, cd, effects, rng=0.0, radius=0.0, width=0.0, team=0, ai=0, ai_range=0.0, max_rank=4, color=C(1,0.7,0.4,1), away=False, vfx="arcane", sound="", **more):
+    """more: SkillData 의 그 밖의 항목 (recast_effects, recast_window, recast_requires, requires_gauge, reset_on_kill, cast_lock 등)"""
     build("%s/skills/%s.tres" % (ROOT, id), "SkillData", dict(vfx=vfx, sound=sound, id=id, display_name=name, glyph=glyph, description=desc, max_rank=max_rank,
         mana_cost=P(*mana_cost), cooldown=P(*cd), target_mode=mode, target_team=team, cast_range=float(rng), radius=float(radius), width=float(width),
-        auto_aim_away=away, ai_use=ai, ai_range=float(ai_range), color=color, effects=effects))
+        auto_aim_away=away, ai_use=ai, ai_range=float(ai_range), color=color, effects=effects, **more))
 
 # ── 상태 효과 ── kind: STUN0 SLOW1 DOT2 STAT_BUFF3 HASTE4 HOT5 MOT6 STEALTH7
 def status_file(id, name, kind, color, mods=(), tick=0.5, dtype=1, scale=1.0, tint=None):
@@ -100,7 +104,7 @@ def status_file(id, name, kind, color, mods=(), tick=0.5, dtype=1, scale=1.0, ti
 def monster(id, **f): build("%s/monsters/%s.tres" % (ROOT, id), "MonsterData", dict(id=id, **f))
 
 heroes = []
-def hero(id, name, role, diff, lore, color, glyph, weapon, base, growth, rng, ranged, pref, build_items, passive, skills, prio=(0, 1, 2), aggr=0.5, pspeed=1000.0, avfx=""):
+def hero(id, name, role, diff, lore, color, glyph, weapon, base, growth, rng, ranged, pref, build_items, passive, skills, prio=(0, 1, 2), aggr=0.5, pspeed=1000.0, avfx="", extra=None):
     heroes.append(id)
     ids = []
     for i, s in enumerate(skills):
@@ -108,7 +112,9 @@ def hero(id, name, role, diff, lore, color, glyph, weapon, base, growth, rng, ra
         skill(sid, **s)
         ids.append("res://data/skills/%s.tres" % sid)
     pas = dict(cls="PassiveData", **passive)
-    extra = dict(attack_vfx=avfx) if avfx else {}
+    extra = dict(extra or {})
+    if avfx:
+        extra["attack_vfx"] = avfx
     build("%s/heroes/%s.tres" % (ROOT, id), "HeroData", dict(id=id, display_name=name, role=role, difficulty=diff, lore=lore, color=C(*color, 1),
         glyph=glyph, weapon=weapon, base_stats=D(**base), growth_stats=D(**growth), attack_range=float(rng), is_ranged=ranged,
         projectile_speed=float(pspeed), passive=pas, passive_description="%s: %s" % (passive["display_name"], passive["description"]),

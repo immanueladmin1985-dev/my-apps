@@ -17,6 +17,8 @@ enum Center { CASTER, POINT, TARGET, EACH_ENEMY }
 ## 여러 개를 만들 때의 개수와, 중심 주변에 흩뿌리는 반지름
 @export var count: int = 1
 @export var scatter: float = 0.0
+## 시전자의 소환수(포탑 등)에게만
+@export var owned_summons_only: bool = false
 
 
 func center_of(ctx: SkillContext) -> Vector2:
@@ -67,4 +69,6 @@ func hit(ctx: SkillContext, pos: Vector2) -> void:
 	if not ctx.caster_valid():
 		return
 	for u in Targeting.in_radius(ctx.caster.get_tree(), pos, radius, ctx.team(), affects, true):
+		if owned_summons_only and not (u is Monster and u.owner_unit == ctx.caster):
+			continue
 		SkillEffect.apply_list(effects, ctx.with_target(u))

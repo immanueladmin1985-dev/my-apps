@@ -1,46 +1,53 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
-[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
-[ext_resource type="Resource" path="res://data/status/monk_guard.tres" id="2"]
-[ext_resource type="Resource" path="res://data/status/haste.tres" id="3"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/dash_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/knockback_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/stun.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
 
-[sub_resource type="Resource" id="ApplyStatusEffect_2"]
-script = ExtResource("1")
-status = ExtResource("3")
-duration = PackedFloat32Array(3.0)
-magnitude = PackedFloat32Array(0.2)
-to_caster = true
-ad_ratio = 0.0
-ap_ratio = 0.0
+[sub_resource type="Resource" id="KnockbackEffect_3"]
+script = ExtResource("3")
+distance = 260.0
+speed = 1200.0
+from_point = false
+wall_status = ExtResource("4")
+wall_duration = 1.2
 
-[sub_resource type="Resource" id="ApplyStatusEffect_1"]
-script = ExtResource("1")
-status = ExtResource("2")
-duration = PackedFloat32Array(3.0)
-magnitude = PackedFloat32Array(0.0)
-to_caster = true
-ad_ratio = 0.0
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(70.0, 105.0, 140.0, 175.0)
+ad_ratio = 0.7
 ap_ratio = 0.0
+gauge_bonus = 0.15
+
+[sub_resource type="Resource" id="DashEffect_1"]
+script = ExtResource("1")
+distance = 160.0
+speed = 1300.0
+width = 70.0
+path_effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("KnockbackEffect_3")])
+end_effects = Array[Resource]([])
 
 [resource]
-script = ExtResource("4")
+script = ExtResource("5")
 vfx = "impact"
-sound = "shield"
+sound = "punch"
 id = "monk_e"
-display_name = "철벽 자세"
+display_name = "철산고"
 glyph = "철"
-description = "3초 동안 방어력·마법 저항력 +25, 이동 속도 +20%."
+description = "어깨로 짧게 들이받아 물리 피해를 주고 멀리 밀쳐냅니다. 벽에 부딪힌 적은 1.2초 동안 기절합니다."
 max_rank = 4
-mana_cost = PackedFloat32Array(40.0)
-cooldown = PackedFloat32Array(13.0, 12.0, 11.0, 10.0)
-target_mode = 0
+mana_cost = PackedFloat32Array(45.0)
+cooldown = PackedFloat32Array(11.0, 10.0, 9.0, 8.0)
+target_mode = 2
 target_team = 0
-cast_range = 0.0
+cast_range = 160.0
 radius = 0.0
-width = 0.0
+width = 70.0
 auto_aim_away = false
-ai_use = 2
-ai_range = 0.0
-color = Color(0.85, 0.8, 0.6, 1)
-effects = Array[Resource]([SubResource("ApplyStatusEffect_1"), SubResource("ApplyStatusEffect_2")])
+ai_use = 0
+ai_range = 220.0
+color = Color(1, 0.75, 0.4, 1)
+effects = Array[Resource]([SubResource("DashEffect_1")])

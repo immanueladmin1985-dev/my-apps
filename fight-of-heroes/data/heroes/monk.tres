@@ -9,6 +9,7 @@
 [ext_resource type="Resource" path="res://data/skills/monk_e.tres" id="7"]
 [ext_resource type="Resource" path="res://data/skills/monk_r.tres" id="8"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="9"]
+[ext_resource type="Resource" path="res://data/passives/monk.tres" id="pz1"]
 
 [sub_resource type="Resource" id="ApplyStatusEffect_3"]
 script = ExtResource("3")
@@ -70,10 +71,17 @@ growth_stats = {
 attack_range = 55.0
 is_ranged = false
 projectile_speed = 1000.0
-passive = SubResource("PassiveData_1")
-passive_description = "연타: 세 번째 공격마다 추가 물리 피해를 주고 3초 동안 공격 속도가 30% 빨라집니다."
+passive = ExtResource("pz1")
+passive_description = "연타·연계: 세 번째 공격마다 추가 물리 피해를 주고 3초 동안 공격 속도가 30% 빨라집니다. 스킬을 쓸 때마다 연계가 1 쌓여(최대 3, 2.5초) 다음 스킬 피해가 하나당 15% 늘어납니다."
 skills = Array[Resource]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")])
 preferred_role = "fighter"
 ai_build = PackedStringArray("berserker_boots", "blood_blade", "hero_sword", "guardian_plate", "conqueror_axe", "spirit_king_robe")
 ai_skill_priority = PackedInt32Array(0, 1, 2)
 ai_aggression = 0.7
+gauge_name = "연계"
+gauge_max = 3.0
+gauge_on_cast = 1.0
+gauge_decay_delay = 2.5
+gauge_decay = 3.0
+gauge_pips = true
+gauge_color = Color(1, 0.7, 0.3, 1)

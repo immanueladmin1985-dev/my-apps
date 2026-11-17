@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="p100"]
 [ext_resource type="Resource" path="res://data/status/haste.tres" id="p101"]
 [ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="p102"]
-
+[ext_resource type="Resource" path="res://data/passives/elf_archer.tres" id="pz1"]
 
 [sub_resource type="Resource" id="p_ApplyStatusEffect_1"]
 script = ExtResource("p100")
@@ -65,9 +65,10 @@ attack_range = 400.0
 is_ranged = true
 attack_vfx = "nature"
 projectile_speed = 1000.0
-passive = SubResource("p_passive")
-passive_description = "바람의 가호: 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다."
+passive = ExtResource("pz1")
+passive_description = "매의 눈: 멀리 있는 적을 맞힐수록 기본 공격 피해가 늘어납니다(사거리 끝에서 +30%). 기본 공격이 맞으면 1.5초 동안 이동 속도가 빨라집니다."
 skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("berserker_boots", "storm_bow", "hero_sword", "blood_blade", "dragon_shield", "immortal_amulet")
 ai_aggression = 0.4
+far_bonus = 0.3

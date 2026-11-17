@@ -82,7 +82,7 @@ func test_new_hero_kits() -> void:
 	ninja.skill_caster.cast(1, CastAim.new())
 	await frames(3)
 	var clones := get_tree().get_nodes_in_group("summons").filter(func(m): return m.owner_unit == ninja)
-	check(clones.size() >= 2, "분신술 (%d)" % clones.size())
+	eq(clones.size(), 1, "분신술은 분신 하나")
 	var mech := spawn_hero("mechanic", Enums.Team.BLUE, Vector2(400, 700))
 	mech.skill_caster.cast(0, CastAim.at_point(Vector2(500, 700)))
 	await frames(3)

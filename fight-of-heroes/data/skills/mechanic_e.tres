@@ -1,54 +1,66 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
 [ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/effects/heal_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/overdrive.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="6"]
 
-[sub_resource type="Resource" id="ShieldEffect_3"]
-script = ExtResource("2")
-base = PackedFloat32Array(70.0, 110.0, 150.0, 190.0)
+[sub_resource type="Resource" id="ShieldEffect_4"]
+script = ExtResource("5")
+base = PackedFloat32Array(60.0, 95.0, 130.0, 165.0)
 duration = PackedFloat32Array(3.0)
 ad_ratio = 0.0
-ap_ratio = 0.45
+ap_ratio = 0.4
 to_caster = true
 
-[sub_resource type="Resource" id="ShieldEffect_2"]
-script = ExtResource("2")
-base = PackedFloat32Array(70.0, 110.0, 150.0, 190.0)
-duration = PackedFloat32Array(3.0)
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(5.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = false
 ad_ratio = 0.0
-ap_ratio = 0.45
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="HealEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(120.0, 180.0, 240.0, 300.0)
+ap_ratio = 0.6
+ad_ratio = 0.0
 to_caster = false
 
 [sub_resource type="Resource" id="AreaEffect_1"]
 script = ExtResource("1")
 center = 0
-radius = 400.0
+radius = 600.0
 delay = 0.0
 duration = 0.0
 tick_interval = 0.5
 affects = 1
-color = Color(0.5, 0.9, 1, 0.25)
-effects = Array[Resource]([SubResource("ShieldEffect_2")])
+color = Color(0.5, 0.9, 1, 0.2)
+effects = Array[Resource]([SubResource("HealEffect_2"), SubResource("ApplyStatusEffect_3")])
+owned_summons_only = true
 
 [resource]
-script = ExtResource("3")
+script = ExtResource("6")
 vfx = "tech"
 sound = "shield"
 id = "mechanic_e"
-display_name = "방어막 발생기"
-glyph = "방"
-description = "주변 아군(자신 포함)에게 3초 동안 피해를 막는 보호막을 씌웁니다."
+display_name = "정비 드론"
+glyph = "정"
+description = "주변(600)의 내 포탑을 수리하고 5초 동안 과부하시켜 공격 속도를 35% 높입니다. 자신에게는 3초 동안 보호막을 씌웁니다."
 max_rank = 4
-mana_cost = PackedFloat32Array(70.0)
-cooldown = PackedFloat32Array(16.0, 15.0, 14.0, 13.0)
+mana_cost = PackedFloat32Array(60.0)
+cooldown = PackedFloat32Array(14.0, 13.0, 12.0, 11.0)
 target_mode = 0
-target_team = 1
+target_team = 0
 cast_range = 0.0
-radius = 0.0
+radius = 600.0
 width = 0.0
 auto_aim_away = false
-ai_use = 4
+ai_use = 2
 ai_range = 0.0
 color = Color(0.5, 0.85, 1, 1)
-effects = Array[Resource]([SubResource("AreaEffect_1"), SubResource("ShieldEffect_3")])
+effects = Array[Resource]([SubResource("AreaEffect_1"), SubResource("ShieldEffect_4")])

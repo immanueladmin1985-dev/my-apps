@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="PassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/slow.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/stack_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/freeze.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="5"]
+
+[sub_resource type="Resource" id="StackEffect_2"]
+script = ExtResource("3")
+key = "frost"
+amount = 1.0
+max_value = 3.0
+duration = 4.0
+to_caster = false
+full_status = ExtResource("4")
+full_duration = 1.0
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(1.0)
+magnitude = PackedFloat32Array(0.2, 0.25, 0.3, 0.35)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[resource]
+script = ExtResource("5")
+id = "chill"
+display_name = "냉기"
+description = "기본 공격과 얼음 창이 적에게 냉기를 쌓습니다. 냉기가 3번 쌓이면 1초 동안 얼어붙습니다(기절)."
+trigger = "attack_hit"
+every = 1
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1"), SubResource("StackEffect_2")])

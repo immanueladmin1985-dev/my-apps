@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/knockback_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/stun.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="KnockbackEffect_3"]
+script = ExtResource("3")
+distance = 240.0
+speed = 1200.0
+from_point = false
+wall_status = ExtResource("4")
+wall_duration = 1.0
+
+[sub_resource type="Resource" id="DamageEffect_2"]
+script = ExtResource("2")
+damage_type = 0
+base = PackedFloat32Array(80.0, 120.0, 160.0, 200.0)
+ad_ratio = 0.8
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 200.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.6, 0.3, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("KnockbackEffect_3")])
+
+[resource]
+script = ExtResource("5")
+vfx = "fire"
+sound = "slash"
+id = "dragon_knight_tail"
+display_name = "꼬리치기"
+glyph = "꼬"
+description = "꼬리를 크게 휘둘러 주변 적에게 물리 피해를 주고 멀리 밀쳐냅니다. 벽에 부딪힌 적은 기절합니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(30.0)
+cooldown = PackedFloat32Array(6.0, 5.5, 5.0, 4.5)
+target_mode = 0
+target_team = 0
+cast_range = 0.0
+radius = 200.0
+width = 0.0
+auto_aim_away = false
+ai_use = 0
+ai_range = 190.0
+color = Color(1, 0.5, 0.3, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1")])

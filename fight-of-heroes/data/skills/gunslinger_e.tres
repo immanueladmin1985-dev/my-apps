@@ -3,7 +3,11 @@
 [ext_resource type="Script" path="res://scripts/skills/effects/dash_effect.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
 [ext_resource type="Resource" path="res://data/status/overdrive.tres" id="3"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/reload_effect.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="ReloadEffect_3"]
+script = ExtResource("4")
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]
 script = ExtResource("2")
@@ -23,13 +27,13 @@ path_effects = Array[Resource]([])
 end_effects = Array[Resource]([])
 
 [resource]
-script = ExtResource("4")
+script = ExtResource("5")
 vfx = "bullet"
 sound = "dash"
 id = "gunslinger_e"
 display_name = "구르기"
 glyph = "구"
-description = "조준한 방향으로 굴러 이동하고 3초 동안 공격 속도가 35% 빨라집니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 구릅니다."
+description = "조준한 방향으로 굴러 이동하고, 탄창을 다시 채우며, 3초 동안 공격 속도가 35% 빨라집니다. 빠르게 누르면 가장 가까운 적의 반대쪽으로 구릅니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(40.0)
 cooldown = PackedFloat32Array(11.0, 10.0, 9.0, 8.0)
@@ -42,4 +46,4 @@ auto_aim_away = true
 ai_use = 3
 ai_range = 0.0
 color = Color(0.9, 0.7, 0.4, 1)
-effects = Array[Resource]([SubResource("DashEffect_1"), SubResource("ApplyStatusEffect_2")])
+effects = Array[Resource]([SubResource("DashEffect_1"), SubResource("ApplyStatusEffect_2"), SubResource("ReloadEffect_3")])

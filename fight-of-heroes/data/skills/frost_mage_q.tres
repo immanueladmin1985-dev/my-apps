@@ -4,7 +4,19 @@
 [ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
 [ext_resource type="Resource" path="res://data/status/slow.tres" id="4"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/effects/stack_effect.gd" id="5"]
+[ext_resource type="Resource" path="res://data/status/freeze.tres" id="6"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="7"]
+
+[sub_resource type="Resource" id="StackEffect_4"]
+script = ExtResource("5")
+key = "frost"
+amount = 1.0
+max_value = 3.0
+duration = 4.0
+to_caster = false
+full_status = ExtResource("6")
+full_duration = 1.0
 
 [sub_resource type="Resource" id="ApplyStatusEffect_3"]
 script = ExtResource("3")
@@ -28,17 +40,17 @@ speed = 1200.0
 width = 40.0
 pierce = true
 max_range = 0.0
-color = Color(0.6, 0.9, 1, 1)
-effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
+color = Color(1, 1, 0.7, 1)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3"), SubResource("StackEffect_4")])
 
 [resource]
-script = ExtResource("5")
+script = ExtResource("7")
 vfx = "ice"
 sound = "ice"
 id = "frost_mage_q"
 display_name = "얼음 창"
 glyph = "창"
-description = "일직선의 적을 꿰뚫는 얼음 창을 던져 마법 피해를 주고 둔화시킵니다."
+description = "일직선의 적을 꿰뚫는 얼음 창을 던져 마법 피해를 주고 둔화시키며 냉기를 쌓습니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(50.0)
 cooldown = PackedFloat32Array(7.0)
@@ -50,5 +62,5 @@ width = 40.0
 auto_aim_away = false
 ai_use = 0
 ai_range = 0.0
-color = Color(0.6, 0.9, 1, 1)
+color = Color(0.6, 0.85, 1, 1)
 effects = Array[Resource]([SubResource("ProjectileEffect_1")])

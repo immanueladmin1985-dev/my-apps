@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://data/skills/assassin_e.tres" id="5"]
 [ext_resource type="Resource" path="res://data/skills/assassin_r.tres" id="6"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="7"]
+[ext_resource type="Resource" path="res://data/passives/assassin.tres" id="pz1"]
 
 [sub_resource type="Resource" id="DamageEffect_2"]
 script = ExtResource("2")
@@ -60,8 +61,8 @@ growth_stats = {
 attack_range = 55.0
 is_ranged = false
 projectile_speed = 1000.0
-passive = SubResource("PassiveData_1")
-passive_description = "급소: 체력이 절반 아래인 적에게 기본 공격이 추가 물리 피해를 줍니다."
+passive = ExtResource("pz1")
+passive_description = "뒤치기: 적의 뒤쪽에서 주는 모든 피해가 40% 늘어납니다."
 skills = Array[Resource]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("swift_boots", "hero_sword", "conqueror_axe", "blood_blade", "guardian_plate", "dragon_shield")

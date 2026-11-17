@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/heal_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="3"]
+
+[sub_resource type="Resource" id="HealEffect_2"]
+script = ExtResource("2")
+base = PackedFloat32Array(70.0, 100.0, 130.0, 160.0)
+ap_ratio = 0.15
+ad_ratio = 0.0
+to_caster = false
+overheal_shield = 0.6
+
+[sub_resource type="Resource" id="AreaEffect_1"]
+script = ExtResource("1")
+center = 0
+radius = 450.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 1
+color = Color(1, 1, 0.7, 0.2)
+effects = Array[Resource]([SubResource("HealEffect_2")])
+
+[resource]
+script = ExtResource("3")
+id = "blessing"
+display_name = "축복"
+description = "5초마다 주변 아군(자신 포함)의 체력을 회복시킵니다. 성녀의 회복이 넘치면 넘친 양의 60%가 보호막이 됩니다."
+trigger = "periodic"
+interval = 5.0
+effects = Array[Resource]([SubResource("AreaEffect_1")])

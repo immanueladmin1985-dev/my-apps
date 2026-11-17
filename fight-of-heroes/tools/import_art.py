@@ -78,6 +78,12 @@ def hero_skill_entries() -> list:
         sub = text[:text.find("[resource]")]
         m = re.search(r'^id = "([^"]+)"', sub, re.M) if "passive_data.gd" in sub else None
         pid = m.group(1) if m else None
+        # PHASE 17 부터는 패시브를 data/passives/<영웅>.tres 로 따로 둔 영웅도 있다.
+        if hid and 'path="res://data/passives/' in text:
+            pf = ROOT / "data" / "passives" / (hid.group(1) + ".tres")
+            if pf.exists():
+                pm = re.search(r'^id = "([^"]+)"', pf.read_text(encoding="utf-8"), re.M)
+                pid = pm.group(1) if pm else pid
         if hid:
             out.append((hid.group(1), name.group(1) if name else "", pid))
     return out

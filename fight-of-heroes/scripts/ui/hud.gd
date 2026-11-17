@@ -422,6 +422,10 @@ func _process(delta: float) -> void:
 			name_label.text = "부활까지 %d초" % ceili(hero.respawn_left)
 		else:
 			name_label.text = "%s · Lv.%d" % [hero.display_name, hero.level]
+			if hero.has_gauge():
+				name_label.text += "  ·  %s %d/%d" % [hero.data.gauge_name, int(hero.gauge), int(hero.data.gauge_max)]
+			if hero.attack.magazine > 0:
+				name_label.text += "  ·  " + ("재장전 중" if hero.attack.reloading else "탄창 %d/%d" % [hero.attack.ammo, hero.attack.magazine])
 	if _message_left > 0.0:
 		_message_left -= delta
 		message_label.modulate.a = clampf(_message_left / 0.4, 0.0, 1.0)

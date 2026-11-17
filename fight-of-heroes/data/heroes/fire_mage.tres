@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/skills/fire_mage_e.tres" id="6"]
 [ext_resource type="Resource" path="res://data/skills/fire_mage_r.tres" id="7"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+[ext_resource type="Resource" path="res://data/passives/fire_mage.tres" id="pz1"]
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]
 script = ExtResource("2")
@@ -64,8 +65,8 @@ attack_range = 400.0
 is_ranged = true
 attack_vfx = "fire"
 projectile_speed = 1000.0
-passive = SubResource("PassiveData_1")
-passive_description = "점화: 기본 공격이 3초 동안 적을 불태웁니다."
+passive = ExtResource("pz1")
+passive_description = "점화: 기본 공격이 3초 동안 적을 불태웁니다. 불타는 적에게 화염구·메테오를 맞히면 화상을 터뜨려 추가 피해를 줍니다."
 skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("mage_boots", "chrono_scepter", "archmage_crown", "spirit_king_robe", "dragon_shield", "immortal_amulet")

@@ -8,7 +8,9 @@ extends Resource
 @export_multiline var description: String = ""
 ## attack_hit: 기본 공격이 맞을 때, skill_cast: 스킬을 쓸 때, periodic: interval 초마다,
 ## kill: 적을 처치했을 때, always: 능력치가 늘 붙어 있음
-@export_enum("attack_hit", "skill_cast", "periodic", "kill", "always") var trigger: String = "attack_hit"
+## nearby_death: radius 안에서 적·몬스터가 죽었을 때 (효과는 죽은 자리에서), summon_died: 내 소환수가 죽었을 때
+@export_enum("attack_hit", "skill_cast", "periodic", "kill", "always", "nearby_death", "summon_died") var trigger: String = "attack_hit"
+@export var radius: float = 600.0
 ## attack_hit: n 번째 공격마다
 @export var every: int = 1
 @export var interval: float = 5.0

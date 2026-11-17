@@ -3,14 +3,7 @@
 [ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/skills/effects/summon_effect.gd" id="4"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
-
-[sub_resource type="Resource" id="SummonEffect_4"]
-script = ExtResource("4")
-monster_id = "shadow_clone"
-count = PackedInt32Array(3)
-duration = PackedFloat32Array(8.0)
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
 
 [sub_resource type="Resource" id="DamageEffect_3"]
 script = ExtResource("3")
@@ -34,16 +27,16 @@ effects = Array[Resource]([SubResource("DamageEffect_3")])
 script = ExtResource("1")
 distance = 0.0
 behind = 30.0
-arrive_effects = Array[Resource]([SubResource("AreaEffect_2"), SubResource("SummonEffect_4")])
+arrive_effects = Array[Resource]([SubResource("AreaEffect_2")])
 
 [resource]
-script = ExtResource("5")
+script = ExtResource("4")
 vfx = "shadow"
 sound = "slash"
 id = "ninja_r"
 display_name = "그림자 난무"
 glyph = "난"
-description = "대상 뒤로 순간이동해 주변 적 모두에게 큰 물리 피해를 주고, 분신 3명을 남깁니다."
+description = "대상 뒤로 순간이동해 주변 적 모두에게 큰 물리 피해를 줍니다. 분신이 있으면 분신도 함께 뛰어들어 벱니다."
 max_rank = 3
 mana_cost = PackedFloat32Array(100.0)
 cooldown = PackedFloat32Array(60.0, 50.0, 40.0)

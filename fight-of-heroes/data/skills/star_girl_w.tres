@@ -3,12 +3,41 @@
 [ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
 [ext_resource type="Resource" path="res://data/status/stun.tres" id="3"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/chain_effect.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/knockback_effect.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="6"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_6"]
+script = ExtResource("2")
+status = ExtResource("3")
+duration = PackedFloat32Array(1.0, 1.1, 1.2, 1.3)
+magnitude = PackedFloat32Array(0.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="KnockbackEffect_5"]
+script = ExtResource("5")
+distance = -200.0
+speed = 900.0
+from_point = true
+
+[sub_resource type="Resource" id="DamageEffect_4"]
+script = ExtResource("1")
+damage_type = 1
+base = PackedFloat32Array(40.0, 60.0, 80.0, 100.0)
+ad_ratio = 0.0
+ap_ratio = 0.3
+
+[sub_resource type="Resource" id="ChainEffect_3"]
+script = ExtResource("4")
+radius = 350.0
+effects = Array[Resource]([SubResource("DamageEffect_4"), SubResource("KnockbackEffect_5"), SubResource("ApplyStatusEffect_6")])
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]
 script = ExtResource("2")
 status = ExtResource("3")
-duration = PackedFloat32Array(1.2, 1.3, 1.4, 1.5)
+duration = PackedFloat32Array(1.0, 1.1, 1.2, 1.3)
 magnitude = PackedFloat32Array(0.0)
 to_caster = false
 ad_ratio = 0.0
@@ -22,13 +51,13 @@ ad_ratio = 0.0
 ap_ratio = 0.5
 
 [resource]
-script = ExtResource("4")
+script = ExtResource("6")
 vfx = "star"
 sound = "ice"
 id = "star_girl_w"
 display_name = "리본 속박"
 glyph = "리"
-description = "대상을 리본으로 묶어 마법 피해를 주고 1.2~1.5초 동안 기절시킵니다."
+description = "대상을 리본으로 묶어 마법 피해를 주고 1~1.3초 동안 기절시킵니다. 근처(350)에 다른 적이 있으면 리본으로 이어 대상 쪽으로 끌어당기고 함께 기절시킵니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(70.0)
 cooldown = PackedFloat32Array(13.0, 12.0, 11.0, 10.0)
@@ -41,4 +70,4 @@ auto_aim_away = false
 ai_use = 0
 ai_range = 0.0
 color = Color(1, 0.5, 0.75, 1)
-effects = Array[Resource]([SubResource("DamageEffect_1"), SubResource("ApplyStatusEffect_2")])
+effects = Array[Resource]([SubResource("DamageEffect_1"), SubResource("ApplyStatusEffect_2"), SubResource("ChainEffect_3")])

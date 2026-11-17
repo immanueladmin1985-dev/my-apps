@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="PassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/dragon_blood.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="3"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(1.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = true
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[resource]
+script = ExtResource("3")
+id = "dragon_rage"
+display_name = "용의 분노"
+description = "공격하고 맞을수록 분노가 찹니다. 분노가 가득 차야 용으로 변신할 수 있고, 변신하면 Q·W·E 가 용의 스킬로 바뀝니다. 체력이 35% 아래면 방어력·마법 저항력 +30."
+trigger = "periodic"
+interval = 0.5
+self_below_hp = 0.35
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1")])

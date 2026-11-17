@@ -35,6 +35,19 @@ extends Resource
 ## 효과 그림 종류 (SkillFx.STYLES: fire ice holy heal poison dark nature steel impact arcane)
 @export var vfx: String = ""
 
+@export_group("특수 규칙")
+## 재사용: 쓰고 나서 recast_window 초 안에 다시 누르면 recast_effects 를 실행한다 (마나 없음).
+## 재사용하거나 시간이 지나면 그때부터 재사용 대기시간이 돈다.
+@export var recast_effects: Array[Resource] = []
+@export var recast_window: float = 0.0
+## 재사용 조건: "mark:<상태 id>" (내가 건 그 상태의 적이 있어야 함), "summon:<몬스터 id>" (내 그 소환수가 있어야 함),
+## "link:<상태 id>" (내가 건 그 상태의 아군이 있어야 함)
+@export var recast_requires: String = ""
+## 게이지가 이만큼 있어야 쓸 수 있고, 쓰면 그만큼 줄어든다 (0 이면 조건 없음)
+@export var requires_gauge: float = 0.0
+## 이 스킬의 피해로 적을 처치하면 재사용 대기시간이 바로 끝난다
+@export var reset_on_kill: bool = false
+
 
 static func at(values: PackedFloat32Array, rank: int) -> float:
 	if values.is_empty():

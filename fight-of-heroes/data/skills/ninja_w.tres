@@ -1,25 +1,36 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
 [ext_resource type="Script" path="res://scripts/skills/effects/summon_effect.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+
+[sub_resource type="Resource" id="TeleportEffect_2"]
+script = ExtResource("2")
+distance = 0.0
+behind = 0.0
+destination = "summon:shadow_clone"
+arrive_effects = Array[Resource]([])
 
 [sub_resource type="Resource" id="SummonEffect_1"]
 script = ExtResource("1")
 monster_id = "shadow_clone"
-count = PackedInt32Array(2, 2, 3, 3)
-duration = PackedFloat32Array(12.0)
+count = PackedInt32Array(1)
+duration = PackedFloat32Array(25.0)
+owner_stat_ratio = PackedFloat32Array(0.4, 0.5, 0.6, 0.7)
+max_alive = 1
+mirror_slots = PackedInt32Array(0, 3)
 
 [resource]
-script = ExtResource("2")
+script = ExtResource("3")
 vfx = "shadow"
 sound = "summon"
 id = "ninja_w"
 display_name = "분신술"
 glyph = "분"
-description = "12초 동안 함께 싸우는 그림자 분신 2~3명을 만듭니다."
+description = "25초 동안 본체를 닮은 분신 하나를 만듭니다. 분신은 본체 능력치의 40/50/60/70%를 가지고, 본체가 수리검 부채·그림자 난무를 쓰면 따라 씁니다. 6초 안에 다시 누르면 분신과 자리를 바꿉니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(60.0)
-cooldown = PackedFloat32Array(16.0, 15.0, 14.0, 13.0)
+cooldown = PackedFloat32Array(18.0, 17.0, 16.0, 15.0)
 target_mode = 0
 target_team = 0
 cast_range = 0.0
@@ -30,3 +41,6 @@ ai_use = 5
 ai_range = 0.0
 color = Color(0.4, 0.4, 0.55, 1)
 effects = Array[Resource]([SubResource("SummonEffect_1")])
+recast_effects = Array[Resource]([SubResource("TeleportEffect_2")])
+recast_window = 6.0
+recast_requires = "summon:shadow_clone"

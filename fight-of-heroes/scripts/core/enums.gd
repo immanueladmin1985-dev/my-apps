@@ -6,10 +6,12 @@ enum DamageType { PHYSICAL, MAGIC, TRUE }
 enum TargetMode { SELF, UNIT, DIRECTION, POINT }
 enum TargetTeam { ENEMY, ALLY, ANY }
 enum Slot { Q, W, E, R }
-enum CastResult { OK, NOT_LEARNED, COOLDOWN, NO_MANA, DISABLED, OUT_OF_RANGE, NO_TARGET, DEAD }
+## NOT_READY: 게이지가 부족하거나(용 변신의 분노 등) 재사용 조건이 맞지 않음
+enum CastResult { OK, NOT_LEARNED, COOLDOWN, NO_MANA, DISABLED, OUT_OF_RANGE, NO_TARGET, DEAD, NOT_READY }
 ## HEAL_OVER_TIME / MANA_OVER_TIME: 초당 magnitude 만큼 체력·마나 회복 (물약)
 ## STEALTH: 적이 대상으로 고를 수 없다 (범위 공격에는 맞는다). 공격하거나 스킬을 쓰면 풀린다.
-enum StatusKind { STUN, SLOW, DOT, STAT_BUFF, HASTE, HEAL_OVER_TIME, MANA_OVER_TIME, STEALTH }
+## TAUNT: 상태를 건 유닛(source)만 공격한다 (도발)
+enum StatusKind { STUN, SLOW, DOT, STAT_BUFF, HASTE, HEAL_OVER_TIME, MANA_OVER_TIME, STEALTH, TAUNT }
 ## AI 가 스킬을 언제 쓸지 고르는 기준.
 ## OFFENSE: 대상이 사거리 안이면 사용, ENGAGE: 거리를 좁힐 때, DEFENSE: 체력이 줄었을 때, ESCAPE: 도망칠 때.
 ## SUPPORT: 체력이 줄어든 아군(자신 포함)에게, SUMMON: 적이 가까이 있을 때 소환
@@ -26,6 +28,7 @@ const CAST_RESULT_TEXT := {
 	CastResult.OUT_OF_RANGE: "사거리 밖입니다",
 	CastResult.NO_TARGET: "대상이 없습니다",
 	CastResult.DEAD: "",
+	CastResult.NOT_READY: "아직 쓸 수 없습니다",
 }
 
 

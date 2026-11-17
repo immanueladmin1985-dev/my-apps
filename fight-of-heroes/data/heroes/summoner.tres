@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/skills/summoner_e.tres" id="6"]
 [ext_resource type="Resource" path="res://data/skills/summoner_r.tres" id="7"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+[ext_resource type="Resource" path="res://data/passives/summoner.tres" id="pz1"]
 
 [sub_resource type="Resource" id="HealEffect_3"]
 script = ExtResource("3")
@@ -67,8 +68,8 @@ attack_range = 380.0
 is_ranged = true
 attack_vfx = "dark"
 projectile_speed = 1000.0
-passive = SubResource("PassiveData_1")
-passive_description = "영혼 수확: 적을 처치하면(소환수가 처치해도) 체력과 마나를 회복합니다."
+passive = ExtResource("pz1")
+passive_description = "망자의 부름: 근처(650)에서 적이나 몬스터가 쓰러지면 그 자리에서 해골 전사를 일으킵니다(2초마다, 해골은 최대 6마리)."
 skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("mage_boots", "chrono_scepter", "archmage_crown", "immortal_amulet", "spirit_king_robe", "dragon_shield")

@@ -6,6 +6,24 @@
 [ext_resource type="Resource" path="res://data/status/burn.tres" id="4"]
 [ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
 
+[sub_resource type="Resource" id="DamageEffect_5"]
+script = ExtResource("2")
+damage_type = 1
+base = PackedFloat32Array(12.0, 18.0, 24.0, 30.0)
+ad_ratio = 0.0
+ap_ratio = 0.08
+
+[sub_resource type="Resource" id="AreaEffect_4"]
+script = ExtResource("1")
+center = 1
+radius = 110.0
+delay = 0.6
+duration = 3.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.4, 0.1, 0.25)
+effects = Array[Resource]([SubResource("DamageEffect_5")])
+
 [sub_resource type="Resource" id="ApplyStatusEffect_3"]
 script = ExtResource("3")
 status = ExtResource("4")
@@ -30,17 +48,17 @@ delay = 0.6
 duration = 0.0
 tick_interval = 0.5
 affects = 0
-color = Color(1, 0.45, 0.15, 0.4)
+color = Color(1, 0.6, 0.3, 0.35)
 effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
 
 [resource]
 script = ExtResource("5")
 vfx = "fire"
-sound = "explosion"
+sound = "fire"
 id = "fire_mage_w"
 display_name = "불기둥"
 glyph = "기"
-description = "지정한 곳에 0.6초 뒤 불기둥을 세워 마법 피해를 주고 불태웁니다."
+description = "지정한 곳에 0.6초 뒤 불기둥을 세워 마법 피해를 주고 불태웁니다. 그 자리에 3초 동안 불길이 남아 계속 피해를 줍니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(70.0)
 cooldown = PackedFloat32Array(10.0, 9.5, 9.0, 8.5)
@@ -52,5 +70,5 @@ width = 0.0
 auto_aim_away = false
 ai_use = 0
 ai_range = 0.0
-color = Color(1, 0.4, 0.15, 1)
-effects = Array[Resource]([SubResource("AreaEffect_1")])
+color = Color(1, 0.5, 0.2, 1)
+effects = Array[Resource]([SubResource("AreaEffect_1"), SubResource("AreaEffect_4")])

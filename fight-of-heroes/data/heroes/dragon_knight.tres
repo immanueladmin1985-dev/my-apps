@@ -8,6 +8,10 @@
 [ext_resource type="Resource" path="res://data/skills/dragon_knight_e.tres" id="6"]
 [ext_resource type="Resource" path="res://data/skills/dragon_knight_r.tres" id="7"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+[ext_resource type="Resource" path="res://data/passives/dragon_knight.tres" id="pz1"]
+[ext_resource type="Resource" path="res://data/skills/dragon_knight_tail.tres" id="az1"]
+[ext_resource type="Resource" path="res://data/skills/dragon_knight_breath.tres" id="az2"]
+[ext_resource type="Resource" path="res://data/skills/dragon_knight_soar.tres" id="az3"]
 
 [sub_resource type="Resource" id="ApplyStatusEffect_2"]
 script = ExtResource("2")
@@ -62,10 +66,20 @@ growth_stats = {
 attack_range = 70.0
 is_ranged = false
 projectile_speed = 1000.0
-passive = SubResource("PassiveData_1")
-passive_description = "용의 피: 체력이 35% 아래로 내려가면 방어력·마법 저항력이 30 오릅니다."
+passive = ExtResource("pz1")
+passive_description = "용의 분노: 공격하고 맞을수록 분노가 찹니다. 분노가 가득 차야 용으로 변신할 수 있고, 변신하면 Q·W·E 가 용의 스킬로 바뀝니다. 체력이 35% 아래면 방어력·마법 저항력 +30."
 skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
 preferred_role = "fighter"
 ai_build = PackedStringArray("plated_boots", "blood_blade", "guardian_plate", "conqueror_axe", "spirit_king_robe", "hero_sword")
 ai_skill_priority = PackedInt32Array(0, 1, 2)
 ai_aggression = 0.65
+gauge_name = "분노"
+gauge_max = 100.0
+gauge_on_hit = 7.0
+gauge_on_damaged = 2.5
+gauge_on_cast = 8.0
+gauge_decay_delay = 8.0
+gauge_decay = 3.0
+gauge_color = Color(1, 0.35, 0.2, 1)
+alt_status = "dragon_form"
+alt_skills = Array[Resource]([ExtResource("az1"), ExtResource("az2"), ExtResource("az3")])

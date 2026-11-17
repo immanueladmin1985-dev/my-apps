@@ -15,6 +15,11 @@ var pierce := false
 var homing_target = null
 var on_hit: Callable
 var basic_attack := false
+## 기본 공격 피해 배율 (마지막 탄 등)
+var power := 1.0
+## 부메랑: 끝까지 날아간 뒤 쏜 유닛에게 돌아오며 다시 맞힌다
+var returns := false
+var returning := false
 var color := Color(1, 1, 0.8)
 ## 스킬 투사체의 효과 종류 (기본 공격은 "")
 var style := ""
@@ -93,6 +98,15 @@ func _physics_process(delta: float) -> void:
 		if not _move(direction * step):
 			return
 	else:
+		if returning:
+			if owner_unit == null or not is_instance_valid(owner_unit) or owner_unit.is_dead or _traveled > max_distance * 3.0:
+				_finish()
+				return
+			var back: Vector2 = owner_unit.global_position - global_position
+			if back.length() <= step + 20.0:
+				_finish()
+				return
+			direction = back.normalized()
 		var from := global_position
 		if not _move(direction * step):
 			return
@@ -109,8 +123,12 @@ func _physics_process(delta: float) -> void:
 	_traveled += step
 	rotation = direction.angle()
 	queue_redraw()
-	if _traveled >= max_distance:
-		_finish()
+	if _traveled >= max_distance and not returning:
+		if returns:
+			returning = true
+			_hit_units.clear()
+		else:
+			_finish()
 
 
 ## 맞은 대상에게 효과를 준다. 쏜 쪽이 사라졌으면 false.
@@ -118,7 +136,7 @@ func _deliver(u) -> bool:
 	if basic_attack:
 		if owner_unit == null or not is_instance_valid(owner_unit) or owner_unit.is_queued_for_deletion():
 			return false
-		owner_unit.attack._hit(u)
+		owner_unit.attack._hit(u, power)
 		return true
 	if not on_hit.is_valid():
 		return false

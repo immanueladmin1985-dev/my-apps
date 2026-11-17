@@ -8,6 +8,7 @@ var type: int = Enums.DamageType.PHYSICAL
 var can_crit := false
 var is_crit := false
 var is_basic_attack := false
+var is_backstab := false
 var skill = null  # SkillData 또는 null
 var final_amount := 0.0
 var absorbed := 0.0

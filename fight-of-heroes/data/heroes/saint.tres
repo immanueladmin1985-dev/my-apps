@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/skills/saint_e.tres" id="6"]
 [ext_resource type="Resource" path="res://data/skills/saint_r.tres" id="7"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="8"]
+[ext_resource type="Resource" path="res://data/passives/saint.tres" id="pz1"]
 
 [sub_resource type="Resource" id="HealEffect_3"]
 script = ExtResource("3")
@@ -73,8 +74,8 @@ attack_range = 380.0
 is_ranged = true
 attack_vfx = "holy"
 projectile_speed = 1000.0
-passive = SubResource("PassiveData_1")
-passive_description = "축복: 5초마다 주변 아군(자신 포함)의 체력을 회복시킵니다."
+passive = ExtResource("pz1")
+passive_description = "축복: 5초마다 주변 아군(자신 포함)의 체력을 회복시킵니다. 성녀의 회복이 넘치면 넘친 양의 60%가 보호막이 됩니다."
 skills = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
 preferred_role = "support"
 ai_build = PackedStringArray("mage_boots", "chrono_scepter", "spirit_king_robe", "immortal_amulet", "dragon_shield", "archmage_crown")

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="PassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/burn.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="3"]
+
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(3.0)
+magnitude = PackedFloat32Array(8.0, 14.0, 20.0, 26.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
+
+[resource]
+script = ExtResource("3")
+id = "ignite"
+display_name = "점화"
+description = "기본 공격이 3초 동안 적을 불태웁니다. 불타는 적에게 화염구·메테오를 맞히면 화상을 터뜨려 추가 피해를 줍니다."
+trigger = "attack_hit"
+every = 1
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1")])

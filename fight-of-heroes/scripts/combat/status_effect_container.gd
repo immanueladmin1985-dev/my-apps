@@ -53,6 +53,14 @@ func is_stunned() -> bool:
 	return false
 
 
+## 도발한 유닛 (없으면 null)
+func taunt_source():
+	for e in active.values():
+		if e.data.kind == Enums.StatusKind.TAUNT and e.source != null and is_instance_valid(e.source) and not e.source.is_dead:
+			return e.source
+	return null
+
+
 func is_stealthed() -> bool:
 	for e in active.values():
 		if e.data.kind == Enums.StatusKind.STEALTH:

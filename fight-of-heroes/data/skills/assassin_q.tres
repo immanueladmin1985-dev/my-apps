@@ -1,40 +1,65 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
-[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="3"]
+[ext_resource type="Resource" path="res://data/status/assassin_mark.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="6"]
+
+[sub_resource type="Resource" id="TeleportEffect_4"]
+script = ExtResource("5")
+distance = 0.0
+behind = 30.0
+destination = "mark:assassin_mark"
+arrive_effects = Array[Resource]([])
+
+[sub_resource type="Resource" id="ApplyStatusEffect_3"]
+script = ExtResource("3")
+status = ExtResource("4")
+duration = PackedFloat32Array(4.0)
+magnitude = PackedFloat32Array(0.0)
+to_caster = false
+ad_ratio = 0.0
+ap_ratio = 0.0
 
 [sub_resource type="Resource" id="DamageEffect_2"]
 script = ExtResource("2")
 damage_type = 0
-base = PackedFloat32Array(60.0, 90.0, 120.0, 150.0)
-ad_ratio = 0.9
+base = PackedFloat32Array(60.0, 95.0, 130.0, 165.0)
+ad_ratio = 0.7
 ap_ratio = 0.0
 
-[sub_resource type="Resource" id="TeleportEffect_1"]
+[sub_resource type="Resource" id="ProjectileEffect_1"]
 script = ExtResource("1")
-distance = 0.0
-behind = 30.0
-arrive_effects = Array[Resource]([SubResource("DamageEffect_2")])
+speed = 1500.0
+width = 34.0
+pierce = false
+max_range = 0.0
+color = Color(1, 1, 0.7, 1)
+effects = Array[Resource]([SubResource("DamageEffect_2"), SubResource("ApplyStatusEffect_3")])
 
 [resource]
-script = ExtResource("3")
-vfx = "dark"
-sound = "teleport"
+script = ExtResource("6")
+vfx = "shadow"
+sound = "dash"
 id = "assassin_q"
-display_name = "그림자 찌르기"
-glyph = "찌"
-description = "대상 뒤로 순간이동해 물리 피해를 줍니다."
+display_name = "표식 단검"
+glyph = "표"
+description = "단검을 던져 처음 맞은 적에게 물리 피해를 주고 4초 동안 표식을 남깁니다. 4초 안에 다시 누르면 표식이 남은 적의 뒤로 순간이동합니다."
 max_rank = 4
-mana_cost = PackedFloat32Array(45.0)
+mana_cost = PackedFloat32Array(50.0)
 cooldown = PackedFloat32Array(9.0, 8.5, 8.0, 7.5)
-target_mode = 1
+target_mode = 2
 target_team = 0
-cast_range = 450.0
+cast_range = 650.0
 radius = 0.0
-width = 0.0
+width = 34.0
 auto_aim_away = false
-ai_use = 1
+ai_use = 0
 ai_range = 0.0
-color = Color(0.7, 0.5, 0.9, 1)
-effects = Array[Resource]([SubResource("TeleportEffect_1")])
+color = Color(0.8, 0.3, 0.4, 1)
+effects = Array[Resource]([SubResource("ProjectileEffect_1")])
+recast_effects = Array[Resource]([SubResource("TeleportEffect_4")])
+recast_window = 4.0
+recast_requires = "mark:assassin_mark"

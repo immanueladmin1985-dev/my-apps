@@ -1,31 +1,23 @@
 [gd_resource type="Resource" script_class="HeroData" format=3]
 
 [ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
-[ext_resource type="Resource" path="res://data/skills/gunslinger_q.tres" id="3"]
-[ext_resource type="Resource" path="res://data/skills/gunslinger_w.tres" id="4"]
-[ext_resource type="Resource" path="res://data/skills/gunslinger_e.tres" id="5"]
-[ext_resource type="Resource" path="res://data/skills/gunslinger_r.tres" id="6"]
-[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="7"]
-
-[sub_resource type="Resource" id="DamageEffect_2"]
-script = ExtResource("2")
-damage_type = 0
-base = PackedFloat32Array(35.0, 60.0, 85.0, 110.0)
-ad_ratio = 0.5
-ap_ratio = 0.0
+[ext_resource type="Resource" path="res://data/skills/gunslinger_q.tres" id="2"]
+[ext_resource type="Resource" path="res://data/skills/gunslinger_w.tres" id="3"]
+[ext_resource type="Resource" path="res://data/skills/gunslinger_e.tres" id="4"]
+[ext_resource type="Resource" path="res://data/skills/gunslinger_r.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="6"]
 
 [sub_resource type="Resource" id="PassiveData_1"]
 script = ExtResource("1")
-id = "headshot"
-display_name = "헤드샷"
-description = "네 번째 기본 공격마다 추가 물리 피해를 줍니다."
+id = "six_shooter"
+display_name = "육연발"
+description = "탄창에 6발이 들어 있습니다. 6발을 다 쏘면 1.2초 동안 재장전하고, 마지막 한 발은 2배 피해입니다. 구르기를 쓰면 바로 재장전합니다."
 trigger = "attack_hit"
-every = 4
-effects = Array[Resource]([SubResource("DamageEffect_2")])
+every = 1
+effects = Array[Resource]([])
 
 [resource]
-script = ExtResource("7")
+script = ExtResource("6")
 id = "gunslinger"
 display_name = "총잡이"
 role = "원거리 연사 딜러"
@@ -60,10 +52,14 @@ attack_range = 440.0
 is_ranged = true
 projectile_speed = 1500.0
 passive = SubResource("PassiveData_1")
-passive_description = "헤드샷: 네 번째 기본 공격마다 추가 물리 피해를 줍니다."
-skills = Array[Resource]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+passive_description = "육연발: 탄창에 6발이 들어 있습니다. 6발을 다 쏘면 1.2초 동안 재장전하고, 마지막 한 발은 2배 피해입니다. 구르기를 쓰면 바로 재장전합니다."
+skills = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 preferred_role = "hunter"
 ai_build = PackedStringArray("berserker_boots", "storm_bow", "hero_sword", "blood_blade", "dragon_shield", "immortal_amulet")
 ai_skill_priority = PackedInt32Array(0, 1, 2)
 ai_aggression = 0.5
+magazine_size = 6
+reload_time = 1.2
+last_shot_mult = 2.0
+gauge_pips = true
 attack_vfx = "bullet"

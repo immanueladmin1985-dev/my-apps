@@ -1,58 +1,57 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
-[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
-[ext_resource type="Resource" path="res://data/status/cheer.tres" id="3"]
-[ext_resource type="Resource" path="res://data/status/haste.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="1"]
+[ext_resource type="Resource" path="res://data/status/ribbon_link.tres" id="2"]
+[ext_resource type="Resource" path="res://data/status/haste.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
 
-[sub_resource type="Resource" id="ApplyStatusEffect_3"]
-script = ExtResource("2")
-status = ExtResource("4")
+[sub_resource type="Resource" id="TeleportEffect_3"]
+script = ExtResource("4")
+distance = 0.0
+behind = 0.0
+destination = "link:ribbon_link"
+arrive_effects = Array[Resource]([])
+
+[sub_resource type="Resource" id="ApplyStatusEffect_2"]
+script = ExtResource("1")
+status = ExtResource("3")
 duration = PackedFloat32Array(4.0)
 magnitude = PackedFloat32Array(0.2)
-to_caster = false
+to_caster = true
 ad_ratio = 0.0
 ap_ratio = 0.0
 
-[sub_resource type="Resource" id="ApplyStatusEffect_2"]
-script = ExtResource("2")
-status = ExtResource("3")
-duration = PackedFloat32Array(4.0)
+[sub_resource type="Resource" id="ApplyStatusEffect_1"]
+script = ExtResource("1")
+status = ExtResource("2")
+duration = PackedFloat32Array(6.0)
 magnitude = PackedFloat32Array(0.0)
 to_caster = false
 ad_ratio = 0.0
 ap_ratio = 0.0
-
-[sub_resource type="Resource" id="AreaEffect_1"]
-script = ExtResource("1")
-center = 0
-radius = 420.0
-delay = 0.0
-duration = 0.0
-tick_interval = 0.5
-affects = 1
-color = Color(1, 0.7, 0.9, 0.25)
-effects = Array[Resource]([SubResource("ApplyStatusEffect_2"), SubResource("ApplyStatusEffect_3")])
 
 [resource]
 script = ExtResource("5")
 vfx = "star"
 sound = "heal"
 id = "star_girl_e"
-display_name = "응원"
-glyph = "응"
-description = "주변 아군(자신 포함)에게 4초 동안 공격력 +15, 주문력 +25, 이동 속도 +20% 를 줍니다."
+display_name = "리본 연결"
+glyph = "연"
+description = "아군 한 명과 6초 동안 리본으로 연결해 공격력 +20, 주문력 +30, 공격 속도 +15% 를 줍니다 (자신도 응원으로 빨라짐). 6초 안에 다시 누르면 연결된 아군 곁으로 날아갑니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(60.0)
 cooldown = PackedFloat32Array(15.0, 14.0, 13.0, 12.0)
-target_mode = 0
+target_mode = 1
 target_team = 1
-cast_range = 0.0
+cast_range = 650.0
 radius = 0.0
 width = 0.0
 auto_aim_away = false
 ai_use = 4
 ai_range = 0.0
 color = Color(1, 0.7, 0.85, 1)
-effects = Array[Resource]([SubResource("AreaEffect_1")])
+effects = Array[Resource]([SubResource("ApplyStatusEffect_1"), SubResource("ApplyStatusEffect_2")])
+recast_effects = Array[Resource]([SubResource("TeleportEffect_3")])
+recast_window = 6.0
+recast_requires = "link:ribbon_link"

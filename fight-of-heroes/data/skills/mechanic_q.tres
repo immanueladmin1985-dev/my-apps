@@ -7,7 +7,8 @@
 script = ExtResource("1")
 monster_id = "turret"
 count = PackedInt32Array(1)
-duration = PackedFloat32Array(20.0)
+duration = PackedFloat32Array(30.0)
+max_alive = 3
 
 [resource]
 script = ExtResource("2")
@@ -16,10 +17,10 @@ sound = "summon"
 id = "mechanic_q"
 display_name = "포탑 설치"
 glyph = "포"
-description = "20초 동안 근처의 적을 쏘는 자동 포탑을 설치합니다. 포탑은 움직이지 않습니다."
+description = "30초 동안 근처의 적을 쏘는 자동 포탑을 설치합니다. 포탑은 움직이지 않고, 최대 3개까지 둘 수 있습니다(넘으면 가장 오래된 포탑이 사라짐)."
 max_rank = 4
 mana_cost = PackedFloat32Array(60.0)
-cooldown = PackedFloat32Array(13.0, 12.0, 11.0, 10.0)
+cooldown = PackedFloat32Array(11.0, 10.0, 9.0, 8.0)
 target_mode = 3
 target_team = 0
 cast_range = 350.0

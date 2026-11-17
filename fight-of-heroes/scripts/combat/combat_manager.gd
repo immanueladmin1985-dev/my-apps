@@ -19,6 +19,12 @@ static func compute(target, info: DamageInfo) -> float:
 		if rng.randf() < src.stats.get_stat("crit_chance"):
 			info.is_crit = true
 			amt *= src.stats.get_stat("crit_damage")
+	# 뒤치기: 대상이 바라보는 방향의 뒤쪽에서 때리면 세진다 (암살자).
+	if src != null and src != target:
+		var bs: float = src.stats.get_stat("backstab")
+		if bs > 0.0 and is_behind(src, target):
+			amt *= 1.0 + bs
+			info.is_backstab = true
 	var k := DataRegistry.combat_config().armor_constant
 	match info.type:
 		Enums.DamageType.PHYSICAL:
@@ -26,6 +32,14 @@ static func compute(target, info: DamageInfo) -> float:
 		Enums.DamageType.MAGIC:
 			amt *= mitigation(_effective_resist(target.stats.get_stat("magic_resist"), src, "magic_pen"), k)
 	return maxf(0.0, amt)
+
+
+## src 가 target 의 뒤쪽(바라보는 방향의 반대편 120도)에 있는지
+static func is_behind(src, target) -> bool:
+	var to_src: Vector2 = src.global_position - target.global_position
+	if to_src.length() < 1.0:
+		return false
+	return target.facing.dot(to_src.normalized()) < -0.5
 
 
 static func _effective_resist(resist: float, src, pen_key: String) -> float:
@@ -39,6 +53,18 @@ static func apply_damage(target, info: DamageInfo) -> float:
 	if target == null or not is_instance_valid(target) or target.is_dead:
 		return 0.0
 	var amt := compute(target, info)
+	# 수호: 이 피해의 일부를 상태를 건 아군(성기사)이 대신 받는다.
+	for e in target.status.active.values():
+		if e.data.redirect_ratio > 0.0 and e.source != null and is_instance_valid(e.source) and not e.source.is_dead and e.source != target:
+			var part: float = amt * e.data.redirect_ratio
+			amt -= part
+			var g = e.source
+			var left: float = g.health.absorb(part)
+			g.health.take(left)
+			EventBus.unit_damaged.emit(g, info, part)
+			if g.health.hp <= 0.0:
+				g.die(info.source if is_instance_valid(info.source) else null)
+			break
 	var rest: float = target.health.absorb(amt)
 	info.absorbed = amt - rest
 	target.health.take(rest)

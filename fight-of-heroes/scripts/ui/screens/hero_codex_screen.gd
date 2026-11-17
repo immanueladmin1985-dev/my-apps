@@ -104,6 +104,16 @@ func show_hero(id: String) -> void:
 		else:
 			detail.add_child(UiKit.label(line, 18, Color(0.75, 0.9, 1.0)))
 		detail.add_child(UiKit.wrap_label(s.description, 16))
+	if not h.alt_skills.is_empty():
+		detail.add_child(UiKit.label("변신했을 때 바뀌는 스킬", 22, UiKit.ACCENT))
+		for i in h.alt_skills.size():
+			var a: SkillData = h.alt_skills[i]
+			if a == null:
+				continue
+			detail.add_child(UiKit.label("%s  %s  (마나 %s, 쿨타임 %s초)" % [Enums.SLOT_KEYS[i], a.display_name, _arr(a.mana_cost), _arr(a.cooldown)], 18, Color(1, 0.75, 0.6)))
+			detail.add_child(UiKit.wrap_label(a.description, 16))
+	if h.gauge_name != "":
+		detail.add_child(UiKit.wrap_label("고유 게이지: %s (최대 %d). 체력 막대 아래와 화면 아래 이름 옆에 보입니다." % [h.gauge_name, int(h.gauge_max)], 16, UiKit.MUTED))
 	detail.add_child(UiKit.label("추천 아이템", 22, UiKit.ACCENT))
 	var names := PackedStringArray()
 	for iid in h.ai_build:

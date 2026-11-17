@@ -300,7 +300,37 @@ Wide 1536x512 PNG.
 | `영혼 효과.png` | soul | 사신 | 초록 | `Theme: reaper souls. Dark purple circle with pale teal ghost flames and a scythe mark, a burst of wailing teal soul wisps, a curved purple scythe-slash wave.` |
 | `기계 효과.png` | tech | 기계공 | 마젠타 | `Theme: sci-fi gadgets. Teal hexagon hologram grid circle with a target marker, an electric teal explosion with bolts and gears, a small rocket with a flame trail.` |
 
-## 8. 진행 상황
+## 8. PHASE 17 에서 바뀐 스킬 아이콘 (10장, 한 장에 한 개)
+
+영웅마다 고유 장치를 넣으면서 스킬 내용이 바뀐 것들입니다. 지금은 예전 아이콘이나 글자로 나옵니다.
+아이콘 **한 장에 하나씩** 만들고, 파일 이름을 아래 `파일 이름` 그대로 저장하면 정리 도구가 바로 넣습니다.
+
+### 공통 앞부분 (한 장짜리)
+
+```
+Original fantasy game skill icon (not copied from any existing game).
+A single square skill icon centered on a flat magenta (#FF00FF) background, with a magenta margin around it.
+The icon is a rounded-square tile with its own painted dark background and a bold symbol in the center, readable at 64x64 pixels.
+Bright hand-painted style matching cel-shaded chibi heroes, bold outline, glowing effects. No text, no numbers, no letters.
+Square 1024x1024 PNG.
+```
+
+### 아이콘별 뒷부분
+
+| 파일 이름 | 영웅 · 스킬 | 뒷부분 |
+|---|---|---|
+| `assassin_q.png` | 암살자 · 표식 단검 | `Theme color: crimson and purple. A thrown dagger trailing a red target-mark rune, with a faint shadow figure ready to blink behind it.` |
+| `dragon_knight_tail.png` | 용기사(변신) · 꼬리치기 | `Theme color: red and orange. A spiked dragon tail sweeping in a wide arc, knocking rocks and dust away.` |
+| `dragon_knight_soar.png` | 용기사(변신) · 비상 | `Theme color: red and orange. A red dragon diving down from the sky toward a glowing landing circle, wings spread.` |
+| `frost_mage_e.png` | 빙결술사 · 얼음벽 | `Theme color: icy blue and white. A tall jagged wall of ice crystals rising from the ground, blocking the way.` |
+| `monk_e.png` | 무투가 · 철산고 | `Theme color: orange and brown. A martial artist ramming forward with the shoulder, an enemy silhouette flying back into a cracked stone wall.` |
+| `paladin_q.png` | 성기사 · 도발 | `Theme color: gold and white. A shield slammed into the ground with a golden shockwave and angry red exclamation-mark-shaped sparks drawn toward it (no letters).` |
+| `star_girl_q.png` | 별빛 마법소녀 · 별 부메랑 | `Theme color: pink and white. A spinning star boomerang flying in a curved loop path with a sparkling trail.` |
+| `star_girl_e.png` | 별빛 마법소녀 · 리본 연결 | `Theme color: pink and white. Two hands linked by a glowing pink ribbon with hearts and stars along it.` |
+| `mechanic_e.png` | 기계공 · 정비 드론 | `Theme color: teal and steel. A small hovering repair drone with a wrench arm, beaming green repair light onto a turret.` |
+| `ninja_w.png` | 그림자 닌자 · 분신술 | `Theme color: dark slate blue and purple. A ninja and one identical shadow clone standing back to back, with a swap arrow circling between them.` |
+
+## 9. 진행 상황
 
 - 넣음: 영웅 10명과 용기사 변신, 몬스터 9종, 아이템 39개, 바닥 무늬 7개, 맵 물건·장식 전부, 스킬 아이콘 50개, 스킬 효과 그림 30장.
 - 남음: 새 영웅 6명의 그림과 스킬 아이콘, 소환수 2종, 전용 스킬 효과 6장(선택) (7번 항목). 그림이 없는 동안은 색 원과 글자로 나옵니다.

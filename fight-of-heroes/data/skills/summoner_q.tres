@@ -8,6 +8,7 @@ script = ExtResource("1")
 monster_id = "skeleton"
 count = PackedInt32Array(2, 2, 3, 3)
 duration = PackedFloat32Array(14.0)
+max_alive = 6
 
 [resource]
 script = ExtResource("2")
@@ -16,7 +17,7 @@ sound = "summon"
 id = "summoner_q"
 display_name = "해골 소환"
 glyph = "해"
-description = "14초 동안 해골 전사 2~3마리를 부릅니다."
+description = "14초 동안 해골 전사 2~3마리를 부릅니다. 해골은 최대 6마리까지 거느릴 수 있습니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(60.0)
 cooldown = PackedFloat32Array(14.0)

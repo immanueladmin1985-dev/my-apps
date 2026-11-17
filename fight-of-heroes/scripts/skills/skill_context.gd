@@ -8,6 +8,8 @@ var rank: int = 1
 var target_unit = null
 var point := Vector2.ZERO
 var direction := Vector2.RIGHT
+## 피해 배율 (멀리 날아간 투사체 등)
+var power := 1.0
 
 
 func with_target(u) -> SkillContext:
@@ -18,6 +20,7 @@ func with_target(u) -> SkillContext:
 	c.target_unit = u
 	c.point = point
 	c.direction = direction
+	c.power = power
 	return c
 
 

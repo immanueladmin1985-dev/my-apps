@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="PassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/summon_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/heroes/passive_data.gd" id="2"]
+
+[sub_resource type="Resource" id="SummonEffect_1"]
+script = ExtResource("1")
+monster_id = "skeleton"
+count = PackedInt32Array(1)
+duration = PackedFloat32Array(14.0)
+at_context_point = true
+max_alive = 6
+
+[resource]
+script = ExtResource("2")
+id = "raise_dead"
+display_name = "망자의 부름"
+description = "근처(650)에서 적이나 몬스터가 쓰러지면 그 자리에서 해골 전사를 일으킵니다(2초마다, 해골은 최대 6마리)."
+trigger = "nearby_death"
+radius = 650.0
+cooldown = 2.0
+effects = Array[Resource]([SubResource("SummonEffect_1")])

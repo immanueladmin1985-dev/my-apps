@@ -1,43 +1,44 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
-[ext_resource type="Script" path="res://scripts/skills/effects/projectile_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/line_zone_effect.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="3"]
 
 [sub_resource type="Resource" id="DamageEffect_2"]
 script = ExtResource("2")
 damage_type = 0
-base = PackedFloat32Array(70.0, 110.0, 150.0, 190.0)
-ad_ratio = 0.8
+base = PackedFloat32Array(90.0, 140.0, 190.0, 240.0)
+ad_ratio = 1.0
 ap_ratio = 0.0
 
-[sub_resource type="Resource" id="ProjectileEffect_1"]
+[sub_resource type="Resource" id="LineZoneEffect_1"]
 script = ExtResource("1")
-speed = 1900.0
-width = 40.0
-pierce = true
-max_range = 0.0
-color = Color(1, 1, 0.7, 1)
+length = 1300.0
+width = 44.0
+delay = 0.6
+affects = 0
 effects = Array[Resource]([SubResource("DamageEffect_2")])
+color = Color(1, 0.9, 0.5, 0.4)
 
 [resource]
 script = ExtResource("3")
 vfx = "bullet"
 sound = "arrow"
 id = "gunslinger_q"
-display_name = "관통탄"
-glyph = "관"
-description = "일직선의 적을 모두 꿰뚫는 탄환을 쏴 물리 피해를 줍니다."
+display_name = "조준 사격"
+glyph = "조"
+description = "0.6초 동안 멈춰 조준한 뒤, 아주 먼 곳까지 한 줄로 꿰뚫는 저격탄을 쏴 큰 물리 피해를 줍니다."
 max_rank = 4
-mana_cost = PackedFloat32Array(45.0)
-cooldown = PackedFloat32Array(7.0, 6.5, 6.0, 5.5)
+mana_cost = PackedFloat32Array(50.0)
+cooldown = PackedFloat32Array(9.0, 8.5, 8.0, 7.5)
 target_mode = 2
 target_team = 0
-cast_range = 800.0
+cast_range = 1300.0
 radius = 0.0
-width = 40.0
+width = 44.0
 auto_aim_away = false
 ai_use = 0
-ai_range = 0.0
+ai_range = 1100.0
 color = Color(1, 0.85, 0.5, 1)
-effects = Array[Resource]([SubResource("ProjectileEffect_1")])
+effects = Array[Resource]([SubResource("LineZoneEffect_1")])
+cast_lock = 0.6

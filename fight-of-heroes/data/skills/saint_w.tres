@@ -9,6 +9,7 @@ base = PackedFloat32Array(220.0, 310.0, 400.0, 490.0)
 ap_ratio = 0.8
 ad_ratio = 0.0
 to_caster = false
+overheal_shield = 0.6
 
 [resource]
 script = ExtResource("2")
@@ -17,7 +18,7 @@ sound = "heal"
 id = "saint_w"
 display_name = "치유"
 glyph = "치"
-description = "아군 한 명(자신 포함)의 체력을 크게 회복시킵니다."
+description = "아군 한 명(자신 포함)의 체력을 크게 회복시킵니다. 넘친 회복의 60%는 3초 동안 보호막이 됩니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(70.0)
 cooldown = PackedFloat32Array(7.5, 7.0, 6.5, 6.0)

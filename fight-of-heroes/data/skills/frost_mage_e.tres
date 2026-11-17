@@ -1,45 +1,33 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
-[ext_resource type="Script" path="res://scripts/skills/effects/shield_effect.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/skills/effects/apply_status_effect.gd" id="2"]
-[ext_resource type="Resource" path="res://data/status/frost_armor.tres" id="3"]
-[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/effects/wall_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="2"]
 
-[sub_resource type="Resource" id="ApplyStatusEffect_2"]
-script = ExtResource("2")
-status = ExtResource("3")
-duration = PackedFloat32Array(4.0)
-magnitude = PackedFloat32Array(0.0)
-to_caster = true
-ad_ratio = 0.0
-ap_ratio = 0.0
-
-[sub_resource type="Resource" id="ShieldEffect_1"]
+[sub_resource type="Resource" id="WallEffect_1"]
 script = ExtResource("1")
-base = PackedFloat32Array(80.0, 120.0, 160.0, 200.0)
-duration = PackedFloat32Array(4.0)
-ad_ratio = 0.0
-ap_ratio = 0.5
-to_caster = true
+length = 300.0
+thickness = 36.0
+duration = PackedFloat32Array(2.5, 3.0, 3.5, 4.0)
+style = "ice"
 
 [resource]
-script = ExtResource("4")
+script = ExtResource("2")
 vfx = "ice"
-sound = "shield"
+sound = "ice"
 id = "frost_mage_e"
-display_name = "얼음 갑옷"
-glyph = "갑"
-description = "4초 동안 보호막과 방어력 +30 을 얻습니다."
+display_name = "얼음벽"
+glyph = "벽"
+description = "지정한 곳에 길을 막는 얼음벽을 세웁니다. 유닛과 투사체가 지나갈 수 없습니다."
 max_rank = 4
 mana_cost = PackedFloat32Array(60.0)
-cooldown = PackedFloat32Array(14.0, 13.0, 12.0, 11.0)
-target_mode = 0
+cooldown = PackedFloat32Array(16.0, 15.0, 14.0, 13.0)
+target_mode = 3
 target_team = 0
-cast_range = 0.0
-radius = 0.0
+cast_range = 600.0
+radius = 150.0
 width = 0.0
 auto_aim_away = false
-ai_use = 2
+ai_use = 3
 ai_range = 0.0
 color = Color(0.7, 0.9, 1, 1)
-effects = Array[Resource]([SubResource("ShieldEffect_1"), SubResource("ApplyStatusEffect_2")])
+effects = Array[Resource]([SubResource("WallEffect_1")])

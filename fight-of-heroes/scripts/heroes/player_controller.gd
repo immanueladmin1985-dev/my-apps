@@ -116,7 +116,9 @@ func end_aim(slot: int, vec: Vector2, dragged: bool, cancelled: bool) -> int:
 
 func try_cast(slot: int, aim: CastAim) -> int:
 	var r: int = hero.skill_caster.cast(slot, aim)
-	if r != Enums.CastResult.OK and r != Enums.CastResult.DEAD:
+	if r == Enums.CastResult.NOT_READY and hero.has_gauge():
+		cast_failed.emit("%s이(가) 부족합니다 (%d/%d)" % [hero.data.gauge_name, int(hero.gauge), int(_skill(slot).requires_gauge)])
+	elif r != Enums.CastResult.OK and r != Enums.CastResult.DEAD:
 		cast_failed.emit(Enums.CAST_RESULT_TEXT.get(r, ""))
 	return r
 

@@ -23,6 +23,12 @@ var tier := 1
 ## 0 보다 크면 캠프 자리에서 이 거리 안에 들어온 적을 먼저 공격한다.
 var aggro_radius := 0.0
 var reward_mult := 1.0
+## 소환 순서 (오래된 소환수부터 없앨 때)
+var summon_order := 0
+static var _summon_counter := 0
+## 주인 스킬 따라 쓰기 (닌자 분신)
+var mirror_slots: PackedInt32Array = PackedInt32Array()
+var mirror_ratio := 0.0
 
 const SUMMON_GUARD := 520.0
 const SUMMON_FOLLOW := 140.0
@@ -78,6 +84,33 @@ func setup_summon(d: MonsterData, owner, pos: Vector2, seconds: float) -> void:
 	owner_unit = owner
 	team = owner.team
 	life_left = seconds
+	_summon_counter += 1
+	summon_order = _summon_counter
+
+
+func set_mirror(slots: PackedInt32Array) -> void:
+	mirror_slots = slots
+	if owner_unit != null and owner_unit.get("skill_caster") != null:
+		owner_unit.skill_caster.cast_done.connect(_on_owner_cast)
+
+
+## 주인이 스킬을 쓰면 같은 스킬을 내 자리에서 같은 곳을 향해 쓴다 (피해는 내 능력치로).
+func _on_owner_cast(slot: int, s: SkillData) -> void:
+	if is_dead or not mirror_slots.has(slot) or not is_instance_valid(owner_unit) or s == null:
+		return
+	var oc = owner_unit.skill_caster.last_ctx
+	if oc == null:
+		return
+	var ctx := SkillContext.new()
+	ctx.caster = self
+	ctx.skill = s
+	ctx.rank = oc.rank
+	var aim_point: Vector2 = oc.point if s.target_mode == Enums.TargetMode.POINT else owner_unit.global_position + oc.direction * maxf(s.cast_range, 200.0)
+	ctx.point = aim_point
+	ctx.direction = (aim_point - global_position).normalized() if global_position.distance_to(aim_point) > 1.0 else oc.direction
+	ctx.target_unit = oc.target_unit
+	face_towards(aim_point)
+	SkillEffect.apply_list(s.effects, ctx)
 
 
 func is_summon() -> bool:

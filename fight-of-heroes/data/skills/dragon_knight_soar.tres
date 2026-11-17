@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/effects/teleport_effect.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/skills/effects/area_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/skills/effects/damage_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/skills/effects/knockback_effect.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="5"]
+
+[sub_resource type="Resource" id="KnockbackEffect_4"]
+script = ExtResource("4")
+distance = 160.0
+speed = 1200.0
+from_point = false
+
+[sub_resource type="Resource" id="DamageEffect_3"]
+script = ExtResource("3")
+damage_type = 0
+base = PackedFloat32Array(90.0, 135.0, 180.0, 225.0)
+ad_ratio = 0.7
+ap_ratio = 0.0
+
+[sub_resource type="Resource" id="AreaEffect_2"]
+script = ExtResource("2")
+center = 0
+radius = 170.0
+delay = 0.0
+duration = 0.0
+tick_interval = 0.5
+affects = 0
+color = Color(1, 0.6, 0.3, 0.35)
+effects = Array[Resource]([SubResource("DamageEffect_3"), SubResource("KnockbackEffect_4")])
+
+[sub_resource type="Resource" id="TeleportEffect_1"]
+script = ExtResource("1")
+distance = 0.0
+behind = 40.0
+arrive_effects = Array[Resource]([SubResource("AreaEffect_2")])
+
+[resource]
+script = ExtResource("5")
+vfx = "fire"
+sound = "explosion"
+id = "dragon_knight_soar"
+display_name = "비상"
+glyph = "비"
+description = "날아올라 지정한 곳으로 뛰어들어 주변 적에게 물리 피해를 주고 밀쳐냅니다."
+max_rank = 4
+mana_cost = PackedFloat32Array(40.0)
+cooldown = PackedFloat32Array(10.0, 9.5, 9.0, 8.5)
+target_mode = 3
+target_team = 0
+cast_range = 550.0
+radius = 170.0
+width = 0.0
+auto_aim_away = false
+ai_use = 1
+ai_range = 0.0
+color = Color(1, 0.55, 0.25, 1)
+effects = Array[Resource]([SubResource("TeleportEffect_1")])

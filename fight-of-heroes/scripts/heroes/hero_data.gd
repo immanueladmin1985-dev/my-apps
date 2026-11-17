@@ -30,6 +30,43 @@ extends Resource
 @export var projectile_speed: float = 900.0
 ## 원거리 기본 공격 투사체의 효과 종류 (SkillFx.STYLES, "" 이면 단순한 점)
 @export var attack_vfx: String = ""
+## 탄창: 이만큼 쏘면 reload_time 초 동안 재장전한다. 마지막 탄은 last_shot_mult 배 피해 (0 이면 탄창 없음)
+@export var magazine_size: int = 0
+@export var reload_time: float = 1.2
+@export var last_shot_mult: float = 2.0
+## 멀리서 맞힐수록 기본 공격 피해 증가 (사거리 끝에서 +far_bonus)
+@export var far_bonus: float = 0.0
+## 원거리 영웅이 이 거리 안의 적은 주먹으로 친다 (피해 ×close_mult, 0 이면 없음)
+@export var close_melee_range: float = 0.0
+@export var close_mult: float = 1.2
+
+@export_group("게이지")
+## 영웅 고유 게이지 (검기·기·분노·영혼 등). gauge_name 이 비어 있으면 없음.
+@export var gauge_name: String = ""
+@export var gauge_max: float = 100.0
+@export var gauge_on_hit: float = 0.0
+@export var gauge_on_cast: float = 0.0
+@export var gauge_on_damaged: float = 0.0
+## 적 영웅 처치 / 도움 / 몬스터 처치 때 오르는 양
+@export var gauge_on_kill: float = 0.0
+@export var gauge_on_assist: float = 0.0
+@export var gauge_on_monster_kill: float = 0.0
+## 마지막으로 오른 뒤 gauge_decay_delay 초가 지나면 초당 gauge_decay 만큼 줄어든다 (0 이면 줄지 않음)
+@export var gauge_decay_delay: float = 4.0
+@export var gauge_decay: float = 0.0
+## 죽었을 때 남는 비율 (1 이면 그대로)
+@export var gauge_keep_on_death: float = 0.0
+## 게이지 1 당 붙는 능력치 (사신의 영혼 → 공격력)
+@export var gauge_stat: String = ""
+@export var gauge_stat_per: float = 0.0
+## 게이지를 점으로 보여 줄지 (최대값이 작은 검기·탄창 같은 것)
+@export var gauge_pips: bool = false
+@export var gauge_color: Color = Color(1, 0.85, 0.3)
+
+@export_group("형태")
+## alt_status 상태(용 변신 등)일 때 Q/W/E/R 대신 쓰는 스킬 (빈 칸은 원래 스킬)
+@export var alt_status: String = ""
+@export var alt_skills: Array[Resource] = []
 
 @export_group("스킬")
 ## PHASE 5 에서 패시브 데이터를 연결한다.

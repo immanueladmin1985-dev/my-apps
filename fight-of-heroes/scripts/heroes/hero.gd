@@ -30,6 +30,7 @@ signal recall_finished
 func setup(hero_data: HeroData, hero_team: int) -> void:
 	data = hero_data
 	team = hero_team
+	add_to_group("heroes")
 	display_name = hero_data.display_name
 	stats.setup(hero_data.base_stats, hero_data.growth_stats)
 	stats.set_level(level)
@@ -45,6 +46,71 @@ func setup(hero_data: HeroData, hero_team: int) -> void:
 	mana.reset_full()
 	$Passive.setup(hero_data.passive as PassiveData)
 	$Visual.setup(self)
+	attack.setup_hero(hero_data)
+	skill_caster.setup_forms(hero_data.alt_status, hero_data.alt_skills)
+	if has_gauge():
+		attack.attack_landed.connect(func(_t): add_gauge(data.gauge_on_hit))
+		skill_caster.cast_done.connect(func(_s, _k): add_gauge(data.gauge_on_cast))
+		if not EventBus.hero_killed.is_connected(_on_hero_killed_gauge):
+			EventBus.hero_killed.connect(_on_hero_killed_gauge)
+			EventBus.unit_died.connect(_on_unit_died_gauge)
+
+
+# ---- 고유 게이지 (검기·기·분노·영혼) ----
+
+var gauge := 0.0
+var _gauge_idle := 0.0
+
+
+func has_gauge() -> bool:
+	return data != null and data.gauge_name != ""
+
+
+func add_gauge(amount: float) -> void:
+	if not has_gauge() or amount == 0.0 or is_dead:
+		return
+	set_gauge(gauge + amount)
+	if amount > 0.0:
+		_gauge_idle = 0.0
+
+
+func set_gauge(v: float) -> void:
+	if not has_gauge():
+		return
+	var old := gauge
+	gauge = clampf(v, 0.0, data.gauge_max)
+	if data.gauge_stat != "" and int(old) != int(gauge):
+		stats.add_modifiers("gauge", [StatModifier.make(data.gauge_stat, floorf(gauge) * data.gauge_stat_per, 0.0)])
+
+
+func gauge_ratio() -> float:
+	return gauge / maxf(1.0, data.gauge_max) if has_gauge() else 0.0
+
+
+func _on_hero_killed_gauge(victim, killer, helpers: Array) -> void:
+	if victim == self or not is_instance_valid(victim) or victim.team == team:
+		return
+	if Targeting.hero_of(killer) == self:
+		add_gauge(data.gauge_on_kill)
+	elif helpers.has(self):
+		add_gauge(data.gauge_on_assist)
+
+
+func _on_unit_died_gauge(victim, killer) -> void:
+	if victim is Monster and not victim.is_summon() and Targeting.hero_of(killer) == self:
+		add_gauge(data.gauge_on_monster_kill)
+
+
+func _exit_tree() -> void:
+	if EventBus.hero_killed.is_connected(_on_hero_killed_gauge):
+		EventBus.hero_killed.disconnect(_on_hero_killed_gauge)
+		EventBus.unit_died.disconnect(_on_unit_died_gauge)
+
+
+func die(killer = null) -> void:
+	if not is_dead and has_gauge():
+		set_gauge(floorf(gauge * data.gauge_keep_on_death))
+	super.die(killer)
 
 
 func set_controller(c: Node) -> void:
@@ -125,6 +191,8 @@ func is_recalling() -> bool:
 
 
 func on_damaged(src, amount: float) -> void:
+	if has_gauge() and amount > 0.0 and data.gauge_on_damaged > 0.0:
+		add_gauge(data.gauge_on_damaged)
 	if recall_left > 0.0 and amount > 0.0:
 		cancel_recall()
 		if controller is PlayerController:
@@ -133,6 +201,10 @@ func on_damaged(src, amount: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
+	if has_gauge() and data.gauge_decay > 0.0 and gauge > 0.0:
+		_gauge_idle += delta
+		if _gauge_idle >= data.gauge_decay_delay:
+			set_gauge(gauge - data.gauge_decay * delta)
 	if recall_left > 0.0:
 		if is_dead or move_input.length() > 0.05 or attack_order != null or nav_goal != null or attack.is_winding_up():
 			cancel_recall()
