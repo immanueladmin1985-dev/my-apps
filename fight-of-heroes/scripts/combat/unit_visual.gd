@@ -19,6 +19,8 @@ var art: Texture2D = null
 var art_alt: Texture2D = null
 var art_alt_status := ""
 var _flip := false
+## 도감에서 "그림 좌우 바꾸기"를 눌러 둔 영웅
+var _user_flip := false
 ## 머리 위치 (체력 막대·상태 표시 기준). 도형이면 -radius, 그림이면 그림 위쪽.
 var _head_y := 0.0
 ## 그림 높이 = 반지름 × 이 값
@@ -41,6 +43,7 @@ func setup(u) -> void:
 			var kind := "heroes" if u is Hero else "monsters"
 			art = Art.texture(kind, d.id)
 			if u is Hero:
+				_user_flip = Art.is_flipped(d.id)
 				art_alt = Art.texture(kind, d.id + "_dragon")
 				art_alt_status = "dragon_form"
 	u.attack.attack_started.connect(func(_t): _swing = 1.0)
@@ -152,7 +155,10 @@ func _draw_art(tex: Texture2D, r: float, team_c: Color, alpha: float) -> void:
 		m = Color(m.lerp(Color(tint, 1.0), tint.a * 0.6), alpha)
 	if _hit_flash > 0.0:
 		m = Color(1.0, 1.0 - _hit_flash * 0.55, 1.0 - _hit_flash * 0.55, alpha)
-	draw_set_transform(Vector2(0, feet - bob), lean, Vector2(-1.0 if _flip else 1.0, 1.0))
+	var sx := -1.0 if _flip else 1.0
+	if unit is Hero and _user_flip:
+		sx = -sx
+	draw_set_transform(Vector2(0, feet - bob), lean, Vector2(sx, 1.0))
 	draw_texture_rect(tex, Rect2(-w * 0.5, -h, w, h), false, m)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_head_y = feet - h * 0.92

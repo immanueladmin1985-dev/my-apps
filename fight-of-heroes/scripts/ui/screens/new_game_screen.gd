@@ -207,6 +207,7 @@ func _refresh() -> void:
 		info.text = "%s · %s · 난이도 %s · 기본 역할 %s\n패시브 %s" % [h.display_name, h.role, "★".repeat(h.difficulty), ROLE_NAMES.get(h.preferred_role, ""), h.passive_description]
 		art_rect.texture = Art.texture("heroes", h.id)
 		art_rect.visible = art_rect.texture != null
+		art_rect.flip_h = Art.is_flipped(h.id)
 		skills_label.text = _skill_lines(h)
 
 

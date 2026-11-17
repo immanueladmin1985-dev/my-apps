@@ -405,3 +405,23 @@ func test_unlimited_kills() -> void:
 	check(not bm.match_over, "무제한이면 킬 수로 끝나지 않음")
 	bm.queue_free()
 	hm.queue_free()
+
+
+func test_quick_item_and_art_flip() -> void:
+	var h := _hero("blade_master", Vector2(400, 8000))
+	h.inventory.add(ItemManager.get_item("health_potion"))
+	h.inventory.add(ItemManager.get_item("health_potion"))
+	var q := QuickItemButton.new()
+	q.setup(34.0)
+	q.hero = h
+	add_child(q)
+	h.health.hp = h.health.max_hp() * 0.5
+	var slot := q.pick_slot()
+	check(slot >= 0 and h.inventory.item_at(slot).id == "health_potion", "다친 상태면 체력 물약을 고름")
+	eq(h.inventory.count_at(slot), 2, "개수")
+	q.queue_free()
+	var was := Art.is_flipped("monk")
+	Art.toggle_flip("monk")
+	check(Art.is_flipped("monk") != was, "그림 좌우 바꾸기")
+	Art.toggle_flip("monk")
+	eq(Art.is_flipped("monk"), was, "다시 누르면 원래대로")

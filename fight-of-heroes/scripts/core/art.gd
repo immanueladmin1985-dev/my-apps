@@ -68,6 +68,21 @@ static func draw_hero_face(ci: CanvasItem, hero_id: String, center: Vector2, rad
 
 
 ## 스킬 아이콘: 데이터에 넣은 icon, 없으면 assets/skills/<id>.png
+## 사용자가 영웅 도감에서 "그림 좌우 바꾸기"를 누른 영웅 (그림이 반대로 들어갔을 때 직접 바로잡는다)
+static func is_flipped(hero_id: String) -> bool:
+	var d = SaveManager.get_setting("art_flip", {})
+	return d is Dictionary and bool(d.get(hero_id, false))
+
+
+static func toggle_flip(hero_id: String) -> void:
+	var d = SaveManager.get_setting("art_flip", {})
+	if not (d is Dictionary):
+		d = {}
+	d = d.duplicate()
+	d[hero_id] = not bool(d.get(hero_id, false))
+	SaveManager.set_setting("art_flip", d)
+
+
 static func skill_icon(skill) -> Texture2D:
 	if skill == null:
 		return null

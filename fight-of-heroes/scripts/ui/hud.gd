@@ -51,6 +51,8 @@ var shop_button: TouchButton
 var shop: ShopManager
 var shop_panel: ShopPanel
 var inventory_bar: InventoryBar
+## 소모품 빠른 사용 버튼 (Q 버튼 왼쪽 아래)
+var quick_item: QuickItemButton
 var shop_open := false
 
 var _message_left := 0.0
@@ -75,12 +77,13 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
-	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, name_label, gather_button, ping_button, shop_button, inventory_bar] + skill_buttons:
+	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, name_label, gather_button, ping_button, shop_button, inventory_bar, quick_item] + skill_buttons:
 		n.visible = playable
 	if not playable:
 		return
 	attack_button.hero = hero
 	inventory_bar.hero = hero
+	quick_item.hero = hero
 	for b in skill_buttons:
 		b.hero = hero
 		var s: SkillData = hero.skill_caster.get_skill(b.slot)
@@ -157,6 +160,14 @@ func _build() -> void:
 		_place(b, Vector2(1, 1), center - b.size * 0.5, b.size)
 		root.add_child(b)
 		skill_buttons.append(b)
+
+	quick_item = QuickItemButton.new()
+	quick_item.name = "QuickItem"
+	quick_item.setup(34.0)
+	var q_center := ATTACK_CENTER + Vector2(-268, 62)
+	_place(quick_item, Vector2(1, 1), q_center - quick_item.size * 0.5, quick_item.size)
+	quick_item.used.connect(func(slot): _on_inventory_slot(slot))
+	root.add_child(quick_item)
 
 	cancel_zone = PanelContainer.new()
 	cancel_zone.name = "CancelZone"

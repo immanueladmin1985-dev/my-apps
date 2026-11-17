@@ -120,6 +120,15 @@ func _draw() -> void:
 		col = s.color.darkened(0.35)
 	draw_circle(c, r, Color(0, 0, 0, 0.5))
 	draw_circle(c, r - 3.0, Color(col, 0.92))
+	if slot < 0 and hero is Hero and hero.data != null:
+		# 공격 버튼: 영웅 색 바탕에 영웅마다 다른 무기 그림 (총잡이는 리볼버 탄창), 둘레에 고유 게이지
+		draw_circle(c, r - 3.0, Color(hero.data.color.darkened(0.55), 0.95))
+		draw_circle(c, r - 10.0, Color(hero.data.color.darkened(0.35), 0.6))
+		AttackIcon.draw(self, hero, c, r)
+		if hero.is_dead or hero.status.is_stunned():
+			draw_circle(c, r - 3.0, Color(0.15, 0.15, 0.15, 0.6))
+		draw_arc(c, r - 1.5, 0, TAU, 48, Color(1, 1, 1, 0.9 if is_held() else 0.35), 3.0 if is_held() else 2.0)
+		return
 	var text := glyph
 	var fs := int(r * 0.62)
 	if s != null and s.glyph != "":

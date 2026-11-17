@@ -60,6 +60,7 @@ func show_hero(id: String) -> void:
 	var h := DataRegistry.hero(id)
 	art_rect.texture = Art.texture("heroes", h.id)
 	art_rect.visible = art_rect.texture != null
+	art_rect.flip_h = Art.is_flipped(h.id)
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 14)
 	detail.add_child(top)
@@ -114,6 +115,14 @@ func show_hero(id: String) -> void:
 			detail.add_child(UiKit.wrap_label(a.description, 16))
 	if h.gauge_name != "":
 		detail.add_child(UiKit.wrap_label("고유 게이지: %s (최대 %d). 체력 막대 아래와 화면 아래 이름 옆에 보입니다." % [h.gauge_name, int(h.gauge_max)], 16, UiKit.MUTED))
+	if art_rect.texture != null:
+		var fb := UiKit.button("그림 좌우 바꾸기", Vector2(220, 50), 18)
+		fb.name = "FlipArt"
+		fb.pressed.connect(func():
+			Art.toggle_flip(h.id)
+			art_rect.flip_h = Art.is_flipped(h.id))
+		detail.add_child(fb)
+		detail.add_child(UiKit.wrap_label("게임은 영웅이 오른쪽을 보는 그림을 기준으로 씁니다. 왼쪽 그림처럼 오른쪽을 보고 있지 않으면 눌러 주세요. 전투에도 바로 적용됩니다.", 15, UiKit.MUTED))
 	detail.add_child(UiKit.label("추천 아이템", 22, UiKit.ACCENT))
 	var names := PackedStringArray()
 	for iid in h.ai_build:
