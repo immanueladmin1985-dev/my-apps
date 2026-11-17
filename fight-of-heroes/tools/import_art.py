@@ -37,6 +37,7 @@ KINDS = {
     "map_object": ("assets/backgrounds", 512),
     "skills": ("assets/skills", 128),
     "effects": ("assets/effects", 256),
+    "attack": ("assets/attack", 192),
 }
 
 # 스킬 효과 그림 묶음 (효과 종류마다 가로 3칸: 바닥 무늬, 터짐, 투사체)
@@ -126,6 +127,11 @@ def catalog() -> dict:
         cat[norm(hid + "_skills")] = ("skill_sheet", hid)
         if hname:
             cat[norm(hname + " 스킬")] = ("skill_sheet", hid)
+    # 공격 버튼 그림: attack_<영웅 id>, 총잡이 탄창은 revolver_cylinder · revolver_bullet
+    for hid, _hname, _p in hero_skill_entries():
+        cat[norm("attack_" + hid)] = ("attack", hid)
+    for i in ("revolver_cylinder", "revolver_bullet"):
+        cat[norm(i)] = ("attack", i)
     # 변신 스킬처럼 Q/W/E/R 칸 밖에 있는 스킬도 스킬 id 로 넣을 수 있다.
     for f in sorted((ROOT / "data" / "skills").glob("*.tres")):
         cat.setdefault(norm(f.stem), ("skills", f.stem))

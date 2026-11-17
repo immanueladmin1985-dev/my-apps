@@ -30,9 +30,23 @@ static func kind_of(h) -> String:
 	return "sword"
 
 
+## 그림 파일(assets/attack/<영웅 id>.png)이 있으면 그 그림을, 없으면 코드로 그린 모양을 쓴다.
 static func draw(ci: CanvasItem, h, c: Vector2, r: float) -> void:
 	var col: Color = h.data.color
-	match kind_of(h):
+	var k := kind_of(h)
+	if k == "revolver" and Art.has("attack", "revolver_cylinder") and Art.has("attack", "revolver_bullet"):
+		_revolver_art(ci, h, c, r)
+		if h.has_gauge():
+			_gauge_ring(ci, h, c, r)
+		return
+	var tex := Art.texture("attack", h.data.id) if k != "revolver" else null
+	if tex != null:
+		var s := r * 1.55
+		ci.draw_texture_rect(tex, Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s)), false)
+		if h.has_gauge():
+			_gauge_ring(ci, h, c, r)
+		return
+	match k:
 		"revolver": _revolver(ci, h, c, r)
 		"sword": _sword(ci, c, r, Color(0.85, 0.9, 1.0), Color(1, 0.8, 0.3))
 		"spear": _spear(ci, c, r, col)
@@ -124,6 +138,39 @@ static func _revolver(ci: CanvasItem, h, c: Vector2, r: float) -> void:
 			ci.draw_circle(p, cr * 0.16, Color(0.08, 0.08, 0.1))
 	ci.draw_circle(c, cr * 0.16, OUTLINE)
 	ci.draw_circle(c, cr * 0.12, Color(0.7, 0.72, 0.78))
+	if a.reloading:
+		var t := "장전"
+		var w := FONT.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
+		ci.draw_string_outline(FONT, c + Vector2(-w * 0.5, r * 0.85), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 4, OUTLINE)
+		ci.draw_string(FONT, c + Vector2(-w * 0.5, r * 0.85), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 0.85, 0.4))
+
+
+# 탄창 그림(revolver_cylinder.png)에서 잰 약실 자리: 그림 반 너비에 대한 비율
+const CHAMBER_DIST := 0.57
+const CHAMBER_RADIUS := 0.23
+
+
+## 그림으로 만든 리볼버 탄창: 탄창 그림을 쏜 만큼 돌리고, 남은 총알을 약실마다 그린다.
+static func _revolver_art(ci: CanvasItem, h, c: Vector2, r: float) -> void:
+	var a = h.attack
+	var n: int = a.magazine
+	var cyl := Art.texture("attack", "revolver_cylinder")
+	var bul := Art.texture("attack", "revolver_bullet")
+	var half := r * 0.86
+	var shots: int = n - a.ammo if not a.reloading else 0
+	var spin := TAU / n * shots
+	if a.reloading:
+		spin = Time.get_ticks_msec() / 90.0
+	ci.draw_set_transform(c, spin, Vector2.ONE)
+	ci.draw_texture_rect(cyl, Rect2(-Vector2(half, half), Vector2(half, half) * 2.0), false)
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	var br := half * CHAMBER_RADIUS * 0.98
+	for i in n:
+		if a.reloading or i < shots:
+			continue
+		var p := c + Vector2.from_angle(-PI / 2.0 + spin + TAU * i / n) * half * CHAMBER_DIST
+		var tint := Color(1, 0.7, 0.45) if i == n - 1 else Color.WHITE  # 마지막 한 발은 붉게
+		ci.draw_texture_rect(bul, Rect2(p - Vector2(br, br), Vector2(br, br) * 2.0), false, tint)
 	if a.reloading:
 		var t := "장전"
 		var w := FONT.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
