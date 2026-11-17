@@ -327,3 +327,34 @@ func test_star_girl_boomerang_chain_and_link() -> void:
 	await frames(20)
 	eq(sg.skill_caster.cast(2, CastAim.new()), Enums.CastResult.OK, "연결된 아군에게 날아감")
 	check(sg.global_position.distance_to(ally.global_position) < 80.0, "아군 곁")
+
+
+func test_kill_target_stepper() -> void:
+	var old: int = int(SaveManager.get_setting("kill_target", 15))
+	SaveManager.set_setting("kill_target", 15)
+	var row := UiKit.kill_stepper()
+	add_child(row)
+	row.get_node("Plus").pressed.emit()
+	row.get_node("Plus").pressed.emit()
+	eq(int(SaveManager.get_setting("kill_target", 0)), 17, "+ 를 누르면 1씩 늘어남")
+	eq(row.get_node("Value").text, "17", "숫자 표시")
+	SaveManager.set_setting("kill_target", 1)
+	row.get_node("Minus").pressed.emit()
+	eq(int(SaveManager.get_setting("kill_target", 0)), 1, "1 아래로는 내려가지 않음")
+	row.queue_free()
+	SaveManager.set_setting("kill_target", old)
+
+
+func test_round_pillars_block() -> void:
+	var m := DataRegistry.map_data("valley_02")
+	check(m.pillars.size() >= 10, "둥근 기둥 %d개" % m.pillars.size())
+	var arena := Arena.new()
+	world.add_child(arena)
+	arena.build(m)
+	await frames(2)
+	var pl: Vector3 = m.pillars[0]
+	var runner := spawn_dummy(Enums.Team.RED, Vector2(pl.x + pl.z + 60.0, pl.y), {"move_speed": 300.0})
+	runner.move_input = Vector2.LEFT
+	await frames(40)
+	check(runner.global_position.distance_to(Vector2(pl.x, pl.y)) > pl.z, "기둥을 지나가지 못함")
+	check(not Targeting.has_line_of_sight(runner, Vector2(pl.x - pl.z - 50.0, pl.y), Vector2(pl.x + pl.z + 50.0, pl.y)), "기둥 너머는 보이지 않음 (투사체가 막힘)")

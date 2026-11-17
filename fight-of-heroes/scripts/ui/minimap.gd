@@ -77,6 +77,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(map.ground_color, 0.7))
 	for r in map.obstacles:
 		draw_rect(Rect2(_to_mini(r.position), r.size / map.size * size), Color(map.obstacle_color.lightened(0.2), 0.9))
+	for pl in map.pillars:
+		draw_circle(_to_mini(Vector2(pl.x, pl.y)), maxf(1.5, pl.z / map.size.x * size.x), Color(map.obstacle_color.lightened(0.2), 0.9))
 	var fr: float = DataRegistry.combat_config().fountain_radius / map.size.x * size.x
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		draw_circle(_to_mini(map.spawn_of(team)), fr, Color(Enums.team_color(team), 0.25))

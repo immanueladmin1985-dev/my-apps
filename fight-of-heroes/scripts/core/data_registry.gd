@@ -138,6 +138,9 @@ func validate() -> PackedStringArray:
 			for r in mp.obstacles:
 				if r.grow(30).has_point(c.position):
 					errors.append("%s/%s: 장애물 안 %s" % [mp.id, c.id, str(r)])
+			for pl in mp.pillars:
+				if c.position.distance_to(Vector2(pl.x, pl.y)) < pl.z + 30.0:
+					errors.append("%s/%s: 기둥 안" % [mp.id, c.id])
 		for sp in [mp.blue_spawn, mp.red_spawn]:
 			for r in mp.obstacles:
 				if r.grow(40).has_point(sp):

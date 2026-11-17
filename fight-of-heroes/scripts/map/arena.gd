@@ -17,6 +17,8 @@ func build(map_data: MapData) -> void:
 	_add_block(Rect2(map.size.x, 0, WALL, map.size.y))
 	for r in map.obstacles:
 		_add_block(r)
+	for pl in map.pillars:
+		_add_pillar(Vector2(pl.x, pl.y), pl.z)
 	_bake_navigation(bounds)
 	queue_redraw()
 
@@ -34,6 +36,27 @@ func _add_block(r: Rect2) -> void:
 	add_child(body)
 
 
+func _add_pillar(center: Vector2, r: float) -> void:
+	var body := StaticBody2D.new()
+	body.collision_layer = 1
+	body.collision_mask = 0
+	var shape := CollisionShape2D.new()
+	var c := CircleShape2D.new()
+	c.radius = r
+	shape.shape = c
+	body.add_child(shape)
+	add_child(body)
+	body.position = center
+
+
+## 둥근 기둥을 길찾기에서 피할 다각형 (16각형)
+static func _circle_points(center: Vector2, r: float, n := 16) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in n:
+		pts.append(center + Vector2.from_angle(TAU * i / n) * r)
+	return pts
+
+
 func _bake_navigation(bounds: Rect2) -> void:
 	nav_region = NavigationRegion2D.new()
 	add_child(nav_region)
@@ -43,6 +66,8 @@ func _bake_navigation(bounds: Rect2) -> void:
 	src.add_traversable_outline(_rect_points(bounds))
 	for r in map.obstacles:
 		src.add_obstruction_outline(_rect_points(r))
+	for pl in map.pillars:
+		src.add_obstruction_outline(_circle_points(Vector2(pl.x, pl.y), pl.z))
 	NavigationServer2D.bake_from_source_geometry_data(poly, src)
 	nav_region.navigation_polygon = poly
 
@@ -93,9 +118,15 @@ func _draw() -> void:
 			_draw_plain_shop(shop_pos)
 	var wall := Art.texture("map", "wall_rock")
 	# 기울어진 시점에서는 아래쪽(앞쪽)에 있는 벽을 나중에 그려야 앞면이 뒤 벽을 가린다.
-	var walls: Array = Array(map.obstacles)
-	walls.sort_custom(func(a, b): return a.end.y < b.end.y)
+	var walls: Array = []  # 네모 벽(Rect2)과 둥근 기둥(Vector3)을 함께 담는다
+	walls.append_array(map.obstacles)
+	for pl in map.pillars:
+		walls.append(pl)
+	walls.sort_custom(func(a, b): return _bottom_of(a) < _bottom_of(b))
 	for r in walls:
+		if r is Vector3:
+			_draw_pillar(Vector2(r.x, r.y), r.z, wall)
+			continue
 		# 벽 둘레에 부드러운 그림자를 깔아 바닥과 자연스럽게 이어지게 한다.
 		_draw_soft_rect(r.grow(6), 34.0, null, Color(0.05, 0.05, 0.03, 0.35))
 		if wall != null:
@@ -107,6 +138,44 @@ func _draw() -> void:
 		else:
 			_draw_plain_rock(r)
 	_draw_edge_shade()
+
+
+static func _bottom_of(o) -> float:
+	return o.y + o.z if o is Vector3 else o.end.y
+
+
+## 둥근 바위 기둥: 바닥 그림자, 기울어진 시점이면 아래로 갈수록 어두운 옆면과 위로 올린 윗면.
+func _draw_pillar(c: Vector2, r: float, tex: Texture2D) -> void:
+	_draw_soft_circle(c + Vector2(4, 8), r + 4.0, 30.0, null, Color(0.05, 0.05, 0.03, 0.35))
+	var h := WALL_HEIGHT if View.tilt < 1.0 else 0.0
+	var top := c - Vector2(0, h)
+	if h > 0.0:
+		# 옆면: 아래 반원과 위로 올린 아래 반원 사이
+		var n := 20
+		var ts := Vector2(tex.get_width(), tex.get_height()) if tex != null else Vector2.ONE
+		for i in n:
+			var a0 := PI * i / n
+			var a1 := PI * (i + 1) / n
+			var p0 := c + Vector2.from_angle(a0) * r
+			var p1 := c + Vector2.from_angle(a1) * r
+			var shade := 0.45 + 0.25 * sin(a0)  # 가운데(앞)가 밝다
+			var up := Color(shade + 0.15, shade + 0.12, shade + 0.1)
+			var lo := Color(shade - 0.1, shade - 0.12, shade - 0.13)
+			var quad := PackedVector2Array([p0 - Vector2(0, h), p1 - Vector2(0, h), p1, p0])
+			if tex != null:
+				draw_polygon(quad, PackedColorArray([up, up, lo, lo]), PackedVector2Array([quad[0] / ts, quad[1] / ts, quad[2] / ts, quad[3] / ts]), tex)
+			else:
+				draw_polygon(quad, PackedColorArray([up, up, lo, lo]))
+	# 윗면
+	var pts := _circle_points(top, r, 32)
+	_fill(pts, tex, Color.WHITE if tex != null else Color(0.56, 0.52, 0.46))
+	draw_arc(top, r * 0.82, PI * 1.1, PI * 1.9, 20, Color(1, 1, 1, 0.18), 3.0)
+	pts.append(pts[0])
+	draw_polyline(pts, Color(0, 0, 0, 0.4), 3.0)
+	if h > 0.0:
+		draw_line(c + Vector2(-r, 0), top + Vector2(-r, 0), Color(0, 0, 0, 0.4), 3.0)
+		draw_line(c + Vector2(r, 0), top + Vector2(r, 0), Color(0, 0, 0, 0.4), 3.0)
+		draw_arc(c, r, 0, PI, 20, Color(0, 0, 0, 0.4), 3.0)
 
 
 ## 기울어진 시점의 벽: 윗면을 WALL_HEIGHT 만큼 위로 올리고, 그 아래에 어두운 앞면을 그려 높이가 있어 보이게 한다.
@@ -410,6 +479,9 @@ func decoration_spots() -> Array:
 func _deco_free(p: Vector2, cfg: CombatConfig, placed: Array) -> bool:
 	for r in map.obstacles:
 		if r.grow(70.0).has_point(p):
+			return false
+	for pl in map.pillars:
+		if p.distance_to(Vector2(pl.x, pl.y)) < pl.z + 70.0:
 			return false
 	for r in map.lava_areas:
 		if r.has_point(p):

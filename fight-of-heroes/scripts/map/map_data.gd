@@ -8,6 +8,8 @@ extends Resource
 @export var blue_spawn: Vector2 = Vector2(220, 700)
 @export var red_spawn: Vector2 = Vector2(2180, 700)
 @export var obstacles: Array[Rect2] = []
+## 둥근 기둥·바위: (중심 x, 중심 y, 반지름)
+@export var pillars: PackedVector3Array = PackedVector3Array()
 ## 몬스터 캠프와 보스 자리 (CampData)
 @export var camps: Array[Resource] = []
 ## 용암 바닥으로 칠할 구역 (가장 어려운 던전)

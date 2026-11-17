@@ -96,8 +96,10 @@ func _draw() -> void:
 		if Enums.is_enemy(viewer_team, unit.team):
 			return
 		alpha = 0.4
-	draw_set_transform(Vector2(0, r * 0.75), 0.0, Vector2(1.0, 0.4))
-	draw_circle(Vector2.ZERO, r * 1.1, Color(0, 0, 0, 0.35 * alpha))
+	# 발밑 그림자: 가장자리가 흐린 타원. 기둥 그림자처럼 오른쪽 아래로 살짝 비켜 있어 바닥에 서 있어 보인다.
+	draw_set_transform(Vector2(r * 0.15, r * 0.8), 0.0, Vector2(1.0, 0.4))
+	draw_texture_rect(SkillFx.tex("dot"), Rect2(-Vector2(r, r) * 1.6, Vector2(r, r) * 3.2), false, Color(0, 0, 0, 0.6 * alpha))
+	draw_circle(Vector2.ZERO, r * 0.8, Color(0, 0, 0, 0.18 * alpha))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if not unit.is_dead:
 		_draw_buff_ground(r, alpha)

@@ -198,3 +198,31 @@ static func hero_badge(h: HeroData, size := 44.0) -> Control:
 		var w := FONT.get_string_size(h.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		c.draw_string(FONT, Vector2(r - w * 0.5, r + fs * 0.36), h.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0, 0, 0, 0.85)))
 	return c
+
+
+## 목표 킬 정하기: [−] 숫자 [+] (1~100). 누를 때마다 설정에 저장한다.
+static func kill_stepper(btn := Vector2(60, 54)) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = "KillStepper"
+	row.add_theme_constant_override("separation", 4)
+	var minus := button("−", btn, 26)
+	minus.name = "Minus"
+	var value := label("", 24)
+	value.name = "Value"
+	value.custom_minimum_size = Vector2(52, 0)
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var plus := button("+", btn, 26)
+	plus.name = "Plus"
+	var show := func():
+		value.text = str(int(SaveManager.get_setting("kill_target", 15)))
+	var change := func(d: int):
+		var k := clampi(int(SaveManager.get_setting("kill_target", 15)) + d, 1, 100)
+		SaveManager.set_setting("kill_target", k)
+		show.call()
+	minus.pressed.connect(change.bind(-1))
+	plus.pressed.connect(change.bind(1))
+	row.add_child(minus)
+	row.add_child(value)
+	row.add_child(plus)
+	show.call()
+	return row

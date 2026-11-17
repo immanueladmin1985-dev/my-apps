@@ -117,12 +117,7 @@ func _ready() -> void:
 		brow.add_child(b)
 		diff_buttons.append(b)
 	brow.add_child(UiKit.label("  목표 킬", 18, UiKit.MUTED))
-	for k in KILL_TARGETS:
-		var b := UiKit.toggle(str(k), Vector2(66, 54))
-		b.set_meta("k", k)
-		b.pressed.connect(func(): SaveManager.set_setting("kill_target", k); _refresh())
-		brow.add_child(b)
-		kill_buttons.append(b)
+	brow.add_child(UiKit.kill_stepper())
 	brow.add_child(UiKit.spacer())
 	var go := UiKit.button("시작", Vector2(200, 60), 26)
 	go.name = "StartButton"
@@ -203,9 +198,6 @@ func _refresh() -> void:
 	var cur: String = SaveManager.get_setting("difficulty", "normal")
 	for b in diff_buttons:
 		b.button_pressed = b.get_meta("id") == cur
-	var kt := int(SaveManager.get_setting("kill_target", 15))
-	for b in kill_buttons:
-		b.button_pressed = b.get_meta("k") == kt
 	var h := DataRegistry.hero(slots[shown_slot]) if slots[shown_slot] != "" else null
 	if h == null:
 		info.text = "이 칸은 무작위 영웅으로 채웁니다. 영웅을 누르면 이 칸에 넣습니다."
@@ -251,8 +243,6 @@ func build_config() -> MatchConfig:
 	c.autoplay = mode == "watch" or flow_autoplay
 	if kill_target_override > 0:
 		c.kill_target = kill_target_override
-	elif mode == "practice":
-		c.kill_target = mini(c.kill_target, 10)
 	return c
 
 

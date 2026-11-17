@@ -88,10 +88,14 @@ camp_sym("lair_wolves_l", "lair_wolves_r", (CX - 330, 2900), ["wolf_alpha", "wol
 camp_sym("lair_inner_l", "lair_inner_r", (CX - 640, 3120), ["bone_golem", "stone_golem", "skeleton", "skeleton"], 60, 150, tier=3, aggro=330)
 camp("ancient_dragon", (CX, 3150), ["ancient_dragon"], 600, 0, final=True)
 
-# 바위
+# 둥근 바위 기둥 (좌우 대칭): 예전 네모 바위와 같은 자리, 비슷한 크기
+pillars = []
 for r in [(1050, 1200, 150, 170), (1100, 2050, 170, 140), (2050, 1560, 130, 130), (1550, 1650, 100, 100),
           (700, 300, 150, 120), (700, 2950, 150, 120), (2250, 900, 140, 110), (1250, 1500, 90, 90), (2300, 1900, 110, 100)]:
-    add_sym(r)
+    x, y, w, h = r
+    cx, cy, rad = x + w / 2, y + h / 2, (w + h) / 4
+    pillars.append((cx, cy, rad))
+    pillars.append((W - cx, cy, rad))
 
 
 def fmt_camp(c):
@@ -120,8 +124,9 @@ for c in camps:
 out += ['[resource]', 'script = ExtResource("1")', 'id = "valley_02"', 'display_name = "용의 협곡"',
         'size = Vector2(%d, %d)' % (W, H), 'blue_spawn = Vector2(320, %d)' % CY, 'red_spawn = Vector2(%d, %d)' % (W - 320, CY),
         'obstacles = Array[Rect2]([%s])' % rects(obs), 'lava_areas = Array[Rect2]([%s])' % rects(lava),
+        'pillars = PackedVector3Array(%s)' % ", ".join("%g, %g, %g" % p for p in pillars),
         'camps = Array[Resource]([%s])' % ", ".join('SubResource("%s")' % c["id"] for c in camps),
         'ground_color = Color(0.2, 0.29, 0.21, 1)', 'obstacle_color = Color(0.36, 0.34, 0.31, 1)']
 path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data/maps/valley_02.tres")
 open(path, "w").write("\n".join(out) + "\n")
-print(len(obs), "장애물", len(camps), "캠프")
+print(len(obs), "벽", len(pillars), "기둥", len(camps), "캠프")

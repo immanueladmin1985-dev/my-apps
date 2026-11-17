@@ -35,12 +35,7 @@ func _ready() -> void:
 	var krow := HBoxContainer.new()
 	krow.add_theme_constant_override("separation", 8)
 	grid.add_child(krow)
-	for k in KILL_TARGETS:
-		var b := UiKit.toggle(str(k), Vector2(80, 54))
-		b.set_meta("k", k)
-		b.pressed.connect(func(): SaveManager.set_setting("kill_target", k); _refresh())
-		krow.add_child(b)
-		kill_buttons.append(b)
+	krow.add_child(UiKit.kill_stepper(Vector2(70, 54)))
 
 	grid.add_child(UiKit.label("효과음 크기", 20))
 	var vrow := HBoxContainer.new()
@@ -97,9 +92,7 @@ func _refresh() -> void:
 	var cur: String = SaveManager.get_setting("difficulty", "normal")
 	for b in diff_buttons:
 		b.button_pressed = b.get_meta("id") == cur
-	var kt := int(SaveManager.get_setting("kill_target", 15))
-	for b in kill_buttons:
-		b.button_pressed = b.get_meta("k") == kt
+	pass
 
 
 func on_back() -> void:
