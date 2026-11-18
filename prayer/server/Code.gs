@@ -16,7 +16,7 @@
  * - 기기마다 앱이 만든 기기 번호와 열쇠로 들어옵니다. 승인 없이 이름만 고르면 됩니다.
  */
 
-var SERVER_VER = 3;
+var SERVER_VER = 4;
 var FORM_SHEET = '설문지 응답 시트1';
 var OLD_RULE_BEFORE = '2026-08-30';   // 이 날짜 전 설문 기록은 그날 것을 모두 더함
 var SH = {
@@ -26,8 +26,32 @@ var SH = {
   dev:    { name: '기기',     cols: ['기기ID', '열쇠(암호화)', '이름', '권한', '기기 정보', '처음 접속', '마지막 접속'] },
   alias:  { name: '이름바꿈', cols: ['원래 이름', '바른 이름', '바꾼 시각'] },
   comment:{ name: '댓글',     cols: ['ID', '기도제목 주인', '쓴 사람', '내용', '쓴 시각', '기기ID', '지움'] },
-  react:  { name: '반응',     cols: ['기도제목 주인', '누른 사람', '종류', '누른 시각', '기기ID'] }
+  react:  { name: '반응',     cols: ['기도제목 주인', '누른 사람', '종류', '누른 시각', '기기ID'] },
+  church: { name: '소속',     cols: ['이름', '교회(소속)', '고친 시각'] }
 };
+// 로고: 그림은 '로고' 시트에 조각으로, 보이는 곳 설정은 스크립트 속성에
+var LOGO_SHEET = '로고';
+function logoOpts() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('LOGO') || 'null') || { v: '' }; } catch (e) { return { v: '' }; }
+}
+function saveLogoOpts(o) { PropertiesService.getScriptProperties().setProperty('LOGO', JSON.stringify(o)); }
+function logoData() {
+  var sh = ss().getSheetByName(LOGO_SHEET); if (!sh || sh.getLastRow() < 1) return '';
+  return sh.getRange(1, 1, sh.getLastRow(), 1).getValues().map(function (r) { return String(r[0]); }).join('');
+}
+function saveLogoData(d) {
+  var sh = ss().getSheetByName(LOGO_SHEET) || ss().insertSheet(LOGO_SHEET);
+  sh.clearContents();
+  if (!d) return;
+  var parts = []; for (var i = 0; i < d.length; i += 40000) parts.push([d.slice(i, i + 40000)]);
+  sh.getRange(1, 1, parts.length, 1).setNumberFormat('@').setValues(parts);
+}
+function cleanChurch(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, 30); }
+function setChurch(name, church) {
+  var list = rows('church').filter(function (r) { return r[0] && String(r[0]) !== name; });
+  if (church) list.push([name, church, String(Date.now())]);
+  writeAll('church', list);
+}
 var REACTS = ['heart', 'like', 'smile', 'pray'];
 // 권한: '마스터'(모두) · '공지'(담임목사님 등: 공지 올리기·내리기, 댓글 관리)
 function isStaff(me) { return me.role === '마스터' || me.role === '공지'; }
@@ -222,7 +246,9 @@ function shared() {
     var o = reacts[String(r[0])] = reacts[String(r[0])] || {};
     (o[String(r[2])] = o[String(r[2])] || []).push(String(r[1]));
   });
-  var out = { names: Object.keys(names).sort(), data: data, prayers: prayers, notices: notices, comments: comments, reacts: reacts };
+  var churches = {};
+  rows('church').forEach(function (r) { if (r[0] && r[1]) churches[String(r[0])] = String(r[1]); });
+  var out = { names: Object.keys(names).sort(), data: data, prayers: prayers, notices: notices, comments: comments, reacts: reacts, churches: churches };
   cachePut(JSON.stringify(out));
   return out;
 }
@@ -246,6 +272,7 @@ function masterTry(ok) {
 }
 
 function handle(p) {
+  if (p.action === 'logo') return { ok: true, logo: logoOpts(), data: logoData() };   // 로고 그림은 누구나 (첫 화면에도 보여야 해서)
   if (p.action === 'load') {   // 읽기는 잠그지 않음 (새 기기만 잠그고 등록)
     var devs = readDevs(), me = find(devs, p.dev);
     if (me) { if (me.keyHash !== hash(p.key || '')) return { ok: false, error: 'key' }; return state(me, devs); }
@@ -259,6 +286,7 @@ function state(me, devs) {
   if (now - Number(me.last || 0) > 60 * 60000) { me.last = String(now); try { writeDev(me); } catch (e) {} }
   var o = shared();
   o.ok = true; o.ver = SERVER_VER; o.today = todayStr();
+  o.logo = logoOpts();   // 그림은 빼고 판 번호·보이는 곳만 (그림은 'logo' 요청으로 따로 받음)
   o.me = { name: me.name, role: me.role === '마스터' || me.role === '공지' ? me.role : '' };
   return o;
 }
@@ -282,6 +310,7 @@ function locked(p) {
       if (name.length < 2) return { ok: false, error: '이름을 두 글자 이상 넣어 주세요' };
       var old = me.name;
       if (old && old !== name) renameMine(me.id, old, name);
+      if (p.church != null) setChurch(name, cleanChurch(p.church));   // 소속(교회 이름)은 비워도 됨
       me.name = name; me.desc = String(p.desc || me.desc || '').slice(0, 120); me.last = String(now);
       writeDev(me); bump();
       return state(me, devs);
@@ -373,6 +402,18 @@ function locked(p) {
   if (!master) return { ok: false, error: '마스터만 할 수 있어요' };
   switch (p.action) {
     case 'unmaster': me.role = ''; writeDev(me); return state(me, devs);
+    case 'setLogo': {   // data: 'data:image/...;base64,...' (비우면 지움), 보이는 곳 설정
+      var lo = logoOpts(), opt = p.opts || {};
+      if (p.data != null) {
+        var dd = String(p.data);
+        if (dd && (!/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(dd) || dd.length > 900000)) return { ok: false, error: '그림이 너무 크거나 형식이 맞지 않아요' };
+        saveLogoData(dd); lo.v = dd ? String(now) : '';
+      }
+      ['header', 'welcome', 'title'].forEach(function (k) { if (opt[k] != null) lo[k] = !!opt[k]; });
+      if (opt.size) lo.size = ['s', 'm', 'l'].indexOf(opt.size) >= 0 ? opt.size : 'm';
+      saveLogoOpts(lo);
+      return state(me, devs);
+    }
     case 'devices': {
       var s0 = state(me, devs);
       s0.devices = devs.filter(function (d) { return d.name; }).map(function (d) { return { id: d.id, name: d.name, role: d.role, desc: d.desc, last: Number(d.last) || 0 }; });
@@ -401,6 +442,8 @@ function locked(p) {
       pr = pr.filter(function (r) { return !(String(r[0]) === from && hasTo); }).map(function (r) { if (String(r[0]) === from) r[0] = to; return r; });
       writeAll('prayer', pr);
       devs.forEach(function (d) { if (d.name === from) { d.name = to; writeDev(d); } });
+      var chs = rows('church'), toHas = chs.some(function (r) { return String(r[0]) === to && r[1]; });
+      writeAll('church', chs.filter(function (r) { return r[0] && !(String(r[0]) === from && toHas); }).map(function (r) { if (String(r[0]) === from) r[0] = to; return r; }));
       writeAll('comment', rows('comment').map(function (r) { if (String(r[1]) === from) r[1] = to; if (String(r[2]) === from) r[2] = to; return r; }));
       var seen = {};
       writeAll('react', rows('react').map(function (r) { if (String(r[0]) === from) r[0] = to; if (String(r[1]) === from) r[1] = to; return r; })
@@ -424,6 +467,9 @@ function renameMine(devId, from, to) {
     return true;
   });
   if (pc) writeAll('prayer', pr);
+  // 소속도 새 이름으로 (새 이름에 이미 소속이 있으면 그대로)
+  var chs = rows('church'), toHas = chs.some(function (r) { return String(r[0]) === to && r[1]; });
+  if (!toHas) writeAll('church', chs.map(function (r) { if (String(r[0]) === from) r[0] = to; return r; }));
   // 이 기기에서 쓴 댓글·반응, 그리고 옮긴 기도제목에 달린 댓글·반응
   writeAll('comment', rows('comment').map(function (r) {
     if (String(r[2]) === from && String(r[5]) === devId) r[2] = to;

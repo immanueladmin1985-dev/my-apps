@@ -59,7 +59,7 @@
     online = true;
     if (!d.ok && d.error === 'key') { await resetDevice(); S = null; C.state = null; saveCfg(); throw new Error('기기 정보가 바뀌어 이름을 다시 골라 주세요'); }
     if (!d.ok) { const e = new Error(d.error || '실패했어요'); e.server = true; throw e; }
-    if (d.names) { S = d; C.state = d; saveCfg(); }
+    if (d.names) { S = d; C.state = d; saveCfg(); checkLogo(); }
     return d;
   }
   async function refresh(quiet) {
@@ -135,11 +135,11 @@
     applyFont();
     const app = $('#app');
     if (!C.server) { app.innerHTML = noServerHtml(); bindNoServer(); return; }
-    if (!S) { app.innerHTML = `<div class="welcome"><img class="logo" src="icon-192.png" alt=""><h1>30인 운동본부 기도</h1><p class="lead">자료를 불러오는 중…</p><div id="loadErr"></div></div>`; return; }
+    if (!S) { app.innerHTML = `<div class="welcome">${brandHtml()}<p class="lead">자료를 불러오는 중…</p><div id="loadErr"></div></div>`; return; }
     if (!myName()) { renderWelcome(); return; }
     const y = window.scrollY;
     app.innerHTML = `<header><div class="top">
-        <h1>30인 운동본부 기도</h1>
+        <h1 class="htitle">${headerBrand()}</h1>
         <button class="icon" id="tReload" aria-label="새로 고침">${ICON.reload}</button>
         <button class="icon" id="tFS" aria-label="전체화면">${ICON.fsOn}</button>
         <button class="icon" id="tSet" aria-label="설정">${ICON.gear}</button></div>
@@ -160,7 +160,7 @@
     let h = '';
     if (!online || C.pending.length) h += `<div class="offline">${C.pending.length ? `📶 보내지 못한 기록 ${C.pending.length}개 — 인터넷이 연결되면 자동으로 보내요.` : '📶 인터넷 연결이 안 돼서 저장해 둔 자료를 보여 드려요.'}</div>`;
     if (!noInstall) h += `<div class="banner hidden" id="banner"><span>📲 홈 화면에 설치하면 다음부터 아이콘으로 바로 열려요.</span>
-      <button class="btn pri sm" id="bInst">설치하기</button><button class="btn sm" id="bFs">전체화면</button><button class="btn ghost sm" id="bNo">다음에</button></div>`;
+      <button class="btn pri sm" id="bInst">📲 바로 설치</button><button class="btn sm" id="bFs">전체화면</button><button class="btn ghost sm" id="bNo">다음에</button></div>`;
     return h;
   }
   function bindBanners() {
@@ -308,7 +308,7 @@
     const d = dataOf(n), t = today(), p = (S.prayers || []).find(x => x.name === n);
     const days = Array.from({ length: 30 }, (_, i) => addDays(t, -i));
     const [w] = sumRange(n, ...periodRange('week')), [mo] = sumRange(n, ...periodRange('month'));
-    modal(`<h3>${esc(n)} 목사</h3>
+    modal(`<h3>${esc(n)} 목사${churchOf(n) ? ` <span class="church">${esc(churchOf(n))}</span>` : ''}</h3>
       <div class="stat"><div><span class="small muted">이번 주</span><b>${hmText(w)}</b></div><div><span class="small muted">이번 달</span><b>${hmText(mo)}</b></div><div><span class="small muted">전체</span><b>${hmText(totalOf(n))}</b></div></div>
       ${p ? `<p class="sect">🙏 기도제목</p><div class="notice">${esc(p.text)}</div>` : ''}
       <p class="sect">최근 30일</p>
@@ -396,7 +396,7 @@
     const seen = C.seenCmt || 0;
     const who = REACTS.map(([k, e]) => (rs[k] || []).length ? e + ' ' + (rs[k] || []).map(esc).join(', ') : '').filter(Boolean).join('  ·  ');
     return `<div class="post${isMine ? ' mine' : ''}" data-post="${esc(p.name)}">
-      <div class="who"><b>${esc(p.name)} 목사${isMine ? ' <span class="small muted">(나)</span>' : ''}</b><span class="small muted">${md(ymd(new Date(p.at)))}${!isMine && isMaster() ? ` <button class="btn ghost sm" data-pm="${esc(p.name)}">관리</button>` : ''}</span></div>
+      <div class="who"><b>${esc(p.name)} 목사${churchOf(p.name) ? ` <span class="church">${esc(churchOf(p.name))}</span>` : ''}${isMine ? ' <span class="small muted">(나)</span>' : ''}</b><span class="small muted">${md(ymd(new Date(p.at)))}${!isMine && isMaster() ? ` <button class="btn ghost sm" data-pm="${esc(p.name)}">관리</button>` : ''}</span></div>
       <div class="txt">${esc(p.text)}</div>
       <div class="reacts">${REACTS.map(([k, e, l]) => { const arr = rs[k] || []; return `<button class="rx${arr.includes(me) ? ' on' : ''}" data-rx="${k}" data-to="${esc(p.name)}" aria-label="${l}" title="${l}"><span>${e}</span>${arr.length ? `<b>${arr.length}</b>` : ''}</button>`; }).join('')}
         <button class="rx cm${open ? ' on' : ''}" data-cm="${esc(p.name)}">💬 댓글${cs.length ? ` <b>${cs.length}</b>` : ''}</button>
@@ -475,50 +475,189 @@
 
   /* ----- 이름 고르기 ----- */
   // 이름 직접 적기 (다른 사람 이름 목록은 보여 주지 않음)
-  function nameInput(inn, value, okLabel, onOk) {
-    inn.innerHTML = `<div class="field" style="margin:0"><label for="nIn">이름 <span class="small muted">(‘목사’는 빼고 성함만)</span></label>
+  function nameInput(inn, value, okLabel, onOk, church) {
+    inn.innerHTML = `<div class="field"><label for="nIn">이름 <span class="small muted">(‘목사’는 빼고 성함만)</span></label>
       <div class="row"><input type="text" id="nIn" placeholder="예: 홍길동" maxlength="12" autocomplete="name" value="${esc(value || '')}" style="flex:1"><span>목사</span></div></div>
+      <div class="field" style="margin:0"><label for="nCh">소속 교회 <span class="small muted">(없으면 비워 두세요)</span></label>
+      <input type="text" id="nCh" placeholder="예: 임마누엘교회" maxlength="30" value="${esc(church || '')}"></div>
       <button class="btn pri big" id="nOk" style="margin-top:14px">${esc(okLabel)}</button>`;
-    const i = $('#nIn', inn);
-    const go = () => { const v = i.value.replace(/\s+/g, '').replace(/목사(님)?$/, ''); if (v.length < 2) { toast('이름을 두 글자 이상 적어 주세요'); i.focus(); return; } onOk(v); };
+    const i = $('#nIn', inn), ch = $('#nCh', inn);
+    const go = () => { const v = i.value.replace(/\s+/g, '').replace(/목사(님)?$/, ''); if (v.length < 2) { toast('이름을 두 글자 이상 적어 주세요'); i.focus(); return; } onOk(v, ch.value.replace(/\s+/g, ' ').trim()); };
     $('#nOk', inn).onclick = go;
-    i.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); go(); } };
+    const enter = e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); if (e.target === i) ch.focus(); else go(); } };
+    i.onkeydown = enter; ch.onkeydown = enter;
     setTimeout(() => { try { i.focus(); } catch (e) {} }, 80);
   }
   function renderWelcome() {
     const app = $('#app');
-    app.innerHTML = `<div class="welcome"><img class="logo" src="icon-192.png" alt=""><h1>30인 운동본부 기도</h1>
+    app.innerHTML = `<div class="welcome">${brandHtml()}
       <p class="lead">처음 한 번만 이름을 적어 주세요.<br>이 기기에 저장되어 다음부터는 바로 들어가요.</p><div class="card" id="pick"></div></div>`;
-    nameInput($('#pick'), '', '시작하기', async n => {
-      if (!(await confirmBox('이름 확인', `<b>${esc(n)} 목사님</b>이 맞으세요?
+    nameInput($('#pick'), '', '시작하기', async (n, church) => {
+      if (!(await confirmBox('이름 확인', `<b>${esc(n)} 목사님</b>${church ? ` (${esc(church)})` : ''}이 맞으세요?
 이 이름이 이 기기에 저장돼요.`, '네, 맞아요'))) return;
-      try { await api('setName', { name: n }); toast(n + ' 목사님, 환영합니다'); render(); showNotices(false); } catch (e) { toast(e.message); }
+      try { await api('setName', { name: n, church }); toast(n + ' 목사님, 환영합니다'); view = 'input'; render(); if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
     });
   }
+  const churchOf = n => (S && S.churches && S.churches[n]) || '';
+
+  /* ----- 로고 (마스터가 올림) ----- */
+  const LOGO_KEY = 'prayer-logo';
+  let logo = load(LOGO_KEY, { v: '', data: '', opts: {} }), logoBusy = false;
+  const logoOpt = () => (S && S.logo) || logo.opts || {};
+  function brandHtml() {
+    const o = logoOpt();
+    if (o.welcome && logo.data) return `<img class="brandimg" src="${logo.data}" alt="30인 운동본부">${o.title !== false ? '<h1>30인 운동본부 기도</h1>' : ''}`;
+    return '<img class="logo" src="icon-192.png" alt=""><h1>30인 운동본부 기도</h1>';
+  }
+  function headerBrand() {
+    const o = logoOpt();
+    if (o.header && logo.data) return `<img class="hlogo ${o.size || 'm'}" src="${logo.data}" alt="30인 운동본부">${o.title !== false ? '<span>30인 운동본부 기도</span>' : ''}`;
+    return '<span>30인 운동본부 기도</span>';
+  }
+  // 서버의 로고 판 번호가 바뀌면 그림을 새로 받아 이 기기에 저장
+  async function checkLogo() {
+    const o = (S && S.logo) || {};
+    if (!o.v) { if (logo.data) { logo = { v: '', data: '', opts: o }; save(LOGO_KEY, logo); setTimeout(render, 0); } return; }
+    logo.opts = o;
+    if (logo.v === o.v || logoBusy) { save(LOGO_KEY, logo); return; }
+    logoBusy = true;
+    try { const d = await api('logo'); logo = { v: (d.logo || {}).v || o.v, data: d.data || '', opts: d.logo || o }; save(LOGO_KEY, logo); render(); }
+    catch (e) {} finally { logoBusy = false; }
+  }
+  function shrinkImage(file) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onerror = () => rej(new Error('그림을 읽지 못했어요'));
+      fr.onload = () => {
+        const img = new Image();
+        img.onerror = () => rej(new Error('그림 파일이 아니에요'));
+        img.onload = () => {
+          const k = Math.min(1, 600 / Math.max(img.width, img.height)), w = Math.round(img.width * k), h = Math.round(img.height * k);
+          const cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h);
+          let d = cv.toDataURL('image/png');
+          if (d.length > 600000) d = cv.toDataURL('image/webp', 0.9);
+          if (d.length > 600000 || !/^data:image\/(png|webp)/.test(d)) d = cv.toDataURL('image/jpeg', 0.85);
+          res(d);
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  async function logoMenu() {
+    const o = Object.assign({ header: true, welcome: true, title: true, size: 'm' }, logoOpt().v ? logoOpt() : {});
+    let data = null;   // null = 그림은 그대로
+    const prev = () => data != null ? data : logo.data;
+    const act = await modal(`<h3>로고</h3>
+      <div class="logoprev" id="lp">${prev() ? `<img src="${prev()}" alt="">` : '<span class="muted small">아직 로고가 없어요</span>'}</div>
+      <label class="btn sm pri" style="display:inline-flex;align-items:center;margin:8px 0">사진에서 로고 고르기<input type="file" id="lf" accept="image/*" hidden></label>
+      <p class="small muted" style="margin:0 0 6px">배경이 투명한 PNG면 가장 깔끔해요.</p>
+      <p class="sect">보이는 곳</p>
+      <label class="row small chk"><input type="checkbox" id="lH"${o.header ? ' checked' : ''}> 맨 위 머리줄(제목 자리)</label>
+      <label class="row small chk"><input type="checkbox" id="lW"${o.welcome ? ' checked' : ''}> 처음 이름 넣는 화면에 크게</label>
+      <label class="row small chk"><input type="checkbox" id="lT"${o.title !== false ? ' checked' : ''}> 로고 옆에 ‘30인 운동본부 기도’ 글자도 보이기</label>
+      <p class="sect">머리줄 로고 크기</p>
+      <div class="chips" id="lS">${[['s', '작게'], ['m', '보통'], ['l', '크게']].map(([v, l]) => `<button data-ls="${v}" class="${o.size === v ? 'on' : ''}">${l}</button>`).join('')}</div>`,
+      [{ label: '로고 지우기', val: 'del', cls: 'danger' }, { label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri' }],
+      inn => {
+        $('#lf', inn).onchange = async e => {
+          const f = e.target.files && e.target.files[0]; if (!f) return;
+          try { data = await shrinkImage(f); $('#lp', inn).innerHTML = `<img src="${data}" alt="">`; } catch (er) { toast(er.message); }
+        };
+        $$('[data-ls]', inn).forEach(b => b.onclick = () => { o.size = b.dataset.ls; $$('[data-ls]', inn).forEach(x => x.classList.toggle('on', x === b)); });
+        ['lH', 'lW', 'lT'].forEach(id => $('#' + id, inn).onchange = e => { o[{ lH: 'header', lW: 'welcome', lT: 'title' }[id]] = e.target.checked; });
+      });
+    if (!act) { masterMenu(); return; }
+    try {
+      if (act === 'del') { if (!(await confirmBox('로고 지우기', '로고를 지울까요?', '지우기'))) { logoMenu(); return; } await api('setLogo', { data: '' }); toast('로고를 지웠어요'); }
+      else {
+        if (!prev()) { toast('먼저 사진에서 로고를 골라 주세요'); logoMenu(); return; }
+        const p = { opts: { header: o.header, welcome: o.welcome, title: o.title, size: o.size } };
+        if (data != null) p.data = data;
+        await api('setLogo', p);
+        if (data != null) { logo = { v: S.logo.v, data, opts: S.logo }; save(LOGO_KEY, logo); }
+        toast('로고를 저장했어요');
+      }
+    } catch (e) { toast(e.message); }
+    render(); masterMenu();
+  }
   async function renameSelf() {
-    const old = myName();
-    let picked = null;
-    await modal(`<h3>이름 고치기</h3><p class="msg small">이름이 틀렸으면 바르게 고쳐 주세요.
-이 기기에서 입력한 기록과 기도제목도 새 이름으로 옮겨져요.</p><div id="rp"></div>`, [{ label: '닫기', val: false }],
-      (inn, close) => nameInput($('#rp', inn), old, '고치기', n => { picked = n; close(true); }));
-    if (!picked || picked === old) return;
-    if (!(await confirmBox('이름 바꾸기', `<b>${esc(old)}</b> → <b>${esc(picked)}</b> 목사로 바꿀까요?`, '바꾸기'))) return;
-    try { await api('setName', { name: picked }); form.who = ''; toast('이름을 바꿨어요'); } catch (e) { toast(e.message); }
+    const old = myName(), oldCh = churchOf(old);
+    let picked = null, pickedCh = '';
+    await modal(`<h3>이름·소속 고치기</h3><p class="msg small">틀린 곳을 바르게 고쳐 주세요.
+이름을 바꾸면 이 기기에서 입력한 기록과 기도제목도 새 이름으로 옮겨져요.</p><div id="rp"></div>`, [{ label: '닫기', val: false }],
+      (inn, close) => nameInput($('#rp', inn), old, '고치기', (n, c) => { picked = n; pickedCh = c; close(true); }, oldCh));
+    if (!picked || (picked === old && pickedCh === oldCh)) return;
+    if (picked !== old && !(await confirmBox('이름 바꾸기', `<b>${esc(old)}</b> → <b>${esc(picked)}</b> 목사로 바꿀까요?`, '바꾸기'))) return;
+    try { await api('setName', { name: picked, church: pickedCh }); form.who = ''; toast('고쳤어요'); } catch (e) { toast(e.message); }
     render();
+  }
+
+  /* ----- 사용법 안내 (실제 버튼을 짚어 줌) ----- */
+  const TOUR = [
+    { v: 'input', sel: null, title: '환영합니다! 🙏', text: '처음 오셨군요.\n사용법을 30초만 알려 드릴게요.\n아래 <b>[다음]</b>을 누르세요.' },
+    { v: 'input', sel: '.datebar', title: '① 기도한 날짜', text: '<b>오늘</b>로 되어 있어요.\n어제 기도한 것은 아래 <b>[어제]</b>를 누르면 돼요.' },
+    { v: 'input', sel: '.time', title: '② 기도한 시간', text: '왼쪽 칸을 눌러 <b>시간</b>,\n오른쪽 칸을 눌러 <b>분</b>을 고르세요.\n(예: 1시간 30분)' },
+    { v: 'input', sel: '[data-q]', parent: true, title: '빠르게 고르기', text: '자주 쓰는 시간은\n이 버튼을 한 번만 눌러도 돼요.' },
+    { v: 'input', sel: '#fSave', title: '③ 저장', text: '다 고르셨으면 <b>[저장]</b>을 누르면 끝!\n잘못 넣었으면 다시 고르고 저장하면\n<b>마지막에 넣은 것</b>으로 바뀌어요.' },
+    { v: 'input', sel: '[data-v="table"]', title: '현황', text: '여기를 누르면 목사님들이\n얼마나 기도했는지 볼 수 있어요.' },
+    { v: 'input', sel: '[data-v="prayer"]', title: '기도제목', text: '내 기도제목을 올리고,\n다른 목사님 기도제목에 🙏 ❤️ 를 누르거나\n댓글을 달 수 있어요.' },
+    { v: 'input', sel: '#tSet', title: '설정', text: '<b>글자를 크게</b> 하거나 <b>이름을 고칠</b> 때,\n이 사용법을 <b>다시 볼</b> 때 누르세요.' },
+    { v: 'input', sel: null, install: true, title: '마지막! 앱 설치 📲', text: '휴대폰에 앱을 설치하면\n다음부터 <b>카카오톡 없이</b>\n홈 화면의 <b>기도시간</b> 아이콘만 누르면 열려요.' }
+  ];
+  function startTour(i) {
+    i = i || 0;
+    let steps = TOUR.filter(s => !s.install || !isStandalone());
+    const s = steps[i]; if (!s) { endTour(); return; }
+    if (view !== s.v) { view = s.v; render(); }
+    if (modalResolve) { try { $('#dlg').close(); } catch (e) {} modalResolve = null; }
+    let el = s.sel ? $(s.sel) : null; if (el && s.parent) el = el.parentElement;
+    let ov = $('#tour'); if (!ov) { ov = document.createElement('div'); ov.id = 'tour'; ov.className = 'tour'; document.body.appendChild(ov); }
+    const last = i === steps.length - 1;
+    ov.innerHTML = `<div class="tour-hole${el ? '' : ' none'}"></div><div class="tour-card">
+      <div class="tour-step">${i + 1} / ${steps.length}</div><h3>${s.title}</h3><p>${s.text.replace(/\n/g, '<br>')}</p>
+      <div class="tour-acts">${i ? '<button class="btn" data-t="prev">이전</button>' : '<button class="btn ghost" data-t="skip">건너뛰기</button>'}
+        ${s.install ? `<button class="btn" data-t="end">나중에</button><button class="btn pri" data-t="install">📲 지금 설치하기</button>` : `<button class="btn pri" data-t="next">${last ? '시작하기' : '다음 ▶'}</button>`}</div></div>`;
+    const place = () => {
+      const hole = $('.tour-hole', ov), card = $('.tour-card', ov), vh = window.innerHeight;
+      if (!el) { card.style.top = Math.max(16, (vh - card.offsetHeight) / 2) + 'px'; return; }
+      const r = el.getBoundingClientRect(), pad = 6;
+      Object.assign(hole.style, { left: r.left - pad + 'px', top: r.top - pad + 'px', width: r.width + pad * 2 + 'px', height: r.height + pad * 2 + 'px' });
+      const below = r.bottom + 14, above = r.top - 14 - card.offsetHeight;
+      card.style.top = (below + card.offsetHeight < vh - 8 || above < 8 ? Math.min(below, vh - card.offsetHeight - 8) : above) + 'px';
+    };
+    if (el) { const r = el.getBoundingClientRect(); if (r.top < 90 || r.bottom > window.innerHeight - 220) window.scrollBy(0, r.top - Math.max(100, window.innerHeight / 2 - r.height)); }
+    requestAnimationFrame(() => requestAnimationFrame(place));
+    ov.onclick = e => {
+      const b = e.target.closest('[data-t]'); if (!b) return;
+      const t = b.dataset.t;
+      if (t === 'next') startTour(i + 1);
+      else if (t === 'prev') startTour(i - 1);
+      else if (t === 'install') { endTour(); installSheet(); }
+      else endTour();
+    };
+    window.onresize = () => { if ($('#tour')) place(); };
+  }
+  function endTour() {
+    const ov = $('#tour'); if (ov) ov.remove();
+    window.onresize = null;
+    C.tourDone = true; saveCfg();
+    window.scrollTo(0, 0);
+    if (S && S.notices && S.notices.length) showNotices(false);
   }
 
   /* ----- 설정 ----- */
   function settings() {
     const sa = isStandalone();
     modal(`<h3>설정</h3>
-      <div class="field"><label>내 이름</label><div class="namebox"><b>${esc(myName())} 목사</b><button class="btn sm" id="sName">이름 고치기</button></div></div>
+      <div class="field"><label>내 이름·소속</label><div class="namebox"><b>${esc(myName())} 목사${churchOf(myName()) ? ` <span class="church">${esc(churchOf(myName()))}</span>` : ''}</b><button class="btn sm" id="sName">고치기</button></div></div>
       <div class="field"><label>글자 크기</label><div class="chips">${[[16, '작게'], [17, '보통'], [19, '크게'], [21, '아주 크게']].map(([v, l]) => `<button data-f="${v}" class="${C.font === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <div class="field"><label>화면</label><div class="row">
         <button class="btn sm${FS.supported() ? '' : ' hidden'}" id="sFS">${FS.on() ? '전체화면 끄기' : '전체화면'}</button>
         <label class="row small" style="gap:6px"><input type="checkbox" id="sAuto"${C.autoFS ? ' checked' : ''}> 자동 전체화면</label>
         <button class="btn sm${sa ? ' hidden' : ''}" id="sInst">홈 화면에 설치하기</button></div></div>
       <div class="field"><label>공지·공유</label><div class="row">
-        <button class="btn sm" id="sNotice">공지 보기</button><button class="btn sm" id="sShare">앱 주소 보내기</button></div></div>
+        <button class="btn sm pri" id="sTour">사용법 다시 보기</button><button class="btn sm" id="sNotice">공지 보기</button><button class="btn sm" id="sShare">앱 주소 보내기</button></div></div>
       <div class="field"><label>관리</label><div class="row">
         ${isMaster() ? '<button class="btn sm pri" id="sMaster">마스터 메뉴</button>' : isStaff() ? '<button class="btn sm pri" id="sStaff">공지 올리기·내리기</button><button class="btn sm" id="sMaster">마스터로 들어가기</button>' : '<button class="btn sm" id="sMaster">마스터로 들어가기</button>'}</div></div>
       <p class="small muted">기기: ${esc(deviceDesc())}${C.pending.length ? ' · 보낼 기록 ' + C.pending.length + '개' : ''}</p>`,
@@ -528,6 +667,7 @@
         $('#sFS', inn).onclick = () => { close(); FS.toggle(); };
         $('#sAuto', inn).onchange = e => { C.autoFS = e.target.checked; saveCfg(); };
         $('#sInst', inn).onclick = () => { close(); installSheet(); };
+        $('#sTour', inn).onclick = () => { close(); startTour(0); };
         $('#sNotice', inn).onclick = () => { close(); if (S.notices && S.notices.length) showNotices(true); else toast('지금 올라온 공지가 없어요'); };
         $('#sShare', inn).onclick = () => { close(); shareApp(); };
         $('#sMaster', inn).onclick = () => { close(); isMaster() ? masterMenu() : masterLogin(); };
@@ -595,7 +735,7 @@
     const act = await modal(`<h3>마스터 메뉴</h3>
       ${noticeHtml()}
       <p class="sect">권한</p>
-      <div class="row"><button class="btn sm pri" id="mRole">권한 주기 (담임목사님 등)</button></div>
+      <div class="row"><button class="btn sm pri" id="mRole">권한 주기 (담임목사님 등)</button><button class="btn sm pri" id="mLogo">로고 넣기·바꾸기</button></div>
       <p class="sect">이름 고치기·합치기 <span class="small">(잘못 적힌 이름의 기록을 모두 옮김)</span></p>
       <div class="row"><select id="mFrom" style="flex:1 1 140px">${names.map(n => `<option>${esc(n)}</option>`).join('')}</select><span>→</span>
         <input type="text" id="mTo" list="mNames" placeholder="바른 이름" style="flex:1 1 140px"><datalist id="mNames">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
@@ -606,6 +746,7 @@
       [{ label: '닫기', val: false, cls: 'pri' }], (inn, close) => {
         bindNotice(inn, close);
         $('#mRole', inn).onclick = () => close({ a: 'role' });
+        $('#mLogo', inn).onclick = () => close({ a: 'logo' });
         $('#mRen', inn).onclick = () => { const from = $('#mFrom', inn).value, to = $('#mTo', inn).value.replace(/\s+/g, ''); if (to.length < 2) { toast('바른 이름을 넣어 주세요'); return; } close({ a: 'rename', from, to }); };
         $('#mImp', inn).onclick = () => close({ a: 'reimport' });
         $('#mSrv', inn).onclick = () => close({ a: 'server' });
@@ -615,6 +756,7 @@
     try {
       if (await doNotice(act)) { /* 공지 */ }
       else if (act.a === 'role') { await roleMenu(); return; }
+      else if (act.a === 'logo') { await logoMenu(); return; }
       else if (act.a === 'rename') {
         const merge = names.includes(act.to);
         if (await confirmBox(merge ? '이름 합치기' : '이름 고치기', `<b>${esc(act.from)}</b>의 모든 기록을 <b>${esc(act.to)}</b>(으)로 ${merge ? '합칠까요?\n같은 날짜에 둘 다 기록이 있으면 나중에 저장한 것이 남아요.' : '옮길까요?'}`, '바꾸기')) { await api('rename', { from: act.from, to: act.to }); toast('바꿨어요'); }
@@ -635,7 +777,7 @@
     C.server = v; S = null; C.state = null; saveCfg(); render(); refresh();
   }
   function noServerHtml() {
-    return `<div class="welcome"><img class="logo" src="icon-192.png" alt=""><h1>30인 운동본부 기도</h1>
+    return `<div class="welcome">${brandHtml()}
       <p class="lead">아직 구글 시트 서버가 연결되지 않았어요.<br>관리자가 서버 주소를 넣으면 쓸 수 있어요.</p>
       <div class="card"><div class="field"><label>서버 주소 (관리자용)</label><input type="text" id="sv0" placeholder="https://script.google.com/macros/s/…/exec"></div>
       <button class="btn pri big" id="sv0ok">연결하기</button></div></div>`;
@@ -656,7 +798,7 @@
   }
   function kickedHtml() {
     const br = IS_IOS ? '사파리' : '크롬';
-    return `<div class="welcome" style="text-align:center"><img class="logo" src="icon-192.png" alt=""><h1>30인 운동본부 기도</h1>
+    return `<div class="welcome" style="text-align:center">${brandHtml()}
       <p><b>${br}(기본 브라우저)</b>로 여는 중이에요…</p>
       <p class="small muted">카카오톡 안에서 열면 이름이 기억되지 않을 수 있어서 기본 브라우저로 열어요.</p>
       <button class="btn pri big" id="kkOpen">${br}로 열기</button>
@@ -690,26 +832,68 @@
     const f = $('#bFs'); if (f) f.classList.toggle('hidden', !FS.supported());
     const t = $('#tFS'); if (t) { t.classList.toggle('hidden', !FS.supported() || (sa && !FS.on())); t.innerHTML = FS.on() ? ICON.fsOff : ICON.fsOn; t.setAttribute('aria-label', FS.on() ? '전체화면 끝내기' : '전체화면'); }
   }
-  function installSheet() {
-    if (isStandalone()) { toast('이미 홈 화면 앱으로 실행 중이에요'); return; }
-    if (installEvt) {
-      const ev = installEvt; installEvt = null;
-      try { ev.prompt(); ev.userChoice.then(r => { if (r && r.outcome === 'accepted') { C.installDismissed = true; saveCfg(); } paintInstall(); }).catch(() => {}); } catch (e) {}
-      return;
-    }
-    const samsung = /SamsungBrowser/i.test(UA), mobile = /Android|Mobi/i.test(UA) || IS_IOS;
-    const kbd = t => `<span class="kbd">${t}</span>`;
+  // 설치: 안드로이드(크롬·삼성 인터넷)는 휴대폰의 설치 창을 바로 띄움. 아이폰은 막혀 있어서 누를 곳을 화살표로 짚어 줌
+  function promptInstall() {
+    const ev = installEvt; installEvt = null;
+    try {
+      ev.prompt();
+      ev.userChoice.then(r => { if (r && r.outcome === 'accepted') { C.installDismissed = true; saveCfg(); toast('설치하고 있어요. 잠시 뒤 홈 화면에 ‘기도시간’ 아이콘이 생겨요'); } paintInstall(); }).catch(() => {});
+    } catch (e) { installGuide(); }
+  }
+  async function installSheet() {
+    if (isStandalone()) { toast('이미 설치된 앱으로 열려 있어요'); return; }
+    if (installEvt) { promptInstall(); return; }   // 한 번에 설치 창
+    if (IN_APP) { openExternal(); return; }        // 카톡 안이면 크롬·사파리로 먼저
+    if (IS_IOS) { iosGuide(); return; }
+    // 안드로이드: 설치 준비 신호가 조금 늦게 올 수 있어 잠깐 기다렸다가, 오면 [설치하기] 한 번 더 누르게 함
+    const v = await modal(`<h3>📲 앱 설치</h3><div class="instwait"><div class="spin"></div><p class="msg" id="iwMsg">설치 준비 중이에요…</p></div>`,
+      [{ label: '닫기', val: false }, { label: '설치하기', val: 'go', cls: 'pri big', check: () => !!installEvt }],
+      (inn, close) => {
+        const btn = $$('.acts button', inn)[1]; btn.disabled = true;
+        let n = 0;
+        const t = setInterval(() => {
+          if (!document.body.contains(btn)) { clearInterval(t); return; }
+          if (installEvt) { clearInterval(t); btn.disabled = false; $('#iwMsg', inn).innerHTML = '준비됐어요! 아래 <b>[설치하기]</b>를 누르고,\n뜨는 창에서 <b>[설치]</b>를 누르세요.'; $('.spin', inn).classList.add('hidden'); return; }
+          if (++n > 12) { clearInterval(t); close('guide'); }
+        }, 400);
+      });
+    if (v === 'go' && installEvt) promptInstall();
+    else if (v === 'guide') installGuide();
+  }
+  // 설치 창을 띄울 수 없을 때(이미 설치됐거나 오래된 브라우저 등): 메뉴 위치를 그림으로
+  function installGuide() {
+    const samsung = /SamsungBrowser/i.test(UA), desktop = !/Android|Mobi/i.test(UA);
+    const step = (n, html) => `<div class="istep"><span class="inum">${n}</span><div>${html}</div></div>`;
     let how;
-    if (IN_APP) how = `<ol><li>${kbd('⋮')} 메뉴를 누르세요</li><li><b>다른 브라우저로 열기</b>(크롬·사파리)를 누르세요</li><li>열린 화면에서 다시 <b>설치하기</b>를 누르세요</li></ol>`;
-    else if (IS_IOS) how = `<ol><li>사파리 아래쪽 ${kbd('공유 ⬆')} 단추를 누르세요</li><li>메뉴를 올려 <b>홈 화면에 추가</b>를 누르세요</li><li>오른쪽 위 <b>추가</b>를 누르세요</li></ol>`;
-    else if (samsung) how = `<ol><li>아래 ${kbd('≡')} 메뉴를 누르세요</li><li><b>현재 페이지 추가</b> → <b>홈 화면</b>을 누르세요</li></ol>`;
-    else if (mobile) how = `<ol><li>오른쪽 위 ${kbd('⋮')} 메뉴를 누르세요</li><li><b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 누르세요</li><li>뜨는 창에서 <b>설치</b>를 누르세요</li></ol>`;
-    else how = `<ol><li>크롬·엣지 주소창 오른쪽의 ${kbd('설치 ⊕')} 아이콘을 누르세요</li><li>없으면 ${kbd('⋮')} 메뉴 → <b>앱 설치</b>를 누르세요</li></ol>`;
-    modal(`<h3>홈 화면에 설치하기</h3><p class="msg">설치하면 카카오톡을 거치지 않고 아이콘으로 바로 열려요.</p>${how}`, [{ label: '알겠어요', val: true, cls: 'pri' }]);
+    if (samsung) how = step(1, `화면 <b>맨 아래 오른쪽 ☰</b>(줄 세 개)를 누르세요`) + step(2, `<b>＋ 현재 페이지 추가</b>를 누르세요`) + step(3, `<b>홈 화면</b>을 누르세요`);
+    else if (desktop) how = step(1, `주소창 오른쪽의 <b>설치 아이콘(⊕ 모니터 모양)</b>을 누르세요`) + step(2, `<b>설치</b>를 누르세요`);
+    else how = step(1, `화면 <b>맨 위 오른쪽 ⋮</b>(점 세 개)를 누르세요`) + step(2, `<b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르세요`) + step(3, `<b>설치</b>(또는 <b>추가</b>)를 누르세요`);
+    modal(`<h3>📲 앱 설치</h3>
+      <p class="msg small muted">이미 설치하셨다면 휴대폰 홈 화면에서 <b>기도시간</b> 아이콘을 찾아보세요.</p>
+      ${!desktop && !samsung ? '<div class="arrow-tr">⋮ 여기<br>⬆</div>' : ''}${how}`, [{ label: '알겠어요', val: true, cls: 'pri big' }]);
+  }
+  // 아이폰·아이패드: 사파리 공유 버튼 → 홈 화면에 추가
+  function iosGuide() {
+    const safari = !/CriOS|FxiOS|EdgiOS|KAKAOTALK|NAVER/i.test(UA), ipad = /iPad/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const share = '<svg class="ishare" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+    const step = (n, html) => `<div class="istep"><span class="inum">${n}</span><div>${html}</div></div>`;
+    const where = !safari ? '화면의 <b>공유 버튼</b>' : ipad ? '화면 <b>맨 위 오른쪽</b>의 공유 버튼' : '화면 <b>맨 아래 가운데</b>의 공유 버튼';
+    modal(`<h3>📲 아이폰에 설치하기</h3>
+      <p class="msg small muted">아이폰은 애플이 자동 설치를 막아 두어서, 아래처럼 세 번만 눌러 주세요.</p>
+      ${step(1, `${where} ${share} 을 누르세요`)}
+      ${step(2, `아래로 내려서 <b>홈 화면에 추가</b> <span class="kbd">⊞</span> 를 누르세요`)}
+      ${step(3, `오른쪽 위 <b>추가</b>를 누르면 끝!`)}
+      <p class="msg small muted">설치한 아이콘으로 처음 열면 이름을 한 번 더 적어 주세요.</p>`,
+      [{ label: '알겠어요', val: true, cls: 'pri big' }]).then(() => {
+        if (!safari || ipad) return;
+        // 화면 아래 공유 버튼 쪽을 가리키는 화살표
+        const a = document.createElement('div'); a.className = 'ios-arrow'; a.innerHTML = '여기 공유 버튼을 누르세요<br><span>⬇</span>';
+        a.onclick = () => a.remove(); document.body.appendChild(a); setTimeout(() => a.remove(), 12000);
+      });
   }
   document.addEventListener('click', e => {
     if (!C.autoFS || FS.userExit || FS.on() || !FS.supported() || isStandalone()) return;
-    if (e.target.closest && e.target.closest('#tFS,#banner,dialog,input,textarea,select')) return;
+    if (e.target.closest && e.target.closest('#tFS,#banner,dialog,input,textarea,select,.tour,.ios-arrow')) return;
     FS.enter();
   }, true);
   const onFs = () => paintInstall();
@@ -737,7 +921,7 @@
     try { await flush(); await api('load'); }
     catch (e) { const el = $('#loadErr'); if (el) el.innerHTML = `<p class="err">${esc(e.message)}</p><button class="btn pri" id="retry">다시 시도</button>`; const r = $('#retry'); if (r) r.onclick = boot; else toast(e.message); return; }
     render();
-    if (myName()) showNotices(false);
+    if (myName()) { if (!C.tourDone) { view = 'input'; render(); startTour(0); } else showNotices(false); }
   }
 
   const STAY_KEY = 'prayer-stay-inapp';

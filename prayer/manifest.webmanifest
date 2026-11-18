@@ -2,14 +2,35 @@
  "name": "30인 운동본부 기도시간",
  "short_name": "기도시간",
  "description": "목사님들의 기도 시간을 입력하고 함께 보는 앱",
+ "id": "./",
+ "start_url": "./",
  "scope": "./",
  "display": "fullscreen",
- "display_override": ["fullscreen", "standalone"],
+ "display_override": [
+  "fullscreen",
+  "standalone"
+ ],
  "background_color": "#f5f3fa",
  "theme_color": "#5b47b0",
  "lang": "ko",
  "icons": [
-  { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-  { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
  ]
 }
