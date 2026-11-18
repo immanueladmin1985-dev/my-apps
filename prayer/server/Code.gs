@@ -16,7 +16,7 @@
  * - 기기마다 앱이 만든 기기 번호와 열쇠로 들어옵니다. 승인 없이 이름만 고르면 됩니다.
  */
 
-var SERVER_VER = 2;
+var SERVER_VER = 3;
 var FORM_SHEET = '설문지 응답 시트1';
 var OLD_RULE_BEFORE = '2026-08-30';   // 이 날짜 전 설문 기록은 그날 것을 모두 더함
 var SH = {
@@ -88,7 +88,17 @@ function cleanName(s) { return String(s == null ? '' : s).replace(/\s+/g, '').re
 function hm(min) { min = Number(min) || 0; var h = Math.floor(min / 60), m = min % 60; return h ? h + '시간' + (m ? ' ' + m + '분' : '') : m + '분'; }
 function todayStr() { return Utilities.formatDate(new Date(), tz(), 'yyyy-MM-dd'); }
 
-function doGet() { return json({ ok: true, app: '기도시간', ver: SERVER_VER, msg: '기도시간 서버가 작동 중입니다. 이 주소를 앱에 넣으세요.' }); }
+// 주소를 그냥 열면 서버 상태(판 번호, 기록 줄 수, 설문지 탭을 찾았는지)를 보여 줌
+function doGet() {
+  var o = { ok: true, app: '기도시간', ver: SERVER_VER, msg: '기도시간 서버가 작동 중입니다. 이 주소를 앱에 넣으세요.' };
+  try {
+    var r = ss().getSheetByName(SH.rec.name), f = formSheet();
+    o.records = r ? Math.max(0, r.getLastRow() - 1) : -1;   // -1: setup 을 아직 안 함
+    o.formSheet = f ? f.getName() : '';
+    o.formRows = f ? Math.max(0, f.getLastRow() - 1) : 0;
+  } catch (e) { o.check = String(e && e.message || e); }
+  return json(o);
+}
 function doPost(e) {
   var p = {};
   try { p = JSON.parse(e.postData.contents); } catch (err) { return json({ ok: false, error: '잘못된 요청' }); }
@@ -108,9 +118,19 @@ function parseMin(v) {
   if (!h && !m && /^\d+(\.\d+)?$/.test(s.trim())) return Math.round(Number(s) * 60);
   return Math.round((h ? Number(h[1]) * 60 : 0) + (m ? Number(m[1]) : 0));
 }
+// 설문지 응답 탭: 이름이 맞으면 그 탭, 아니면 A1 칸이 '타임스탬프'인 탭
+function formSheet() {
+  var book = ss(), s = book.getSheetByName(FORM_SHEET);
+  if (s) return s;
+  var all = book.getSheets();
+  for (var i = 0; i < all.length; i++) {
+    try { if (String(all[i].getRange('A1').getValue()).trim() === '타임스탬프' && all[i].getLastRow() > 1) return all[i]; } catch (e) {}
+  }
+  return null;
+}
 // 설문지 응답 전체를 다시 읽어 '출처=설문' 줄을 새로 만듦 (몇 번 실행해도 결과가 같음)
 function importForm() {
-  var fs = ss().getSheetByName(FORM_SHEET);
+  var fs = formSheet();
   if (!fs || fs.getLastRow() < 2) return 0;
   var z = tz(), data = fs.getRange(2, 1, fs.getLastRow() - 1, 5).getValues(), agg = {}, alias = aliases();
   data.forEach(function (r) {
@@ -148,9 +168,10 @@ function aliases() {
 }
 
 /* ---------- 캐시 (읽기를 빠르게) ---------- */
-function bump() { CacheService.getScriptCache().put('ver', String(Date.now()), 21600); }
+// 캐시 이름에 서버 판 번호를 넣어, 코드를 새로 배포하면 예전 캐시를 쓰지 않음
+function bump() { CacheService.getScriptCache().put('ver' + SERVER_VER, String(Date.now()), 21600); }
 function cacheGet() {
-  var c = CacheService.getScriptCache(), ver = c.get('ver');
+  var c = CacheService.getScriptCache(), ver = c.get('ver' + SERVER_VER);
   if (!ver) return null;
   var head = c.get('st_' + ver + '_n'); if (!head) return null;
   var keys = []; for (var i = 0; i < Number(head); i++) keys.push('st_' + ver + '_' + i);
@@ -159,8 +180,8 @@ function cacheGet() {
   return s;
 }
 function cachePut(s) {
-  var c = CacheService.getScriptCache(), ver = c.get('ver');
-  if (!ver) { ver = String(Date.now()); c.put('ver', ver, 21600); }
+  var c = CacheService.getScriptCache(), ver = c.get('ver' + SERVER_VER);
+  if (!ver) { ver = String(Date.now()); c.put('ver' + SERVER_VER, ver, 21600); }
   var o = {}, n = 0;
   for (var i = 0; i < s.length; i += 90000) o['st_' + ver + '_' + (n++)] = s.slice(i, i + 90000);
   o['st_' + ver + '_n'] = String(n);
