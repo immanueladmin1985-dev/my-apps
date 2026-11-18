@@ -25,6 +25,10 @@ var score_label: Label
 var time_label: Label
 var fps_label: Label
 var message_label: Label
+## 큰 처치 알림 (첫 처치, 더블 킬, 연속 처치 등)
+var banner_label: Label
+var _banner_left := 0.0
+var _multi: Dictionary = {}  # 영웅 -> [연속 처치 수, 마지막 처치 시각]
 var pause_button: TouchButton
 var pause_panel: Control
 var result_panel: Control
@@ -253,6 +257,12 @@ func _build() -> void:
 	kill_feed.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_place(kill_feed, Vector2(1, 0), Vector2(-520, 76), Vector2(420, 120))
 	root.add_child(kill_feed)
+	banner_label = _label("", 40, HORIZONTAL_ALIGNMENT_CENTER)
+	banner_label.add_theme_constant_override("outline_size", 10)
+	banner_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_place(banner_label, Vector2(0.5, 0), Vector2(-400, 160), Vector2(800, 60))
+	banner_label.visible = false
+	root.add_child(banner_label)
 	message_label = _label("", 22, HORIZONTAL_ALIGNMENT_CENTER)
 	_place(message_label, Vector2(0.5, 0), Vector2(-320, 118), Vector2(640, 36))
 	root.add_child(message_label)
@@ -437,6 +447,11 @@ func _process(delta: float) -> void:
 				name_label.text += "  ·  %s %d/%d" % [hero.data.gauge_name, int(hero.gauge), int(hero.data.gauge_max)]
 			if hero.attack.magazine > 0:
 				name_label.text += "  ·  " + ("재장전 중" if hero.attack.reloading else "탄창 %d/%d" % [hero.attack.ammo, hero.attack.magazine])
+	if _banner_left > 0.0:
+		_banner_left -= delta
+		banner_label.modulate.a = clampf(_banner_left / 0.5, 0.0, 1.0)
+		if _banner_left <= 0.0:
+			banner_label.visible = false
 	if _message_left > 0.0:
 		_message_left -= delta
 		message_label.modulate.a = clampf(_message_left / 0.4, 0.0, 1.0)
@@ -481,6 +496,7 @@ func _on_hero_killed(victim, killer, helpers: Array) -> void:
 	while kill_feed.get_child_count() > 4:
 		kill_feed.get_child(0).free()
 	get_tree().create_timer(5.0).timeout.connect(l.queue_free)
+	_announce(victim, killer)
 	if hero != null and victim == hero:
 		show_message("처치당했습니다. 우물에서 부활합니다")
 	elif hero != null and killer == hero:
@@ -587,6 +603,47 @@ func _on_inventory_slot(i: int) -> void:
 			show_message(ShopManager.RESULT_TEXT.get(r, ""))
 	else:
 		show_message("%s: %s" % [it.display_name, ", ".join(it.stat_lines())])
+
+
+## 처치 알림: 여러 명을 연달아(10초 안) 잡으면 더블·트리플 킬, 상대를 모두 쓰러뜨리면 전멸,
+## 경기 첫 처치는 첫 처치, 죽지 않고 계속 잡으면 연속 처치 알림.
+func _announce(victim, killer) -> void:
+	if killer == null or battle == null:
+		return
+	var now := Unit.now()
+	var m: Array = _multi.get(killer, [0, -100.0])
+	m = [m[0] + 1 if now - m[1] <= 10.0 else 1, now]
+	_multi[killer] = m
+	_multi.erase(victim)
+	var text := ""
+	var all_dead := true
+	for h in battle.hero_manager.team_heroes(victim.team) if battle.hero_manager != null else []:
+		if not h.is_dead and h != victim:
+			all_dead = false
+	var streak: int = battle.streaks.get(killer, 0)
+	if m[0] >= 3:
+		text = "트리플 킬!"
+	elif all_dead and battle.hero_manager != null and battle.hero_manager.team_heroes(victim.team).size() > 1:
+		text = "전멸!"
+	elif m[0] == 2:
+		text = "더블 킬!"
+	elif battle.kills[Enums.Team.BLUE] + battle.kills[Enums.Team.RED] == 1:
+		text = "첫 처치!"
+	elif streak >= 7:
+		text = "전설!"
+	elif streak == 5:
+		text = "학살 중!"
+	elif streak == 3:
+		text = "연속 처치 중!"
+	if text == "":
+		return
+	banner_label.text = "%s  %s" % [killer.display_name, text]
+	banner_label.add_theme_color_override("font_color", Enums.team_color(killer.team).lightened(0.35))
+	banner_label.visible = true
+	banner_label.modulate.a = 1.0
+	banner_label.scale = Vector2.ONE
+	_banner_left = 2.6
+	AudioManager.play("crit" if killer.team == (hero.team if hero != null else Enums.Team.BLUE) else "hurt", 0.1, 0.9)
 
 
 ## 신호 버튼: 종류 고르는 창을 열고 닫는다. 찍을 곳을 고르는 중이면 취소한다.

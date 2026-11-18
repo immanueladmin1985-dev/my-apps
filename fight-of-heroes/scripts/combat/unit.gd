@@ -33,6 +33,8 @@ const ATTACKER_MEMORY := 15.0
 var cast_lock_left := 0.0
 ## 돌진할 때마다 1 씩 늘어난다. 따라가던 투사체가 이 값이 바뀌면 대상을 놓친다.
 var dash_count := 0
+## 이 시각까지는 풀숲에 있어도 드러난다 (공격·스킬을 쓰면)
+var revealed_until := -100.0
 ## 마지막 돌진(밀려남 포함)이 벽에 막혀 끝났는지
 var last_dash_blocked := false
 ## 쌓기 (냉기·표식 등): key -> {"v": 값, "until": 사라지는 시각(0 이면 계속)}

@@ -10,6 +10,7 @@ var nav_region: NavigationRegion2D
 
 func build(map_data: MapData) -> void:
 	map = map_data
+	Bushes.setup(map)
 	var bounds := Rect2(Vector2.ZERO, map.size)
 	_add_block(Rect2(-WALL, -WALL, map.size.x + WALL * 2, WALL))
 	_add_block(Rect2(-WALL, map.size.y, map.size.x + WALL * 2, WALL))
@@ -102,6 +103,8 @@ func _draw() -> void:
 		_draw_soft_rect(r, 70.0, lava, Color.WHITE if lava != null else Color(0.3, 0.12, 0.08))
 	for c: CampData in map.camps:
 		_draw_camp(c)
+	for b in map.bushes:
+		_draw_bush(Vector2(b.x, b.y), b.z)
 	_draw_decorations()
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		var c := Enums.team_color(team)
@@ -138,6 +141,25 @@ func _draw() -> void:
 		else:
 			_draw_plain_rock(r)
 	_draw_edge_shade()
+
+
+## 풀숲: 짙은 풀 바닥 위에 덤불 그림을 고리 모양으로 촘촘히 깐다 (그림이 없으면 초록 원들).
+func _draw_bush(c: Vector2, r: float) -> void:
+	_draw_soft_circle(c, r, 26.0, null, Color(0.12, 0.32, 0.12, 0.75))
+	var tex := Art.texture("map", "bush")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector2i(int(c.x), int(c.y)))
+	var n := int(r / 14.0)
+	for i in n:
+		var a := TAU * i / n + rng.randf_range(-0.2, 0.2)
+		var d := r * rng.randf_range(0.25, 0.85)
+		var p := c + Vector2.from_angle(a) * d
+		var s := rng.randf_range(52.0, 74.0)
+		if tex != null:
+			draw_texture_rect(tex, Rect2(p - Vector2(s, s) * 0.5, Vector2(s, s)), false, Color(0.85, 1.0, 0.85))
+		else:
+			draw_circle(p, s * 0.35, Color(0.2, 0.5, 0.18))
+			draw_circle(p - Vector2(4, 4), s * 0.22, Color(0.3, 0.62, 0.25))
 
 
 static func _bottom_of(o) -> float:
@@ -482,6 +504,9 @@ func _deco_free(p: Vector2, cfg: CombatConfig, placed: Array) -> bool:
 			return false
 	for pl in map.pillars:
 		if p.distance_to(Vector2(pl.x, pl.y)) < pl.z + 70.0:
+			return false
+	for b in map.bushes:
+		if p.distance_to(Vector2(b.x, b.y)) < b.z + 60.0:
 			return false
 	for r in map.lava_areas:
 		if r.has_point(p):

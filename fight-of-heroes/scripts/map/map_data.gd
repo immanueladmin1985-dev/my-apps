@@ -10,6 +10,10 @@ extends Resource
 @export var obstacles: Array[Rect2] = []
 ## 둥근 기둥·바위: (중심 x, 중심 y, 반지름)
 @export var pillars: PackedVector3Array = PackedVector3Array()
+## 풀숲: (중심 x, 중심 y, 반지름). 안에 있는 유닛은 같은 풀숲에 들어오지 않은 적에게 보이지 않는다.
+@export var bushes: PackedVector3Array = PackedVector3Array()
+## 룬 제단 자리: 주기적으로 룬(잠깐 강해지는 버프)이 나타난다.
+@export var rune_spots: PackedVector2Array = PackedVector2Array()
 ## 몬스터 캠프와 보스 자리 (CampData)
 @export var camps: Array[Resource] = []
 ## 용암 바닥으로 칠할 구역 (가장 어려운 던전)

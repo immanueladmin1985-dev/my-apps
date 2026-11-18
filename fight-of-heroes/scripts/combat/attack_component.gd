@@ -78,6 +78,7 @@ func try_attack(target) -> bool:
 		return false
 	windup_target = target
 	unit.status.remove_kind(Enums.StatusKind.STEALTH)
+	unit.revealed_until = Unit.now() + Bushes.REVEAL
 	windup_left = interval() * DataRegistry.combat_config().attack_windup_ratio
 	cooldown_left = interval()
 	unit.face_towards(target.global_position)

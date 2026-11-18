@@ -226,7 +226,8 @@ func test_ally_supports_attacked_player() -> void:
 	for i in 4:
 		CombatManager.apply_damage(player, DamageInfo.new(enemy, 1.0, Enums.DamageType.TRUE))
 		await frames(20)
-	eq(ally.controller.target, enemy, "지원 AI 가 멀리서 플레이어를 공격한 적을 노림")
+	var c: AIController = ally.controller
+	check(c.target == enemy or (c.objective is Vector2 and c.objective.distance_to(player.global_position) < 200.0), "지원 AI 가 멀리서 플레이어를 공격한 적을 노리거나 플레이어에게 달려감")
 	check(ally.global_position.x > 650.0, "지원하러 이동 (%.0f)" % ally.global_position.x)
 	battle.queue_free()
 
@@ -268,5 +269,8 @@ func test_enemy_fountain_hurts() -> void:
 	red.global_position = red.spawn_point - Vector2(600, 0)
 	await frames(8)  # 안개(시야) 갱신
 	ai.think()
-	eq(ai.target, red, "우물 밖으로 나오면 다시 노림")
+	check(ai.target != red, "우물 근처의 멀쩡한 적은 쫓지 않음 (상대 기지 앞에서 얼쩡거리지 않게)")
+	red.health.hp = red.health.max_hp() * 0.25
+	ai.think()
+	eq(ai.target, red, "우물 밖으로 나온 약해진 적은 노림")
 	battle.queue_free()

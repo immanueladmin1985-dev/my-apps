@@ -132,14 +132,20 @@ static func can_see(unit) -> bool:
 		return true
 	if unit.team == current.viewer_team:
 		return true
+	if Bushes.hidden_from(unit, current.viewer_team):
+		return false
 	return current.is_visible_pos(unit.global_position)
 
 
 ## team 의 시야에 이 유닛이 보이는지 (AI 판단용). 같은 팀과 중립 몬스터(캠프 위치는 모두 안다)는 늘 보인다.
 static func team_can_see(team: int, unit) -> bool:
-	if current == null or unit == null or not is_instance_valid(unit):
+	if unit == null or not is_instance_valid(unit):
 		return true
 	if unit.team == team or unit.team == Enums.Team.NEUTRAL:
+		return true
+	if Bushes.hidden_from(unit, team):
+		return false
+	if current == null:
 		return true
 	return current.is_visible_pos(unit.global_position, team)
 

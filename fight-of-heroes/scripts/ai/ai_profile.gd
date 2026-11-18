@@ -20,5 +20,9 @@ extends Resource
 @export var focus_fire: bool = false
 ## 보스·정예 몬스터의 위험 지역 예고를 보고 피하는지
 @export var dodge_telegraphs: bool = true
+## 영웅 스킬 예고(범위·직선)를 알아채고 피할 확률. 몬스터·보스 패턴은 늘 피한다.
+@export var hero_dodge_chance: float = 0.3
+## 영웅 스킬은 몬스터 패턴보다 늦게 알아챈다 (reaction_time 에 더하는 초)
+@export var hero_dodge_delay: float = 0.3
 ## 적을 찾는 거리
 @export var sight_range: float = 900.0

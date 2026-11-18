@@ -89,6 +89,11 @@ func _ready() -> void:
 	hero_manager.battle = battle_manager
 	ai_manager.monster_manager = monster_manager
 	shop_manager.setup(map)
+	# 룬 제단
+	var runes := RuneManager.new()
+	runes.name = "Runes"
+	world.add_child(runes)
+	runes.setup(map, hero_manager, seed_base)
 	ai_manager.shop = shop_manager
 	camera.limit_left = int(-80)
 	camera.limit_top = int(-80)
@@ -260,3 +265,4 @@ func _notification(what: int) -> void:
 
 func _exit_tree() -> void:
 	View.tilt = 1.0
+	Bushes.list = PackedVector3Array()

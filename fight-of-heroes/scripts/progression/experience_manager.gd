@@ -63,6 +63,9 @@ func give(h: Hero, xp: float, gold: int) -> void:
 	EventBus.reward.emit(h, xp, gold)
 
 
+const MONSTER_GOLD_SHARE := 0.4
+
+
 func _alive_near(team: int, pos: Vector2, radius: float) -> Array:
 	return hero_manager.team_heroes(team).filter(func(h): return not h.is_dead and h.global_position.distance_to(pos) <= radius)
 
@@ -88,8 +91,9 @@ func _on_unit_died(victim, killer) -> void:
 	var mult: float = victim.reward_mult
 	var total: float = d.xp * mult * (1.0 + cfg.group_bonus * (group.size() - 1))
 	var gold := roundi(d.gold * mult)
+	# 처치한 영웅은 골드를 다 받고, 근처에서 함께 싸운 아군은 40% 를 받는다.
 	for h in group:
-		give(h, total / group.size(), gold if h == credit else 0)
+		give(h, total / group.size(), gold if h == credit else roundi(gold * MONSTER_GOLD_SHARE))
 
 
 func _on_hero_killed(victim, killer, helpers: Array) -> void:

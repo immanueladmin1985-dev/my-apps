@@ -16,3 +16,5 @@ smart_ultimate = false
 focus_fire = false
 sight_range = 600.0
 dodge_telegraphs = false
+hero_dodge_chance = 0.1
+hero_dodge_delay = 0.45

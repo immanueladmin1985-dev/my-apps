@@ -139,6 +139,7 @@ func cast(slot: int, aim: CastAim = null) -> int:
 	cast_counts[slot] += 1
 	unit.attack.cancel_windup()
 	unit.status.remove_kind(Enums.StatusKind.STEALTH)
+	unit.revealed_until = Unit.now() + Bushes.REVEAL
 	if s.cast_lock > 0.0:
 		unit.cast_lock_left = s.cast_lock
 	var ctx := _build_context(s, rank, aim)

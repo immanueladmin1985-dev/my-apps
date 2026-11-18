@@ -89,7 +89,10 @@ func _dodge() -> bool:
 		return false
 	var hold := false
 	for z in get_tree().get_nodes_in_group("telegraphs"):
-		if z.elapsed() < profile.reaction_time:
+		var from_hero: bool = z.ctx != null and z.ctx.caster_valid() and z.ctx.caster is Hero
+		if z.elapsed() < profile.reaction_time + (profile.hero_dodge_delay if from_hero else 0.0):
+			continue
+		if from_hero and not _will_dodge(z):
 			continue
 		if z.threatens(hero, DODGE_MARGIN):
 			if not _dodging:
@@ -114,6 +117,19 @@ func _dodge() -> bool:
 		hero.move_input = Vector2.ZERO
 		_think_left = 0.0
 	return false
+
+
+## 영웅이 쓴 스킬 예고는 사람처럼 일부만 알아채고 피한다 (예고 하나마다 한 번 정함).
+var _dodge_choice: Dictionary = {}
+
+
+func _will_dodge(z) -> bool:
+	var id: int = z.get_instance_id()
+	if not _dodge_choice.has(id):
+		if _dodge_choice.size() > 64:
+			_dodge_choice.clear()
+		_dodge_choice[id] = rng.randf() < profile.hero_dodge_chance
+	return _dodge_choice[id]
 
 
 func _set_state(s: int) -> void:
@@ -176,6 +192,20 @@ func think() -> void:
 		help_target = null
 	if help_target != null and pos.distance_to(help_target.global_position) > _help_range():
 		help_target = null
+	# 사람이 하는 아군이 적 영웅에게 맞고 있으면 하던 사냥을 멈추고 도우러 간다.
+	var rescue = _player_in_danger()
+	if rescue != null and hp > 0.35 and state != State.RETREAT:
+		var ph = rescue[0]
+		var attacker = rescue[1]
+		if attacker != null and pos.distance_to(attacker.global_position) <= profile.sight_range and FogOfWar.team_can_see(hero.team, attacker):
+			help_target = attacker
+		elif pos.distance_to(ph.global_position) > 300.0:
+			objective = _reachable(ph.global_position)
+			target = null
+			_set_state(State.FOLLOW)
+			_use_skills(enemies)
+			_apply_orders()
+			return
 	if state == State.RETREAT:
 		# 회복했거나, 쫓아온 적을 잡을 수 있으면 다시 싸운다.
 		if hp >= profile.retreat_recover or _can_finish(enemies, hp):
@@ -228,6 +258,14 @@ func think() -> void:
 				_use_skills(enemies)
 				_apply_orders()
 				return
+			# 가까운 룬이 있으면 먹으러 간다.
+			var rune = _nearby_rune(1300.0)
+			if rune != null and hp > 0.4:
+				objective = rune
+				_set_state(State.FOLLOW)
+				_use_skills(enemies)
+				_apply_orders()
+				return
 		if target == null:
 			target = _monster_target(enemies, help_target, plan)
 		if target is Monster and target.is_boss():
@@ -247,6 +285,47 @@ func think() -> void:
 			_role_think()
 	_use_skills(enemies)
 	_apply_orders()
+
+
+func _nearby_rune(dist: float):
+	var rm = get_tree().get_first_node_in_group("runes")
+	if rm == null:
+		return null
+	var best = null
+	var best_d := dist
+	for s in rm.active():
+		var d: float = hero.global_position.distance_to(s.pos)
+		if d < best_d:
+			best_d = d
+			best = s.pos
+	return best
+
+
+# ---- 사람이 하는 아군 돕기 ----
+
+const RESCUE_RANGE := 2600.0
+
+
+## [사람 아군, 때리는 적 영웅] 또는 null. 최근 2.5초 안에 적 영웅에게 맞았고 가까이 있을 때.
+func _player_in_danger():
+	if manager == null:
+		return null
+	var ph = manager.player_heroes.get(hero.team)
+	if ph == null or not is_instance_valid(ph) or ph == hero or ph.is_dead:
+		return null
+	if hero.global_position.distance_to(ph.global_position) > RESCUE_RANGE:
+		return null
+	var now := Unit.now()
+	var best = null
+	var best_t := now - 2.5
+	for pair in ph.valid_attackers():
+		var u = pair[0]
+		if u is Hero and pair[1] > best_t and Targeting.is_valid(u, hero.team, Enums.TargetTeam.ENEMY):
+			best_t = pair[1]
+			best = u
+	if best == null:
+		return null
+	return [ph, best]
 
 
 # ---- 신호(핑) ----
@@ -410,8 +489,34 @@ func _role_think() -> void:
 				objective = spot
 				_set_state(State.FARM)
 				return
+	# 초반에 갈 사냥터가 없으면(아직 안 나왔거나 다 잡음) 상대 진영을 돌아다니지 말고 우리 쪽 캠프 옆에서 기다린다.
+	if hero.level < 6:
+		var wait = _nearest_own_camp()
+		if wait != null:
+			objective = wait
+			_set_state(State.FOLLOW if hero.global_position.distance_to(wait) > 220.0 else State.IDLE)
+			return
 	objective = null
 	_set_state(State.MOVE)
+
+
+func _nearest_own_camp():
+	var mm = manager.monster_manager if manager != null else null
+	if mm == null:
+		return null
+	var best = null
+	var best_d := INF
+	for camp in mm.camps:
+		var c: CampData = camp.data
+		if c.wave_interval > 0.0 or c.power_tier > 1 or c.is_final_boss or mm.is_boss_camp(camp):
+			continue
+		if _camp_side({"position": c.position, "wave": false}) != "own":
+			continue
+		var d: float = hero.global_position.distance_to(c.position)
+		if d < best_d:
+			best_d = d
+			best = c.position + (home - c.position).normalized() * 120.0
+	return best
 
 
 ## 진영별 사냥터 중 가까운 곳. order 는 "own"(자기 진영), "center"(중앙), "enemy"(상대 진영) 순서의 우선순위.
@@ -559,9 +664,15 @@ func _choose_target(enemies: Array, help_target = null):
 	var best_score := INF
 	var focus = manager.focus_target(hero.team) if manager != null and profile.focus_fire else null
 	var hm = manager.hero_manager if manager != null else null
+	var enemy_home: Vector2 = rally_point * 2.0 - home
 	for e in enemies:
-		# 상대 우물 안의 적은 쫓지 않는다.
+		# 상대 우물 안의 적은 쫓지 않는다. 우물 근처(600)도 거의 다 잡은 적이 아니면 쫓지 않는다.
 		if hm != null and hm.in_enemy_fountain(hero, e.global_position, 40.0):
+			continue
+		if hm != null and hm.in_enemy_fountain(hero, e.global_position, 600.0) and e.health.ratio() > 0.3 and e != help_target:
+			continue
+		# 초반(4레벨 전)에는 상대 진영 깊숙이 있는 적을 쫓아가지 않고 사냥에 집중한다.
+		if hero.level < 4 and e != help_target and e.health.ratio() > 0.4 and e.global_position.distance_to(enemy_home) < e.global_position.distance_to(home) * 0.7:
 			continue
 		var score: float = hero.global_position.distance_to(e.global_position) + e.health.ratio() * 300.0
 		if e == target:

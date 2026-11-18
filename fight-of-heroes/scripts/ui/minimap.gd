@@ -77,6 +77,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(map.ground_color, 0.7))
 	for r in map.obstacles:
 		draw_rect(Rect2(_to_mini(r.position), r.size / map.size * size), Color(map.obstacle_color.lightened(0.2), 0.9))
+	for b in map.bushes:
+		draw_circle(_to_mini(Vector2(b.x, b.y)), maxf(2.0, b.z / map.size.x * size.x), Color(0.25, 0.55, 0.22, 0.85))
 	for pl in map.pillars:
 		draw_circle(_to_mini(Vector2(pl.x, pl.y)), maxf(1.5, pl.z / map.size.x * size.x), Color(map.obstacle_color.lightened(0.2), 0.9))
 	var fr: float = DataRegistry.combat_config().fountain_radius / map.size.x * size.x
@@ -109,6 +111,11 @@ func _draw() -> void:
 			if h == player:
 				draw_circle(p, 6.5, Color(1, 0.95, 0.4))
 			draw_circle(p, 5.0, c)
+	for rm in get_tree().get_nodes_in_group("runes"):
+		for s in rm.active():
+			var rp := _to_mini(s.pos)
+			draw_circle(rp, 5.0, Color(0, 0, 0, 0.7))
+			draw_circle(rp, 3.5, RuneManager.COLORS[s.kind])
 	_draw_pings()
 	draw_rect(Rect2(Vector2.ZERO, size), Color(1, 1, 1, 0.35), false, 1.5)
 

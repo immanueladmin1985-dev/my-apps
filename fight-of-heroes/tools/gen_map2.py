@@ -115,6 +115,41 @@ def fmt_camp(c):
     return lines + ['']
 
 
+# 풀숲·룬 제단 (좌우 대칭). 벽·기둥·캠프·기지와 겹치는 자리는 뺀다.
+import math
+
+
+def _free(x, y, r, camp_gap=280.0):
+    if x - r < 60 or x + r > W - 60 or y - r < 60 or y + r > H - 60:
+        return False
+    for (ox, oy, ow, oh) in obs + lava:
+        if ox - r - 30 < x < ox + ow + r + 30 and oy - r - 30 < y < oy + oh + r + 30:
+            return False
+    for (px, py, pr) in pillars:
+        if math.hypot(x - px, y - py) < pr + r + 40:
+            return False
+    for c in camps:
+        if math.hypot(x - c["pos"][0], y - c["pos"][1]) < camp_gap + r:
+            return False
+    for sx in (320, W - 320):
+        if math.hypot(x - sx, y - CY) < 700:
+            return False
+    return True
+
+
+bushes = []
+for (x, y, r) in [(1400, 1000, 115), (2300, 1450, 105), (1100, 1600, 110), (2000, 1900, 105), (950, 2200, 115), (800, 850, 110)]:
+    if _free(x, y, r):
+        bushes.append((x, y, r))
+        bushes.append((W - x, y, r))
+rune_spots = []
+for (x, y) in [(1750, 1450), (1850, 450), (500, 2500)]:
+    if _free(x, y, 60, 320) and all(math.hypot(x - bx, y - by) > br + 80 for (bx, by, br) in bushes):
+        rune_spots.append((x, y))
+        rune_spots.append((W - x, y))
+    if len(rune_spots) >= 4:
+        break
+
 rects = lambda rs: ", ".join("Rect2(%d, %d, %d, %d)" % r for r in rs)
 out = ['[gd_resource type="Resource" script_class="MapData" format=3]', '',
        '[ext_resource type="Script" path="res://scripts/map/map_data.gd" id="1"]',
@@ -125,8 +160,10 @@ out += ['[resource]', 'script = ExtResource("1")', 'id = "valley_02"', 'display_
         'size = Vector2(%d, %d)' % (W, H), 'blue_spawn = Vector2(320, %d)' % CY, 'red_spawn = Vector2(%d, %d)' % (W - 320, CY),
         'obstacles = Array[Rect2]([%s])' % rects(obs), 'lava_areas = Array[Rect2]([%s])' % rects(lava),
         'pillars = PackedVector3Array(%s)' % ", ".join("%g, %g, %g" % p for p in pillars),
+        'bushes = PackedVector3Array(%s)' % ", ".join("%g, %g, %g" % b for b in bushes),
+        'rune_spots = PackedVector2Array(%s)' % ", ".join("%g, %g" % p for p in rune_spots),
         'camps = Array[Resource]([%s])' % ", ".join('SubResource("%s")' % c["id"] for c in camps),
         'ground_color = Color(0.2, 0.29, 0.21, 1)', 'obstacle_color = Color(0.36, 0.34, 0.31, 1)']
 path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data/maps/valley_02.tres")
 open(path, "w").write("\n".join(out) + "\n")
-print(len(obs), "벽", len(pillars), "기둥", len(camps), "캠프")
+print(len(obs), "벽", len(pillars), "기둥", len(camps), "캠프", len(bushes), "풀숲", rune_spots, "룬")

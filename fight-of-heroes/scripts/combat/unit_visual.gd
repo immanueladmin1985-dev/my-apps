@@ -95,6 +95,9 @@ func _draw() -> void:
 	var r: float = unit.radius
 	var team_c := Enums.team_color(unit.team)
 	var alpha := 0.35 if unit.is_dead else 1.0
+	# 풀숲 안에 숨은 우리 편은 반투명하게 (적에게 안 보인다는 표시)
+	if not unit.is_dead and Bushes.index_at(unit.global_position) >= 0 and unit.revealed_until < Unit.now():
+		alpha = 0.55
 	if unit.status.is_stealthed():
 		if Enums.is_enemy(viewer_team, unit.team):
 			return
