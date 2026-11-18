@@ -100,7 +100,9 @@
     gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     fsOn: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
     fsOff: '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
-    reload: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>'
+    reload: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
+    sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    moon: '<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
   };
 
   /* ---------- 창(모달) ---------- */
@@ -129,7 +131,16 @@
   let tableEnd = null;   // 현황 표의 마지막 날짜 (null = 오늘)
   let editPrayer = false, prayerQuery = '';
 
-  function applyFont() { document.documentElement.style.setProperty('--fs', (C.font || 17) + 'px'); }
+  function applyFont() { document.documentElement.style.setProperty('--fs', (C.font || 17) + 'px'); applyTheme(); }
+  // 화면 밝기: 'light'(기본, 밝게) · 'dark'(어둡게) · 'auto'(휴대폰 설정 따라감)
+  const TABS = [['input', '✍️', '입력'], ['mine', '📅', '내 기록'], ['table', '📊', '현황'], ['prayer', '🙏', '기도제목']];
+  function isDark() { const t = C.theme || 'light'; return t === 'dark' || (t === 'auto' && mq('(prefers-color-scheme: dark)')); }
+  function applyTheme() {
+    const dark = isDark();
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    $$('meta[name=theme-color]').forEach(m => { m.removeAttribute('media'); m.setAttribute('content', dark ? '#17142a' : '#7a5af5'); });
+  }
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if ((C.theme || 'light') === 'auto') { applyTheme(); render(); } }); } catch (e) {}
 
   function render() {
     applyFont();
@@ -138,19 +149,20 @@
     if (!S) { app.innerHTML = `<div class="welcome">${brandHtml()}<p class="lead">자료를 불러오는 중…</p><div id="loadErr"></div></div>`; return; }
     if (!myName()) { renderWelcome(); return; }
     const y = window.scrollY;
+    const nc = view !== 'prayer' ? newComments() : 0;
     app.innerHTML = `<header><div class="top">
         <h1 class="htitle">${headerBrand()}</h1>
-        <button class="icon" id="tReload" aria-label="새로 고침">${ICON.reload}</button>
+        <button class="icon" id="tTheme" aria-label="밝게·어둡게">${isDark() ? ICON.sun : ICON.moon}</button>
         <button class="icon" id="tFS" aria-label="전체화면">${ICON.fsOn}</button>
-        <button class="icon" id="tSet" aria-label="설정">${ICON.gear}</button></div>
-      <nav class="tabs"><button data-v="input">입력</button><button data-v="table">현황</button><button data-v="prayer">기도제목${view !== 'prayer' && newComments() ? `<span class="badge">${newComments()}</span>` : ''}</button></nav></header>
+        <button class="icon" id="tSet" aria-label="설정">${ICON.gear}</button></div></header>
+      <nav class="tabs">${TABS.map(([v, ic, l]) => `<button data-v="${v}" class="t-${v}"><span class="ti">${ic}</span><span class="tl">${l}</span>${v === 'prayer' && nc ? `<span class="badge">${nc}</span>` : ''}</button>`).join('')}</nav>
       <main id="main"></main>`;
     $$('.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.v === view); b.onclick = () => go(b.dataset.v); });
+    $('#tTheme').onclick = () => { C.theme = isDark() ? 'light' : 'dark'; saveCfg(); applyTheme(); render(); };
     $('#tSet').onclick = settings;
-    $('#tReload').onclick = () => refresh();
     $('#tFS').onclick = () => FS.toggle();
     const m = $('#main');
-    if (view === 'table') (C.stView === 'grid' ? renderTable : renderList)(m); else if (view === 'prayer') renderPrayer(m); else renderInput(m);
+    if (view === 'table') (C.stView === 'grid' ? renderTable : renderList)(m); else if (view === 'prayer') renderPrayer(m); else if (view === 'mine') renderMine(m); else renderInput(m);
     paintInstall(); paintBusy();
     if (view !== 'table') window.scrollTo(0, y);
   }
@@ -159,8 +171,8 @@
   function topBanners(noInstall) {
     let h = '';
     if (!online || C.pending.length) h += `<div class="offline">${C.pending.length ? `📶 보내지 못한 기록 ${C.pending.length}개 — 인터넷이 연결되면 자동으로 보내요.` : '📶 인터넷 연결이 안 돼서 저장해 둔 자료를 보여 드려요.'}</div>`;
-    if (!noInstall) h += `<div class="banner hidden" id="banner"><span>📲 홈 화면에 설치하면 다음부터 아이콘으로 바로 열려요.</span>
-      <button class="btn pri sm" id="bInst">📲 바로 설치</button><button class="btn sm" id="bFs">전체화면</button><button class="btn ghost sm" id="bNo">다음에</button></div>`;
+    if (!noInstall) h += `<div class="banner hidden" id="banner"><span>📲 앱 설치</span>
+      <button class="btn pri sm" id="bInst">바로 설치</button><button class="btn sm" id="bFs">전체화면</button><button class="btn ghost sm" id="bNo">다음에</button></div>`;
     return h;
   }
   function bindBanners() {
@@ -172,13 +184,14 @@
   /* ----- 입력 ----- */
   function savedFor(who, date) { return dataOf(who)[date] || 0; }
   function setFormDate(d) {
-    form.date = d;
+    form.date = d; form.for = (form.who || myName()) + '|' + d;
     const v = savedFor(form.who || myName(), d);
     form.h = Math.floor(v / 60); form.m = v % 60;
   }
   function renderInput(m) {
     const me = myName(), who = form.who || me, t = today();
     if (form.date > t) form.date = t;
+    if (form.for !== who + '|' + form.date) setFormDate(form.date);   // 저장된 시간을 칸에 채움
     const saved = savedFor(who, form.date);
     const hOpts = Array.from({ length: 24 }, (_, i) => `<option value="${i}"${i === form.h ? ' selected' : ''}>${i}</option>`).join('');
     const mOpts = Array.from({ length: 60 }, (_, i) => `<option value="${i}"${i === form.m ? ' selected' : ''}>${i}</option>`).join('');
@@ -188,22 +201,23 @@
     const nameSel = isMaster()
       ? `<select id="fWho">${[me].concat((S.names || []).filter(n => n !== me).sort(ko)).map(n => `<option value="${esc(n)}"${n === who ? ' selected' : ''}>${esc(n)} 목사${n === me ? ' (나)' : ''}</option>`).join('')}</select>`
       : '';
+    const d0 = dataOf(who), wk0 = addDays(t, -((parse(t).getDay() + 6) % 7));
+    let wsum = 0; Object.keys(d0).forEach(k => { if (k >= wk0 && k <= t) wsum += d0[k]; });
     m.innerHTML = topBanners() +
-      (nt ? `<div class="notice" id="nCard">📢 ${esc(nt.text.length > 120 ? nt.text.slice(0, 120) + '…' : nt.text)}<small>${md(ymd(new Date(nt.at)))} 공지${S.notices.length > 1 ? ` · 공지 ${S.notices.length}개 모두 보기` : ''}</small></div>` : '') +
-      `<div class="card">
-        <div class="field"><label>이름</label>
-          ${nameSel || `<div class="namebox"><b>${esc(me)} 목사</b><button class="btn sm" id="fRename">이름 고치기</button></div>`}
-          ${nameSel ? '<p class="small muted" style="margin:6px 0 0">마스터는 다른 목사님 기록도 넣을 수 있어요.</p>' : ''}</div>
-        <div class="field"><label>기도한 날짜 <span class="small muted">(기본 오늘)</span></label>
+      (nt ? `<button class="notice one" id="nCard">📢 <span>${esc(nt.text.replace(/\n/g, ' '))}</span></button>` : '') +
+      `<div class="card inputcard">
+        <div class="hello">${nameSel || `<span>🙏 <b>${esc(me)}</b> 목사님</span><button class="linkbtn" id="fRename">이름 고치기</button>`}</div>
+        <div class="field"><label>📆 기도한 날짜</label>
           <div class="datebar"><button class="btn" id="dPrev" aria-label="하루 전">◀</button><input type="date" id="fDate" value="${form.date}" max="${t}"><button class="btn" id="dNext" aria-label="하루 뒤"${form.date >= t ? ' disabled' : ''}>▶</button></div>
           <div class="chips">${[[t, '오늘'], [addDays(t, -1), '어제'], [addDays(t, -2), '그제']].map(([d, l]) => `<button data-d="${d}" class="${d === form.date ? 'on' : ''}">${l}</button>`).join('')}
             <span class="small muted" style="align-self:center;margin-left:4px">${md(form.date)} (${wd(form.date)})</span></div></div>
-        <div class="field"><label>기도 시간</label>
+        <div class="field"><label>⏱️ 기도 시간</label>
           <div class="time"><select id="fH" aria-label="시간">${hOpts}</select><span>시간</span><select id="fM" aria-label="분">${mOpts}</select><span>분</span></div>
-          <div class="chips">${quick.map(([v, l]) => `<button data-q="${v}" class="${v === cur ? 'on' : ''}">${l}</button>`).join('')}</div>
-          ${saved ? `<div class="saved">이 날짜에 저장된 기도: <b>${hmText(saved)}</b><br><span class="small">다시 저장하면 마지막에 넣은 시간으로 바뀌어요.</span></div>` : ''}</div>
-        <button class="btn pri big" id="fSave">${saved ? '고쳐서 저장' : '저장'}</button>
-      </div>` + myRecords(who);
+          <div class="chips qchips">${quick.map(([v, l]) => `<button data-q="${v}" class="${v === cur ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        ${saved ? `<div class="saved">✅ <b>${hmText(saved)}</b> 저장됨 · 다시 저장하면 바뀌어요</div>` : ''}
+        <button class="btn pri big" id="fSave">${saved ? '고쳐서 저장' : '저장하기'}</button>
+        <button class="weekline" id="fMine">이번 주 <b>${hmText(wsum)}</b> · 내 기록 보기 ›</button>
+      </div>`;
     bindBanners();
     const nc = $('#nCard'); if (nc) nc.onclick = () => showNotices(true);
     const rn = $('#fRename'); if (rn) rn.onclick = renameSelf;
@@ -216,18 +230,38 @@
     $('#fM').onchange = e => { form.m = +e.target.value; paintQuick(); };
     $$('[data-q]', m).forEach(b => b.onclick = () => { const v = +b.dataset.q; form.h = Math.floor(v / 60); form.m = v % 60; $('#fH').value = form.h; $('#fM').value = form.m; paintQuick(); });
     $('#fSave').onclick = doSave;
-    $$('[data-day]', m).forEach(li => li.onclick = () => { setFormDate(li.dataset.day); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    $('#fMine').onclick = () => go('mine');
   }
   function paintQuick() { const cur = form.h * 60 + form.m; $$('[data-q]').forEach(b => b.classList.toggle('on', +b.dataset.q === cur)); }
-  function myRecords(who) {
-    const d = dataOf(who), t = today(), wk = parse(t).getDay();
-    const weekStart = addDays(t, -((wk + 6) % 7)), monthStart = t.slice(0, 8) + '01';
-    let w = 0, mo = 0; Object.keys(d).forEach(k => { if (k >= weekStart && k <= t) w += d[k]; if (k >= monthStart && k <= t) mo += d[k]; });
-    const days = Array.from({ length: 14 }, (_, i) => addDays(t, -i));
-    return `<div class="card"><h2>${who === myName() ? '내' : esc(who) + ' 목사'} 기도 기록</h2>
-      <div class="stat"><div><span class="small muted">이번 주</span><b>${hmText(w)}</b></div><div><span class="small muted">이번 달</span><b>${hmText(mo)}</b></div><div><span class="small muted">전체</span><b>${hmText(totalOf(who))}</b></div></div>
-      <ul class="mylist" style="margin-top:10px">${days.map(day => { const k = parse(day).getDay(); return `<li data-day="${day}"><span class="${k === 0 ? 'sun' : k === 6 ? 'sat' : ''}">${md(day)} (${WD[k]})</span><b>${d[day] ? hmText(d[day]) : '<span class="muted">—</span>'}</b></li>`; }).join('')}</ul>
-      <p class="small muted" style="margin:8px 0 0">날짜를 누르면 그 날짜 기록을 고칠 수 있어요.</p></div>`;
+  /* ----- 내 기록 (달력) ----- */
+  let calMonth = null;   // 'YYYY-MM'
+  function renderMine(m) {
+    const who = form.who || myName(), d = dataOf(who), t = today();
+    const mon = calMonth || t.slice(0, 7), first = parse(mon + '-01'), y = first.getFullYear(), mo = first.getMonth();
+    const days = new Date(y, mo + 1, 0).getDate(), lead = first.getDay();
+    const weekStart = addDays(t, -((parse(t).getDay() + 6) % 7));
+    let w = 0, ms = 0, cnt = 0;
+    Object.keys(d).forEach(k => { if (k >= weekStart && k <= t) w += d[k]; if (k.slice(0, 7) === mon) { ms += d[k]; cnt++; } });
+    const cells = [];
+    for (let i = 0; i < lead; i++) cells.push('<div class="cd empty"></div>');
+    for (let i = 1; i <= days; i++) {
+      const day = mon + '-' + pad(i), v = d[day] || 0, k = (lead + i - 1) % 7, fut = day > t;
+      cells.push(`<button class="cd l${lv(v)}${day === t ? ' today' : ''}${k === 0 ? ' sun' : k === 6 ? ' sat' : ''}" data-day="${day}"${fut ? ' disabled' : ''}>
+        <span class="dn">${i}</span>${v ? `<span class="dv">${cellText(v)}</span>` : ''}</button>`);
+    }
+    const prevM = ymd(new Date(y, mo - 1, 1)).slice(0, 7), nextM = ymd(new Date(y, mo + 1, 1)).slice(0, 7);
+    m.innerHTML = topBanners(true) + `
+      <div class="stat mystat"><div class="s1"><span>이번 주</span><b>${hmText(w)}</b></div><div class="s2"><span>${mo + 1}월</span><b>${hmText(ms)}</b></div><div class="s3"><span>전체</span><b>${hmText(totalOf(who))}</b></div></div>
+      <div class="card calcard">
+        <div class="calbar"><button class="btn sm" id="cPrev">◀</button><b>${y}년 ${mo + 1}월${who !== myName() ? ` · ${esc(who)} 목사` : ''}</b><button class="btn sm" id="cNext"${nextM > t.slice(0, 7) ? ' disabled' : ''}>▶</button></div>
+        <div class="calhead">${WD.map((x, i) => `<span class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${x}</span>`).join('')}</div>
+        <div class="calgrid">${cells.join('')}</div>
+        <p class="small muted calnote">${cnt}일 기도 · 날짜를 누르면 그 날 기록을 넣거나 고쳐요</p>
+      </div>`;
+    bindBanners();
+    $('#cPrev').onclick = () => { calMonth = prevM; render(); };
+    $('#cNext').onclick = () => { calMonth = nextM >= t.slice(0, 7) ? null : nextM; render(); };
+    $$('[data-day]', m).forEach(b => b.onclick = () => { setFormDate(b.dataset.day); go('input'); });
   }
   async function doSave() {
     const who = form.who || myName(), min = form.h * 60 + form.m, saved = savedFor(who, form.date);
@@ -600,8 +634,10 @@
     { v: 'input', sel: '.time', title: '② 기도한 시간', text: '왼쪽 칸을 눌러 <b>시간</b>,\n오른쪽 칸을 눌러 <b>분</b>을 고르세요.\n(예: 1시간 30분)' },
     { v: 'input', sel: '[data-q]', parent: true, title: '빠르게 고르기', text: '자주 쓰는 시간은\n이 버튼을 한 번만 눌러도 돼요.' },
     { v: 'input', sel: '#fSave', title: '③ 저장', text: '다 고르셨으면 <b>[저장]</b>을 누르면 끝!\n잘못 넣었으면 다시 고르고 저장하면\n<b>마지막에 넣은 것</b>으로 바뀌어요.' },
+    { v: 'input', sel: '[data-v="mine"]', title: '내 기록', text: '내가 기도한 날을 <b>달력</b>으로 볼 수 있어요.\n달력에서 날짜를 누르면\n그 날 기록을 넣거나 고칠 수 있어요.' },
     { v: 'input', sel: '[data-v="table"]', title: '현황', text: '여기를 누르면 목사님들이\n얼마나 기도했는지 볼 수 있어요.' },
     { v: 'input', sel: '[data-v="prayer"]', title: '기도제목', text: '내 기도제목을 올리고,\n다른 목사님 기도제목에 🙏 ❤️ 를 누르거나\n댓글을 달 수 있어요.' },
+    { v: 'input', sel: '#tTheme', title: '밝게 · 어둡게', text: '화면이 너무 밝거나 어두우면\n이 버튼을 누르세요. ☀️ ↔ 🌙' },
     { v: 'input', sel: '#tSet', title: '설정', text: '<b>글자를 크게</b> 하거나 <b>이름을 고칠</b> 때,\n이 사용법을 <b>다시 볼</b> 때 누르세요.' },
     { v: 'input', sel: null, install: true, title: '마지막! 앱 설치 📲', text: '휴대폰에 앱을 설치하면\n다음부터 <b>카카오톡 없이</b>\n홈 화면의 <b>기도시간</b> 아이콘만 누르면 열려요.' }
   ];
@@ -652,12 +688,13 @@
     modal(`<h3>설정</h3>
       <div class="field"><label>내 이름·소속</label><div class="namebox"><b>${esc(myName())} 목사${churchOf(myName()) ? ` <span class="church">${esc(churchOf(myName()))}</span>` : ''}</b><button class="btn sm" id="sName">고치기</button></div></div>
       <div class="field"><label>글자 크기</label><div class="chips">${[[16, '작게'], [17, '보통'], [19, '크게'], [21, '아주 크게']].map(([v, l]) => `<button data-f="${v}" class="${C.font === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <div class="field"><label>화면 밝기</label><div class="chips">${[['light', '☀️ 밝게'], ['dark', '🌙 어둡게'], ['auto', '📱 휴대폰 설정대로']].map(([v, l]) => `<button data-th="${v}" class="${(C.theme || 'light') === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <div class="field"><label>화면</label><div class="row">
         <button class="btn sm${FS.supported() ? '' : ' hidden'}" id="sFS">${FS.on() ? '전체화면 끄기' : '전체화면'}</button>
         <label class="row small" style="gap:6px"><input type="checkbox" id="sAuto"${C.autoFS ? ' checked' : ''}> 자동 전체화면</label>
         <button class="btn sm${sa ? ' hidden' : ''}" id="sInst">홈 화면에 설치하기</button></div></div>
       <div class="field"><label>공지·공유</label><div class="row">
-        <button class="btn sm pri" id="sTour">사용법 다시 보기</button><button class="btn sm" id="sNotice">공지 보기</button><button class="btn sm" id="sShare">앱 주소 보내기</button></div></div>
+        <button class="btn sm pri" id="sTour">사용법 다시 보기</button><button class="btn sm" id="sReload">새로 고침</button><button class="btn sm" id="sNotice">공지 보기</button><button class="btn sm" id="sShare">앱 주소 보내기</button></div></div>
       <div class="field"><label>관리</label><div class="row">
         ${isMaster() ? '<button class="btn sm pri" id="sMaster">마스터 메뉴</button>' : isStaff() ? '<button class="btn sm pri" id="sStaff">공지 올리기·내리기</button><button class="btn sm" id="sMaster">마스터로 들어가기</button>' : '<button class="btn sm" id="sMaster">마스터로 들어가기</button>'}</div></div>
       <p class="small muted">기기: ${esc(deviceDesc())}${C.pending.length ? ' · 보낼 기록 ' + C.pending.length + '개' : ''}</p>`,
@@ -668,6 +705,8 @@
         $('#sAuto', inn).onchange = e => { C.autoFS = e.target.checked; saveCfg(); };
         $('#sInst', inn).onclick = () => { close(); installSheet(); };
         $('#sTour', inn).onclick = () => { close(); startTour(0); };
+        $('#sReload', inn).onclick = () => { close(); refresh(); toast('새 자료를 받았어요'); };
+        $$('[data-th]', inn).forEach(b => b.onclick = () => { C.theme = b.dataset.th; saveCfg(); applyTheme(); $$('[data-th]', inn).forEach(x => x.classList.toggle('on', x === b)); render(); });
         $('#sNotice', inn).onclick = () => { close(); if (S.notices && S.notices.length) showNotices(true); else toast('지금 올라온 공지가 없어요'); };
         $('#sShare', inn).onclick = () => { close(); shareApp(); };
         $('#sMaster', inn).onclick = () => { close(); isMaster() ? masterMenu() : masterLogin(); };
