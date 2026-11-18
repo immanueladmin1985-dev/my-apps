@@ -46,7 +46,32 @@
   /* ---------- 서버 ---------- */
   let S = C.state || null;   // 마지막으로 받은 자료 (바로 그리기용)
   let online = true, busy = 0;
+  // 기다려야 하는 요청은 화면 전체에 로딩 창을 띄우고 그동안 다른 버튼을 막음 (여러 번 누르지 않게)
+  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요' };
+  let waitN = 0, waitTimer = 0;
+  function showWait(msg) {
+    waitN++;
+    clearTimeout(waitTimer);
+    waitTimer = setTimeout(() => {   // 아주 빨리 끝나면 깜빡이지 않게 조금 있다가 띄움
+      let w = $('#wait');
+      if (!w) { w = document.createElement('div'); w.id = 'wait'; w.className = 'wait'; document.body.appendChild(w); }
+      w.innerHTML = `<div class="wait-card"><div class="wait-ic">🙏</div><div class="spin"></div><p>${esc(msg)}…</p><p class="small muted">잠시만 기다려 주세요</p></div>`;
+      w.classList.add('show');
+    }, 150);
+  }
+  function hideWait() {
+    waitN = Math.max(0, waitN - 1);
+    if (waitN) return;
+    clearTimeout(waitTimer);
+    const w = $('#wait'); if (w) w.classList.remove('show');
+  }
   async function api(action, extra) {
+    const msg = WAIT_MSG[action] || (['load', 'logo', 'react'].includes(action) ? '' : '잠시만요');
+    if (!msg) return apiRaw(action, extra);
+    showWait(msg);
+    try { return await apiRaw(action, extra); } finally { hideWait(); }
+  }
+  async function apiRaw(action, extra) {
     if (!C.server) throw new Error('서버 주소가 아직 없어요');
     await ensureDevice();
     const body = JSON.stringify(Object.assign({ action, dev: device.id, key: device.key, desc: deviceDesc() }, extra || {}));
@@ -517,7 +542,13 @@
       <input type="text" id="nCh" placeholder="예: 임마누엘교회" maxlength="30" value="${esc(church || '')}"></div>
       <button class="btn pri big" id="nOk" style="margin-top:14px">${esc(okLabel)}</button>`;
     const i = $('#nIn', inn), ch = $('#nCh', inn);
-    const go = () => { const v = i.value.replace(/\s+/g, '').replace(/목사(님)?$/, ''); if (v.length < 2) { toast('이름을 두 글자 이상 적어 주세요'); i.focus(); return; } onOk(v, ch.value.replace(/\s+/g, ' ').trim()); };
+    let going = false;   // 처리하는 동안 다시 눌러도 무시
+    const go = async () => {
+      if (going) return;
+      const v = i.value.replace(/\s+/g, '').replace(/목사(님)?$/, ''); if (v.length < 2) { toast('이름을 두 글자 이상 적어 주세요'); i.focus(); return; }
+      going = true; const b = $('#nOk', inn); if (b) b.disabled = true;
+      try { await onOk(v, ch.value.replace(/\s+/g, ' ').trim()); } finally { going = false; if (b && document.body.contains(b)) b.disabled = false; }
+    };
     $('#nOk', inn).onclick = go;
     const enter = e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); if (e.target === i) ch.focus(); else go(); } };
     i.onkeydown = enter; ch.onkeydown = enter;
