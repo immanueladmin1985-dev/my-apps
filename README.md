@@ -15,6 +15,7 @@ GitHub Pages로 배포되는 스마트폰 홈 화면용 HTML 앱 모음입니다
 - 반주 반복기: https://immanueladmin1985-dev.github.io/my-apps/hymn-loop/
 - 하루 도우미: https://immanueladmin1985-dev.github.io/my-apps/haru-helper/
 - 사계절 정원: https://immanueladmin1985-dev.github.io/my-apps/season-garden/
+- 30인 운동본부 기도: https://immanueladmin1985-dev.github.io/my-apps/prayer/
 
 각 앱은 따로 홈 화면에 설치해서 따로 실행할 수 있습니다. `main` 브랜치에 올린 내용이 몇 분 안에 사이트에 반영됩니다.
 
@@ -291,3 +292,15 @@ GitHub Pages로 배포되는 스마트폰 홈 화면용 HTML 앱 모음입니다
 - 진행 중인 정원은 모드마다 자동 저장되어 언제든 이어서 할 수 있습니다.
 - 점검: `node season-garden/tools/sim.js 40 classic`(컴퓨터 대국으로 점수 분포 확인), `node season-garden/tools/check.js <폴더>`(Playwright 로 휴대폰·태블릿 화면 확인과 한 판 끝까지 자동 진행).
 
+
+## 30인 운동본부 기도 (`prayer/`)
+
+목사님들이 매일 기도 시간을 넣고 함께 보는 앱입니다. 예전 구글 설문지 + 시트 수식 방식을 대신합니다.
+
+- 처음 한 번 이름을 적으면 그 기기에 저장되어 다음부터 바로 들어갑니다(승인 없음). 이름이 틀렸으면 [이름 고치기].
+- 입력: 날짜(기본 오늘) + 시간·분(최대 23시간 59분). 같은 날짜는 마지막에 저장한 값이 최종입니다.
+- 현황: 한눈에(막대·최근 2주 칸, 기간별) / 날짜별 표, 가나다순·시간순. 이름을 누르면 자세히 보입니다.
+- 기도제목: 목사님마다 하나씩 올리고 고칩니다.
+- 공지: 마스터가 올리면 앱을 열 때 창으로 보입니다.
+- 카카오톡에서 열면 기본 브라우저(크롬·사파리)로 넘깁니다.
+- 서버: 기도시간 응답 구글 시트에 붙인 Apps Script(`prayer/server/Code.gs`). setup 을 실행하면 설문지 응답을 '기도기록' 시트로 옮기고(2026-08-30 이전은 그날 합계, 이후는 마지막 응답), 설문지로 새 응답이 들어와도 자동으로 옮깁니다. 마스터 암호는 '설정' 시트 B3. 웹 앱 주소는 `prayer/js/config.js`.
