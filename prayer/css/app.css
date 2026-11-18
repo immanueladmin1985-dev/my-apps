@@ -286,3 +286,9 @@ dialog ol { padding-left: 1.3em; }
 main { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
 @media (max-width: 420px) { .banner #bFs { display: none; } }
 .inputcard .saved { font-size: .88em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 달력 칸: 날짜는 왼쪽 위에 작게, 기도 시간은 가운데 크게 */
+.cd { position: relative; }
+.cd .dn { position: absolute; top: 3px; left: 5px; font-size: .68em; font-weight: 700; opacity: .85; line-height: 1; }
+.cd .dv { display: flex; flex-direction: column; align-items: center; line-height: 1; margin-top: 6px; }
+.cd .dv b { font-size: 1.15em; font-weight: 900; letter-spacing: -.02em; }
+.cd .dv small { font-size: .58em; font-weight: 700; opacity: .9; margin-top: 2px; }

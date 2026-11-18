@@ -11,7 +11,8 @@
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (e) { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const C = Object.assign({ server: '', font: 17, autoFS: true, installDismissed: false, hideNotices: [], tab: 'input', pending: [], state: null, sort: 'recent' }, load(CFG_KEY, {}));
-  if (window.PRAYER_SERVER) C.server = window.PRAYER_SERVER;
+  // 내 컴퓨터(localhost)에서 시험할 때는 진짜 서버를 쓰지 않음 (?s= 로 시험 서버를 줌)
+  if (window.PRAYER_SERVER && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) C.server = window.PRAYER_SERVER;
   const saveCfg = () => save(CFG_KEY, C);
 
   // 기기 번호·열쇠: localStorage 가 지워져도 IndexedDB 에서 되살림
@@ -247,7 +248,7 @@
     for (let i = 1; i <= days; i++) {
       const day = mon + '-' + pad(i), v = d[day] || 0, k = (lead + i - 1) % 7, fut = day > t;
       cells.push(`<button class="cd l${lv(v)}${day === t ? ' today' : ''}${k === 0 ? ' sun' : k === 6 ? ' sat' : ''}" data-day="${day}"${fut ? ' disabled' : ''}>
-        <span class="dn">${i}</span>${v ? `<span class="dv">${cellText(v)}</span>` : ''}</button>`);
+        <span class="dn">${i}</span>${v ? `<span class="dv"><b>${v < 60 ? v : Math.round(v / 6) / 10}</b><small>${v < 60 ? '분' : '시간'}</small></span>` : ''}</button>`);
     }
     const prevM = ymd(new Date(y, mo - 1, 1)).slice(0, 7), nextM = ymd(new Date(y, mo + 1, 1)).slice(0, 7);
     m.innerHTML = topBanners(true) + `
