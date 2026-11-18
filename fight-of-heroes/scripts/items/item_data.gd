@@ -25,7 +25,7 @@ extends Resource
 @export var consumable: bool = false
 @export var max_stack: int = 1
 ## status: use_status 를 use_duration 동안 use_magnitude 세기로 건다. recall: 기지로 귀환
-@export_enum("none", "status", "recall") var use_kind: String = "none"
+@export_enum("none", "status", "recall", "ward") var use_kind: String = "none"
 @export var use_status: StatusEffectData
 @export var use_duration: float = 0.0
 @export var use_magnitude: float = 0.0

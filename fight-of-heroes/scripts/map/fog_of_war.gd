@@ -86,6 +86,9 @@ func refresh(dt: float) -> void:
 		for m in get_tree().get_nodes_in_group("summons"):
 			if is_instance_valid(m) and not m.is_dead and m.team == t:
 				_light(arr, m.global_position, SUMMON_SIGHT)
+		for w in get_tree().get_nodes_in_group("wards"):
+			if is_instance_valid(w) and w.team == t:
+				_light(arr, w.global_position, Ward.SIGHT)
 		team_reveal[t] = arr
 	reveal = team_reveal.get(viewer_team, PackedFloat32Array())
 	if viewer_team < 0:

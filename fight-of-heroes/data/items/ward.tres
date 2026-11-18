@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ward"
+display_name = "감시 와드"
+category = "special"
+tier = 1
+glyph = "눈"
+color = Color(0.95, 0.85, 0.35, 1)
+cost = 75
+description = "사용하면 바라보는 쪽 바로 앞에 와드를 꽂습니다. 90초 동안 주변(500)을 밝히고, 풀숲에 꽂으면 그 풀숲 안도 보입니다. 적에게는 보이지 않습니다. 한 사람이 3개까지 꽂을 수 있고, 최대 3개까지 한 칸에 쌓입니다."
+consumable = true
+max_stack = 3
+use_kind = "ward"
+use_duration = 90.0
+use_magnitude = 0.0

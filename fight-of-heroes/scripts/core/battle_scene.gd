@@ -94,6 +94,10 @@ func _ready() -> void:
 	runes.name = "Runes"
 	world.add_child(runes)
 	runes.setup(map, hero_manager, seed_base)
+	var goblins := GoblinEvent.new()
+	goblins.name = "GoblinEvent"
+	add_child(goblins)
+	goblins.setup(world, map, seed_base)
 	ai_manager.shop = shop_manager
 	camera.limit_left = int(-80)
 	camera.limit_top = int(-80)
@@ -131,6 +135,15 @@ func _ready() -> void:
 		var xy: PackedStringArray = str(GameManager.dev_args["look"]).split(",")
 		if xy.size() == 2:
 			look_at_point(Vector2(float(xy[0]), float(xy[1])))
+	if GameManager.dev_args.has("scoreboard"):
+		hud.toggle_scoreboard()
+	if GameManager.dev_args.has("goblin") and player_hero != null:
+		# 개발용: 내 영웅 앞에 황금 고블린을 부르고 와드를 하나 꽂는다.
+		var g: Monster = goblins.spawn()
+		g.global_position = player_hero.global_position + Vector2(260, 0)
+		g.health.hp = g.health.max_hp() * 0.55
+		g.on_damaged(player_hero, 1.0)
+		Ward.place(player_hero, player_hero.global_position + Vector2(-150, 60), 90.0)
 	if GameManager.dev_args.has("ping") and player_hero != null:
 		# 개발용: --ping=attack|danger|gather 로 내 영웅 앞에 신호를 찍고 신호 창을 연다.
 		hud.choose_ping(str(GameManager.dev_args["ping"]))

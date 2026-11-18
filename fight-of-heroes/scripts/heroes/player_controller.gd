@@ -207,6 +207,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			hud.call_gather()
 		if event.physical_keycode == KEY_B and hud != null:
 			hud.toggle_shop()
+		if event.physical_keycode == KEY_TAB and hud != null:
+			hud.toggle_scoreboard()
 		var num := [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6].find(event.physical_keycode)
 		if num >= 0 and hud != null:
 			hud._on_inventory_slot(num)

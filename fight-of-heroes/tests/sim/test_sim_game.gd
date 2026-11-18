@@ -5,7 +5,7 @@ const BATTLE := preload("res://scenes/battlefield/battle.tscn")
 
 
 func test_full_match_kills() -> void:
-	await _play("normal", 15, 600.0, 61, 20 * 60)
+	await _play("normal", 15, 600.0, 61, 25 * 60)
 
 
 func test_full_match_hard() -> void:

@@ -57,6 +57,9 @@ var shop_panel: ShopPanel
 var inventory_bar: InventoryBar
 ## 소모품 빠른 사용 버튼 (Q 버튼 왼쪽 아래)
 var quick_item: QuickItemButton
+## 점수판
+var score_button: TouchButton
+var scoreboard: Scoreboard
 var shop_open := false
 
 var _message_left := 0.0
@@ -128,6 +131,14 @@ func setup_overview(map: MapData, hm: HeroManager, cam: Camera2D, mm: MonsterMan
 	var h := 120.0
 	minimap.offset_bottom = minimap.offset_top + h
 	minimap.offset_right = minimap.offset_left + h * map.size.x / map.size.y
+	scoreboard = Scoreboard.new()
+	scoreboard.name = "Scoreboard"
+	scoreboard.anchor_right = 1.0
+	scoreboard.anchor_bottom = 1.0
+	scoreboard.setup(hm, battle, hero.team if hero != null else Enums.Team.BLUE)
+	scoreboard.visible = false
+	scoreboard.closed.connect(toggle_scoreboard)
+	root.add_child(scoreboard)
 	blue_status.setup(hm.team_heroes(Enums.Team.BLUE), Enums.Team.BLUE, hero, false)
 	red_status.setup(hm.team_heroes(Enums.Team.RED), Enums.Team.RED, hero, true)
 
@@ -236,7 +247,7 @@ func _build() -> void:
 	root.add_child(blue_status)
 	red_status = TeamStatus.new()
 	red_status.name = "RedStatus"
-	_place(red_status, Vector2(1, 0), Vector2(-268, 6), Vector2(170, 52))
+	_place(red_status, Vector2(1, 0), Vector2(-338, 6), Vector2(170, 52))
 	root.add_child(red_status)
 	minimap = Minimap.new()
 	minimap.name = "Minimap"
@@ -273,6 +284,13 @@ func _build() -> void:
 	_place(pause_button, Vector2(1, 0), Vector2(-84, 10), Vector2(70, 58))
 	pause_button.pressed.connect(set_paused.bind(true))
 	root.add_child(pause_button)
+
+	score_button = TouchButton.new()
+	score_button.name = "ScoreButton"
+	score_button.setup("점수", 18)
+	_place(score_button, Vector2(1, 0), Vector2(-160, 10), Vector2(70, 58))
+	score_button.pressed.connect(toggle_scoreboard)
+	root.add_child(score_button)
 
 	gather_button = TouchButton.new()
 	gather_button.name = "GatherButton"
@@ -671,6 +689,13 @@ func place_ping(pos: Vector2) -> void:
 	PingMarker.spawn(hero, pos, kind, AIManager.PING_SECONDS)
 	AudioManager.play("skill", 0.1, 0.6)
 	show_message("'%s' 신호를 찍었습니다" % AIManager.PING_KINDS[kind])
+
+
+## 점수판 열기·닫기 (화면은 멈추지 않는다)
+func toggle_scoreboard() -> void:
+	if scoreboard == null:
+		return
+	scoreboard.visible = not scoreboard.visible
 
 
 ## 아군 AI 를 플레이어 자리로 부른다.

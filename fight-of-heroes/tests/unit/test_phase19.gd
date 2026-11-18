@@ -130,3 +130,70 @@ func test_ai_rescues_player() -> void:
 	ally.think()
 	check(ally.state == AIController.State.FOLLOW and ally.objective is Vector2 and ally.objective.distance_to(me.global_position) < 200.0, "플레이어가 적 영웅에게 맞으면 도우러 감")
 	battle.queue_free()
+
+
+func test_golden_goblin_drops_coins() -> void:
+	var cfg := GameManager.default_config("blade_master", 1)
+	GameManager.match_config = cfg
+	var battle: Node = BATTLE.instantiate()
+	add_child(battle)
+	await frames(2)
+	var ev: GoblinEvent = battle.get_node("GoblinEvent")
+	var g: Monster = ev.spawn()
+	check(g != null and g.flee, "황금 고블린")
+	var h: Hero = battle.player_hero
+	g.global_position = h.global_position + Vector2(200, 0)
+	var info := DamageInfo.new(h, g.health.max_hp() * 0.35, Enums.DamageType.TRUE)
+	CombatManager.apply_damage(g, info)
+	await frames(1)
+	eq(get_tree().get_nodes_in_group("coins").size(), 3, "체력 35% 를 잃으면 금화 3개")
+	var c: GoldCoin = get_tree().get_nodes_in_group("coins")[0]
+	var gold0 := h.gold
+	await frames(25)
+	c.global_position = h.global_position
+	c._vel = Vector2.ZERO
+	await frames(2)
+	eq(h.gold, gold0 + 25, "금화를 밟으면 25 골드")
+	await frames(30)
+	var p0 := g.global_position
+	g.global_position = h.global_position + Vector2(150, 0)
+	await frames(60)
+	check(g.global_position.distance_to(h.global_position) > 160.0, "가까이 가면 도망감")
+	check(p0 != Vector2.ZERO, "끝")
+	battle.queue_free()
+
+
+func test_ward_gives_vision_and_bush_sight() -> void:
+	var h := spawn_hero("blade_master", Enums.Team.BLUE, Vector2(400, 400))
+	h.inventory.add(ItemManager.get_item("ward"))
+	var shop := ShopManager.new()
+	add_child(shop)
+	var slot := h.inventory.find("ward")
+	eq(shop.use_item(h, slot), ShopManager.Result.OK, "와드 꽂기")
+	var wards := get_tree().get_nodes_in_group("wards")
+	eq(wards.size(), 1, "와드 하나")
+	Bushes.list = PackedVector3Array([Vector3(wards[0].global_position.x, wards[0].global_position.y, 120)])
+	var hider := spawn_dummy(Enums.Team.RED, wards[0].global_position + Vector2(30, 0), {})
+	check(not Bushes.hidden_from(hider, Enums.Team.BLUE), "와드를 꽂은 풀숲 안은 보임")
+	for i in 4:
+		Ward.place(h, Vector2(600 + i * 50, 400), 90.0)
+	await frames(1)
+	eq(get_tree().get_nodes_in_group("wards").filter(func(w): return not w.is_queued_for_deletion()).size(), 3, "한 사람이 3개까지")
+	shop.queue_free()
+
+
+func test_scoreboard_toggle() -> void:
+	var cfg := GameManager.default_config("blade_master")
+	GameManager.match_config = cfg
+	var battle: Node = BATTLE.instantiate()
+	add_child(battle)
+	await frames(2)
+	var hud = battle.hud
+	check(not hud.scoreboard.visible, "처음에는 닫혀 있음")
+	hud.toggle_scoreboard()
+	check(hud.scoreboard.visible, "점수 버튼을 누르면 열림")
+	check(not get_tree().paused, "게임은 멈추지 않음")
+	await frames(2)
+	hud.toggle_scoreboard()
+	check(not hud.scoreboard.visible, "다시 누르면 닫힘")
+	battle.queue_free()

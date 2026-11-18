@@ -284,15 +284,22 @@ func think() -> void:
 		else:
 			_role_think()
 	_use_skills(enemies)
+	_place_ward(enemies)
 	_apply_orders()
 
 
 func _nearby_rune(dist: float):
-	var rm = get_tree().get_first_node_in_group("runes")
-	if rm == null:
-		return null
 	var best = null
 	var best_d := dist
+	# 떨어진 금화도 가까우면 줍는다.
+	for c in get_tree().get_nodes_in_group("coins"):
+		var dc: float = hero.global_position.distance_to(c.global_position)
+		if dc < minf(dist, 450.0) and dc < best_d:
+			best_d = dc
+			best = c.global_position
+	var rm = get_tree().get_first_node_in_group("runes")
+	if rm == null:
+		return best
 	for s in rm.active():
 		var d: float = hero.global_position.distance_to(s.pos)
 		if d < best_d:
@@ -366,6 +373,21 @@ func follows_ping(id: int) -> bool:
 	return _ping_choice.get(id, false)
 
 
+## 와드가 있으면 지나가는 풀숲에 꽂는다 (이미 우리 와드가 근처에 있으면 빼고).
+func _place_ward(enemies: Array) -> void:
+	var slot: int = hero.inventory.find("ward")
+	if slot < 0 or not enemies.filter(func(e): return e is Hero).is_empty():
+		return
+	if Bushes.index_at(hero.global_position) < 0:
+		return
+	for w in get_tree().get_nodes_in_group("wards"):
+		if w.team == hero.team and w.global_position.distance_to(hero.global_position) < 500.0:
+			return
+	var shop := _shop()
+	if shop != null:
+		shop.use_item(hero, slot)
+
+
 # ---- 아이템 ----
 
 func _shop() -> ShopManager:
@@ -390,6 +412,9 @@ func _shop_if_possible() -> void:
 	if hero.level < POTION_LEVEL_LIMIT:
 		while hero.inventory.count_of("health_potion") < 2 and shop.buy(hero, "health_potion") == ShopManager.Result.OK:
 			bought.append("health_potion")
+	# 지원 역할은 감시 와드를 챙긴다.
+	if role == "support" and hero.inventory.count_of("ward") == 0 and shop.buy(hero, "ward") == ShopManager.Result.OK:
+		bought.append("ward")
 
 
 func _sell_a_potion() -> bool:

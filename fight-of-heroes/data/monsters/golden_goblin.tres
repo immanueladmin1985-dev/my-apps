@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://scripts/map/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "golden_goblin"
+display_name = "황금 고블린"
+tier = "normal"
+color = Color(1, 0.82, 0.25, 1)
+glyph = "금"
+radius = 17.0
+weapon = "dagger"
+base_stats = {
+"armor": 35.0,
+"attack": 0.0,
+"attack_speed": 1.0,
+"magic_resist": 35.0,
+"max_hp": 2400.0,
+"move_speed": 255.0
+}
+attack_range = 10.0
+leash_radius = 99999.0
+xp = 150.0
+gold = 450

@@ -122,6 +122,8 @@ func use_item(hero, slot: int) -> int:
 				hero.status.apply(item.use_status, item.use_duration, item.use_magnitude, hero)
 		"recall":
 			hero.start_recall(item.use_duration)
+		"ward":
+			Ward.place(hero, hero.global_position + hero.facing * 80.0, item.use_duration)
 	hero.inventory.take_one(slot)
 	EventBus.item_used.emit(hero, item)
 	return Result.OK

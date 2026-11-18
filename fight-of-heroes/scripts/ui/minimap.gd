@@ -111,6 +111,11 @@ func _draw() -> void:
 			if h == player:
 				draw_circle(p, 6.5, Color(1, 0.95, 0.4))
 			draw_circle(p, 5.0, c)
+	for g in get_tree().get_nodes_in_group("goblins"):
+		if is_instance_valid(g) and not g.is_dead:
+			var gp := _to_mini(g.global_position)
+			draw_circle(gp, 6.5, Color(0, 0, 0, 0.7))
+			draw_circle(gp, 5.0, Color(1, 0.82, 0.25))
 	for rm in get_tree().get_nodes_in_group("runes"):
 		for s in rm.active():
 			var rp := _to_mini(s.pos)

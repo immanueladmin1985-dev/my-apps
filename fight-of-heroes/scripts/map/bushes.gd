@@ -34,4 +34,7 @@ static func hidden_from(unit, team: int) -> bool:
 	for u in unit.get_tree().get_nodes_in_group("units"):
 		if u.team == team and not u.is_dead and index_at(u.global_position) == i:
 			return false
+	for w in unit.get_tree().get_nodes_in_group("wards"):
+		if w.team == team and index_at(w.global_position) == i:
+			return false
 	return true

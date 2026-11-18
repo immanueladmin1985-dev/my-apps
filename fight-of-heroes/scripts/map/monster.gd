@@ -29,6 +29,9 @@ static var _summon_counter := 0
 ## 주인 스킬 따라 쓰기 (닌자 분신)
 var mirror_slots: PackedInt32Array = PackedInt32Array()
 var mirror_ratio := 0.0
+## 황금 고블린: 싸우지 않고 가까운 영웅에게서 도망 다니며, 맞아서 체력이 10% 줄 때마다 금화를 떨어뜨린다.
+var flee := false
+var _coin_hp := 1.0
 
 const SUMMON_GUARD := 520.0
 const SUMMON_FOLLOW := 140.0
@@ -126,6 +129,11 @@ func is_final_boss() -> bool:
 
 
 func on_damaged(src, amount: float) -> void:
+	if flee:
+		while health.ratio() < _coin_hp - 0.1 and _coin_hp > 0.1:
+			_coin_hp -= 0.1
+			GoldCoin.drop(self, global_position, 25)
+		return
 	if is_summon():
 		return
 	if src == null or not (src is Unit) or src.team == team or returning:
@@ -179,6 +187,9 @@ func _think() -> void:
 	if is_summon():
 		_think_summon()
 		return
+	if flee:
+		_think_flee()
+		return
 	if returning:
 		attack_order = null
 		nav_goal = home
@@ -226,6 +237,22 @@ func _think() -> void:
 	nav_goal = null
 	attack_order = target
 	_use_skill()
+
+
+func _think_flee() -> void:
+	attack_order = null
+	var near = null
+	var nd := 700.0
+	for h in get_tree().get_nodes_in_group("heroes"):
+		if not h.is_dead and h.global_position.distance_to(global_position) < nd:
+			nd = h.global_position.distance_to(global_position)
+			near = h
+	if near != null:
+		var away: Vector2 = (global_position - near.global_position).normalized()
+		away = away.rotated(_rng.randf_range(-0.6, 0.6))
+		nav_goal = (global_position + away * 350.0).clamp(Vector2(100, 100), GoblinEvent.map_size - Vector2(100, 100))
+	elif nav_goal == null or global_position.distance_to(nav_goal) < 30.0:
+		nav_goal = global_position + Vector2.from_angle(_rng.randf() * TAU) * 250.0
 
 
 func _start_return() -> void:
