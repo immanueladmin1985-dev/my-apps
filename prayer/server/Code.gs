@@ -16,7 +16,7 @@
  * - 기기마다 앱이 만든 기기 번호와 열쇠로 들어옵니다. 승인 없이 이름만 고르면 됩니다.
  */
 
-var SERVER_VER = 1;
+var SERVER_VER = 2;
 var FORM_SHEET = '설문지 응답 시트1';
 var OLD_RULE_BEFORE = '2026-08-30';   // 이 날짜 전 설문 기록은 그날 것을 모두 더함
 var SH = {
@@ -24,8 +24,13 @@ var SH = {
   prayer: { name: '기도제목', cols: ['이름', '기도제목', '고친 시각', '기기ID'] },
   notice: { name: '공지',     cols: ['ID', '내용', '올린 시각', '올린 사람', '지움'] },
   dev:    { name: '기기',     cols: ['기기ID', '열쇠(암호화)', '이름', '권한', '기기 정보', '처음 접속', '마지막 접속'] },
-  alias:  { name: '이름바꿈', cols: ['원래 이름', '바른 이름', '바꾼 시각'] }
+  alias:  { name: '이름바꿈', cols: ['원래 이름', '바른 이름', '바꾼 시각'] },
+  comment:{ name: '댓글',     cols: ['ID', '기도제목 주인', '쓴 사람', '내용', '쓴 시각', '기기ID', '지움'] },
+  react:  { name: '반응',     cols: ['기도제목 주인', '누른 사람', '종류', '누른 시각', '기기ID'] }
 };
+var REACTS = ['heart', 'like', 'smile', 'pray'];
+// 권한: '마스터'(모두) · '공지'(담임목사님 등: 공지 올리기·내리기, 댓글 관리)
+function isStaff(me) { return me.role === '마스터' || me.role === '공지'; }
 
 function ss() { return SpreadsheetApp.getActiveSpreadsheet(); }
 function tz() { try { return ss().getSpreadsheetTimeZone() || 'Asia/Seoul'; } catch (e) { return 'Asia/Seoul'; } }
@@ -187,7 +192,16 @@ function shared() {
   var notices = rows('notice').filter(function (r) { return r[0] && String(r[4]) !== '1'; }).map(function (r) {
     return { id: String(r[0]), text: String(r[1]), at: Number(r[2]) || 0, by: String(r[3]) };
   }).reverse();
-  var out = { names: Object.keys(names).sort(), data: data, prayers: prayers, notices: notices };
+  var comments = rows('comment').filter(function (r) { return r[0] && String(r[6]) !== '1' && r[3]; }).map(function (r) {
+    return { id: String(r[0]), to: String(r[1]), by: String(r[2]), text: String(r[3]), at: Number(r[4]) || 0 };
+  });
+  var reacts = {};   // { 주인: { heart: [이름…], … } }
+  rows('react').forEach(function (r) {
+    if (!r[0] || !r[1] || REACTS.indexOf(String(r[2])) < 0) return;
+    var o = reacts[String(r[0])] = reacts[String(r[0])] || {};
+    (o[String(r[2])] = o[String(r[2])] || []).push(String(r[1]));
+  });
+  var out = { names: Object.keys(names).sort(), data: data, prayers: prayers, notices: notices, comments: comments, reacts: reacts };
   cachePut(JSON.stringify(out));
   return out;
 }
@@ -224,7 +238,7 @@ function state(me, devs) {
   if (now - Number(me.last || 0) > 60 * 60000) { me.last = String(now); try { writeDev(me); } catch (e) {} }
   var o = shared();
   o.ok = true; o.ver = SERVER_VER; o.today = todayStr();
-  o.me = { name: me.name, role: me.role === '마스터' ? '마스터' : '' };
+  o.me = { name: me.name, role: me.role === '마스터' || me.role === '공지' ? me.role : '' };
   return o;
 }
 
@@ -287,9 +301,42 @@ function locked(p) {
     }
   }
 
-  if (!master) return { ok: false, error: '마스터만 할 수 있어요' };
+  // 댓글·반응 (이름을 정한 기기 누구나)
   switch (p.action) {
-    case 'unmaster': me.role = ''; writeDev(me); return state(me, devs);
+    case 'comment': {
+      if (!me.name) return { ok: false, error: '먼저 이름을 정해 주세요' };
+      var to = cleanName(p.to), ct = String(p.text || '').replace(/\r/g, '').trim().slice(0, 500);
+      if (!to) return { ok: false, error: '잘못된 요청' };
+      if (!ct) return { ok: false, error: '댓글 내용을 넣어 주세요' };
+      append('comment', [[String(now) + Math.floor(Math.random() * 1000), to, me.name, ct, String(now), me.id, '']]);
+      bump(); return state(me, devs);
+    }
+    case 'delComment': {
+      var found = false, cs = rows('comment').map(function (r) {
+        if (String(r[0]) === String(p.id)) {
+          if (String(r[5]) !== me.id && String(r[2]) !== me.name && String(r[1]) !== me.name && !isStaff(me)) throw new Error('본인 댓글만 지울 수 있어요');
+          r[6] = '1'; found = true;
+        }
+        return r;
+      });
+      if (found) { writeAll('comment', cs); bump(); }
+      return state(me, devs);
+    }
+    case 'react': {   // 한 번 누르면 켜지고, 다시 누르면 꺼짐
+      if (!me.name) return { ok: false, error: '먼저 이름을 정해 주세요' };
+      var rt = cleanName(p.to), kind = String(p.kind);
+      if (!rt || REACTS.indexOf(kind) < 0) return { ok: false, error: '잘못된 요청' };
+      var had = false, rr = rows('react').filter(function (r) {
+        if (r[0] && String(r[0]) === rt && String(r[1]) === me.name && String(r[2]) === kind) { had = true; return false; }
+        return !!r[0];
+      });
+      if (!had) rr.push([rt, me.name, kind, String(now), me.id]);
+      writeAll('react', rr); bump(); return state(me, devs);
+    }
+  }
+
+  // 공지 (마스터 · 공지 권한)
+  if (isStaff(me)) switch (p.action) {
     case 'notice': {
       var t = String(p.text || '').replace(/\r/g, '').trim().slice(0, 3000);
       if (!t) return { ok: false, error: '공지 내용을 넣어 주세요' };
@@ -299,6 +346,26 @@ function locked(p) {
     case 'delNotice': {
       var ns = rows('notice').map(function (r) { if (String(r[0]) === String(p.id)) r[4] = '1'; return r; });
       writeAll('notice', ns); bump(); return state(me, devs);
+    }
+  }
+
+  if (!master) return { ok: false, error: '마스터만 할 수 있어요' };
+  switch (p.action) {
+    case 'unmaster': me.role = ''; writeDev(me); return state(me, devs);
+    case 'devices': {
+      var s0 = state(me, devs);
+      s0.devices = devs.filter(function (d) { return d.name; }).map(function (d) { return { id: d.id, name: d.name, role: d.role, desc: d.desc, last: Number(d.last) || 0 }; });
+      return s0;
+    }
+    case 'setRole': {
+      var tg = find(devs, p.target);
+      if (!tg) return { ok: false, error: '기기를 찾지 못했어요' };
+      if (tg.id === me.id) return { ok: false, error: '지금 쓰는 기기의 권한은 바꿀 수 없어요' };
+      tg.role = p.role === '공지' ? '공지' : p.role === '마스터' ? '마스터' : '';
+      writeDev(tg);
+      var s1 = state(me, devs);
+      s1.devices = devs.filter(function (d) { return d.name; }).map(function (d) { return { id: d.id, name: d.name, role: d.role, desc: d.desc, last: Number(d.last) || 0 }; });
+      return s1;
     }
     case 'rename': {   // 이름 고치기·합치기: 모든 기록·기도제목·기기의 이름을 바꿈
       var from = cleanName(p.from), to = cleanName(p.to);
@@ -313,6 +380,10 @@ function locked(p) {
       pr = pr.filter(function (r) { return !(String(r[0]) === from && hasTo); }).map(function (r) { if (String(r[0]) === from) r[0] = to; return r; });
       writeAll('prayer', pr);
       devs.forEach(function (d) { if (d.name === from) { d.name = to; writeDev(d); } });
+      writeAll('comment', rows('comment').map(function (r) { if (String(r[1]) === from) r[1] = to; if (String(r[2]) === from) r[2] = to; return r; }));
+      var seen = {};
+      writeAll('react', rows('react').map(function (r) { if (String(r[0]) === from) r[0] = to; if (String(r[1]) === from) r[1] = to; return r; })
+        .filter(function (r) { var k = r[0] + '|' + r[1] + '|' + r[2]; if (!r[0] || seen[k]) return false; seen[k] = 1; return true; }));
       bump(); return state(me, devs);
     }
     case 'reimport': { var n = importForm(); var s = state(me, devs); s.imported = n; return s; }
@@ -332,4 +403,16 @@ function renameMine(devId, from, to) {
     return true;
   });
   if (pc) writeAll('prayer', pr);
+  // 이 기기에서 쓴 댓글·반응, 그리고 옮긴 기도제목에 달린 댓글·반응
+  writeAll('comment', rows('comment').map(function (r) {
+    if (String(r[2]) === from && String(r[5]) === devId) r[2] = to;
+    if (pc && !hasTo && String(r[1]) === from) r[1] = to;
+    return r;
+  }));
+  var seen = {};
+  writeAll('react', rows('react').map(function (r) {
+    if (String(r[1]) === from && String(r[4]) === devId) r[1] = to;
+    if (pc && !hasTo && String(r[0]) === from) r[0] = to;
+    return r;
+  }).filter(function (r) { var k = r[0] + '|' + r[1] + '|' + r[2]; if (!r[0] || seen[k]) return false; seen[k] = 1; return true; }));
 }

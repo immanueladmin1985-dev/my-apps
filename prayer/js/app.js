@@ -91,6 +91,7 @@
   const cellText = min => !min ? '' : min < 60 ? Math.round(min) + '분' : String(Math.round(min / 6) / 10);
   const myName = () => (S && S.me && S.me.name) || '';
   const isMaster = () => !!(S && S.me && S.me.role === '마스터');
+  const isStaff = () => !!(S && S.me && (S.me.role === '마스터' || S.me.role === '공지'));   // 공지 권한(담임목사님 등)
   const dataOf = n => (S && S.data && S.data[n]) || {};
   const totalOf = n => Object.values(dataOf(n)).reduce((a, b) => a + b, 0);
 
@@ -142,7 +143,7 @@
         <button class="icon" id="tReload" aria-label="새로 고침">${ICON.reload}</button>
         <button class="icon" id="tFS" aria-label="전체화면">${ICON.fsOn}</button>
         <button class="icon" id="tSet" aria-label="설정">${ICON.gear}</button></div>
-      <nav class="tabs"><button data-v="input">입력</button><button data-v="table">현황</button><button data-v="prayer">기도제목</button></nav></header>
+      <nav class="tabs"><button data-v="input">입력</button><button data-v="table">현황</button><button data-v="prayer">기도제목${view !== 'prayer' && newComments() ? `<span class="badge">${newComments()}</span>` : ''}</button></nav></header>
       <main id="main"></main>`;
     $$('.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.v === view); b.onclick = () => go(b.dataset.v); });
     $('#tSet').onclick = settings;
@@ -358,8 +359,9 @@
     const myCard = editPrayer || !mine
       ? `<div class="card"><h2>내 기도제목</h2><textarea id="pText" placeholder="함께 기도할 제목을 적어 주세요.\n목사님마다 하나씩 올라가고, 다시 저장하면 바뀌어요.">${esc(mine ? mine.text : '')}</textarea>
           <div class="row" style="margin-top:10px;justify-content:flex-end">${mine ? '<button class="btn danger" id="pDel">지우기</button><button class="btn" id="pCancel">취소</button>' : ''}<button class="btn pri" id="pSave">올리기</button></div></div>`
-      : `<div class="post mine"><div class="who"><b>${esc(me)} 목사 <span class="small muted">(나)</span></b><span class="small muted">${md(ymd(new Date(mine.at)))}</span></div><div class="txt">${esc(mine.text)}</div>
-          <div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn sm" id="pEdit">고치기</button></div></div>`;
+      : postHtml(mine, true);
+    const newCnt = newComments();
+    if (newCnt) { openCmt.add(me); setTimeout(() => { C.seenCmt = Date.now(); saveCfg(); }, 0); }
     m.innerHTML = topBanners(true) + myCard +
       `<div class="row search"><input type="text" id="pQ" placeholder="이름이나 내용으로 찾기" value="${esc(prayerQuery)}" style="flex:1">
         <button class="btn sm" id="pSort">${C.sort === 'name' ? '가나다순' : '최근순'}</button></div>
@@ -381,10 +383,74 @@
     $('#pSort').onclick = () => { C.sort = C.sort === 'name' ? 'recent' : 'name'; saveCfg(); render(); };
     bindPosts();
   }
-  function postHtml(p) {
-    return `<div class="post"><div class="who"><b>${esc(p.name)} 목사</b><span class="small muted">${md(ymd(new Date(p.at)))}${isMaster() ? ` <button class="btn ghost sm" data-pm="${esc(p.name)}">관리</button>` : ''}</span></div><div class="txt">${esc(p.text)}</div></div>`;
+  const REACTS = [['heart', '❤️', '사랑해요'], ['like', '👍', '좋아요'], ['smile', '😄', '웃음'], ['pray', '🙏', '기도할게요']];
+  const openCmt = new Set();
+  const commentsOf = n => (S.comments || []).filter(c => c.to === n).sort((a, b) => a.at - b.at);
+  function newComments() {
+    const me = myName(), seen = C.seenCmt || 0;
+    return (S && S.comments || []).filter(c => c.to === me && c.by !== me && c.at > seen).length;
+  }
+  const when = at => { const d = new Date(at), t = today(), k = ymd(d); return (k === t ? '오늘' : md(k)) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  function postHtml(p, isMine) {
+    const me = myName(), rs = (S.reacts || {})[p.name] || {}, cs = commentsOf(p.name), open = openCmt.has(p.name) || (isMine && newComments() > 0);
+    const seen = C.seenCmt || 0;
+    const who = REACTS.map(([k, e]) => (rs[k] || []).length ? e + ' ' + (rs[k] || []).map(esc).join(', ') : '').filter(Boolean).join('  ·  ');
+    return `<div class="post${isMine ? ' mine' : ''}" data-post="${esc(p.name)}">
+      <div class="who"><b>${esc(p.name)} 목사${isMine ? ' <span class="small muted">(나)</span>' : ''}</b><span class="small muted">${md(ymd(new Date(p.at)))}${!isMine && isMaster() ? ` <button class="btn ghost sm" data-pm="${esc(p.name)}">관리</button>` : ''}</span></div>
+      <div class="txt">${esc(p.text)}</div>
+      <div class="reacts">${REACTS.map(([k, e, l]) => { const arr = rs[k] || []; return `<button class="rx${arr.includes(me) ? ' on' : ''}" data-rx="${k}" data-to="${esc(p.name)}" aria-label="${l}" title="${l}"><span>${e}</span>${arr.length ? `<b>${arr.length}</b>` : ''}</button>`; }).join('')}
+        <button class="rx cm${open ? ' on' : ''}" data-cm="${esc(p.name)}">💬 댓글${cs.length ? ` <b>${cs.length}</b>` : ''}</button>
+        ${isMine ? '<button class="btn sm" id="pEdit" style="margin-left:auto">고치기</button>' : ''}</div>
+      ${open ? `<div class="cmts">
+        ${who ? `<p class="small muted rxwho">${who}</p>` : ''}
+        ${cs.map(c => `<div class="cmt${isMine && c.by !== me && c.at > seen ? ' new' : ''}"><div class="ch"><b>${esc(c.by)} 목사</b><span class="small muted">${when(c.at)}</span>
+          ${c.by === me || isMine || isStaff() ? `<button class="btn ghost sm" data-cd="${esc(c.id)}">지우기</button>` : ''}</div><div class="txt">${esc(c.text)}</div></div>`).join('') || '<p class="small muted" style="margin:4px 0">첫 댓글을 남겨 주세요.</p>'}
+        <div class="cin"><textarea rows="1" placeholder="댓글 달기" data-ci="${esc(p.name)}" maxlength="500"></textarea><button class="btn pri sm" data-cs="${esc(p.name)}">올리기</button></div>
+      </div>` : ''}
+    </div>`;
   }
   function bindPosts() {
+    $$('[data-rx]').forEach(b => b.onclick = async () => {
+      const to = b.dataset.to, kind = b.dataset.rx, me = myName();
+      // 먼저 화면에 반영
+      S.reacts = S.reacts || {}; const o = S.reacts[to] = S.reacts[to] || {}; const arr = o[kind] = o[kind] || [];
+      const i = arr.indexOf(me); if (i >= 0) arr.splice(i, 1); else arr.push(me);
+      rerenderPost(to);
+      try { await api('react', { to, kind }); } catch (e) { toast(e.message); }
+      rerenderPost(to);
+    });
+    $$('[data-cm]').forEach(b => b.onclick = () => {
+      const n = b.dataset.cm; if (openCmt.has(n)) openCmt.delete(n); else openCmt.add(n);
+      rerenderPost(n);
+      if (openCmt.has(n)) { const ta = $(`[data-ci="${CSS.escape(n)}"]`); if (ta) ta.focus(); }
+    });
+    $$('[data-cs]').forEach(b => b.onclick = async () => {
+      const to = b.dataset.cs, ta = $(`[data-ci="${CSS.escape(to)}"]`), text = ta ? ta.value.trim() : '';
+      if (!text) { toast('댓글 내용을 적어 주세요'); return; }
+      b.disabled = true;
+      try { await api('comment', { to, text }); openCmt.add(to); if (ta) ta.value = ''; toast('댓글을 달았어요'); } catch (e) { toast(e.message); b.disabled = false; return; }
+      rerenderPost(to);
+    });
+    $$('[data-ci]').forEach(ta => ta.oninput = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; });
+    $$('[data-cd]').forEach(b => b.onclick = async () => {
+      if (!(await confirmBox('댓글 지우기', '이 댓글을 지울까요?', '지우기'))) return;
+      const c = (S.comments || []).find(x => x.id === b.dataset.cd);
+      try { await api('delComment', { id: b.dataset.cd }); toast('지웠어요'); } catch (e) { toast(e.message); }
+      if (c) rerenderPost(c.to);
+    });
+    const ed = $('#pEdit'); if (ed) ed.onclick = () => { editPrayer = true; render(); const ta = $('#pText'); if (ta) ta.focus(); };
+    bindManage();
+  }
+  // 글 하나만 다시 그림 (쓰던 댓글·스크롤 위치 유지)
+  function rerenderPost(n) {
+    const el = $(`[data-post="${CSS.escape(n)}"]`); if (!el) { render(); return; }
+    const p = (S.prayers || []).find(x => x.name === n); if (!p) { render(); return; }
+    const ta = $('[data-ci]', el), draft = ta ? ta.value : '';
+    const tmp = document.createElement('div'); tmp.innerHTML = postHtml(p, n === myName()); el.replaceWith(tmp.firstElementChild);
+    const nta = $(`[data-ci="${CSS.escape(n)}"]`); if (nta && draft) nta.value = draft;
+    bindPosts();
+  }
+  function bindManage() {
     $$('[data-pm]').forEach(b => b.onclick = async () => {
       const name = b.dataset.pm, p = (S.prayers || []).find(x => x.name === name); if (!p) return;
       let text = p.text;
@@ -414,7 +480,7 @@
       <div class="row"><input type="text" id="nIn" placeholder="예: 홍길동" maxlength="12" autocomplete="name" value="${esc(value || '')}" style="flex:1"><span>목사</span></div></div>
       <button class="btn pri big" id="nOk" style="margin-top:14px">${esc(okLabel)}</button>`;
     const i = $('#nIn', inn);
-    const go = () => { const v = i.value.replace(/s+/g, '').replace(/목사(님)?$/, ''); if (v.length < 2) { toast('이름을 두 글자 이상 적어 주세요'); i.focus(); return; } onOk(v); };
+    const go = () => { const v = i.value.replace(/\s+/g, '').replace(/목사(님)?$/, ''); if (v.length < 2) { toast('이름을 두 글자 이상 적어 주세요'); i.focus(); return; } onOk(v); };
     $('#nOk', inn).onclick = go;
     i.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); go(); } };
     setTimeout(() => { try { i.focus(); } catch (e) {} }, 80);
@@ -454,7 +520,7 @@
       <div class="field"><label>공지·공유</label><div class="row">
         <button class="btn sm" id="sNotice">공지 보기</button><button class="btn sm" id="sShare">앱 주소 보내기</button></div></div>
       <div class="field"><label>관리</label><div class="row">
-        ${isMaster() ? '<button class="btn sm pri" id="sMaster">마스터 메뉴</button>' : '<button class="btn sm" id="sMaster">마스터로 들어가기</button>'}</div></div>
+        ${isMaster() ? '<button class="btn sm pri" id="sMaster">마스터 메뉴</button>' : isStaff() ? '<button class="btn sm pri" id="sStaff">공지 올리기·내리기</button><button class="btn sm" id="sMaster">마스터로 들어가기</button>' : '<button class="btn sm" id="sMaster">마스터로 들어가기</button>'}</div></div>
       <p class="small muted">기기: ${esc(deviceDesc())}${C.pending.length ? ' · 보낼 기록 ' + C.pending.length + '개' : ''}</p>`,
       [{ label: '닫기', val: true, cls: 'pri' }], (inn, close) => {
         $('#sName', inn).onclick = () => { close(); renameSelf(); };
@@ -465,6 +531,7 @@
         $('#sNotice', inn).onclick = () => { close(); if (S.notices && S.notices.length) showNotices(true); else toast('지금 올라온 공지가 없어요'); };
         $('#sShare', inn).onclick = () => { close(); shareApp(); };
         $('#sMaster', inn).onclick = () => { close(); isMaster() ? masterMenu() : masterLogin(); };
+        const st = $('#sStaff', inn); if (st) st.onclick = () => { close(); noticeMenu(); };
       });
   }
   async function shareApp() {
@@ -481,14 +548,54 @@
     if (!v || !pw) return;
     try { await api('master', { mpass: pw }); toast('마스터가 되었어요'); render(); masterMenu(); } catch (e) { toast(e.message); }
   }
-  async function masterMenu() {
+  function noticeHtml() {
     const notices = S.notices || [];
-    const names = (S.names || []).slice().sort(ko);
-    const act = await modal(`<h3>마스터 메뉴</h3>
-      <p class="sect">공지 올리기 <span class="small">(앱을 열 때 모두에게 보여요)</span></p>
+    return `<p class="sect">공지 올리기 <span class="small">(앱을 열 때 모두에게 보여요)</span></p>
       <textarea id="mN" placeholder="공지 내용"></textarea>
       <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn pri sm" id="mNPost">공지 올리기</button></div>
-      ${notices.length ? `<ul class="list">${notices.map(n => `<li><div>${esc(n.text)}<br><span class="small muted">${md(ymd(new Date(n.at)))}</span></div><button class="btn sm danger" data-nd="${esc(n.id)}">내리기</button></li>`).join('')}</ul>` : '<p class="small muted">올라간 공지가 없어요.</p>'}
+      ${notices.length ? `<ul class="list">${notices.map(n => `<li><div>${esc(n.text)}<br><span class="small muted">${md(ymd(new Date(n.at)))}${n.by ? ' · ' + esc(n.by) : ''}</span></div><button class="btn sm danger" data-nd="${esc(n.id)}">내리기</button></li>`).join('')}</ul>` : '<p class="small muted">올라간 공지가 없어요.</p>'}`;
+  }
+  function bindNotice(inn, close) {
+    $('#mNPost', inn).onclick = () => { const t = $('#mN', inn).value.trim(); if (!t) { toast('공지 내용을 넣어 주세요'); return; } close({ a: 'notice', text: t }); };
+    $$('[data-nd]', inn).forEach(b => b.onclick = () => close({ a: 'delNotice', id: b.dataset.nd }));
+  }
+  async function doNotice(act) {
+    if (act.a === 'notice') { await api('notice', { text: act.text }); toast('공지를 올렸어요'); return true; }
+    if (act.a === 'delNotice') { if (await confirmBox('공지 내리기', '이 공지를 내릴까요?', '내리기')) { await api('delNotice', { id: act.id }); toast('공지를 내렸어요'); } return true; }
+    return false;
+  }
+  // 공지 권한(담임목사님 등): 공지만
+  async function noticeMenu() {
+    const act = await modal(`<h3>📢 공지 관리</h3>${noticeHtml()}`, [{ label: '닫기', val: false, cls: 'pri' }], bindNotice);
+    if (!act) return;
+    try { await doNotice(act); } catch (e) { toast(e.message); }
+    render(); noticeMenu();
+  }
+  // 권한 주기: 이름을 넣은 기기 목록
+  async function roleMenu() {
+    let d; try { d = await api('devices'); } catch (e) { toast(e.message); return; }
+    const me = myName(), devs = (d.devices || []).sort((a, b) => ko(a.name, b.name));
+    const roleTxt = r => r === '마스터' ? '<span class="tag m">마스터</span>' : r === '공지' ? '<span class="tag">공지 권한</span>' : '';
+    const act = await modal(`<h3>권한 주기</h3>
+      <p class="msg small">담임목사님처럼 공지를 올리고 내릴 분에게 <b>공지 권한</b>을 드려요.\n목사님이 먼저 앱에 이름을 넣고 들어오셔야 목록에 나와요. 기기마다 따로 드려요.</p>
+      <input type="text" id="rq" placeholder="이름으로 찾기" style="margin-bottom:8px">
+      <ul class="list" id="rl">${devs.map(v => `<li data-n="${esc(v.name)}"><div><b>${esc(v.name)}</b> ${roleTxt(v.role)}<br><span class="small muted">${esc(v.desc || '')}${v.last ? ' · ' + when(v.last) : ''}</span></div>
+        ${v.role === '마스터' ? '' : v.role === '공지' ? `<button class="btn sm danger" data-role="" data-t="${esc(v.id)}">권한 빼기</button>` : `<button class="btn sm pri" data-role="공지" data-t="${esc(v.id)}">공지 권한</button>`}</li>`).join('') || '<li class="muted">이름을 넣은 기기가 없어요</li>'}</ul>`,
+      [{ label: '닫기', val: false, cls: 'pri' }], (inn, close) => {
+        $('#rq', inn).oninput = e => { const q = e.target.value.replace(/\s/g, ''); $$('#rl li[data-n]', inn).forEach(li => li.classList.toggle('hidden', !!q && !li.dataset.n.includes(q))); };
+        $$('[data-t]', inn).forEach(b => b.onclick = () => close({ target: b.dataset.t, role: b.dataset.role, name: b.closest('li').dataset.n }));
+      });
+    if (!act) { masterMenu(); return; }
+    if (!(await confirmBox('권한 바꾸기', act.role ? `<b>${esc(act.name)}</b> 목사님 기기에 공지 권한을 드릴까요?\n공지를 올리고 내릴 수 있고, 댓글도 지울 수 있어요.` : `<b>${esc(act.name)}</b> 목사님 기기의 공지 권한을 뺄까요?`, '바꾸기'))) { roleMenu(); return; }
+    try { await api('setRole', { target: act.target, role: act.role }); toast('권한을 바꿨어요'); } catch (e) { toast(e.message); }
+    roleMenu();
+  }
+  async function masterMenu() {
+    const names = (S.names || []).slice().sort(ko);
+    const act = await modal(`<h3>마스터 메뉴</h3>
+      ${noticeHtml()}
+      <p class="sect">권한</p>
+      <div class="row"><button class="btn sm pri" id="mRole">권한 주기 (담임목사님 등)</button></div>
       <p class="sect">이름 고치기·합치기 <span class="small">(잘못 적힌 이름의 기록을 모두 옮김)</span></p>
       <div class="row"><select id="mFrom" style="flex:1 1 140px">${names.map(n => `<option>${esc(n)}</option>`).join('')}</select><span>→</span>
         <input type="text" id="mTo" list="mNames" placeholder="바른 이름" style="flex:1 1 140px"><datalist id="mNames">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
@@ -497,8 +604,8 @@
       <div class="row"><button class="btn sm" id="mImp">설문지 응답 다시 옮기기</button><button class="btn sm" id="mSrv">서버 주소</button><button class="btn sm danger" id="mOut">이 기기 마스터 끝내기</button></div>
       <p class="small muted">다른 목사님 기록은 [입력] 탭의 이름 칸에서 골라 넣을 수 있어요.</p>`,
       [{ label: '닫기', val: false, cls: 'pri' }], (inn, close) => {
-        $('#mNPost', inn).onclick = () => { const t = $('#mN', inn).value.trim(); if (!t) { toast('공지 내용을 넣어 주세요'); return; } close({ a: 'notice', text: t }); };
-        $$('[data-nd]', inn).forEach(b => b.onclick = () => close({ a: 'delNotice', id: b.dataset.nd }));
+        bindNotice(inn, close);
+        $('#mRole', inn).onclick = () => close({ a: 'role' });
         $('#mRen', inn).onclick = () => { const from = $('#mFrom', inn).value, to = $('#mTo', inn).value.replace(/\s+/g, ''); if (to.length < 2) { toast('바른 이름을 넣어 주세요'); return; } close({ a: 'rename', from, to }); };
         $('#mImp', inn).onclick = () => close({ a: 'reimport' });
         $('#mSrv', inn).onclick = () => close({ a: 'server' });
@@ -506,8 +613,8 @@
       });
     if (!act) return;
     try {
-      if (act.a === 'notice') { await api('notice', { text: act.text }); toast('공지를 올렸어요'); }
-      else if (act.a === 'delNotice') { if (await confirmBox('공지 내리기', '이 공지를 내릴까요?', '내리기')) { await api('delNotice', { id: act.id }); toast('공지를 내렸어요'); } }
+      if (await doNotice(act)) { /* 공지 */ }
+      else if (act.a === 'role') { await roleMenu(); return; }
       else if (act.a === 'rename') {
         const merge = names.includes(act.to);
         if (await confirmBox(merge ? '이름 합치기' : '이름 고치기', `<b>${esc(act.from)}</b>의 모든 기록을 <b>${esc(act.to)}</b>(으)로 ${merge ? '합칠까요?\n같은 날짜에 둘 다 기록이 있으면 나중에 저장한 것이 남아요.' : '옮길까요?'}`, '바꾸기')) { await api('rename', { from: act.from, to: act.to }); toast('바꿨어요'); }

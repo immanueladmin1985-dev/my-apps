@@ -166,3 +166,23 @@ dialog ol { padding-left: 1.3em; }
 .pt small { color: var(--muted); font-size: .78em; }
 @media (max-width: 440px) { .pn { width: 66px; font-size: .95em; } .pn small { display: none; } .pt { min-width: 70px; } .prow { gap: 8px; padding: 10px; } .sumcards b { font-size: 1em; } .sumcards > div { padding: 8px 4px; } }
 .stat b { word-break: keep-all; }
+
+/* 기도제목: 반응·댓글 */
+.reacts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.rx { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; min-height: 38px; padding: 4px 11px; cursor: pointer; font-size: .95em; }
+.rx span { font-size: 1.1em; line-height: 1; }
+.rx b { font-size: .85em; }
+.rx.on { background: var(--pri-soft); border-color: var(--pri); color: var(--pri); }
+.rx:active { transform: scale(.94); }
+.cmts { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.rxwho { margin: 0 0 6px; }
+.cmt { padding: 8px 10px; border-radius: 12px; background: var(--bg); margin-bottom: 6px; }
+.cmt.new { background: var(--mine); }
+.cmt .ch { display: flex; align-items: center; gap: 8px; }
+.cmt .ch .btn { margin-left: auto; min-height: 28px; padding: 2px 6px; }
+.cmt .txt { margin-top: 2px; }
+.cin { display: flex; gap: 6px; align-items: flex-end; margin-top: 6px; }
+.cin textarea { min-height: 44px; height: 44px; padding: 10px 12px; flex: 1; resize: none; }
+.badge { display: inline-block; min-width: 20px; height: 20px; line-height: 20px; border-radius: 10px; background: var(--err); color: #fff; font-size: .72em; margin-left: 4px; padding: 0 6px; vertical-align: 2px; }
+.tag { display: inline-block; font-size: .72em; padding: 1px 7px; border-radius: 99px; background: var(--pri-soft); color: var(--pri); font-weight: 700; }
+.tag.m { background: var(--pri); color: var(--pri-ink); }
