@@ -38,7 +38,9 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if team != UnitVisual.viewer_team:
 		return
-	var left := clampf((life - _age) / life, 0.0, 1.0)
+	var left := clampf((life - _age) / maxf(life, 0.01), 0.0, 1.0)
+	if left <= 0.01:
+		return
 	draw_arc(Vector2.ZERO, SIGHT, 0, TAU, 64, Color(1, 0.9, 0.4, 0.12), 2.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, View.upright()))
 	var tex := Art.texture("items", "ward")

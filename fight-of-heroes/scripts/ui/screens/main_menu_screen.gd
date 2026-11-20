@@ -3,6 +3,7 @@ extends Control
 
 const MENU := [
 	["새 게임", GameManager.NEW_GAME_SCENE],
+	["같은 와이파이 대전", GameManager.LAN_SCENE],
 	["영웅 도감", GameManager.HERO_CODEX_SCENE],
 	["아이템 도감", GameManager.ITEM_CODEX_SCENE],
 	["게임 기록", GameManager.RECORDS_SCENE],
@@ -11,6 +12,8 @@ const MENU := [
 
 
 func _ready() -> void:
+	if Net.is_online():
+		Net.leave()
 	UiKit.background(self)
 	var row := HBoxContainer.new()
 	row.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -25,7 +28,10 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 12)
 	left.add_child(box)
 	box.add_child(UiKit.label("FIGHT OF HEROES", 56, UiKit.ACCENT))
-	box.add_child(UiKit.label("오프라인 3대3 영웅 대전", 22, UiKit.MUTED))
+	var title: Label = box.get_child(0)
+	title.add_theme_constant_override("outline_size", 12)
+	title.add_theme_color_override("font_outline_color", Color(0.35, 0.18, 0.05, 0.9))
+	box.add_child(UiKit.label("3대3 영웅 대전 · 혼자 또는 같은 와이파이의 친구와", 22, UiKit.MUTED))
 	box.add_child(_lineup())
 	var r := SaveManager.records()
 	var total := int(r.games)
@@ -57,7 +63,7 @@ func _ready() -> void:
 		info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		menu.add_child(info)
 	for m in MENU:
-		var b := UiKit.button(m[0], Vector2(340, 70), 26)
+		var b := UiKit.button(m[0], Vector2(340, 62), 24)
 		b.name = m[0]
 		b.pressed.connect(open.bind(m[1]))
 		menu.add_child(b)
@@ -76,7 +82,7 @@ func _lineup() -> Control:
 	var ids: Array = DataRegistry.ids("heroes").filter(func(id): return Art.has("heroes", id))
 	var last: String = SaveManager.get_setting("last_hero", "")
 	ids.erase(last)
-	ids.sort()
+	ids.shuffle()  # 들어올 때마다 다른 영웅들
 	var picks: Array = ids.slice(0, 4)
 	if Art.has("heroes", last):
 		picks.insert(2 if picks.size() >= 2 else picks.size(), last)
@@ -95,11 +101,18 @@ func _lineup() -> Control:
 			var h := base * (0.98 if center else 0.8)
 			var w := h * tex.get_width() / float(tex.get_height())
 			var x := c.size.x * 0.5 + (order - (n - 1) * 0.5) * step - w * 0.5
-			var y := c.size.y - h
+			# 숨 쉬듯 살짝 들썩인다
+			var y := c.size.y - h - absf(sin(Time.get_ticks_msec() / 600.0 + order * 1.3)) * 6.0
 			c.draw_set_transform(Vector2(x + w * 0.5, c.size.y), 0.0, Vector2(1, 0.25))
 			c.draw_circle(Vector2.ZERO, w * 0.35, Color(0, 0, 0, 0.35))
 			c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-			c.draw_texture_rect(tex, Rect2(x, y, w, h), false, Color.WHITE if center else Color(0.82, 0.82, 0.85)))
+			var flip := Art.is_flipped(picks[order])
+			c.draw_texture_rect(tex, Rect2(x + (w if flip else 0.0), y, -w if flip else w, h), false, Color.WHITE if center else Color(0.82, 0.82, 0.85)))
+	var t := Timer.new()
+	t.wait_time = 0.05
+	t.autostart = true
+	t.timeout.connect(c.queue_redraw)
+	c.add_child(t)
 	return c
 
 

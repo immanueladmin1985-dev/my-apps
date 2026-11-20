@@ -334,15 +334,26 @@ func _build() -> void:
 	inventory_bar.slot_pressed.connect(_on_inventory_slot)
 	root.add_child(inventory_bar)
 
-	pause_panel = _make_dialog("일시정지", [
-		["계속하기", set_paused.bind(false)],
-		["다시 시작", func(): GameManager.restart_match()],
-		["저장하고 처음 화면", func(): GameManager.leave_battle()],
-	])
-	result_panel = _make_dialog("", [
-		["다시 하기", func(): GameManager.restart_match()],
-		["처음 화면", func(): GameManager.go_main()],
-	])
+	if _is_lan():
+		# 와이파이 대전: 멈추지 않고, 다시 시작 대신 방 나가기·로비로
+		pause_panel = _make_dialog("메뉴 (경기는 계속됩니다)", [
+			["계속하기", set_paused.bind(false)],
+			["방 나가기", func(): Net.leave(); GameManager.go_main()],
+		])
+		result_panel = _make_dialog("", [
+			["로비로", func(): GameManager.goto(GameManager.LAN_SCENE)],
+			["처음 화면", func(): Net.leave(); GameManager.go_main()],
+		])
+	else:
+		pause_panel = _make_dialog("일시정지", [
+			["계속하기", set_paused.bind(false)],
+			["다시 시작", func(): GameManager.restart_match()],
+			["저장하고 처음 화면", func(): GameManager.leave_battle()],
+		])
+		result_panel = _make_dialog("", [
+			["다시 하기", func(): GameManager.restart_match()],
+			["처음 화면", func(): GameManager.go_main()],
+		])
 	result_title = result_panel.get_node("Box/Title")
 	shop_panel = ShopPanel.new()
 	shop_panel.name = "ShopPanel"
@@ -685,8 +696,10 @@ func place_ping(pos: Vector2) -> void:
 	ping_mode = ""
 	if ai_manager == null or hero == null or kind == "":
 		return
-	ai_manager.add_ping(hero.team, kind, pos)
-	PingMarker.spawn(hero, pos, kind, AIManager.PING_SECONDS)
+	if not NetSync.client_request("ping", [kind, pos.x, pos.y]):
+		ai_manager.add_ping(hero.team, kind, pos)
+		PingMarker.spawn(hero, pos, kind, AIManager.PING_SECONDS)
+		NetSync.host_ping(hero.team, kind, pos)
 	AudioManager.play("skill", 0.1, 0.6)
 	show_message("'%s' 신호를 찍었습니다" % AIManager.PING_KINDS[kind])
 
@@ -702,14 +715,19 @@ func toggle_scoreboard() -> void:
 func call_gather() -> void:
 	if ai_manager == null or hero == null or hero.is_dead:
 		return
-	ai_manager.request_gather(hero.team, hero.global_position)
+	if not NetSync.client_request("gather", []):
+		ai_manager.request_gather(hero.team, hero.global_position)
 	show_message("아군을 불렀습니다 (%d초)" % int(AIManager.GATHER_SECONDS))
+
+
+func _is_lan() -> bool:
+	return GameManager.match_config != null and GameManager.match_config.mode == "lan"
 
 
 func set_paused(p: bool) -> void:
 	if battle != null and battle.match_over:
 		return
-	get_tree().paused = p
+	get_tree().paused = p and not _is_lan()
 	pause_panel.visible = p
 	if p:
 		_release_all_touches()

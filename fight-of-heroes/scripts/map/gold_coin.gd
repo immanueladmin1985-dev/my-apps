@@ -20,6 +20,8 @@ static func drop(parent_of: Node, pos: Vector2, gold: int) -> GoldCoin:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	_age += delta
 	if _age >= life:
 		queue_free()

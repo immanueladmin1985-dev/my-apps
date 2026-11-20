@@ -9,6 +9,7 @@ const ITEM_CODEX_SCENE := "res://scenes/menu/item_codex.tscn"
 const RECORDS_SCENE := "res://scenes/menu/records.tscn"
 const SETTINGS_SCENE := "res://scenes/menu/settings.tscn"
 const RESULTS_SCENE := "res://scenes/results/results.tscn"
+const LAN_SCENE := "res://scenes/menu/lan_lobby.tscn"
 const RESULTS_DELAY := 2.0
 ## 새 게임에서 쓰는 맵
 const DEFAULT_MAP := "valley_02"

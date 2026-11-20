@@ -71,6 +71,8 @@ func _alive_near(team: int, pos: Vector2, radius: float) -> Array:
 
 
 func _on_unit_died(victim, killer) -> void:
+	if Net.is_client():
+		return
 	if not (victim is Monster) or hero_manager == null:
 		return
 	if victim.expired:
@@ -97,6 +99,8 @@ func _on_unit_died(victim, killer) -> void:
 
 
 func _on_hero_killed(victim, killer, helpers: Array) -> void:
+	if Net.is_client():
+		return
 	if hero_manager == null or killer == null or not (killer is Hero):
 		return
 	var cfg := DataRegistry.progression()

@@ -19,6 +19,8 @@ var alt_status := ""
 var alt_skills: Array = []
 ## 마지막으로 쓴 스킬의 실행 정보 (분신 따라 쓰기)
 var last_ctx: SkillContext = null
+## 마지막 시전이 재사용(두 번째 누르기)이었는지
+var last_was_recast := false
 
 @onready var unit = get_parent()
 
@@ -144,6 +146,7 @@ func cast(slot: int, aim: CastAim = null) -> int:
 		unit.cast_lock_left = s.cast_lock
 	var ctx := _build_context(s, rank, aim)
 	last_ctx = ctx
+	last_was_recast = false
 	if s.custom_script != null:
 		var runner = s.custom_script.new()
 		runner.execute(ctx)
@@ -160,6 +163,8 @@ func _recast(slot: int, s: SkillData, rank: int, aim: CastAim) -> int:
 	_start_pending_cooldown(slot)
 	unit.attack.cancel_windup()
 	var ctx := _build_context(s, rank, aim if aim != null and s.target_mode != Enums.TargetMode.UNIT else null)
+	last_ctx = ctx
+	last_was_recast = true
 	SkillEffect.apply_list(s.recast_effects, ctx)
 	EventBus.skill_cast.emit(unit, slot, s)
 	return Enums.CastResult.OK

@@ -83,6 +83,7 @@ func try_attack(target) -> bool:
 	cooldown_left = interval()
 	unit.face_towards(target.global_position)
 	attack_started.emit(target)
+	EventBus.attack_started.emit(unit, target)
 	return true
 
 

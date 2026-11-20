@@ -35,6 +35,8 @@ func active() -> Array:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	_t += delta
 	var spawned := false
 	for s in spots:

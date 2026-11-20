@@ -183,6 +183,8 @@ func team_boss_ready_keep(team: int) -> bool:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	_plan_left -= delta
 	if _plan_left <= 0.0:
 		_plan_left = PLAN_REFRESH

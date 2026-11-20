@@ -10,7 +10,7 @@ var active: Dictionary = {}  # id -> {data, remaining, magnitude, source, tick_l
 
 
 func apply(data: StatusEffectData, duration: float, magnitude: float, source = null) -> void:
-	if unit.is_dead or data == null or duration <= 0.0:
+	if unit.is_dead or data == null or duration <= 0.0 or Net.is_client():
 		return
 	var e = active.get(data.id)
 	if e == null:
@@ -108,7 +108,27 @@ func _max_magnitude(kind: int) -> float:
 	return m
 
 
+## 와이파이 대전 참가자: 방장이 보낸 상태 목록대로 맞춘다 (그림·능력치 표시용).
+func sync_ids(ids: PackedStringArray) -> void:
+	for id in active.keys():
+		if not ids.has(id):
+			remove(id)
+	for id in ids:
+		if active.has(id):
+			active[id].remaining = 999.0
+			continue
+		var data = DataRegistry.get_item("status", id)
+		if data == null:
+			continue
+		active[id] = {"data": data, "remaining": 999.0, "magnitude": 0.0, "source": null, "tick_left": 999.0}
+		if data.kind == Enums.StatusKind.STAT_BUFF:
+			unit.stats.add_modifiers("status:" + id, data.stat_modifiers)
+	changed.emit()
+
+
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	if active.is_empty():
 		return
 	var expired: Array = []

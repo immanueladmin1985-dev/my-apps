@@ -81,6 +81,8 @@ func buy(hero, id: String) -> int:
 	var plan := check_buy(hero, item)
 	if plan.result != Result.OK:
 		return plan.result
+	if NetSync.client_request("buy", [id]):
+		return Result.OK
 	hero.add_gold(-plan.price)
 	if item.permanent:
 		hero.drink_elixir(item)
@@ -102,6 +104,8 @@ func sell(hero, slot: int) -> int:
 		return Result.UNKNOWN
 	if not can_shop(hero):
 		return Result.NOT_IN_SHOP
+	if NetSync.client_request("sell", [slot]):
+		return Result.OK
 	var gold := ItemManager.sell_price(item)
 	hero.inventory.take_one(slot)
 	hero.add_gold(gold)
@@ -116,6 +120,8 @@ func use_item(hero, slot: int) -> int:
 		return Result.UNKNOWN
 	if not item.consumable or item.use_kind == "none" or hero.is_dead:
 		return Result.NOT_USABLE
+	if NetSync.client_request("use", [slot]):
+		return Result.OK
 	match item.use_kind:
 		"status":
 			if item.use_status != null:

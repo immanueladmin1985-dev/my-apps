@@ -33,6 +33,8 @@ func is_boss_camp(camp: Dictionary) -> bool:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	elapsed += delta
 	for camp in camps:
 		if camp.data.wave_interval > 0.0:

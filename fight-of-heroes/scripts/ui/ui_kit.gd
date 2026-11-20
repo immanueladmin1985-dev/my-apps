@@ -44,10 +44,8 @@ static func make_theme() -> Theme:
 
 
 static func background(parent: Control) -> void:
-	var bg := ColorRect.new()
-	bg.color = BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bg := MenuBackdrop.new()
+	bg.name = "Backdrop"
 	parent.add_child(bg)
 
 

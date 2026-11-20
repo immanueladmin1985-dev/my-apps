@@ -33,6 +33,9 @@ const ATTACKER_MEMORY := 15.0
 var cast_lock_left := 0.0
 ## 돌진할 때마다 1 씩 늘어난다. 따라가던 투사체가 이 값이 바뀌면 대상을 놓친다.
 var dash_count := 0
+## 와이파이 대전 번호와, 참가자 화면에서 따라갈 위치 (방장이 보낸 위치)
+var net_id := -1
+var net_pos = null
 ## 이 시각까지는 풀숲에 있어도 드러난다 (공격·스킬을 쓰면)
 var revealed_until := -100.0
 ## 마지막 돌진(밀려남 포함)이 벽에 막혀 끝났는지
@@ -148,6 +151,13 @@ func clear_orders() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		# 참가자: 방장이 보낸 위치로 부드럽게 따라간다. 너무 멀면 바로 옮긴다.
+		if net_pos != null:
+			var d: float = global_position.distance_to(net_pos)
+			wants_move = d > 3.0
+			global_position = net_pos if d > 260.0 else global_position.lerp(net_pos, minf(1.0, delta * 14.0))
+		return
 	if is_dead:
 		velocity = Vector2.ZERO
 		wants_move = false

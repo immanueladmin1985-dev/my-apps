@@ -52,6 +52,9 @@ static func _effective_resist(resist: float, src, pen_key: String) -> float:
 static func apply_damage(target, info: DamageInfo) -> float:
 	if target == null or not is_instance_valid(target) or target.is_dead:
 		return 0.0
+	# 와이파이 대전 참가자: 피해 계산은 방장만 한다 (참가자는 방장이 보낸 체력을 그린다).
+	if Net.is_client():
+		return 0.0
 	var amt := compute(target, info)
 	# 수호: 이 피해의 일부를 상태를 건 아군(성기사)이 대신 받는다.
 	for e in target.status.active.values():
@@ -78,7 +81,7 @@ static func apply_damage(target, info: DamageInfo) -> float:
 
 
 static func heal(target, amount: float, source = null) -> float:
-	if target == null or not is_instance_valid(target) or target.is_dead:
+	if target == null or not is_instance_valid(target) or target.is_dead or Net.is_client():
 		return 0.0
 	var healed: float = target.health.heal(amount)
 	if healed > 0.0:

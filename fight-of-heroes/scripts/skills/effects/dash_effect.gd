@@ -17,6 +17,10 @@ func apply(ctx: SkillContext) -> void:
 		return
 	var dir := -ctx.direction if reverse else ctx.direction
 	var start: Vector2 = ctx.caster.global_position
+	if Net.is_client():
+		# 참가자: 움직임은 방장이 보낸 위치로 보이고, 여기서는 지나간 자리 효과만 그린다.
+		SkillFx.line(ctx.caster, start, start + dir * distance, width * 0.6, SkillFx.style_of(ctx.skill))
+		return
 	var caster = ctx.caster
 	var path := path_effects
 	var ends := end_effects

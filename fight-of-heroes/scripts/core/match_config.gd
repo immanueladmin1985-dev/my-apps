@@ -18,3 +18,8 @@ extends Resource
 @export var autoplay: bool = false
 ## 무작위로 채운 팀인지 ("다시 하기" 때 플레이어 영웅만 두고 다시 뽑는다)
 @export var random_teams: bool = false
+## 같은 와이파이 대전 (mode == "lan"): 사람이 맡은 자리(0~2 블루, 3~5 레드) -> 피어 번호, 내 자리, 모두가 같은 시드
+@export var net_humans: Dictionary = {}
+@export var net_my_slot: int = -1
+@export var net_my_team: int = Enums.Team.BLUE
+@export var net_seed: int = 0

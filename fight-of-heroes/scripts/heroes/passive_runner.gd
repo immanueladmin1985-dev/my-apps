@@ -43,6 +43,8 @@ func _ready_to_fire(target) -> bool:
 
 
 func _fire(target) -> void:
+	if Net.is_client():
+		return
 	_cooldown_left = passive.cooldown
 	procs += 1
 	var ctx := SkillContext.new()
@@ -79,6 +81,8 @@ func _on_unit_died(victim, killer) -> void:
 
 ## 효과를 pos 자리에서 실행한다 (쓰러진 적 자리에서 해골 일으키기).
 func _fire_at(pos: Vector2) -> void:
+	if Net.is_client():
+		return
 	_cooldown_left = passive.cooldown
 	procs += 1
 	var ctx := SkillContext.new()
@@ -91,6 +95,8 @@ func _fire_at(pos: Vector2) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	if passive == null:
 		return
 	_cooldown_left = maxf(0.0, _cooldown_left - delta)

@@ -26,6 +26,8 @@ func setup(w: Node2D, m: MapData, seed_value := 0) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	if goblin != null and (not is_instance_valid(goblin) or goblin.is_dead):
 		goblin = null
 		left = INTERVAL

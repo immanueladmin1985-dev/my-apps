@@ -6,12 +6,25 @@ signal changed(hp: float, max_hp: float)
 
 var hp: float = 1.0
 var shields: Array = []  # [{amount, remaining}]
+var net_max := 0.0  # 와이파이 대전 참가자: 방장이 보낸 최대 체력
 
 @onready var unit = get_parent()
 
 
 func max_hp() -> float:
+	if net_max > 0.0:
+		return net_max
 	return unit.stats.get_stat("max_hp")
+
+
+## 참가자: 방장이 보낸 체력·보호막으로 맞춘다.
+func net_set(new_hp: float, new_max: float, shield: float) -> void:
+	var changed_now := absf(new_hp - hp) > 0.5 or absf(new_max - net_max) > 0.5 or absf(shield - shield_total()) > 0.5
+	net_max = new_max
+	hp = new_hp
+	shields = [{"amount": shield, "remaining": 1.0}] if shield > 0.0 else []
+	if changed_now:
+		changed.emit(hp, max_hp())
 
 
 func ratio() -> float:
@@ -72,7 +85,7 @@ func heal(amount: float) -> float:
 
 
 func _physics_process(delta: float) -> void:
-	if unit.is_dead:
+	if net_max > 0.0 or unit.is_dead:
 		return
 	var regen: float = unit.stats.get_stat("hp_regen")
 	if regen > 0.0 and hp < max_hp():

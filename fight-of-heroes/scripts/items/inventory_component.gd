@@ -80,6 +80,15 @@ func take_one(i: int) -> ItemData:
 	return item
 
 
+## 참가자: 방장이 보낸 칸 내용 (refresh 를 따로 부른다)
+func set_slot(i: int, item: ItemData, count: int) -> void:
+	slots[i] = {"item": item, "count": count} if item != null and count > 0 else null
+
+
+func refresh() -> void:
+	_apply()
+
+
 func clear_slot(i: int) -> void:
 	slots[i] = null
 	_apply()

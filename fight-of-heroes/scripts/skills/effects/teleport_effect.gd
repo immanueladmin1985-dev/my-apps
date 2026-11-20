@@ -56,6 +56,9 @@ func apply(ctx: SkillContext) -> void:
 	var from: Vector2 = c.global_position
 	var dest := from + ctx.direction * distance
 	var target = null
+	if Net.is_client():
+		SkillFx.puff(c, from, 50.0, SkillFx.style_of(ctx.skill))
+		return
 	if destination != "":
 		var d = find_destination(c, destination)
 		if d == null:

@@ -115,11 +115,37 @@ func end_aim(slot: int, vec: Vector2, dragged: bool, cancelled: bool) -> int:
 
 
 func try_cast(slot: int, aim: CastAim) -> int:
+	if Net.is_client():
+		return _net_cast(slot, aim)
 	var r: int = hero.skill_caster.cast(slot, aim)
 	if r == Enums.CastResult.NOT_READY and hero.has_gauge():
 		cast_failed.emit("%s이(가) 부족합니다 (%d/%d)" % [hero.data.gauge_name, int(hero.gauge), int(_skill(slot).requires_gauge)])
 	elif r != Enums.CastResult.OK and r != Enums.CastResult.DEAD:
 		cast_failed.emit(Enums.CAST_RESULT_TEXT.get(r, ""))
+	return r
+
+
+## 참가자: 쓸 수 있는지 여기서 먼저 보고, 실제 시전은 방장에게 부탁한다.
+func _net_cast(slot: int, aim: CastAim) -> int:
+	var sc: SkillCaster = hero.skill_caster
+	var s := _skill(slot)
+	var r := Enums.CastResult.OK
+	if hero.is_dead:
+		r = Enums.CastResult.DEAD
+	elif s == null or sc.ranks[slot] <= 0:
+		r = Enums.CastResult.NOT_LEARNED
+	elif sc.cooldowns[slot] > 0.0 and sc.recast_left[slot] <= 0.0:
+		r = Enums.CastResult.COOLDOWN
+	elif sc.recast_left[slot] <= 0.0 and not hero.mana.has(sc.mana_cost(slot)):
+		r = Enums.CastResult.NO_MANA
+	if r != Enums.CastResult.OK:
+		if r != Enums.CastResult.DEAD:
+			cast_failed.emit(Enums.CAST_RESULT_TEXT.get(r, ""))
+		return r
+	if aim == null:
+		aim = CastAim.toward(hero.facing)
+	var uid: int = aim.unit.net_id if aim.unit != null and is_instance_valid(aim.unit) else -1
+	NetSync.client_request("cast", [slot, aim.direction.x, aim.direction.y, aim.point.x, aim.point.y, aim.has_point, uid])
 	return r
 
 

@@ -85,6 +85,8 @@ func has_gauge() -> bool:
 
 
 func add_gauge(amount: float) -> void:
+	if Net.is_client():
+		return
 	if not has_gauge() or amount == 0.0 or is_dead:
 		return
 	set_gauge(gauge + amount)
@@ -179,6 +181,8 @@ func can_learn(slot: int) -> bool:
 func learn(slot: int) -> bool:
 	if not can_learn(slot):
 		return false
+	if NetSync.client_request("learn", [slot]):
+		return true
 	skill_points -= 1
 	skill_caster.level_up(slot)
 	skill_points_changed.emit(skill_points)
@@ -219,6 +223,8 @@ func on_damaged(src, amount: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
+	if Net.is_client():
+		return
 	if has_gauge() and data.gauge_decay > 0.0 and gauge > 0.0:
 		_gauge_idle += delta
 		if _gauge_idle >= data.gauge_decay_delay:

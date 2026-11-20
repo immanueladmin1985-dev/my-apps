@@ -2,7 +2,7 @@ extends Control
 ## 게임 기록: 전체 전적, 영웅별 기록, 최근 경기. 기록 초기화(확인 창).
 
 const DIFF := {"easy": "쉬움", "normal": "보통", "hard": "어려움"}
-const MODE := {"team": "3대3", "practice": "1대1 연습", "watch": "관전"}
+const MODE := {"team": "3대3", "practice": "1대1 연습", "watch": "관전", "lan": "와이파이 대전"}
 
 var content: VBoxContainer
 
@@ -50,7 +50,12 @@ func _fill() -> void:
 		var hr: Dictionary = r.heroes[id]
 		var h := DataRegistry.hero(id)
 		var g := maxf(1, int(hr.games))
-		grid.add_child(UiKit.label(h.display_name if h != null else id, 18))
+		var nm := HBoxContainer.new()
+		nm.add_theme_constant_override("separation", 8)
+		if h != null:
+			nm.add_child(UiKit.hero_badge(h, 34.0))
+		nm.add_child(UiKit.label(h.display_name if h != null else id, 18))
+		grid.add_child(nm)
 		grid.add_child(UiKit.label(str(int(hr.games)), 18))
 		grid.add_child(UiKit.label("%d%%" % roundi(100.0 * int(hr.wins) / g), 18))
 		grid.add_child(UiKit.label("%.1f / %.1f / %.1f" % [hr.kills / g, hr.deaths / g, hr.assists / g], 18))
@@ -63,7 +68,24 @@ func _fill() -> void:
 			str(e.date).replace("T", " ").left(16), "승리" if e.won else "패배", h.display_name if h != null else e.hero,
 			int(e.level), int(e.kills), int(e.deaths), int(e.assists), e.score, t / 60, t % 60,
 			MODE.get(e.get("mode", "team"), ""), DIFF.get(e.difficulty, "")]
-		content.add_child(UiKit.label(line, 16, UiKit.GOOD if e.won else UiKit.BAD))
+		# 한 줄짜리 카드: 승패 띠, 영웅 얼굴, 내용
+		var card := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(UiKit.GOOD if e.won else UiKit.BAD, 0.12)
+		sb.border_color = UiKit.GOOD if e.won else UiKit.BAD
+		sb.border_width_left = 6
+		sb.set_corner_radius_all(8)
+		sb.content_margin_left = 12
+		sb.content_margin_top = 4
+		sb.content_margin_bottom = 4
+		card.add_theme_stylebox_override("panel", sb)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		card.add_child(row)
+		if h != null:
+			row.add_child(UiKit.hero_badge(h, 32.0))
+		row.add_child(UiKit.label(line, 16, UiKit.TEXT))
+		content.add_child(card)
 
 
 func on_back() -> void:

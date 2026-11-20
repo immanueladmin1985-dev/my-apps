@@ -55,6 +55,8 @@ func team_heroes(team: int) -> Array:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	var cfg := DataRegistry.combat_config()
 	for h: Hero in heroes:
 		if h.is_dead:

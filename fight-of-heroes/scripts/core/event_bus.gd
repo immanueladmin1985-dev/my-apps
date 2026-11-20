@@ -7,6 +7,8 @@ signal unit_healed(target, amount, source)
 signal unit_died(victim, killer)
 signal hero_respawned(hero)
 signal skill_cast(caster, slot, skill)
+## 기본 공격을 시작했다 (와이파이 대전에서 참가자 화면에 휘두르기·투사체를 그리려고)
+signal attack_started(unit, target)
 ## 영웅 처치: 처치한 영웅(없을 수 있음), 도움 영웅 목록
 signal hero_killed(victim, killer, assists)
 signal hero_level_up(hero, level)

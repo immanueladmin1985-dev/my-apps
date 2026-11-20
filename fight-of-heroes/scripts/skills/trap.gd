@@ -16,6 +16,8 @@ func setup(e: TrapEffect, c: SkillContext) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return
 	_age += delta
 	if _age >= effect.lifetime or not ctx.caster_valid():
 		queue_free()

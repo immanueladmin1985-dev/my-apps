@@ -149,6 +149,8 @@ func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	if is_dead or data == null:
 		return
+	if Net.is_client():
+		return
 	if is_summon():
 		life_left -= delta
 		if life_left <= 0.0 or not is_instance_valid(owner_unit) or owner_unit.is_dead:

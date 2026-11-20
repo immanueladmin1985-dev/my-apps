@@ -16,6 +16,8 @@ const AUTOSAVE_INTERVAL := 15.0
 var free_look := false
 var free_pos := Vector2.ZERO
 var _autosave_left := AUTOSAVE_INTERVAL
+## 와이파이 대전 동기화 (혼자 하는 경기에서는 없음)
+var net_sync: NetSync = null
 
 @onready var arena: Arena = $Arena
 @onready var world: Node2D = $World
@@ -45,6 +47,11 @@ func _ready() -> void:
 	var seed_base := 0
 	if GameManager.dev_args.has("seed"):
 		seed_base = int(GameManager.dev_args["seed"])
+	var lan: bool = config.mode == "lan" and Net.is_online()
+	if lan:
+		seed_base = config.net_seed
+		net_sync = NetSync.new()
+		net_sync.name = "NetSync"
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		var ids: PackedStringArray = config.blue_heroes if team == Enums.Team.BLUE else config.red_heroes
 		for i in ids.size():
@@ -53,11 +60,20 @@ func _ready() -> void:
 				push_error("영웅 데이터가 없습니다: " + ids[i])
 				continue
 			var h := hero_manager.spawn(data, team, i)
-			var is_player: bool = team == Enums.Team.BLUE and i == config.player_index
+			var my_team: int = config.net_my_team if lan else Enums.Team.BLUE
+			var is_player: bool = team == my_team and i == config.player_index
+			var slot: int = (0 if team == Enums.Team.BLUE else 3) + i
 			if is_player and not config.autoplay:
 				player_controller = PlayerController.new()
 				player_controller.name = "PlayerController"
 				h.set_controller(player_controller)
+			elif lan and Net.is_client():
+				pass  # 참가자 화면의 다른 영웅은 방장이 보낸 대로 움직인다.
+			elif lan and config.net_humans.has(slot):
+				var rc := RemoteController.new()
+				rc.name = "RemoteController"
+				rc.sync = net_sync
+				h.set_controller(rc)
 			else:
 				var s: int = seed_base + team * 100 + i if seed_base != 0 else 0
 				ai_manager.attach(h, map.spawn_of(team), center, s)
@@ -69,6 +85,9 @@ func _ready() -> void:
 				h.get_node("Visual").is_player = true
 	for team in [Enums.Team.BLUE, Enums.Team.RED]:
 		ai_manager.assign_roles(team)
+	if net_sync != null:
+		add_child(net_sync)
+		net_sync.setup(self)
 	UnitVisual.viewer_team = player_hero.team if player_hero != null else Enums.Team.BLUE
 	# 안개는 늘 계산한다 (AI 도 자기 팀 시야만 본다). 화면에는 사람이 하는 팀의 시야만 그린다.
 	# 설정에서 끄면 모두가 모든 것을 본다.
@@ -165,7 +184,7 @@ func _ready() -> void:
 
 ## 이어 하기용으로 전투를 저장한다. 끝난 경기와 시험용 자동 진행 경기는 저장하지 않는다.
 func can_save() -> bool:
-	return battle_manager != null and not battle_manager.match_over and config != null and not config.autoplay
+	return battle_manager != null and not battle_manager.match_over and config != null and not config.autoplay and config.mode != "lan"
 
 
 func save_snapshot() -> bool:

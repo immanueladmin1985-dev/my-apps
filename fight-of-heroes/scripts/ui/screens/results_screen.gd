@@ -67,12 +67,14 @@ func _ready() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.add_theme_constant_override("separation", 12)
 	box.add_child(row)
-	var again := UiKit.button("다시 하기", Vector2(200, 62), 22)
+	var lan: bool = GameManager.match_config != null and GameManager.match_config.mode == "lan"
+	var again := UiKit.button("로비로" if lan else "다시 하기", Vector2(200, 62), 22)
 	again.pressed.connect(replay)
 	row.add_child(again)
 	var change := UiKit.button("영웅 바꾸기", Vector2(200, 62), 22)
 	change.pressed.connect(func(): GameManager.goto(GameManager.NEW_GAME_SCENE))
-	row.add_child(change)
+	if not lan:
+		row.add_child(change)
 	var home := UiKit.button("메인 메뉴", Vector2(200, 62), 22)
 	home.pressed.connect(on_back)
 	row.add_child(home)
@@ -81,8 +83,12 @@ func _ready() -> void:
 
 ## 같은 설정으로 다시 한다 (무작위 팀은 새로 섞는다).
 func replay() -> void:
+	if GameManager.match_config != null and GameManager.match_config.mode == "lan":
+		GameManager.goto(GameManager.LAN_SCENE)
+		return
 	GameManager.restart_match()
 
 
 func on_back() -> void:
+	Net.leave()
 	GameManager.go_main()
