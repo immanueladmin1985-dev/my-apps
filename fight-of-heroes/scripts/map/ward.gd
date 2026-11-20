@@ -41,6 +41,13 @@ func _draw() -> void:
 	var left := clampf((life - _age) / life, 0.0, 1.0)
 	draw_arc(Vector2.ZERO, SIGHT, 0, TAU, 64, Color(1, 0.9, 0.4, 0.12), 2.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, View.upright()))
+	var tex := Art.texture("items", "ward")
+	if tex != null:
+		# 아이템 그림을 세워서 꽂고, 남은 시간 고리를 눈 위에 둔다
+		draw_texture_rect(tex, Rect2(Vector2(-26, -58), Vector2(52, 62)), false)
+		draw_arc(Vector2(0, -40), 16.0, -PI / 2.0, -PI / 2.0 + TAU * left, 24, Color(1, 0.9, 0.5, 0.9), 2.5)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		return
 	draw_line(Vector2(0, 4), Vector2(0, -26), Color(0.15, 0.1, 0.05), 5.0)
 	draw_circle(Vector2(0, -30), 10.0, Color(0.15, 0.1, 0.05))
 	draw_circle(Vector2(0, -30), 8.0, Color(1, 0.85, 0.35))
