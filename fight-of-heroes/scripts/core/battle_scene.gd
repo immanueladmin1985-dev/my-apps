@@ -18,6 +18,8 @@ var free_pos := Vector2.ZERO
 var _autosave_left := AUTOSAVE_INTERVAL
 ## 와이파이 대전 동기화 (혼자 하는 경기에서는 없음)
 var net_sync: NetSync = null
+## 빠른 대화
+var quick_chat: QuickChat = null
 
 @onready var arena: Arena = $Arena
 @onready var world: Node2D = $World
@@ -118,6 +120,9 @@ func _ready() -> void:
 	add_child(goblins)
 	goblins.setup(world, map, seed_base)
 	ai_manager.shop = shop_manager
+	quick_chat = QuickChat.new()
+	add_child(quick_chat)
+	quick_chat.setup(self)
 	camera.limit_left = int(-80)
 	camera.limit_top = int(-80)
 	camera.limit_right = int(map.size.x + 80)
@@ -127,6 +132,7 @@ func _ready() -> void:
 		camera.reset_smoothing()
 	$AimIndicator.setup(player_hero, player_controller)
 	hud.ai_manager = ai_manager
+	hud.quick_chat = quick_chat
 	hud.shop = shop_manager
 	hud.setup(player_hero, player_controller, battle_manager)
 	hud.setup_overview(map, hero_manager, camera, monster_manager)
@@ -168,6 +174,17 @@ func _ready() -> void:
 		hud.choose_ping(str(GameManager.dev_args["ping"]))
 		hud.place_ping(player_hero.global_position + Vector2(280, -60))
 		hud.toggle_ping_menu()
+	if GameManager.dev_args.has("chat_demo") and player_hero != null:
+		# 개발용: 대화 창을 열고 몇 줄을 미리 띄운다 (아군 AI 대답 포함).
+		quick_chat.reply_delay = Vector2(0.2, 0.3)
+		quick_chat.player_say(QuickChat.HELP)
+		var mates: Array = hero_manager.team_heroes(player_hero.team).filter(func(x): return x != player_hero)
+		if not mates.is_empty():
+			quick_chat.deliver(player_hero.team, mates[0].display_name, 7, false)
+		var foes: Array = hero_manager.team_heroes(Enums.Team.RED if player_hero.team == Enums.Team.BLUE else Enums.Team.BLUE)
+		if not foes.is_empty():
+			quick_chat.deliver(foes[0].team, foes[0].display_name, 10, true)
+		hud.toggle_chat_menu()
 	if GameManager.dev_args.has("fx_demo") and player_hero != null:
 		var demo = load("res://scripts/dev/fx_demo.gd").new()
 		demo.name = "FxDemo"

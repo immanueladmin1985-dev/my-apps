@@ -106,7 +106,7 @@ func assign_roles(team: int) -> void:
 
 func plan_for(team: int) -> Dictionary:
 	var p: Dictionary = plans.get(team, {})
-	if p.get("kind", "") == "gather" and Unit.now() > p.until:
+	if p.get("kind", "") in ["gather", "retreat"] and Unit.now() > p.until:
 		plans[team] = {"kind": "none"}
 		return plans[team]
 	if p.get("kind", "") == "boss" and (not is_instance_valid(p.target) or p.target.is_dead):
@@ -118,6 +118,11 @@ func plan_for(team: int) -> Dictionary:
 ## "모여!": 팀 AI 가 GATHER_SECONDS 동안 pos 로 모인다.
 func request_gather(team: int, pos: Vector2) -> void:
 	plans[team] = {"kind": "gather", "pos": pos, "until": Unit.now() + GATHER_SECONDS}
+
+
+## "후퇴하자"(빠른 대화): 팀 AI 가 seconds 동안 우물 쪽으로 물러난다 (거의 다 잡은 적이 있으면 마무리한다).
+func request_retreat(team: int, seconds: float) -> void:
+	plans[team] = {"kind": "retreat", "until": Unit.now() + seconds}
 
 
 ## 팀이 보스에 도전할 준비가 됐는지: 2명 이상 살아 있고 평균 체력 50% 이상.
@@ -148,7 +153,7 @@ func team_boss_ready(team: int, boss) -> bool:
 
 func _update_plan(team: int) -> void:
 	var p := plan_for(team)
-	if p.get("kind", "") == "gather":
+	if p.get("kind", "") in ["gather", "retreat"]:
 		return
 	if monster_manager == null:
 		plans[team] = {"kind": "none"}

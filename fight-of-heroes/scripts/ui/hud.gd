@@ -51,6 +51,13 @@ var gather_button: TouchButton
 var ping_button: TouchButton
 var ping_menu: Control
 var ping_mode := ""
+## 빠른 대화: 버튼 → 문장 고르기. 받은 문장은 왼쪽 미니맵 아래에 몇 초 동안 보인다.
+var chat_button: TouchButton
+var chat_menu: Control
+var chat_all_button: TouchButton
+var chat_feed: VBoxContainer
+var chat_to_all := false
+var quick_chat: QuickChat
 var shop_button: TouchButton
 var shop: ShopManager
 var shop_panel: ShopPanel
@@ -84,7 +91,7 @@ func setup(h, c: PlayerController, bm: BattleManager) -> void:
 	EventBus.hero_killed.connect(_on_hero_killed)
 	bm.ended.connect(_on_match_ended)
 	var playable: bool = hero != null and controller != null
-	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, name_label, gather_button, ping_button, shop_button, inventory_bar, quick_item] + skill_buttons:
+	for n in [joystick, attack_button, hp_bar, mp_bar, xp_bar, name_label, gather_button, ping_button, chat_button, shop_button, inventory_bar, quick_item] + skill_buttons:
 		n.visible = playable
 	if not playable:
 		return
@@ -260,8 +267,15 @@ func _build() -> void:
 	focus_button.visible = false
 	root.add_child(focus_button)
 	fps_label = _label("", 13, HORIZONTAL_ALIGNMENT_LEFT)
-	_place(fps_label, Vector2(0, 0), Vector2(14, 244), Vector2(200, 20))
+	_place(fps_label, Vector2(0, 0), Vector2(150, 206), Vector2(120, 20))
 	root.add_child(fps_label)
+	chat_feed = VBoxContainer.new()
+	chat_feed.name = "ChatFeed"
+	chat_feed.alignment = BoxContainer.ALIGNMENT_BEGIN
+	chat_feed.add_theme_constant_override("separation", 0)
+	chat_feed.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place(chat_feed, Vector2(0, 0), Vector2(14, 244), Vector2(440, 104))
+	root.add_child(chat_feed)
 	kill_feed = VBoxContainer.new()
 	kill_feed.name = "KillFeed"
 	kill_feed.alignment = BoxContainer.ALIGNMENT_BEGIN
@@ -319,6 +333,8 @@ func _build() -> void:
 		_place(b, Vector2(0, 0), Vector2(i * 78, 0), Vector2(72, 52))
 		b.pressed.connect(choose_ping.bind(kinds[i]))
 		ping_menu.add_child(b)
+
+	_build_chat_menu()
 
 	shop_button = TouchButton.new()
 	shop_button.name = "ShopButton"
@@ -617,8 +633,9 @@ func toggle_shop() -> void:
 		shop_panel.open_for(hero, shop)
 	else:
 		shop_panel.visible = false
-	for n in [joystick, attack_button, gather_button, shop_button, pause_button, inventory_bar] + skill_buttons:
+	for n in [joystick, attack_button, gather_button, chat_button, shop_button, pause_button, inventory_bar] + skill_buttons:
 		n.visible = not shop_open
+	chat_menu.visible = false
 
 
 func _on_inventory_slot(i: int) -> void:
@@ -682,6 +699,7 @@ func toggle_ping_menu() -> void:
 		show_message("신호를 취소했습니다")
 		return
 	ping_menu.visible = not ping_menu.visible
+	chat_menu.visible = false
 
 
 func choose_ping(kind: String) -> void:
@@ -749,3 +767,97 @@ func _on_match_ended(winner: int, reason: String) -> void:
 	await get_tree().create_timer(1.2).timeout
 	get_tree().paused = true
 	result_panel.visible = true
+
+
+# ---- 빠른 대화 ----
+
+const CHAT_COLS := 3
+const CHAT_CELL := Vector2(150, 44)
+const CHAT_GAP := 6.0
+
+
+## "대화" 버튼(신호 버튼 아래)과 문장 창(버튼 왼쪽). 창은 3줄 4칸의 문장과 받는 사람 바꾸기 버튼.
+func _build_chat_menu() -> void:
+	chat_button = TouchButton.new()
+	chat_button.name = "ChatButton"
+	chat_button.setup("대화", 19, Color(0.14, 0.26, 0.24, 0.88))
+	_place(chat_button, Vector2(1, 0), Vector2(-84, 192), Vector2(70, 52))
+	chat_button.pressed.connect(toggle_chat_menu)
+	root.add_child(chat_button)
+	var rows := ceili(float(QuickChat.PANEL_COUNT) / CHAT_COLS)
+	var pad := 10.0
+	var w := CHAT_COLS * CHAT_CELL.x + (CHAT_COLS - 1) * CHAT_GAP + pad * 2.0
+	var h := (rows + 1) * (CHAT_CELL.y + CHAT_GAP) - CHAT_GAP + pad * 2.0
+	chat_menu = Panel.new()
+	chat_menu.name = "ChatMenu"
+	chat_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.05, 0.07, 0.1, 0.86)
+	st.border_color = Color(1, 1, 1, 0.25)
+	st.set_border_width_all(2)
+	st.set_corner_radius_all(12)
+	chat_menu.add_theme_stylebox_override("panel", st)
+	_place(chat_menu, Vector2(1, 0), Vector2(-92 - w, 66), Vector2(w, h))
+	chat_menu.visible = false
+	root.add_child(chat_menu)
+	for i in QuickChat.PANEL_COUNT:
+		var b := TouchButton.new()
+		b.name = "Chat_%d" % i
+		b.setup(QuickChat.PHRASES[i], 16, Color(0.16, 0.2, 0.27, 0.95))
+		var cell := Vector2(i % CHAT_COLS, i / CHAT_COLS)
+		_place(b, Vector2(0, 0), Vector2(pad, pad) + cell * (CHAT_CELL + Vector2.ONE * CHAT_GAP), CHAT_CELL)
+		b.pressed.connect(send_chat.bind(i))
+		chat_menu.add_child(b)
+	chat_all_button = TouchButton.new()
+	chat_all_button.name = "ChatAll"
+	chat_all_button.setup("", 16)
+	_place(chat_all_button, Vector2(0, 0), Vector2(pad, pad + rows * (CHAT_CELL.y + CHAT_GAP)), Vector2(w - pad * 2.0, CHAT_CELL.y))
+	chat_all_button.pressed.connect(toggle_chat_all)
+	chat_menu.add_child(chat_all_button)
+	_refresh_chat_all()
+
+
+func toggle_chat_menu() -> void:
+	chat_menu.visible = not chat_menu.visible
+	if chat_menu.visible:
+		ping_menu.visible = false
+
+
+## 받는 사람 바꾸기: 우리 팀 ↔ 전체(양 팀)
+func toggle_chat_all() -> void:
+	chat_to_all = not chat_to_all
+	_refresh_chat_all()
+
+
+func _refresh_chat_all() -> void:
+	chat_all_button.text = "받는 사람: 전체에게 (상대 팀도 봅니다)" if chat_to_all else "받는 사람: 우리 팀에게만 (누르면 전체에게)"
+	chat_all_button.bg = Color(0.4, 0.28, 0.1, 0.95) if chat_to_all else Color(0.12, 0.22, 0.32, 0.95)
+	chat_all_button.queue_redraw()
+
+
+## 문장 버튼: 보내고 창을 닫는다. 너무 자주 보내면 알려 주고 창은 그대로 둔다.
+func send_chat(idx: int) -> int:
+	if quick_chat == null:
+		return QuickChat.Result.BAD
+	var r := quick_chat.player_say(idx, chat_to_all)
+	if r == QuickChat.Result.TOO_FAST:
+		show_message("너무 자주 보냈습니다. 잠시 뒤에 다시 보내 주세요")
+	elif r == QuickChat.Result.OK:
+		chat_menu.visible = false
+		AudioManager.play("skill", 0.1, 0.4)
+	return r
+
+
+## 대화 한 줄: "[팀] 이름: 문장" (전체에게 보낸 것은 [전체]), 보낸 팀 색. 4줄까지, 몇 초 뒤 사라진다.
+func add_chat_line(team: int, who: String, text: String, to_all: bool) -> void:
+	var l := _label("%s %s: %s" % ["[전체]" if to_all else "[팀]", who, text], 17, HORIZONTAL_ALIGNMENT_LEFT)
+	l.add_theme_color_override("font_color", Enums.team_color(team).lightened(0.35))
+	l.clip_text = true
+	l.custom_minimum_size = Vector2(0, 26)
+	chat_feed.add_child(l)
+	while chat_feed.get_child_count() > 4:
+		chat_feed.get_child(0).free()
+	var tw := l.create_tween()
+	tw.tween_interval(QuickChat.FEED_SECONDS - 0.6)
+	tw.tween_property(l, "modulate:a", 0.0, 0.6)
+	tw.tween_callback(l.queue_free)

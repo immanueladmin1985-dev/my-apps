@@ -217,6 +217,10 @@ func think() -> void:
 			threshold *= 0.75
 		if hp < threshold and not _can_finish(enemies, hp):
 			_set_state(State.RETREAT)
+	# 팀이 "후퇴하자" 로 물러나는 중이면 우물로 간다.
+	if manager != null and manager.plan_for(hero.team).get("kind", "") == "retreat" and not _can_finish(enemies, hp):
+		target = null
+		_set_state(State.RETREAT)
 	if state != State.RETREAT:
 		if help_target != null and not enemies.has(help_target):
 			enemies.append(help_target)

@@ -272,6 +272,11 @@ func _req(kind: String, args: Array) -> void:
 	var h = _hero_of_sender()
 	if h == null:
 		return
+	handle_request(h, kind, args)
+
+
+## 참가자 h 의 요청을 방장에서 실행한다 (보낸 사람의 영웅으로만).
+func handle_request(h: Hero, kind: String, args: Array) -> void:
 	var shop: ShopManager = battle.shop_manager
 	match kind:
 		"cast":
@@ -295,6 +300,10 @@ func _req(kind: String, args: Array) -> void:
 				_ping_event.rpc_id(peer, h.team, str(args[0]), args[1], args[2])
 		"gather":
 			battle.ai_manager.request_gather(h.team, h.global_position)
+		"chat":
+			# 문장 번호와 보내는 간격은 방장이 다시 확인한다 (잘못된 번호·너무 잦은 요청은 버림).
+			if battle.quick_chat != null and args.size() == 2 and typeof(args[0]) in [TYPE_INT, TYPE_FLOAT] and typeof(args[1]) == TYPE_BOOL:
+				battle.quick_chat.say(h, int(args[0]), bool(args[1]))
 
 
 # ======================= 참가자 =======================
@@ -313,10 +322,13 @@ func _send_input() -> void:
 		if Engine.get_physics_frames() % 120 == 0:
 			h.learn(0)
 			battle.player_controller.try_cast(0, battle.player_controller.auto_aim(0))
+		# 5초마다 빠른 대화 (팀에게 "도와줘!", 가끔 전체에게)
+		if Engine.get_physics_frames() % 300 == 150 and battle.quick_chat != null:
+			battle.quick_chat.player_say(QuickChat.HELP, Engine.get_physics_frames() % 600 == 450)
 	_net_input.rpc_id(1, mv.x, mv.y, t.net_id if t != null and is_instance_valid(t) else -1)
 
 
-## 참가자 요청 보내기 (스킬·배우기·사기·팔기·쓰기·신호·모여)
+## 참가자 요청 보내기 (스킬·배우기·사기·팔기·쓰기·신호·모여·빠른 대화)
 func request(kind: String, args: Array) -> void:
 	_req.rpc_id(1, kind, args)
 
@@ -579,6 +591,13 @@ func _ping_event(team: int, kind: String, x: float, y: float) -> void:
 	if Net.is_client() and team == battle.config.net_my_team:
 		battle.ai_manager.add_ping(team, kind, Vector2(x, y))
 		PingMarker.spawn(battle.player_hero, Vector2(x, y), kind, AIManager.PING_SECONDS)
+
+
+## 방장이 보낸 빠른 대화 한 줄
+@rpc("authority", "reliable")
+func _chat_event(team: int, who: String, idx: int, to_all: bool) -> void:
+	if Net.is_client() and battle.quick_chat != null:
+		battle.quick_chat.show_line(team, who, idx, to_all)
 
 
 @rpc("authority", "reliable")
