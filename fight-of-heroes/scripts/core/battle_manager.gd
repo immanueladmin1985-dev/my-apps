@@ -63,6 +63,28 @@ func bounty_of(victim) -> int:
 func _physics_process(delta: float) -> void:
 	if not match_over:
 		elapsed += delta
+		# 보스 레이드: 제한 시간이 다 되면 실패.
+		if raid_time_left() == 0.0 and not Net.is_client():
+			finish(Enums.Team.RED, "timeout")
+
+
+func is_raid() -> bool:
+	return config != null and config.is_raid()
+
+
+## 보스 레이드의 남은 시간(초). 제한 시간이 없으면 -1.
+func raid_time_left() -> float:
+	if config == null or config.raid_time_limit <= 0.0:
+		return -1.0
+	return maxf(0.0, config.raid_time_limit - elapsed)
+
+
+## 보스 레이드: 블루 팀 영웅이 한꺼번에 모두 쓰러졌는지
+func _raid_wiped() -> bool:
+	if hero_manager == null:
+		return false
+	var team: Array = hero_manager.team_heroes(Enums.Team.BLUE)
+	return not team.is_empty() and team.all(func(h): return h.is_dead)
 
 
 func _on_unit_died(victim, killer) -> void:
@@ -72,6 +94,9 @@ func _on_unit_died(victim, killer) -> void:
 	if not (victim is Hero) or match_over:
 		return
 	victim.deaths += 1
+	if is_raid() and _raid_wiped():
+		finish(Enums.Team.RED, "wiped")
+		return
 	var bounty := bounty_of(victim)
 	streaks[victim] = 0
 	# 몬스터나 우물에게 죽으면 최근에 때린 적 영웅이 처치를 인정받는다. 없으면 점수 없음.
@@ -138,8 +163,12 @@ func summary() -> Dictionary:
 			})
 	var mvp := ""
 	var best := -INF
+	var raid := is_raid()
 	for e in heroes:
 		var score: float = e.kills * 3.0 + e.assists * 1.5 - e.deaths * 1.0 + e.damage / 1500.0
+		if raid:
+			# 보스 레이드에는 적 영웅이 없으므로 준 피해 전체와 덜 쓰러진 것으로 고른다.
+			score = e.damage_total / 2000.0 - e.deaths * 1.0
 		if e.team == winner:
 			score += 2.0
 		if score > best:
@@ -150,4 +179,6 @@ func summary() -> Dictionary:
 		"blue_kills": kills[Enums.Team.BLUE], "red_kills": kills[Enums.Team.RED],
 		"difficulty": config.difficulty if config != null else "", "kill_target": config.kill_target if config != null else 0,
 		"mode": config.mode if config != null else "team",
+		"game_type": config.game_type if config != null else "normal",
+		"time_limit": config.raid_time_limit if config != null else 0.0,
 	}

@@ -23,11 +23,21 @@ func _exit_tree() -> void:
 
 
 func _on_warning(boss_name: String, seconds: int) -> void:
+	if _raid():
+		EventBus.notice.emit("레이드 보스 %s 이(가) %d초 뒤에 맵 가운데에 나타납니다. 함께 맞설 준비를 하세요!" % [boss_name, seconds])
+		return
 	EventBus.notice.emit("%s 이(가) %d초 뒤에 나타납니다" % [boss_name, seconds])
 
 
 func _on_spawned(boss) -> void:
+	if _raid() and boss.is_final_boss():
+		EventBus.notice.emit("%s 이(가) 맵 가운데에 나타났습니다! 쓰러뜨리면 레이드 성공입니다" % boss.display_name)
+		return
 	EventBus.notice.emit("%s 이(가) 나타났습니다!" % boss.display_name)
+
+
+func _raid() -> bool:
+	return monsters != null and monsters.raid
 
 
 func _on_unit_died(victim, killer) -> void:
@@ -45,4 +55,4 @@ func _on_unit_died(victim, killer) -> void:
 			if not h.is_dead:
 				h.status.apply(d.team_buff, d.team_buff_duration, 0.0, null)
 	if victim.is_final_boss() and battle != null:
-		battle.finish(team, "boss")
+		battle.finish(team, "raid" if _raid() else "boss")

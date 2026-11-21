@@ -14,13 +14,32 @@ var final_boss_time := 600.0
 var elapsed := 0.0
 
 
+## 최종 보스(보스 레이드에서는 레이드 보스) 체력 배율
+var final_boss_hp_scale := 1.0
+## 보스 레이드: 최종 보스가 맵 가운데에서 나오고, 가운데 미니언 무대는 쉰다.
+var raid := false
+
+
 func setup(world_node: Node2D, map_data: MapData, cfg: MatchConfig) -> void:
 	world = world_node
 	map = map_data
 	if cfg != null and cfg.final_boss_time > 0.0:
 		final_boss_time = cfg.final_boss_time
-	for c: CampData in map.camps:
-		var first := final_boss_time if c.is_final_boss else c.first_spawn
+	var spawn_scale := 1.0
+	if cfg != null:
+		spawn_scale = cfg.camp_spawn_scale
+		raid = cfg.is_raid()
+		final_boss_hp_scale = cfg.raid_boss_hp_scale if raid else 1.0
+	for src: CampData in map.camps:
+		if raid and src.wave_interval > 0.0:
+			continue
+		var c := src
+		if raid and src.is_final_boss:
+			# 맵 자료는 함께 쓰는 리소스이므로 복사해서 자리를 옮긴다.
+			c = src.duplicate() as CampData
+			c.id = "raid_boss"
+			c.position = map.size * 0.5
+		var first := final_boss_time if c.is_final_boss else c.first_spawn * spawn_scale
 		camps.append({"data": c, "units": [], "left": first, "alive": false, "spawned": 0, "warned": false, "tier": 1})
 
 
@@ -119,6 +138,11 @@ func spawn_camp(camp: Dictionary) -> void:
 		m.aggro_radius = c.aggro_radius
 		if c.power_tier > 1:
 			m.empower(c.power_tier, 0.3, 0.35)
+		if c.is_final_boss and raid:
+			m.heal_on_return = false
+		if c.is_final_boss and final_boss_hp_scale != 1.0:
+			m.stats.add_modifiers("raid_boss", [StatModifier.make("max_hp", 0.0, final_boss_hp_scale - 1.0)])
+			m.health.reset_full()
 		units.append(m)
 		if m.is_boss():
 			EventBus.boss_spawned.emit(m)

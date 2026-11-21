@@ -461,10 +461,15 @@ func _process(delta: float) -> void:
 	if battle != null:
 		var t := int(battle.elapsed)
 		time_label.text = "%02d:%02d" % [t / 60, t % 60]
+		var raid: bool = battle.is_raid()
+		if raid:
+			_update_raid_timer()
+		elif battle.config != null and battle.config.is_quick():
+			time_label.text += "  ·  짧은 판 %d킬 먼저" % battle.config.kill_target
 		if monster_manager != null:
 			var fb := int(ceil(monster_manager.time_to_final_boss()))
 			if fb > 0:
-				time_label.text += "  ·  최종 보스 %d:%02d" % [fb / 60, fb % 60]
+				time_label.text += "  ·  %s %d:%02d" % ["레이드 보스 등장까지" if raid else "최종 보스", fb / 60, fb % 60]
 		if hero != null:
 			var d: int = battle.deficit(hero.team)
 			if d > 0:
@@ -504,11 +509,25 @@ func _process(delta: float) -> void:
 			message_label.text = ""
 
 
+## 보스 레이드: 위쪽 가운데에 남은 시간을 크게 보여 준다 (1분 아래로 남으면 빨갛게).
+func _update_raid_timer() -> void:
+	var left := battle.raid_time_left()
+	if left < 0.0:
+		score_label.text = "보스 레이드"
+		return
+	var s := ceili(left)
+	score_label.text = "보스 레이드 · 남은 시간 %d:%02d" % [s / 60, s % 60]
+	score_label.add_theme_color_override("font_color", UiKit.BAD if left <= 60.0 else UiKit.TEXT)
+
+
 ## 화면 가운데(카메라) 가까이에 살아 있는 보스가 있으면 이름과 체력 막대를 보여 준다.
+## 보스 레이드에서는 레이드 보스가 어디에 있든 늘 보여 준다.
 func _update_boss_bar() -> void:
 	var cam := get_viewport().get_camera_2d()
 	var boss = null
-	if cam != null:
+	if battle != null and battle.is_raid() and monster_manager != null:
+		boss = monster_manager.final_boss()
+	if boss == null and cam != null:
 		var center := cam.get_screen_center_position()
 		var best := 900.0
 		for b in get_tree().get_nodes_in_group("bosses"):
@@ -763,6 +782,13 @@ func _on_match_ended(winner: int, reason: String) -> void:
 	result_title.text = "승리!" if winner == player_team else "패배"
 	var why := "목표 킬 달성" if reason == "kills" else "최종 보스 처치"
 	result_detail.text = "%s 팀 %s (블루 %d : %d 레드)" % [Enums.team_name(winner), why, battle.kills[Enums.Team.BLUE], battle.kills[Enums.Team.RED]]
+	if battle.is_raid():
+		var t := int(battle.elapsed)
+		var won := winner == Enums.Team.BLUE
+		result_title.text = "레이드 성공!" if won else "레이드 실패"
+		result_detail.text = {"raid": "레이드 보스를 쓰러뜨렸습니다. 걸린 시간 %d:%02d" % [t / 60, t % 60],
+			"timeout": "제한 시간 안에 레이드 보스를 쓰러뜨리지 못했습니다.",
+			"wiped": "우리 팀 영웅이 모두 쓰러졌습니다."}.get(reason, "")
 	_release_all_touches()
 	await get_tree().create_timer(1.2).timeout
 	get_tree().paused = true

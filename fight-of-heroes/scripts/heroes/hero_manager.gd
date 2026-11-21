@@ -8,11 +8,14 @@ var heroes: Array = []
 var battle: BattleManager = null
 var world: Node2D
 var map: MapData
+## 경기 설정 (시작 레벨·골드, 부활 시간 배율). 없으면 기본 규칙.
+var config: MatchConfig = null
 
 
-func setup(world_node: Node2D, map_data: MapData) -> void:
+func setup(world_node: Node2D, map_data: MapData, cfg: MatchConfig = null) -> void:
 	world = world_node
 	map = map_data
+	config = cfg
 
 
 func spawn(data: HeroData, team: int, index: int) -> Hero:
@@ -28,11 +31,33 @@ func spawn(data: HeroData, team: int, index: int) -> Hero:
 	h.setup(data, team)
 	h.died.connect(_on_hero_died.bind(h))
 	heroes.append(h)
+	apply_start(h)
 	return h
+
+
+## 게임 방식의 시작 상태: 시작 레벨까지 올리고 스킬 포인트를 자동으로 배운 뒤, 체력·마나를 채우고 시작 골드를 준다.
+func apply_start(h: Hero) -> void:
+	if config == null:
+		return
+	if config.start_level > 1:
+		# 레벨 업 알림·효과 없이 조용히 올린다 (레벨마다 스킬 포인트 1).
+		var target := mini(config.start_level, DataRegistry.progression().max_level)
+		h.skill_points += maxi(0, target - h.level)
+		h.level = maxi(h.level, target)
+		h.stats.set_level(h.level)
+		h.xp = 0.0
+		AIController.learn_all(h)
+		h.health.reset_full()
+		h.mana.reset_full()
+	if config.start_gold >= 0:
+		h.gold = config.start_gold
+		h.gold_changed.emit(h.gold)
 
 
 func _on_hero_died(_killer, h: Hero) -> void:
 	var t := DataRegistry.combat_config().respawn_time(h.level)
+	if config != null:
+		t *= config.respawn_scale
 	if battle != null:
 		t *= DataRegistry.progression().comeback_respawn(battle.deficit(h.team))
 	h.respawn_left = t

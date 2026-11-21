@@ -32,6 +32,8 @@ var mirror_ratio := 0.0
 ## 황금 고블린: 싸우지 않고 가까운 영웅에게서 도망 다니며, 맞아서 체력이 10% 줄 때마다 금화를 떨어뜨린다.
 var flee := false
 var _coin_hp := 1.0
+## false 이면 캠프로 돌아가도 체력을 채우지 않는다 (보스 레이드의 레이드 보스: 깎은 체력이 그대로 남는다).
+var heal_on_return := true
 
 const SUMMON_GUARD := 520.0
 const SUMMON_FOLLOW := 140.0
@@ -158,7 +160,7 @@ func _physics_process(delta: float) -> void:
 			die(null)
 			get_tree().create_timer(0.6, false).timeout.connect(queue_free)
 			return
-	if returning:
+	if returning and heal_on_return:
 		health.heal(health.max_hp() * RETURN_HEAL * delta)
 	_skill_left -= delta
 	_think_left -= delta
@@ -203,7 +205,8 @@ func _think() -> void:
 			returning = false
 			nav_goal = null
 			threat.clear()
-			health.reset_full()
+			if heal_on_return:
+				health.reset_full()
 		return
 	_check_enrage()
 	var leash: float = data.leash_radius

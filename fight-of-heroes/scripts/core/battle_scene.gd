@@ -43,8 +43,9 @@ func _ready() -> void:
 	View.setup_from_settings()
 	camera.zoom = Vector2(camera.zoom.x, camera.zoom.x * View.tilt)
 	arena.build(map)
-	hero_manager.setup(world, map)
+	hero_manager.setup(world, map, config)
 	ai_manager.setup(config.difficulty, hero_manager)
+	ai_manager.raid = config.is_raid()
 	var center := map.size * 0.5
 	var seed_base := 0
 	if GameManager.dev_args.has("seed"):
@@ -199,9 +200,9 @@ func _ready() -> void:
 			hud.shop_panel._select_item(ItemManager.get_item("hero_sword"))
 
 
-## 이어 하기용으로 전투를 저장한다. 끝난 경기와 시험용 자동 진행 경기는 저장하지 않는다.
+## 이어 하기용으로 전투를 저장한다. 끝난 경기, 시험용 자동 진행 경기, 와이파이 대전, 보스 레이드는 저장하지 않는다.
 func can_save() -> bool:
-	return battle_manager != null and not battle_manager.match_over and config != null and not config.autoplay and config.mode != "lan"
+	return battle_manager != null and not battle_manager.match_over and config != null and not config.autoplay and config.mode != "lan" and not config.is_raid()
 
 
 func save_snapshot() -> bool:

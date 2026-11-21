@@ -118,6 +118,8 @@ func restart_match() -> void:
 		c.mode = old.mode
 		c.autoplay = old.autoplay
 		c.final_boss_time = old.final_boss_time
+		if old.game_type != "normal":
+			c.apply_game_type(old.game_type)
 		start_match(c)
 		return
 	start_match(old)
@@ -268,7 +270,7 @@ func _selfcheck() -> void:
 	get_tree().quit(1 if not errors.is_empty() else 0)
 
 
-## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--resume] [--autoplay] [--boss_time=초] [--follow_boss]
+## 개발용: --screenshot=경로 --wait=초 [--battle=영웅id] [--resume] [--autoplay] [--boss_time=초] [--follow_boss] [--raid] [--quick]
 func _screenshot_later() -> void:
 	if dev_args.has("fx_demo"):
 		dev_args["battle"] = dev_args["fx_demo"]
@@ -280,6 +282,11 @@ func _screenshot_later() -> void:
 		c.autoplay = dev_args.has("autoplay")
 		if dev_args.has("boss_time"):
 			c.final_boss_time = float(dev_args["boss_time"])
+		# --raid / --quick: 보스 레이드·짧은 판으로 시작한다.
+		if dev_args.has("raid"):
+			c.apply_game_type("raid")
+		elif dev_args.has("quick"):
+			c.apply_game_type("quick")
 		start_match(c)
 	if dev_args.has("scene"):
 		goto(dev_args["scene"])

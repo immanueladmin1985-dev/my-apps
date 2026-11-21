@@ -142,6 +142,7 @@ func record_match(summary: Dictionary) -> void:
 		"hero": me.id, "won": won, "reason": summary.reason, "time": int(summary.time),
 		"kills": me.kills, "deaths": me.deaths, "assists": me.assists, "level": me.level,
 		"score": "%d:%d" % [summary.blue_kills, summary.red_kills], "difficulty": summary.difficulty, "mode": summary.mode,
+		"game_type": summary.get("game_type", "normal"),
 	})
 	while hist.size() > HISTORY_MAX:
 		hist.pop_back()

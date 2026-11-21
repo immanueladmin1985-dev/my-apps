@@ -47,6 +47,8 @@ func _draw() -> void:
 	sb.set_corner_radius_all(14)
 	draw_style_box(sb, r)
 	var title := "점수판   블루 %d : %d 레드" % [battle.kills[Enums.Team.BLUE], battle.kills[Enums.Team.RED]] if battle != null else "점수판"
+	if battle != null and battle.is_raid():
+		title = "점수판   보스 레이드"
 	_text(r.position + Vector2(24, 40), title, 24, Color(1, 0.9, 0.5))
 	_text(r.position + Vector2(r.size.x - 200, 40), "아무 곳이나 누르면 닫힘", 14, Color(1, 1, 1, 0.5))
 	var y := r.position.y + 70.0

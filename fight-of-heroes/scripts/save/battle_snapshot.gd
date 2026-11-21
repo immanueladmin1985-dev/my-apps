@@ -18,7 +18,7 @@ static func capture(battle) -> Dictionary:
 		"config": {
 			"blue": Array(cfg.blue_heroes), "red": Array(cfg.red_heroes), "player_index": cfg.player_index,
 			"difficulty": cfg.difficulty, "kill_target": cfg.kill_target, "map_id": cfg.map_id,
-			"final_boss_time": cfg.final_boss_time, "mode": cfg.mode,
+			"final_boss_time": cfg.final_boss_time, "mode": cfg.mode, "game_type": cfg.game_type,
 		},
 		"elapsed": bm.elapsed,
 		"kills": [bm.kills[Enums.Team.BLUE], bm.kills[Enums.Team.RED]],
@@ -65,6 +65,11 @@ static func make_config(snap: Dictionary) -> MatchConfig:
 		return null
 	var c: Dictionary = snap.config
 	var cfg := MatchConfig.new()
+	# 게임 방식 규칙(짧은 판의 부활 시간 등)을 먼저 정하고, 저장한 값으로 덮는다. 보스 레이드는 저장하지 않는다.
+	var gt := str(c.get("game_type", "normal"))
+	if gt == "raid":
+		return null
+	cfg.apply_game_type(gt)
 	cfg.blue_heroes = PackedStringArray(c.get("blue", []))
 	cfg.red_heroes = PackedStringArray(c.get("red", []))
 	for id in Array(cfg.blue_heroes) + Array(cfg.red_heroes):
