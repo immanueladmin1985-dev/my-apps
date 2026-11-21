@@ -27,9 +27,23 @@ var skills_label: Label
 var art_rect: TextureRect
 var slot_row: HBoxContainer
 
+## 밴 단계: 시작을 누르면 먼저 블루(나)·레드(AI)가 번갈아 2명씩 금지하고, 다시 영웅을 고른 뒤 시작한다.
+var ban_on := true
+var bans: PackedStringArray = PackedStringArray()
+var bans_done := false
+var ban_phase: BanPhase = null
+var ban_overlay: Control = null
+var ban_board: BanBoard = null
+var ban_button: Button
+## 지금 차례의 남은 시간, AI 차례면 금지하기까지 남은 시간
+var ban_left := 0.0
+var _ai_wait := 0.0
+var _ban_close_left := -1.0
+
 
 func _ready() -> void:
 	team_mode = SaveManager.get_setting("team_mode", "random")
+	ban_on = bool(SaveManager.get_setting("ban_phase", true))
 	var box := UiKit.page(self, 8)
 	UiKit.header(box, "새 게임", on_back)
 	var mrow := HBoxContainer.new()
@@ -118,6 +132,11 @@ func _ready() -> void:
 		diff_buttons.append(b)
 	brow.add_child(UiKit.label("  목표 킬", 18, UiKit.MUTED))
 	brow.add_child(UiKit.kill_stepper())
+	brow.add_child(UiKit.label("  밴 단계", 18, UiKit.MUTED))
+	ban_button = UiKit.toggle("", Vector2(110, 54))
+	ban_button.name = "BanToggle"
+	ban_button.pressed.connect(func(): set_ban_on(not ban_on))
+	brow.add_child(ban_button)
 	brow.add_child(UiKit.spacer())
 	var go := UiKit.button("시작", Vector2(200, 60), 26)
 	go.name = "StartButton"
@@ -127,6 +146,11 @@ func _ready() -> void:
 	var last: String = SaveManager.get_setting("last_hero", "blade_master")
 	slots[0] = last if DataRegistry.hero(last) != null else heroes[0].id
 	_refresh()
+	if GameManager.dev_args.has("ban_demo"):
+		# 개발용: 밴 화면 확인. 블루·레드가 한 명씩 금지한 상태로 연다.
+		open_ban_phase()
+		player_ban("ninja")
+		ai_ban()
 
 
 func select_hero(id: String) -> void:
@@ -135,6 +159,8 @@ func select_hero(id: String) -> void:
 
 
 func _on_hero(id: String) -> void:
+	if bans.has(id):
+		return
 	if team_mode == "random" or mode == "watch":
 		selected_slot = 0
 	var idx := slots.find(id)
@@ -186,7 +212,10 @@ func _refresh() -> void:
 	for b in hero_buttons:
 		var id: String = b.get_meta("id")
 		b.button_pressed = slots[shown_slot] == id
-		b.disabled = team_mode == "manual" and slots.has(id) and slots[shown_slot] != id and mode != "watch"
+		b.disabled = bans.has(id) or (team_mode == "manual" and slots.has(id) and slots[shown_slot] != id and mode != "watch")
+		b.modulate = Color(0.5, 0.5, 0.52) if bans.has(id) else Color.WHITE
+	ban_button.button_pressed = ban_on
+	ban_button.text = ("끝남" if bans_done else "켬") if ban_on else "끔"
 	slot_row.visible = team_mode == "manual"
 	for i in 6:
 		var b: Button = slot_buttons[i]
@@ -209,6 +238,16 @@ func _refresh() -> void:
 		art_rect.visible = art_rect.texture != null
 		art_rect.flip_h = Art.is_flipped(h.id)
 		skills_label.text = _skill_lines(h)
+	if bans_done and not bans.is_empty():
+		info.text = "밴이 끝났습니다. 금지된 영웅: %s. 영웅을 고른 뒤 시작을 누르세요.\n" % _ban_names() + info.text
+
+
+func _ban_names() -> String:
+	var names: Array = []
+	for id in bans:
+		var d := DataRegistry.hero(id)
+		names.append(d.display_name if d != null else id)
+	return ", ".join(names)
 
 
 func _skill_lines(h: HeroData) -> String:
@@ -225,9 +264,10 @@ func _skill_lines(h: HeroData) -> String:
 
 func build_config() -> MatchConfig:
 	var size := 1 if mode == "practice" else 3
-	var c := GameManager.default_config(slots[0], size)
+	var use_bans: PackedStringArray = bans if ban_on and bans_done else PackedStringArray()
+	var c := GameManager.default_config(slots[0], size, use_bans)
 	if team_mode == "manual":
-		var pool: Array = DataRegistry.ids("heroes")
+		var pool: Array = BanPhase.allowed(use_bans)
 		for id in slots:
 			pool.erase(id)
 		pool.shuffle()
@@ -247,8 +287,12 @@ func build_config() -> MatchConfig:
 	return c
 
 
-## 시작 버튼. 이어 할 전투가 저장돼 있으면 사라진다고 먼저 묻는다.
+## 시작 버튼. 밴 단계가 켜져 있고 아직 안 했으면 밴 단계부터 한다.
+## 이어 할 전투가 저장돼 있으면 사라진다고 먼저 묻는다.
 func start_pressed() -> void:
+	if ban_on and not bans_done and mode != "watch":
+		open_ban_phase()
+		return
 	if SaveManager.has_battle():
 		UiKit.confirm(self, "저장해 둔 전투가 있습니다. 새 게임을 시작하면 저장한 전투는 사라집니다.", "새 게임 시작", start)
 	else:
@@ -261,4 +305,127 @@ func start() -> void:
 
 
 func on_back() -> void:
+	if ban_overlay != null:
+		close_ban_phase(false)
+		return
 	GameManager.go_main()
+
+
+func set_ban_on(on: bool) -> void:
+	ban_on = on
+	SaveManager.set_setting("ban_phase", on)
+	bans = PackedStringArray()
+	bans_done = false
+	_refresh()
+
+
+# ---- 밴 단계 (블루 = 나, 레드 = AI) ----
+
+func open_ban_phase() -> void:
+	close_ban_phase(false)
+	ban_phase = BanPhase.new()
+	ban_overlay = Control.new()
+	ban_overlay.name = "BanOverlay"
+	ban_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ban_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(ban_overlay)
+	var box := UiKit.page(ban_overlay, 10)
+	UiKit.header(box, "밴 단계", on_back)
+	ban_board = BanBoard.new()
+	ban_board.ban_confirmed.connect(player_ban)
+	box.add_child(ban_board)
+	_start_turn()
+
+
+## 밴 단계를 닫는다. finished 이면 금지한 영웅을 남기고 영웅 고르기로 돌아간다.
+func close_ban_phase(finished: bool) -> void:
+	if ban_overlay != null:
+		ban_overlay.queue_free()
+	ban_overlay = null
+	ban_board = null
+	_ban_close_left = -1.0
+	if finished and ban_phase != null:
+		bans = PackedStringArray(ban_phase.bans)
+		bans_done = true
+		# 금지된 영웅을 골라 두었으면 바꾼다: 내 영웅은 고를 수 있는 첫 영웅으로, 직접 구성 칸은 무작위로.
+		var allowed := BanPhase.allowed(bans)
+		if bans.has(slots[0]):
+			for id in allowed:
+				if not slots.has(id):
+					slots[0] = id
+					break
+		for i in range(1, 6):
+			if bans.has(slots[i]):
+				slots[i] = ""
+	ban_phase = null
+	if is_inside_tree() and info != null:
+		_refresh()
+
+
+func _start_turn() -> void:
+	ban_left = BanPhase.TURN_SECONDS
+	_ai_wait = BanPhase.AI_DELAY
+	_update_ban_board()
+
+
+func _update_ban_board() -> void:
+	if ban_board == null or ban_phase == null:
+		return
+	var mine := ban_phase.current_team() == Enums.Team.BLUE
+	var who := ""
+	if ban_phase.done():
+		who = "밴이 끝났습니다. 잠시 뒤 영웅 고르기로 돌아갑니다."
+	elif mine:
+		who = "내 차례입니다. 상대가 쓰지 못하게 할 영웅을 고르고 밴하기를 누르세요. 시간이 지나면 무작위로 금지합니다."
+	else:
+		who = "상대 팀(AI)이 금지할 영웅을 고르고 있습니다."
+	ban_board.show_state(ban_phase.bans, ban_phase.turn, mine and not ban_phase.done(), who)
+	ban_board.set_time_left(ban_left if not ban_phase.done() else -1.0)
+
+
+## 블루(나)의 금지. 내 차례가 아니거나 금지할 수 없는 영웅이면 false.
+func player_ban(hero_id: String) -> bool:
+	if ban_phase == null or ban_phase.current_team() != Enums.Team.BLUE:
+		return false
+	if not ban_phase.ban(hero_id):
+		return false
+	_after_ban()
+	return true
+
+
+## AI(또는 시간이 다 된 차례)의 금지
+func ai_ban() -> String:
+	if ban_phase == null or ban_phase.done():
+		return ""
+	var protect: Array = [slots[0]] if ban_phase.current_team() == Enums.Team.BLUE else []
+	var id := ban_phase.ai_ban(protect)
+	if id != "":
+		_after_ban()
+	return id
+
+
+func _after_ban() -> void:
+	if ban_phase.done():
+		_ban_close_left = 1.0
+	_start_turn()
+
+
+func _process(delta: float) -> void:
+	if ban_phase == null or ban_overlay == null:
+		return
+	if ban_phase.done():
+		if _ban_close_left >= 0.0:
+			_ban_close_left -= delta
+			if _ban_close_left < 0.0:
+				close_ban_phase(true)
+		return
+	if ban_phase.current_team() == Enums.Team.RED:
+		_ai_wait -= delta
+		if _ai_wait <= 0.0:
+			ai_ban()
+		return
+	ban_left -= delta
+	if ban_left <= 0.0:
+		ai_ban()
+	elif ban_board != null:
+		ban_board.set_time_left(ban_left)

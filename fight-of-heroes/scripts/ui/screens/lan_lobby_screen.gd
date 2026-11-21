@@ -8,6 +8,8 @@ var status_label: Label
 var name_edit: LineEdit
 var ip_edit: LineEdit
 var _shown := ""  # 지금 그린 화면 ("outside" / "room")
+var ban_board: BanBoard = null
+var _ban_pick := ""  # 밴 단계에서 눌러 둔 영웅 (방 화면을 다시 그려도 남긴다)
 
 
 func _ready() -> void:
@@ -47,7 +49,15 @@ func on_back() -> void:
 	GameManager.go_main()
 
 
+func _process(_delta: float) -> void:
+	if ban_board != null and is_instance_valid(ban_board) and Net.ban_turn >= 0:
+		ban_board.set_time_left(Net.ban_left)
+
+
 func _clear() -> void:
+	if ban_board != null and is_instance_valid(ban_board):
+		_ban_pick = ban_board.selected
+	ban_board = null
 	for c in body.get_children():
 		body.remove_child(c)
 		c.queue_free()
@@ -188,10 +198,23 @@ func _build_room() -> void:
 		var k := int(SaveManager.get_setting("kill_target", 15))
 		var diff: String = {"easy": "쉬움", "normal": "보통", "hard": "어려움"}.get(SaveManager.get_setting("difficulty", "normal"), "보통")
 		top.add_child(UiKit.label("목표 킬 %s · AI %s" % [str(k) if k > 0 else "무제한", diff], 18, UiKit.MUTED))
+	top.add_child(UiKit.label("밴 단계", 18, UiKit.MUTED))
+	if Net.is_host():
+		var bt := UiKit.toggle("켬" if Net.ban_enabled else "끔", Vector2(90, 52))
+		bt.name = "BanToggle"
+		bt.button_pressed = Net.ban_enabled
+		bt.disabled = Net.ban_turn >= 0
+		bt.pressed.connect(func(): Net.set_ban_enabled(not Net.ban_enabled))
+		top.add_child(bt)
+	else:
+		top.add_child(UiKit.label("켬" if Net.ban_enabled else "끔", 18, UiKit.ACCENT if Net.ban_enabled else UiKit.MUTED))
 	var leave := UiKit.button("방 나가기", Vector2(150, 52))
 	leave.pressed.connect(on_back)
 	top.add_child(leave)
 
+	if Net.ban_turn >= 0:
+		_build_ban_phase()
+		return
 	var teams := HBoxContainer.new()
 	teams.add_theme_constant_override("separation", 14)
 	body.add_child(teams)
@@ -206,7 +229,9 @@ func _build_room() -> void:
 		for i in 3:
 			v.add_child(_slot_row(i + (0 if team == Enums.Team.BLUE else 3)))
 
-	# 영웅 고르기 (내 팀이 이미 고른 영웅은 못 고름)
+	body.add_child(_spectator_row())
+
+	# 영웅 고르기 (내 팀이 이미 고른 영웅과 금지된 영웅은 못 고름). 관전자는 고르지 않는다.
 	var mine := Net.my_slot()
 	var used: Array = []
 	for s in Net.slots:
@@ -217,7 +242,14 @@ func _build_room() -> void:
 	body.add_child(hp)
 	var hv := VBoxContainer.new()
 	hp.add_child(hv)
-	hv.add_child(UiKit.label("내 영웅 고르기", 18, UiKit.ACCENT))
+	if mine < 0:
+		hv.add_child(UiKit.wrap_label("관전 중입니다. 경기가 시작되면 영웅 없이 모든 곳을 볼 수 있습니다. 경기에 참여하려면 빈자리의 \"이 자리로\"를 누르세요.", 18, UiKit.MUTED))
+		_add_bottom()
+		return
+	var title := "내 영웅 고르기"
+	if Net.bans_done and not Net.bans.is_empty():
+		title += "   ·   금지된 영웅: " + _ban_names()
+	hv.add_child(UiKit.label(title, 18, UiKit.ACCENT))
 	var sc := UiKit.scroll()
 	hv.add_child(sc)
 	var grid := GridContainer.new()
@@ -232,7 +264,9 @@ func _build_room() -> void:
 		var b := UiKit.toggle("", Vector2(142, 64), 16)
 		b.name = "Hero_" + id
 		b.button_pressed = id == my_hero
-		b.disabled = used.has(id)
+		b.disabled = used.has(id) or Net.bans.has(id)
+		if Net.bans.has(id):
+			b.modulate = Color(0.45, 0.45, 0.48)
 		var row := HBoxContainer.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -244,14 +278,18 @@ func _build_room() -> void:
 		b.add_child(row)
 		b.pressed.connect(func(): Net.request_hero(id); SaveManager.set_setting("last_hero", id))
 		grid.add_child(b)
+	_add_bottom()
 
+
+func _add_bottom() -> void:
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 12)
 	body.add_child(bottom)
 	if Net.is_host():
-		bottom.add_child(UiKit.label("사람 %d명 · 빈자리 %d개는 AI" % [Net.slots.size(), 6 - Net.slots.size()], 18, UiKit.MUTED))
+		bottom.add_child(UiKit.label("사람 %d명 · 빈자리 %d개는 AI · 관전 %d명" % [Net.slots.size(), 6 - Net.slots.size(), Net.spectators.size()], 18, UiKit.MUTED))
 		bottom.add_child(UiKit.spacer())
-		var start := UiKit.button("시작하기", Vector2(240, 62), 24)
+		var need_bans: bool = Net.ban_enabled and not Net.bans_done
+		var start := UiKit.button("밴 단계 시작" if need_bans else "시작하기", Vector2(240, 62), 24)
 		start.name = "StartButton"
 		start.pressed.connect(Net.start_match)
 		bottom.add_child(start)
@@ -282,3 +320,52 @@ func _slot_row(slot: int) -> Control:
 		b.pressed.connect(Net.request_slot.bind(slot))
 		row.add_child(b)
 	return row
+
+
+## 관전 줄: 관전자 이름과 "관전으로" 버튼 (방장은 경기를 진행하므로 관전할 수 없다)
+func _spectator_row() -> Control:
+	var row := HBoxContainer.new()
+	row.name = "Spectators"
+	row.add_theme_constant_override("separation", 12)
+	row.add_child(UiKit.label("관전 (%d/%d)" % [Net.spectators.size(), Net.MAX_SPECTATORS], 18, UiKit.ACCENT))
+	var names: Array = []
+	for p in Net.spectators:
+		names.append(str(Net.spectators[p].name) + (" (나)" if int(p) == Net.my_id() else ""))
+	row.add_child(UiKit.label(", ".join(names) if not names.is_empty() else "아무도 없습니다", 18, UiKit.TEXT if not names.is_empty() else UiKit.MUTED))
+	row.add_child(UiKit.spacer())
+	if not Net.is_host() and not Net.is_spectator():
+		var b := UiKit.button("관전으로", Vector2(150, 46), 17)
+		b.name = "SpectateButton"
+		b.disabled = Net.spectators.size() >= Net.MAX_SPECTATORS
+		b.pressed.connect(Net.request_spectate)
+		row.add_child(b)
+	return row
+
+
+func _ban_names() -> String:
+	var names: Array = []
+	for id in Net.bans:
+		var d := DataRegistry.hero(id)
+		names.append(d.display_name if d != null else str(id))
+	return ", ".join(names)
+
+
+## 밴 단계 화면 (모두 같은 화면을 보고, 차례인 사람만 누를 수 있다)
+func _build_ban_phase() -> void:
+	ban_board = BanBoard.new()
+	body.add_child(ban_board)
+	ban_board.selected = _ban_pick
+	ban_board.ban_confirmed.connect(func(id: String):
+		_ban_pick = ""
+		Net.request_ban(id))
+	var team: int = BanPhase.ORDER[Net.ban_turn] if Net.ban_turn < BanPhase.ORDER.size() else Enums.Team.BLUE
+	var bs := Net.banner_slot(team)
+	var who := ""
+	if Net.my_ban_turn():
+		who = "내 차례입니다. 상대가 쓰지 못하게 할 영웅을 고르고 밴하기를 누르세요. 시간이 지나면 대신 금지합니다."
+	elif bs >= 0:
+		who = "%s 팀의 %s 이(가) 금지할 영웅을 고르고 있습니다." % [Enums.team_name(team), Net.slots[bs].name]
+	else:
+		who = "%s 팀은 사람이 없어 AI 가 금지할 영웅을 고르고 있습니다." % Enums.team_name(team)
+	ban_board.show_state(Net.bans, Net.ban_turn, Net.my_ban_turn(), who)
+	ban_board.set_time_left(Net.ban_left)

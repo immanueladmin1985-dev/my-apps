@@ -446,12 +446,19 @@ func _sync_coins(list: Array) -> void:
 		if i < have.size():
 			have[i].global_position = p
 		else:
-			var c := GoldCoin.drop(battle.player_hero, p, 0)
+			var c := GoldCoin.drop(_fx_anchor(), p, 0)
 			c._vel = Vector2.ZERO
 
 
+## 효과를 붙일 기준 노드 (관전자는 내 영웅이 없으므로 월드)
+func _fx_anchor() -> Node:
+	return battle.player_hero if battle.player_hero != null else battle.world
+
+
+## 와드: 우리 팀 것만 보인다. 관전자는 모두 본다.
 func _sync_wards(list: Array) -> void:
-	var mine: Array = list.filter(func(w): return int(w[0]) == battle.config.net_my_team)
+	var spec: bool = battle.config.net_spectator
+	var mine: Array = list.filter(func(w): return spec or int(w[0]) == battle.config.net_my_team)
 	var have: Array = get_tree().get_nodes_in_group("wards")
 	while have.size() > mine.size():
 		have.pop_back().queue_free()
@@ -463,7 +470,7 @@ func _sync_wards(list: Array) -> void:
 			w = Ward.new()
 			w.team = int(mine[i][0])
 			w.add_to_group("wards")
-			Targeting.effects_parent(battle.player_hero).add_child(w)
+			Targeting.effects_parent(_fx_anchor()).add_child(w)
 		w.global_position = Vector2(mine[i][1], mine[i][2])
 		w.life = w._age + maxf(0.5, float(mine[i][3]))
 
@@ -588,7 +595,7 @@ func _events(list: Array) -> void:
 
 @rpc("authority", "reliable")
 func _ping_event(team: int, kind: String, x: float, y: float) -> void:
-	if Net.is_client() and team == battle.config.net_my_team:
+	if Net.is_client() and not battle.config.net_spectator and team == battle.config.net_my_team:
 		battle.ai_manager.add_ping(team, kind, Vector2(x, y))
 		PingMarker.spawn(battle.player_hero, Vector2(x, y), kind, AIManager.PING_SECONDS)
 
