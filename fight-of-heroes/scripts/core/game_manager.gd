@@ -43,17 +43,22 @@ func _ready() -> void:
 
 
 ## 기본 경기: 플레이어 영웅 + 나머지는 무작위로 채운 3대3. 영웅이 모자라지 않으면 같은 영웅은 한 번만 나온다.
-func default_config(player_hero := "blade_master", team_size := 3) -> MatchConfig:
+## bans 에 있는 영웅(밴 단계에서 금지한 영웅)은 뽑지 않는다.
+func default_config(player_hero := "blade_master", team_size := 3, bans := PackedStringArray()) -> MatchConfig:
 	var c := MatchConfig.new()
-	var pool: Array = pick_order(player_hero)
+	var pool: Array = pick_order(player_hero, bans)
+	var fallback: Array = BanPhase.allowed(bans)
+	if fallback.is_empty():
+		fallback = DataRegistry.ids("heroes")
 	var blue := [player_hero]
 	var red := []
 	# 상대 팀을 먼저 뽑는다 (최근에 덜 만난 영웅부터).
 	for i in team_size:
-		red.append(pool.pop_front() if not pool.is_empty() else DataRegistry.ids("heroes").pick_random())
+		red.append(pool.pop_front() if not pool.is_empty() else fallback.pick_random())
 	pool.shuffle()
 	for i in team_size - 1:
-		blue.append(pool.pop_back() if not pool.is_empty() else DataRegistry.ids("heroes").pick_random())
+		blue.append(pool.pop_back() if not pool.is_empty() else fallback.pick_random())
+	c.bans = PackedStringArray(bans)
 	c.blue_heroes = PackedStringArray(blue)
 	c.red_heroes = PackedStringArray(red)
 	c.player_index = 0
@@ -65,8 +70,8 @@ func default_config(player_hero := "blade_master", team_size := 3) -> MatchConfi
 
 
 ## 무작위로 뽑을 영웅 순서: 섞은 뒤, 최근에 상대로 만난 영웅을 뒤로 보낸다 (매번 다른 상대를 만나도록).
-func pick_order(player_hero: String) -> Array:
-	var pool: Array = DataRegistry.ids("heroes")
+func pick_order(player_hero: String, bans := PackedStringArray()) -> Array:
+	var pool: Array = BanPhase.allowed(bans)
 	pool.shuffle()
 	pool.erase(player_hero)
 	var recent: Array = SaveManager.get_setting("recent_enemies", [])
@@ -107,7 +112,7 @@ func restart_match() -> void:
 		start_match(default_config())
 		return
 	if old.random_teams and old.player_index >= 0 and old.player_index < old.blue_heroes.size():
-		var c := default_config(old.blue_heroes[old.player_index], old.blue_heroes.size())
+		var c := default_config(old.blue_heroes[old.player_index], old.blue_heroes.size(), old.bans)
 		c.difficulty = old.difficulty
 		c.kill_target = old.kill_target
 		c.mode = old.mode

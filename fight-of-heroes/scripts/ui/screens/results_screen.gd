@@ -22,8 +22,10 @@ func _ready() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 24)
 	box.add_child(top)
-	var title := ("승리!" if won else "패배") if s.mode != "watch" else "%s 팀 승리" % Enums.team_name(s.winner)
-	top.add_child(UiKit.label(title, 52, UiKit.GOOD if won or s.mode == "watch" else UiKit.BAD))
+	# AI 끼리 관전이나 와이파이 대전 관전(내 영웅이 없음)은 이긴 팀을 보여 준다.
+	var watching: bool = s.mode == "watch" or me == null
+	var title := ("승리!" if won else "패배") if not watching else "%s 팀 승리" % Enums.team_name(s.winner)
+	top.add_child(UiKit.label(title, 52, UiKit.GOOD if won or watching else UiKit.BAD))
 	var t := int(s.time)
 	top.add_child(UiKit.label("%s 팀 %s · 블루 %d : %d 레드 · %02d:%02d" % [Enums.team_name(s.winner), REASONS.get(s.reason, ""), s.blue_kills, s.red_kills, t / 60, t % 60], 20, UiKit.MUTED))
 	for team in [my_team, Enums.Team.BLUE + Enums.Team.RED - my_team]:

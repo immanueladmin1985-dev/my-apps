@@ -23,3 +23,7 @@ extends Resource
 @export var net_my_slot: int = -1
 @export var net_my_team: int = Enums.Team.BLUE
 @export var net_seed: int = 0
+## 와이파이 대전에서 영웅 없이 보기만 하는 관전자인지
+@export var net_spectator: bool = false
+## 밴 단계에서 금지한 영웅 (아무도 고를 수 없다)
+@export var bans: PackedStringArray = PackedStringArray()

@@ -3,7 +3,9 @@ extends Node
 ## 방장 폰이 서버가 되어 실제 게임을 진행하고(host), 참가자 폰은 조작만 보내고 방장이 보낸 상태를 그린다(client).
 ## 방 찾기: 방장이 1초마다 같은 와이파이에 UDP 로 방을 알리고, 참가자는 그 알림을 듣는다. 안 보이면 IP 로 직접 들어간다.
 ##
-## 로비 자리: 0~2 블루, 3~5 레드. 사람이 없는 자리는 AI 가 채운다.
+## 로비 자리: 0~2 블루, 3~5 레드. 사람이 없는 자리는 AI 가 채운다. 자리가 차면 2명까지 관전으로 들어온다.
+## 밴 단계(방장이 켬): 시작하기를 누르면 블루·레드·블루·레드 차례로 금지하고 방으로 돌아온다.
+## 팀의 금지는 그 팀의 첫 사람(가장 앞 자리)이 하고, 사람이 없는 팀은 AI 가 한다. 요청은 방장이 모두 확인한다.
 
 signal lobby_changed
 signal rooms_changed
@@ -14,7 +16,8 @@ signal left
 const PORT := 47900
 const DISCOVERY_PORT := 47901
 const GAME_TAG := "fight-of-heroes"
-const MAX_CLIENTS := 5
+const MAX_SPECTATORS := 2
+const MAX_CLIENTS := 5 + MAX_SPECTATORS
 
 enum Role { OFFLINE, HOST, CLIENT }
 
@@ -22,6 +25,14 @@ var role: int = Role.OFFLINE
 var my_name := "플레이어"
 ## 자리 번호 -> {peer, name, hero}. 비어 있으면 AI.
 var slots: Dictionary = {}
+## 관전자: 피어 번호 -> {name, hero(자리로 돌아갈 때 고를 영웅)}
+var spectators: Dictionary = {}
+## 밴 단계: 켰는지(방장 설정), 금지한 영웅(순서대로), 지금 차례(-1 이면 금지 중이 아님), 끝났는지, 지금 차례의 남은 시간
+var ban_enabled := true
+var bans: Array = []
+var ban_turn := -1
+var bans_done := false
+var ban_left := 0.0
 ## 방 찾기로 들은 방: ip -> {name, players, time}
 var rooms: Dictionary = {}
 var room_name := ""
@@ -45,6 +56,11 @@ func is_online() -> bool:
 
 func my_id() -> int:
 	return multiplayer.get_unique_id() if is_online() else 1
+
+
+## 내가 관전자인지
+func is_spectator() -> bool:
+	return is_online() and spectators.has(my_id())
 
 
 ## 내 자리 번호 (-1 이면 없음)
@@ -83,7 +99,13 @@ func _dev_auto() -> void:
 		while is_host() and slots.size() < need:
 			await get_tree().create_timer(0.2).timeout
 		await get_tree().create_timer(0.5).timeout
+		# 개발용: --lan_bans 를 주면 밴 단계를 거친다 (AI·시간 초과가 대신 금지).
+		ban_enabled = a.has("lan_bans")
 		start_match()
+		while is_host() and ban_turn >= 0:
+			await get_tree().create_timer(0.2).timeout
+		if is_host() and bans_done:
+			start_match()
 	elif a.has("lan_join"):
 		my_name = "참가자"
 		join(str(a["lan_join"]))
@@ -114,6 +136,8 @@ func host(name_text := "") -> int:
 	role = Role.HOST
 	room_name = name_text if name_text != "" else "%s 의 방" % my_name
 	slots = {0: {"peer": 1, "name": my_name, "hero": _default_hero()}}
+	_reset_room_extras()
+	ban_enabled = bool(SaveManager.get_setting("lan_bans", true))
 	_udp_send = PacketPeerUDP.new()
 	_udp_send.set_broadcast_enabled(true)
 	_udp_send.set_dest_address("255.255.255.255", DISCOVERY_PORT)
@@ -133,6 +157,7 @@ func join(ip: String) -> int:
 	multiplayer.multiplayer_peer = peer
 	role = Role.CLIENT
 	slots = {}
+	_reset_room_extras()
 	status.emit("%s 에 연결하는 중..." % ip)
 	return OK
 
@@ -144,6 +169,7 @@ func leave() -> void:
 	var was := role
 	role = Role.OFFLINE
 	slots = {}
+	_reset_room_extras()
 	if _udp_send != null:
 		_udp_send.close()
 		_udp_send = null
@@ -177,6 +203,8 @@ func local_ips() -> PackedStringArray:
 
 
 func _process(delta: float) -> void:
+	if ban_turn >= 0 and is_online():
+		_ban_tick(delta)
 	if is_host() and _udp_send != null and not _in_battle():
 		_announce_left -= delta
 		if _announce_left <= 0.0:
@@ -211,7 +239,7 @@ func _version() -> String:
 
 
 func _human_count() -> int:
-	return slots.size()
+	return slots.size() + spectators.size()
 
 
 func _default_hero() -> String:
@@ -247,6 +275,9 @@ func _on_peer_disconnected(id: int) -> void:
 	if not is_host():
 		return
 	ready_peers.erase(id)
+	if spectators.has(id):
+		status.emit("관전하던 %s 이(가) 나갔습니다" % spectators[id].name)
+		spectators.erase(id)
 	for s in slots.keys():
 		if int(slots[s].peer) == id:
 			var nm: String = slots[s].name
@@ -287,13 +318,25 @@ func _hello(name_text: String, ver: String, hero_id: String) -> void:
 	if _in_battle():
 		_kick.rpc_id(id, "이미 경기가 시작된 방입니다")
 		return
+	add_joiner(id, name_text, hero_id)
+
+
+## 들어온 사람을 빈자리에 앉힌다. 자리가 없으면 관전으로, 관전 자리도 없으면 내보낸다 (true 면 들어옴).
+func add_joiner(id: int, name_text: String, hero_id: String) -> bool:
 	var slot := _free_slot()
 	if slot < 0:
-		_kick.rpc_id(id, "방이 꽉 찼습니다")
-		return
+		if spectators.size() >= MAX_SPECTATORS:
+			if multiplayer.get_peers().has(id):
+				_kick.rpc_id(id, "방이 꽉 찼습니다. 관전 자리도 남아 있지 않습니다")
+			return false
+		spectators[id] = {"name": name_text, "hero": hero_id}
+		status.emit("%s 이(가) 관전으로 들어왔습니다" % name_text)
+		_broadcast_lobby()
+		return true
 	slots[slot] = {"peer": id, "name": name_text, "hero": _unique_hero(slot, hero_id)}
 	status.emit("%s 이(가) 들어왔습니다" % name_text)
 	_broadcast_lobby()
+	return true
 
 
 @rpc("authority", "reliable")
@@ -324,10 +367,10 @@ func _unique_hero(slot: int, want: String) -> String:
 	for s in team_slots:
 		if s != slot and slots.has(s):
 			used.append(slots[s].hero)
-	if DataRegistry.hero(want) != null and not used.has(want):
+	if DataRegistry.hero(want) != null and not used.has(want) and not bans.has(want):
 		return want
 	for id in DataRegistry.ids("heroes"):
-		if not used.has(id):
+		if not used.has(id) and not bans.has(id):
 			return id
 	return want
 
@@ -360,14 +403,25 @@ func _req_slot(slot: int) -> void:
 
 
 func _set_hero(peer: int, hero_id: String) -> void:
+	if ban_turn >= 0 or bans.has(hero_id):
+		return
 	for s in slots:
 		if int(slots[s].peer) == peer:
 			slots[s].hero = _unique_hero(int(s), hero_id)
+	if spectators.has(peer) and DataRegistry.hero(hero_id) != null:
+		spectators[peer].hero = hero_id
 	_broadcast_lobby()
 
 
+## 자리 옮기기. 관전자가 빈자리를 고르면 그 자리에 앉는다. 밴 단계 중에는 못 옮긴다.
 func _move_slot(peer: int, slot: int) -> void:
-	if slot < 0 or slot > 5 or slots.has(slot):
+	if slot < 0 or slot > 5 or slots.has(slot) or ban_turn >= 0:
+		return
+	if spectators.has(peer):
+		var sp: Dictionary = spectators[peer]
+		spectators.erase(peer)
+		slots[slot] = {"peer": peer, "name": sp.name, "hero": _unique_hero(slot, str(sp.get("hero", "")))}
+		_broadcast_lobby()
 		return
 	for s in slots.keys():
 		if int(slots[s].peer) == peer:
@@ -379,19 +433,190 @@ func _move_slot(peer: int, slot: int) -> void:
 	_broadcast_lobby()
 
 
+## 관전으로 옮기기 (방장은 게임을 진행하므로 관전할 수 없다)
+func request_spectate() -> void:
+	if is_host():
+		_to_spectator(1)
+	elif is_client():
+		_req_spectate.rpc_id(1)
+
+
+@rpc("any_peer", "reliable")
+func _req_spectate() -> void:
+	if is_host():
+		_to_spectator(multiplayer.get_remote_sender_id())
+
+
+func _to_spectator(peer: int) -> bool:
+	if peer == 1:
+		status.emit("방장은 경기를 진행하므로 관전할 수 없습니다")
+		return false
+	if spectators.has(peer) or ban_turn >= 0:
+		return false
+	if spectators.size() >= MAX_SPECTATORS:
+		status.emit("관전 자리가 꽉 찼습니다")
+		return false
+	for s in slots.keys():
+		if int(slots[s].peer) == peer:
+			spectators[peer] = {"name": slots[s].name, "hero": slots[s].hero}
+			slots.erase(s)
+			_broadcast_lobby()
+			return true
+	return false
+
+
 func _broadcast_lobby() -> void:
 	lobby_changed.emit()
 	if is_host():
-		_lobby_state.rpc(_slots_to_array(), room_name)
+		_lobby_state.rpc(_slots_to_array(), room_name, _extras())
+
+
+## 자리 밖의 로비 상태: 관전자, 밴 단계
+func _extras() -> Dictionary:
+	var spec: Array = []
+	for p in spectators:
+		spec.append([int(p), str(spectators[p].name), str(spectators[p].get("hero", ""))])
+	return {"spec": spec, "ban_on": ban_enabled, "bans": bans.duplicate(), "turn": ban_turn, "left": ban_left, "done": bans_done}
 
 
 @rpc("authority", "reliable")
-func _lobby_state(arr: Array, rname: String) -> void:
+func _lobby_state(arr: Array, rname: String, extras: Dictionary = {}) -> void:
 	slots = {}
 	for e in arr:
 		slots[int(e[0])] = {"peer": int(e[1]), "name": str(e[2]), "hero": str(e[3])}
 	room_name = rname
+	spectators = {}
+	for e in extras.get("spec", []):
+		spectators[int(e[0])] = {"name": str(e[1]), "hero": str(e[2])}
+	ban_enabled = bool(extras.get("ban_on", ban_enabled))
+	bans = Array(extras.get("bans", []))
+	ban_turn = int(extras.get("turn", -1))
+	ban_left = float(extras.get("left", 0.0))
+	bans_done = bool(extras.get("done", false))
 	lobby_changed.emit()
+
+
+func _reset_room_extras() -> void:
+	spectators = {}
+	bans = []
+	ban_turn = -1
+	bans_done = false
+	ban_left = 0.0
+
+
+# ---- 밴 단계 ----
+
+## 방장: 밴 단계 켜기/끄기 (끄면 이미 금지한 영웅도 풀린다)
+func set_ban_enabled(on: bool) -> void:
+	if not is_host() or ban_turn >= 0:
+		return
+	ban_enabled = on
+	SaveManager.set_setting("lan_bans", on)
+	bans = []
+	bans_done = false
+	_broadcast_lobby()
+
+
+## team 의 금지를 맡는 자리 (그 팀의 가장 앞 사람 자리, 사람이 없으면 -1 = AI)
+func banner_slot(team: int) -> int:
+	var base := 0 if team == Enums.Team.BLUE else 3
+	for s in [base, base + 1, base + 2]:
+		if slots.has(s):
+			return s
+	return -1
+
+
+## 지금 금지할 피어 번호 (AI 차례이거나 금지 중이 아니면 0)
+func current_banner_peer() -> int:
+	if ban_turn < 0 or ban_turn >= BanPhase.ORDER.size():
+		return 0
+	var s := banner_slot(BanPhase.ORDER[ban_turn])
+	return int(slots[s].peer) if s >= 0 else 0
+
+
+## 지금 내가 금지할 차례인지
+func my_ban_turn() -> bool:
+	return ban_turn >= 0 and current_banner_peer() == my_id()
+
+
+func _begin_bans() -> void:
+	bans = []
+	bans_done = false
+	ban_turn = 0
+	ban_left = BanPhase.TURN_SECONDS
+	status.emit("밴 단계를 시작합니다")
+	_broadcast_lobby()
+
+
+## 금지 요청 (내 차례일 때 화면에서)
+func request_ban(hero_id: String) -> void:
+	if is_host():
+		_do_ban(1, hero_id)
+	elif is_client():
+		_req_ban.rpc_id(1, hero_id)
+
+
+@rpc("any_peer", "reliable")
+func _req_ban(hero_id: String) -> void:
+	if is_host():
+		_do_ban(multiplayer.get_remote_sender_id(), hero_id)
+
+
+## 방장이 금지 요청을 확인하고 실행한다. peer 0 은 AI(방장이 대신 고름).
+## 보낸 사람이 지금 차례 팀의 금지 담당이 아니거나, 이미 금지한 영웅이면 무시한다.
+func _do_ban(peer: int, hero_id: String) -> bool:
+	if not is_host() or ban_turn < 0 or ban_turn >= BanPhase.ORDER.size():
+		return false
+	if peer != current_banner_peer():
+		return false
+	if not BanPhase.can_ban(bans, hero_id):
+		return false
+	bans.append(hero_id)
+	ban_turn += 1
+	ban_left = BanPhase.TURN_SECONDS
+	if ban_turn >= BanPhase.ORDER.size():
+		_finish_bans()
+	else:
+		_broadcast_lobby()
+	return true
+
+
+## AI 가(또는 시간이 다 된 차례를 대신) 금지한다. 금지한 영웅 id.
+func _ai_ban() -> String:
+	if ban_turn < 0 or ban_turn >= BanPhase.ORDER.size():
+		return ""
+	var team: int = BanPhase.ORDER[ban_turn]
+	var protect: Array = []
+	for s in slots:
+		if (int(s) < 3) == (team == Enums.Team.BLUE):
+			protect.append(slots[s].hero)
+	var id := BanPhase.choose_ai_ban(bans, protect)
+	var peer := current_banner_peer()
+	return id if id != "" and _do_ban(peer, id) else ""
+
+
+func _ban_tick(delta: float) -> void:
+	ban_left -= delta
+	if not is_host():
+		return
+	var ai := current_banner_peer() == 0
+	if (ai and ban_left <= BanPhase.TURN_SECONDS - BanPhase.AI_DELAY) or ban_left <= 0.0:
+		if not ai:
+			status.emit("시간이 지나 대신 금지했습니다")
+		_ai_ban()
+
+
+## 밴이 끝나면 방으로 돌아간다. 금지된 영웅을 고른 사람은 고를 수 있는 영웅으로 바꾼다.
+func _finish_bans() -> void:
+	ban_turn = -1
+	bans_done = true
+	var changed := false
+	for s in slots:
+		if bans.has(slots[s].hero):
+			slots[s].hero = _unique_hero(int(s), slots[s].hero)
+			changed = true
+	status.emit("밴이 끝났습니다. %s영웅을 확인한 뒤 방장이 시작하기를 누르세요" % ("금지된 영웅은 다른 영웅으로 바꿨습니다. " if changed else ""))
+	_broadcast_lobby()
 
 
 func _slots_to_array() -> Array:
@@ -404,13 +629,24 @@ func _slots_to_array() -> Array:
 # ---- 경기 시작 ----
 
 ## 방장이 시작: 빈자리는 AI 영웅으로 채운 설정을 모두에게 보내고 함께 전투 화면으로 간다.
+## 밴 단계가 켜져 있고 아직 안 했으면 먼저 밴 단계를 한다(끝나면 방으로 돌아오고, 다시 시작하기를 누른다).
 func start_match() -> void:
-	if not is_host():
+	if not is_host() or ban_turn >= 0:
 		return
+	if ban_enabled and not bans_done:
+		_begin_bans()
+		return
+	var cfg := build_start_cfg()
+	_start.rpc(cfg)
+	_start(cfg)
+
+
+## 방장: 경기 설정을 만든다. 빈자리는 금지되지 않았고 같은 팀과 겹치지 않는 영웅으로 채운다.
+func build_start_cfg() -> Dictionary:
 	var heroes := ["", "", "", "", "", ""]
 	for s in slots:
-		heroes[int(s)] = slots[s].hero
-	var pool: Array = DataRegistry.ids("heroes")
+		heroes[int(s)] = slots[s].hero if not bans.has(slots[s].hero) else _unique_hero(int(s), slots[s].hero)
+	var pool: Array = BanPhase.allowed(bans)
 	pool.shuffle()
 	for i in 6:
 		if heroes[i] == "":
@@ -424,10 +660,9 @@ func start_match() -> void:
 		"difficulty": SaveManager.get_setting("difficulty", "normal"),
 		"kill_target": int(SaveManager.get_setting("kill_target", 15)),
 		"map": GameManager.DEFAULT_MAP, "seed": randi() % 100000 + 1,
-		"humans": _slots_to_array(),
+		"humans": _slots_to_array(), "bans": bans.duplicate(),
 	}
-	_start.rpc(cfg)
-	_start(cfg)
+	return cfg
 
 
 @rpc("authority", "reliable")
@@ -443,10 +678,18 @@ func _start(cfg: Dictionary) -> void:
 	c.net_humans = {}
 	for e in cfg.humans:
 		c.net_humans[int(e[0])] = int(e[1])
+	c.bans = PackedStringArray(cfg.get("bans", []))
+	if GameManager.dev_args.has("lan_quit"):
+		print("LAN_START bans=%s blue=%s red=%s" % [",".join(c.bans), ",".join(c.blue_heroes), ",".join(c.red_heroes)])
 	var mine := my_slot()
 	c.player_index = mine % 3 if mine >= 0 else -1
 	c.net_my_team = Enums.Team.BLUE if mine < 3 else Enums.Team.RED
 	c.net_my_slot = mine
+	c.net_spectator = mine < 0
 	ready_peers = {}
+	# 다음 판은 밴을 새로 한다.
+	bans = []
+	bans_done = false
+	ban_turn = -1
 	started.emit()
 	GameManager.start_match(c)
