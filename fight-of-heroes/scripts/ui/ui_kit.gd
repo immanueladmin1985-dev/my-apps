@@ -225,3 +225,71 @@ static func kill_stepper(btn := Vector2(60, 54)) -> HBoxContainer:
 	row.add_child(plus)
 	show.call()
 	return row
+
+
+## 영웅 숙련도 메달: 단계 숫자를 넣은 작은 원. 색은 단계(동·은·금·보라)에 따라 다르다.
+static func mastery_badge(level: int, size := 22.0) -> Control:
+	var c := Control.new()
+	c.name = "Mastery"
+	c.custom_minimum_size = Vector2(size, size)
+	c.size = Vector2(size, size)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var col := ProgressMeta.tier_color(level)
+	c.draw.connect(func():
+		var r := size * 0.5
+		c.draw_circle(Vector2(r, r), r, Color(0.08, 0.06, 0.04, 0.9))
+		c.draw_circle(Vector2(r, r), r - 2.0, col)
+		c.draw_circle(Vector2(r, r), r - 4.0, col.darkened(0.2))
+		var fs := int(size * 0.62)
+		var t := str(level)
+		var w := FONT.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		c.draw_string(FONT, Vector2(r - w * 0.5, r + fs * 0.36), t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0.1, 0.07, 0.03)))
+	return c
+
+
+## 가로 진행 막대 (0~1)
+static func progress_bar(ratio: float, min_size := Vector2(200, 12), color := ACCENT) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = min_size
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var t := clampf(ratio, 0.0, 1.0)
+	c.draw.connect(func():
+		c.draw_rect(Rect2(Vector2.ZERO, c.size), Color(1, 1, 1, 0.12))
+		if t > 0.0:
+			c.draw_rect(Rect2(Vector2.ZERO, Vector2(c.size.x * t, c.size.y)), color))
+	return c
+
+
+## 화면 오른쪽 위에 잠깐 떴다 사라지는 알림 (업적 얻음 등). index 로 여러 개를 아래로 쌓는다.
+static func toast(parent: Control, text: String, index := 0, color := ACCENT, delay := 0.0) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.name = "Toast%d" % index
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.12, 0.1, 0.06, 0.95)
+	sb.border_color = color
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(12)
+	sb.content_margin_left = 18
+	sb.content_margin_right = 18
+	sb.content_margin_top = 8
+	sb.content_margin_bottom = 8
+	p.add_theme_stylebox_override("panel", sb)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(label(text, 20, color))
+	p.modulate.a = 0.0
+	parent.add_child(p)
+	p.reset_size()
+	var place := func():
+		p.position = Vector2(parent.size.x - p.size.x - 24.0, 14.0 + index * 58.0)
+	place.call()
+	place.call_deferred()
+	p.resized.connect(place)
+	var tw := p.create_tween()
+	tw.tween_interval(delay)
+	tw.tween_property(p, "modulate:a", 1.0, 0.25)
+	tw.tween_interval(4.0)
+	tw.tween_property(p, "modulate:a", 0.0, 0.6)
+	tw.tween_callback(p.queue_free)
+	return p

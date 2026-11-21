@@ -48,6 +48,7 @@ static func capture(battle) -> Dictionary:
 			"items": slots, "status": statuses,
 			"streak": bm.streaks.get(h, 0),
 			"damage": bm.damage_to_heroes.get(h, 0.0), "damage_total": bm.damage_total.get(h, 0.0),
+			"feats": bm.feat(h).duplicate(),
 		})
 	for camp in battle.monster_manager.camps:
 		var units: Array = []
@@ -154,6 +155,11 @@ static func _apply_hero(h: Hero, s: Dictionary, bm: BattleManager) -> void:
 	bm.streaks[h] = int(s.get("streak", 0))
 	bm.damage_to_heroes[h] = float(s.get("damage", 0.0))
 	bm.damage_total[h] = float(s.get("damage_total", 0.0))
+	var fs = s.get("feats", {})
+	if fs is Dictionary:
+		var f := bm.feat(h)
+		for k in f:
+			f[k] = int(fs.get(k, 0))
 
 
 static func _apply_camps(mm: MonsterManager, saved: Array) -> void:

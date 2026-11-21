@@ -26,6 +26,7 @@ func _ready() -> void:
 	top.add_child(UiKit.label(title, 52, UiKit.GOOD if won or s.mode == "watch" else UiKit.BAD))
 	var t := int(s.time)
 	top.add_child(UiKit.label("%s 팀 %s · 블루 %d : %d 레드 · %02d:%02d" % [Enums.team_name(s.winner), REASONS.get(s.reason, ""), s.blue_kills, s.red_kills, t / 60, t % 60], 20, UiKit.MUTED))
+	_progress_row(box)
 	for team in [my_team, Enums.Team.BLUE + Enums.Team.RED - my_team]:
 		var p := UiKit.panel()
 		box.add_child(p)
@@ -79,6 +80,41 @@ func _ready() -> void:
 	home.pressed.connect(on_back)
 	row.add_child(home)
 	AudioManager.play("victory" if won else "defeat")
+
+
+## 숙련도·오늘의 도전 과제 한 줄, 새 업적은 화면 위 알림으로 (관전·자동 진행 경기는 없음)
+func _progress_row(box: VBoxContainer) -> void:
+	var pr: Dictionary = GameManager.last_progress
+	if pr.is_empty():
+		return
+	var row := HBoxContainer.new()
+	row.name = "ProgressRow"
+	row.add_theme_constant_override("separation", 12)
+	box.add_child(row)
+	var lv := int(pr.get("level_after", 1))
+	row.add_child(UiKit.mastery_badge(lv, 30.0))
+	var hd := DataRegistry.hero(str(pr.get("hero", "")))
+	row.add_child(UiKit.label("숙련도 +%d" % int(pr.get("gain", 0)), 20, UiKit.ACCENT))
+	var lv_text := "%s %d단계" % [hd.display_name if hd != null else "", lv]
+	if lv > int(pr.get("level_before", lv)):
+		lv_text = "%s 숙련도가 %d단계로 올랐습니다!" % [hd.display_name if hd != null else "", lv]
+	row.add_child(UiKit.label(lv_text, 18, ProgressMeta.tier_color(lv)))
+	var done: Array = pr.get("challenges", [])
+	if not done.is_empty():
+		var names := PackedStringArray()
+		for c in done:
+			names.append(str(c.text).trim_suffix("."))
+		var cl := UiKit.label("· 도전 과제 완료: %s (별 +%d)" % [", ".join(names), int(pr.get("stars", 0))], 17, UiKit.GOOD)
+		cl.clip_text = true
+		cl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		row.add_child(cl)
+	var n := 0
+	for id in pr.get("achievements", []):
+		var a := ProgressMeta.achievement(str(id))
+		if not a.is_empty():
+			UiKit.toast(self, "업적 달성: %s" % a.name, n, UiKit.ACCENT, 0.6 + n * 0.5)
+			n += 1
 
 
 ## 같은 설정으로 다시 한다 (무작위 팀은 새로 섞는다).

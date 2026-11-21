@@ -641,7 +641,7 @@ func _announce(victim, killer) -> void:
 		return
 	var now := Unit.now()
 	var m: Array = _multi.get(killer, [0, -100.0])
-	m = [m[0] + 1 if now - m[1] <= 10.0 else 1, now]
+	m = BattleManager.next_multi(m, now)
 	_multi[killer] = m
 	_multi.erase(victim)
 	var text := ""

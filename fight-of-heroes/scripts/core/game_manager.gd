@@ -10,6 +10,7 @@ const RECORDS_SCENE := "res://scenes/menu/records.tscn"
 const SETTINGS_SCENE := "res://scenes/menu/settings.tscn"
 const RESULTS_SCENE := "res://scenes/results/results.tscn"
 const LAN_SCENE := "res://scenes/menu/lan_lobby.tscn"
+const CHALLENGES_SCENE := "res://scenes/menu/challenges.tscn"
 const RESULTS_DELAY := 2.0
 ## 새 게임에서 쓰는 맵
 const DEFAULT_MAP := "valley_02"
@@ -20,6 +21,8 @@ var match_config: MatchConfig
 var dev_args: Dictionary = {}
 ## 마지막 경기 요약 (결과 화면이 읽는다)
 var last_summary: Dictionary = {}
+## 마지막 경기로 바뀐 숙련도·도전 과제·업적 (ProgressMeta.apply_match 결과, 결과 화면이 읽는다)
+var last_progress: Dictionary = {}
 ## 이어 하기로 전투 화면을 열 때 되돌릴 저장 내용 (전투 화면이 읽고 비운다)
 var resume_snapshot: Dictionary = {}
 
@@ -159,8 +162,12 @@ func apply_settings() -> void:
 func on_match_finished(summary: Dictionary, battle: Node) -> void:
 	last_summary = summary
 	SaveManager.clear_battle()
+	last_progress = {}
 	if summary.get("mode", "team") != "watch":
 		SaveManager.record_match(summary)
+		# 숙련도·도전 과제·업적은 사람이 직접 한 경기만 센다 (자동 진행 시험 경기는 빼고).
+		if not summary.get("autoplay", false):
+			last_progress = ProgressMeta.apply_match(summary)
 	match_finished.emit(summary)
 	if get_tree().current_scene == battle:
 		await get_tree().create_timer(RESULTS_DELAY, true, false, true).timeout
@@ -199,6 +206,7 @@ func _flow_test() -> void:
 		print("FLOW %s %s (%s)" % ["[통과]" if good else "[실패]", name, cur])
 		return good
 	SaveManager.reset_records()
+	ProgressMeta.reset()
 	SaveManager.clear_battle()
 	ok = await step.call("메인 메뉴", MAIN_SCENE, 5.0) and ok
 	get_tree().current_scene.open(NEW_GAME_SCENE)
@@ -244,7 +252,10 @@ func _flow_test() -> void:
 	ok = ok and cleared
 	get_tree().current_scene.on_back()
 	ok = await step.call("메인 메뉴로", MAIN_SCENE, 5.0) and ok
-	for path in [HERO_CODEX_SCENE, ITEM_CODEX_SCENE, RECORDS_SCENE, SETTINGS_SCENE]:
+	var prog_ok: bool = ProgressMeta.mastery_points("monk") > 0 and int(ProgressMeta.meta().stats.games) == 1
+	print("FLOW %s 숙련도·도전 과제 반영 (자동 진행 경기는 빼고 1판)" % ("[통과]" if prog_ok else "[실패]"))
+	ok = ok and prog_ok
+	for path in [HERO_CODEX_SCENE, ITEM_CODEX_SCENE, RECORDS_SCENE, CHALLENGES_SCENE, SETTINGS_SCENE]:
 		get_tree().current_scene.open(path)
 		ok = await step.call("열기 " + path.get_file(), path, 5.0) and ok
 		await get_tree().process_frame

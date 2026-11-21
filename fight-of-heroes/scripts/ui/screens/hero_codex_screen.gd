@@ -31,6 +31,9 @@ func _ready() -> void:
 		var badge := UiKit.hero_badge(h, 36.0)
 		badge.position = Vector2(8, 10)
 		b.add_child(badge)
+		var mb := UiKit.mastery_badge(ProgressMeta.mastery_level(h.id), 22.0)
+		mb.position = Vector2(30, 30)
+		b.add_child(mb)
 		b.set_meta("id", h.id)
 		b.pressed.connect(show_hero.bind(h.id))
 		list.add_child(b)
@@ -69,6 +72,7 @@ func show_hero(id: String) -> void:
 	top.add_child(tv)
 	tv.add_child(UiKit.label(h.display_name, 30, UiKit.ACCENT))
 	tv.add_child(UiKit.label("%s · 난이도 %s · 기본 역할 %s · %s" % [h.role, "★".repeat(h.difficulty), ROLE_NAMES.get(h.preferred_role, ""), "원거리" if h.is_ranged else "근접"], 17, UiKit.MUTED))
+	detail.add_child(_mastery_row(h.id))
 	detail.add_child(UiKit.wrap_label(h.lore, 17))
 	# 능력치 표
 	var grid := GridContainer.new()
@@ -135,6 +139,22 @@ func show_hero(id: String) -> void:
 		var games := int(rec.games)
 		detail.add_child(UiKit.label("내 기록", 22, UiKit.ACCENT))
 		detail.add_child(UiKit.label("%d판 %d승 (승률 %d%%) · 평균 %.1f / %.1f / %.1f" % [games, int(rec.wins), roundi(100.0 * int(rec.wins) / maxf(1, games)), rec.kills / maxf(1, games), rec.deaths / maxf(1, games), rec.assists / maxf(1, games)], 17))
+
+
+## 숙련도 메달, 단계, 다음 단계까지 남은 점수와 진행 막대
+func _mastery_row(id: String) -> Control:
+	var pts := ProgressMeta.mastery_points(id)
+	var lv := ProgressMeta.level_for(pts)
+	var row := HBoxContainer.new()
+	row.name = "MasteryRow"
+	row.add_theme_constant_override("separation", 10)
+	row.add_child(UiKit.mastery_badge(lv, 30.0))
+	var nxt := ProgressMeta.points_to_next(pts)
+	var text := "숙련도 %d단계 · 다음 단계까지 %d" % [lv, nxt] if nxt > 0 else "숙련도 %d단계 · 최고 단계입니다" % lv
+	row.add_child(UiKit.label(text, 18, ProgressMeta.tier_color(lv)))
+	row.add_child(UiKit.progress_bar(ProgressMeta.level_progress(pts), Vector2(160, 10), ProgressMeta.tier_color(lv)))
+	row.add_child(UiKit.label("누적 %d점" % pts, 15, UiKit.MUTED))
+	return row
 
 
 func _fmt(k: String, v: float) -> String:

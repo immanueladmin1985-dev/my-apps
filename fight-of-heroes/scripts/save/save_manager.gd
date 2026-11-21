@@ -28,6 +28,8 @@ func _defaults() -> Dictionary:
 			"damage_numbers": true, "fog_of_war": true, "tilt_view": true, "battery_saver": false, "last_hero": "blade_master", "team_mode": "random",
 		},
 		"records": {"games": 0, "wins": 0, "losses": 0, "best_kills": 0, "heroes": {}, "history": []},
+		# 숙련도·오늘의 도전 과제·업적 (ProgressMeta 가 읽고 쓴다). 기록 초기화로 지우지 않는다.
+		"meta": {},
 	}
 
 
