@@ -13,6 +13,8 @@ var winner := Enums.Team.NEUTRAL
 var end_reason := ""
 
 const ASSIST_WINDOW := 10.0
+## 이 시간(초) 안에 다음 영웅을 잡으면 연달아 잡은 것으로 센다 (더블·트리플 킬)
+const MULTI_WINDOW := 10.0
 
 
 ## 영웅별 준 피해 (영웅에게 준 피해, 전체 피해)
@@ -21,6 +23,11 @@ var damage_total: Dictionary = {}
 ## 영웅별 연속 처치 (죽으면 0). 연속 처치 중인 영웅을 잡으면 현상금을 더 준다.
 var streaks: Dictionary = {}
 var hero_manager = null
+## 영웅별 연달아 잡은 수 [수, 마지막 처치 시각]
+var multi: Dictionary = {}
+## 영웅별 경기 기록 (도전 과제·업적용): best_multi 한 번에 연달아 잡은 최대 수, boss_kills 보스 처치,
+## final_boss_kills 최종 보스 처치, wards 꽂은 와드 수
+var feats: Dictionary = {}
 
 
 func setup(cfg: MatchConfig, hm = null) -> void:
@@ -28,6 +35,24 @@ func setup(cfg: MatchConfig, hm = null) -> void:
 	hero_manager = hm
 	EventBus.unit_died.connect(_on_unit_died)
 	EventBus.unit_damaged.connect(_on_unit_damaged)
+	EventBus.item_used.connect(_on_item_used)
+
+
+## 영웅 h 의 경기 기록 (없으면 만든다)
+func feat(h) -> Dictionary:
+	if not feats.has(h):
+		feats[h] = {"best_multi": 0, "boss_kills": 0, "final_boss_kills": 0, "wards": 0}
+	return feats[h]
+
+
+## 연달아 잡은 수를 갱신해 돌려준다 (m = [수, 마지막 처치 시각]). HUD 알림도 같은 규칙을 쓴다.
+static func next_multi(m: Array, now: float) -> Array:
+	return [m[0] + 1 if now - m[1] <= MULTI_WINDOW else 1, now]
+
+
+func _on_item_used(hero, item) -> void:
+	if hero is Hero and item != null and item.use_kind == "ward" and not match_over:
+		feat(hero).wards += 1
 
 
 func _exit_tree() -> void:
@@ -35,6 +60,8 @@ func _exit_tree() -> void:
 		EventBus.unit_died.disconnect(_on_unit_died)
 	if EventBus.unit_damaged.is_connected(_on_unit_damaged):
 		EventBus.unit_damaged.disconnect(_on_unit_damaged)
+	if EventBus.item_used.is_connected(_on_item_used):
+		EventBus.item_used.disconnect(_on_item_used)
 
 
 func _on_unit_damaged(target, info, amount: float) -> void:
@@ -90,6 +117,14 @@ func _raid_wiped() -> bool:
 func _on_unit_died(victim, killer) -> void:
 	if Net.is_client():
 		return
+	if victim is Monster and victim.is_boss():
+		# 최종 보스를 잡으면 곧바로 경기가 끝나므로 match_over 와 상관없이 센다.
+		var c = ExperienceManager.credit_hero(victim, killer)
+		if c is Hero and (not match_over or victim.is_final_boss()):
+			feat(c).boss_kills += 1
+			if victim.is_final_boss():
+				feat(c).final_boss_kills += 1
+		return
 	# 경기가 끝난 뒤(결과 화면이 뜨기 전)에 쓰러진 것은 점수에 넣지 않는다.
 	if not (victim is Hero) or match_over:
 		return
@@ -105,6 +140,11 @@ func _on_unit_died(victim, killer) -> void:
 		return
 	credit.kills += 1
 	streaks[credit] = streaks.get(credit, 0) + 1
+	var m := next_multi(multi.get(credit, [0, -100.0]), Unit.now())
+	multi[credit] = m
+	multi.erase(victim)
+	var f := feat(credit)
+	f.best_multi = maxi(int(f.best_multi), int(m[0]))
 	if bounty > 0:
 		credit.add_gold(bounty)
 		EventBus.notice.emit("%s 의 연속 처치를 끊었습니다! 현상금 %d 골드" % [victim.display_name, bounty])
@@ -160,6 +200,8 @@ func summary() -> Dictionary:
 				"level": h.level, "kills": h.kills, "deaths": h.deaths, "assists": h.assists, "gold": h.gold,
 				"damage": roundi(damage_to_heroes.get(h, 0.0)), "damage_total": roundi(damage_total.get(h, 0.0)), "items": items,
 				"role": h.controller.role if h.controller is AIController else "",
+				"best_multi": int(feat(h).best_multi), "boss_kills": int(feat(h).boss_kills),
+				"final_boss_kills": int(feat(h).final_boss_kills), "wards": int(feat(h).wards),
 			})
 	var mvp := ""
 	var best := -INF
@@ -181,4 +223,5 @@ func summary() -> Dictionary:
 		"mode": config.mode if config != null else "team",
 		"game_type": config.game_type if config != null else "normal",
 		"time_limit": config.raid_time_limit if config != null else 0.0,
+		"autoplay": config.autoplay if config != null else false,
 	}

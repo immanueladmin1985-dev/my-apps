@@ -95,6 +95,9 @@ func _ready() -> void:
 		var badge := UiKit.hero_badge(h, 40.0)
 		badge.position = Vector2(8, 12)
 		b.add_child(badge)
+		var mb := UiKit.mastery_badge(ProgressMeta.mastery_level(h.id), 20.0)
+		mb.position = Vector2(32, 34)
+		b.add_child(mb)
 		b.text = h.display_name + "\n" + h.role
 		grid.add_child(b)
 		UiKit.indent_button(b, 56.0)

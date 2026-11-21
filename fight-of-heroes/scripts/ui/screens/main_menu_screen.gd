@@ -1,11 +1,13 @@
 extends Control
-## 메인 메뉴: 새 게임, 영웅 도감, 아이템 도감, 게임 기록, 설정, 게임 종료.
+## 메인 메뉴: 새 게임, 같은 와이파이 대전, 영웅 도감, 아이템 도감, 도전과 업적, 게임 기록, 설정, 게임 종료.
+## 버튼이 8개라 720 높이(이어 하기 버튼이 있을 때 포함)에 들어가도록 버튼 높이를 낮춘다.
 
 const MENU := [
 	["새 게임", GameManager.NEW_GAME_SCENE],
 	["같은 와이파이 대전", GameManager.LAN_SCENE],
 	["영웅 도감", GameManager.HERO_CODEX_SCENE],
 	["아이템 도감", GameManager.ITEM_CODEX_SCENE],
+	["도전과 업적", GameManager.CHALLENGES_SCENE],
 	["게임 기록", GameManager.RECORDS_SCENE],
 	["설정", GameManager.SETTINGS_SCENE],
 ]
@@ -22,6 +24,7 @@ func _ready() -> void:
 	var left := MarginContainer.new()
 	left.add_theme_constant_override("margin_left", 60)
 	left.add_theme_constant_override("margin_top", 40)
+	left.add_theme_constant_override("margin_bottom", 16)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(left)
 	var box := VBoxContainer.new()
@@ -37,6 +40,11 @@ func _ready() -> void:
 	var total := int(r.games)
 	var rate := (100.0 * int(r.wins) / total) if total > 0 else 0.0
 	box.add_child(UiKit.label("전적 %d승 %d패 (승률 %d%%) · 최고 킬 %d" % [int(r.wins), int(r.losses), roundi(rate), int(r.best_kills)], 20, UiKit.TEXT))
+	var daily_done := 0
+	for c in ProgressMeta.daily_for(ProgressMeta.today()):
+		if ProgressMeta.challenge_done(c.id):
+			daily_done += 1
+	box.add_child(UiKit.label("오늘의 도전 과제 %d / 3 · ★ 별 %d개" % [daily_done, ProgressMeta.stars()], 18, UiKit.ACCENT))
 	var last: String = SaveManager.get_setting("last_hero", "")
 	var h := DataRegistry.hero(last)
 	if h != null:
@@ -49,13 +57,13 @@ func _ready() -> void:
 	row.add_child(right)
 	var menu := VBoxContainer.new()
 	menu.alignment = BoxContainer.ALIGNMENT_CENTER
-	menu.add_theme_constant_override("separation", 12)
+	menu.add_theme_constant_override("separation", 8)
 	right.add_child(menu)
 	var snap := SaveManager.load_battle()
 	if BattleSnapshot.make_config(snap) != null:
 		var t := int(snap.get("elapsed", 0.0))
 		var k: Array = snap.get("kills", [0, 0])
-		var cont := UiKit.button("이어 하기", Vector2(340, 70), 26)
+		var cont := UiKit.button("이어 하기", Vector2(340, 64), 26)
 		cont.name = "이어 하기"
 		cont.pressed.connect(resume)
 		menu.add_child(cont)
@@ -63,11 +71,11 @@ func _ready() -> void:
 		info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		menu.add_child(info)
 	for m in MENU:
-		var b := UiKit.button(m[0], Vector2(340, 62), 24)
+		var b := UiKit.button(m[0], Vector2(340, 54), 22)
 		b.name = m[0]
 		b.pressed.connect(open.bind(m[1]))
 		menu.add_child(b)
-	var q := UiKit.button("게임 종료", Vector2(340, 62), 22)
+	var q := UiKit.button("게임 종료", Vector2(340, 54), 20)
 	q.pressed.connect(on_back)
 	menu.add_child(q)
 
