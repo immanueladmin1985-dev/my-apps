@@ -15,6 +15,8 @@ var monster_manager: MonsterManager
 var shop: ShopManager
 ## 팀마다 플레이어가 조작하는 영웅 (없으면 null)
 var player_heroes: Dictionary = {}
+## 보스 레이드: 블루 팀 AI 는 준비가 되면(평균 9레벨 또는 2분 뒤) 플레이어와 상관없이 레이드 보스에 모인다.
+var raid := false
 
 var _focus: Dictionary = {}  # team -> Unit
 var _focus_left := 0.0
@@ -153,6 +155,9 @@ func _update_plan(team: int) -> void:
 	if monster_manager == null:
 		plans[team] = {"kind": "none"}
 		return
+	if raid:
+		_update_raid_plan(team, p)
+		return
 	# 플레이어 팀은 플레이어가 보스를 공격하기 시작하면 함께 도전한다.
 	var player = player_heroes.get(team)
 	if player != null and is_instance_valid(player) and not player.is_dead:
@@ -175,6 +180,37 @@ func _update_plan(team: int) -> void:
 			plans[team] = {"kind": "boss", "target": b}
 			return
 	plans[team] = {"kind": "none"}
+
+
+## 보스 레이드의 팀 계획: 레이드 보스가 나왔고 준비가 됐거나 플레이어가 보스를 공격 중이면 보스, 아니면 사냥.
+func _update_raid_plan(team: int, p: Dictionary) -> void:
+	var fb = monster_manager.final_boss()
+	if fb == null:
+		plans[team] = {"kind": "none"}
+		return
+	var player = player_heroes.get(team)
+	var player_on_boss: bool = player != null and is_instance_valid(player) and not player.is_dead and player.attack_order == fb
+	if player_on_boss or raid_ready(team):
+		plans[team] = {"kind": "boss", "target": fb}
+	elif p.get("kind", "") == "boss" and team_boss_ready_keep(team):
+		return
+	else:
+		plans[team] = {"kind": "none"}
+
+
+## 보스 레이드에서 보스에 도전할 준비: 2명 이상 살아 있고, 평균 레벨이 9 이상이거나 2분이 지났다.
+func raid_ready(team: int) -> bool:
+	if alive_count(team) < 2 or hero_manager == null:
+		return false
+	var elapsed: float = monster_manager.elapsed if monster_manager != null else 0.0
+	if elapsed >= MatchConfig.RAID_ENGAGE_TIME:
+		return true
+	var lv := 0.0
+	var n := 0
+	for h in hero_manager.team_heroes(team):
+		lv += h.level
+		n += 1
+	return n > 0 and lv / n >= MatchConfig.RAID_ENGAGE_LEVEL
 
 
 ## 이미 도전 중이면 2명 이상 살아 있는 동안 계속한다.

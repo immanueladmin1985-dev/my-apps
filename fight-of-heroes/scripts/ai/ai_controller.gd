@@ -56,8 +56,13 @@ func _ready() -> void:
 		auto_learn()
 
 
-## 스킬 포인트를 모두 쓴다: R 이 열리면 R, 아니면 데이터의 우선순위대로.
 func auto_learn() -> void:
+	learn_all(hero)
+
+
+## 스킬 포인트를 모두 쓴다: R 이 열리면 R, 아니면 데이터의 우선순위대로.
+## 짧은 판·보스 레이드에서 높은 레벨로 시작할 때 플레이어 영웅에도 쓴다.
+static func learn_all(hero) -> void:
 	var order: Array = [Enums.Slot.R]
 	for i in hero.data.ai_skill_priority:
 		order.append(i)

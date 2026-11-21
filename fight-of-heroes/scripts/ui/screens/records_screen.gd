@@ -68,6 +68,9 @@ func _fill() -> void:
 			str(e.date).replace("T", " ").left(16), "승리" if e.won else "패배", h.display_name if h != null else e.hero,
 			int(e.level), int(e.kills), int(e.deaths), int(e.assists), e.score, t / 60, t % 60,
 			MODE.get(e.get("mode", "team"), ""), DIFF.get(e.difficulty, "")]
+		var gt: String = str(e.get("game_type", "normal"))
+		if gt != "normal":
+			line += " · " + str(MatchConfig.GAME_TYPE_NAMES.get(gt, ""))
 		# 한 줄짜리 카드: 승패 띠, 영웅 얼굴, 내용
 		var card := PanelContainer.new()
 		var sb := StyleBoxFlat.new()

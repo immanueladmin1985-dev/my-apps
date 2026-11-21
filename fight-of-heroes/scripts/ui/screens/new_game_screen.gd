@@ -1,13 +1,19 @@
 extends Control
-## 새 게임: 게임 모드 → 영웅 선택 → 팀 구성(무작위 / 직접) → 난이도·목표 킬 → 시작.
+## 새 게임: 게임 모드·게임 방식(일반 / 짧은 판 / 보스 레이드) → 영웅 선택 → 팀 구성(무작위 / 직접) → 난이도·목표 킬 → 시작.
 ## 직접 구성: 아래 칸을 누른 뒤 영웅을 누르면 그 칸에 들어간다. 같은 영웅은 한 번만 쓸 수 있다.
 
 const MODES := [["team", "3대3 대전"], ["practice", "1대1 연습"], ["watch", "AI끼리 관전"]]
 const DIFFICULTIES := [["easy", "쉬움"], ["normal", "보통"], ["hard", "어려움"]]
 const KILL_TARGETS := [10, 15, 20, 30]
+const GAME_TYPES := [["normal", "일반"], ["quick", "짧은 판"], ["raid", "보스 레이드"]]
+const GAME_TYPE_RULES := {
+	"quick": "짧은 판: 6레벨·2500골드로 시작합니다. 먼저 5킬을 올리면 이기고, 부활과 몬스터 등장이 두 배 빠릅니다.",
+	"raid": "보스 레이드: 8레벨·3000골드로 시작해, 아군 셋이 10분 안에 맵 가운데의 강해진 고대 흑룡을 쓰러뜨립니다.",
+}
 const ROLE_NAMES := {"fighter": "돌격", "hunter": "사냥꾼", "support": "지원"}
 
 var mode := "team"
+var game_type := "normal"
 var team_mode := "random"
 ## 직접 구성 칸: 0 = 나, 1~2 = 아군, 3~5 = 적군 ("" = 무작위)
 var slots: Array = ["", "", "", "", "", ""]
@@ -22,6 +28,10 @@ var team_buttons: Array = []
 var slot_buttons: Array = []
 var diff_buttons: Array = []
 var kill_buttons: Array = []
+var type_buttons: Array = []
+var kill_title: Label
+var kill_stepper: Control
+var rule_label: Label
 var info: Label
 var skills_label: Label
 var art_rect: TextureRect
@@ -30,6 +40,11 @@ var slot_row: HBoxContainer
 
 func _ready() -> void:
 	team_mode = SaveManager.get_setting("team_mode", "random")
+	game_type = str(SaveManager.get_setting("game_type", "normal"))
+	if GameManager.dev_args.has("game_type"):
+		game_type = str(GameManager.dev_args["game_type"])  # 개발용 화면 캡처
+	if not MatchConfig.GAME_TYPES.has(game_type):
+		game_type = "normal"
 	var box := UiKit.page(self, 8)
 	UiKit.header(box, "새 게임", on_back)
 	var mrow := HBoxContainer.new()
@@ -42,6 +57,14 @@ func _ready() -> void:
 		b.pressed.connect(_set_mode.bind(m[0]))
 		mrow.add_child(b)
 		mode_buttons.append(b)
+	mrow.add_child(UiKit.label("  게임 방식", 18, UiKit.MUTED))
+	for g in GAME_TYPES:
+		var b := UiKit.toggle(g[1], Vector2(130, 48))
+		b.name = "Type_" + g[0]
+		b.set_meta("id", g[0])
+		b.pressed.connect(set_game_type.bind(g[0]))
+		mrow.add_child(b)
+		type_buttons.append(b)
 
 	var grid := GridContainer.new()
 	grid.columns = 6
@@ -116,8 +139,16 @@ func _ready() -> void:
 		b.pressed.connect(func(): SaveManager.set_setting("difficulty", d[0]); _refresh())
 		brow.add_child(b)
 		diff_buttons.append(b)
-	brow.add_child(UiKit.label("  목표 킬", 18, UiKit.MUTED))
-	brow.add_child(UiKit.kill_stepper())
+	kill_title = UiKit.label("  목표 킬", 18, UiKit.MUTED)
+	brow.add_child(kill_title)
+	kill_stepper = UiKit.kill_stepper()
+	brow.add_child(kill_stepper)
+	# 짧은 판·보스 레이드는 목표 킬을 고를 수 없으므로 그 자리에 규칙을 보여 준다.
+	rule_label = UiKit.wrap_label("", 15, UiKit.ACCENT)
+	rule_label.name = "RuleLabel"
+	rule_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rule_label.size_flags_stretch_ratio = 6.0
+	brow.add_child(rule_label)
 	brow.add_child(UiKit.spacer())
 	var go := UiKit.button("시작", Vector2(200, 60), 26)
 	go.name = "StartButton"
@@ -160,7 +191,21 @@ func _select_slot(i: int) -> void:
 
 func _set_mode(m: String) -> void:
 	mode = m
+	# 1대1 연습에서는 보스 레이드를 할 수 없다 (레이드는 아군 셋이 함께 한다).
+	if mode == "practice" and game_type == "raid":
+		game_type = "normal"
 	selected_slot = 0
+	_refresh()
+
+
+func set_game_type(t: String) -> void:
+	game_type = t
+	SaveManager.set_setting("game_type", t)
+	if game_type == "raid" and mode == "practice":
+		mode = "team"
+	# 보스 레이드에는 적 칸이 없다.
+	if game_type == "raid" and selected_slot >= 3:
+		selected_slot = 0
 	_refresh()
 
 
@@ -172,6 +217,8 @@ func _set_team_mode(t: String) -> void:
 
 
 func _visible_slot(i: int) -> bool:
+	if game_type == "raid":
+		return i < 3
 	if mode == "practice":
 		return i == 0 or i == 3
 	return true
@@ -182,6 +229,13 @@ func _refresh() -> void:
 		b.button_pressed = b.get_meta("id") == mode
 	for b in team_buttons:
 		b.button_pressed = b.get_meta("id") == team_mode
+	for b in type_buttons:
+		b.button_pressed = b.get_meta("id") == game_type
+	var fixed_rules := game_type != "normal"
+	kill_title.visible = not fixed_rules
+	kill_stepper.visible = not fixed_rules
+	rule_label.visible = fixed_rules
+	rule_label.text = GAME_TYPE_RULES.get(game_type, "")
 	var shown_slot := selected_slot
 	for b in hero_buttons:
 		var id: String = b.get_meta("id")
@@ -224,7 +278,7 @@ func _skill_lines(h: HeroData) -> String:
 
 
 func build_config() -> MatchConfig:
-	var size := 1 if mode == "practice" else 3
+	var size := 1 if mode == "practice" and game_type != "raid" else 3
 	var c := GameManager.default_config(slots[0], size)
 	if team_mode == "manual":
 		var pool: Array = DataRegistry.ids("heroes")
@@ -242,6 +296,7 @@ func build_config() -> MatchConfig:
 		c.random_teams = false
 	c.mode = mode
 	c.autoplay = mode == "watch" or flow_autoplay
+	c.apply_game_type(game_type)
 	if kill_target_override > 0:
 		c.kill_target = kill_target_override
 	return c

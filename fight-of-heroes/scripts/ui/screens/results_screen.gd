@@ -1,7 +1,7 @@
 extends Control
 ## 결과 화면: 승패, 사유, 경기 시간, 영웅별 레벨·킬/데스/도움·골드·준 피해·아이템, MVP.
 
-const REASONS := {"kills": "목표 킬 달성", "boss": "최종 보스 처치"}
+const REASONS := {"kills": "목표 킬 달성", "boss": "최종 보스 처치", "raid": "레이드 보스 처치", "timeout": "제한 시간 초과", "wiped": "모두 쓰러짐"}
 
 
 func _ready() -> void:
@@ -22,11 +22,22 @@ func _ready() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 24)
 	box.add_child(top)
+	var raid: bool = s.get("game_type", "normal") == "raid"
 	var title := ("승리!" if won else "패배") if s.mode != "watch" else "%s 팀 승리" % Enums.team_name(s.winner)
-	top.add_child(UiKit.label(title, 52, UiKit.GOOD if won or s.mode == "watch" else UiKit.BAD))
 	var t := int(s.time)
-	top.add_child(UiKit.label("%s 팀 %s · 블루 %d : %d 레드 · %02d:%02d" % [Enums.team_name(s.winner), REASONS.get(s.reason, ""), s.blue_kills, s.red_kills, t / 60, t % 60], 20, UiKit.MUTED))
-	for team in [my_team, Enums.Team.BLUE + Enums.Team.RED - my_team]:
+	var detail := "%s 팀 %s · 블루 %d : %d 레드 · %02d:%02d" % [Enums.team_name(s.winner), REASONS.get(s.reason, ""), s.blue_kills, s.red_kills, t / 60, t % 60]
+	if raid:
+		won = s.winner == Enums.Team.BLUE
+		title = "레이드 성공!" if won else "레이드 실패"
+		detail = ("클리어 시간 %02d:%02d" % [t / 60, t % 60]) if won else ("%s · %02d:%02d 동안 버텼습니다" % [REASONS.get(s.reason, ""), t / 60, t % 60])
+	elif s.get("game_type", "normal") == "quick":
+		detail += " · 짧은 판"
+	top.add_child(UiKit.label(title, 52, UiKit.GOOD if won or (s.mode == "watch" and not raid) else UiKit.BAD))
+	top.add_child(UiKit.label(detail, 20, UiKit.MUTED))
+	var teams := [my_team, Enums.Team.BLUE + Enums.Team.RED - my_team]
+	if raid:
+		teams = [Enums.Team.BLUE]
+	for team in teams:
 		var p := UiKit.panel()
 		box.add_child(p)
 		var grid := GridContainer.new()
@@ -35,7 +46,7 @@ func _ready() -> void:
 		grid.add_theme_constant_override("v_separation", 4)
 		p.add_child(grid)
 		var tc := Enums.team_color(team)
-		for head in ["%s 팀" % Enums.team_name(team), "레벨", "킬/데스/도움", "골드", "영웅 피해", "아이템", ""]:
+		for head in ["%s 팀" % Enums.team_name(team), "레벨", "킬/데스/도움", "골드", "준 피해" if raid else "영웅 피해", "아이템", ""]:
 			grid.add_child(UiKit.label(head, 15, tc if head.ends_with("팀") else UiKit.MUTED))
 		for h in s.heroes:
 			if h.team != team:
@@ -49,7 +60,7 @@ func _ready() -> void:
 			grid.add_child(UiKit.label(str(h.level), 18))
 			grid.add_child(UiKit.label("%d / %d / %d" % [h.kills, h.deaths, h.assists], 18))
 			grid.add_child(UiKit.label(str(h.gold), 18))
-			grid.add_child(UiKit.label(str(h.damage), 18))
+			grid.add_child(UiKit.label(str(h.get("damage_total", 0) if raid else h.damage), 18))
 			var items := HBoxContainer.new()
 			items.add_theme_constant_override("separation", 3)
 			for iid in h.items:
