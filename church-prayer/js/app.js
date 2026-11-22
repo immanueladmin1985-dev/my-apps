@@ -344,18 +344,19 @@
     const strip = Array.from({ length: 14 }, (_, i) => addDays(t, i - 13));
     const byN = {};
     (S.names || []).forEach(n => { const [tot, cnt] = sumRange(n, s, e); byN[n] = { tot, cnt }; });
-    const people = sortPeople(Object.keys(byN), n => byN[n].tot);
+    const people = sortPeople(Object.keys(byN).filter(n => byN[n].tot > 0), n => byN[n].tot);   // 기도 시간이 0인 분은 보이지 않음
     const max = Math.max(1, ...people.map(n => byN[n].tot));
     const all = people.reduce((a, n) => a + byN[n].tot, 0), active = people.filter(n => byN[n].tot).length;
-    const todayCnt = people.filter(n => dataOf(n)[t]).length;
+    const todayCnt = (S.names || []).filter(n => dataOf(n)[t]).length;
     let rank = 0, prev = -1;
+    if (!people.length) { m.innerHTML = topBanners(true) + statusBar(true) + '<p class="muted" style="text-align:center;padding:30px 0">이 기간에 기도 기록이 없어요</p>'; bindBanners(); bindStatusBar(); return; }
     const rowsHtml = people.map((n, i) => {
       const r = byN[n]; if (r.tot !== prev) { rank = i + 1; prev = r.tot; }
       const d = dataOf(n);
       const medal = C.stSort === 'time' && r.tot ? (rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank) : '';
       return `<button class="prow${n === me ? ' me' : ''}${r.tot ? '' : ' zero'}" data-person="${esc(n)}">
         ${C.stSort === 'time' ? `<span class="rk">${medal}</span>` : ''}
-        <span class="pn">${esc(n)}<small> 님</small></span>
+        <span class="pn">${esc(n)}<small> ${esc(titleOf(n) || '님')}</small></span>
         <span class="pb"><span class="bar"><i style="width:${Math.round(r.tot / max * 100)}%"></i></span>
           <span class="strip">${strip.map(day => `<i class="l${lv(d[day])}${day === t ? ' td' : ''}"></i>`).join('')}</span></span>
         <span class="pt"><b>${r.tot ? hmText(r.tot) : '—'}</b>${r.cnt ? `<small>${r.cnt}일</small>` : ''}</span></button>`;
@@ -373,12 +374,13 @@
     const d = dataOf(n), t = today(), p = (S.prayers || []).find(x => x.name === n);
     const days = Array.from({ length: 30 }, (_, i) => addDays(t, -i));
     const [w] = sumRange(n, ...periodRange('week')), [mo] = sumRange(n, ...periodRange('month'));
-    modal(`<h3>${esc(n)} 님${churchOf(n) ? ` <span class="church">${esc(churchOf(n))}</span>` : ''}</h3>
+    modal(`<h3>${dispName(n)}${groupChip(n)}</h3>
       <div class="stat"><div><span class="small muted">이번 주</span><b>${hmText(w)}</b></div><div><span class="small muted">이번 달</span><b>${hmText(mo)}</b></div><div><span class="small muted">전체</span><b>${hmText(totalOf(n))}</b></div></div>
       ${p ? `<p class="sect">🙏 기도제목</p><div class="notice">${esc(p.text)}</div>` : ''}
       <p class="sect">최근 30일</p>
+      ${isMaster() ? `<button class="btn sm" id="psInfo" style="margin-top:10px">직책·소속 고치기 (마스터)</button>` : ''}
       <ul class="mylist">${days.filter(day => d[day]).map(day => { const k = parse(day).getDay(); return `<li><span class="${k === 0 ? 'sun' : k === 6 ? 'sat' : ''}">${md(day)} (${WD[k]})</span><b>${hmText(d[day])}</b></li>`; }).join('') || '<li class="muted">최근 30일 기록이 없어요</li>'}</ul>`,
-      [{ label: '닫기', val: true, cls: 'pri' }]);
+      [{ label: '닫기', val: true, cls: 'pri' }], (inn, close) => { const b = $('#psInfo', inn); if (b) b.onclick = () => { close(true); infoEdit(n); }; });
   }
 
   /* ----- 날짜별 표 ----- */
@@ -387,14 +389,14 @@
     const t = today(), end = tableEnd || t, start = addDays(end, -39), me = myName();
     const days = []; for (let d = start; d <= end; d = addDays(d, 1)) days.push(d);
     const winTot = n => days.reduce((a, d) => a + (dataOf(n)[d] || 0), 0);
-    const people = sortPeople((S.names || []).slice(), winTot);
+    const people = sortPeople((S.names || []).filter(n => winTot(n) > 0), winTot);   // 이 기간 기도 시간이 0인 분은 보이지 않음
     const head1 = days.map((d, i) => { const first = i === 0 || d.slice(5, 7) !== days[i - 1].slice(5, 7); return `<th class="mon ${cls(d)}">${first ? (+d.slice(5, 7)) + '월' : ''}</th>`; }).join('');
     const head2 = days.map(d => `<th class="${cls(d)}${d === t ? ' today' : ''}">${+d.slice(8)}</th>`).join('');
     const head3 = days.map(d => `<th class="${cls(d)}">${wd(d)}</th>`).join('');
     const sumDay = {};
     const body = people.map(n => {
       const d = dataOf(n);
-      return `<tr class="${n === me ? 'me' : ''}"><th class="c1">${esc(n)}<span class="t"> 님</span></th><td class="c2">${hmText(totalOf(n))}</td>${days.map(day => { if (d[day]) sumDay[day] = (sumDay[day] || 0) + d[day]; return `<td class="${cls(day)}">${cellText(d[day])}</td>`; }).join('')}</tr>`;
+      return `<tr class="${n === me ? 'me' : ''}"><th class="c1">${esc(n)}<span class="t"> ${esc(titleOf(n) || '님')}</span></th><td class="c2">${hmText(totalOf(n))}</td>${days.map(day => { if (d[day]) sumDay[day] = (sumDay[day] || 0) + d[day]; return `<td class="${cls(day)}">${cellText(d[day])}</td>`; }).join('')}</tr>`;
     }).join('');
     const all = people.reduce((a, n) => a + totalOf(n), 0);
     const foot = `<tr><th class="c1">모두</th><td class="c2">${hmText(all)}</td>${days.map(d => `<td class="${cls(d)}">${sumDay[d] ? Math.round(sumDay[d] / 60) : ''}</td>`).join('')}</tr>`;
@@ -461,7 +463,7 @@
     const seen = C.seenCmt || 0;
     const who = REACTS.map(([k, e]) => (rs[k] || []).length ? e + ' ' + (rs[k] || []).map(esc).join(', ') : '').filter(Boolean).join('  ·  ');
     return `<div class="post${isMine ? ' mine' : ''}" data-post="${esc(p.name)}">
-      <div class="who"><b>${esc(p.name)} 님${churchOf(p.name) ? ` <span class="church">${esc(churchOf(p.name))}</span>` : ''}${isMine ? ' <span class="small muted">(나)</span>' : ''}</b><span class="small muted">${md(ymd(new Date(p.at)))}${!isMine && isMaster() ? ` <button class="btn ghost sm" data-pm="${esc(p.name)}">관리</button>` : ''}</span></div>
+      <div class="who"><b>${dispName(p.name)}${groupChip(p.name)}${isMine ? ' <span class="small muted">(나)</span>' : ''}</b><span class="small muted">${md(ymd(new Date(p.at)))}${!isMine && isMaster() ? ` <button class="btn ghost sm" data-pm="${esc(p.name)}">관리</button>` : ''}</span></div>
       <div class="txt">${esc(p.text)}</div>
       <div class="reacts">${REACTS.map(([k, e, l]) => { const arr = rs[k] || []; return `<button class="rx${arr.includes(me) ? ' on' : ''}" data-rx="${k}" data-to="${esc(p.name)}" aria-label="${l}" title="${l}"><span>${e}</span>${arr.length ? `<b>${arr.length}</b>` : ''}</button>`; }).join('')}
         <button class="rx cm${open ? ' on' : ''}" data-cm="${esc(p.name)}">💬 댓글${cs.length ? ` <b>${cs.length}</b>` : ''}</button>
@@ -922,36 +924,52 @@
 
   /* ----- 이름 고르기 ----- */
   // 이름 직접 적기 (다른 사람 이름 목록은 보여 주지 않음)
-  function nameInput(inn, value, okLabel, onOk, church) {
+  function nameInput(inn, value, okLabel, onOk, church, title) {
     inn.innerHTML = `<div class="field"><label for="nIn">이름 <span class="small muted">(성함만)</span></label>
-      <div class="row"><input type="text" id="nIn" placeholder="예: 홍길동" maxlength="12" autocomplete="name" value="${esc(value || '')}" style="flex:1"><span>님</span></div></div>
-      <div class="field" style="margin:0"><label for="nCh">소속 <span class="small muted">(구역·부서, 없으면 비워 두세요)</span></label>
-      <input type="text" id="nCh" placeholder="예: 1구역 · 학생부 교사" maxlength="30" value="${esc(church || '')}"></div>
+      <input type="text" id="nIn" placeholder="예: 홍길동" maxlength="12" autocomplete="name" value="${esc(value || '')}"></div>
+      <div class="field"><label for="nTi">직책 <span class="small muted">(예: 집사, 권사, 장로 · 없으면 비워 두세요)</span></label>
+      <input type="text" id="nTi" placeholder="직접 적어 주세요" maxlength="10" value="${esc(title || '')}"></div>
+      <div class="field" style="margin:0"><label for="nCh">소속</label>
+      <select id="nCh"><option value="">고르지 않음</option>${GROUPS.map(g => `<option${g === church ? ' selected' : ''}>${g}</option>`).join('')}</select></div>
       <button class="btn pri big" id="nOk" style="margin-top:14px">${esc(okLabel)}</button>`;
-    const i = $('#nIn', inn), ch = $('#nCh', inn);
+    const i = $('#nIn', inn), ch = $('#nCh', inn), ti = $('#nTi', inn);
     let going = false;   // 처리하는 동안 다시 눌러도 무시
     const go = async () => {
       if (going) return;
       const v = i.value.replace(/\s+/g, '').replace(/님$/, ''); if (v.length < 2) { toast('이름을 두 글자 이상 적어 주세요'); i.focus(); return; }
       going = true; const b = $('#nOk', inn); if (b) b.disabled = true;
-      try { await onOk(v, ch.value.replace(/\s+/g, ' ').trim()); } finally { going = false; if (b && document.body.contains(b)) b.disabled = false; }
+      try { await onOk(v, ch.value, ti.value.replace(/\s+/g, '')); } finally { going = false; if (b && document.body.contains(b)) b.disabled = false; }
     };
     $('#nOk', inn).onclick = go;
-    const enter = e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); if (e.target === i) ch.focus(); else go(); } };
-    i.onkeydown = enter; ch.onkeydown = enter;
+    const enter = e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); if (e.target === i) ti.focus(); else go(); } };
+    i.onkeydown = enter; ti.onkeydown = enter;
     setTimeout(() => { try { i.focus(); } catch (e) {} }, 80);
   }
   function renderWelcome() {
     const app = $('#app');
     app.innerHTML = `<div class="welcome">${brandHtml()}
       <p class="lead">처음 한 번만 이름을 적어 주세요.<br>이 기기에 저장되어 다음부터는 바로 들어가요.</p><div class="card" id="pick"></div></div>`;
-    nameInput($('#pick'), '', '시작하기', async (n, church) => {
-      if (!(await confirmBox('이름 확인', `<b>${esc(n)} 성도님</b>${church ? ` (${esc(church)})` : ''}이 맞으세요?
+    nameInput($('#pick'), '', '시작하기', async (n, church, title) => {
+      if (!(await confirmBox('이름 확인', `<b>${esc(n)} ${esc(title || '성도님')}</b>${church ? ` (${esc(church)})` : ''}이 맞으세요?
 이 이름이 이 기기에 저장돼요.`, '네, 맞아요'))) return;
-      try { await api('setName', { name: n, church }); toast(n + ' 성도님, 환영합니다'); view = 'input'; render(); if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
+      try { await api('setName', { name: n, church, title }); toast(n + ' 성도님, 환영합니다'); view = 'input'; render(); if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
     });
   }
+  const GROUPS = ['유치부', '주일학교', '학생부', '청년부', '1남선교회', '2남선교회', '3남선교회', '4남선교회', '1여선교회', '2여선교회', '3여선교회', '4여선교회'];
   const churchOf = n => (S && S.churches && S.churches[n]) || '';
+  const titleOf = n => (S && S.titles && S.titles[n]) || '';
+  const dispName = n => esc(n) + ' ' + esc(titleOf(n) || '님');   // 홍길동 집사 · 이름만 있으면 홍길동 님
+  const groupChip = n => churchOf(n) ? ` <span class="church">${esc(churchOf(n))}</span>` : '';
+  // 마스터: 다른 분의 직책·소속 고치기
+  async function infoEdit(n) {
+    const v = await modal(`<h3>${esc(n)} — 직책·소속</h3>
+      <div class="field"><label for="iTi">직책</label><input type="text" id="iTi" maxlength="10" value="${esc(titleOf(n))}" placeholder="예: 집사"></div>
+      <div class="field"><label for="iCh">소속</label><select id="iCh"><option value="">고르지 않음</option>${GROUPS.map(g => `<option${g === churchOf(n) ? ' selected' : ''}>${g}</option>`).join('')}</select></div>`,
+      [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }]);
+    if (!v) return;
+    try { await api('setInfo', { name: n, title: $('#iTi').value.replace(/\s+/g, ''), church: $('#iCh').value }); toast('고쳤어요'); } catch (e) { toast(e.message); }
+    render();
+  }
 
   /* ----- 로고 (마스터가 올림) ----- */
   const LOGO_KEY = 'church-prayer-logo';
@@ -960,7 +978,7 @@
   function brandHtml() {
     const o = logoOpt();
     if (o.welcome && logo.data) return `<img class="brandimg" src="${logo.data}" alt="교회">${o.title !== false ? '<h1>' + esc(appTitle()) + '</h1>' : ''}`;
-    return '<img class="logo" src="icon-192.png" alt=""><h1>우리교회 기도</h1>';
+    return '<img class="logo" src="icon-192.png" alt=""><h1>' + esc(appTitle()) + '</h1>';
   }
   function headerBrand() {
     const o = logoOpt();
@@ -1035,14 +1053,14 @@
     render(); masterMenu();
   }
   async function renameSelf() {
-    const old = myName(), oldCh = churchOf(old);
-    let picked = null, pickedCh = '';
-    await modal(`<h3>이름·소속 고치기</h3><p class="msg small">틀린 곳을 바르게 고쳐 주세요.
+    const old = myName(), oldCh = churchOf(old), oldTi = titleOf(old);
+    let picked = null, pickedCh = '', pickedTi = '';
+    await modal(`<h3>이름·직책·소속 고치기</h3><p class="msg small">틀린 곳을 바르게 고쳐 주세요.
 이름을 바꾸면 이 기기에서 입력한 기록과 기도제목도 새 이름으로 옮겨져요.</p><div id="rp"></div>`, [{ label: '닫기', val: false }],
-      (inn, close) => nameInput($('#rp', inn), old, '고치기', (n, c) => { picked = n; pickedCh = c; close(true); }, oldCh));
-    if (!picked || (picked === old && pickedCh === oldCh)) return;
+      (inn, close) => nameInput($('#rp', inn), old, '고치기', (n, c, t) => { picked = n; pickedCh = c; pickedTi = t; close(true); }, oldCh, oldTi));
+    if (!picked || (picked === old && pickedCh === oldCh && pickedTi === oldTi)) return;
     if (picked !== old && !(await confirmBox('이름 바꾸기', `<b>${esc(old)}</b> → <b>${esc(picked)}</b> 님로 바꿀까요?`, '바꾸기'))) return;
-    try { await api('setName', { name: picked, church: pickedCh }); form.who = ''; toast('고쳤어요'); } catch (e) { toast(e.message); }
+    try { await api('setName', { name: picked, church: pickedCh, title: pickedTi }); form.who = ''; toast('고쳤어요'); } catch (e) { toast(e.message); }
     render();
   }
 
@@ -1106,7 +1124,7 @@
   function settings() {
     const sa = isStandalone();
     modal(`<h3>설정</h3>
-      <div class="field"><label>내 이름·소속</label><div class="namebox"><b>${esc(myName())} 님${churchOf(myName()) ? ` <span class="church">${esc(churchOf(myName()))}</span>` : ''}</b><button class="btn sm" id="sName">고치기</button></div></div>
+      <div class="field"><label>내 이름·직책·소속</label><div class="namebox"><b>${dispName(myName())}${groupChip(myName())}</b><button class="btn sm" id="sName">고치기</button></div></div>
       <div class="field"><label>글자 크기</label><div class="chips">${[[16, '작게'], [17, '보통'], [19, '크게'], [21, '아주 크게']].map(([v, l]) => `<button data-f="${v}" class="${C.font === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <div class="field"><label>화면 밝기</label><div class="chips">${[['light', '☀️ 밝게'], ['dark', '🌙 어둡게'], ['auto', '📱 휴대폰 설정대로']].map(([v, l]) => `<button data-th="${v}" class="${(C.theme || 'light') === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <div class="field"><label>화면</label><div class="row">
