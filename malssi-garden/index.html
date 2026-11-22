@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>말씨정원</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="말씨정원">
+<meta name="theme-color" content="#7ed5b2">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="intro" class="intro hidden"></div>
+
+<div id="app" class="app hidden">
+  <header class="top">
+    <button class="stat" id="tStreakBox" aria-label="연속 공부">🔥<b id="tStreak">0</b></button>
+    <div class="stat"><img src="img/water.png" alt="물방울"><b id="tWater">0</b></div>
+    <div class="stat"><img src="img/coin.png" alt="코인"><b id="tCoin">0</b></div>
+    <div class="stat fp"><img src="img/flower-point.png" alt="꽃 포인트"><b id="tFp">0</b></div>
+    <span class="sp"></span>
+    <button class="ib" id="bFsTop" aria-label="전체화면 켜기"></button>
+    <button class="ib" id="bSet" aria-label="설정">⚙️</button>
+  </header>
+  <main id="view" class="view">
+    <div class="banner hidden" id="banner">
+      <img src="icon-192.png" alt="">
+      <div class="bt"><b>홈 화면에 설치하세요</b><small>아이콘으로 바로 열고 화면을 넓게 써요</small></div>
+      <div class="bb"><button class="btn primary" id="bInst">설치하기</button><button class="btn" id="bFs">전체화면</button><button class="btn ghost" id="bLater">다음에</button></div>
+    </div>
+    <section id="learnView"></section>
+    <section id="gardenView" class="hidden"></section>
+    <section id="homeView" class="hidden"></section>
+    <section id="shopView" class="hidden"></section>
+  </main>
+  <nav class="nav" id="nav">
+    <button data-tab="learn"><span class="ni">🗺️</span>배우기<i class="badge hidden"></i></button>
+    <button data-tab="garden"><span class="ni">🌱</span>정원<i class="badge hidden"></i></button>
+    <button data-tab="home"><span class="ni">🐰</span>토끼 집<i class="badge hidden"></i></button>
+    <button data-tab="shop"><span class="ni">🎁</span>상점<i class="badge hidden"></i></button>
+  </nav>
+</div>
+
+<div id="lesson" class="lesson hidden">
+  <div class="lhead"><button class="ib" id="lQuit" aria-label="그만하기">✕</button><div class="lbar"><i id="lBar"></i></div><div class="combo" id="lCombo"></div></div>
+  <div class="lbody" id="lBody"></div>
+  <div class="lfoot" id="lFoot"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/lesson.js"></script>
+<script src="js/garden.js"></script>
+<script src="js/home.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

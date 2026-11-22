@@ -1,0 +1,16 @@
+{
+ "name": "말씨정원",
+ "short_name": "말씨정원",
+ "description": "일본어·영어·중국어를 배우며 정원과 토끼를 키우고 선물로 바꾸는 학습 게임",
+ "scope": "./",
+ "display": "fullscreen",
+ "display_override": ["fullscreen", "standalone"],
+ "orientation": "any",
+ "background_color": "#eafaf3",
+ "theme_color": "#7ed5b2",
+ "lang": "ko",
+ "icons": [
+  { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+  { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+ ]
+}
