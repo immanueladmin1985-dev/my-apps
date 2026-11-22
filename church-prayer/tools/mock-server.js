@@ -90,7 +90,7 @@ sheets['설정'].getRange(3, 2).setValue('test');
 // MOCK_SEED=1: 시트에 직접 넣은 것처럼 ID 가 겹치고 특별기도ID 가 빈 기도 대상을 넣어 둠
 if (process.env.MOCK_SEED) {
   const camp = String(sheets['특별기도'].getRange(2, 1).getValue()), tg = sheets['기도대상'];
-  [['t1', camp, '김지오', '고1'], ['t1', camp, '김하윤', '고1'], ['t1', '', '김라인', '중1'], ['', camp, '정선미', '중1'], ['t1', camp, '임동현', '예비청년']]
+  [['t1', camp, '김지오', '고1'], ['t1', camp, '김하윤', '고1'], ['t1', '', '김라인', '중1'], ['', camp, '정선미', '중1'], ['t1', camp, '임동현', '예비청년'], ['t1', camp, '고현명', '청년5~6년차'], ['t1', camp, '김교사', '']]
     .forEach((r, i) => tg.getRange(i + 2, 1, 1, 10).setValues([[r[0], r[1], r[2], r[3], '', '', '유상연', '', '', String(i + 1)]]));
 }
 

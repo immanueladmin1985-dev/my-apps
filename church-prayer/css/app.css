@@ -467,3 +467,11 @@ input[type=tel] { width: 100%; border: 1px solid var(--line); background: var(--
 .scrow .chips { margin-top: 4px; }
 .attbar { position: static; }
 .deptsel { margin-bottom: 10px; }
+
+/* 출석부: 위쪽 도구 · 구분 탭 */
+.atools.top { grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0 0 10px; }
+.atools.top .btn { min-height: 40px; padding: 4px 2px; font-size: .78em; white-space: nowrap; }
+.sectabs { grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); margin-bottom: 8px; }
+.sectabs button.dim:not(.on) { opacity: .7; }
+.ash small { font-weight: 500; color: var(--muted); font-size: .8em; }
+@media (max-width: 360px) { .atools.top { grid-template-columns: 1fr 1fr; } }

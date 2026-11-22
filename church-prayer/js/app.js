@@ -1022,11 +1022,12 @@
     const ds = myDepts(), people = rosterOf(dept), st = attStats(dept), o = attOf(dept), present = o[attDate] || new Set();
     const q = attQuery.replace(/\s+/g, '');
     const y0 = window.scrollY;
-    // 칸 나누기
-    const normal = [], special = [], long = [], recentLimit = addDays(t, -30), longLimit = addDays(t, -365);
+    // 칸 나누기: 학년(구분)별 · 교사 · 따로 보기 · 장기결석
+    const tn = new Set(S.tnames || []), normal = [], teachers = [], special = [], long = [], recentLimit = addDays(t, -30), longLimit = addDays(t, -365);
     people.forEach(m => {
       const s = st[m.id];
-      if (SPECIAL.includes(m.status)) special.push(m);
+      if (tn.has(m.name)) teachers.push(m);
+      else if (SPECIAL.includes(m.status)) special.push(m);
       else if (s.last ? s.last < longLimit : (m.reg && m.reg < longLimit)) long.push(m);
       else normal.push(m);
     });
@@ -1034,13 +1035,25 @@
     normal.forEach(m => { const sc = sectionOf(m); (secs[sc.name] = secs[sc.name] || { k: sc.k, list: [] }).list.push(m); });
     const order = (a, b) => { const sa = st[a.id], sb = st[b.id], ra = sa.last >= recentLimit, rb = sb.last >= recentLimit;
       if (ra !== rb) return ra ? -1 : 1; if (ra) return ko(a.name, b.name); return sb.rate - sa.rate || ko(a.name, b.name); };
+    const byName = (a, b) => ko(a.name, b.name);
+    const groups = Object.keys(secs).sort((a, b) => secs[a].k - secs[b].k || ko(a, b)).map(n => ({ key: n, title: n, list: secs[n].list.sort(order) }));
+    if (teachers.length) groups.push({ key: '교사', title: '교사', list: teachers.sort(byName) });
+    if (special.length) groups.push({ key: '따로', title: '따로 보기', list: special.sort(byName), sub: '군복무·유학 등' });
+    if (long.length) groups.push({ key: '장기', title: '장기결석', list: long.sort(byName), sub: '1년 넘게 안 나옴', long: true });
+    C.attSec = C.attSec || {};
+    let sel = C.attSec[dept];
+    if (sel !== '전체' && !groups.some(g => g.key === sel)) sel = groups.length ? groups[0].key : '전체';
+    const showAll = sel === '전체' || !!q;
     const row = m => {
       const s = st[m.id], on = present.has(m.id), hide = q && !m.name.includes(q);
-      return `<div class="arow${on ? ' on' : ''}${hide ? ' hidden' : ''}"><button class="atap" data-at="${esc(m.id)}">${photoHtml(m, 'xs')}<span class="an"><b>${esc(m.name)}</b><small>${esc(m.label || '')}${m.y != null && m.dept !== '유치부' && !/세$/.test(m.label) ? ` · ${m.y + 1}세` : ''}</small></span><span class="amark">${on ? '○' : ''}</span></button>
+      return `<div class="arow${on ? ' on' : ''}${hide ? ' hidden' : ''}"><button class="atap" data-at="${esc(m.id)}">${photoHtml(m, 'xs')}<span class="an"><b>${esc(m.name)}</b><small>${tn.has(m.name) ? '교사' : esc(m.label || '')}${m.y != null && m.dept !== '유치부' && !/세$/.test(m.label) ? ` · ${m.y + 1}세` : ''}</small></span><span class="amark">${on ? '○' : ''}</span></button>
         <button class="ainfo" data-pi="${esc(m.id)}"><span class="rate r${s.den ? Math.min(4, Math.floor(s.rate * 5)) : 0}">${s.den ? Math.round(s.rate * 100) + '%' : '-'}</span>›</button></div>`;
     };
-    const secHtml = (title, list, extra) => `<div class="asec"><div class="ash"><b>${esc(title)}</b><span>${list.filter(m => present.has(m.id)).length} / ${list.length}${extra || ''}</span></div>${list.map(row).join('')}</div>`;
-    const secNames = Object.keys(secs).sort((a, b) => secs[a].k - secs[b].k || ko(a, b));
+    const pc = list => list.filter(m => present.has(m.id)).length;
+    const secHtml = g => {
+      const folded = g.long && showAll && !showLong && !q;
+      return `<div class="asec${g.long ? ' long' : ''}" data-sec="${esc(g.key)}">${g.long && showAll ? `<button class="ash" id="aLong">` : '<div class="ash">'}<b>${esc(g.title)}${g.sub ? ` <small>(${g.sub})</small>` : ''}</b><span>${pc(g.list)} / ${g.list.length}${g.long && showAll ? (folded ? ' ▼' : ' ▲') : ''}</span>${g.long && showAll ? '</button>' : '</div>'}${folded ? '' : g.list.map(row).join('')}</div>`;
+    };
     const total = people.filter(m => present.has(m.id)).length;
     app.innerHTML = `<header><div class="top">
         <h1 class="htitle"><span>✅ 출석부</span></h1>
@@ -1050,20 +1063,19 @@
       <main id="main" class="attmain">
         ${ds.length > 4 ? `<select id="aDept" class="deptsel" aria-label="부서">${ds.map(d => `<option value="${d}"${d === dept ? ' selected' : ''}>${d}${rosterOf(d).length ? ` (${rosterOf(d).length}명)` : ''}</option>`).join('')}</select>`
           : ds.length > 1 ? `<div class="gchips deptchips">${ds.map(d => `<button data-dp="${d}" class="${d === dept ? 'on' : ''}">${d}<small>${rosterOf(d).length || ''}</small></button>`).join('')}</div>` : ''}
+        <div class="atools top">
+          <button class="btn sm pri" id="aAdd">＋ 한 명</button><button class="btn sm pri" id="aBulk">📋 여러 명</button>
+          <button class="btn sm" id="aImp">📥 시트 가져오기</button><button class="btn sm" id="aStat">📊 주별 인원</button>
+        </div>
         <div class="attbar card">
           <div class="datebar"><button class="btn" id="aPrev" aria-label="한 주 전">◀</button><input type="date" id="aDate" value="${attDate}" max="${t}"><button class="btn" id="aNext" aria-label="한 주 뒤"${attDate >= t ? ' disabled' : ''}>▶</button></div>
           <div class="attsum"><span><b>${esc(dept)}</b> ${md(attDate)} (${wd(attDate)}) 출석 <b class="big">${total}</b>명 / ${people.length}명</span><span id="attSave" class="attsave"></span></div>
-          <input type="text" id="aQ" placeholder="🔍 이름 찾기" value="${esc(attQuery)}">
+          <input type="text" id="aQ" placeholder="🔍 이름 찾기 (모든 구분에서)" value="${esc(attQuery)}">
         </div>
-        ${people.length ? '' : `<div class="card"><p>아직 ${esc(dept)} 명단이 없어요.</p><p class="small muted">아래 [📥 구글 시트에서 가져오기]로 지금까지의 출석부를 한 번에 넣거나, [＋ 한 명] · [📋 여러 명]으로 넣어 주세요.</p></div>`}
+        ${people.length ? `<div class="gchips sectabs"><button data-sc="전체" class="${sel === '전체' ? 'on' : ''}">전체<small>${total}/${people.length}</small></button>${groups.map(g => `<button data-sc="${esc(g.key)}" class="${sel === g.key ? 'on' : ''}${g.long ? ' dim' : ''}">${esc(g.title)}<small>${pc(g.list)}/${g.list.length}</small></button>`).join('')}</div>`
+          : `<div class="card"><p>아직 ${esc(dept)} 명단이 없어요.</p><p class="small muted">위의 [📥 시트 가져오기]로 지금까지의 출석부를 한 번에 넣거나, [＋ 한 명] · [📋 여러 명]으로 넣어 주세요.</p></div>`}
         <p class="small muted ahelp">이름을 누르면 출석 ○ · 오른쪽 %를 누르면 연락처·심방 · 한 달 안에 나온 분은 가나다순, 그 밖은 출석률(최근 1년) 순</p>
-        ${secNames.map(n => secHtml(n, secs[n].list.sort(order))).join('')}
-        ${special.length ? secHtml('따로 보기 (군복무·유학 등)', special.sort((a, b) => ko(a.name, b.name))) : ''}
-        ${long.length ? `<div class="asec long"><button class="ash" id="aLong"><b>장기결석 (1년 넘게 안 나옴)</b><span>${long.length}명 ${showLong ? '▲' : '▼'}</span></button>${showLong || q ? long.sort((a, b) => ko(a.name, b.name)).map(row).join('') : ''}</div>` : ''}
-        <div class="atools">
-          <button class="btn pri" id="aAdd">＋ 한 명</button><button class="btn pri" id="aBulk">📋 여러 명</button>
-          <button class="btn" id="aImp">📥 구글 시트에서 가져오기</button><button class="btn" id="aStat">📊 주별 인원</button>
-        </div>
+        ${groups.filter(g => showAll || g.key === sel).map(secHtml).join('')}
       </main>`;
     paintAttSave();
     $('#tMode').onclick = () => { mode = 'pray'; render(); window.scrollTo(0, 0); };
@@ -1074,13 +1086,19 @@
     $('#aDate').onchange = e => { const v = e.target.value; if (v) { attDate = v > t ? t : v; render(); } };
     $('#aPrev').onclick = () => { attDate = addDays(attDate, -7); render(); };
     $('#aNext').onclick = () => { const n = addDays(attDate, 7); attDate = n > t ? t : n; render(); };
-    const aq = $('#aQ'); aq.oninput = () => { attQuery = aq.value; const v = attQuery.replace(/\s+/g, ''); $$('.arow').forEach(r => { const n = r.querySelector('.an b').textContent; r.classList.toggle('hidden', !!v && !n.includes(v)); }); };
+    const aq = $('#aQ'); aq.oninput = () => { const had = !!attQuery.trim(); attQuery = aq.value; const v = attQuery.replace(/\s+/g, '');
+      if (had !== !!v || (v && !showAll)) { const pos = aq.selectionStart; render(); const n = $('#aQ'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } return; }
+      $$('.arow').forEach(r => { const n = r.querySelector('.an b').textContent; r.classList.toggle('hidden', !!v && !n.includes(v)); }); };
+    $$('[data-sc]').forEach(b => b.onclick = () => { C.attSec = C.attSec || {}; C.attSec[dept] = b.dataset.sc; saveCfg(); attQuery = ''; render(); const tb = $('.sectabs'); if (tb) window.scrollTo(0, tb.getBoundingClientRect().top + window.scrollY - 8); });
     $$('[data-at]').forEach(b => b.onclick = () => {
       const id = b.dataset.at, on = !(attOf(dept)[attDate] || new Set()).has(id);
       markAtt(id, attDate, on);
       const r = b.closest('.arow'); r.classList.toggle('on', on); b.querySelector('.amark').textContent = on ? '○' : '';
       const cnt = (attOf(dept)[attDate] || new Set()).size; const big = $('.attsum .big'); if (big) big.textContent = cnt;
-      $$('.asec').forEach(sec => { const sp = sec.querySelector('.ash span'); if (!sp || sec.classList.contains('long')) return; const ids = $$('[data-at]', sec).map(x => x.dataset.at); sp.textContent = `${ids.filter(i => (attOf(dept)[attDate] || new Set()).has(i)).length} / ${ids.length}`; });
+      const now = attOf(dept)[attDate] || new Set();
+      $$('.asec').forEach(sec => { const sp = sec.querySelector('.ash span'); if (!sp || sec.classList.contains('long')) return; const ids = $$('[data-at]', sec).map(x => x.dataset.at); sp.textContent = `${ids.filter(i => now.has(i)).length} / ${ids.length}`; });
+      const g = groups.find(x => x.list.some(m => m.id === id)); const tb = g && $(`[data-sc="${CSS.escape(g.key)}"] small`); if (tb) tb.textContent = `${pc(g.list)}/${g.list.length}`;
+      const ta = $('[data-sc="전체"] small'); if (ta) ta.textContent = `${cnt}/${people.length}`;
       paintAttSave();
     });
     $$('[data-pi]').forEach(b => b.onclick = () => personCard(b.dataset.pi));
@@ -1099,7 +1117,7 @@
     const o = attOf(m.dept), st = attStats(m.dept)[id] || {}, vs = visitsOf(id);
     const days = Object.keys(o).filter(d => o[d].size && d >= addDays(today(), -364)).sort().slice(-12);
     const ph = (num, who) => num ? `<div class="crow"><span>${who}</span><b>${esc(num)}</b><a class="btn sm pri" href="tel:${telOf(num)}">📞 전화</a><a class="btn sm" href="sms:${telOf(num)}">💬 문자</a></div>` : '';
-    const v = await modal(`<div class="pcard">${photoHtml(m, 'lg')}<div><h3>${esc(m.name)} <span class="tag">${esc(m.label || '학년 미정')}</span></h3>
+    const v = await modal(`<div class="pcard">${photoHtml(m, 'lg')}<div><h3>${esc(m.name)} <span class="tag">${(S.tnames || []).includes(m.name) ? '교사' : esc(m.label || '학년 미정')}</span></h3>
         <p class="small muted">${esc(m.dept)}${m.birth ? ` · ${m.birth}년생 (${m.y + 1}세)` : ''}${m.status ? ` · ${esc(m.status)}` : ''}</p>
         <p class="small">출석률 <b>${st.den ? Math.round(st.rate * 100) + '%' : '-'}</b> (최근 1년 ${st.n || 0}/${st.den || 0}) · 마지막 출석 ${st.last ? md(st.last) : '없음'}</p></div></div>
       <div class="adots">${days.map(d => `<span class="${o[d].has(id) ? 'on' : ''}" title="${d}">${+d.slice(5, 7)}/${+d.slice(8)}</span>`).join('')}</div>

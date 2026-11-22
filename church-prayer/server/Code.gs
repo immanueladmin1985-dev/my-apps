@@ -358,10 +358,10 @@ function parseScope(s) {
 function scopeStr(o) { return Object.keys(o || {}).filter(function (d) { return GROUPS.indexOf(d) >= 0; }).map(function (d) { return d + ':' + (o[d] === '*' ? '*' : [].concat(o[d]).join(',')); }).join('|'); }
 function inScope(sc, m) { var v = sc[m.dept]; return !!v && (v === '*' || v.indexOf(m.label) >= 0); }
 function specialShared(mem) {
-  var camps = liveCamps(), targets = [], tIds = {};
+  var camps = liveCamps(), targets = [], tIds = {}, tn = teacherNames();
   camps.forEach(function (c) {
     mem.forEach(function (m) {
-      if (!inScope(c.scope, m)) return;
+      if (tn[m.name] || !inScope(c.scope, m)) return;   // 교사는 기도 대상에서 뺌
       targets.push({ id: m.id, camp: c.id, name: m.name, grade: m.label, dept: m.dept, gk: m.y == null ? 999 : m.y, note: m.memo, pv: m.pv });
       tIds[c.id + '|' + m.id] = 1;
     });
@@ -525,6 +525,7 @@ function attachRoster(o, me) {
   delete o.mem; delete o.attBy; delete o.vis;
   o.me.depts = acc;
   if (!acc.length) return;
+  o.tnames = Object.keys(teacherNames());   // 출석부에서 교사는 '교사' 칸으로
   var ok = {}; acc.forEach(function (d) { ok[d] = 1; });
   var mine = mem.filter(function (m) { return ok[m.dept]; }), ids = {};
   o.roster = mine;
@@ -960,7 +961,7 @@ function locked(p) {
         tl.push([n, String(now), ds.join(' ')]);
       });
       if (tl.length > 300) return { ok: false, error: '이름이 너무 많아요' };
-      writeAll('teacher', tl);
+      writeAll('teacher', tl); bump();
       return state(me, devs);
     }
     case 'camp': {   // 특별기도 만들기·고치기
