@@ -17,11 +17,15 @@
  * - 특별기도: 기간(시작~끝)마다 기도 대상(학생 등)·한 사람이 고를 수·기도표·일정·예배 인원을 따로 관리합니다.
  *   매일 기도 기록과는 섞이지 않습니다.
  * - 권한: 마스터(모두) · 공지(공지 올리기) · 교사(기도 대상 사진·이름 올리기, 일정, 예배 인원).
- *   마스터가 '교사명단'에 이름을 넣어 두면, 그 이름으로 들어온 기기는 자동으로 교사가 됩니다.
+ *   마스터가 '교사명단'에 이름과 부서를 넣어 두면, 그 이름으로 들어온 기기는 자동으로 그 부서 교사가 됩니다.
+ * - 출석부: '명단'(부서·이름·태어난 해·학교·연락처·비고·사진) · '출석' · '심방' 시트.
+ *   연락처·학교·비고·심방·출석은 그 부서 교사, 마스터, 담임목사 기기에만 보냅니다.
+ *   학년·나이는 태어난 해로 해마다 저절로 바뀝니다(청년부: 20세 = 1년차).
+ *   특별기도의 기도 대상은 명단에서 '대상'(부서·학년)에 맞는 사람입니다.
  * - 학생 사진은 '사진' 시트에만 있고, 이름을 넣은 기기에만 보냅니다.
  */
 
-var SERVER_VER = 4;
+var SERVER_VER = 5;
 var SUM_BEFORE = '2026-08-30';   // 이 날짜 전 설문 기록은 그날 것을 모두 더함 (설정 B7 이 있으면 그 날짜)
 var APP_NAME = '교회기도';
 var FORM_SHEET = '설문지 응답 시트1';
@@ -35,15 +39,19 @@ var SH = {
   react:  { name: '반응',     cols: ['기도제목 주인', '누른 사람', '종류', '누른 시각', '기기ID'] },
   church: { name: '소속',     cols: ['이름', '소속', '고친 시각', '직책'] },
   // ---- 특별기도 ----
-  camp:   { name: '특별기도',   cols: ['ID', '제목', '시작', '끝', '목표', '방법', '1인 선택 수', '목표 인원', '만든 시각', '지움'] },
+  camp:   { name: '특별기도',   cols: ['ID', '제목', '시작', '끝', '목표', '방법', '1인 선택 수', '목표 인원', '만든 시각', '지움', '대상'] },
   target: { name: '기도대상',   cols: ['ID', '특별기도ID', '이름', '학년', '메모', '사진 판', '올린 사람', '고친 시각', '지움', '순서'] },
-  photo:  { name: '사진',       cols: ['기도대상ID', '판', '그림'] },
+  photo:  { name: '사진',       cols: ['명단ID', '판', '그림'] },
   pick:   { name: '선택',       cols: ['특별기도ID', '기도자', '기도대상ID', '고른 시각', '기기ID'] },
   sp:     { name: '특별기도표', cols: ['저장 시각', '특별기도ID', '날짜', '이름', '기도함', '기기ID'] },
   event:  { name: '일정',       cols: ['ID', '특별기도ID', '날짜', '제목', '지움'] },
   join:   { name: '참석',       cols: ['일정ID', '이름', '누른 시각', '기기ID'] },
   att:    { name: '예배인원',   cols: ['특별기도ID', '날짜', '인원', '메모', '고친 시각', '고친 사람'] },
-  teacher:{ name: '교사명단',   cols: ['이름', '넣은 시각'] }
+  teacher:{ name: '교사명단',   cols: ['이름', '넣은 시각', '부서'] },
+  // ---- 출석부 ----
+  member: { name: '명단', cols: ['ID', '부서', '이름', '태어난 해', '학년 조정', '학년(직접)', '학교', '연락처', '보호자 연락처', '비고', '기도 메모', '상태', '사진 판', '등록일', '고친 시각', '고친 사람', '지움'] },
+  attend: { name: '출석', cols: ['저장 시각', '날짜', '명단ID', '출석', '출처', '기기ID'] },
+  visit:  { name: '심방', cols: ['ID', '명단ID', '날짜', '내용', '쓴 사람', '쓴 시각', '지움'] }
 };
 // 로고: 그림은 '로고' 시트에 조각으로, 보이는 곳 설정은 스크립트 속성에
 var LOGO_SHEET = '로고';
@@ -74,10 +82,28 @@ function setChurch(name, church, title) {
   writeAll('church', list);
 }
 var REACTS = ['heart', 'like', 'smile', 'pray'];
-// 권한: '마스터'(모두) · '공지'(공지 올리기·내리기, 댓글 관리) · '교사'(기도 대상·일정·예배 인원)
-var ROLES = ['마스터', '공지', '교사'];
-function isStaff(me) { return me.role === '마스터' || me.role === '공지'; }
-function teacherNames() { var m = {}; rows('teacher').forEach(function (r) { var n = cleanName(r[0]); if (n) m[n] = 1; }); return m; }
+// 권한: '마스터'(모두) · '담임목사'(공지 + 모든 부서 출석부 보기) · '공지'(공지 올리기·내리기, 댓글 관리) · '교사'(자기 부서 출석부, 일정·예배 인원)
+var ROLES = ['마스터', '담임목사', '공지', '교사'];
+function isStaff(me) { return me.role === '마스터' || me.role === '공지' || me.role === '담임목사'; }
+// 교사명단: { 이름: [부서…] }
+function teacherMap() {
+  var m = {};
+  rows('teacher').forEach(function (r) {
+    var n = cleanName(r[0]); if (!n) return;
+    var ds = String(r[2] || '').split(/[\s,·/]+/).filter(function (d) { return GROUPS.indexOf(d) >= 0; });
+    m[n] = (m[n] || []).concat(ds);
+  });
+  return m;
+}
+function teacherNames() { var m = teacherMap(), o = {}; Object.keys(m).forEach(function (k) { o[k] = 1; }); return o; }
+// 출석부를 볼 수 있는 부서
+function accessDepts(me) {
+  var r = effRole(me);
+  if (r === '마스터' || r === '담임목사') return GROUPS.slice();
+  if (!me.name) return [];
+  var ds = teacherMap()[me.name] || [];
+  return GROUPS.filter(function (g) { return ds.indexOf(g) >= 0; });
+}
 // 실제 권한: 시트의 권한, 없으면 교사명단에 이름이 있을 때 '교사'
 function effRole(me) { if (ROLES.indexOf(me.role) >= 0) return me.role; return me.name && teacherNames()[me.name] ? '교사' : ''; }
 function isTeacher(me) { var r = effRole(me); return r === '마스터' || r === '교사'; }
@@ -117,7 +143,7 @@ function seedCamp() {
   append('camp', [[id, '학생부·청년부 겨울 대확장', '2026-11-22', '2027-02-28',
     '학생부·청년부 예배 인원 50명 이상 달성',
     '① 겨울수련회까지 예비청년·청년 1년차·학생부의 성령 체험을 위해 모든 성도님이 1인 3명의 학생을 정해 기도\n② 온 성도가 겨울수련회에 참여하여 함께 기도해서 꼭 성령 받게 함\n③ 매번의 헌신예배 시간에도 다 참여하여 기도하며 격려하기',
-    '3', '50', now, '']]);
+    '3', '50', now, '', '학생부:*|청년부:예비청년,1년차']]);
   append('event', [['e' + now, id, '', '겨울수련회', '']]);
   bump();
 }
@@ -296,7 +322,13 @@ function shared() {
   var churches = {}, titles = {};
   rows('church').forEach(function (r) { if (!r[0]) return; if (r[1]) churches[String(r[0])] = String(r[1]); if (r[3]) titles[String(r[0])] = String(r[3]); });
   var out = { names: Object.keys(names).sort(), data: data, prayers: prayers, notices: notices, comments: comments, reacts: reacts, churches: churches, titles: titles, groups: GROUPS };
-  out.sp = specialShared();
+  var mem = liveMembers();
+  out.mem = mem;                        // 개인 정보 — state() 에서 권한대로 걸러서 보냄
+  out.attBy = attendByDept(mem);        // { 부서: { 날짜: [ID…] } }
+  out.vis = liveVisits();
+  out.cnt = {};                         // 공개: { 부서: { 날짜: 출석 인원 } }
+  Object.keys(out.attBy).forEach(function (d) { var o = out.cnt[d] = {}; Object.keys(out.attBy[d]).forEach(function (k) { o[k] = out.attBy[d][k].length; }); });
+  out.sp = specialShared(mem);
   cachePut(JSON.stringify(out));
   return out;
 }
@@ -305,7 +337,7 @@ function shared() {
 function liveCamps() {
   return rows('camp').filter(function (r) { return r[0] && String(r[9]) !== '1'; }).map(function (r) {
     return { id: String(r[0]), title: String(r[1]), start: String(r[2]), end: String(r[3]), goal: String(r[4]), how: String(r[5]),
-      picks: Math.max(1, Math.min(10, Number(r[6]) || 3)), goalN: Number(r[7]) || 0, at: Number(r[8]) || 0 };
+      picks: Math.max(1, Math.min(10, Number(r[6]) || 3)), goalN: Number(r[7]) || 0, at: Number(r[8]) || 0, scope: parseScope(r[10]) };
   });
 }
 function liveTargets() {
@@ -313,13 +345,31 @@ function liveTargets() {
     return { id: String(r[0]), camp: String(r[1]), name: String(r[2]).trim(), grade: String(r[3]).trim(), note: String(r[4]), pv: String(r[5] || ''), at: Number(r[7]) || 0, ord: Number(r[9]) || 0 };
   });
 }
-function specialShared() {
-  var camps = liveCamps(), targets = liveTargets(), tIds = {};
-  targets.forEach(function (t) { tIds[t.id] = t.camp; });
+// 대상: '학생부:*|청년부:예비청년,1년차' → { 학생부: '*', 청년부: ['예비청년', '1년차'] }
+function parseScope(s) {
+  var o = {};
+  String(s || '').split('|').forEach(function (part) {
+    var i = part.indexOf(':'), d = (i < 0 ? part : part.slice(0, i)).trim(), l = i < 0 ? '*' : part.slice(i + 1).trim();
+    if (GROUPS.indexOf(d) < 0) return;
+    o[d] = !l || l === '*' ? '*' : l.split(',').map(function (x) { return x.trim(); }).filter(String);
+  });
+  return o;
+}
+function scopeStr(o) { return Object.keys(o || {}).filter(function (d) { return GROUPS.indexOf(d) >= 0; }).map(function (d) { return d + ':' + (o[d] === '*' ? '*' : [].concat(o[d]).join(',')); }).join('|'); }
+function inScope(sc, m) { var v = sc[m.dept]; return !!v && (v === '*' || v.indexOf(m.label) >= 0); }
+function specialShared(mem) {
+  var camps = liveCamps(), targets = [], tIds = {};
+  camps.forEach(function (c) {
+    mem.forEach(function (m) {
+      if (!inScope(c.scope, m)) return;
+      targets.push({ id: m.id, camp: c.id, name: m.name, grade: m.label, dept: m.dept, gk: m.y == null ? 999 : m.y, note: m.memo, pv: m.pv });
+      tIds[c.id + '|' + m.id] = 1;
+    });
+  });
   var picks = {};   // { 기간: { 기도자: [대상ID…] } }
   rows('pick').forEach(function (r) {
     var c = String(r[0]), n = String(r[1]), t = String(r[2]);
-    if (!c || !n || tIds[t] !== c) return;
+    if (!c || !n || !tIds[c + '|' + t]) return;
     var o = picks[c] = picks[c] || {}, a = o[n] = o[n] || [];
     if (a.indexOf(t) < 0) a.push(t);
   });
@@ -373,39 +423,228 @@ function importOnce() {
   var pp = PropertiesService.getScriptProperties();
   if (pp.getProperty('IMPORTED') === String(SERVER_VER)) return;
   var lock = LockService.getScriptLock(); lock.waitLock(25000);
-  try { if (pp.getProperty('IMPORTED') !== String(SERVER_VER)) { fixHeaders(); importForm(); pp.setProperty('IMPORTED', String(SERVER_VER)); } } finally { lock.releaseLock(); }
+  try { if (pp.getProperty('IMPORTED') !== String(SERVER_VER)) { fixHeaders(); repairIds('target', 2, 't'); migrateTargets(); importForm(); pp.setProperty('IMPORTED', String(SERVER_VER)); } } finally { lock.releaseLock(); }
 }
 // 새 칸이 생긴 시트의 제목 줄을 맞춤
 function fixHeaders() {
   Object.keys(SH).forEach(function (k) { var sh = sheet(k), c = SH[k].cols; sh.getRange(1, 1, 1, c.length).setValues([c]).setFontWeight('bold'); });
 }
-// 시트에 직접 넣은 기도 대상: ID 가 비었거나 겹치면 새 ID, 특별기도ID 가 비면 지금 특별기도로 채움
-function repairTargets() {
-  var bad = function (all) {
-    var seen = {}, need = false;
-    all.forEach(function (r) { if (!String(r[2]).trim()) return; var id = String(r[0]).trim(); if (!id || seen[id] || !String(r[1]).trim()) need = true; seen[id] = 1; });
-    return need;
-  };
-  if (!bad(rows('target'))) return;
-  var lock = LockService.getScriptLock(); lock.waitLock(25000);
-  try {
-    var all = rows('target'); if (!bad(all)) return;
-    var t = todayStr(), cs = liveCamps().sort(function (a, b) { return a.start < b.start ? 1 : -1; });
-    var def = cs.filter(function (c) { return c.start <= t && t <= c.end; })[0] || cs[0];
-    var seen = {}, base = Date.now();
-    all.forEach(function (r, i) {
-      if (!String(r[2]).trim()) return;
-      var id = String(r[0]).trim();
-      if (!id || seen[id]) { id = 't' + base + '_' + i; r[0] = id; }
-      seen[id] = 1;
-      if (!String(r[1]).trim() && def) r[1] = def.id;
-    });
-    writeAll('target', all); bump();
-  } finally { lock.releaseLock(); }
+// 시트에 직접 넣은 줄: ID 가 비었거나 겹치면 새 ID (이름 칸이 빈 줄은 건너뜀)
+function needIdFix(all, nameCol) {
+  var seen = {}, need = false;
+  all.forEach(function (r) { if (!String(r[nameCol]).trim()) return; var id = String(r[0]).trim(); if (!id || seen[id]) need = true; seen[id] = 1; });
+  return need;
 }
+function repairIds(k, nameCol, prefix) {
+  var all = rows(k); if (!needIdFix(all, nameCol)) return false;
+  var seen = {}, base = Date.now();
+  all.forEach(function (r, i) {
+    if (!String(r[nameCol]).trim()) return;
+    var id = String(r[0]).trim();
+    if (!id || seen[id]) { id = prefix + base + '_' + i; r[0] = id; }
+    seen[id] = 1;
+  });
+  writeAll(k, all); bump(); return true;
+}
+// 예전 '기도대상' 시트의 사람을 '명단'으로 옮김 (ID·사진·선택은 그대로) — 한 번만
+function migrateTargets() {
+  var pp = PropertiesService.getScriptProperties();
+  if (pp.getProperty('MIGR_MEMBER') === '1') return;
+  var old = liveTargets(), Y = yearNow(), have = {}, add = [], scopes = {};
+  rows('member').forEach(function (r) { if (r[0]) have[String(r[0])] = 1; });
+  var camps = {}; rows('camp').forEach(function (r) { if (r[0]) camps[String(r[0])] = 1; });
+  var cs0 = Object.keys(camps);
+  old.forEach(function (t) {
+    if (!camps[t.camp]) t.camp = cs0[cs0.length - 1] || '';   // 특별기도ID 가 빈 줄은 가장 최근 특별기도로
+    var g = t.grade.replace(/\s+/g, ''), dept = '', y = null, manual = '', si = SCHOOL.indexOf(g), m;
+    if (/^(중|고)\d$/.test(g)) { dept = '학생부'; y = si + 7; }
+    else if (/^초\d$/.test(g)) { dept = '주일학교'; y = si + 7; }
+    else if (g === '예비청년') { dept = '청년부'; y = 18; }
+    else if ((m = g.match(/^청년(\d+)년차$/)) || (m = g.match(/^(\d+)년차$/))) { dept = '청년부'; y = 18 + Number(m[1]); }
+    else if (/청년|년차/.test(g)) { dept = '청년부'; manual = g; }
+    else { dept = '학생부'; manual = g; }
+    var label = y == null ? manual : labelFor(dept, y, '');
+    var sc = scopes[t.camp] = scopes[t.camp] || {};
+    if (dept === '학생부') sc[dept] = '*';
+    else if (sc[dept] !== '*') { sc[dept] = sc[dept] || []; if (sc[dept].indexOf(label) < 0) sc[dept].push(label); }
+    if (have[t.id]) return;
+    have[t.id] = 1;
+    add.push([t.id, dept, t.name.replace(/\s+/g, ''), y == null ? '' : String(Y - y), '0', manual, '', '', '', '', t.note, '', t.pv, todayStr(), String(Date.now()), '기도대상에서 옮김', '']);
+  });
+  append('member', add);
+  var cr = rows('camp');
+  cr.forEach(function (r) { if (r[0] && !String(r[10] || '').trim() && scopes[String(r[0])]) r[10] = scopeStr(scopes[String(r[0])]); });
+  writeAll('camp', cr);
+  pp.setProperty('MIGR_MEMBER', '1');
+}
+
+/* ---------- 출석부: 명단 · 출석 · 심방 ---------- */
+var SCHOOL = ['초1', '초2', '초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
+var SPECIAL = ['군복무', '유학·타지', '쉬는 중', '전출'];
+function yearNow() { return Number(todayStr().slice(0, 4)); }
+// 학년·나이 이름: y = 올해 − 태어난 해 (+ 조정) · 청년부는 19세 예비청년, 20세 1년차 (한국식 나이)
+function labelFor(dept, y, manual) {
+  if (y == null) return manual || '';
+  if (dept === '청년부') { if (y === 18) return '예비청년'; if (y >= 19) return (y - 18) + '년차'; }
+  if (y >= 7 && y <= 18) return SCHOOL[y - 7];
+  return (y + 1) + '세';
+}
+function liveMembers() {
+  var Y = yearNow();
+  return rows('member').filter(function (r) { return r[0] && String(r[2]).trim() && String(r[16]) !== '1'; }).map(function (r) {
+    var birth = Number(r[3]) || 0, adj = Number(r[4]) || 0, y = birth ? Y - birth + adj : null, dept = String(r[1]).trim();
+    return { id: String(r[0]).trim(), dept: dept, name: String(r[2]).replace(/\s+/g, ''), birth: birth || '', adj: adj, grade: String(r[5]).trim(),
+      school: String(r[6]), phone: String(r[7]), phone2: String(r[8]), note: String(r[9]), memo: String(r[10]), status: String(r[11]).trim(),
+      pv: String(r[12] || ''), reg: String(r[13] || ''), y: y, label: labelFor(dept, y, String(r[5]).trim()) };
+  });
+}
+function attendByDept(mem) {
+  var dept = {}; mem.forEach(function (m) { dept[m.id] = m.dept; });
+  var last = {};
+  rows('attend').forEach(function (r) {
+    var d = String(r[1]), id = String(r[2]); if (!isDay(d) || !dept[id]) return;
+    var k = d + '|' + id, ts = Number(r[0]) || 0;
+    if (!last[k] || ts >= last[k].ts) last[k] = { ts: ts, v: String(r[3]) === '1' };
+  });
+  var by = {};
+  Object.keys(last).forEach(function (k) {
+    if (!last[k].v) return;
+    var i = k.indexOf('|'), d = k.slice(0, i), id = k.slice(i + 1), o = by[dept[id]] = by[dept[id]] || {};
+    (o[d] = o[d] || []).push(id);
+  });
+  return by;
+}
+function liveVisits() {
+  return rows('visit').filter(function (r) { return r[0] && r[1] && String(r[6]) !== '1'; }).map(function (r) {
+    return { id: String(r[0]), pid: String(r[1]), date: String(r[2]), text: String(r[3]), by: String(r[4]), at: Number(r[5]) || 0 };
+  });
+}
+// 권한이 있는 부서의 명단·출석·심방만 붙임 (출석은 명단 순서 번호를 36진수로 줄여 보냄)
+function attachRoster(o, me) {
+  var acc = accessDepts(me), mem = o.mem || [], attBy = o.attBy || {}, vis = o.vis || [];
+  delete o.mem; delete o.attBy; delete o.vis;
+  o.me.depts = acc;
+  if (!acc.length) return;
+  var ok = {}; acc.forEach(function (d) { ok[d] = 1; });
+  var mine = mem.filter(function (m) { return ok[m.dept]; }), ids = {};
+  o.roster = mine;
+  o.ratt = {};
+  acc.forEach(function (d) {
+    var list = mine.filter(function (m) { return m.dept === d; }), idx = {};
+    list.forEach(function (m, i) { idx[m.id] = i.toString(36); });
+    var dd = {}, src = attBy[d] || {};
+    Object.keys(src).forEach(function (day) { dd[day] = src[day].map(function (id) { return idx[id]; }).filter(function (x) { return x != null; }).join(','); });
+    o.ratt[d] = { ids: list.map(function (m) { return m.id; }), d: dd };
+  });
+  mine.forEach(function (m) { ids[m.id] = 1; });
+  o.visits = vis.filter(function (v) { return ids[v.pid]; });
+}
+function cleanPhone(s) { return String(s == null ? '' : s).replace(/[^\d\-+ ]/g, '').trim().slice(0, 20); }
+function clip(s, n, multi) { s = String(s == null ? '' : s).replace(/\r/g, ''); if (!multi) s = s.replace(/\s+/g, ' '); return s.trim().slice(0, n); }
+function memberRow(all, id) { return all.filter(function (r) { return String(r[0]) === String(id) && String(r[16]) !== '1'; })[0] || null; }
+// 이름 칸: '임동현(19)' · '이 훈' · '김민수(30대)'
+function parseNameCell(v) {
+  var t = String(v == null ? '' : v).trim().replace(/\u3000/g, ' ');
+  var m = t.match(/^([가-힣A-Za-z][가-힣A-Za-z\s]{0,8}?)\s*(?:\(\s*(\d{1,2})\s*(대)?\s*\))?\s*$/);
+  if (!m) return null;
+  var name = m[1].replace(/\s+/g, '');
+  if (name.length < 2) return null;
+  return { name: name, age: m[2] && !m[3] ? Number(m[2]) : null };
+}
+// 월별 출석 시트 한 장: '이 름' 칸 오른쪽의 날짜(일) 칸들, 그 아래로 '이름(나이)'와 ○ 표시
+function parseMonth(v, y, mo) {
+  var out = [], norm = function (s) { return String(s == null ? '' : s).replace(/\s+/g, ''); }, pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
+  for (var r = 0; r < v.length; r++) for (var c = 0; c < v[r].length; c++) {
+    if (norm(v[r][c]) !== '이름') continue;
+    var dcols = [];
+    for (var j = c + 1; j < v[r].length; j++) {
+      var t = norm(v[r][j]).replace(/일$/, '');
+      if (!/^\d{1,2}$/.test(t)) break;
+      var dn = Number(t), dt = new Date(y, mo - 1, dn);
+      if (dn < 1 || dt.getMonth() !== mo - 1) break;
+      dcols.push({ c: j, date: y + '-' + pad2(mo) + '-' + pad2(dn) });
+    }
+    if (!dcols.length) continue;
+    var title = r >= 2 ? norm(v[r - 2][c]) : '';
+    for (var i = r + 1; i < v.length; i++) {
+      var raw = v[i][c], k = norm(raw);
+      if (!k) continue;
+      if (k === '합계' || k === '주차' || k === '이름' || /^출석/.test(k)) break;
+      var nm = parseNameCell(raw); if (!nm) continue;
+      var dates = dcols.filter(function (dc) { var x = norm(v[i][dc.c]); return x && !/^(0|-|x|X|×|결)$/.test(x); }).map(function (dc) { return dc.date; });
+      out.push({ name: nm.name, age: nm.age, y: y, mo: mo, title: title, dates: dates, first: dcols[0].date });
+    }
+  }
+  return out;
+}
+// 구글 시트(월별 시트 26.11, 26.10 …)에서 명단·출석 가져오기. 다시 해도 같은 결과(예전에 가져온 것은 지우고 새로)
+function importAttendSheet(url, dept, me) {
+  var book;
+  try { book = SpreadsheetApp.openByUrl(String(url || '').trim()); }
+  catch (e) { throw new Error('시트를 열지 못했어요. 주소가 맞는지, 이 서버를 만든 구글 계정으로 볼 수 있는 시트인지 확인해 주세요'); }
+  var recs = [], used = [];
+  book.getSheets().forEach(function (sh) {
+    var nm = String(sh.getName()).trim(), m = nm.match(/^(\d{2}|\d{4})[.\-_/ ](\d{1,2})(?!\d)/);
+    if (!m || nm.indexOf('사본') >= 0) return;
+    var y = m[1].length === 2 ? 2000 + Number(m[1]) : Number(m[1]), mo = Number(m[2]);
+    if (mo < 1 || mo > 12) return;
+    var got = parseMonth(sh.getDataRange().getDisplayValues(), y, mo);
+    if (got.length) { used.push(nm); recs = recs.concat(got); }
+  });
+  if (!recs.length) throw new Error("'26.11' 같은 이름의 월별 시트에서 '이 름' 칸을 찾지 못했어요");
+  var all = rows('member').filter(function (r) { return r[0]; }), now = Date.now(), Y = yearNow();
+  var people = all.filter(function (r) { return String(r[1]) === dept && String(r[16]) !== '1'; });
+  // 사람마다 가장 최근 시트의 나이로 태어난 해를 정함
+  var groups = {};
+  recs.forEach(function (rc) {
+    var by = rc.age ? rc.y - rc.age + 1 : 0, key = rc.name + '|' + (by || '');
+    var g = groups[key] = groups[key] || { name: rc.name, by: by, ym: 0, title: '', first: '9999', dates: {} };
+    var ym = rc.y * 100 + rc.mo;
+    if (ym >= g.ym) { g.ym = ym; g.title = rc.title; }
+    if (rc.first < g.first) g.first = rc.first;
+    rc.dates.forEach(function (d) { g.dates[d] = 1; });
+  });
+  // 나이 없이 적힌 줄은 같은 이름이 하나뿐이면 그 사람으로 합침
+  Object.keys(groups).forEach(function (k) {
+    var g = groups[k]; if (g.by) return;
+    var same = Object.keys(groups).filter(function (x) { return x !== k && groups[x].name === g.name && groups[x].by; });
+    if (same.length === 1) { var t = groups[same[0]]; Object.keys(g.dates).forEach(function (d) { t.dates[d] = 1; }); if (g.first < t.first) t.first = g.first; delete groups[k]; }
+  });
+  var added = 0, matched = 0, marks = [], idOf = {};
+  Object.keys(groups).forEach(function (k, gi) {
+    var g = groups[k];
+    var cands = people.filter(function (r) { return String(r[2]).replace(/\s+/g, '') === g.name; });
+    var row = cands.length <= 1 ? cands[0] : cands.slice().sort(function (a, b) { return Math.abs((Number(a[3]) || 0) - g.by) - Math.abs((Number(b[3]) || 0) - g.by); })[0];
+    if (row && g.by && Number(row[3]) && Math.abs(Number(row[3]) - g.by) > 1 && cands.length === 1) row = null;   // 이름만 같은 다른 사람
+    var t = g.title, st = /군인|군복무|직업군인/.test(t) ? '군복무' : /유학/.test(t) ? '유학·타지' : '';
+    if (!row) {
+      row = ['m' + now + '_i' + gi, dept, g.name, g.by ? String(g.by) : '', '0', '', '', '', '', '', '', st, '', g.first, String(now), me.name + '(시트 가져오기)', ''];
+      all.push(row); people.push(row); added++;
+    } else {
+      matched++;
+      if (!Number(row[3]) && g.by) row[3] = String(g.by);
+      if (st && !String(row[11])) row[11] = st;
+      if (!String(row[13]) || g.first < String(row[13])) row[13] = g.first;
+    }
+    Object.keys(g.dates).forEach(function (d) { marks.push(d + '|' + row[0]); });
+    idOf[k] = row[0];
+  });
+  writeAll('member', all);
+  var deptIds = {}; people.forEach(function (r) { deptIds[String(r[0])] = 1; });
+  var keep = rows('attend').filter(function (r) { return r[0] !== '' && !(String(r[4]) === '시트' && deptIds[String(r[2])]); });
+  var seen = {};
+  marks.forEach(function (x) { if (seen[x]) return; seen[x] = 1; var i = x.indexOf('|'); keep.push(['1', x.slice(0, i), x.slice(i + 1), '1', '시트', '']); });
+  writeAll('attend', keep);
+  bump();
+  return { added: added, matched: matched, marks: Object.keys(seen).length, sheets: used.length };
+}
+
 function handle(p) {
   importOnce();
-  if (p.action !== 'logo') repairTargets();
+  if (p.action !== 'logo' && needIdFix(rows('member'), 2)) {   // 시트에 직접 넣은 명단 줄 고치기
+    var lk = LockService.getScriptLock(); lk.waitLock(25000);
+    try { repairIds('member', 2, 'm'); } finally { lk.releaseLock(); }
+  }
   if (p.action === 'logo') return { ok: true, logo: logoOpts(), data: logoData() };   // 로고 그림은 누구나 (첫 화면에도 보여야 해서)
   if (p.action === 'load' || p.action === 'photos') {   // 읽기는 잠그지 않음 (새 기기만 잠그고 등록)
     var devs = readDevs(), me = find(devs, p.dev);
@@ -424,7 +663,8 @@ function state(me, devs) {
   var o = shared();
   o.ok = true; o.ver = SERVER_VER; o.today = todayStr(); o.church = churchName(); o.logo = logoOpts();
   o.me = { name: me.name, role: effRole(me) };
-  if (me.role === '마스터') o.teachers = Object.keys(teacherNames()).sort();
+  attachRoster(o, me);
+  if (me.role === '마스터') { var tm = teacherMap(); o.teachers = Object.keys(tm).sort().map(function (n) { return { name: n, depts: tm[n] }; }); }
   return o;
 }
 // 기도 대상 사진 (이름을 넣은 기기만)
@@ -544,14 +784,14 @@ function locked(p) {
       var pc = campOf(p.camp), pwho = me.name;
       if (p.name && cleanName(p.name) !== me.name) { if (!master) return { ok: false, error: '본인 것만 고를 수 있어요' }; pwho = cleanName(p.name); }
       if (todayStr() > pc.end) return { ok: false, error: '끝난 특별기도예요' };
-      var tg = liveTargets().filter(function (t) { return t.id === String(p.target) && t.camp === pc.id; })[0];
+      var inCamp = {}; liveMembers().forEach(function (m) { if (inScope(pc.scope, m)) inCamp[m.id] = 1; });
+      var tg = inCamp[String(p.target)] ? { id: String(p.target) } : null;
       if (!tg) return { ok: false, error: '기도 대상을 찾지 못했어요' };
       var pr = rows('pick').filter(function (r) { return r[0]; });
       var mine = pr.filter(function (r) { return String(r[0]) === pc.id && String(r[1]) === pwho; });
       var has = mine.some(function (r) { return String(r[2]) === tg.id; });
       if (p.on && !has) {
-        var live = {}; liveTargets().forEach(function (t) { live[t.id] = 1; });
-        var cnt = mine.filter(function (r) { return live[String(r[2])]; }).length;
+        var cnt = mine.filter(function (r) { return inCamp[String(r[2])]; }).length;
         if (cnt >= pc.picks) return { ok: false, error: pc.picks + '명까지 고를 수 있어요. 먼저 한 명을 빼 주세요' };
         append('pick', [[pc.id, pwho, tg.id, String(now), me.id]]);
       } else if (!p.on && has) {
@@ -578,42 +818,91 @@ function locked(p) {
     }
   }
 
-  // 교사·마스터: 기도 대상, 일정, 예배 인원
-  if (isTeacher(me)) switch (p.action) {
-    case 'target': {   // 기도 대상 넣기·고치기 (photo: 'data:image/…' 새 사진, '' 사진 지우기, 없으면 그대로)
-      var tc = campOf(p.camp), tn = String(p.name || '').replace(/\s+/g, ' ').trim().slice(0, 20);
-      if (tn.length < 1) return { ok: false, error: '이름을 넣어 주세요' };
-      var grade = String(p.grade || '').trim().slice(0, 12), note = String(p.note || '').replace(/\r/g, '').trim().slice(0, 200);
-      var all = rows('target').filter(function (r) { return r[0]; }), row = null;
-      if (p.id) { row = all.filter(function (r) { return String(r[0]) === String(p.id) && String(r[8]) !== '1'; })[0]; if (!row) return { ok: false, error: '기도 대상을 찾지 못했어요' }; }
-      else { row = [newId('t'), tc.id, '', '', '', '', me.name, '', '', String(all.length + 1)]; all.push(row); }
+  // 출석부: 그 부서 교사 · 마스터 · 담임목사
+  var acc = accessDepts(me), can = function (d) { return acc.indexOf(String(d)) >= 0; };
+  switch (p.action) {
+    case 'person': {   // 사람 넣기·고치기 (photo: 'data:image/…' 새 사진, '' 지우기, 없으면 그대로)
+      var pdept = cleanChurch(p.dept);
+      if (!pdept || !can(pdept)) return { ok: false, error: '이 부서는 권한이 없어요' };
+      var pn = String(p.name || '').replace(/\s+/g, '').slice(0, 12);
+      if (pn.length < 1) return { ok: false, error: '이름을 넣어 주세요' };
+      var pb = String(p.birth == null ? '' : p.birth).trim();
+      if (pb && !(Number(pb) >= 1900 && Number(pb) <= yearNow())) return { ok: false, error: '태어난 해를 확인해 주세요 (예: 2010)' };
+      var mall = rows('member').filter(function (r) { return r[0]; }), prow = null;
+      if (p.id) { prow = memberRow(mall, p.id); if (!prow) return { ok: false, error: '명단에서 찾지 못했어요' }; if (!can(prow[1])) return { ok: false, error: '이 부서는 권한이 없어요' }; }
+      else { prow = [newId('m'), '', '', '', '0', '', '', '', '', '', '', '', '', todayStr(), '', '', '']; mall.push(prow); }
       if (p.photo != null) {
-        var pd = String(p.photo);
-        if (pd && (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(pd) || pd.length > 48000)) return { ok: false, error: '사진이 너무 크거나 형식이 맞지 않아요' };
-        row[5] = savePhoto(String(row[0]), pd);
+        var ppd = String(p.photo);
+        if (ppd && (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(ppd) || ppd.length > 48000)) return { ok: false, error: '사진이 너무 크거나 형식이 맞지 않아요' };
+        prow[12] = savePhoto(String(prow[0]), ppd);
       }
-      row[2] = tn; row[3] = grade; row[4] = note; row[7] = String(now);
-      writeAll('target', all); bump();
-      var ts0 = state(me, devs); ts0.savedId = String(row[0]); return ts0;
+      prow[1] = pdept; prow[2] = pn; prow[3] = pb; prow[4] = String(Math.max(-3, Math.min(3, Math.round(Number(p.adj) || 0))));
+      prow[5] = clip(p.grade, 12); prow[6] = clip(p.school, 30); prow[7] = cleanPhone(p.phone); prow[8] = cleanPhone(p.phone2);
+      prow[9] = clip(p.note, 1000, true); prow[10] = clip(p.memo, 200, true); prow[11] = SPECIAL.indexOf(String(p.status)) >= 0 ? String(p.status) : '';
+      prow[14] = String(now); prow[15] = me.name;
+      writeAll('member', mall); bump();
+      var ps0 = state(me, devs); ps0.savedId = String(prow[0]); return ps0;
     }
-    case 'targets': {   // 여러 명 한번에 (같은 특별기도·같은 학년에 이미 있는 이름은 건너뜀)
-      var bc = campOf(p.camp), bg = String(p.grade || '').trim().slice(0, 12);
-      var allT = rows('target').filter(function (r) { return r[0]; }), have = {};
-      allT.forEach(function (r) { if (String(r[1]) === bc.id && String(r[8]) !== '1') have[String(r[2]).replace(/\s+/g, '') + '|' + String(r[3]).trim()] = 1; });
-      var add = [];
-      (p.names || []).slice(0, 300).forEach(function (x, i) {
-        var nm = String(x || '').replace(/\s+/g, ' ').trim().slice(0, 20), k = nm.replace(/\s+/g, '') + '|' + bg;
-        if (!nm || have[k]) return;
-        have[k] = 1;
-        add.push(['t' + now + '_b' + i, bc.id, nm, bg, '', '', me.name, String(now), '', String(allT.length + add.length + 1)]);
+    case 'people': {   // 여러 명 한번에: list [{ name, birth }] (같은 부서에 같은 이름·태어난 해가 있으면 건너뜀)
+      var bd = cleanChurch(p.dept);
+      if (!bd || !can(bd)) return { ok: false, error: '이 부서는 권한이 없어요' };
+      var ball = rows('member').filter(function (r) { return r[0]; }), bhave = {}, badd = [];
+      ball.forEach(function (r) { if (String(r[1]) === bd && String(r[16]) !== '1') { bhave[String(r[2]).replace(/\s+/g, '') + '|' + (Number(r[3]) || '')] = 1; bhave[String(r[2]).replace(/\s+/g, '') + '|'] = 1; } });
+      (p.list || []).slice(0, 300).forEach(function (x, i) {
+        var nm2 = String(x && x.name || '').replace(/\s+/g, '').slice(0, 12), by2 = Number(x && x.birth) || '';
+        if (nm2.length < 2 || bhave[nm2 + '|']) return;   // 같은 부서에 같은 이름이 있으면 건너뜀 (동명이인은 한 명씩 넣기로)
+        bhave[nm2 + '|'] = 1;
+        bhave[nm2 + '|' + by2] = 1;
+        badd.push(['m' + now + '_b' + i, bd, nm2, by2 ? String(by2) : '', '0', clip(x.grade, 12), '', '', '', '', '', '', '', todayStr(), String(now), me.name, '']);
       });
-      append('target', add); bump();
-      var bs = state(me, devs); bs.added = add.length; return bs;
+      append('member', badd); bump();
+      var bs0 = state(me, devs); bs0.added = badd.length; return bs0;
     }
-    case 'delTarget': {
-      var dt = rows('target').map(function (r) { if (String(r[0]) === String(p.id)) r[8] = '1'; return r; });
-      writeAll('target', dt); savePhoto(String(p.id), ''); bump(); return state(me, devs);
+    case 'delPerson': {
+      var dall = rows('member'), drow = memberRow(dall, p.id);
+      if (!drow) return { ok: false, error: '명단에서 찾지 못했어요' };
+      if (!can(drow[1])) return { ok: false, error: '이 부서는 권한이 없어요' };
+      drow[16] = '1'; writeAll('member', dall); savePhoto(String(p.id), ''); bump();
+      return state(me, devs);
     }
+    case 'marks': {   // 출석 표시 모아 보내기: list [{ id, date, on }] — 가볍게 결과만 돌려줌
+      var md0 = {}; liveMembers().forEach(function (m) { md0[m.id] = m.dept; });
+      var today0 = todayStr(), add0 = [];
+      (p.list || []).slice(0, 500).forEach(function (x) {
+        var id0 = String(x && x.id || ''), d0 = String(x && x.date || '');
+        if (!md0[id0] || !can(md0[id0]) || !isDay(d0) || d0 > today0) return;
+        add0.push([String(now), d0, id0, x.on ? '1' : '0', '앱', me.id]);
+      });
+      append('attend', add0); bump();
+      return { ok: true, saved: add0.length };
+    }
+    case 'visit': {   // 심방 기록 넣기·고치기
+      var vall = rows('member'), vrow = memberRow(vall, p.pid);
+      if (!vrow || !can(vrow[1])) return { ok: false, error: '이 부서는 권한이 없어요' };
+      var vd = String(p.date || ''), vt = clip(p.text, 2000, true);
+      if (!isDay(vd)) return { ok: false, error: '날짜를 확인해 주세요' };
+      if (!vt) return { ok: false, error: '심방 내용을 적어 주세요' };
+      var vs = rows('visit').filter(function (r) { return r[0]; }), vr = p.id ? vs.filter(function (r) { return String(r[0]) === String(p.id); })[0] : null;
+      if (!vr) { vr = [newId('v'), String(p.pid), '', '', me.name, String(now), '']; vs.push(vr); }
+      vr[2] = vd; vr[3] = vt;
+      vs.sort(function (a, b) { return String(a[2]) < String(b[2]) ? -1 : 1; });
+      writeAll('visit', vs); bump(); return state(me, devs);
+    }
+    case 'delVisit': {
+      var dvs = rows('visit').filter(function (r) { return r[0]; }), mem2 = {}; liveMembers().forEach(function (m) { mem2[m.id] = m.dept; });
+      dvs.forEach(function (r) { if (String(r[0]) === String(p.id)) { if (!can(mem2[String(r[1])])) throw new Error('이 부서는 권한이 없어요'); r[6] = '1'; } });
+      writeAll('visit', dvs); bump(); return state(me, devs);
+    }
+    case 'importSheet': {   // 구글 시트 출석부 가져오기 (그 부서 교사·마스터)
+      var idp = cleanChurch(p.dept);
+      if (!idp || !can(idp)) return { ok: false, error: '이 부서는 권한이 없어요' };
+      var res = importAttendSheet(p.url, idp, me);
+      var is0 = state(me, devs); is0.imported = res; return is0;
+    }
+  }
+
+  // 교사·마스터: 일정, 예배 인원
+  if (isTeacher(me)) switch (p.action) {
     case 'event': {   // 일정 넣기·고치기 (날짜는 비워도 됨 = 추후 공지)
       var ec = campOf(p.camp), et = String(p.title || '').trim().slice(0, 60), ed = String(p.date || '');
       if (!et) return { ok: false, error: '일정 이름을 넣어 주세요' };
@@ -663,9 +952,13 @@ function locked(p) {
       setChurch(inm, cleanChurch(p.church), cleanTitle(p.title)); bump();
       return state(me, devs);
     }
-    case 'teachers': {   // 교사명단: 이 이름으로 들어온 기기는 자동으로 교사
+    case 'teachers': {   // 교사명단: [{ name, depts }] — 이 이름으로 들어온 기기는 자동으로 그 부서 교사
       var seen = {}, tl = [];
-      (p.names || []).forEach(function (x) { var n = cleanName(x); if (n.length >= 2 && !seen[n]) { seen[n] = 1; tl.push([n, String(now)]); } });
+      (p.list || (p.names || []).map(function (n) { return { name: n, depts: [] }; })).forEach(function (x) {
+        var n = cleanName(x && x.name); if (n.length < 2 || seen[n]) return; seen[n] = 1;
+        var ds = (x.depts || []).filter(function (d) { return GROUPS.indexOf(d) >= 0; });
+        tl.push([n, String(now), ds.join(' ')]);
+      });
       if (tl.length > 300) return { ok: false, error: '이름이 너무 많아요' };
       writeAll('teacher', tl);
       return state(me, devs);
@@ -678,21 +971,11 @@ function locked(p) {
       var cr = rows('camp').filter(function (r) { return r[0]; }), crow = null;
       if (p.id) crow = cr.filter(function (r) { return String(r[0]) === String(p.id); })[0];
       var isNew = !crow;
-      if (isNew) { crow = [newId('c'), '', '', '', '', '', '', '', String(now), '']; cr.push(crow); }
+      if (isNew) { crow = [newId('c'), '', '', '', '', '', '', '', String(now), '', '']; cr.push(crow); }
       crow[1] = title; crow[2] = st; crow[3] = en; crow[4] = String(p.goal || '').trim().slice(0, 300);
       crow[5] = String(p.how || '').replace(/\r/g, '').trim().slice(0, 2000); crow[6] = String(picks); crow[7] = String(gn);
+      if (p.scope != null) crow[10] = scopeStr(p.scope);
       writeAll('camp', cr);
-      if (isNew && p.copyFrom) {   // 지난 특별기도의 기도 대상(사진 포함)을 그대로 가져옴
-        var src = liveTargets().filter(function (t) { return t.camp === String(p.copyFrom); });
-        var ph = {}; rows('photo').forEach(function (r) { ph[String(r[0])] = r; });
-        var addT = [], addP = [];
-        src.forEach(function (t, i) {
-          var nid = newId('t') + i;
-          addT.push([nid, crow[0], t.name, t.grade, t.note, ph[t.id] ? String(ph[t.id][1]) : '', me.name, String(now), '', String(t.ord || i + 1)]);
-          if (ph[t.id]) addP.push([nid, String(ph[t.id][1]), String(ph[t.id][2])]);
-        });
-        append('target', addT); append('photo', addP);
-      }
       bump(); var cs0 = state(me, devs); cs0.savedId = String(crow[0]); return cs0;
     }
     case 'delCamp': {

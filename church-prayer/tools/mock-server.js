@@ -29,9 +29,35 @@ function makeSheet(name) {
       };
       return rg;
     },
+    getDataRange() { const nr = sh.getLastRow(), nc = sh.getLastColumn(); const rg = sh.getRange(1, 1, Math.max(1, nr), Math.max(1, nc)); rg.getDisplayValues = () => rg.getValues().map(r => r.map(v => String(v))); return rg; },
     setFrozenRows() {}, setColumnWidth() {}, clearContents() { grid.length = 0; }
   };
   return sh;
+}
+// 시험용 '청년부 출석부' 구글 시트 (월별 시트, '이 름' 칸, ○ 표시)
+function fakeAttendBook() {
+  const mk = (name, rowsArr) => { const s = makeSheet(name); rowsArr.forEach((r, i) => s.getRange(i + 1, 1, 1, r.length).setValues([r])); return s; };
+  const o = '○';
+  return { getSheets: () => [
+    mk('26.11', [
+      ['예 비 청 년', '', '', '', '', '', '', '1년차-4년차', '', '', '', '', ''],
+      ['주 차', '1주', '2주', '3주', '4주', '5주', '반출석률', '주 차', '1주', '2주', '3주', '4주', '반출석률'],
+      ['이 름', '1', '8', '15', '22', '29', '18.75%', '이 름', '1', '8', '15', '22', '13.64%'],
+      ['임동현(19)', o, o, o, o, '', '100%', '박지민(20)', o, o, o, o, '100%'],
+      ['이 훈(19)', o, '', '', '', '', '25%', '이주언(20)', '', '', '', '', '0%'],
+      ['', '', '', '', '', '', '', '', '', '', '', '', ''],
+      ['유준하', '', '', '', '', '', '', '고현명(24)', '', o, '', '', '25%']]),
+    mk('26.10', [
+      ['예 비 청 년'], ['주 차'],
+      ['이 름', '4', '11', '18', '25'],
+      ['임동현(19)', o, '', '', ''],
+      ['최현민(19)', '', o, '', '']]),
+    mk('24.11', [
+      ['5년차-6년차'], ['주 차'],
+      ['이 름', '3', '10'],
+      ['김옛날(23)', o, '']]),
+    mk('26.10 사본', [['이 름', '4'], ['가짜(19)', o]])
+  ] };
 }
 const sheets = {};
 const book = {
@@ -43,7 +69,7 @@ const book = {
 const cache = {}, props = {};
 const pad = n => String(n).padStart(2, '0');
 const ctx = {
-  SpreadsheetApp: { getActiveSpreadsheet: () => book },
+  SpreadsheetApp: { getActiveSpreadsheet: () => book, openByUrl: u => { if (!/docs\.google\.com\/spreadsheets\/d\//.test(u)) throw new Error('bad url'); return fakeAttendBook(); } },
   CacheService: { getScriptCache: () => ({ get: k => cache[k] == null ? null : cache[k], put: (k, v) => { cache[k] = v; }, remove: k => { delete cache[k]; }, getAll: ks => Object.fromEntries(ks.filter(k => k in cache).map(k => [k, cache[k]])), putAll: o => Object.assign(cache, o) }) },
   LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
   PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] || null, setProperty: (k, v) => { props[k] = v; } }) },

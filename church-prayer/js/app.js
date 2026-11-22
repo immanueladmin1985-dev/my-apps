@@ -47,7 +47,7 @@
   let S = C.state || null;   // 마지막으로 받은 자료 (바로 그리기용)
   let online = true, busy = 0;
   // 기다려야 하는 요청은 화면 전체에 로딩 창을 띄우고 그동안 다른 버튼을 막음 (여러 번 누르지 않게)
-  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', targets: '여러 명을 넣고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요' };
+  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', targets: '여러 명을 넣고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요', person: '명단을 저장하고 있어요', people: '여러 명을 넣고 있어요', delPerson: '지우고 있어요', visit: '심방 기록을 저장하고 있어요', delVisit: '지우고 있어요', importSheet: '구글 시트에서 출석부를 가져오고 있어요 (1분 안팎)' };
   let waitN = 0, waitTimer = 0;
   function showWait(msg) {
     waitN++;
@@ -66,7 +66,7 @@
     const w = $('#wait'); if (w) w.classList.remove('show');
   }
   async function api(action, extra) {
-    const msg = WAIT_MSG[action] || (['load', 'logo', 'react', 'photos', 'spCheck', 'join'].includes(action) ? '' : '잠시만요');
+    const msg = WAIT_MSG[action] || (['load', 'logo', 'react', 'photos', 'spCheck', 'join', 'marks'].includes(action) ? '' : '잠시만요');
     if (!msg) return apiRaw(action, extra);
     showWait(msg);
     try { return await apiRaw(action, extra); } finally { hideWait(); }
@@ -76,7 +76,7 @@
     await ensureDevice();
     const body = JSON.stringify(Object.assign({ action, dev: device.id, key: device.key, desc: deviceDesc() }, extra || {}));
     let r, ctl = window.AbortController ? new AbortController() : null;
-    const tm = ctl ? setTimeout(() => ctl.abort(), 30000) : 0;
+    const tm = ctl ? setTimeout(() => ctl.abort(), action === 'importSheet' ? 330000 : 30000) : 0;
     busy++; paintBusy();
     try { r = await fetch(C.server, { method: 'POST', body, redirect: 'follow', signal: ctl ? ctl.signal : undefined }); }
     catch (e) { online = false; throw new Error('인터넷 연결을 확인해 주세요'); }
@@ -119,7 +119,7 @@
   const isMaster = () => !!(S && S.me && S.me.role === '마스터');
   const isTeacher = () => !!(S && S.me && (S.me.role === '마스터' || S.me.role === '교사'));   // 교사: 기도 대상·일정·예배 인원
   const appTitle = () => '임마누엘교회 기도';
-  const isStaff = () => !!(S && S.me && (S.me.role === '마스터' || S.me.role === '공지'));   // 공지 권한(담임목사님 등)
+  const isStaff = () => !!(S && S.me && (S.me.role === '마스터' || S.me.role === '공지' || S.me.role === '담임목사'));   // 공지 권한(담임목사님 등)
   const dataOf = n => (S && S.data && S.data[n]) || {};
   const totalOf = n => Object.values(dataOf(n)).reduce((a, b) => a + b, 0);
 
@@ -176,6 +176,9 @@
     if (!C.server) { app.innerHTML = noServerHtml(); bindNoServer(); return; }
     if (!S) { app.innerHTML = `<div class="welcome">${brandHtml()}<p class="lead">자료를 불러오는 중…</p><div id="loadErr"></div></div>`; return; }
     if (!myName()) { renderWelcome(); return; }
+    document.title = appTitle();
+    if (isRosterUser() && !mode) { renderLauncher(); paintInstall(); return; }
+    if (mode === 'att' && isRosterUser()) { renderAttend(); paintInstall(); paintBusy(); return; }
     const y = window.scrollY;
     const nc = view !== 'prayer' ? newComments() : 0;
     const tabs = TABS.concat(hasSpecial() ? [['special', '🔥', '특별기도']] : []);
@@ -183,6 +186,7 @@
     document.title = appTitle();
     app.innerHTML = `<header><div class="top">
         <h1 class="htitle">${headerBrand()}</h1>
+        ${isRosterUser() ? '<button class="icon" id="tMode" aria-label="출석부로 가기">✅</button>' : ''}
         <button class="icon" id="tTheme" aria-label="밝게·어둡게">${isDark() ? ICON.sun : ICON.moon}</button>
         <button class="icon" id="tFS" aria-label="전체화면">${ICON.fsOn}</button>
         <button class="icon" id="tSet" aria-label="설정">${ICON.gear}</button></div></header>
@@ -192,6 +196,7 @@
     $('#tTheme').onclick = () => { C.theme = isDark() ? 'light' : 'dark'; saveCfg(); applyTheme(); render(); };
     $('#tSet').onclick = settings;
     $('#tFS').onclick = () => FS.toggle();
+    const tm = $('#tMode'); if (tm) tm.onclick = () => { mode = 'att'; render(); window.scrollTo(0, 0); };
     const m = $('#main');
     if (view === 'table') (C.stView === 'grid' ? renderTable : renderList)(m); else if (view === 'prayer') renderPrayer(m); else if (view === 'mine') renderMine(m); else if (view === 'special') renderSpecial(m); else renderInput(m);
     paintInstall(); paintBusy();
@@ -547,7 +552,14 @@
     const cs = campsSorted(), t = today();
     return cs.find(c => c.id === C.spCamp) || cs.find(c => c.start <= t && t <= c.end) || cs.slice().reverse().find(c => c.start > t) || cs[0] || null;
   }
-  const campTargets = c => SPS().targets.filter(x => x.camp === c.id).sort((a, b) => gradeIdx(a.grade) - gradeIdx(b.grade) || ko(a.grade, b.grade) || ko(a.name, b.name));
+  const campTargets = c => SPS().targets.filter(x => x.camp === c.id).sort((a, b) => DEPTS.indexOf(a.dept) - DEPTS.indexOf(b.dept) || (a.gk - b.gk) || ko(a.name, b.name));
+  // 목표 인원: 출석부(대상 부서 출석 인원 합) — 선생님이 직접 넣은 날은 그 숫자
+  function goalSeries(c) {
+    const man = SPS().att[c.id] || {}, cnt = (S && S.cnt) || {}, out = {}, t = today();
+    Object.keys(c.scope || {}).forEach(d => Object.keys(cnt[d] || {}).forEach(day => { if (day < c.start || day > t) return; const o = out[day] = out[day] || { n: 0, note: '출석부', auto: true }; o.n += cnt[d][day]; }));
+    Object.keys(man).forEach(day => { out[day] = Object.assign({}, man[day]); });
+    return out;
+  }
   const picksOf = (c, n) => ((SPS().picks[c.id] || {})[n] || []).filter(id => SPS().targets.some(x => x.id === id));
   function pickersOf(c, tid) { const o = SPS().picks[c.id] || {}; return Object.keys(o).filter(n => o[n].includes(tid)).sort(ko); }
   const logOf = (c, n) => ((SPS().log[c.id] || {})[n] || {});
@@ -631,7 +643,7 @@
     loadPhotos(campTargets(c));
   }
   function campHead(c) {
-    const cs = campsSorted(), t = today(), att = SPS().att[c.id] || {}, days = Object.keys(att).sort();
+    const cs = campsSorted(), t = today(), att = goalSeries(c), days = Object.keys(att).sort();
     const lastN = days.length ? att[days[days.length - 1]].n : 0, maxN = days.reduce((a, d) => Math.max(a, att[d].n), 0);
     const passed = dayDiff(c.start, t) + 1;
     const status = t < c.start ? `시작까지 D-${dayDiff(t, c.start)}` : t > c.end ? '끝났어요' : `${passed}일째 · 끝까지 ${dayDiff(t, c.end)}일`;
@@ -642,7 +654,7 @@
       <p class="small muted spdate">${dotDate(c.start)} ~ ${dotDate(c.end)} · <b>${status}</b></p>
       ${c.goalN ? `<div class="goal"><div class="goalt"><span>🎯 ${esc(c.goal || '목표')}</span><b>${lastN} / ${c.goalN}명</b></div>
         <div class="bar big"><i style="width:${pct}%"></i></div>
-        <span class="small muted">${days.length ? `최근 예배 ${md(days[days.length - 1])} 기준${maxN > lastN ? ` · 가장 많았던 날 ${maxN}명` : ''}` : '예배 인원은 [일정·인원]에 선생님이 넣어요'}</span></div>` : (c.goal ? `<p class="goalp">🎯 ${esc(c.goal)}</p>` : '')}
+        <span class="small muted">${days.length ? `최근 예배 ${md(days[days.length - 1])} 기준${maxN > lastN ? ` · 가장 많았던 날 ${maxN}명` : ''}` : '출석부에 출석을 넣으면 인원이 저절로 나와요'}</span></div>` : (c.goal ? `<p class="goalp">🎯 ${esc(c.goal)}</p>` : '')}
       ${c.how ? `<button class="howbtn" id="spHow">${spState.showHow ? '기도 방법 접기 ▲' : '📢 기도 방법 보기 ▼'}</button>${spState.showHow ? `<div class="notice how">${esc(c.how)}</div>` : ''}` : ''}
     </div>`;
   }
@@ -704,10 +716,11 @@
   /* 고르기: 사진 카드 */
   function spPick(el, c) {
     const who = spWho(), mine = picksOf(c, who), all = campTargets(c), ended = today() > c.end;
-    const divs = ['학생부', '청년부', '기타'].filter(d => all.some(x => divOf(x.grade) === d));
+    const dv = x => x.dept || divOf(x.grade), divs = DEPTS.filter(d => all.some(x => dv(x) === d));
     if (spState.div && !divs.includes(spState.div)) spState.div = '';
-    const inDiv = all.filter(x => !spState.div || divOf(x.grade) === spState.div);
-    const grades = [...new Set(inDiv.map(x => x.grade || '학년 없음'))].sort((a, b) => gradeIdx(a) - gradeIdx(b) || ko(a, b));
+    const inDiv = all.filter(x => !spState.div || dv(x) === spState.div);
+    const gk = {}; inDiv.forEach(x => { const g = x.grade || '학년 없음'; gk[g] = Math.min(gk[g] == null ? 999 : gk[g], x.gk == null ? 999 : x.gk); });
+    const grades = Object.keys(gk).sort((a, b) => gk[a] - gk[b] || ko(a, b));
     if (spState.grade && !grades.includes(spState.grade)) spState.grade = '';
     let list = inDiv.filter(x => !spState.grade || (x.grade || '학년 없음') === spState.grade);
     const srt = C.spSort || 'few';
@@ -716,8 +729,8 @@
     const none = all.filter(x => !pickersOf(c, x.id).length).length;
     el.innerHTML = whoSelect(who) +
       `<p class="pickinfo">${ended ? '끝난 특별기도예요.' : `<b>${mine.length} / ${c.picks}명</b> 골랐어요 · 사진을 누르면 고르거나 빼요`}${none ? `<br><span class="small">🙋 아직 기도해 주는 분이 없는 사람 <b>${none}명</b></span>` : ''}</p>
-      ${isTeacher() ? '<div class="addrow"><button class="btn pri" id="tAdd">＋ 한 명 넣기</button><button class="btn pri" id="tBulk">📋 여러 명 한번에</button></div>' : ''}
-      ${all.length ? `${divs.length > 1 ? `<div class="seg divseg"><button data-dv="" class="${!spState.div ? 'on' : ''}">전체 ${all.length}</button>${divs.map(d => `<button data-dv="${d}" class="${spState.div === d ? 'on' : ''}">${d} ${all.filter(x => divOf(x.grade) === d).length}</button>`).join('')}</div>` : ''}
+      ${isRosterUser() ? '<button class="btn addt" id="tRoster">📋 기도 대상(학생·청년)은 출석부 명단에서 넣고 고쳐요 →</button>' : ''}
+      ${all.length ? `${divs.length > 1 ? `<div class="seg divseg"><button data-dv="" class="${!spState.div ? 'on' : ''}">전체 ${all.length}</button>${divs.map(d => `<button data-dv="${d}" class="${spState.div === d ? 'on' : ''}">${d} ${all.filter(x => dv(x) === d).length}</button>`).join('')}</div>` : ''}
       ${grades.length > 1 ? `<div class="gchips"><button data-gr="" class="${!spState.grade ? 'on' : ''}">전체</button>${grades.map(g => `<button data-gr="${esc(g)}" class="${spState.grade === g ? 'on' : ''}">${esc(g.replace(/^청년(?=\d)/, ''))}<small>${inDiv.filter(x => (x.grade || '학년 없음') === g).length}</small></button>`).join('')}</div>` : ''}
       <div class="seg sortseg">${[['few', '기도자 적은 순'], ['grade', '학년순'], ['name', '이름순']].map(([v, l]) => `<button data-sso="${v}" class="${srt === v ? 'on' : ''}">${l}</button>`).join('')}</div>` : ''}
       <div class="tgrid">${list.map(x => {
@@ -727,16 +740,15 @@
             <b class="tn">${esc(x.name)}</b>${x.grade ? `<span class="tag">${esc(x.grade)}</span>` : ''}
             <span class="pc">🙏 ${ps.length}명</span>
             <span class="pw">${ps.length ? ps.map(esc).join(', ') : '기도해 줄 분을 기다려요'}</span></button>
-          ${isTeacher() ? `<button class="tedit" data-tedit="${esc(x.id)}">✏️ 고치기</button>` : ''}</div>`;
-      }).join('') || `<p class="muted">아직 기도 대상이 없어요.${isTeacher() ? ' 위의 [＋ 기도 대상 넣기]를 눌러 주세요.' : ' 선생님이 곧 올려 주실 거예요.'}</p>`}</div>`;
+          ${personOf(x.id) ? `<button class="tedit" data-tedit="${esc(x.id)}">✏️ 사진·정보</button>` : ''}</div>`;
+      }).join('') || `<p class="muted">아직 기도 대상이 없어요.${isRosterUser() ? ' 출석부 명단에 넣으면 여기 나와요.' : ' 선생님이 곧 올려 주실 거예요.'}</p>`}</div>`;
     bindWho(el);
-    const ta = $('#tAdd', el); if (ta) ta.onclick = () => targetEdit(c, null);
-    const tb = $('#tBulk', el); if (tb) tb.onclick = () => bulkAdd(c);
+    const tr = $('#tRoster', el); if (tr) tr.onclick = () => { const d = myDepts().find(x => (c.scope || {})[x]); if (d) C.attDept = d; mode = 'att'; saveCfg(); render(); window.scrollTo(0, 0); };
     $$('[data-dv]', el).forEach(b => b.onclick = () => { spState.div = b.dataset.dv; spState.grade = ''; render(); });
     $$('[data-gr]', el).forEach(b => b.onclick = () => { spState.grade = b.dataset.gr; render(); });
     $$('[data-sso]', el).forEach(b => b.onclick = () => { C.spSort = b.dataset.sso; saveCfg(); render(); });
     $$('[data-tpick]', el).forEach(b => b.onclick = () => doPick(c, b.dataset.tpick, !mine.includes(b.dataset.tpick)));
-    $$('[data-tedit]', el).forEach(b => b.onclick = () => targetEdit(c, all.find(x => x.id === b.dataset.tedit)));
+    $$('[data-tedit]', el).forEach(b => b.onclick = () => personCard(b.dataset.tedit));
   }
 
   /* 기도표 */
@@ -794,7 +806,7 @@
   function spInfo(el, c) {
     const me = myName(), t = today();
     const evs = SPS().events.filter(e => e.camp === c.id).sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
-    const att = SPS().att[c.id] || {}, days = Object.keys(att).sort().reverse();
+    const att = goalSeries(c), days = Object.keys(att).sort().reverse();
     const max = Math.max(c.goalN || 0, 1, ...days.map(d => att[d].n));
     el.innerHTML = `<div class="card"><div class="cardh"><h2>📅 일정</h2>${isTeacher() ? '<button class="linkbtn" id="evAdd">＋ 일정 넣기</button>' : ''}</div>
       ${evs.map(e => {
@@ -821,69 +833,8 @@
   }
 
   /* 편집 창: 기도 대상 · 특별기도 · 일정 · 예배 인원 */
-  async function targetEdit(c, x) {
-    let photo = null;   // null: 그대로 · '': 지우기 · data: 새 사진
-    const cur = () => photo != null ? photo : (x && photoMem[x.id] && photoMem[x.id].v === x.pv && photoMem[x.id].data) || '';
-    const grade = x ? x.grade : '';
-    const v = await modal(`<h3>${x ? '기도 대상 고치기' : '기도 대상 넣기'}</h3>
-      <div class="tphoto"><div id="tpv" class="ph xl" style="--h:${hue(x ? x.name : '')}">${cur() ? `<img src="${cur()}" alt="">` : '<span>사진</span>'}</div>
-        <div class="tpb"><label class="btn sm pri">📷 사진 고르기<input type="file" id="tpf" accept="image/*" hidden></label>${x && x.pv ? '<button class="btn sm ghost" id="tpd">사진 지우기</button>' : ''}<p class="small muted">얼굴이 가운데 오게 찍은 사진이 좋아요</p></div></div>
-      <div class="field"><label for="tName">이름</label><input type="text" id="tName" maxlength="20" value="${esc(x ? x.name : '')}" placeholder="예: 김하늘"></div>
-      <div class="field"><label for="tGrade">학년</label><div class="chips" id="tGr">${GRADES.map(g => `<button data-g="${g}" class="${grade === g ? 'on' : ''}">${g}</button>`).join('')}</div>
-        <input type="text" id="tGrade" maxlength="12" value="${esc(grade)}" placeholder="직접 적기 (예: 대1)" style="margin-top:8px"></div>
-      <div class="field"><label for="tNote">기도 제목·메모 <span class="small muted">(모두에게 보여요, 비워도 돼요)</span></label><textarea id="tNote" maxlength="200" style="min-height:70px">${esc(x ? x.note : '')}</textarea></div>`,
-      (x ? [{ label: '지우기', val: 'del', cls: 'danger' }] : []).concat([{ label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri', check: () => { if (!$('#tName').value.trim()) { toast('이름을 넣어 주세요'); return false; } return true; } }]),
-      inn => {
-        const gi = $('#tGrade', inn);
-        $$('[data-g]', inn).forEach(b => b.onclick = () => { gi.value = b.dataset.g; $$('[data-g]', inn).forEach(y => y.classList.toggle('on', y === b)); });
-        gi.oninput = () => $$('[data-g]', inn).forEach(y => y.classList.toggle('on', y.dataset.g === gi.value.trim()));
-        $('#tpf', inn).onchange = async e => {
-          const f = e.target.files && e.target.files[0]; if (!f) return;
-          try { photo = await facePhoto(f); $('#tpv', inn).innerHTML = `<img src="${photo}" alt="">`; } catch (er) { toast(er.message); }
-        };
-        const pd = $('#tpd', inn); if (pd) pd.onclick = () => { photo = ''; $('#tpv', inn).innerHTML = '<span>사진</span>'; };
-      });
-    if (!v) return;
-    const vals = { name: $('#tName').value.trim(), grade: $('#tGrade').value.trim(), note: $('#tNote').value.trim() };
-    try {
-      if (v === 'del') {
-        if (!(await confirmBox('기도 대상 지우기', `<b>${esc(x.name)}</b>을(를) 지울까요?\n고른 분들의 목록에서도 빠져요.`, '지우기'))) return;
-        await api('delTarget', { id: x.id }); toast('지웠어요');
-      } else {
-        const p = Object.assign({ camp: c.id }, vals); if (x) p.id = x.id; if (photo != null) p.photo = photo;
-        const d = await api('target', p);
-        if (photo) { const nt = SPS().targets.find(y => y.id === d.savedId); if (nt) { photoMem[nt.id] = { v: nt.pv, data: photo }; kvSet('ph:' + nt.id, photoMem[nt.id]); } }
-        toast(x ? '고쳤어요' : `${vals.name} — 넣었어요`);
-        if (!x) { render(); if (await confirmBox('한 명 더', '기도 대상을 한 명 더 넣을까요?', '더 넣기')) return targetEdit(c, null); }
-      }
-    } catch (e) { toast(e.message); }
-    render();
-  }
-  // 여러 명 한번에: 구글 시트(출석부)에서 이름 칸을 복사해 붙여 넣기
-  const parseNames = t => [...new Set(String(t || '').split(/[\n\t,;/]+/).map(x => x.replace(/\(.*?\)/g, '').replace(/[0-9%·.\s]/g, '').trim())
-    .filter(x => x.length >= 2 && x.length <= 10 && /^[가-힣a-zA-Z]+$/.test(x) && !/^(이름|합계|주차|출석률|반출석률|예비청년)$/.test(x)))];
-  async function bulkAdd(c) {
-    let grade = spState.grade && spState.grade !== '학년 없음' ? spState.grade : '', text = '';
-    const v = await modal(`<h3>📋 여러 명 한번에 넣기</h3>
-      <p class="msg small">① 학년(구분)을 고르고 ② 이름을 붙여 넣으세요.\n구글 시트 출석부에서 <b>이름 칸을 쭉 골라 복사</b>해서 붙여 넣으면 돼요. 한 줄에 한 명, 쉼표로 나눠도 돼요.\n(19) 같은 괄호·숫자와 ‘이 름’ 같은 제목은 알아서 빼요. 이미 있는 이름은 건너뛰어요.\n사진은 나중에 한 명씩 [고치기]에서 넣으면 돼요.</p>
-      <div class="field"><label>① 학년·구분</label><div class="chips gpick">${GRADES.map(g => `<button data-bg="${g}" class="${grade === g ? 'on' : ''}">${g}</button>`).join('')}</div>
-        <input type="text" id="bGrade" maxlength="12" value="${esc(grade)}" placeholder="직접 적기" style="margin-top:8px"></div>
-      <div class="field"><label for="bText">② 이름 붙여 넣기</label><textarea id="bText" placeholder="임동현(19)\n윤환희(19)\n이 훈(19)" style="min-height:150px"></textarea>
-        <p class="small muted" id="bCnt" style="margin:6px 0 0">0명</p></div>`,
-      [{ label: '취소', val: false }, { label: '넣기', val: true, cls: 'pri', check: () => { if (!parseNames(text).length) { toast('이름을 붙여 넣어 주세요'); return false; } if (!grade) { toast('학년·구분을 골라 주세요'); return false; } return true; } }],
-      inn => {
-        const gi = $('#bGrade', inn), cnt = $('#bCnt', inn);
-        const paint = () => { const ns = parseNames(text), have = new Set(SPS().targets.filter(x => x.camp === c.id && x.grade === grade).map(x => x.name.replace(/\s+/g, ''))); const dup = ns.filter(n => have.has(n)).length; cnt.innerHTML = ns.length ? `<b>${ns.length - dup}명</b> 넣어요${dup ? ` · 이미 있는 ${dup}명은 건너뜀` : ''}<br>${ns.slice(0, 40).map(esc).join(', ')}${ns.length > 40 ? ' …' : ''}` : '0명'; };
-        $$('[data-bg]', inn).forEach(b => b.onclick = () => { grade = b.dataset.bg; gi.value = grade; $$('[data-bg]', inn).forEach(y => y.classList.toggle('on', y === b)); paint(); });
-        gi.oninput = () => { grade = gi.value.trim(); $$('[data-bg]', inn).forEach(y => y.classList.toggle('on', y.dataset.bg === grade)); paint(); };
-        $('#bText', inn).oninput = e => { text = e.target.value; paint(); };
-      });
-    if (!v) return;
-    try { const d = await api('targets', { camp: c.id, grade, names: parseNames(text) }); toast(`${grade} ${d.added}명을 넣었어요`); spState.div = divOf(grade); spState.grade = grade; } catch (e) { toast(e.message); }
-    render();
-  }
   async function campEdit(c) {
-    const cs = campsSorted(), t = today();
+    const t = today(), scope = JSON.parse(JSON.stringify((c && c.scope) || {}));
     const v = await modal(`<h3>${c ? '특별기도 고치기' : '새 특별기도 만들기'}</h3>
       <div class="field"><label for="cT">제목</label><input type="text" id="cT" maxlength="60" value="${esc(c ? c.title : '')}" placeholder="예: 학생부·청년부 겨울 대확장"></div>
       <div class="field"><label>기간</label><div class="row" style="flex-wrap:nowrap"><input type="date" id="cS" value="${c ? c.start : t}"><span>~</span><input type="date" id="cE" value="${c ? c.end : addDays(t, 30)}"></div></div>
@@ -891,11 +842,23 @@
       <div class="field"><label for="cG">목표</label><input type="text" id="cG" maxlength="300" value="${esc(c ? c.goal : '')}" placeholder="예: 학생부·청년부 예배 인원 50명 이상"></div>
       <div class="field"><label for="cN">목표 인원 <span class="small muted">(숫자 · 없으면 0)</span></label><input type="number" id="cN" min="0" max="9999" inputmode="numeric" value="${c ? c.goalN : 0}"></div>
       <div class="field"><label for="cH">기도 방법 (광고 내용)</label><textarea id="cH" maxlength="2000" placeholder="① …\n② …">${esc(c ? c.how : '')}</textarea></div>
-      ${!c && cs.length ? `<div class="field"><label for="cC">기도 대상 가져오기</label><select id="cC"><option value="">새로 넣기 (가져오지 않음)</option>${cs.map(x => `<option value="${esc(x.id)}">‘${esc(x.title)}’의 기도 대상 그대로</option>`).join('')}</select></div>` : ''}`,
-      (c ? [{ label: '지우기', val: 'del', cls: 'danger' }] : []).concat([{ label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri' }]));
+      <div class="field"><label>기도 대상 <span class="small muted">(출석부 명단에서 이 부서·학년인 분이 나와요)</span></label><div id="scB"></div></div>`,
+      (c ? [{ label: '지우기', val: 'del', cls: 'danger' }] : []).concat([{ label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri' }]),
+      inn => {
+        const box = $('#scB', inn);
+        const paint = () => {
+          box.innerHTML = DEPTS.map(d => { const v = scope[d], ch = gradeChoices(d);
+            return `<div class="scrow${v ? ' on' : ''}"><label class="chk row"><input type="checkbox" data-sd="${d}"${v ? ' checked' : ''}> <b>${d}</b></label>
+              ${v && ch.length ? `<div class="chips gpick"><button data-sa="${d}" class="${v === '*' ? 'on' : ''}">전체</button>${ch.map(g => `<button data-sg="${d}|${g}" class="${v !== '*' && v.includes(g) ? 'on' : ''}">${g}</button>`).join('')}</div>` : ''}</div>`; }).join('');
+          $$('[data-sd]', box).forEach(x => x.onchange = () => { if (x.checked) scope[x.dataset.sd] = '*'; else delete scope[x.dataset.sd]; paint(); });
+          $$('[data-sa]', box).forEach(x => x.onclick = () => { scope[x.dataset.sa] = '*'; paint(); });
+          $$('[data-sg]', box).forEach(x => x.onclick = () => { const [d, g] = x.dataset.sg.split('|'); let v = scope[d] === '*' ? [] : (scope[d] || []).slice(); v = v.includes(g) ? v.filter(y => y !== g) : v.concat(g); scope[d] = v.length ? v : '*'; paint(); });
+        };
+        paint();
+      });
     if (!v) return;
     const g = id => { const e = $('#' + id); return e ? e.value.trim() : ''; };
-    const p = { title: g('cT'), start: g('cS'), end: g('cE'), picks: +g('cP'), goal: g('cG'), goalN: +g('cN') || 0, how: $('#cH').value, copyFrom: g('cC') };
+    const p = { title: g('cT'), start: g('cS'), end: g('cE'), picks: +g('cP'), goal: g('cG'), goalN: +g('cN') || 0, how: $('#cH').value, scope };
     try {
       if (v === 'del') {
         if (!(await confirmBox('특별기도 지우기', `<b>${esc(c.title)}</b>을(를) 지울까요?\n앱에서 보이지 않게 돼요(시트에는 남아 있어요).`, '지우기'))) return;
@@ -944,6 +907,326 @@
     render();
   }
 
+  /* ----- 출석부 (교사·마스터·담임목사): 명단 · 출석 · 심방 ----- */
+  let mode = null;   // null: (교사면) 고르는 화면 · 'pray' · 'att'
+  const DEPTS = ['유치부', '주일학교', '학생부', '청년부', '1남선교회', '2남선교회', '3남선교회', '4남선교회', '1여선교회', '2여선교회', '3여선교회', '4여선교회'];
+  const SCHOOL = ['초1', '초2', '초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
+  const SPECIAL = ['군복무', '유학·타지', '쉬는 중', '전출'];
+  const myDepts = () => (S && S.me && S.me.depts) || [];
+  const isRosterUser = () => myDepts().length > 0;
+  const yearNow = () => +today().slice(0, 4);
+  const ageY = (birth, adj) => birth ? yearNow() - +birth + (+adj || 0) : null;
+  function labelFor(dept, y, manual) {
+    if (y == null) return manual || '';
+    if (dept === '청년부') { if (y === 18) return '예비청년'; if (y >= 19) return (y - 18) + '년차'; }
+    if (y >= 7 && y <= 18) return SCHOOL[y - 7];
+    return (y + 1) + '세';
+  }
+  // 출석부 칸(구분): 청년부는 예비청년·1년차·2~5년차·6~10년차·11~14년차·15년차 이상, 선교회는 한 칸, 그 밖은 학년(나이)마다
+  function sectionOf(m) {
+    const y = m.y;
+    if (y == null) return { name: m.grade || '학년 미정', k: 900 };
+    if (/선교회/.test(m.dept)) return { name: '전체', k: 0 };
+    if (m.dept === '청년부' && y >= 18) {
+      const G = [[18, 18, '예비청년'], [19, 19, '1년차'], [20, 23, '2~5년차'], [24, 28, '6~10년차'], [29, 32, '11~14년차'], [33, 999, '15년차 이상']];
+      const g = G.find(x => y >= x[0] && y <= x[1]); return { name: g[2], k: g[0] };
+    }
+    return { name: labelFor(m.dept, y, m.grade), k: y };
+  }
+  // 이 부서에서 고를 수 있는 학년(나이) 버튼 (여러 명 넣기 · 특별기도 대상)
+  function gradeChoices(dept) {
+    if (dept === '유치부') return ['4세', '5세', '6세', '7세'];
+    if (dept === '주일학교') return SCHOOL.slice(0, 6);
+    if (dept === '학생부') return SCHOOL.slice(6);
+    if (dept === '청년부') return ['예비청년'].concat(Array.from({ length: 15 }, (_, i) => (i + 1) + '년차'));
+    return [];
+  }
+  // 학년(나이) 이름 → 태어난 해
+  function birthFromLabel(dept, l) {
+    const Y = yearNow(); let y = null, m;
+    if (SCHOOL.includes(l)) y = SCHOOL.indexOf(l) + 7;
+    else if (l === '예비청년') y = 18;
+    else if ((m = l.match(/^(\d+)년차$/))) y = 18 + +m[1];
+    else if ((m = l.match(/^(\d+)세$/))) y = +m[1] - 1;
+    return y == null ? '' : Y - y;
+  }
+  const rosterOf = d => (S.roster || []).filter(m => m.dept === d);
+  const personOf = id => (S.roster || []).find(m => m.id === id);
+  const visitsOf = id => (S.visits || []).filter(v => v.pid === id).sort((a, b) => b.date.localeCompare(a.date) || b.at - a.at);
+  const telOf = p => String(p || '').replace(/[^\d+]/g, '');
+
+  /* 출석 자료: { 날짜: Set(ID) } — 서버 자료 + 아직 안 보낸 표시 */
+  let attCache = { s: null, by: {} };
+  function attOf(dept) {
+    if (attCache.s !== S) attCache = { s: S, by: {} };
+    if (attCache.by[dept]) return attCache.by[dept];
+    const r = (S.ratt || {})[dept] || { ids: [], d: {} }, o = {};
+    Object.keys(r.d).forEach(day => { o[day] = new Set(r.d[day] ? r.d[day].split(',').map(x => r.ids[parseInt(x, 36)]).filter(Boolean) : []); });
+    (C.attQ || []).forEach(q => { const p = personOf(q.id); if (!p || p.dept !== dept) return; const st = o[q.date] = o[q.date] || new Set(); if (q.on) st.add(q.id); else st.delete(q.id); });
+    return (attCache.by[dept] = o);
+  }
+  // 사람별: 최근 1년 출석률, 마지막 출석일
+  function attStats(dept) {
+    const o = attOf(dept), t = today(), from = addDays(t, -364);
+    const days = Object.keys(o).filter(d => o[d].size && d >= from && d <= t).sort();
+    const res = {};
+    rosterOf(dept).forEach(m => {
+      let n = 0, last = '', den = 0;
+      days.forEach(d => { if (m.reg && d < m.reg) return; den++; if (o[d].has(m.id)) n++; });
+      Object.keys(o).forEach(d => { if (o[d].has(m.id) && d > last) last = d; });
+      res[m.id] = { n, den, rate: den ? n / den : 0, last };
+    });
+    return res;
+  }
+  const attSent = new Set(); let attTimer = 0, attBusy = false;
+  function markAtt(id, date, on) {
+    C.attQ = (C.attQ || []).filter(q => !(q.id === id && q.date === date)); C.attQ.push({ id, date, on }); saveCfg();
+    const p = personOf(id), st = attOf(p.dept); const set = st[date] = st[date] || new Set(); if (on) set.add(id); else set.delete(id);
+    clearTimeout(attTimer); attTimer = setTimeout(flushAtt, 1200);
+  }
+  async function flushAtt() {
+    if (attBusy || !(C.attQ || []).length) return;
+    attBusy = true; paintAttSave();
+    const list = C.attQ.slice();
+    try {
+      await api('marks', { list });
+      C.attQ = C.attQ.filter(q => !list.includes(q)); saveCfg();
+    } catch (e) { if (e.server) { toast(e.message); C.attQ = C.attQ.filter(q => !list.includes(q)); saveCfg(); } }
+    finally { attBusy = false; paintAttSave(); }
+    if ((C.attQ || []).length) { clearTimeout(attTimer); attTimer = setTimeout(flushAtt, 5000); }
+  }
+  function paintAttSave() { const el = $('#attSave'); if (!el) return; const n = (C.attQ || []).length; el.textContent = n ? (attBusy ? '저장하는 중…' : `보낼 표시 ${n}개`) : '✓ 저장됨'; el.classList.toggle('pending', !!n); }
+
+  /* 고르는 화면: 기도 / 출석부 */
+  function renderLauncher() {
+    const app = $('#app');
+    app.innerHTML = `<div class="welcome launcher">${brandHtml()}
+      <p class="lead">${dispName(myName())}, 어디로 갈까요?</p>
+      <button class="lcard" id="goPray"><span class="li">🙏</span><b>기도</b><small>매일 기도 · 특별기도</small></button>
+      <button class="lcard att" id="goAtt"><span class="li">✅</span><b>출석부</b><small>${esc(myDepts().length > 4 ? '모든 부서' : myDepts().join(' · '))}</small></button>
+    </div>`;
+    $('#goPray').onclick = () => { mode = 'pray'; render(); showNotices(false); };
+    $('#goAtt').onclick = () => { mode = 'att'; render(); };
+  }
+  function curDept() {
+    const ds = myDepts();
+    if (ds.includes(C.attDept)) return C.attDept;
+    return ds.find(d => rosterOf(d).length) || ds[0];
+  }
+  const lastSunday = () => { const t = today(); return addDays(t, -parse(t).getDay()); };
+  let attDate = null, attQuery = '', showLong = false;
+
+  function renderAttend() {
+    const app = $('#app'), dept = curDept(), t = today();
+    if (!attDate || attDate > t) attDate = lastSunday();
+    const ds = myDepts(), people = rosterOf(dept), st = attStats(dept), o = attOf(dept), present = o[attDate] || new Set();
+    const q = attQuery.replace(/\s+/g, '');
+    const y0 = window.scrollY;
+    // 칸 나누기
+    const normal = [], special = [], long = [], recentLimit = addDays(t, -30), longLimit = addDays(t, -365);
+    people.forEach(m => {
+      const s = st[m.id];
+      if (SPECIAL.includes(m.status)) special.push(m);
+      else if (s.last ? s.last < longLimit : (m.reg && m.reg < longLimit)) long.push(m);
+      else normal.push(m);
+    });
+    const secs = {};
+    normal.forEach(m => { const sc = sectionOf(m); (secs[sc.name] = secs[sc.name] || { k: sc.k, list: [] }).list.push(m); });
+    const order = (a, b) => { const sa = st[a.id], sb = st[b.id], ra = sa.last >= recentLimit, rb = sb.last >= recentLimit;
+      if (ra !== rb) return ra ? -1 : 1; if (ra) return ko(a.name, b.name); return sb.rate - sa.rate || ko(a.name, b.name); };
+    const row = m => {
+      const s = st[m.id], on = present.has(m.id), hide = q && !m.name.includes(q);
+      return `<div class="arow${on ? ' on' : ''}${hide ? ' hidden' : ''}"><button class="atap" data-at="${esc(m.id)}">${photoHtml(m, 'xs')}<span class="an"><b>${esc(m.name)}</b><small>${esc(m.label || '')}${m.y != null && m.dept !== '유치부' && !/세$/.test(m.label) ? ` · ${m.y + 1}세` : ''}</small></span><span class="amark">${on ? '○' : ''}</span></button>
+        <button class="ainfo" data-pi="${esc(m.id)}"><span class="rate r${s.den ? Math.min(4, Math.floor(s.rate * 5)) : 0}">${s.den ? Math.round(s.rate * 100) + '%' : '-'}</span>›</button></div>`;
+    };
+    const secHtml = (title, list, extra) => `<div class="asec"><div class="ash"><b>${esc(title)}</b><span>${list.filter(m => present.has(m.id)).length} / ${list.length}${extra || ''}</span></div>${list.map(row).join('')}</div>`;
+    const secNames = Object.keys(secs).sort((a, b) => secs[a].k - secs[b].k || ko(a, b));
+    const total = people.filter(m => present.has(m.id)).length;
+    app.innerHTML = `<header><div class="top">
+        <h1 class="htitle"><span>✅ 출석부</span></h1>
+        <button class="icon" id="tMode" aria-label="기도로 가기">🙏</button>
+        <button class="icon" id="tTheme" aria-label="밝게·어둡게">${isDark() ? ICON.sun : ICON.moon}</button>
+        <button class="icon" id="tSet" aria-label="설정">${ICON.gear}</button></div></header>
+      <main id="main" class="attmain">
+        ${ds.length > 4 ? `<select id="aDept" class="deptsel" aria-label="부서">${ds.map(d => `<option value="${d}"${d === dept ? ' selected' : ''}>${d}${rosterOf(d).length ? ` (${rosterOf(d).length}명)` : ''}</option>`).join('')}</select>`
+          : ds.length > 1 ? `<div class="gchips deptchips">${ds.map(d => `<button data-dp="${d}" class="${d === dept ? 'on' : ''}">${d}<small>${rosterOf(d).length || ''}</small></button>`).join('')}</div>` : ''}
+        <div class="attbar card">
+          <div class="datebar"><button class="btn" id="aPrev" aria-label="한 주 전">◀</button><input type="date" id="aDate" value="${attDate}" max="${t}"><button class="btn" id="aNext" aria-label="한 주 뒤"${attDate >= t ? ' disabled' : ''}>▶</button></div>
+          <div class="attsum"><span><b>${esc(dept)}</b> ${md(attDate)} (${wd(attDate)}) 출석 <b class="big">${total}</b>명 / ${people.length}명</span><span id="attSave" class="attsave"></span></div>
+          <input type="text" id="aQ" placeholder="🔍 이름 찾기" value="${esc(attQuery)}">
+        </div>
+        ${people.length ? '' : `<div class="card"><p>아직 ${esc(dept)} 명단이 없어요.</p><p class="small muted">아래 [📥 구글 시트에서 가져오기]로 지금까지의 출석부를 한 번에 넣거나, [＋ 한 명] · [📋 여러 명]으로 넣어 주세요.</p></div>`}
+        <p class="small muted ahelp">이름을 누르면 출석 ○ · 오른쪽 %를 누르면 연락처·심방 · 한 달 안에 나온 분은 가나다순, 그 밖은 출석률(최근 1년) 순</p>
+        ${secNames.map(n => secHtml(n, secs[n].list.sort(order))).join('')}
+        ${special.length ? secHtml('따로 보기 (군복무·유학 등)', special.sort((a, b) => ko(a.name, b.name))) : ''}
+        ${long.length ? `<div class="asec long"><button class="ash" id="aLong"><b>장기결석 (1년 넘게 안 나옴)</b><span>${long.length}명 ${showLong ? '▲' : '▼'}</span></button>${showLong || q ? long.sort((a, b) => ko(a.name, b.name)).map(row).join('') : ''}</div>` : ''}
+        <div class="atools">
+          <button class="btn pri" id="aAdd">＋ 한 명</button><button class="btn pri" id="aBulk">📋 여러 명</button>
+          <button class="btn" id="aImp">📥 구글 시트에서 가져오기</button><button class="btn" id="aStat">📊 주별 인원</button>
+        </div>
+      </main>`;
+    paintAttSave();
+    $('#tMode').onclick = () => { mode = 'pray'; render(); window.scrollTo(0, 0); };
+    $('#tTheme').onclick = () => { C.theme = isDark() ? 'light' : 'dark'; saveCfg(); applyTheme(); render(); };
+    $('#tSet').onclick = settings;
+    $$('[data-dp]').forEach(b => b.onclick = () => { C.attDept = b.dataset.dp; saveCfg(); attQuery = ''; showLong = false; render(); window.scrollTo(0, 0); });
+    const adp = $('#aDept'); if (adp) adp.onchange = () => { C.attDept = adp.value; saveCfg(); attQuery = ''; showLong = false; render(); window.scrollTo(0, 0); };
+    $('#aDate').onchange = e => { const v = e.target.value; if (v) { attDate = v > t ? t : v; render(); } };
+    $('#aPrev').onclick = () => { attDate = addDays(attDate, -7); render(); };
+    $('#aNext').onclick = () => { const n = addDays(attDate, 7); attDate = n > t ? t : n; render(); };
+    const aq = $('#aQ'); aq.oninput = () => { attQuery = aq.value; const v = attQuery.replace(/\s+/g, ''); $$('.arow').forEach(r => { const n = r.querySelector('.an b').textContent; r.classList.toggle('hidden', !!v && !n.includes(v)); }); };
+    $$('[data-at]').forEach(b => b.onclick = () => {
+      const id = b.dataset.at, on = !(attOf(dept)[attDate] || new Set()).has(id);
+      markAtt(id, attDate, on);
+      const r = b.closest('.arow'); r.classList.toggle('on', on); b.querySelector('.amark').textContent = on ? '○' : '';
+      const cnt = (attOf(dept)[attDate] || new Set()).size; const big = $('.attsum .big'); if (big) big.textContent = cnt;
+      $$('.asec').forEach(sec => { const sp = sec.querySelector('.ash span'); if (!sp || sec.classList.contains('long')) return; const ids = $$('[data-at]', sec).map(x => x.dataset.at); sp.textContent = `${ids.filter(i => (attOf(dept)[attDate] || new Set()).has(i)).length} / ${ids.length}`; });
+      paintAttSave();
+    });
+    $$('[data-pi]').forEach(b => b.onclick = () => personCard(b.dataset.pi));
+    const al = $('#aLong'); if (al) al.onclick = () => { showLong = !showLong; render(); };
+    $('#aAdd').onclick = () => personEdit(null, dept);
+    $('#aBulk').onclick = () => peopleBulk(dept);
+    $('#aImp').onclick = () => importSheetDlg(dept);
+    $('#aStat').onclick = () => attStatDlg(dept);
+    loadPhotos(people.filter(m => m.pv));
+    window.scrollTo(0, y0);
+  }
+
+  /* 한 사람: 연락처 · 학교 · 비고 · 심방 · 출석 */
+  async function personCard(id) {
+    const m = personOf(id); if (!m) return;
+    const o = attOf(m.dept), st = attStats(m.dept)[id] || {}, vs = visitsOf(id);
+    const days = Object.keys(o).filter(d => o[d].size && d >= addDays(today(), -364)).sort().slice(-12);
+    const ph = (num, who) => num ? `<div class="crow"><span>${who}</span><b>${esc(num)}</b><a class="btn sm pri" href="tel:${telOf(num)}">📞 전화</a><a class="btn sm" href="sms:${telOf(num)}">💬 문자</a></div>` : '';
+    const v = await modal(`<div class="pcard">${photoHtml(m, 'lg')}<div><h3>${esc(m.name)} <span class="tag">${esc(m.label || '학년 미정')}</span></h3>
+        <p class="small muted">${esc(m.dept)}${m.birth ? ` · ${m.birth}년생 (${m.y + 1}세)` : ''}${m.status ? ` · ${esc(m.status)}` : ''}</p>
+        <p class="small">출석률 <b>${st.den ? Math.round(st.rate * 100) + '%' : '-'}</b> (최근 1년 ${st.n || 0}/${st.den || 0}) · 마지막 출석 ${st.last ? md(st.last) : '없음'}</p></div></div>
+      <div class="adots">${days.map(d => `<span class="${o[d].has(id) ? 'on' : ''}" title="${d}">${+d.slice(5, 7)}/${+d.slice(8)}</span>`).join('')}</div>
+      ${ph(m.phone, '연락처')}${ph(m.phone2, '보호자')}
+      ${m.school ? `<div class="crow"><span>학교</span><b>${esc(m.school)}</b></div>` : ''}
+      ${m.note ? `<p class="sect">비고</p><div class="notice">${esc(m.note)}</div>` : ''}
+      ${m.memo ? `<p class="sect">기도 메모 <span class="small">(특별기도에 보여요)</span></p><div class="notice">${esc(m.memo)}</div>` : ''}
+      <p class="sect">심방 기록 (${vs.length}) <button class="linkbtn" id="vAdd" style="float:right">＋ 심방 기록</button></p>
+      ${vs.map(x => `<button class="visit" data-vi="${esc(x.id)}"><span><b>${md(x.date)}</b> ${x.date.slice(0, 4)}</span><span class="vt">${esc(x.text)}</span><small>${esc(x.by)}</small></button>`).join('') || '<p class="small muted">아직 심방 기록이 없어요</p>'}`,
+      [{ label: '고치기', val: 'edit' }, { label: '닫기', val: false, cls: 'pri' }],
+      (inn, close) => {
+        $('#vAdd', inn).onclick = () => close('visit');
+        $$('[data-vi]', inn).forEach(b => b.onclick = () => close('v:' + b.dataset.vi));
+      });
+    if (v === 'edit') return personEdit(m, m.dept);
+    if (v === 'visit') return visitEdit(m, null);
+    if (v && v.startsWith('v:')) return visitEdit(m, vs.find(x => x.id === v.slice(2)));
+  }
+  async function visitEdit(m, x) {
+    const v = await modal(`<h3>${esc(m.name)} — 심방 ${x ? '고치기' : '기록'}</h3>
+      <div class="field"><label for="vD">날짜</label><input type="date" id="vD" value="${x ? x.date : today()}" max="${today()}"></div>
+      <div class="field"><label for="vT">내용</label><textarea id="vT" placeholder="만난 곳, 나눈 이야기, 기도 제목…">${esc(x ? x.text : '')}</textarea></div>`,
+      (x ? [{ label: '지우기', val: 'del', cls: 'danger' }] : []).concat([{ label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri', check: () => { if (!$('#vT').value.trim()) { toast('내용을 적어 주세요'); return false; } return true; } }]),
+      inn => setTimeout(() => { try { $('#vT', inn).focus(); } catch (e) {} }, 80));
+    if (!v) return personCard(m.id);
+    const date = $('#vD').value, text = $('#vT').value;
+    try {
+      if (v === 'del') { if (!(await confirmBox('심방 기록 지우기', '이 기록을 지울까요?', '지우기'))) return personCard(m.id); await api('delVisit', { id: x.id }); toast('지웠어요'); }
+      else { await api('visit', { pid: m.id, id: x ? x.id : '', date, text }); toast('심방 기록을 저장했어요'); }
+    } catch (e) { toast(e.message); }
+    render(); personCard(m.id);
+  }
+  async function personEdit(m, dept) {
+    let photo = null;
+    const cur = () => photo != null ? photo : (m && photoMem[m.id] && photoMem[m.id].v === m.pv && photoMem[m.id].data) || '';
+    const preview = (b, a, g) => { const y = ageY(b, a); return y == null ? (g ? `학년(직접): ${g}` : '태어난 해를 넣으면 학년이 저절로 나와요') : `${yearNow()}년: <b>${labelFor(dept, y, g)}</b> (${y + 1}세) · 해가 바뀌면 저절로 올라가요`; };
+    const v = await modal(`<h3>${m ? esc(m.name) + ' 고치기' : esc(dept) + ' — 한 명 넣기'}</h3>
+      <div class="tphoto"><div id="tpv" class="ph xl" style="--h:${hue(m ? m.name : '')}">${cur() ? `<img src="${cur()}" alt="">` : '<span>사진</span>'}</div>
+        <div class="tpb"><label class="btn sm pri">📷 사진 고르기<input type="file" id="tpf" accept="image/*" hidden></label>${m && m.pv ? '<button class="btn sm ghost" id="tpd">사진 지우기</button>' : ''}</div></div>
+      <div class="field"><label for="eN">이름</label><input type="text" id="eN" maxlength="12" value="${esc(m ? m.name : '')}"></div>
+      <div class="field"><label for="eB">태어난 해</label><div class="row" style="flex-wrap:nowrap"><input type="number" id="eB" inputmode="numeric" min="1900" max="${yearNow()}" placeholder="예: 2010" value="${m ? m.birth : ''}">
+        <select id="eA" style="max-width:9em;font-size:1em"><option value="0">조정 없음</option><option value="-1"${m && m.adj === -1 ? ' selected' : ''}>한 학년 아래</option><option value="1"${m && m.adj === 1 ? ' selected' : ''}>한 학년 위</option></select></div>
+        ${gradeChoices(dept).length ? `<div class="chips gpick">${gradeChoices(dept).map(g => `<button data-gl="${g}">${g}</button>`).join('')}</div>` : ''}
+        <p class="small muted" id="eP" style="margin:6px 0 0">${preview(m && m.birth, m && m.adj, m && m.grade)}</p></div>
+      <div class="field"><label for="eG">학년(직접) <span class="small muted">(태어난 해를 모를 때만)</span></label><input type="text" id="eG" maxlength="12" value="${esc(m ? m.grade : '')}"></div>
+      <div class="field"><label for="eS">학교·직장</label><input type="text" id="eS" maxlength="30" value="${esc(m ? m.school : '')}"></div>
+      <div class="field"><label for="eP1">연락처</label><input type="tel" id="eP1" maxlength="20" value="${esc(m ? m.phone : '')}" placeholder="010-0000-0000"></div>
+      <div class="field"><label for="eP2">보호자 연락처</label><input type="tel" id="eP2" maxlength="20" value="${esc(m ? m.phone2 : '')}"></div>
+      <div class="field"><label for="eT">비고 <span class="small muted">(교사만 봐요)</span></label><textarea id="eT" style="min-height:80px">${esc(m ? m.note : '')}</textarea></div>
+      <div class="field"><label for="eM">기도 메모 <span class="small muted">(특별기도 카드에 모두에게 보여요)</span></label><textarea id="eM" maxlength="200" style="min-height:60px">${esc(m ? m.memo : '')}</textarea></div>
+      <div class="field"><label for="eSt">따로 보기</label><select id="eSt" style="font-size:1em"><option value="">없음</option>${SPECIAL.map(x => `<option${m && m.status === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
+      ${!m && myDepts().length > 1 ? '' : ''}`,
+      (m ? [{ label: '지우기', val: 'del', cls: 'danger' }] : []).concat([{ label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri', check: () => { if (!$('#eN').value.trim()) { toast('이름을 넣어 주세요'); return false; } return true; } }]),
+      inn => {
+        const b = $('#eB', inn), a = $('#eA', inn), g = $('#eG', inn), p = $('#eP', inn), paint = () => { p.innerHTML = preview(b.value, a.value, g.value.trim()); };
+        b.oninput = paint; a.onchange = paint; g.oninput = paint;
+        $$('[data-gl]', inn).forEach(x => x.onclick = () => { b.value = birthFromLabel(dept, x.dataset.gl); a.value = '0'; paint(); });
+        $('#tpf', inn).onchange = async e => { const f = e.target.files && e.target.files[0]; if (!f) return; try { photo = await facePhoto(f); $('#tpv', inn).innerHTML = `<img src="${photo}" alt="">`; } catch (er) { toast(er.message); } };
+        const pd = $('#tpd', inn); if (pd) pd.onclick = () => { photo = ''; $('#tpv', inn).innerHTML = '<span>사진</span>'; };
+        if (!m) setTimeout(() => { try { $('#eN', inn).focus(); } catch (e) {} }, 80);
+      });
+    if (!v) { if (m) personCard(m.id); return; }
+    const g = id => $('#' + id).value;
+    const p = { dept, name: g('eN'), birth: g('eB'), adj: +g('eA'), grade: g('eG'), school: g('eS'), phone: g('eP1'), phone2: g('eP2'), note: g('eT'), memo: g('eM'), status: g('eSt') };
+    try {
+      if (v === 'del') {
+        if (!(await confirmBox('명단에서 지우기', `<b>${esc(m.name)}</b>을(를) 명단에서 지울까요?\n출석 기록도 함께 보이지 않게 돼요. 안 나오는 분은 지우지 말고 그냥 두면 장기결석으로 내려가요.`, '지우기'))) return;
+        await api('delPerson', { id: m.id }); toast('지웠어요'); render(); return;
+      }
+      if (m) p.id = m.id; if (photo != null) p.photo = photo;
+      const d = await api('person', p);
+      if (photo) { const nm = personOf(d.savedId); if (nm) { photoMem[nm.id] = { v: nm.pv, data: photo }; kvSet('ph:' + nm.id, photoMem[nm.id]); } }
+      toast(m ? '고쳤어요' : `${p.name} — 넣었어요`);
+      render();
+      if (m) personCard(m.id); else if (await confirmBox('한 명 더', '한 명 더 넣을까요?', '더 넣기')) personEdit(null, dept);
+    } catch (e) { toast(e.message); render(); }
+  }
+  // 여러 명: '임동현(19)' · '홍길동 2010' · 그냥 이름 (학년 버튼을 고르면 모두 그 학년)
+  function parsePeople(t, dept, label) {
+    const Y = yearNow(), out = [], seen = new Set();
+    String(t || '').split(/[\n\t,;]+/).forEach(line => {
+      const s = line.replace(/　/g, ' ').trim(); if (!s) return;
+      let m = s.match(/^([가-힣A-Za-z][가-힣A-Za-z\s]{0,8}?)\s*(?:\(\s*(\d{1,2})\s*\)|\s(\d{4}))?\s*$/); if (!m) return;
+      const name = m[1].replace(/\s+/g, ''); if (name.length < 2 || /^(이름|합계|주차|출석률|반출석률|예비청년)$/.test(name)) return;
+      const birth = m[2] ? Y - +m[2] + 1 : m[3] ? +m[3] : (label ? birthFromLabel(dept, label) : '');
+      const k = name + '|' + birth; if (seen.has(k)) return; seen.add(k);
+      out.push({ name, birth, grade: !birth && label ? label : '' });
+    });
+    return out;
+  }
+  async function peopleBulk(dept) {
+    let label = '', text = '';
+    const v = await modal(`<h3>📋 ${esc(dept)} — 여러 명 한번에</h3>
+      <p class="msg small">한 줄에 한 명씩 붙여 넣으세요. 구글 시트 출석부에서 이름 칸을 쭉 복사해도 돼요.\n‘임동현(19)’처럼 나이(한국 나이)가 있으면 태어난 해를 알아서 넣고, ‘홍길동 2010’처럼 태어난 해를 적어도 돼요. 이미 있는 분은 건너뛰어요.</p>
+      ${gradeChoices(dept).length ? `<div class="field"><label>나이가 안 적힌 분의 학년 <span class="small muted">(고르면 모두 그 학년)</span></label><div class="chips gpick">${gradeChoices(dept).map(g => `<button data-bl="${g}">${g}</button>`).join('')}</div></div>` : ''}
+      <div class="field"><textarea id="bT" placeholder="임동현(19)\n윤환희(19)\n홍길동 2010" style="min-height:160px"></textarea><p class="small muted" id="bC" style="margin:6px 0 0">0명</p></div>`,
+      [{ label: '취소', val: false }, { label: '넣기', val: true, cls: 'pri', check: () => { if (!parsePeople(text, dept, label).length) { toast('이름을 붙여 넣어 주세요'); return false; } return true; } }],
+      inn => {
+        const have = new Set(rosterOf(dept).map(m => m.name));
+        const c = $('#bC', inn), paint = () => { const ps = parsePeople(text, dept, label), dup = ps.filter(x => have.has(x.name)).length; c.innerHTML = ps.length ? `<b>${ps.length - dup}명</b> 넣어요${dup ? ` · 이미 있는 ${dup}명은 건너뜀` : ''}<br>` + ps.slice(0, 30).map(x => have.has(x.name) ? `<s class="muted">${esc(x.name)}</s>` : esc(x.name) + (x.birth ? `<small>(${labelFor(dept, yearNow() - x.birth, '')})</small>` : '')).join(', ') + (ps.length > 30 ? ' …' : '') : '0명'; };
+        $$('[data-bl]', inn).forEach(b => b.onclick = () => { label = label === b.dataset.bl ? '' : b.dataset.bl; $$('[data-bl]', inn).forEach(x => x.classList.toggle('on', x.dataset.bl === label)); paint(); });
+        $('#bT', inn).oninput = e => { text = e.target.value; paint(); };
+      });
+    if (!v) return;
+    try { const d = await api('people', { dept, list: parsePeople(text, dept, label) }); toast(`${d.added}명을 넣었어요`); } catch (e) { toast(e.message); }
+    render();
+  }
+  async function importSheetDlg(dept) {
+    let url = C.attUrl && C.attUrl[dept] || '';
+    const v = await modal(`<h3>📥 ${esc(dept)} — 구글 시트에서 가져오기</h3>
+      <p class="msg small">지금까지 쓰던 출석부 구글 시트의 주소를 붙여 넣으세요.\n‘26.11’, ‘26.10’처럼 달마다 있는 시트를 모두 읽어서 <b>명단(이름·나이)</b>과 <b>출석(○)</b>을 넣어요.\n· 이미 있는 분은 이름(과 나이)으로 찾아 출석만 더해요.\n· 여러 번 해도 겹치지 않아요(예전에 가져온 것은 새로 바꿔요). 앱에서 직접 누른 출석은 그대로 둬요.\n· 시간이 조금(1분 안팎) 걸릴 수 있어요.</p>
+      <div class="field"><label for="iU">시트 주소</label><input type="text" id="iU" value="${esc(url)}" placeholder="https://docs.google.com/spreadsheets/d/…"></div>`,
+      [{ label: '취소', val: false }, { label: '가져오기', val: true, cls: 'pri', check: () => /docs\.google\.com\/spreadsheets\/d\//.test($('#iU').value) || (toast('구글 시트 주소를 넣어 주세요'), false) }]);
+    if (!v) return;
+    url = $('#iU').value.trim(); C.attUrl = Object.assign({}, C.attUrl, { [dept]: url }); saveCfg();
+    try {
+      const d = await api('importSheet', { dept, url }), r = d.imported || {};
+      modal(`<h3>가져왔어요</h3><p class="msg">시트 ${r.sheets}개를 읽었어요.\n새로 넣은 분 <b>${r.added}명</b>, 이미 있던 분 ${r.matched}명\n출석 표시 <b>${r.marks}개</b></p><p class="small muted">나이가 시트와 다르게 나온 분은 그 분을 눌러 [고치기]에서 ‘한 학년 아래/위’로 맞추면 돼요.</p>`, [{ label: '확인', val: true, cls: 'pri' }]);
+    } catch (e) { toast(e.message); }
+    render();
+  }
+  function attStatDlg(dept) {
+    const o = attOf(dept), days = Object.keys(o).filter(d => o[d].size).sort().slice(-16).reverse(), max = Math.max(1, ...days.map(d => o[d].size));
+    modal(`<h3>📊 ${esc(dept)} 주별 출석 인원</h3><div class="attl">${days.map(d => `<div class="attr"><span class="ad">${md(d)} (${wd(d)})</span><span class="bar"><i style="width:${Math.round(o[d].size / max * 100)}%"></i></span><b>${o[d].size}명</b></div>`).join('') || '<p class="muted small">아직 출석 기록이 없어요</p>'}</div>`, [{ label: '닫기', val: true, cls: 'pri' }]);
+  }
+  window.addEventListener('online', () => flushAtt());
+
   /* ----- 공지 ----- */
   async function showNotices(all) {
     const list = (S && S.notices || []).filter(n => all || !C.hideNotices.includes(n.id));
@@ -983,7 +1266,7 @@
     nameInput($('#pick'), '', '시작하기', async (n, church, title) => {
       if (!(await confirmBox('이름 확인', `<b>${esc(n)} ${esc(title || '성도님')}</b>${church ? ` (${esc(church)})` : ''}이 맞으세요?
 이 이름이 이 기기에 저장돼요.`, '네, 맞아요'))) return;
-      try { await api('setName', { name: n, church, title }); toast(n + ' 성도님, 환영합니다'); view = 'input'; render(); if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
+      try { await api('setName', { name: n, church, title }); toast(n + ' 성도님, 환영합니다'); view = 'input'; render(); if (isRosterUser()) return; if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
     });
   }
   const GROUPS = ['유치부', '주일학교', '학생부', '청년부', '1남선교회', '2남선교회', '3남선교회', '4남선교회', '1여선교회', '2여선교회', '3여선교회', '4여선교회'];
@@ -1223,34 +1506,38 @@
   async function roleMenu() {
     let d; try { d = await api('devices'); } catch (e) { toast(e.message); return; }
     const me = myName(), devs = (d.devices || []).sort((a, b) => ko(a.name, b.name));
-    const roleTxt = r => r === '마스터' ? '<span class="tag m">마스터</span>' : r === '공지' ? '<span class="tag">공지 권한</span>' : r === '교사' ? '<span class="tag">교사</span>' : '';
+    const roleTxt = r => r === '마스터' ? '<span class="tag m">마스터</span>' : r === '공지' ? '<span class="tag">공지 권한</span>' : r === '교사' ? '<span class="tag">교사</span>' : r === '담임목사' ? '<span class="tag m">담임목사</span>' : '';
     const tagOf = v => v.role ? roleTxt(v.role) : v.listed ? '<span class="tag">교사(명단)</span>' : '';
     const act = await modal(`<h3>권한 주기</h3>
-      <p class="msg small"><b>교사</b>: 특별기도의 기도 대상(학생 사진·이름·학년)을 올리고, 일정과 예배 인원을 넣어요. [교사 명단]에 이름을 넣어 두면 그 이름으로 들어온 분은 자동으로 교사가 돼요.\n<b>공지</b>: 담임목사님처럼 공지를 올리고 내려요.\n성도님이 먼저 앱에 이름을 넣고 들어오셔야 목록에 나와요. 기기마다 따로 드려요.</p>
+      <p class="msg small"><b>교사</b>는 [교사 명단]에 ‘성함 부서’로 넣으면 저절로 돼요.\n<b>담임목사</b>: 모든 부서 출석부(연락처·심방 포함)를 보고, 공지를 올리고 내려요.\n<b>공지</b>: 담임목사님처럼 공지를 올리고 내려요.\n성도님이 먼저 앱에 이름을 넣고 들어오셔야 목록에 나와요. 기기마다 따로 드려요.</p>
       <input type="text" id="rq" placeholder="이름으로 찾기" style="margin-bottom:8px">
       <ul class="list" id="rl">${devs.map(v => `<li data-n="${esc(v.name)}"><div><b>${esc(v.name)}</b> ${tagOf(v)}<br><span class="small muted">${esc(v.desc || '')}${v.last ? ' · ' + when(v.last) : ''}</span></div>
-        ${v.role === '마스터' ? '' : v.role ? `<button class="btn sm danger" data-role="" data-t="${esc(v.id)}">권한 빼기</button>` : `<span class="rbtns">${v.listed ? '' : `<button class="btn sm pri" data-role="교사" data-t="${esc(v.id)}">교사</button>`}<button class="btn sm" data-role="공지" data-t="${esc(v.id)}">공지</button></span>`}</li>`).join('') || '<li class="muted">이름을 넣은 기기가 없어요</li>'}</ul>`,
+        ${v.role === '마스터' ? '' : v.role ? `<button class="btn sm danger" data-role="" data-t="${esc(v.id)}">권한 빼기</button>` : `<span class="rbtns"><button class="btn sm pri" data-role="담임목사" data-t="${esc(v.id)}">담임목사</button><button class="btn sm" data-role="공지" data-t="${esc(v.id)}">공지</button></span>`}</li>`).join('') || '<li class="muted">이름을 넣은 기기가 없어요</li>'}</ul>`,
       [{ label: '닫기', val: false, cls: 'pri' }], (inn, close) => {
         $('#rq', inn).oninput = e => { const q = e.target.value.replace(/\s/g, ''); $$('#rl li[data-n]', inn).forEach(li => li.classList.toggle('hidden', !!q && !li.dataset.n.includes(q))); };
         $$('[data-t]', inn).forEach(b => b.onclick = () => close({ target: b.dataset.t, role: b.dataset.role, name: b.closest('li').dataset.n }));
       });
     if (!act) { masterMenu(); return; }
-    if (!(await confirmBox('권한 바꾸기', act.role === '교사' ? `<b>${esc(act.name)}</b> 님 기기에 교사 권한을 드릴까요?\n특별기도 기도 대상(사진·이름·학년), 일정, 예배 인원을 넣을 수 있어요.` : act.role ? `<b>${esc(act.name)}</b> 님 기기에 공지 권한을 드릴까요?\n공지를 올리고 내릴 수 있고, 댓글도 지울 수 있어요.` : `<b>${esc(act.name)}</b> 님 기기의 권한을 뺄까요?`, '바꾸기'))) { roleMenu(); return; }
+    if (!(await confirmBox('권한 바꾸기', act.role === '담임목사' ? `<b>${esc(act.name)}</b> 님 기기에 담임목사 권한을 드릴까요?\n모든 부서 출석부(연락처·심방 포함)를 보고, 공지를 올리고 내릴 수 있어요.` : act.role ? `<b>${esc(act.name)}</b> 님 기기에 공지 권한을 드릴까요?\n공지를 올리고 내릴 수 있고, 댓글도 지울 수 있어요.` : `<b>${esc(act.name)}</b> 님 기기의 권한을 뺄까요?`, '바꾸기'))) { roleMenu(); return; }
     try { await api('setRole', { target: act.target, role: act.role }); toast('권한을 바꿨어요'); } catch (e) { toast(e.message); }
     roleMenu();
   }
   // 교사 명단: 이 이름으로 들어온 기기는 자동으로 교사 권한
   async function teacherMenu() {
-    const list = (S.teachers || []).slice().sort(ko), names = S.names || [];
-    let text = list.join('\n');
+    const tl = (S.teachers || []).map(x => typeof x === 'string' ? { name: x, depts: [] } : x).sort((a, b) => ko(a.name, b.name)), list = tl.map(x => x.name), names = S.names || [];
+    let text = tl.map(x => [x.name].concat(x.depts || []).join(' ')).join('\n');
     const v = await modal(`<h3>👩‍🏫 교사 명단</h3>
-      <p class="msg small">선생님 성함을 한 줄에 한 분씩 적어 주세요.\n이 이름으로 앱에 들어오시면 <b>자동으로 교사</b>가 돼요(이미 들어와 계신 분도 바로 적용).\n교사는 특별기도의 기도 대상(사진·이름·학년), 일정, 예배 인원을 넣을 수 있어요.</p>
-      <textarea id="tl" placeholder="예:\n김하나\n이두리" style="min-height:160px">${esc(text)}</textarea>
-      ${list.length ? `<p class="sect">지금 명단 (${list.length}명)</p><p class="small">${list.map(n => names.includes(n) ? `<b>${esc(n)}</b> ✓` : `<span class="muted">${esc(n)} (아직 안 들어옴)</span>`).join(' · ')}</p>` : ''}`,
+      <p class="msg small">한 줄에 한 분씩 <b>성함 부서</b>로 적어 주세요. (예: 김하나 학생부)\n두 부서를 맡으면 이어서 적어요. (예: 이두리 청년부 학생부)\n이 이름으로 앱에 들어오시면 <b>자동으로 그 부서 교사</b>가 돼요. 그 부서 출석부(연락처·심방 포함)를 보고 쓸 수 있어요.\n부서: ${DEPTS.join(', ')}</p>
+      <textarea id="tl" placeholder="예:\n김하나 학생부\n이두리 청년부" style="min-height:160px">${esc(text)}</textarea>
+      ${list.length ? `<p class="sect">지금 명단 (${list.length}명)</p><p class="small">${tl.map(x => (names.includes(x.name) ? `<b>${esc(x.name)}</b> ✓` : `<span class="muted">${esc(x.name)} (아직 안 들어옴)</span>`) + ` <small>${x.depts && x.depts.length ? esc(x.depts.join('·')) : '<span class="err">부서 없음</span>'}</small>`).join('<br>')}</p>` : ''}`,
       [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }], inn => { $('#tl', inn).oninput = e => text = e.target.value; });
     if (!v) { masterMenu(); return; }
-    const arr = text.split(/[\n,·]+/).map(x => { x = x.replace(/\s+/g, ''); const y = x.replace(/(선생님|님)$/, ''); return y.length >= 2 ? y : x; }).filter(x => x.length >= 2);
-    try { await api('teachers', { names: arr }); toast(`교사 명단을 저장했어요 (${arr.length}명)`); } catch (e) { toast(e.message); }
+    const arr = text.split(/\n+/).map(line => {
+      const parts = line.trim().split(/[\s,·/]+/).filter(Boolean); if (!parts.length) return null;
+      const depts = parts.filter(p => DEPTS.includes(p)), nm = parts.filter(p => !DEPTS.includes(p)).join('').replace(/(선생님|님|선생|교사)$/, '');
+      return nm.length >= 2 ? { name: nm, depts } : null;
+    }).filter(Boolean);
+    try { await api('teachers', { list: arr }); toast(`교사 명단을 저장했어요 (${arr.length}명)`); } catch (e) { toast(e.message); }
     render(); masterMenu();
   }
   async function masterMenu() {
@@ -1448,7 +1735,7 @@
     try { await flush(); await api('load'); }
     catch (e) { const el = $('#loadErr'); if (el) el.innerHTML = `<p class="err">${esc(e.message)}</p><button class="btn pri" id="retry">다시 시도</button>`; const r = $('#retry'); if (r) r.onclick = boot; else toast(e.message); return; }
     render();
-    if (myName()) { if (!C.tourDone) { view = 'input'; render(); startTour(0); } else showNotices(false); }
+    if (myName() && !isRosterUser()) { if (!C.tourDone) { view = 'input'; render(); startTour(0); } else showNotices(false); }
   }
 
   const STAY_KEY = 'church-prayer-stay-inapp';
