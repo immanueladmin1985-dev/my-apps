@@ -47,7 +47,7 @@
   let S = C.state || null;   // 마지막으로 받은 자료 (바로 그리기용)
   let online = true, busy = 0;
   // 기다려야 하는 요청은 화면 전체에 로딩 창을 띄우고 그동안 다른 버튼을 막음 (여러 번 누르지 않게)
-  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요' };
+  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요' };
   let waitN = 0, waitTimer = 0;
   function showWait(msg) {
     waitN++;
@@ -118,7 +118,7 @@
   const myName = () => (S && S.me && S.me.name) || '';
   const isMaster = () => !!(S && S.me && S.me.role === '마스터');
   const isTeacher = () => !!(S && S.me && (S.me.role === '마스터' || S.me.role === '교사'));   // 교사: 기도 대상·일정·예배 인원
-  const appTitle = () => ((S && S.church) || C.church || '우리교회') + ' 기도';
+  const appTitle = () => '임마누엘교회 기도';
   const isStaff = () => !!(S && S.me && (S.me.role === '마스터' || S.me.role === '공지'));   // 공지 권한(담임목사님 등)
   const dataOf = n => (S && S.data && S.data[n]) || {};
   const totalOf = n => Object.values(dataOf(n)).reduce((a, b) => a + b, 0);
@@ -166,7 +166,7 @@
   function applyTheme() {
     const dark = isDark();
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    $$('meta[name=theme-color]').forEach(m => { m.removeAttribute('media'); m.setAttribute('content', dark ? '#17142a' : '#7a5af5'); });
+    $$('meta[name=theme-color]').forEach(m => { m.removeAttribute('media'); m.setAttribute('content', dark ? '#0d1f1d' : '#0f8f7e'); });
   }
   try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if ((C.theme || 'light') === 'auto') { applyTheme(); render(); } }); } catch (e) {}
 
@@ -946,17 +946,10 @@
     app.innerHTML = `<div class="welcome">${brandHtml()}
       <p class="lead">처음 한 번만 이름을 적어 주세요.<br>이 기기에 저장되어 다음부터는 바로 들어가요.</p><div class="card" id="pick"></div></div>`;
     nameInput($('#pick'), '', '시작하기', async (n, church) => {
-      const ci = $('#nCode'), code = ci ? ci.value.trim() : '';
-      if (S.needCode && !code) { toast('입장 암호를 넣어 주세요'); if (ci) ci.focus(); return; }
       if (!(await confirmBox('이름 확인', `<b>${esc(n)} 성도님</b>${church ? ` (${esc(church)})` : ''}이 맞으세요?
 이 이름이 이 기기에 저장돼요.`, '네, 맞아요'))) return;
-      try { await api('setName', { name: n, church, code }); toast(n + ' 성도님, 환영합니다'); view = 'input'; render(); if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
+      try { await api('setName', { name: n, church }); toast(n + ' 성도님, 환영합니다'); view = 'input'; render(); if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
     });
-    if (S.needCode) {
-      const f = document.createElement('div'); f.className = 'field';
-      f.innerHTML = '<label for="nCode">🔒 입장 암호 <span class="small muted">(교회에서 알려 드린 암호)</span></label><input type="text" id="nCode" autocomplete="off" maxlength="40">';
-      $('#pick').prepend(f); setTimeout(() => { try { $('#nCode').focus(); } catch (e) {} }, 120);
-    }
   }
   const churchOf = n => (S && S.churches && S.churches[n]) || '';
 
@@ -1066,7 +1059,7 @@
     { v: 'input', sel: '[data-v="special"]', needSp: true, title: '특별기도 🔥', text: '특별기도 기간에는 여기서\n<b>기도할 사람</b>을 고르고,\n매일 <b>[오늘 기도했어요]</b>를 눌러 주세요.' },
     { v: 'input', sel: '#tTheme', title: '밝게 · 어둡게', text: '화면이 너무 밝거나 어두우면\n이 버튼을 누르세요. ☀️ ↔ 🌙' },
     { v: 'input', sel: '#tSet', title: '설정', text: '<b>글자를 크게</b> 하거나 <b>이름을 고칠</b> 때,\n이 사용법을 <b>다시 볼</b> 때 누르세요.' },
-    { v: 'input', sel: null, install: true, title: '마지막! 앱 설치 📲', text: '휴대폰에 앱을 설치하면\n다음부터 <b>카카오톡 없이</b>\n홈 화면의 <b>기도시간</b> 아이콘만 누르면 열려요.' }
+    { v: 'input', sel: null, install: true, title: '마지막! 앱 설치 📲', text: '휴대폰에 앱을 설치하면\n다음부터 <b>카카오톡 없이</b>\n홈 화면의 <b>임마누엘기도</b> 아이콘만 누르면 열려요.' }
   ];
   function startTour(i) {
     i = i || 0;
@@ -1182,11 +1175,12 @@
     let d; try { d = await api('devices'); } catch (e) { toast(e.message); return; }
     const me = myName(), devs = (d.devices || []).sort((a, b) => ko(a.name, b.name));
     const roleTxt = r => r === '마스터' ? '<span class="tag m">마스터</span>' : r === '공지' ? '<span class="tag">공지 권한</span>' : r === '교사' ? '<span class="tag">교사</span>' : '';
+    const tagOf = v => v.role ? roleTxt(v.role) : v.listed ? '<span class="tag">교사(명단)</span>' : '';
     const act = await modal(`<h3>권한 주기</h3>
-      <p class="msg small"><b>교사</b>: 특별기도의 기도 대상(학생 사진·이름·학년)을 올리고, 일정과 예배 인원을 넣어요.\n<b>공지</b>: 담임목사님처럼 공지를 올리고 내려요.\n성도님이 먼저 앱에 이름을 넣고 들어오셔야 목록에 나와요. 기기마다 따로 드려요.</p>
+      <p class="msg small"><b>교사</b>: 특별기도의 기도 대상(학생 사진·이름·학년)을 올리고, 일정과 예배 인원을 넣어요. [교사 명단]에 이름을 넣어 두면 그 이름으로 들어온 분은 자동으로 교사가 돼요.\n<b>공지</b>: 담임목사님처럼 공지를 올리고 내려요.\n성도님이 먼저 앱에 이름을 넣고 들어오셔야 목록에 나와요. 기기마다 따로 드려요.</p>
       <input type="text" id="rq" placeholder="이름으로 찾기" style="margin-bottom:8px">
-      <ul class="list" id="rl">${devs.map(v => `<li data-n="${esc(v.name)}"><div><b>${esc(v.name)}</b> ${roleTxt(v.role)}<br><span class="small muted">${esc(v.desc || '')}${v.last ? ' · ' + when(v.last) : ''}</span></div>
-        ${v.role === '마스터' ? '' : v.role ? `<button class="btn sm danger" data-role="" data-t="${esc(v.id)}">권한 빼기</button>` : `<span class="rbtns"><button class="btn sm pri" data-role="교사" data-t="${esc(v.id)}">교사</button><button class="btn sm" data-role="공지" data-t="${esc(v.id)}">공지</button></span>`}</li>`).join('') || '<li class="muted">이름을 넣은 기기가 없어요</li>'}</ul>`,
+      <ul class="list" id="rl">${devs.map(v => `<li data-n="${esc(v.name)}"><div><b>${esc(v.name)}</b> ${tagOf(v)}<br><span class="small muted">${esc(v.desc || '')}${v.last ? ' · ' + when(v.last) : ''}</span></div>
+        ${v.role === '마스터' ? '' : v.role ? `<button class="btn sm danger" data-role="" data-t="${esc(v.id)}">권한 빼기</button>` : `<span class="rbtns">${v.listed ? '' : `<button class="btn sm pri" data-role="교사" data-t="${esc(v.id)}">교사</button>`}<button class="btn sm" data-role="공지" data-t="${esc(v.id)}">공지</button></span>`}</li>`).join('') || '<li class="muted">이름을 넣은 기기가 없어요</li>'}</ul>`,
       [{ label: '닫기', val: false, cls: 'pri' }], (inn, close) => {
         $('#rq', inn).oninput = e => { const q = e.target.value.replace(/\s/g, ''); $$('#rl li[data-n]', inn).forEach(li => li.classList.toggle('hidden', !!q && !li.dataset.n.includes(q))); };
         $$('[data-t]', inn).forEach(b => b.onclick = () => close({ target: b.dataset.t, role: b.dataset.role, name: b.closest('li').dataset.n }));
@@ -1196,12 +1190,26 @@
     try { await api('setRole', { target: act.target, role: act.role }); toast('권한을 바꿨어요'); } catch (e) { toast(e.message); }
     roleMenu();
   }
+  // 교사 명단: 이 이름으로 들어온 기기는 자동으로 교사 권한
+  async function teacherMenu() {
+    const list = (S.teachers || []).slice().sort(ko), names = S.names || [];
+    let text = list.join('\n');
+    const v = await modal(`<h3>👩‍🏫 교사 명단</h3>
+      <p class="msg small">선생님 성함을 한 줄에 한 분씩 적어 주세요.\n이 이름으로 앱에 들어오시면 <b>자동으로 교사</b>가 돼요(이미 들어와 계신 분도 바로 적용).\n교사는 특별기도의 기도 대상(사진·이름·학년), 일정, 예배 인원을 넣을 수 있어요.</p>
+      <textarea id="tl" placeholder="예:\n김하나\n이두리" style="min-height:160px">${esc(text)}</textarea>
+      ${list.length ? `<p class="sect">지금 명단 (${list.length}명)</p><p class="small">${list.map(n => names.includes(n) ? `<b>${esc(n)}</b> ✓` : `<span class="muted">${esc(n)} (아직 안 들어옴)</span>`).join(' · ')}</p>` : ''}`,
+      [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }], inn => { $('#tl', inn).oninput = e => text = e.target.value; });
+    if (!v) { masterMenu(); return; }
+    const arr = text.split(/[\n,·]+/).map(x => { x = x.replace(/\s+/g, ''); const y = x.replace(/(선생님|님)$/, ''); return y.length >= 2 ? y : x; }).filter(x => x.length >= 2);
+    try { await api('teachers', { names: arr }); toast(`교사 명단을 저장했어요 (${arr.length}명)`); } catch (e) { toast(e.message); }
+    render(); masterMenu();
+  }
   async function masterMenu() {
     const names = (S.names || []).slice().sort(ko);
     const act = await modal(`<h3>마스터 메뉴</h3>
       ${noticeHtml()}
       <p class="sect">권한</p>
-      <div class="row"><button class="btn sm pri" id="mCamp">🔥 특별기도 관리</button><button class="btn sm pri" id="mRole">권한 주기 (교사·담임목사님)</button><button class="btn sm pri" id="mLogo">로고 넣기·바꾸기</button></div>
+      <div class="row"><button class="btn sm pri" id="mCamp">🔥 특별기도 관리</button><button class="btn sm pri" id="mTeach">👩‍🏫 교사 명단</button><button class="btn sm pri" id="mRole">권한 주기 (교사·담임목사님)</button><button class="btn sm pri" id="mLogo">로고 넣기·바꾸기</button></div>
       <p class="sect">이름 고치기·합치기 <span class="small">(잘못 적힌 이름의 기록을 모두 옮김)</span></p>
       <div class="row"><select id="mFrom" style="flex:1 1 140px">${names.map(n => `<option>${esc(n)}</option>`).join('')}</select><span>→</span>
         <input type="text" id="mTo" list="mNames" placeholder="바른 이름" style="flex:1 1 140px"><datalist id="mNames">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
@@ -1213,6 +1221,7 @@
         bindNotice(inn, close);
         $('#mRole', inn).onclick = () => close({ a: 'role' });
         $('#mCamp', inn).onclick = () => close({ a: 'camps' });
+        $('#mTeach', inn).onclick = () => close({ a: 'teachers' });
         $('#mLogo', inn).onclick = () => close({ a: 'logo' });
         $('#mRen', inn).onclick = () => { const from = $('#mFrom', inn).value, to = $('#mTo', inn).value.replace(/\s+/g, ''); if (to.length < 2) { toast('바른 이름을 넣어 주세요'); return; } close({ a: 'rename', from, to }); };
         $('#mImp', inn).onclick = () => close({ a: 'reimport' });
@@ -1224,6 +1233,7 @@
       if (await doNotice(act)) { /* 공지 */ }
       else if (act.a === 'role') { await roleMenu(); return; }
       else if (act.a === 'camps') { await campList(); return; }
+      else if (act.a === 'teachers') { await teacherMenu(); return; }
       else if (act.a === 'logo') { await logoMenu(); return; }
       else if (act.a === 'rename') {
         const merge = names.includes(act.to);
@@ -1305,7 +1315,7 @@
     const ev = installEvt; installEvt = null;
     try {
       ev.prompt();
-      ev.userChoice.then(r => { if (r && r.outcome === 'accepted') { C.installDismissed = true; saveCfg(); toast('설치하고 있어요. 잠시 뒤 홈 화면에 ‘기도시간’ 아이콘이 생겨요'); } paintInstall(); }).catch(() => {});
+      ev.userChoice.then(r => { if (r && r.outcome === 'accepted') { C.installDismissed = true; saveCfg(); toast('설치하고 있어요. 잠시 뒤 홈 화면에 ‘임마누엘기도’ 아이콘이 생겨요'); } paintInstall(); }).catch(() => {});
     } catch (e) { installGuide(); }
   }
   async function installSheet() {
@@ -1337,7 +1347,7 @@
     else if (desktop) how = step(1, `주소창 오른쪽의 <b>설치 아이콘(⊕ 모니터 모양)</b>을 누르세요`) + step(2, `<b>설치</b>를 누르세요`);
     else how = step(1, `화면 <b>맨 위 오른쪽 ⋮</b>(점 세 개)를 누르세요`) + step(2, `<b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르세요`) + step(3, `<b>설치</b>(또는 <b>추가</b>)를 누르세요`);
     modal(`<h3>📲 앱 설치</h3>
-      <p class="msg small muted">이미 설치하셨다면 휴대폰 홈 화면에서 <b>기도시간</b> 아이콘을 찾아보세요.</p>
+      <p class="msg small muted">이미 설치하셨다면 휴대폰 홈 화면에서 <b>임마누엘기도</b> 아이콘을 찾아보세요.</p>
       ${!desktop && !samsung ? '<div class="arrow-tr">⋮ 여기<br>⬆</div>' : ''}${how}`, [{ label: '알겠어요', val: true, cls: 'pri big' }]);
   }
   // 아이폰·아이패드: 사파리 공유 버튼 → 홈 화면에 추가

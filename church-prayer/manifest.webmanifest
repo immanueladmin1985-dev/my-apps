@@ -1,6 +1,6 @@
 {
- "name": "우리교회 기도",
- "short_name": "기도시간",
+ "name": "임마누엘교회 기도",
+ "short_name": "임마누엘기도",
  "description": "성도님들의 기도 시간을 입력하고 함께 보는 앱",
  "id": "./",
  "start_url": "./",
@@ -10,8 +10,8 @@
   "fullscreen",
   "standalone"
  ],
- "background_color": "#f5f3fa",
- "theme_color": "#5b47b0",
+ "background_color": "#eef8f5",
+ "theme_color": "#0f8f7e",
  "lang": "ko",
  "icons": [
   {

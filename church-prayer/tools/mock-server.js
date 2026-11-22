@@ -60,9 +60,7 @@ const ctx = {
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(ROOT, 'server/Code.gs'), 'utf8'), ctx);
 ctx.setup();
-// 시험 자료: 마스터 암호 test, 입장 암호(원하면 MOCK_CODE 환경 변수)
 sheets['설정'].getRange(3, 2).setValue('test');
-if (process.env.MOCK_CODE) sheets['설정'].getRange(6, 2).setValue(process.env.MOCK_CODE);
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 http.createServer((req, res) => {

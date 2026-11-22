@@ -1,17 +1,17 @@
 /* 밝은 화면(기본) — 화면 밝기는 앱이 html[data-theme] 로 정함 */
 :root {
-  --bg: #f4f2ff; --card: #ffffff; --ink: #1f1b2e; --muted: #6e6a85; --line: #e6e1f7;
-  --pri: #7253f0; --pri2: #a855f7; --pri-ink: #ffffff; --pri-soft: #efeafe; --ok: #1f9d63; --err: #e5484d;
+  --bg: #eef8f5; --card: #ffffff; --ink: #142824; --muted: #5b736e; --line: #d5ebe5;
+  --pri: #0f8f7e; --pri2: #22b07d; --pri-ink: #ffffff; --pri-soft: #e0f3ee; --ok: #1f9d63; --err: #e5484d;
   --sat: #e3eeff; --sun: #ffe6ea; --sat-ink: #2563eb; --sun-ink: #e11d48; --mine: #fff4cc;
-  --head: linear-gradient(135deg, #7a5af5 0%, #a55cf2 55%, #ec6fb0 100%); --head-ink: #ffffff;
-  --shadow: 0 4px 16px rgba(114, 83, 240, .10);
+  --head: linear-gradient(135deg, #0f8f7e 0%, #1fa88a 55%, #3aaecb 100%); --head-ink: #ffffff;
+  --shadow: 0 4px 16px rgba(15, 143, 126, .10);
   --fs: 17px; color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --bg: #13111f; --card: #1e1b2e; --ink: #f1eefb; --muted: #a8a2c2; --line: #302b47;
-  --pri: #9b84ff; --pri2: #c084fc; --pri-ink: #15121f; --pri-soft: #2a2442; --ok: #4ade80; --err: #ff7b7f;
+  --bg: #0c1917; --card: #152522; --ink: #e7f5f1; --muted: #9ab7b0; --line: #24403a;
+  --pri: #3dd6b5; --pri2: #6ee7b7; --pri-ink: #0b1a17; --pri-soft: #1b3631; --ok: #4ade80; --err: #ff7b7f;
   --sat: #1b2a45; --sun: #3b1f2a; --sat-ink: #93b8ff; --sun-ink: #ff94a8; --mine: #3a3218;
-  --head: linear-gradient(135deg, #3b2a85 0%, #5a2d82 60%, #7a2c63 100%); --head-ink: #ffffff;
+  --head: linear-gradient(135deg, #0e5a50 0%, #11695a 60%, #1a5f73 100%); --head-ink: #ffffff;
   --shadow: 0 4px 16px rgba(0, 0, 0, .35);
   color-scheme: dark;
 }
@@ -135,7 +135,7 @@ dialog ol { padding-left: 1.3em; }
 .list li > div { flex: 1; white-space: pre-wrap; word-break: break-word; }
 .sect { font-weight: 700; margin: 18px 0 8px; color: var(--muted); font-size: .9em; }
 
-.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); transform: translate(-50%, 30px); background: #2b2638; color: #fff; padding: 12px 18px; border-radius: 12px; opacity: 0; pointer-events: none; transition: .25s; z-index: 100; max-width: 90vw; text-align: center; }
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); transform: translate(-50%, 30px); background: #1d2f2b; color: #fff; padding: 12px 18px; border-radius: 12px; opacity: 0; pointer-events: none; transition: .25s; z-index: 100; max-width: 90vw; text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .err { color: var(--err); }
 .offline { background: var(--sun); color: var(--sun-ink); border-radius: 12px; padding: 8px 12px; margin-bottom: 12px; font-size: .9em; }
@@ -256,7 +256,7 @@ dialog ol { padding-left: 1.3em; }
 .mystat { margin-bottom: 12px; }
 .mystat > div { color: #fff; padding: 10px 6px; box-shadow: var(--shadow); }
 .mystat span { font-size: .8em; opacity: .9; }
-.mystat .s1 { background: linear-gradient(135deg, #7a5af5, #a855f7); }
+.mystat .s1 { background: linear-gradient(135deg, #0f8f7e, #22b07d); }
 .mystat .s2 { background: linear-gradient(135deg, #f472b6, #fb7185); }
 .mystat .s3 { background: linear-gradient(135deg, #22c1a8, #3b82f6); }
 .calcard { padding: 12px; }
@@ -282,7 +282,7 @@ dialog ol { padding-left: 1.3em; }
 .banner { flex-wrap: nowrap; gap: 6px; }
 .banner span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
 .banner .btn.sm { min-height: 34px; padding: 4px 10px; white-space: nowrap; }
-.welcome h1 { background: linear-gradient(135deg, var(--pri), #ec6fb0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.welcome h1 { background: linear-gradient(135deg, var(--pri), #3aaecb); -webkit-background-clip: text; background-clip: text; color: transparent; }
 main { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
 @media (max-width: 420px) { .banner #bFs { display: none; } }
 .inputcard .saved { font-size: .88em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -294,7 +294,7 @@ main { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
 .cd .dv small { font-size: .58em; font-weight: 700; opacity: .9; margin-top: 2px; }
 
 /* 저장 중 로딩 창 (그동안 화면을 막음) */
-.wait { position: fixed; inset: 0; z-index: 200; display: none; place-items: center; background: rgba(20, 14, 40, .45); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.wait { position: fixed; inset: 0; z-index: 200; display: none; place-items: center; background: rgba(8, 24, 22, .45); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
 .wait.show { display: grid; }
 .wait-card { background: var(--card); color: var(--ink); border-radius: 22px; padding: 22px 28px 16px; text-align: center; min-width: 220px; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
 .wait-ic { font-size: 2.2em; animation: bob 1.2s ease-in-out infinite; }

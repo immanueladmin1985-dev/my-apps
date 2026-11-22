@@ -6,20 +6,23 @@
  * 2) 위쪽 함수 목록에서 setup 을 골라 ▶실행 → 권한 허용.
  *    '설정'·'기도기록'·'기도제목'·'공지'·'기기'·'특별기도'·'기도대상'… 시트가 생기고, 설문지 응답이 '기도기록'으로 옮겨집니다.
  *    특별기도가 하나도 없으면 '학생부·청년부 겨울 대확장'(2026.11.22~2027.2.28)을 만들어 둡니다.
- * 3) '설정' 시트에서 B3 마스터 암호, B5 교회 이름, B6 입장 암호(비우면 암호 없이 들어옴)를 적습니다(바꾸면 바로 적용).
+ * 3) '설정' 시트 B3 칸의 마스터 암호를 바꿉니다(바꾸면 바로 적용).
  * 4) [배포 → 새 배포 → 유형: 웹 앱] 실행: 나, 액세스 권한: 모든 사용자 → 배포 → 나온 웹 앱 주소를 앱에 넣습니다.
  *    코드를 바꾼 뒤에는 [배포 → 배포 관리 → ✏️ → 버전: 새 버전 → 배포] 를 해야 적용됩니다.
  *
  * 규칙
  * - 매일 기도: 같은 사람·같은 날짜는 마지막에 저장한 값이 최종입니다(지우려면 0시간 0분으로 저장).
- * - 설정 B7 날짜 이전 설문지 기록은 그날 입력한 것을 모두 더하고, 그 뒤로는 그날 마지막 응답만 씁니다(비우면 모두 마지막 응답).
+ * - 설정 B7 날짜(비우면 2026-08-30) 이전 설문지 기록은 그날 입력한 것을 모두 더하고, 그 뒤로는 그날 마지막 응답만 씁니다.
+ * - 서버 판(SERVER_VER)이 바뀌어 처음 열릴 때 설문지 응답을 한 번 다시 옮깁니다.
  * - 특별기도: 기간(시작~끝)마다 기도 대상(학생 등)·한 사람이 고를 수·기도표·일정·예배 인원을 따로 관리합니다.
  *   매일 기도 기록과는 섞이지 않습니다.
  * - 권한: 마스터(모두) · 공지(공지 올리기) · 교사(기도 대상 사진·이름 올리기, 일정, 예배 인원).
- * - 학생 사진은 '사진' 시트에만 있고, 입장한(이름을 넣은) 기기에만 보냅니다.
+ *   마스터가 '교사명단'에 이름을 넣어 두면, 그 이름으로 들어온 기기는 자동으로 교사가 됩니다.
+ * - 학생 사진은 '사진' 시트에만 있고, 이름을 넣은 기기에만 보냅니다.
  */
 
-var SERVER_VER = 1;
+var SERVER_VER = 2;
+var SUM_BEFORE = '2026-08-30';   // 이 날짜 전 설문 기록은 그날 것을 모두 더함 (설정 B7 이 있으면 그 날짜)
 var APP_NAME = '교회기도';
 var FORM_SHEET = '설문지 응답 시트1';
 var SH = {
@@ -39,7 +42,8 @@ var SH = {
   sp:     { name: '특별기도표', cols: ['저장 시각', '특별기도ID', '날짜', '이름', '기도함', '기기ID'] },
   event:  { name: '일정',       cols: ['ID', '특별기도ID', '날짜', '제목', '지움'] },
   join:   { name: '참석',       cols: ['일정ID', '이름', '누른 시각', '기기ID'] },
-  att:    { name: '예배인원',   cols: ['특별기도ID', '날짜', '인원', '메모', '고친 시각', '고친 사람'] }
+  att:    { name: '예배인원',   cols: ['특별기도ID', '날짜', '인원', '메모', '고친 시각', '고친 사람'] },
+  teacher:{ name: '교사명단',   cols: ['이름', '넣은 시각'] }
 };
 // 로고: 그림은 '로고' 시트에 조각으로, 보이는 곳 설정은 스크립트 속성에
 var LOGO_SHEET = '로고';
@@ -68,7 +72,10 @@ var REACTS = ['heart', 'like', 'smile', 'pray'];
 // 권한: '마스터'(모두) · '공지'(공지 올리기·내리기, 댓글 관리) · '교사'(기도 대상·일정·예배 인원)
 var ROLES = ['마스터', '공지', '교사'];
 function isStaff(me) { return me.role === '마스터' || me.role === '공지'; }
-function isTeacher(me) { return me.role === '마스터' || me.role === '교사'; }
+function teacherNames() { var m = {}; rows('teacher').forEach(function (r) { var n = cleanName(r[0]); if (n) m[n] = 1; }); return m; }
+// 실제 권한: 시트의 권한, 없으면 교사명단에 이름이 있을 때 '교사'
+function effRole(me) { if (ROLES.indexOf(me.role) >= 0) return me.role; return me.name && teacherNames()[me.name] ? '교사' : ''; }
+function isTeacher(me) { var r = effRole(me); return r === '마스터' || r === '교사'; }
 
 function ss() { return SpreadsheetApp.getActiveSpreadsheet(); }
 function tz() { try { return ss().getSpreadsheetTimeZone() || 'Asia/Seoul'; } catch (e) { return 'Asia/Seoul'; } }
@@ -83,12 +90,11 @@ function setup() {
       ['', ''],
       ['마스터 암호', 'pray1234'],
       ['안내', 'B3 마스터 암호를 꼭 바꾸세요. 바꾸면 바로 적용돼요. 다른 시트는 앱이 씁니다.'],
-      ['교회 이름', '우리교회'],
-      ['입장 암호', ''],
-      ['설문 더하기 기준일', '']
+      ['교회 이름', '임마누엘교회'],
+      ['', ''],
+      ['설문 더하기 기준일', SUM_BEFORE]
     ]);
-    st.getRange('C6').setValue('← 적어 두면 처음 들어오는 기기는 이 암호를 넣어야 해요(학생 사진 보호). 비우면 암호 없이 들어와요.');
-    st.getRange('C7').setValue('← 이 날짜(예: 2026-08-30) 전 설문지 기록은 그날 것을 모두 더해요. 비우면 그날 마지막 응답만 써요.');
+    st.getRange('C7').setValue('← 이 날짜 전 설문지 기록은 그날 것을 모두 더해요. 그 뒤로는 그날 마지막 응답만 써요.');
     st.setColumnWidth(1, 140); st.setColumnWidth(2, 360);
   }
   Object.keys(SH).forEach(function (k) { sheet(k); });
@@ -139,8 +145,7 @@ function append(k, data) {
 function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function hash(s) { return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8)); }
 function setting(row) { var st = ss().getSheetByName('설정'); return st ? String(st.getRange(row, 2).getDisplayValue()).trim() : ''; }
-function churchName() { return setting(5) || '우리교회'; }
-function entryCode() { return setting(6); }
+function churchName() { return setting(5) || '임마누엘교회'; }
 function cleanName(s) { return String(s == null ? '' : s).replace(/\s+/g, '').replace(/님$/, '').slice(0, 12); }
 function hm(min) { min = Number(min) || 0; var h = Math.floor(min / 60), m = min % 60; return h ? h + '시간' + (m ? ' ' + m + '분' : '') : m + '분'; }
 function todayStr() { return Utilities.formatDate(new Date(), tz(), 'yyyy-MM-dd'); }
@@ -194,7 +199,7 @@ function importForm() {
   if (!fs || fs.getLastRow() < 2) return 0;
   var z = tz(), w = Math.min(5, fs.getLastColumn()), data = fs.getRange(2, 1, fs.getLastRow() - 1, w).getValues(), agg = {}, alias = aliases();
   var sumBefore = setting(7);
-  if (!isDay(sumBefore)) sumBefore = '';
+  if (!isDay(sumBefore)) sumBefore = SUM_BEFORE;
   data.forEach(function (r) {
     var stamp = r[0], name = cleanName(r[1]), d = r[2];
     if (alias[name]) name = alias[name];
@@ -357,10 +362,16 @@ function failTry(key, ok, what) {
   if (!ok) { c.put(key, String(n + 1), 600); return what + '가 맞지 않아요'; }
   c.remove(key); return '';
 }
-// 입장 암호가 있으면, 암호를 넣은 기기(또는 마스터)만 자료를 봄
-function blocked(me) { return !!entryCode() && me.ok !== '1' && me.role !== '마스터'; }
 
+// 서버 판이 바뀌면 처음 한 번 설문지 응답을 다시 옮김 (더하기 규칙 등이 바뀌었을 때)
+function importOnce() {
+  var pp = PropertiesService.getScriptProperties();
+  if (pp.getProperty('IMPORTED') === String(SERVER_VER)) return;
+  var lock = LockService.getScriptLock(); lock.waitLock(25000);
+  try { if (pp.getProperty('IMPORTED') !== String(SERVER_VER)) { importForm(); pp.setProperty('IMPORTED', String(SERVER_VER)); } } finally { lock.releaseLock(); }
+}
 function handle(p) {
+  importOnce();
   if (p.action === 'logo') return { ok: true, logo: logoOpts(), data: logoData() };   // 로고 그림은 누구나 (첫 화면에도 보여야 해서)
   if (p.action === 'load' || p.action === 'photos') {   // 읽기는 잠그지 않음 (새 기기만 잠그고 등록)
     var devs = readDevs(), me = find(devs, p.dev);
@@ -376,19 +387,15 @@ function find(devs, id) { for (var i = 0; i < devs.length; i++) if (devs[i].id =
 function state(me, devs) {
   var now = Date.now();
   if (now - Number(me.last || 0) > 60 * 60000) { me.last = String(now); try { writeDev(me); } catch (e) {} }
-  var base = { ok: true, ver: SERVER_VER, today: todayStr(), church: churchName(), logo: logoOpts() };
-  if (blocked(me)) {   // 입장 암호를 아직 안 넣음: 이름 목록·기록·사진은 보내지 않음
-    base.names = []; base.data = {}; base.needCode = true; base.me = { name: '', role: '' };
-    return base;
-  }
   var o = shared();
-  Object.keys(base).forEach(function (k) { o[k] = base[k]; });
-  o.me = { name: me.name, role: ROLES.indexOf(me.role) >= 0 ? me.role : '' };
+  o.ok = true; o.ver = SERVER_VER; o.today = todayStr(); o.church = churchName(); o.logo = logoOpts();
+  o.me = { name: me.name, role: effRole(me) };
+  if (me.role === '마스터') o.teachers = Object.keys(teacherNames()).sort();
   return o;
 }
-// 기도 대상 사진 (이름을 넣고 입장한 기기만)
+// 기도 대상 사진 (이름을 넣은 기기만)
 function photos(me, ids) {
-  if (!me.name || blocked(me)) return { ok: false, error: '먼저 이름을 넣어 주세요' };
+  if (!me.name) return { ok: false, error: '먼저 이름을 넣어 주세요' };
   var want = {}; (ids || []).slice(0, 60).forEach(function (i) { want[String(i)] = 1; });
   var out = {};
   rows('photo').forEach(function (r) { if (want[String(r[0])] && r[2]) out[String(r[0])] = { v: String(r[1]), data: String(r[2]) }; });
@@ -421,17 +428,12 @@ function locked(p) {
       var pass = String(p.mpass || '').trim();
       var err = failTry('mfail', pass !== '' && pass === setting(3), '마스터 암호');
       if (err) return { ok: false, error: err };
-      me.role = '마스터'; me.ok = '1'; writeDev(me);
+      me.role = '마스터'; writeDev(me);
       return state(me, devs);
     }
     case 'setName': {
       var name = cleanName(p.name);
       if (name.length < 2) return { ok: false, error: '이름을 두 글자 이상 넣어 주세요' };
-      if (blocked(me)) {
-        var ce = failTry('cfail_' + me.id, String(p.code || '').trim() === entryCode(), '입장 암호');
-        if (ce) return { ok: false, error: ce };
-        me.ok = '1';
-      }
       var old = me.name;
       if (old && old !== name) renameMine(me.id, old, name);
       if (p.church != null) setChurch(name, cleanChurch(p.church));   // 소속은 비워도 됨
@@ -440,7 +442,6 @@ function locked(p) {
       return state(me, devs);
     }
   }
-  if (blocked(me)) return { ok: false, error: '입장 암호를 먼저 넣어 주세요' };
 
   switch (p.action) {
     case 'save': {
@@ -608,6 +609,13 @@ function locked(p) {
   if (!master) return { ok: false, error: '이 일은 권한이 있어야 할 수 있어요' };
   switch (p.action) {
     case 'unmaster': me.role = ''; writeDev(me); return state(me, devs);
+    case 'teachers': {   // 교사명단: 이 이름으로 들어온 기기는 자동으로 교사
+      var seen = {}, tl = [];
+      (p.names || []).forEach(function (x) { var n = cleanName(x); if (n.length >= 2 && !seen[n]) { seen[n] = 1; tl.push([n, String(now)]); } });
+      if (tl.length > 300) return { ok: false, error: '이름이 너무 많아요' };
+      writeAll('teacher', tl);
+      return state(me, devs);
+    }
     case 'camp': {   // 특별기도 만들기·고치기
       var title = String(p.title || '').trim().slice(0, 60), st = String(p.start || ''), en = String(p.end || '');
       if (!title) return { ok: false, error: '제목을 넣어 주세요' };
@@ -687,7 +695,8 @@ function locked(p) {
   return { ok: false, error: '모르는 요청' };
 }
 function devList(devs) {
-  return devs.filter(function (d) { return d.name; }).map(function (d) { return { id: d.id, name: d.name, role: d.role, desc: d.desc, last: Number(d.last) || 0 }; });
+  var tn = teacherNames();
+  return devs.filter(function (d) { return d.name; }).map(function (d) { return { id: d.id, name: d.name, role: d.role, listed: !!tn[d.name], desc: d.desc, last: Number(d.last) || 0 }; });
 }
 function dedupe(list, cols) {
   var seen = {};
