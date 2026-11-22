@@ -47,7 +47,7 @@ var SH = {
   event:  { name: '일정',       cols: ['ID', '특별기도ID', '날짜', '제목', '지움'] },
   join:   { name: '참석',       cols: ['일정ID', '이름', '누른 시각', '기기ID'] },
   att:    { name: '예배인원',   cols: ['특별기도ID', '날짜', '인원', '메모', '고친 시각', '고친 사람'] },
-  teacher:{ name: '교사명단',   cols: ['이름', '넣은 시각', '부서'] },
+  teacher:{ name: '교사명단',   cols: ['이름', '넣은 시각', '부서', '역할'] },
   // ---- 출석부 ----
   member: { name: '명단', cols: ['ID', '부서', '이름', '태어난 해', '학년 조정', '학년(직접)', '학교', '연락처', '보호자 연락처', '비고', '기도 메모', '상태', '사진 판', '등록일', '고친 시각', '고친 사람', '지움'] },
   attend: { name: '출석', cols: ['저장 시각', '날짜', '명단ID', '출석', '출처', '기기ID'] },
@@ -86,16 +86,18 @@ var REACTS = ['heart', 'like', 'smile', 'pray'];
 var ROLES = ['마스터', '담임목사', '공지', '교사'];
 function isStaff(me) { return me.role === '마스터' || me.role === '공지' || me.role === '담임목사'; }
 // 교사명단: { 이름: [부서…] }
-function teacherMap() {
-  var m = {};
+// 출석부 권한 명단: { 이름: [부서…] } · 역할 '교사'(기본) 또는 '임원'(출석 관리만, 교사 칸에 넣지 않음)
+function staffRows() {
+  var out = [];
   rows('teacher').forEach(function (r) {
     var n = cleanName(r[0]); if (!n) return;
     var ds = String(r[2] || '').split(/[\s,·/]+/).filter(function (d) { return GROUPS.indexOf(d) >= 0; });
-    m[n] = (m[n] || []).concat(ds);
+    out.push({ name: n, depts: ds, role: String(r[3] || '').trim() === '임원' ? '임원' : '교사' });
   });
-  return m;
+  return out;
 }
-function teacherNames() { var m = teacherMap(), o = {}; Object.keys(m).forEach(function (k) { o[k] = 1; }); return o; }
+function teacherMap() { var m = {}; staffRows().forEach(function (x) { m[x.name] = (m[x.name] || []).concat(x.depts); }); return m; }
+function teacherNames() { var o = {}; staffRows().forEach(function (x) { if (x.role === '교사') o[x.name] = 1; }); return o; }
 // 출석부를 볼 수 있는 부서
 function accessDepts(me) {
   var r = effRole(me);
@@ -105,7 +107,7 @@ function accessDepts(me) {
   return GROUPS.filter(function (g) { return ds.indexOf(g) >= 0; });
 }
 // 실제 권한: 시트의 권한, 없으면 교사명단에 이름이 있을 때 '교사'
-function effRole(me) { if (ROLES.indexOf(me.role) >= 0) return me.role; return me.name && teacherNames()[me.name] ? '교사' : ''; }
+function effRole(me) { if (ROLES.indexOf(me.role) >= 0) return me.role; if (!me.name) return ''; var s = staffRows().filter(function (x) { return x.name === me.name; })[0]; return s ? s.role : ''; }
 function isTeacher(me) { var r = effRole(me); return r === '마스터' || r === '교사'; }
 
 function ss() { return SpreadsheetApp.getActiveSpreadsheet(); }
@@ -361,7 +363,7 @@ function specialShared(mem) {
   var camps = liveCamps(), targets = [], tIds = {}, tn = teacherNames();
   camps.forEach(function (c) {
     mem.forEach(function (m) {
-      if (tn[m.name] || !inScope(c.scope, m)) return;   // 교사는 기도 대상에서 뺌
+      if (tn[m.name] || m.status === '교사' || !inScope(c.scope, m)) return;   // 교사는 기도 대상에서 뺌
       targets.push({ id: m.id, camp: c.id, name: m.name, grade: m.label, dept: m.dept, gk: m.y == null ? 999 : m.y, note: m.memo, pv: m.pv });
       tIds[c.id + '|' + m.id] = 1;
     });
@@ -481,6 +483,7 @@ function migrateTargets() {
 /* ---------- 출석부: 명단 · 출석 · 심방 ---------- */
 var SCHOOL = ['초1', '초2', '초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
 var SPECIAL = ['군복무', '유학·타지', '쉬는 중', '전출'];
+var STATUS = ['교사'].concat(SPECIAL);   // 명단의 '구분': 교사 칸 · 따로 보기
 function yearNow() { return Number(todayStr().slice(0, 4)); }
 // 학년·나이 이름: y = 올해 − 태어난 해 (+ 조정) · 청년부는 19세 예비청년, 20세 1년차 (한국식 나이)
 function labelFor(dept, y, manual) {
@@ -665,7 +668,15 @@ function state(me, devs) {
   o.ok = true; o.ver = SERVER_VER; o.today = todayStr(); o.church = churchName(); o.logo = logoOpts();
   o.me = { name: me.name, role: effRole(me) };
   attachRoster(o, me);
-  if (me.role === '마스터') { var tm = teacherMap(); o.teachers = Object.keys(tm).sort().map(function (n) { return { name: n, depts: tm[n] }; }); }
+  if (String(me.ok || '').indexOf('claim:') === 0) o.me.claim = String(me.ok).slice(6);
+  if (me.role === '마스터') {
+    o.teachers = staffRows().sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+    var ch = {}, ti = {}; rows('church').forEach(function (r) { if (r[0]) { ch[String(r[0])] = String(r[1]); ti[String(r[0])] = String(r[3] || ''); } });
+    o.claims = (devs || readDevs()).filter(function (d) { return String(d.ok || '').indexOf('claim:') === 0; }).map(function (d) {
+      var nm = String(d.ok).slice(6), olds = (devs || []).filter(function (x) { return x.name === nm; });
+      return { id: d.id, name: nm, desc: d.desc, at: Number(d.first) || 0, church: ch[nm] || '', title: ti[nm] || '', others: olds.map(function (x) { return x.desc + ' · ' + (Number(x.last) || 0); }) };
+    });
+  }
   return o;
 }
 // 기도 대상 사진 (이름을 넣은 기기만)
@@ -706,10 +717,31 @@ function locked(p) {
       me.role = '마스터'; writeDev(me);
       return state(me, devs);
     }
+    case 'cancelClaim': { me.ok = ''; writeDev(me); bump(); return state(me, devs); }
     case 'setName': {
       var name = cleanName(p.name);
       if (name.length < 2) return { ok: false, error: '이름을 두 글자 이상 넣어 주세요' };
       var old = me.name;
+      // 이미 있는 이름: 본인(폰 바꿈)이면 마스터 승인, 동명이인이면 소속·직책을 붙인 새 이름
+      if (name !== old) {
+        var taken = function (n) { return shared().names.indexOf(n) >= 0 || devs.some(function (d) { return d.id !== me.id && d.name === n; }); };
+        if (taken(name)) {
+          if (p.mode === 'claim') {
+            me.ok = 'claim:' + name; me.desc = String(p.desc || me.desc || '').slice(0, 120); me.last = String(now);
+            writeDev(me); bump(); return state(me, devs);
+          }
+          if (p.mode === 'new') {
+            var tag = cleanChurch(p.church) || cleanTitle(p.title) || '', base = name + (tag ? '(' + tag + ')' : ''), cand = base, k = 2;
+            if (!tag) cand = name + k++;
+            while (taken(cand)) cand = (tag ? base : name) + k++;
+            name = cand;
+          } else {
+            var crow = rows('church').filter(function (r) { return String(r[0]) === name; })[0];
+            return { ok: false, error: 'exists', exist: { name: name, church: crow ? String(crow[1]) : '', title: crow ? String(crow[3] || '') : '' } };
+          }
+        }
+      }
+      if (String(me.ok || '').indexOf('claim:') === 0) me.ok = '';
       if (old && old !== name) renameMine(me.id, old, name);
       if (p.church != null || p.title != null) setChurch(name, p.church == null ? null : cleanChurch(p.church), p.title == null ? null : cleanTitle(p.title));   // 비워도 됨
       me.name = name; me.desc = String(p.desc || me.desc || '').slice(0, 120); me.last = String(now);
@@ -839,7 +871,7 @@ function locked(p) {
       }
       prow[1] = pdept; prow[2] = pn; prow[3] = pb; prow[4] = String(Math.max(-3, Math.min(3, Math.round(Number(p.adj) || 0))));
       prow[5] = clip(p.grade, 12); prow[6] = clip(p.school, 30); prow[7] = cleanPhone(p.phone); prow[8] = cleanPhone(p.phone2);
-      prow[9] = clip(p.note, 1000, true); prow[10] = clip(p.memo, 200, true); prow[11] = SPECIAL.indexOf(String(p.status)) >= 0 ? String(p.status) : '';
+      prow[9] = clip(p.note, 1000, true); prow[10] = clip(p.memo, 200, true); prow[11] = STATUS.indexOf(String(p.status)) >= 0 ? String(p.status) : '';
       prow[14] = String(now); prow[15] = me.name;
       writeAll('member', mall); bump();
       var ps0 = state(me, devs); ps0.savedId = String(prow[0]); return ps0;
@@ -894,8 +926,24 @@ function locked(p) {
       dvs.forEach(function (r) { if (String(r[0]) === String(p.id)) { if (!can(mem2[String(r[1])])) throw new Error('이 부서는 권한이 없어요'); r[6] = '1'; } });
       writeAll('visit', dvs); bump(); return state(me, devs);
     }
-    case 'importSheet': {   // 구글 시트 출석부 가져오기 (그 부서 교사·마스터)
+    case 'bulkPerson': {   // 여러 명 한번에 고치기: ids + (status | dept | del)
+      var ball2 = rows('member'), want = {}; (p.ids || []).slice(0, 500).forEach(function (x) { want[String(x)] = 1; });
+      var nd = p.dept != null ? cleanChurch(p.dept) : null;
+      if (p.dept != null && (!nd || !can(nd))) return { ok: false, error: '옮길 부서의 권한이 없어요' };
+      var nst = p.status != null ? (STATUS.indexOf(String(p.status)) >= 0 ? String(p.status) : '') : null, cnt2 = 0;
+      ball2.forEach(function (r) {
+        if (!want[String(r[0])] || String(r[16]) === '1' || !can(r[1])) return;
+        if (p.del) { r[16] = '1'; }
+        if (nst != null) r[11] = nst;
+        if (nd) r[1] = nd;
+        r[14] = String(now); r[15] = me.name; cnt2++;
+      });
+      writeAll('member', ball2); bump();
+      var bp = state(me, devs); bp.changed = cnt2; return bp;
+    }
+    case 'importSheet': {   // 구글 시트 출석부 가져오기 (마스터만)
       var idp = cleanChurch(p.dept);
+      if (!master) return { ok: false, error: '시트 가져오기는 마스터만 할 수 있어요' };
       if (!idp || !can(idp)) return { ok: false, error: '이 부서는 권한이 없어요' };
       var res = importAttendSheet(p.url, idp, me);
       var is0 = state(me, devs); is0.imported = res; return is0;
@@ -947,6 +995,13 @@ function locked(p) {
   if (!master) return { ok: false, error: '이 일은 권한이 있어야 할 수 있어요' };
   switch (p.action) {
     case 'unmaster': me.role = ''; writeDev(me); return state(me, devs);
+    case 'approve': {   // 폰 바꿈 승인: yes 면 그 기기를 그 이름으로
+      var ad = find(devs, p.target);
+      if (!ad || String(ad.ok || '').indexOf('claim:') !== 0) return { ok: false, error: '승인할 기기를 찾지 못했어요' };
+      if (p.yes) ad.name = String(ad.ok).slice(6);
+      ad.ok = ''; writeDev(ad); bump();
+      return state(me, devs);
+    }
     case 'setInfo': {   // 마스터가 다른 분의 직책·소속을 고침
       var inm = cleanName(p.name);
       if (!inm) return { ok: false, error: '이름을 확인해 주세요' };
@@ -958,7 +1013,7 @@ function locked(p) {
       (p.list || (p.names || []).map(function (n) { return { name: n, depts: [] }; })).forEach(function (x) {
         var n = cleanName(x && x.name); if (n.length < 2 || seen[n]) return; seen[n] = 1;
         var ds = (x.depts || []).filter(function (d) { return GROUPS.indexOf(d) >= 0; });
-        tl.push([n, String(now), ds.join(' ')]);
+        tl.push([n, String(now), ds.join(' '), x.role === '임원' ? '임원' : '교사']);
       });
       if (tl.length > 300) return { ok: false, error: '이름이 너무 많아요' };
       writeAll('teacher', tl); bump();

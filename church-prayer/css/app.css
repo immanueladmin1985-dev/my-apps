@@ -475,3 +475,20 @@ input[type=tel] { width: 100%; border: 1px solid var(--line); background: var(--
 .sectabs button.dim:not(.on) { opacity: .7; }
 .ash small { font-weight: 500; color: var(--muted); font-size: .8em; }
 @media (max-width: 360px) { .atools.top { grid-template-columns: 1fr 1fr; } }
+
+/* 출석부: 최근 8번 · 체크 · 편집 */
+.adots8 { display: grid; grid-template-columns: repeat(8, 9px); gap: 3px; flex: 0 0 auto; margin-right: 4px; }
+.adots8 i { width: 9px; height: 14px; border-radius: 3px; background: var(--line); }
+.adots8 i.on { background: var(--pri); opacity: .75; }
+.amark { font-size: 1.15em; }
+.arow.on .amark { color: #fff; }
+.amark.box { border-radius: 8px; }
+@media (max-width: 380px) { .adots8 { grid-template-columns: repeat(8, 7px); gap: 2px; } .adots8 i { width: 7px; } .ph.xs { display: none; } }
+.atools.top { grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); }
+.editnote { color: var(--pri); font-weight: 700; }
+.editbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 6px; align-items: center; padding: 10px 12px calc(env(safe-area-inset-bottom) + 10px); background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(0,0,0,.15); }
+.editbar span { flex: 1; font-weight: 800; font-size: .9em; }
+.editbar .btn { min-height: 40px; padding: 4px 10px; }
+.attmain { padding-bottom: 90px; }
+.claimbadge { position: fixed; left: 12px; bottom: calc(env(safe-area-inset-bottom) + 14px); z-index: 60; border: 0; border-radius: 99px; padding: 10px 16px; background: #e8590c; color: #fff; font-weight: 800; box-shadow: 0 6px 18px rgba(0,0,0,.25); cursor: pointer; }
+.claimwait p { line-height: 1.6; }

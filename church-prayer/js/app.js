@@ -47,7 +47,7 @@
   let S = C.state || null;   // 마지막으로 받은 자료 (바로 그리기용)
   let online = true, busy = 0;
   // 기다려야 하는 요청은 화면 전체에 로딩 창을 띄우고 그동안 다른 버튼을 막음 (여러 번 누르지 않게)
-  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', targets: '여러 명을 넣고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요', person: '명단을 저장하고 있어요', people: '여러 명을 넣고 있어요', delPerson: '지우고 있어요', visit: '심방 기록을 저장하고 있어요', delVisit: '지우고 있어요', importSheet: '구글 시트에서 출석부를 가져오고 있어요 (1분 안팎)' };
+  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', targets: '여러 명을 넣고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요', person: '명단을 저장하고 있어요', people: '여러 명을 넣고 있어요', delPerson: '지우고 있어요', visit: '심방 기록을 저장하고 있어요', delVisit: '지우고 있어요', importSheet: '구글 시트에서 출석부를 가져오고 있어요 (1분 안팎)', bulkPerson: '한꺼번에 바꾸고 있어요', approve: '승인하고 있어요', cancelClaim: '취소하고 있어요' };
   let waitN = 0, waitTimer = 0;
   function showWait(msg) {
     waitN++;
@@ -84,7 +84,7 @@
     let d; try { d = await r.json(); } catch (e) { online = false; throw new Error('서버 응답이 이상해요'); }
     online = true;
     if (!d.ok && d.error === 'key') { await resetDevice(); S = null; C.state = null; saveCfg(); throw new Error('기기 정보가 바뀌어 이름을 다시 골라 주세요'); }
-    if (!d.ok) { const e = new Error(d.error || '실패했어요'); e.server = true; throw e; }
+    if (!d.ok) { const e = new Error(d.error === 'exists' ? '이미 있는 이름이에요' : (d.error || '실패했어요')); e.server = true; e.data = d; throw e; }
     if (d.names) { S = d; C.state = d; if (d.church) C.church = d.church; saveCfg(); checkLogo(); }
     return d;
   }
@@ -175,10 +175,11 @@
     const app = $('#app');
     if (!C.server) { app.innerHTML = noServerHtml(); bindNoServer(); return; }
     if (!S) { app.innerHTML = `<div class="welcome">${brandHtml()}<p class="lead">자료를 불러오는 중…</p><div id="loadErr"></div></div>`; return; }
+    if (S.me && S.me.claim) { renderClaimWait(); return; }
     if (!myName()) { renderWelcome(); return; }
     document.title = appTitle();
-    if (isRosterUser() && !mode) { renderLauncher(); paintInstall(); return; }
-    if (mode === 'att' && isRosterUser()) { renderAttend(); paintInstall(); paintBusy(); return; }
+    if (isRosterUser() && !mode) { renderLauncher(); paintInstall(); paintClaims(); return; }
+    if (mode === 'att' && isRosterUser()) { renderAttend(); paintInstall(); paintBusy(); paintClaims(); return; }
     const y = window.scrollY;
     const nc = view !== 'prayer' ? newComments() : 0;
     const tabs = TABS.concat(hasSpecial() ? [['special', '🔥', '특별기도']] : []);
@@ -199,7 +200,7 @@
     const tm = $('#tMode'); if (tm) tm.onclick = () => { mode = 'att'; render(); window.scrollTo(0, 0); };
     const m = $('#main');
     if (view === 'table') (C.stView === 'grid' ? renderTable : renderList)(m); else if (view === 'prayer') renderPrayer(m); else if (view === 'mine') renderMine(m); else if (view === 'special') renderSpecial(m); else renderInput(m);
-    paintInstall(); paintBusy();
+    paintInstall(); paintBusy(); paintClaims();
     if (view !== 'table') window.scrollTo(0, y);
   }
   function go(v) { view = v; C.tab = v; saveCfg(); editPrayer = false; render(); window.scrollTo(0, 0); }
@@ -1014,7 +1015,25 @@
     return ds.find(d => rosterOf(d).length) || ds[0];
   }
   const lastSunday = () => { const t = today(); return addDays(t, -parse(t).getDay()); };
-  let attDate = null, attQuery = '', showLong = false;
+  let attDate = null, attQuery = '', showLong = false, editMode = false, attSel = new Set();
+  // 편집: 고른 사람들의 구분·부서를 한꺼번에 바꾸거나 지움
+  async function bulkEdit(dept, kind) {
+    const ids = [...attSel]; if (!ids.length) { toast('먼저 사람을 눌러 골라 주세요'); return; }
+    const names = ids.map(id => (personOf(id) || {}).name).filter(Boolean), head = `<p class="small muted">${names.slice(0, 12).map(esc).join(', ')}${names.length > 12 ? ` 외 ${names.length - 12}명` : ''}</p>`;
+    let p = { ids };
+    if (kind === 'status') {
+      const v = await modal(`<h3>${ids.length}명 — 구분 바꾸기</h3>${head}<div class="chips">${[['', '학년대로 (구분 없음)'], ['교사', '교사']].concat(SPECIAL.map(x => [x, x])).map(([k, l]) => `<button data-bs="${k}">${l}</button>`).join('')}</div>`, [{ label: '취소', val: false }], (inn, close) => $$('[data-bs]', inn).forEach(b => b.onclick = () => close({ v: b.dataset.bs })));
+      if (!v) return; p.status = v.v;
+    } else if (kind === 'dept') {
+      const ds = myDepts().filter(d => d !== dept); if (!ds.length) { toast('옮길 수 있는 다른 부서가 없어요'); return; }
+      const v = await modal(`<h3>${ids.length}명 — 부서 옮기기</h3>${head}<div class="chips">${ds.map(d => `<button data-bd="${d}">${d}</button>`).join('')}</div><p class="small muted">출석 기록은 그대로 따라가요.</p>`, [{ label: '취소', val: false }], (inn, close) => $$('[data-bd]', inn).forEach(b => b.onclick = () => close({ v: b.dataset.bd })));
+      if (!v) return; p.dept = v.v;
+    } else {
+      if (!(await confirmBox('명단에서 지우기', `${ids.length}명을 명단에서 지울까요?\n${names.slice(0, 12).map(esc).join(', ')}\n안 나오는 분은 지우지 말고 두면 장기결석으로 내려가요.`, '지우기'))) return; p.del = true;
+    }
+    try { const d = await api('bulkPerson', p); toast(`${d.changed}명을 바꿨어요`); attSel = new Set(); } catch (e) { toast(e.message); }
+    render();
+  }
 
   function renderAttend() {
     const app = $('#app'), dept = curDept(), t = today();
@@ -1023,10 +1042,10 @@
     const q = attQuery.replace(/\s+/g, '');
     const y0 = window.scrollY;
     // 칸 나누기: 학년(구분)별 · 교사 · 따로 보기 · 장기결석
-    const tn = new Set(S.tnames || []), normal = [], teachers = [], special = [], long = [], recentLimit = addDays(t, -30), longLimit = addDays(t, -365);
+    const tn = new Set(S.tnames || []), isT = m => tn.has(m.name) || m.status === '교사', normal = [], teachers = [], special = [], long = [], recentLimit = addDays(t, -30), longLimit = addDays(t, -365);
     people.forEach(m => {
       const s = st[m.id];
-      if (tn.has(m.name)) teachers.push(m);
+      if (isT(m)) teachers.push(m);
       else if (SPECIAL.includes(m.status)) special.push(m);
       else if (s.last ? s.last < longLimit : (m.reg && m.reg < longLimit)) long.push(m);
       else normal.push(m);
@@ -1044,9 +1063,10 @@
     let sel = C.attSec[dept];
     if (sel !== '전체' && !groups.some(g => g.key === sel)) sel = groups.length ? groups[0].key : '전체';
     const showAll = sel === '전체' || !!q;
+    const recent = Object.keys(o).filter(d => o[d].size && d < attDate).sort().slice(-8);
     const row = m => {
-      const s = st[m.id], on = present.has(m.id), hide = q && !m.name.includes(q);
-      return `<div class="arow${on ? ' on' : ''}${hide ? ' hidden' : ''}"><button class="atap" data-at="${esc(m.id)}">${photoHtml(m, 'xs')}<span class="an"><b>${esc(m.name)}</b><small>${tn.has(m.name) ? '교사' : esc(m.label || '')}${m.y != null && m.dept !== '유치부' && !/세$/.test(m.label) ? ` · ${m.y + 1}세` : ''}</small></span><span class="amark">${on ? '○' : ''}</span></button>
+      const s = st[m.id], on = editMode ? attSel.has(m.id) : present.has(m.id), hide = q && !m.name.includes(q);
+      return `<div class="arow${on ? ' on' : ''}${hide ? ' hidden' : ''}"><button class="atap" data-at="${esc(m.id)}">${photoHtml(m, 'xs')}<span class="an"><b>${esc(m.name)}</b><small>${isT(m) ? '교사' : esc(m.label || '')}${m.y != null && m.dept !== '유치부' && !/세$/.test(m.label) ? ` · ${m.y + 1}세` : ''}</small></span><span class="adots8" title="최근 ${recent.length}번">${recent.map(d => `<i class="${o[d].has(m.id) ? 'on' : ''}"></i>`).join('')}</span><span class="amark${editMode ? ' box' : ''}">${on ? '✓' : ''}</span></button>
         <button class="ainfo" data-pi="${esc(m.id)}"><span class="rate r${s.den ? Math.min(4, Math.floor(s.rate * 5)) : 0}">${s.den ? Math.round(s.rate * 100) + '%' : '-'}</span>›</button></div>`;
     };
     const pc = list => list.filter(m => present.has(m.id)).length;
@@ -1065,7 +1085,8 @@
           : ds.length > 1 ? `<div class="gchips deptchips">${ds.map(d => `<button data-dp="${d}" class="${d === dept ? 'on' : ''}">${d}<small>${rosterOf(d).length || ''}</small></button>`).join('')}</div>` : ''}
         <div class="atools top">
           <button class="btn sm pri" id="aAdd">＋ 한 명</button><button class="btn sm pri" id="aBulk">📋 여러 명</button>
-          <button class="btn sm" id="aImp">📥 시트 가져오기</button><button class="btn sm" id="aStat">📊 주별 인원</button>
+          <button class="btn sm${editMode ? ' pri' : ''}" id="aEdit">✏️ ${editMode ? '편집 끝' : '편집'}</button><button class="btn sm" id="aStat">📊 주별</button>
+          ${isMaster() ? '<button class="btn sm" id="aImp">📥 시트 가져오기</button>' : ''}
         </div>
         <div class="attbar card">
           <div class="datebar"><button class="btn" id="aPrev" aria-label="한 주 전">◀</button><input type="date" id="aDate" value="${attDate}" max="${t}"><button class="btn" id="aNext" aria-label="한 주 뒤"${attDate >= t ? ' disabled' : ''}>▶</button></div>
@@ -1073,16 +1094,17 @@
           <input type="text" id="aQ" placeholder="🔍 이름 찾기 (모든 구분에서)" value="${esc(attQuery)}">
         </div>
         ${people.length ? `<div class="gchips sectabs"><button data-sc="전체" class="${sel === '전체' ? 'on' : ''}">전체<small>${total}/${people.length}</small></button>${groups.map(g => `<button data-sc="${esc(g.key)}" class="${sel === g.key ? 'on' : ''}${g.long ? ' dim' : ''}">${esc(g.title)}<small>${pc(g.list)}/${g.list.length}</small></button>`).join('')}</div>`
-          : `<div class="card"><p>아직 ${esc(dept)} 명단이 없어요.</p><p class="small muted">위의 [📥 시트 가져오기]로 지금까지의 출석부를 한 번에 넣거나, [＋ 한 명] · [📋 여러 명]으로 넣어 주세요.</p></div>`}
-        <p class="small muted ahelp">이름을 누르면 출석 ○ · 오른쪽 %를 누르면 연락처·심방 · 한 달 안에 나온 분은 가나다순, 그 밖은 출석률(최근 1년) 순</p>
+          : `<div class="card"><p>아직 ${esc(dept)} 명단이 없어요.</p><p class="small muted">${isMaster() ? '위의 [📥 시트 가져오기]로 지금까지의 출석부를 한 번에 넣거나, ' : ''}[＋ 한 명] · [📋 여러 명]으로 넣어 주세요.</p></div>`}
+        ${editMode ? '<p class="small ahelp editnote">✏️ 편집: 사람을 눌러 여러 명 고른 뒤 아래에서 구분(교사 등)·부서를 바꾸거나 지워요</p>' : '<p class="small muted ahelp">이름을 누르면 출석 ✓ · 작은 칸은 지난 8번 출석 · 오른쪽 %를 누르면 연락처·심방</p>'}
         ${groups.filter(g => showAll || g.key === sel).map(secHtml).join('')}
-      </main>`;
+      </main>
+      ${editMode ? `<div class="editbar"><span id="eCnt">${attSel.size}명 선택</span><button class="btn sm" id="eAll">이 칸 모두</button><button class="btn sm pri" id="eSet">구분</button><button class="btn sm pri" id="eMove">부서</button><button class="btn sm danger" id="eDel">지우기</button></div>` : ''}`;
     paintAttSave();
     $('#tMode').onclick = () => { mode = 'pray'; render(); window.scrollTo(0, 0); };
     $('#tTheme').onclick = () => { C.theme = isDark() ? 'light' : 'dark'; saveCfg(); applyTheme(); render(); };
     $('#tSet').onclick = settings;
     $$('[data-dp]').forEach(b => b.onclick = () => { C.attDept = b.dataset.dp; saveCfg(); attQuery = ''; showLong = false; render(); window.scrollTo(0, 0); });
-    const adp = $('#aDept'); if (adp) adp.onchange = () => { C.attDept = adp.value; saveCfg(); attQuery = ''; showLong = false; render(); window.scrollTo(0, 0); };
+    const adp = $('#aDept'); if (adp) adp.onchange = () => { attSel = new Set(); C.attDept = adp.value; saveCfg(); attQuery = ''; showLong = false; render(); window.scrollTo(0, 0); };
     $('#aDate').onchange = e => { const v = e.target.value; if (v) { attDate = v > t ? t : v; render(); } };
     $('#aPrev').onclick = () => { attDate = addDays(attDate, -7); render(); };
     $('#aNext').onclick = () => { const n = addDays(attDate, 7); attDate = n > t ? t : n; render(); };
@@ -1091,9 +1113,10 @@
       $$('.arow').forEach(r => { const n = r.querySelector('.an b').textContent; r.classList.toggle('hidden', !!v && !n.includes(v)); }); };
     $$('[data-sc]').forEach(b => b.onclick = () => { C.attSec = C.attSec || {}; C.attSec[dept] = b.dataset.sc; saveCfg(); attQuery = ''; render(); const tb = $('.sectabs'); if (tb) window.scrollTo(0, tb.getBoundingClientRect().top + window.scrollY - 8); });
     $$('[data-at]').forEach(b => b.onclick = () => {
+      if (editMode) { const id = b.dataset.at, on = !attSel.has(id); if (on) attSel.add(id); else attSel.delete(id); b.closest('.arow').classList.toggle('on', on); b.querySelector('.amark').textContent = on ? '✓' : ''; const c = $('#eCnt'); if (c) c.textContent = `${attSel.size}명 선택`; return; }
       const id = b.dataset.at, on = !(attOf(dept)[attDate] || new Set()).has(id);
       markAtt(id, attDate, on);
-      const r = b.closest('.arow'); r.classList.toggle('on', on); b.querySelector('.amark').textContent = on ? '○' : '';
+      const r = b.closest('.arow'); r.classList.toggle('on', on); b.querySelector('.amark').textContent = on ? '✓' : '';
       const cnt = (attOf(dept)[attDate] || new Set()).size; const big = $('.attsum .big'); if (big) big.textContent = cnt;
       const now = attOf(dept)[attDate] || new Set();
       $$('.asec').forEach(sec => { const sp = sec.querySelector('.ash span'); if (!sp || sec.classList.contains('long')) return; const ids = $$('[data-at]', sec).map(x => x.dataset.at); sp.textContent = `${ids.filter(i => now.has(i)).length} / ${ids.length}`; });
@@ -1105,7 +1128,14 @@
     const al = $('#aLong'); if (al) al.onclick = () => { showLong = !showLong; render(); };
     $('#aAdd').onclick = () => personEdit(null, dept);
     $('#aBulk').onclick = () => peopleBulk(dept);
-    $('#aImp').onclick = () => importSheetDlg(dept);
+    const ai = $('#aImp'); if (ai) ai.onclick = () => importSheetDlg(dept);
+    $('#aEdit').onclick = () => { editMode = !editMode; attSel = new Set(); render(); };
+    if (editMode) {
+      $('#eAll').onclick = () => { $$('.arow:not(.hidden) [data-at]').forEach(b => { attSel.add(b.dataset.at); b.closest('.arow').classList.add('on'); b.querySelector('.amark').textContent = '✓'; }); $('#eCnt').textContent = `${attSel.size}명 선택`; };
+      $('#eSet').onclick = () => bulkEdit(dept, 'status');
+      $('#eMove').onclick = () => bulkEdit(dept, 'dept');
+      $('#eDel').onclick = () => bulkEdit(dept, 'del');
+    }
     $('#aStat').onclick = () => attStatDlg(dept);
     loadPhotos(people.filter(m => m.pv));
     window.scrollTo(0, y0);
@@ -1168,7 +1198,7 @@
       <div class="field"><label for="eP2">보호자 연락처</label><input type="tel" id="eP2" maxlength="20" value="${esc(m ? m.phone2 : '')}"></div>
       <div class="field"><label for="eT">비고 <span class="small muted">(교사만 봐요)</span></label><textarea id="eT" style="min-height:80px">${esc(m ? m.note : '')}</textarea></div>
       <div class="field"><label for="eM">기도 메모 <span class="small muted">(특별기도 카드에 모두에게 보여요)</span></label><textarea id="eM" maxlength="200" style="min-height:60px">${esc(m ? m.memo : '')}</textarea></div>
-      <div class="field"><label for="eSt">따로 보기</label><select id="eSt" style="font-size:1em"><option value="">없음</option>${SPECIAL.map(x => `<option${m && m.status === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
+      <div class="field"><label for="eSt">구분 <span class="small muted">(교사 칸 · 따로 보기)</span></label><select id="eSt" style="font-size:1em"><option value="">학년대로</option>${['교사'].concat(SPECIAL).map(x => `<option${m && m.status === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
       ${!m && myDepts().length > 1 ? '' : ''}`,
       (m ? [{ label: '지우기', val: 'del', cls: 'danger' }] : []).concat([{ label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri', check: () => { if (!$('#eN').value.trim()) { toast('이름을 넣어 주세요'); return false; } return true; } }]),
       inn => {
@@ -1284,10 +1314,50 @@
     nameInput($('#pick'), '', '시작하기', async (n, church, title) => {
       if (!(await confirmBox('이름 확인', `<b>${esc(n)} ${esc(title || '성도님')}</b>${church ? ` (${esc(church)})` : ''}이 맞으세요?
 이 이름이 이 기기에 저장돼요.`, '네, 맞아요'))) return;
-      try { await api('setName', { name: n, church, title }); toast(n + ' 성도님, 환영합니다'); view = 'input'; render(); if (isRosterUser()) return; if (!C.tourDone) startTour(0); else showNotices(false); } catch (e) { toast(e.message); }
+      const r = await setNameFlow(n, church, title);
+      if (r === 'ok' || r === 'new') { toast(myName() + ' 님, 환영합니다'); view = 'input'; render(); if (isRosterUser()) return; if (!C.tourDone) startTour(0); else showNotices(false); } else render();
     });
   }
   const GROUPS = ['유치부', '주일학교', '학생부', '청년부', '1남선교회', '2남선교회', '3남선교회', '4남선교회', '1여선교회', '2여선교회', '3여선교회', '4여선교회'];
+  // 이름 정하기: 이미 있는 이름이면 본인(폰 바꿈 → 마스터 승인)인지 동명이인인지 물어봄
+  async function setNameFlow(n, church, title) {
+    try { await api('setName', { name: n, church, title }); return 'ok'; }
+    catch (e) {
+      if (!(e.data && e.data.error === 'exists')) { toast(e.message); return 'err'; }
+      const x = e.data.exist || {}, info = [x.title, x.church].filter(Boolean).join(' · ');
+      const v = await modal(`<h3>이미 ‘${esc(n)}’ 님이 계세요</h3>
+        <div class="notice" style="text-align:center;font-size:1.1em"><b>${esc(n)}</b>${info ? ` ${esc(info)}` : ''}</div>
+        <p class="msg">이 분이 본인이세요?\n· <b>네, 저예요</b>: 폰을 바꿨거나 앱을 다시 깔았을 때예요. 마스터가 확인하고 승인하면 예전 기록 그대로 쓸 수 있어요.\n· <b>아니에요</b>: 이름만 같은 다른 분이에요. 직책·소속을 붙여 따로 들어가요.</p>`,
+        [{ label: '취소', val: false }, { label: '아니에요, 동명이인이에요', val: 'new' }, { label: '네, 저예요', val: 'claim', cls: 'pri' }]);
+      if (!v) return 'cancel';
+      if (v === 'new' && !church && !title) { await modal('<h3>직책이나 소속을 넣어 주세요</h3><p class="msg">이름이 같은 분과 구분하려고 해요.\n직책(예: 집사)이나 소속(예: 2남선교회)을 넣고 다시 눌러 주세요.</p>', [{ label: '알겠어요', val: true, cls: 'pri' }]); return 'cancel'; }
+      try { await api('setName', { name: n, church, title, mode: v }); } catch (e2) { toast(e2.message); return 'err'; }
+      return v;
+    }
+  }
+  function renderClaimWait() {
+    $('#app').innerHTML = `<div class="welcome">${brandHtml()}<div class="card claimwait"><h2>⏳ 마스터 승인을 기다려요</h2>
+      <p>‘<b>${esc(S.me.claim)}</b>’ 님으로 들어가려고 해요.<br>마스터가 확인하고 승인하면 바로 열려요.</p>
+      <button class="btn pri big" id="cwR">승인됐는지 확인</button><button class="btn ghost" id="cwC" style="margin-top:8px;width:100%">취소하고 이름 다시 넣기</button></div></div>`;
+    $('#cwR').onclick = async () => { await refresh(); if (S.me && S.me.claim) toast('아직 승인 전이에요'); };
+    $('#cwC').onclick = async () => { try { await api('cancelClaim'); } catch (e) { toast(e.message); } render(); };
+  }
+  // 마스터: 폰 바꿈 승인 알림
+  function paintClaims() {
+    let b = $('#claimBadge'); const n = isMaster() ? (S.claims || []).length : 0;
+    if (!n) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('button'); b.id = 'claimBadge'; b.className = 'claimbadge'; document.body.appendChild(b); }
+    b.textContent = `📱 승인 기다림 ${n}`; b.onclick = claimsMenu;
+  }
+  async function claimsMenu() {
+    const cl = S.claims || [];
+    const act = await modal(`<h3>📱 폰 바꿈 승인</h3><p class="msg small">이미 있는 이름으로 새 기기가 들어오려고 해요. 본인이 맞는지 확인하고 승인해 주세요.\n승인하면 그 기기가 그 분의 기록·기도제목을 그대로 써요. 모르는 기기면 거절하세요.</p>
+      <ul class="list">${cl.map(c => `<li><div><b>${esc(c.name)}</b> ${esc([c.title, c.church].filter(Boolean).join(' · '))}<br><span class="small muted">새 기기: ${esc(c.desc || '')} · ${c.at ? when(c.at) : ''}</span></div><span class="rbtns"><button class="btn sm danger" data-cn="${esc(c.id)}">거절</button><button class="btn sm pri" data-cy="${esc(c.id)}">승인</button></span></li>`).join('') || '<li class="muted">기다리는 기기가 없어요</li>'}</ul>`,
+      [{ label: '닫기', val: false, cls: 'pri' }], (inn, close) => { $$('[data-cy]', inn).forEach(b => b.onclick = () => close({ id: b.dataset.cy, yes: true })); $$('[data-cn]', inn).forEach(b => b.onclick = () => close({ id: b.dataset.cn, yes: false })); });
+    if (!act) return;
+    try { await api('approve', { target: act.id, yes: act.yes }); toast(act.yes ? '승인했어요' : '거절했어요'); } catch (e) { toast(e.message); }
+    render(); if ((S.claims || []).length) claimsMenu();
+  }
   const churchOf = n => (S && S.churches && S.churches[n]) || '';
   const titleOf = n => (S && S.titles && S.titles[n]) || '';
   const dispName = n => esc(n) + ' ' + esc(titleOf(n) || '님');   // 홍길동 집사 · 이름만 있으면 홍길동 님
@@ -1392,7 +1462,7 @@
       (inn, close) => nameInput($('#rp', inn), old, '고치기', (n, c, t) => { picked = n; pickedCh = c; pickedTi = t; close(true); }, oldCh, oldTi));
     if (!picked || (picked === old && pickedCh === oldCh && pickedTi === oldTi)) return;
     if (picked !== old && !(await confirmBox('이름 바꾸기', `<b>${esc(old)}</b> → <b>${esc(picked)}</b> 님로 바꿀까요?`, '바꾸기'))) return;
-    try { await api('setName', { name: picked, church: pickedCh, title: pickedTi }); form.who = ''; toast('고쳤어요'); } catch (e) { toast(e.message); }
+    const r = await setNameFlow(picked, pickedCh, pickedTi); if (r === 'ok' || r === 'new') { form.who = ''; toast('고쳤어요'); }
     render();
   }
 
@@ -1543,19 +1613,20 @@
   // 교사 명단: 이 이름으로 들어온 기기는 자동으로 교사 권한
   async function teacherMenu() {
     const tl = (S.teachers || []).map(x => typeof x === 'string' ? { name: x, depts: [] } : x).sort((a, b) => ko(a.name, b.name)), list = tl.map(x => x.name), names = S.names || [];
-    let text = tl.map(x => [x.name].concat(x.depts || []).join(' ')).join('\n');
-    const v = await modal(`<h3>👩‍🏫 교사 명단</h3>
-      <p class="msg small">한 줄에 한 분씩 <b>성함 부서</b>로 적어 주세요. (예: 김하나 학생부)\n두 부서를 맡으면 이어서 적어요. (예: 이두리 청년부 학생부)\n이 이름으로 앱에 들어오시면 <b>자동으로 그 부서 교사</b>가 돼요. 그 부서 출석부(연락처·심방 포함)를 보고 쓸 수 있어요.\n부서: ${DEPTS.join(', ')}</p>
-      <textarea id="tl" placeholder="예:\n김하나 학생부\n이두리 청년부" style="min-height:160px">${esc(text)}</textarea>
-      ${list.length ? `<p class="sect">지금 명단 (${list.length}명)</p><p class="small">${tl.map(x => (names.includes(x.name) ? `<b>${esc(x.name)}</b> ✓` : `<span class="muted">${esc(x.name)} (아직 안 들어옴)</span>`) + ` <small>${x.depts && x.depts.length ? esc(x.depts.join('·')) : '<span class="err">부서 없음</span>'}</small>`).join('<br>')}</p>` : ''}`,
+    let text = tl.map(x => [x.name].concat(x.depts || [], x.role === '임원' ? ['임원'] : []).join(' ')).join('\n');
+    const v = await modal(`<h3>👩‍🏫 교사·임원 명단 (출석부 권한)</h3>
+      <p class="msg small">한 줄에 한 분씩 <b>성함 부서</b>로 적어 주세요. (예: 김하나 학생부)\n두 부서를 맡으면 이어서 적어요. (예: 이두리 청년부 학생부)\n교사가 아니지만 출석을 맡는 분(청년부 임원 등)은 끝에 <b>임원</b>을 붙여요. (예: 박하늘 청년부 임원)\n이 이름으로 앱에 들어오시면 <b>자동으로 그 부서 출석부</b>(연락처·심방 포함)를 보고 쓸 수 있어요. 교사는 출석부의 ‘교사’ 칸으로 가고 특별기도 대상에서 빠져요. 임원은 그대로 학년 칸에 있어요.\n부서: ${DEPTS.join(', ')}</p>
+      <textarea id="tl" placeholder="예:\n김하나 학생부\n이두리 청년부\n박하늘 청년부 임원" style="min-height:160px">${esc(text)}</textarea>
+      ${list.length ? `<p class="sect">지금 명단 (${list.length}명)</p><p class="small">${tl.map(x => (names.includes(x.name) ? `<b>${esc(x.name)}</b> ✓` : `<span class="muted">${esc(x.name)} (아직 안 들어옴)</span>`) + ` <small>${x.depts && x.depts.length ? esc(x.depts.join('·')) : '<span class="err">부서 없음</span>'}${x.role === '임원' ? ' · 임원' : ''}</small>`).join('<br>')}</p>` : ''}`,
       [{ label: '취소', val: false }, { label: '저장', val: true, cls: 'pri' }], inn => { $('#tl', inn).oninput = e => text = e.target.value; });
     if (!v) { masterMenu(); return; }
     const arr = text.split(/\n+/).map(line => {
       const parts = line.trim().split(/[\s,·/]+/).filter(Boolean); if (!parts.length) return null;
-      const depts = parts.filter(p => DEPTS.includes(p)), nm = parts.filter(p => !DEPTS.includes(p)).join('').replace(/(선생님|님|선생|교사)$/, '');
-      return nm.length >= 2 ? { name: nm, depts } : null;
+      const role = parts.some(p => /^(임원|관리)$/.test(p)) ? '임원' : '교사', rest = parts.filter(p => !DEPTS.includes(p) && !/^(임원|관리|교사)$/.test(p));
+      const depts = parts.filter(p => DEPTS.includes(p)), raw = rest.join(''), nm0 = raw.replace(/(선생님|님)$/, ''), nm = nm0.length >= 2 ? nm0 : raw;
+      return nm.length >= 2 ? { name: nm, depts, role } : null;
     }).filter(Boolean);
-    try { await api('teachers', { list: arr }); toast(`교사 명단을 저장했어요 (${arr.length}명)`); } catch (e) { toast(e.message); }
+    try { await api('teachers', { list: arr }); toast(`명단을 저장했어요 (${arr.length}명)`); } catch (e) { toast(e.message); }
     render(); masterMenu();
   }
   async function masterMenu() {
@@ -1563,7 +1634,7 @@
     const act = await modal(`<h3>마스터 메뉴</h3>
       ${noticeHtml()}
       <p class="sect">권한</p>
-      <div class="row"><button class="btn sm pri" id="mCamp">🔥 특별기도 관리</button><button class="btn sm pri" id="mTeach">👩‍🏫 교사 명단</button><button class="btn sm pri" id="mRole">권한 주기 (교사·담임목사님)</button><button class="btn sm pri" id="mLogo">로고 넣기·바꾸기</button></div>
+      <div class="row">${(S.claims || []).length ? `<button class="btn sm pri" id="mClaim">📱 폰 바꿈 승인 (${S.claims.length})</button>` : ''}<button class="btn sm pri" id="mCamp">🔥 특별기도 관리</button><button class="btn sm pri" id="mTeach">👩‍🏫 교사·임원 명단</button><button class="btn sm pri" id="mRole">권한 주기 (교사·담임목사님)</button><button class="btn sm pri" id="mLogo">로고 넣기·바꾸기</button></div>
       <p class="sect">이름 고치기·합치기 <span class="small">(잘못 적힌 이름의 기록을 모두 옮김)</span></p>
       <div class="row"><select id="mFrom" style="flex:1 1 140px">${names.map(n => `<option>${esc(n)}</option>`).join('')}</select><span>→</span>
         <input type="text" id="mTo" list="mNames" placeholder="바른 이름" style="flex:1 1 140px"><datalist id="mNames">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
@@ -1575,6 +1646,7 @@
         bindNotice(inn, close);
         $('#mRole', inn).onclick = () => close({ a: 'role' });
         $('#mCamp', inn).onclick = () => close({ a: 'camps' });
+        const mc = $('#mClaim', inn); if (mc) mc.onclick = () => close({ a: 'claims' });
         $('#mTeach', inn).onclick = () => close({ a: 'teachers' });
         $('#mLogo', inn).onclick = () => close({ a: 'logo' });
         $('#mRen', inn).onclick = () => { const from = $('#mFrom', inn).value, to = $('#mTo', inn).value.replace(/\s+/g, ''); if (to.length < 2) { toast('바른 이름을 넣어 주세요'); return; } close({ a: 'rename', from, to }); };
@@ -1587,6 +1659,7 @@
       if (await doNotice(act)) { /* 공지 */ }
       else if (act.a === 'role') { await roleMenu(); return; }
       else if (act.a === 'camps') { await campList(); return; }
+      else if (act.a === 'claims') { await claimsMenu(); return; }
       else if (act.a === 'teachers') { await teacherMenu(); return; }
       else if (act.a === 'logo') { await logoMenu(); return; }
       else if (act.a === 'rename') {
