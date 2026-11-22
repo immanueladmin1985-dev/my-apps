@@ -391,3 +391,15 @@ input[type=number] { width: 100%; border: 1px solid var(--line); background: var
 .rbtns { display: flex; gap: 4px; flex: 0 0 auto; }
 .tcb .ph { width: min(100%, 112px); }
 .evd { flex-basis: 74px; } .evd b { white-space: nowrap; }
+
+/* 고르기: 부서 탭 · 학년 버튼(줄바꿈, 옆으로 넘기지 않음) */
+.addrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.addrow .btn { padding: 8px 6px; }
+.divseg { margin-bottom: 8px; }
+.divseg button { font-size: 1em; padding: 10px 4px; }
+.gchips { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.gchips button { border: 1px solid var(--line); background: var(--card); border-radius: 12px; min-height: 44px; padding: 4px 2px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; font-size: .92em; }
+.gchips button small { font-weight: 500; color: var(--muted); font-size: .78em; }
+.gchips button.on { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; border-color: transparent; }
+.gchips button.on small { color: #fff; opacity: .9; }
+.gpick button { font-size: .88em; padding: 5px 10px; min-height: 34px; }

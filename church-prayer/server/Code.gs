@@ -21,7 +21,7 @@
  * - 학생 사진은 '사진' 시트에만 있고, 이름을 넣은 기기에만 보냅니다.
  */
 
-var SERVER_VER = 3;
+var SERVER_VER = 4;
 var SUM_BEFORE = '2026-08-30';   // 이 날짜 전 설문 기록은 그날 것을 모두 더함 (설정 B7 이 있으면 그 날짜)
 var APP_NAME = '교회기도';
 var FORM_SHEET = '설문지 응답 시트1';
@@ -309,8 +309,8 @@ function liveCamps() {
   });
 }
 function liveTargets() {
-  return rows('target').filter(function (r) { return r[0] && String(r[8]) !== '1'; }).map(function (r) {
-    return { id: String(r[0]), camp: String(r[1]), name: String(r[2]), grade: String(r[3]), note: String(r[4]), pv: String(r[5] || ''), at: Number(r[7]) || 0, ord: Number(r[9]) || 0 };
+  return rows('target').filter(function (r) { return r[0] && String(r[2]).trim() && String(r[8]) !== '1'; }).map(function (r) {
+    return { id: String(r[0]), camp: String(r[1]), name: String(r[2]).trim(), grade: String(r[3]).trim(), note: String(r[4]), pv: String(r[5] || ''), at: Number(r[7]) || 0, ord: Number(r[9]) || 0 };
   });
 }
 function specialShared() {
@@ -379,8 +379,33 @@ function importOnce() {
 function fixHeaders() {
   Object.keys(SH).forEach(function (k) { var sh = sheet(k), c = SH[k].cols; sh.getRange(1, 1, 1, c.length).setValues([c]).setFontWeight('bold'); });
 }
+// 시트에 직접 넣은 기도 대상: ID 가 비었거나 겹치면 새 ID, 특별기도ID 가 비면 지금 특별기도로 채움
+function repairTargets() {
+  var bad = function (all) {
+    var seen = {}, need = false;
+    all.forEach(function (r) { if (!String(r[2]).trim()) return; var id = String(r[0]).trim(); if (!id || seen[id] || !String(r[1]).trim()) need = true; seen[id] = 1; });
+    return need;
+  };
+  if (!bad(rows('target'))) return;
+  var lock = LockService.getScriptLock(); lock.waitLock(25000);
+  try {
+    var all = rows('target'); if (!bad(all)) return;
+    var t = todayStr(), cs = liveCamps().sort(function (a, b) { return a.start < b.start ? 1 : -1; });
+    var def = cs.filter(function (c) { return c.start <= t && t <= c.end; })[0] || cs[0];
+    var seen = {}, base = Date.now();
+    all.forEach(function (r, i) {
+      if (!String(r[2]).trim()) return;
+      var id = String(r[0]).trim();
+      if (!id || seen[id]) { id = 't' + base + '_' + i; r[0] = id; }
+      seen[id] = 1;
+      if (!String(r[1]).trim() && def) r[1] = def.id;
+    });
+    writeAll('target', all); bump();
+  } finally { lock.releaseLock(); }
+}
 function handle(p) {
   importOnce();
+  if (p.action !== 'logo') repairTargets();
   if (p.action === 'logo') return { ok: true, logo: logoOpts(), data: logoData() };   // 로고 그림은 누구나 (첫 화면에도 보여야 해서)
   if (p.action === 'load' || p.action === 'photos') {   // 읽기는 잠그지 않음 (새 기기만 잠그고 등록)
     var devs = readDevs(), me = find(devs, p.dev);
@@ -570,6 +595,20 @@ function locked(p) {
       row[2] = tn; row[3] = grade; row[4] = note; row[7] = String(now);
       writeAll('target', all); bump();
       var ts0 = state(me, devs); ts0.savedId = String(row[0]); return ts0;
+    }
+    case 'targets': {   // 여러 명 한번에 (같은 특별기도·같은 학년에 이미 있는 이름은 건너뜀)
+      var bc = campOf(p.camp), bg = String(p.grade || '').trim().slice(0, 12);
+      var allT = rows('target').filter(function (r) { return r[0]; }), have = {};
+      allT.forEach(function (r) { if (String(r[1]) === bc.id && String(r[8]) !== '1') have[String(r[2]).replace(/\s+/g, '') + '|' + String(r[3]).trim()] = 1; });
+      var add = [];
+      (p.names || []).slice(0, 300).forEach(function (x, i) {
+        var nm = String(x || '').replace(/\s+/g, ' ').trim().slice(0, 20), k = nm.replace(/\s+/g, '') + '|' + bg;
+        if (!nm || have[k]) return;
+        have[k] = 1;
+        add.push(['t' + now + '_b' + i, bc.id, nm, bg, '', '', me.name, String(now), '', String(allT.length + add.length + 1)]);
+      });
+      append('target', add); bump();
+      var bs = state(me, devs); bs.added = add.length; return bs;
     }
     case 'delTarget': {
       var dt = rows('target').map(function (r) { if (String(r[0]) === String(p.id)) r[8] = '1'; return r; });

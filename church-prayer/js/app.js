@@ -47,7 +47,7 @@
   let S = C.state || null;   // 마지막으로 받은 자료 (바로 그리기용)
   let online = true, busy = 0;
   // 기다려야 하는 요청은 화면 전체에 로딩 창을 띄우고 그동안 다른 버튼을 막음 (여러 번 누르지 않게)
-  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요' };
+  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', targets: '여러 명을 넣고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요' };
   let waitN = 0, waitTimer = 0;
   function showWait(msg) {
     waitN++;
@@ -532,13 +532,15 @@
   }
 
   /* ----- 특별기도 (기간마다: 기도 대상 고르기 · 기도표 · 일정 · 예배 인원) ----- */
-  const GRADES = ['중1', '중2', '중3', '고1', '고2', '고3', '예비청년', '청년1년차', '청년'];
+  const GRADES = ['중1', '중2', '중3', '고1', '고2', '고3', '예비청년', '청년1년차', '청년2~4년차', '청년5~6년차', '청년7~11년차', '청년12~15년차', '청년16년차~'];
+  // 부서: 중·고 → 학생부, '청년'·'년차' → 청년부, 그 밖 → 기타
+  const divOf = g => /^(중|고)\s*\d/.test(g || '') ? '학생부' : /청년|년차/.test(g || '') ? '청년부' : '기타';
   const SPS = () => (S && S.sp) || { camps: [], targets: [], picks: {}, log: {}, events: [], att: {} };
   const hasSpecial = () => SPS().camps.length > 0 || isMaster();
   const gradeIdx = g => { const i = GRADES.indexOf(g); return i < 0 ? 99 : i; };
   const dayDiff = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
   const dotDate = s => s.slice(0, 4) + '.' + (+s.slice(5, 7)) + '.' + (+s.slice(8));
-  let spState = { who: '', grade: '', tEnd: null, tView: 'grid', showHow: false };
+  let spState = { who: '', div: '', grade: '', tEnd: null, tView: 'grid', showHow: false };
   function campsSorted() { return SPS().camps.slice().sort((a, b) => b.start.localeCompare(a.start)); }
   // 고른 특별기도 → 진행 중 → 앞으로 할 것 → 가장 최근 것
   function curCamp() {
@@ -702,17 +704,21 @@
   /* 고르기: 사진 카드 */
   function spPick(el, c) {
     const who = spWho(), mine = picksOf(c, who), all = campTargets(c), ended = today() > c.end;
-    const grades = [...new Set(all.map(x => x.grade).filter(Boolean))].sort((a, b) => gradeIdx(a) - gradeIdx(b) || ko(a, b));
+    const divs = ['학생부', '청년부', '기타'].filter(d => all.some(x => divOf(x.grade) === d));
+    if (spState.div && !divs.includes(spState.div)) spState.div = '';
+    const inDiv = all.filter(x => !spState.div || divOf(x.grade) === spState.div);
+    const grades = [...new Set(inDiv.map(x => x.grade || '학년 없음'))].sort((a, b) => gradeIdx(a) - gradeIdx(b) || ko(a, b));
     if (spState.grade && !grades.includes(spState.grade)) spState.grade = '';
-    let list = all.filter(x => !spState.grade || x.grade === spState.grade);
+    let list = inDiv.filter(x => !spState.grade || (x.grade || '학년 없음') === spState.grade);
     const srt = C.spSort || 'few';
     if (srt === 'few') list = list.slice().sort((a, b) => pickersOf(c, a.id).length - pickersOf(c, b.id).length);
     else if (srt === 'name') list = list.slice().sort((a, b) => ko(a.name, b.name));
     const none = all.filter(x => !pickersOf(c, x.id).length).length;
     el.innerHTML = whoSelect(who) +
       `<p class="pickinfo">${ended ? '끝난 특별기도예요.' : `<b>${mine.length} / ${c.picks}명</b> 골랐어요 · 사진을 누르면 고르거나 빼요`}${none ? `<br><span class="small">🙋 아직 기도해 주는 분이 없는 사람 <b>${none}명</b></span>` : ''}</p>
-      ${isTeacher() ? '<button class="btn pri addt" id="tAdd">＋ 기도 대상(학생) 넣기</button>' : ''}
-      ${all.length ? `<div class="chips pchips"><button data-gr="" class="${!spState.grade ? 'on' : ''}">전체 ${all.length}</button>${grades.map(g => `<button data-gr="${esc(g)}" class="${spState.grade === g ? 'on' : ''}">${esc(g)} ${all.filter(x => x.grade === g).length}</button>`).join('')}</div>
+      ${isTeacher() ? '<div class="addrow"><button class="btn pri" id="tAdd">＋ 한 명 넣기</button><button class="btn pri" id="tBulk">📋 여러 명 한번에</button></div>' : ''}
+      ${all.length ? `${divs.length > 1 ? `<div class="seg divseg"><button data-dv="" class="${!spState.div ? 'on' : ''}">전체 ${all.length}</button>${divs.map(d => `<button data-dv="${d}" class="${spState.div === d ? 'on' : ''}">${d} ${all.filter(x => divOf(x.grade) === d).length}</button>`).join('')}</div>` : ''}
+      ${grades.length > 1 ? `<div class="gchips"><button data-gr="" class="${!spState.grade ? 'on' : ''}">전체</button>${grades.map(g => `<button data-gr="${esc(g)}" class="${spState.grade === g ? 'on' : ''}">${esc(g.replace(/^청년(?=\d)/, ''))}<small>${inDiv.filter(x => (x.grade || '학년 없음') === g).length}</small></button>`).join('')}</div>` : ''}
       <div class="seg sortseg">${[['few', '기도자 적은 순'], ['grade', '학년순'], ['name', '이름순']].map(([v, l]) => `<button data-sso="${v}" class="${srt === v ? 'on' : ''}">${l}</button>`).join('')}</div>` : ''}
       <div class="tgrid">${list.map(x => {
         const ps = pickersOf(c, x.id), on = mine.includes(x.id);
@@ -725,6 +731,8 @@
       }).join('') || `<p class="muted">아직 기도 대상이 없어요.${isTeacher() ? ' 위의 [＋ 기도 대상 넣기]를 눌러 주세요.' : ' 선생님이 곧 올려 주실 거예요.'}</p>`}</div>`;
     bindWho(el);
     const ta = $('#tAdd', el); if (ta) ta.onclick = () => targetEdit(c, null);
+    const tb = $('#tBulk', el); if (tb) tb.onclick = () => bulkAdd(c);
+    $$('[data-dv]', el).forEach(b => b.onclick = () => { spState.div = b.dataset.dv; spState.grade = ''; render(); });
     $$('[data-gr]', el).forEach(b => b.onclick = () => { spState.grade = b.dataset.gr; render(); });
     $$('[data-sso]', el).forEach(b => b.onclick = () => { C.spSort = b.dataset.sso; saveCfg(); render(); });
     $$('[data-tpick]', el).forEach(b => b.onclick = () => doPick(c, b.dataset.tpick, !mine.includes(b.dataset.tpick)));
@@ -849,6 +857,29 @@
         if (!x) { render(); if (await confirmBox('한 명 더', '기도 대상을 한 명 더 넣을까요?', '더 넣기')) return targetEdit(c, null); }
       }
     } catch (e) { toast(e.message); }
+    render();
+  }
+  // 여러 명 한번에: 구글 시트(출석부)에서 이름 칸을 복사해 붙여 넣기
+  const parseNames = t => [...new Set(String(t || '').split(/[\n\t,;/]+/).map(x => x.replace(/\(.*?\)/g, '').replace(/[0-9%·.\s]/g, '').trim())
+    .filter(x => x.length >= 2 && x.length <= 10 && /^[가-힣a-zA-Z]+$/.test(x) && !/^(이름|합계|주차|출석률|반출석률|예비청년)$/.test(x)))];
+  async function bulkAdd(c) {
+    let grade = spState.grade && spState.grade !== '학년 없음' ? spState.grade : '', text = '';
+    const v = await modal(`<h3>📋 여러 명 한번에 넣기</h3>
+      <p class="msg small">① 학년(구분)을 고르고 ② 이름을 붙여 넣으세요.\n구글 시트 출석부에서 <b>이름 칸을 쭉 골라 복사</b>해서 붙여 넣으면 돼요. 한 줄에 한 명, 쉼표로 나눠도 돼요.\n(19) 같은 괄호·숫자와 ‘이 름’ 같은 제목은 알아서 빼요. 이미 있는 이름은 건너뛰어요.\n사진은 나중에 한 명씩 [고치기]에서 넣으면 돼요.</p>
+      <div class="field"><label>① 학년·구분</label><div class="chips gpick">${GRADES.map(g => `<button data-bg="${g}" class="${grade === g ? 'on' : ''}">${g}</button>`).join('')}</div>
+        <input type="text" id="bGrade" maxlength="12" value="${esc(grade)}" placeholder="직접 적기" style="margin-top:8px"></div>
+      <div class="field"><label for="bText">② 이름 붙여 넣기</label><textarea id="bText" placeholder="임동현(19)\n윤환희(19)\n이 훈(19)" style="min-height:150px"></textarea>
+        <p class="small muted" id="bCnt" style="margin:6px 0 0">0명</p></div>`,
+      [{ label: '취소', val: false }, { label: '넣기', val: true, cls: 'pri', check: () => { if (!parseNames(text).length) { toast('이름을 붙여 넣어 주세요'); return false; } if (!grade) { toast('학년·구분을 골라 주세요'); return false; } return true; } }],
+      inn => {
+        const gi = $('#bGrade', inn), cnt = $('#bCnt', inn);
+        const paint = () => { const ns = parseNames(text), have = new Set(SPS().targets.filter(x => x.camp === c.id && x.grade === grade).map(x => x.name.replace(/\s+/g, ''))); const dup = ns.filter(n => have.has(n)).length; cnt.innerHTML = ns.length ? `<b>${ns.length - dup}명</b> 넣어요${dup ? ` · 이미 있는 ${dup}명은 건너뜀` : ''}<br>${ns.slice(0, 40).map(esc).join(', ')}${ns.length > 40 ? ' …' : ''}` : '0명'; };
+        $$('[data-bg]', inn).forEach(b => b.onclick = () => { grade = b.dataset.bg; gi.value = grade; $$('[data-bg]', inn).forEach(y => y.classList.toggle('on', y === b)); paint(); });
+        gi.oninput = () => { grade = gi.value.trim(); $$('[data-bg]', inn).forEach(y => y.classList.toggle('on', y.dataset.bg === grade)); paint(); };
+        $('#bText', inn).oninput = e => { text = e.target.value; paint(); };
+      });
+    if (!v) return;
+    try { const d = await api('targets', { camp: c.id, grade, names: parseNames(text) }); toast(`${grade} ${d.added}명을 넣었어요`); spState.div = divOf(grade); spState.grade = grade; } catch (e) { toast(e.message); }
     render();
   }
   async function campEdit(c) {
