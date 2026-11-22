@@ -951,7 +951,11 @@
     else if ((m = l.match(/^(\d+)세$/))) y = +m[1] - 1;
     return y == null ? '' : Y - y;
   }
-  const rosterOf = d => (S.roster || []).filter(m => m.dept === d);
+  // 교사: 맡은 부서에서만 '교사' 칸, 다른 부서 명단에서는 숨김
+  const tdOf = n => ((S && S.tdepts) || {})[n];
+  const isTeacherIn = m => m.status === '교사' || !!(tdOf(m.name) && tdOf(m.name).includes(m.dept));
+  const hiddenHere = m => m.status !== '교사' && !!tdOf(m.name) && !tdOf(m.name).includes(m.dept);
+  const rosterOf = d => (S.roster || []).filter(m => m.dept === d && !hiddenHere(m));
   const personOf = id => (S.roster || []).find(m => m.id === id);
   const visitsOf = id => (S.visits || []).filter(v => v.pid === id).sort((a, b) => b.date.localeCompare(a.date) || b.at - a.at);
   const telOf = p => String(p || '').replace(/[^\d+]/g, '');
@@ -1042,7 +1046,7 @@
     const q = attQuery.replace(/\s+/g, '');
     const y0 = window.scrollY;
     // 칸 나누기: 학년(구분)별 · 교사 · 따로 보기 · 장기결석
-    const tn = new Set(S.tnames || []), isT = m => tn.has(m.name) || m.status === '교사', normal = [], teachers = [], special = [], long = [], recentLimit = addDays(t, -30), longLimit = addDays(t, -365);
+    const isT = isTeacherIn, normal = [], teachers = [], special = [], long = [], recentLimit = addDays(t, -30), longLimit = addDays(t, -365);
     people.forEach(m => {
       const s = st[m.id];
       if (isT(m)) teachers.push(m);
@@ -1147,7 +1151,7 @@
     const o = attOf(m.dept), st = attStats(m.dept)[id] || {}, vs = visitsOf(id);
     const days = Object.keys(o).filter(d => o[d].size && d >= addDays(today(), -364)).sort().slice(-12);
     const ph = (num, who) => num ? `<div class="crow"><span>${who}</span><b>${esc(num)}</b><a class="btn sm pri" href="tel:${telOf(num)}">📞 전화</a><a class="btn sm" href="sms:${telOf(num)}">💬 문자</a></div>` : '';
-    const v = await modal(`<div class="pcard">${photoHtml(m, 'lg')}<div><h3>${esc(m.name)} <span class="tag">${(S.tnames || []).includes(m.name) ? '교사' : esc(m.label || '학년 미정')}</span></h3>
+    const v = await modal(`<div class="pcard">${photoHtml(m, 'lg')}<div><h3>${esc(m.name)} <span class="tag">${isTeacherIn(m) ? '교사' : esc(m.label || '학년 미정')}</span></h3>
         <p class="small muted">${esc(m.dept)}${m.birth ? ` · ${m.birth}년생 (${m.y + 1}세)` : ''}${m.status ? ` · ${esc(m.status)}` : ''}</p>
         <p class="small">출석률 <b>${st.den ? Math.round(st.rate * 100) + '%' : '-'}</b> (최근 1년 ${st.n || 0}/${st.den || 0}) · 마지막 출석 ${st.last ? md(st.last) : '없음'}</p></div></div>
       <div class="adots">${days.map(d => `<span class="${o[d].has(id) ? 'on' : ''}" title="${d}">${+d.slice(5, 7)}/${+d.slice(8)}</span>`).join('')}</div>

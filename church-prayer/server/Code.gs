@@ -25,7 +25,7 @@
  * - 학생 사진은 '사진' 시트에만 있고, 이름을 넣은 기기에만 보냅니다.
  */
 
-var SERVER_VER = 5;
+var SERVER_VER = 6;
 var SUM_BEFORE = '2026-08-30';   // 이 날짜 전 설문 기록은 그날 것을 모두 더함 (설정 B7 이 있으면 그 날짜)
 var APP_NAME = '교회기도';
 var FORM_SHEET = '설문지 응답 시트1';
@@ -425,7 +425,7 @@ function importOnce() {
   var pp = PropertiesService.getScriptProperties();
   if (pp.getProperty('IMPORTED') === String(SERVER_VER)) return;
   var lock = LockService.getScriptLock(); lock.waitLock(25000);
-  try { if (pp.getProperty('IMPORTED') !== String(SERVER_VER)) { fixHeaders(); repairIds('target', 2, 't'); migrateTargets(); importForm(); pp.setProperty('IMPORTED', String(SERVER_VER)); } } finally { lock.releaseLock(); }
+  try { if (pp.getProperty('IMPORTED') !== String(SERVER_VER)) { fixHeaders(); repairIds('target', 2, 't'); migrateTargets(); syncTeachers(); importForm(); pp.setProperty('IMPORTED', String(SERVER_VER)); } } finally { lock.releaseLock(); }
 }
 // 새 칸이 생긴 시트의 제목 줄을 맞춤
 function fixHeaders() {
@@ -480,6 +480,23 @@ function migrateTargets() {
   pp.setProperty('MIGR_MEMBER', '1');
 }
 
+// 교사 명단의 교사를 맡은 부서 명단에 넣어 둠 (구분: 교사) — 다른 부서에 있던 정보(태어난 해·연락처)는 복사
+function syncTeachers() {
+  var all = rows('member').filter(function (r) { return r[0]; }), now = Date.now(), add = [];
+  var live = all.filter(function (r) { return String(r[16]) !== '1' && String(r[2]).trim(); });
+  staffRows().forEach(function (x, i) {
+    if (x.role !== '교사') return;
+    x.depts.forEach(function (d, j) {
+      var here = live.filter(function (r) { return String(r[2]).replace(/\s+/g, '') === x.name && String(r[1]) === d; })[0];
+      if (here) { if (String(here[11]) !== '교사') { here[11] = '교사'; add.push(null); } return; }
+      var src = live.filter(function (r) { return String(r[2]).replace(/\s+/g, '') === x.name; })[0] || [];
+      add.push(['m' + now + '_t' + i + '_' + j, d, x.name, src[3] || '', src[4] || '0', '', src[6] || '', src[7] || '', '', '', '', '교사', src[12] || '', todayStr(), String(now), '교사 명단', '']);
+    });
+  });
+  if (!add.length) return;
+  writeAll('member', all.concat(add.filter(Boolean)));
+}
+
 /* ---------- 출석부: 명단 · 출석 · 심방 ---------- */
 var SCHOOL = ['초1', '초2', '초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
 var SPECIAL = ['군복무', '유학·타지', '쉬는 중', '전출'];
@@ -528,7 +545,8 @@ function attachRoster(o, me) {
   delete o.mem; delete o.attBy; delete o.vis;
   o.me.depts = acc;
   if (!acc.length) return;
-  o.tnames = Object.keys(teacherNames());   // 출석부에서 교사는 '교사' 칸으로
+  // 교사: { 이름: [맡은 부서…] } — 맡은 부서 출석부의 '교사' 칸에만 나오고, 다른 부서 명단에서는 숨김
+  o.tdepts = {}; staffRows().forEach(function (x) { if (x.role === '교사') o.tdepts[x.name] = (o.tdepts[x.name] || []).concat(x.depts); });
   var ok = {}; acc.forEach(function (d) { ok[d] = 1; });
   var mine = mem.filter(function (m) { return ok[m.dept]; }), ids = {};
   o.roster = mine;
@@ -1016,7 +1034,7 @@ function locked(p) {
         tl.push([n, String(now), ds.join(' '), x.role === '임원' ? '임원' : '교사']);
       });
       if (tl.length > 300) return { ok: false, error: '이름이 너무 많아요' };
-      writeAll('teacher', tl); bump();
+      writeAll('teacher', tl); syncTeachers(); bump();
       return state(me, devs);
     }
     case 'camp': {   // 특별기도 만들기·고치기
