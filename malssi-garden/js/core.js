@@ -23,7 +23,7 @@
   // ---------- 저장 ----------
   M.defaults = function () {
     return {
-      v: 1, started: false, lang: 'ja', petName: '말랑이',
+      v: 2, started: false, lang: 'ja', petName: '말랑이',
       water: 30, coins: 60, fp: 0, xp: 0,
       prog: { ja: {}, en: {}, zh: {} }, srs: {},
       streak: 0, best: 0, lastDay: '', freeze: 0, miles: {},
@@ -63,6 +63,30 @@
     M.P = merge(M.defaults(), raw || {});
     var g = M.P.garden;
     if (!Array.isArray(g.cells) || g.cells.length !== 30) g.cells = new Array(30).fill(null);
+    migrate(M.P);
+  };
+  // 단계 번호가 바뀐 판(v1 → v2)의 진행 기록을 옮긴다
+  function migrate(P) {
+    if ((P.v || 1) >= 2) return;
+    var old = P.prog || {}, np = { ja: {}, en: {}, zh: {} };
+    Object.keys(old.ja || {}).forEach(function (id) {
+      var m = id.match(/^ja-1-(\d)$/);
+      if (m) { var n = +m[1]; np.ja['ja-1-' + (n * 2 - 1)] = old.ja[id]; np.ja['ja-1-' + (n * 2)] = old.ja[id]; }
+      else np.ja[id] = old.ja[id];
+    });
+    ['en', 'zh'].forEach(function (c) {
+      Object.keys(old[c] || {}).forEach(function (id) {
+        var m = id.match(/^(\w+)-(\d+)-(\d+)$/);
+        if (m) np[c][m[1] + '-' + (+m[2] + 1) + '-' + m[3]] = old[c][id];
+      });
+    });
+    P.prog = np; P.v = 2;
+  }
+  // 받침에 맞는 조사를 붙인다: M.j('토끼', '를', '을')가 아니라 M.j(낱말, 받침 있을 때, 받침 없을 때)
+  M.j = function (w, withB, noB) {
+    w = String(w || ''); var c = w.charCodeAt(w.length - 1) - 0xAC00;
+    var has = c >= 0 && c <= 11171 ? c % 28 !== 0 : false;
+    return w + (has ? withB : noB);
   };
   M.save = function () { try { localStorage.setItem(KEY, JSON.stringify(M.P)); } catch (e) {} };
   M.exportData = function () { return JSON.stringify({ app: 'malssi-garden', at: new Date().toISOString(), data: M.P }); };
@@ -157,7 +181,8 @@
     feed: { needs: [1], text: function () { return M.P.petName + '에게 먹이 주기'; }, icon: '🥕' },
     combo: { needs: [5, 8], text: function (n) { return n + '문제 연속으로 맞히기'; }, icon: '🔥', max: true },
     review: { needs: [1], text: function () { return '복습 1판 하기'; }, icon: '🔁', ok: function () { return M.learnedCount() >= 6; } },
-    harvest: { needs: [2], text: function (n) { return '정원에서 ' + n + '번 수확하기'; }, icon: '🧺' }
+    harvest: { needs: [2], text: function (n) { return '정원에서 ' + n + '번 팔기'; }, icon: '🧺' },
+    order: { needs: [2, 3], text: function (n) { return '정원 주문 ' + n + '개 채우기'; }, icon: '📦' }
   };
   M.QUESTS = QUESTS;
   M.dailyState = function () {
@@ -365,6 +390,21 @@
     d.querySelector('.hint').addEventListener('click', open);
     if (M.fast) open();
     return d;
+  };
+
+  // 보상 아이콘이 위쪽 숫자로 날아가는 연출
+  M.fly = function (fromEl, src, toId, n) {
+    var to = M.$(toId); if (M.fast || !fromEl || !to || !document.body.animate) return;
+    var a = fromEl.getBoundingClientRect(), b = to.getBoundingClientRect();
+    for (var i = 0; i < Math.max(1, n || 1); i++) (function (i) {
+      var im = document.createElement('img'); im.className = 'flyicon'; im.src = src;
+      var sx = a.left + a.width / 2 + (Math.random() - .5) * 30, sy = a.top + a.height / 2 + (Math.random() - .5) * 20;
+      im.style.left = sx + 'px'; im.style.top = sy + 'px'; document.body.appendChild(im);
+      var dx = b.left + b.width / 2 - sx, dy = b.top + b.height / 2 - sy;
+      var an = im.animate([{ transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 }, { transform: 'translate(calc(-50% + ' + (Math.random() - .5) * 60 + 'px), calc(-50% - 30px)) scale(1.1)', opacity: 1, offset: .25 },
+        { transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(.7)', opacity: 1 }], { duration: 650, delay: i * 70, easing: 'cubic-bezier(.5,0,.7,1)', fill: 'backwards' });
+      an.onfinish = function () { im.parentNode && im.parentNode.removeChild(im); var p = to.parentNode; p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump'); };
+    })(i);
   };
 
   // PIN 은 기기에만 저장하므로 간단한 해시로 충분하다

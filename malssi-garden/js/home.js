@@ -32,6 +32,7 @@
     face = face || (M.petFull() < 30 ? 'sad' : 'normal');
     return 'img/pet-' + M.petStage() + '-' + face + '.png';
   };
+  M.petExp = function (n) { addExp(n); };
   function addExp(n) {
     var p = M.P.pet, before = M.petStage(), up = false;
     p.exp += n;
@@ -40,7 +41,7 @@
     if (up) {
       M.sfx('win');
       var grown = M.petStage() !== before;
-      M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy') + '" alt=""><h3>' + (grown ? esc(M.P.petName) + '(이)가 자랐어요!' : '레벨 업! Lv.' + p.lv) + '</h3><p>이제 레슨에서 물방울을 <b>' + M.petBonus() + '%</b> 더 받아요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
+      M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy') + '" alt=""><h3>' + (grown ? esc(M.j(M.P.petName, '이가', '가')) + ' 자랐어요!' : '레벨 업! Lv.' + p.lv) + '</h3><p>이제 레슨에서 물방울을 <b>' + M.petBonus() + '%</b> 더 받아요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
     }
   }
 
@@ -60,7 +61,7 @@
       '<div class="meter"><span>친밀도</span><div class="mbar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></div><small>' + p.exp + '/' + needExp(p.lv) + '</small></div>' +
       '<div class="meter"><span>배부름</span><div class="mbar full"><i style="width:' + M.petFullPct() + '%"></i></div><small>' + (full >= 100 ? '아주 배부름' : full < 30 ? '배고파요' : full + '%') + '</small></div>' +
       '<div class="row3"><button class="btn primary" id="hFeed">🥕 먹이 주기</button><button class="btn" id="hShop">🛋️ 가구 상점</button><button class="btn' + (editing ? ' on' : '') + '" id="hEdit">' + (editing ? '✅ 꾸미기 끝' : '✏️ 꾸미기') + '</button></div>' +
-      '<p class="hint">레벨 5와 10이 되면 ' + esc(P.petName) + '(이)가 자라요. 레벨이 오를수록 레슨에서 물방울을 더 받아요.</p></div></div>';
+      '<p class="hint">레벨 5와 10이 되면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 물방울을 더 받아요.</p></div></div>';
     root.innerHTML = h;
   };
   function rerender() { var r = $('homeView'); if (r) M.renderHome(r); }
@@ -111,7 +112,7 @@
       var f = FURN.filter(function (x) { return x.id === b.dataset.fid; })[0];
       if (P.room.owned[f.id]) { togglePlace(f); paint(); return; }
       if (!M.spend('coins', f.price)) { M.toast('코인이 ' + (f.price - P.coins) + '개 더 필요해요'); return; }
-      P.room.owned[f.id] = true; togglePlace(f); M.sfx('coin'); M.toast(f.name + '을(를) 샀어요! 방에 놓았어요'); paint();
+      P.room.owned[f.id] = true; togglePlace(f); M.sfx('coin'); M.toast(M.j(f.name, '을', '를') + ' 샀어요! 방에 놓았어요'); paint();
     });
   }
   function togglePlace(f) {

@@ -51,7 +51,7 @@
     if (id === 'freeze' && P.freeze >= 3) { M.toast('보호권은 3개까지만 가질 수 있어요'); return; }
     if (!M.spend('coins', it.price)) { M.toast('코인이 부족해요'); return; }
     if (id === 'freeze') M.give({ freeze: 1 }); else M.give({ water: 30 });
-    M.sfx('coin'); M.toast(it.e + ' ' + it.name + '을(를) 샀어요'); rerender();
+    M.sfx('coin'); M.toast(it.e + ' ' + M.j(it.name, '을', '를') + ' 샀어요'); rerender();
   }
 
   // ---------- 관리자 PIN ----------

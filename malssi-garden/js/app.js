@@ -37,8 +37,8 @@
     if (t === tab) return;
     if (M.stopEditing) M.stopEditing();
     tab = t; $('view').scrollTop = 0; M.render();
-    var tips = { garden: ['seenGarden', '🌱 정원', '레슨에서 받은 물방울로 <b>씨앗을 뿌리고</b>, 같은 것끼리 <b>끌어다 겹치면</b> 한 단계씩 자라요.<br><br><img class="inl" src="img/flower-5.png" alt=""> 황금 꽃을 수확하면 <b>꽃 포인트</b>가, <img class="inl" src="img/tree-5.png" alt=""> 황금 사과나무는 <b>코인</b>이 많이 나와요.'],
-      home: ['seenHome', '🏠 ' + esc(P.petName) + '의 집', '코인으로 먹이를 주면 ' + esc(P.petName) + '(이)가 자라요. 레벨이 오를수록 레슨에서 <b>물방울을 더</b> 받아요.<br><br>가구 상점에서 가구를 사서 방을 꾸며 보세요.'],
+    var tips = { garden: ['seenGarden', '🌱 정원', '<b>① 씨앗 뿌리기</b>: 레슨에서 받은 물방울로 씨앗을 뿌려요. 꾹 누르면 계속 뿌려요.<br><b>② 합치기</b>: 같은 것끼리 끌어다 겹치면 한 단계 자라요. 빠르게 이어서 합치면 콤보!<br><b>③ 주문 채우기</b>: 위에 있는 동물 친구들이 원하는 것을 키워서 <b>주기</b>를 누르면 코인과 <img class="inl" src="img/flower-point.png" alt="">꽃 포인트를 받아요.'],
+      home: ['seenHome', '🏠 ' + esc(P.petName) + '의 집', '코인으로 먹이를 주면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 <b>물방울을 더</b> 받아요.<br><br>가구 상점에서 가구를 사서 방을 꾸며 보세요.'],
       shop: ['seenShop', '🎁 상점', '<b>꽃 포인트</b>를 모아 남편이 등록한 <b>진짜 선물</b>로 바꿀 수 있어요. 바꾸면 쿠폰이 생기고, 남편이 확인하면 선물을 받아요.'] };
     var tip = tips[t];
     if (tip && !P.ui[tip[0]]) { P.ui[tip[0]] = true; M.save(); M.modal('<h3>' + tip[1] + '</h3><p>' + tip[2] + '</p><button class="btn primary wide" data-close>알겠어요</button>'); }
@@ -48,7 +48,7 @@
     var g = P.garden, golden = false, free = 0;
     for (var i = 0; i < g.open; i++) { var it = g.cells[i]; if (it && it.l === 5) golden = true; if (!it) free++; }
     set('learn', M.questReady() || '');
-    set('garden', golden ? '✨' : (P.water >= 25 && free ? '💧' : ''));
+    set('garden', M.gardenOrderReady && M.gardenOrderReady() ? '📦' : (P.water >= 25 && free ? '💧' : ''));
     set('home', M.petFull() < 30 ? '!' : '');
     set('shop', P.rewards.some(function (r) { return P.fp >= r.price; }) ? '🎁' : '');
   };
@@ -199,7 +199,7 @@
         P.lang = introData.lang; P.set.goal = introData.goal; P.started = true;
         $('view').insertBefore($('banner'), $('view').firstChild);
         M.save(); M.render();
-        M.modal('<div class="center"><img class="bigpet popin" src="img/pet-1-happy.png" alt=""><h3>' + esc(P.petName) + '와(과) 함께 시작해요!</h3><p>첫 레슨을 끝내면 물방울을 받아요.<br>물방울로 정원에 씨앗을 뿌려 보세요 🌱</p><button class="btn primary wide" data-close>좋아요</button></div>');
+        M.modal('<div class="center"><img class="bigpet popin" src="img/pet-1-happy.png" alt=""><h3>' + esc(M.j(P.petName, '과', '와')) + ' 함께 시작해요!</h3><p>첫 레슨을 끝내면 물방울을 받아요.<br>물방울로 정원에 씨앗을 뿌려 보세요 🌱</p><button class="btn primary wide" data-close>좋아요</button></div>');
         dayCheck();
         return;
       }
