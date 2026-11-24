@@ -433,7 +433,7 @@
   var queue = [];
   M.queuePopup = function (f) { queue.push(f); setTimeout(runQueue, M.fast ? 0 : 300); };
   function runQueue() {
-    if (document.querySelector('.dim') || document.body.classList.contains('in-lesson')) { setTimeout(runQueue, 400); return; }
+    if (document.querySelector('.dim') || document.body.classList.contains('in-lesson') || document.body.classList.contains('in-mini')) { setTimeout(runQueue, 400); return; }
     var f = queue.shift(); if (!f) return;
     f();
     setTimeout(runQueue, M.fast ? 0 : 400);   // 띄운 창이 닫힐 때까지 기다렸다가 다음 것을 띄운다

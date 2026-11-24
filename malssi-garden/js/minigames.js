@@ -12,7 +12,15 @@
     { id: 'song', cust: 'chick', heart: 1, icon: '🎈', name: '삐약이 소리 풍선',
       ask: '삐약! 제가 들은 말을 풍선에 적어 뒀는데 헷갈려요. 소리를 듣고 맞는 풍선을 터뜨려 주세요!', how: '소리를 잘 듣고 같은 말이 적힌 풍선을 눌러요. 빨리 맞힐수록 점수가 커요.', thanks: '삐약삐약! 이제 다 알아들었어요!' },
     { id: 'memory', cust: 'bear', heart: 1, icon: '🍯', name: '꿀단지 짝 맞추기',
-      ask: '꿀단지 뚜껑에 낱말과 뜻을 나눠 적어 뒀는데 섞여 버렸어요. 짝을 맞춰 줄래요?', how: '두 개씩 뒤집어서 낱말과 뜻이 맞는 짝을 찾아요. 적게 뒤집을수록 좋아요.', thanks: '꿀단지 정리 끝! 고마워요, 친구!' }
+      ask: '꿀단지 뚜껑에 낱말과 뜻을 나눠 적어 뒀는데 섞여 버렸어요. 짝을 맞춰 줄래요?', how: '두 개씩 뒤집어서 낱말과 뜻이 맞는 짝을 찾아요. 적게 뒤집을수록 좋아요.', thanks: '꿀단지 정리 끝! 고마워요, 친구!' },
+    { id: 'road', cust: 'hedgehog', heart: 1, icon: '🫖', name: '갈림길 차 배달',
+      ask: '따뜻한 차를 배달해야 하는데, 길마다 표지판이 외국 말로 적혀 있어요… 주소 뜻을 알려 줄 테니 맞는 길로 같이 가 줄래요?', how: '위에 나온 뜻과 같은 말이 적힌 표지판 쪽으로 가요. 12번 갈림길을 지나면 도착!', thanks: '차가 식기 전에 도착했어요! 고마워요.' },
+    { id: 'bamboo', cust: 'panda', heart: 1, icon: '🎋', name: '대나무 문장 쌓기',
+      ask: '대나무 마디마다 낱말을 써서 문장 탑을 쌓고 싶은데, 순서를 자꾸 잊어버려요… 뜻을 보고 순서대로 쌓아 줄래요?', how: '뜻을 보고 낱말 마디를 문장 순서대로 눌러 쌓아요. 틀리면 마디가 흔들려요.', thanks: '와, 멋진 대나무 탑이에요! 하나 먹어도 돼요?' },
+    { id: 'riddle', cust: 'fox', heart: 1, icon: '🦊', name: '여우의 수수께끼',
+      ask: '후후, 수수께끼 놀이 해요! 제가 그림을 보여 주면 무엇인지 외국 말로 맞혀 보세요. 연달아 맞히면 점수가 쑥쑥!', how: '그림을 보고 알맞은 낱말을 골라요. 연속으로 맞히면 점수가 커져요.', thanks: '대단해요! 제 수수께끼를 이렇게 잘 푸는 친구는 처음이에요.' },
+    { id: 'dict', cust: 'owl', heart: 1, icon: '🦉', name: '부엉 박사의 받아쓰기',
+      ask: '부엉, 오늘은 받아쓰기 시간이에요. 제가 낱말을 읽어 줄 테니 글자 조각을 모아 써 보세요.', how: '소리를 듣고 글자 조각을 순서대로 눌러 낱말을 완성해요. 잘못 누른 조각은 다시 눌러 빼요.', thanks: '부엉부엉! 백 점짜리 받아쓰기예요.' }
   ];
   function gs() { return M.gardenState(); }
   function state() { var g = gs(); g.mini = g.mini || { day: '', done: {}, best: {}, seen: {} }; if (g.mini.day !== M.today()) { g.mini.day = M.today(); g.mini.done = {}; } return g.mini; }
@@ -35,17 +43,21 @@
   };
 
   // ---------- 낱말 고르기 ----------
-  function words(n) {
-    var lang = M.P.lang, seen = {}, out = [];
-    var src = M.learnedItems(lang);
-    if (src.length < n + 2) { var L = window.LANGS[lang]; L.stages.slice(0, 6).forEach(function (s) { src = src.concat(s.items); }); }
-    M.shuffle(src).forEach(function (it) { if (out.length < n && it.k && it.t && !seen[it.k] && !seen[it.t] && it.t.length <= 12) { seen[it.k] = seen[it.t] = 1; out.push(it); } });
+  // 배운 낱말 중에서 고른다. 모자라면 앞쪽 단계의 낱말로 채운다. 문자·병음 연습 항목(kana)은 낱말이 모자랄 때만 쓴다
+  function words(n, ok) {
+    var lang = M.P.lang, L = window.LANGS[lang], seen = {}, out = [];
+    ok = ok || function () { return true; };
+    var good = function (it) { return it.k && it.t && it.t.length <= 12 && ok(it); };
+    var learned = M.learnedItems(lang).filter(good), nonKana = learned.filter(function (it) { return !it.kana; });
+    var src = nonKana.length >= n ? nonKana : learned;
+    if (src.length < n) { var extra = []; L.stages.forEach(function (st) { if (!st.kana && !st.gram && extra.length < n * 3) extra = extra.concat(st.items.filter(good)); }); src = src.concat(extra); }
+    M.shuffle(src).forEach(function (it) { if (out.length < n && !seen[it.k] && !seen[it.t]) { seen[it.k] = seen[it.t] = 1; out.push(it); } });
     return out;
   }
   function wordHtml(it) { return '<b class="lang-' + it.lang + '">' + esc(it.t) + '</b>' + (it.lang === 'ja' && it.r && HAN.test(it.t) ? '<small>' + esc(it.r) + '</small>' : it.lang === 'zh' && it.r && !it.kana ? '<small>' + esc(it.r.split(' · ')[0]) + '</small>' : ''); }
 
   // ---------- 화면 ----------
-  var cur = null;   // 지금 하는 놀이
+  var cur = null, pendingExp = 0;   // 지금 하는 놀이, 나갈 때 줄 토끼 경험치
   function custFace(m, happy) { var src = M.custImg(m.cust, happy), c = M.custOf(m.cust); return src ? '<img class="mface" src="' + src + '" alt="">' : '<span class="mface em">' + c.em + '</span>'; }
   M.miniIntro = function (id) {
     var m = byId(id); if (!m || !isOpen(m)) return;
@@ -68,6 +80,7 @@
   function stop() {
     if (cur) { cur.alive = false; cur.timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); if (cur.raf) cancelAnimationFrame(cur.raf); }
     cur = null; var el = $('mini'); if (el) { el.classList.add('hidden'); el.innerHTML = ''; } document.body.classList.remove('in-mini');
+    if (pendingExp && M.petExp) { var e = pendingExp; pendingExp = 0; setTimeout(function () { M.petExp(e); }, 300); }
     if ($('gardenView') && M.renderGarden && !$('gardenView').hidden) M.renderGarden($('gardenView'));
   }
   function setScore(g, n) { g.score = Math.max(0, n); var s = $('mScore'); if (s) s.textContent = g.score + '점'; }
@@ -87,7 +100,7 @@
     var coins = Math.round((10 + 30 * ratio) * (first ? 2 : 1)), water = first ? 10 + stars * 5 : 0;
     var best = st.best[m.id] || 0; if (g.score > best) st.best[m.id] = g.score;
     if (first && stars > 0) st.done[m.id] = 1;
-    M.give({ coins: coins, water: water }); if (M.petExp) M.petExp(2 + stars);
+    M.give({ coins: coins, water: water }); pendingExp += 2 + stars;   // 토끼 경험치는 놀이를 마치고 나갈 때 준다 (레벨업 창이 놀이 위에 뜨지 않게)
     M.save(); M.sfx(stars ? 'win' : 'bad');
     var lines = (window.STORY_LINES || {})[M.P.lang] || [], ln = lines[0];
     var el = $('mBody'); if (!el) return;
@@ -183,6 +196,116 @@
       };
     });
     timeBar(g, 90, function () { setScore(g, found * 5); finish(g, 90); });
+  };
+
+  // 갈림길 배달: 뜻을 보고 왼쪽·오른쪽 표지판 중 맞는 길로 간다 (12번)
+  GAMES.road = function (g) {
+    var pool = words(16); if (pool.length < 4) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
+    var n = 0, combo = 0;
+    $('mBody').innerHTML = '<div class="aq" id="rQ"></div><div class="road"><div class="rsigns" id="rS"></div><div class="rpath"><span class="rhog" id="rH">🦔🫖</span></div><div class="rprog" id="rP"></div></div>';
+    function round() {
+      if (!g.alive) return;
+      if (n >= 12) { finish(g, 150); return; }
+      n++; $('rP').textContent = n + ' / 12';
+      var two = M.shuffle(pool).slice(0, 2), target = two[0], pair = M.shuffle(two.slice());
+      $('rQ').innerHTML = '🏠 <b>' + esc(target.k) + '</b>' + (target.e ? ' <span class="ae">' + target.e + '</span>' : '');
+      $('rS').innerHTML = pair.map(function (it, i) { return '<button class="rsign ' + (i ? 'right' : 'left') + '" data-i="' + i + '">' + (i ? '' : '⬅ ') + wordHtml(it) + (i ? ' ➡' : '') + '</button>'; }).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('.rsign'), function (b) {
+        b.onclick = function () {
+          if (!g.alive || b.disabled) return;
+          var it = pair[+b.dataset.i], h = $('rH');
+          if (it === target) { combo++; setScore(g, g.score + 10 + Math.min(5, combo)); M.sfx('ok'); M.say(it.say, it.lang); h.className = 'rhog go' + (b.dataset.i === '1' ? 'r' : 'l'); setTimeout(function () { h.className = 'rhog'; round(); }, 420); }
+          else { combo = 0; M.sfx('bad'); b.disabled = true; b.classList.add('miss'); g.left = Math.max(0, g.left - 4); }
+        };
+      });
+    }
+    round(); timeBar(g, 60, function () { finish(g, 150); });
+  };
+  // 대나무 문장 쌓기: 배운 문장의 낱말을 순서대로 눌러 쌓는다 (5문장)
+  function sentences(n) {
+    var lang = M.P.lang, L = window.LANGS[lang], out = [];
+    L.stages.forEach(function (st) { if (M.P.prog[lang][st.id] && !st.kana) (st.sents || []).forEach(function (x) { if (x.w && x.w.length >= 2 && x.w.length <= 7) out.push(x); }); });
+    if (out.length < n) L.stages.filter(function (st) { return !st.kana; }).slice(0, 12).forEach(function (st) { (st.sents || []).forEach(function (x) { if (x.w && x.w.length >= 2 && x.w.length <= 7 && out.indexOf(x) < 0) out.push(x); }); });
+    return M.shuffle(out).slice(0, n);
+  }
+  GAMES.bamboo = function (g) {
+    var list = sentences(5); if (list.length < 2) { $('mBody').innerHTML = '<p class="center">문장을 조금 더 배우고 와 주세요!</p>'; return; }
+    var n = 0;
+    function round() {
+      if (!g.alive) return;
+      if (n >= list.length) { finish(g, list.length * 20); return; }
+      var sn = list[n++], got = 0, miss = 0, lang = sn.lang;
+      var tiles = sn.w.map(function (w, i) { return { w: w, i: i }; });
+      $('mBody').innerHTML = '<div class="aq"><b>' + esc(sn.k) + '</b><small class="bprog">' + n + ' / ' + list.length + '</small></div><div class="btower lang-' + lang + '" id="bT"></div><div class="btiles lang-' + lang + '" id="bTi">' +
+        M.shuffle(tiles).map(function (t) { return '<button class="bseg" data-i="' + t.i + '">' + esc(t.w) + '</button>'; }).join('') + '</div>';
+      Array.prototype.forEach.call(document.querySelectorAll('.bseg'), function (b) {
+        b.onclick = function () {
+          if (!g.alive || b.disabled) return;
+          var idx = +b.dataset.i;
+          if (idx === got || sn.w[idx] === sn.w[got]) {   // 같은 낱말이 두 번 나오면 어느 쪽이든 된다
+            b.disabled = true; b.classList.add('used');
+            var seg = document.createElement('div'); seg.className = 'tseg'; seg.textContent = sn.w[got]; $('bT').prepend(seg);
+            got++; M.sfx('pop');
+            if (got === sn.w.length) { setScore(g, g.score + Math.max(6, 20 - miss * 4)); M.say(sn.say, lang); M.sfx('ok'); setTimeout(round, 1200); }
+          } else { miss++; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); M.sfx('bad'); }
+        };
+      });
+    }
+    round(); timeBar(g, 100, function () { finish(g, list.length * 20); });
+  };
+  // 여우의 수수께끼: 그림(이모지)만 보고 낱말 고르기, 가끔은 낱말을 보고 그림 고르기 (10문제)
+  GAMES.riddle = function (g) {
+    var pool = words(12, function (it) { return !!it.e; }); if (pool.length < 4) { $('mBody').innerHTML = '<p class="center">그림이 있는 낱말을 조금 더 배우고 와 주세요!</p>'; return; }
+    var n = 0, combo = 0;
+    function round() {
+      if (!g.alive) return;
+      if (n >= 10) { finish(g, 150); return; }
+      n++; var four = M.shuffle(pool).slice(0, 4), target = four[0], rev = n % 3 === 0;
+      four = M.shuffle(four);
+      $('mBody').innerHTML = '<div class="rq"><small>수수께끼 ' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>' + (rev ? '<div class="rword">' + wordHtml(target) + '</div><p>이 말은 어떤 그림일까요?</p>' : '<div class="remoji">' + target.e + '</div><p>나는 누구일까요?</p>') + '</div>' +
+        '<div class="ropts' + (rev ? ' em' : '') + '">' + four.map(function (it, i) { return '<button class="ropt" data-i="' + i + '">' + (rev ? '<span class="remoji sm">' + it.e + '</span>' : wordHtml(it)) + '</button>'; }).join('') + '</div>';
+      if (rev) M.say(target.say, target.lang);
+      Array.prototype.forEach.call(document.querySelectorAll('.ropt'), function (b) {
+        b.onclick = function () {
+          if (!g.alive || b.disabled) return;
+          var it = four[+b.dataset.i];
+          if (it === target) { combo++; setScore(g, g.score + 10 + Math.min(10, combo * 2)); b.classList.add('ok'); M.sfx('ok'); if (!rev) M.say(it.say, it.lang); setTimeout(round, 600); }
+          else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
+        };
+      });
+    }
+    round(); timeBar(g, 80, function () { finish(g, 150); });
+  };
+  // 받아쓰기: 소리를 듣고 글자 조각을 순서대로 눌러 낱말을 쓴다 (6낱말)
+  GAMES.dict = function (g) {
+    var lang = M.P.lang;
+    var pool = words(12, function (it) { var t = lang === 'ja' && it.r && HAN.test(it.t) ? it.r : it.t; return t.replace(/[\s~～]/g, '').length >= 2 && t.length <= 8; });
+    if (pool.length < 3) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
+    var list = pool.slice(0, 6), n = 0;
+    function chars(it) { var t = lang === 'ja' && it.r && HAN.test(it.t) ? it.r.split(' · ')[0] : it.t; return Array.from(t.replace(/[\s~～]/g, '')); }
+    function round() {
+      if (!g.alive) return;
+      if (n >= list.length) { finish(g, list.length * 15); return; }
+      var it = list[n++], ans = chars(it), picked = [], miss = 0;
+      var decoy = []; M.shuffle(pool).forEach(function (o) { if (o !== it) chars(o).forEach(function (c) { if (decoy.length < 3 && ans.indexOf(c) < 0 && decoy.indexOf(c) < 0) decoy.push(c); }); });
+      var tiles = M.shuffle(ans.concat(decoy).map(function (c, i) { return { c: c, id: i }; }));
+      $('mBody').innerHTML = '<div class="sq"><button class="say big" id="dPlay">🔊</button><small>' + n + ' / ' + list.length + ' · 뜻: ' + esc(it.k) + '</small></div><div class="dslots lang-' + lang + '" id="dS">' + ans.map(function () { return '<span class="dslot"></span>'; }).join('') + '</div>' +
+        '<div class="dtiles lang-' + lang + '">' + tiles.map(function (t) { return '<button class="dtile" data-id="' + t.id + '">' + esc(t.c) + '</button>'; }).join('') + '</div>' + '<button class="btn ghost wide" id="dUndo">⌫ 하나 지우기</button>';
+      var play = function () { M.say(it.say, lang); }; $('dPlay').onclick = play; setTimeout(play, 250);
+      function paint() { Array.prototype.forEach.call(document.querySelectorAll('.dslot'), function (sl, k) { sl.textContent = picked[k] ? picked[k].c : ''; }); }
+      $('dUndo').onclick = function () { var t = picked.pop(); if (t) { t.b.disabled = false; t.b.classList.remove('used'); paint(); } };
+      Array.prototype.forEach.call(document.querySelectorAll('.dtile'), function (b) {
+        b.onclick = function () {
+          if (!g.alive || b.disabled || picked.length >= ans.length) return;
+          picked.push({ c: b.textContent, b: b }); b.disabled = true; b.classList.add('used'); paint(); M.sfx('tap');
+          if (picked.length === ans.length) {
+            if (picked.map(function (t) { return t.c; }).join('') === ans.join('')) { setScore(g, g.score + Math.max(5, 15 - miss * 3)); M.sfx('ok'); $('dS').classList.add('ok'); setTimeout(round, 900); }
+            else { miss++; M.sfx('bad'); $('dS').classList.add('bad'); setTimeout(function () { $('dS') && $('dS').classList.remove('bad'); picked.forEach(function (t) { t.b.disabled = false; t.b.classList.remove('used'); }); picked = []; paint(); }, 700); }
+          }
+        };
+      });
+    }
+    round(); timeBar(g, 120, function () { finish(g, list.length * 15); });
   };
 
   M.MINIS = MINIS;

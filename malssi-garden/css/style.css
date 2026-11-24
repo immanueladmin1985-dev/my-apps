@@ -862,3 +862,40 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .pot.done { border-color: var(--mint); box-shadow: 0 3px 0 var(--mint-d); background: #effbf5; }
 .acorn b { font-size: 1.3rem; } .balloon b { font-size: 1.6rem; } .pot .face b { font-size: 1.2rem; }
 .order .mqchip { display: inline-block; margin-left: 3px; background: #ff6b6b; color: #fff; border-radius: 8px; padding: 0 5px; font-size: .62rem; font-weight: 800; animation: bob 1s ease-in-out infinite; }
+/* 갈림길 배달 */
+.road { flex: 1; display: flex; flex-direction: column; margin-top: 8px; border-radius: 18px; background: linear-gradient(#cdeccf, #a9dc9c); overflow: hidden; position: relative; }
+.rsigns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 10px; }
+.rsign { background: #fff6e0; border: 3px solid #b98a52; border-radius: 12px; padding: 10px 6px; box-shadow: 0 4px 0 #8a6236; display: flex; flex-direction: column; align-items: center; }
+.rsign b { font-size: 1.3rem; } .rsign small { font-size: .7rem; color: var(--sub); }
+.rsign.miss { opacity: .35; }
+.rpath { flex: 1; position: relative; background: linear-gradient(90deg, transparent 38%, #e9d3a8 38%, #e9d3a8 62%, transparent 62%); }
+.rpath::before, .rpath::after { content: ''; position: absolute; top: 0; width: 34%; height: 40%; border-top: 26px solid #e9d3a8; }
+.rpath::before { left: 12%; border-left: 26px solid #e9d3a8; border-top-left-radius: 40px; }
+.rpath::after { right: 12%; border-right: 26px solid #e9d3a8; border-top-right-radius: 40px; }
+.rhog { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); font-size: 2.4rem; transition: transform .4s; }
+.rhog.gol { transform: translate(-160%, -180%); } .rhog.gor { transform: translate(60%, -180%); }
+.rprog { text-align: center; font-weight: 800; color: #4b6b3c; padding: 6px; }
+/* 대나무 */
+.bprog { display: block; color: var(--sub); font-size: .75rem; }
+.btower { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; padding: 8px 0; }
+.tseg { min-width: 40%; text-align: center; background: linear-gradient(90deg, #8fd16a, #b8e68f 50%, #7cc254); border: 2px solid #5a9a3a; border-radius: 10px; padding: 6px 12px; font-weight: 800; font-size: 1.1rem; color: #24461a; animation: popin .3s; }
+.btiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding-bottom: 6px; }
+.bseg { padding: 10px 14px; border-radius: 12px; background: #fff; border: 2px solid #a5d98a; box-shadow: 0 3px 0 #a5d98a; font-size: 1.1rem; font-weight: 700; }
+.bseg.used { visibility: hidden; } .bseg.shake { animation: shakeX .3s; }
+/* 수수께끼 */
+.rq { text-align: center; background: #fff; border-radius: 18px; padding: 10px; box-shadow: var(--sh); }
+.rq small { color: var(--sub); font-weight: 700; } .rq p { margin: 4px 0 0; font-weight: 700; }
+.remoji { font-size: 4.5rem; line-height: 1.1; } .remoji.sm { font-size: 2.6rem; }
+.rword b { font-size: 2rem; } .rword small { display: block; color: var(--sub); }
+.ropts { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: center; margin-top: 10px; }
+.ropt { min-height: 80px; border-radius: 16px; background: #fff; border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ropt b { font-size: 1.3rem; } .ropt small { font-size: .7rem; color: var(--sub); }
+.ropt.ok { border-color: var(--mint); background: #effbf5; } .ropt.miss { opacity: .35; }
+/* 받아쓰기 */
+.dslots { display: flex; justify-content: center; gap: 6px; margin: 14px 0; flex-wrap: wrap; }
+.dslot { width: 44px; height: 50px; border-bottom: 3px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 800; }
+.dslots.ok .dslot { border-color: var(--mint); color: var(--mint-d); } .dslots.bad { animation: shakeX .3s; } .dslots.bad .dslot { border-color: #e5484d; }
+.dtiles { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-content: flex-start; }
+.dtile { width: 54px; height: 54px; border-radius: 14px; background: #fff; border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); font-size: 1.5rem; font-weight: 700; }
+.dtile.used { opacity: .25; }
+.btower::after { content: "🐼"; font-size: 2.6rem; order: 99; }
