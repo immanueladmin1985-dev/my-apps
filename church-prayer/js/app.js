@@ -47,7 +47,7 @@
   let S = C.state || null;   // 마지막으로 받은 자료 (바로 그리기용)
   let online = true, busy = 0;
   // 기다려야 하는 요청은 화면 전체에 로딩 창을 띄우고 그동안 다른 버튼을 막음 (여러 번 누르지 않게)
-  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', targets: '여러 명을 넣고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요', person: '명단을 저장하고 있어요', people: '여러 명을 넣고 있어요', delPerson: '지우고 있어요', visit: '심방 기록을 저장하고 있어요', delVisit: '지우고 있어요', importSheet: '구글 시트에서 출석부를 가져오고 있어요 (1분 안팎)', bulkPerson: '한꺼번에 바꾸고 있어요', approve: '승인하고 있어요', cancelClaim: '취소하고 있어요' };
+  const WAIT_MSG = { setName: '이름을 저장하고 있어요', save: '기도 시간을 저장하고 있어요', prayer: '기도제목을 올리고 있어요', comment: '댓글을 올리고 있어요', master: '확인하고 있어요', reimport: '설문지 기록을 옮기고 있어요', setLogo: '로고를 저장하고 있어요', devices: '기기 목록을 불러오고 있어요', pick: '기도할 사람을 저장하고 있어요', target: '기도 대상을 저장하고 있어요', delTarget: '지우고 있어요', targets: '여러 명을 넣고 있어요', camp: '특별기도를 저장하고 있어요', delCamp: '지우고 있어요', event: '일정을 저장하고 있어요', delEvent: '지우고 있어요', att: '예배 인원을 저장하고 있어요', setRole: '권한을 바꾸고 있어요', teachers: '교사 명단을 저장하고 있어요', person: '명단을 저장하고 있어요', people: '여러 명을 넣고 있어요', delPerson: '지우고 있어요', visit: '심방 기록을 저장하고 있어요', delVisit: '지우고 있어요', importSheet: '구글 시트에서 출석부를 가져오고 있어요 (1분 안팎)', bulkPerson: '한꺼번에 바꾸고 있어요', campTarget: '기도 대상을 저장하고 있어요', approve: '승인하고 있어요', cancelClaim: '취소하고 있어요' };
   let waitN = 0, waitTimer = 0;
   function showWait(msg) {
     waitN++;
@@ -730,7 +730,7 @@
     const none = all.filter(x => !pickersOf(c, x.id).length).length;
     el.innerHTML = whoSelect(who) +
       `<p class="pickinfo">${ended ? '끝난 특별기도예요.' : `<b>${mine.length} / ${c.picks}명</b> 골랐어요 · 사진을 누르면 고르거나 빼요`}${none ? `<br><span class="small">🙋 아직 기도해 주는 분이 없는 사람 <b>${none}명</b></span>` : ''}</p>
-      ${isRosterUser() ? '<button class="btn addt" id="tRoster">📋 기도 대상(학생·청년)은 출석부 명단에서 넣고 고쳐요 →</button>' : ''}
+      ${isRosterUser() ? '<button class="btn addt" id="tRoster">⭐ 기도 대상은 출석부 [✏️ 편집]에서 골라 ⭐로 넣어요 →</button>' : ''}
       ${all.length ? `${divs.length > 1 ? `<div class="seg divseg"><button data-dv="" class="${!spState.div ? 'on' : ''}">전체 ${all.length}</button>${divs.map(d => `<button data-dv="${d}" class="${spState.div === d ? 'on' : ''}">${d} ${all.filter(x => dv(x) === d).length}</button>`).join('')}</div>` : ''}
       ${grades.length > 1 ? `<div class="gchips"><button data-gr="" class="${!spState.grade ? 'on' : ''}">전체</button>${grades.map(g => `<button data-gr="${esc(g)}" class="${spState.grade === g ? 'on' : ''}">${esc(g.replace(/^청년(?=\d)/, ''))}<small>${inDiv.filter(x => (x.grade || '학년 없음') === g).length}</small></button>`).join('')}</div>` : ''}
       <div class="seg sortseg">${[['few', '기도자 적은 순'], ['grade', '학년순'], ['name', '이름순']].map(([v, l]) => `<button data-sso="${v}" class="${srt === v ? 'on' : ''}">${l}</button>`).join('')}</div>` : ''}
@@ -742,9 +742,9 @@
             <span class="pc">🙏 ${ps.length}명</span>
             <span class="pw">${ps.length ? ps.map(esc).join(', ') : '기도해 줄 분을 기다려요'}</span></button>
           ${personOf(x.id) ? `<button class="tedit" data-tedit="${esc(x.id)}">✏️ 사진·정보</button>` : ''}</div>`;
-      }).join('') || `<p class="muted">아직 기도 대상이 없어요.${isRosterUser() ? ' 출석부 명단에 넣으면 여기 나와요.' : ' 선생님이 곧 올려 주실 거예요.'}</p>`}</div>`;
+      }).join('') || `<p class="muted">아직 기도 대상이 없어요.${isRosterUser() ? ' 출석부 [✏️ 편집]에서 ⭐로 넣으면 여기 나와요.' : ' 선생님이 곧 올려 주실 거예요.'}</p>`}</div>`;
     bindWho(el);
-    const tr = $('#tRoster', el); if (tr) tr.onclick = () => { const d = myDepts().find(x => (c.scope || {})[x]); if (d) C.attDept = d; mode = 'att'; saveCfg(); render(); window.scrollTo(0, 0); };
+    const tr = $('#tRoster', el); if (tr) tr.onclick = () => { const d = myDepts().find(x => (c.scope || {})[x]); if (d) C.attDept = d; mode = 'att'; editMode = true; attSel = new Set(); saveCfg(); render(); window.scrollTo(0, 0); };
     $$('[data-dv]', el).forEach(b => b.onclick = () => { spState.div = b.dataset.dv; spState.grade = ''; render(); });
     $$('[data-gr]', el).forEach(b => b.onclick = () => { spState.grade = b.dataset.gr; render(); });
     $$('[data-sso]', el).forEach(b => b.onclick = () => { C.spSort = b.dataset.sso; saveCfg(); render(); });
@@ -843,12 +843,12 @@
       <div class="field"><label for="cG">목표</label><input type="text" id="cG" maxlength="300" value="${esc(c ? c.goal : '')}" placeholder="예: 학생부·청년부 예배 인원 50명 이상"></div>
       <div class="field"><label for="cN">목표 인원 <span class="small muted">(숫자 · 없으면 0)</span></label><input type="number" id="cN" min="0" max="9999" inputmode="numeric" value="${c ? c.goalN : 0}"></div>
       <div class="field"><label for="cH">기도 방법 (광고 내용)</label><textarea id="cH" maxlength="2000" placeholder="① …\n② …">${esc(c ? c.how : '')}</textarea></div>
-      <div class="field"><label>기도 대상 <span class="small muted">(출석부 명단에서 이 부서·학년인 분이 나와요)</span></label><div id="scB"></div></div>`,
+      <div class="field"><label>목표 인원을 셀 부서 <span class="small muted">(이 부서들의 출석 인원을 더해요 · 기도 대상은 교사가 출석부에서 ⭐로 넣어요)</span></label><div id="scB"></div></div>`,
       (c ? [{ label: '지우기', val: 'del', cls: 'danger' }] : []).concat([{ label: '취소', val: false }, { label: '저장', val: 'save', cls: 'pri' }]),
       inn => {
         const box = $('#scB', inn);
         const paint = () => {
-          box.innerHTML = DEPTS.map(d => { const v = scope[d], ch = gradeChoices(d);
+          box.innerHTML = DEPTS.map(d => { const v = scope[d], ch = [];
             return `<div class="scrow${v ? ' on' : ''}"><label class="chk row"><input type="checkbox" data-sd="${d}"${v ? ' checked' : ''}> <b>${d}</b></label>
               ${v && ch.length ? `<div class="chips gpick"><button data-sa="${d}" class="${v === '*' ? 'on' : ''}">전체</button>${ch.map(g => `<button data-sg="${d}|${g}" class="${v !== '*' && v.includes(g) ? 'on' : ''}">${g}</button>`).join('')}</div>` : ''}</div>`; }).join('');
           $$('[data-sd]', box).forEach(x => x.onchange = () => { if (x.checked) scope[x.dataset.sd] = '*'; else delete scope[x.dataset.sd]; paint(); });
@@ -954,7 +954,7 @@
   // 교사: 맡은 부서에서만 '교사' 칸, 다른 부서 명단에서는 숨김
   const tdOf = n => ((S && S.tdepts) || {})[n];
   const isTeacherIn = m => m.status === '교사' || !!(tdOf(m.name) && tdOf(m.name).includes(m.dept));
-  const hiddenHere = m => m.status !== '교사' && !!tdOf(m.name) && !tdOf(m.name).includes(m.dept);
+  const hiddenHere = m => !!tdOf(m.name) && !tdOf(m.name).includes(m.dept);
   const rosterOf = d => (S.roster || []).filter(m => m.dept === d && !hiddenHere(m));
   const personOf = id => (S.roster || []).find(m => m.id === id);
   const visitsOf = id => (S.visits || []).filter(v => v.pid === id).sort((a, b) => b.date.localeCompare(a.date) || b.at - a.at);
@@ -1007,10 +1007,12 @@
     const app = $('#app');
     app.innerHTML = `<div class="welcome launcher">${brandHtml()}
       <p class="lead">${dispName(myName())}, 어디로 갈까요?</p>
+      ${topBanners()}${S.notices && S.notices[0] ? `<button class="notice one" id="lNt">📢 <span>${esc(S.notices[0].text.replace(/\n/g, ' '))}</span></button>` : ''}
       <button class="lcard" id="goPray"><span class="li">🙏</span><b>기도</b><small>매일 기도 · 특별기도</small></button>
       <button class="lcard att" id="goAtt"><span class="li">✅</span><b>출석부</b><small>${esc(myDepts().length > 4 ? '모든 부서' : myDepts().join(' · '))}</small></button>
     </div>`;
     $('#goPray').onclick = () => { mode = 'pray'; render(); showNotices(false); };
+    bindBanners(); const ln = $('#lNt'); if (ln) ln.onclick = () => showNotices(true);
     $('#goAtt').onclick = () => { mode = 'att'; render(); };
   }
   function curDept() {
@@ -1021,6 +1023,9 @@
   const lastSunday = () => { const t = today(); return addDays(t, -parse(t).getDay()); };
   let attDate = null, attQuery = '', showLong = false, editMode = false, attSel = new Set();
   // 편집: 고른 사람들의 구분·부서를 한꺼번에 바꾸거나 지움
+  // 지금 진행 중인 특별기도 (⭐ 기도 대상 넣기용)
+  const liveCamps = () => SPS().camps.filter(c => c.end >= today()).sort((a, b) => a.start.localeCompare(b.start));
+  const starIds = () => { const c = liveCamps()[0]; return new Set(c ? SPS().targets.filter(x => x.camp === c.id).map(x => x.id) : []); };
   async function bulkEdit(dept, kind) {
     const ids = [...attSel]; if (!ids.length) { toast('먼저 사람을 눌러 골라 주세요'); return; }
     const names = ids.map(id => (personOf(id) || {}).name).filter(Boolean), head = `<p class="small muted">${names.slice(0, 12).map(esc).join(', ')}${names.length > 12 ? ` 외 ${names.length - 12}명` : ''}</p>`;
@@ -1028,6 +1033,17 @@
     if (kind === 'status') {
       const v = await modal(`<h3>${ids.length}명 — 구분 바꾸기</h3>${head}<div class="chips">${[['', '학년대로 (구분 없음)'], ['교사', '교사']].concat(SPECIAL.map(x => [x, x])).map(([k, l]) => `<button data-bs="${k}">${l}</button>`).join('')}</div>`, [{ label: '취소', val: false }], (inn, close) => $$('[data-bs]', inn).forEach(b => b.onclick = () => close({ v: b.dataset.bs })));
       if (!v) return; p.status = v.v;
+    } else if (kind === 'star') {
+      const cs = liveCamps(); if (!cs.length) { toast('진행 중인 특별기도가 없어요'); return; }
+      let camp = cs[0].id;
+      const v = await modal(`<h3>⭐ ${ids.length}명 — 특별기도 기도 대상</h3>${head}
+        ${cs.length > 1 ? `<div class="field"><select id="stC">${cs.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join('')}</select></div>` : `<p><b>${esc(cs[0].title)}</b></p>`}
+        <p class="small muted">넣은 사람만 특별기도 [고르기]에 나와요. 성도님들이 이 중에서 기도할 사람을 골라요.</p>`,
+        [{ label: '취소', val: false }, { label: '빼기', val: 'off', cls: 'danger' }, { label: '⭐ 넣기', val: 'on', cls: 'pri' }],
+        inn => { const sc = $('#stC', inn); if (sc) sc.onchange = () => camp = sc.value; });
+      if (!v) return;
+      try { const d = await api('campTarget', { camp, ids, on: v === 'on' }); toast(v === 'on' ? `⭐ ${d.changed}명을 기도 대상에 넣었어요` : `${d.changed}명을 기도 대상에서 뺐어요`); attSel = new Set(); } catch (e) { toast(e.message); }
+      render(); return;
     } else if (kind === 'dept') {
       const ds = myDepts().filter(d => d !== dept); if (!ds.length) { toast('옮길 수 있는 다른 부서가 없어요'); return; }
       const v = await modal(`<h3>${ids.length}명 — 부서 옮기기</h3>${head}<div class="chips">${ds.map(d => `<button data-bd="${d}">${d}</button>`).join('')}</div><p class="small muted">출석 기록은 그대로 따라가요.</p>`, [{ label: '취소', val: false }], (inn, close) => $$('[data-bd]', inn).forEach(b => b.onclick = () => close({ v: b.dataset.bd })));
@@ -1067,10 +1083,10 @@
     let sel = C.attSec[dept];
     if (sel !== '전체' && !groups.some(g => g.key === sel)) sel = groups.length ? groups[0].key : '전체';
     const showAll = sel === '전체' || !!q;
-    const recent = Object.keys(o).filter(d => o[d].size && d < attDate).sort().slice(-8);
+    const recent = Object.keys(o).filter(d => o[d].size && d < attDate).sort().slice(-8), stars = starIds();
     const row = m => {
       const s = st[m.id], on = editMode ? attSel.has(m.id) : present.has(m.id), hide = q && !m.name.includes(q);
-      return `<div class="arow${on ? ' on' : ''}${hide ? ' hidden' : ''}"><button class="atap" data-at="${esc(m.id)}">${photoHtml(m, 'xs')}<span class="an"><b>${esc(m.name)}</b><small>${isT(m) ? '교사' : esc(m.label || '')}${m.y != null && m.dept !== '유치부' && !/세$/.test(m.label) ? ` · ${m.y + 1}세` : ''}</small></span><span class="adots8" title="최근 ${recent.length}번">${recent.map(d => `<i class="${o[d].has(m.id) ? 'on' : ''}"></i>`).join('')}</span><span class="amark${editMode ? ' box' : ''}">${on ? '✓' : ''}</span></button>
+      return `<div class="arow${on ? ' on' : ''}${hide ? ' hidden' : ''}"><button class="atap" data-at="${esc(m.id)}">${photoHtml(m, 'xs')}<span class="an"><b>${stars.has(m.id) ? '<i class="star" title="특별기도 기도 대상">⭐</i>' : ''}${esc(m.name)}</b><small>${isT(m) ? '교사' : esc(m.label || '') + (m.y != null && m.dept !== '유치부' && !/세$/.test(m.label) ? ` · ${m.y + 1}세` : '')}</small></span><span class="adots8" title="최근 ${recent.length}번">${recent.map(d => `<i class="${o[d].has(m.id) ? 'on' : ''}"></i>`).join('')}</span><span class="amark${editMode ? ' box' : ''}">${on ? '✓' : ''}</span></button>
         <button class="ainfo" data-pi="${esc(m.id)}"><span class="rate r${s.den ? Math.min(4, Math.floor(s.rate * 5)) : 0}">${s.den ? Math.round(s.rate * 100) + '%' : '-'}</span>›</button></div>`;
     };
     const pc = list => list.filter(m => present.has(m.id)).length;
@@ -1099,10 +1115,10 @@
         </div>
         ${people.length ? `<div class="gchips sectabs"><button data-sc="전체" class="${sel === '전체' ? 'on' : ''}">전체<small>${total}/${people.length}</small></button>${groups.map(g => `<button data-sc="${esc(g.key)}" class="${sel === g.key ? 'on' : ''}${g.long ? ' dim' : ''}">${esc(g.title)}<small>${pc(g.list)}/${g.list.length}</small></button>`).join('')}</div>`
           : `<div class="card"><p>아직 ${esc(dept)} 명단이 없어요.</p><p class="small muted">${isMaster() ? '위의 [📥 시트 가져오기]로 지금까지의 출석부를 한 번에 넣거나, ' : ''}[＋ 한 명] · [📋 여러 명]으로 넣어 주세요.</p></div>`}
-        ${editMode ? '<p class="small ahelp editnote">✏️ 편집: 사람을 눌러 여러 명 고른 뒤 아래에서 구분(교사 등)·부서를 바꾸거나 지워요</p>' : '<p class="small muted ahelp">이름을 누르면 출석 ✓ · 작은 칸은 지난 8번 출석 · 오른쪽 %를 누르면 연락처·심방</p>'}
+        ${editMode ? '<p class="small ahelp editnote">✏️ 편집: 사람을 눌러 여러 명 고른 뒤 아래에서 ⭐(특별기도 기도 대상)·구분(교사 등)·부서를 바꾸거나 지워요</p>' : '<p class="small muted ahelp">이름을 누르면 출석 ✓ · 작은 칸은 지난 8번 출석 · 오른쪽 %를 누르면 연락처·심방</p>'}
         ${groups.filter(g => showAll || g.key === sel).map(secHtml).join('')}
       </main>
-      ${editMode ? `<div class="editbar"><span id="eCnt">${attSel.size}명 선택</span><button class="btn sm" id="eAll">이 칸 모두</button><button class="btn sm pri" id="eSet">구분</button><button class="btn sm pri" id="eMove">부서</button><button class="btn sm danger" id="eDel">지우기</button></div>` : ''}`;
+      ${editMode ? `<div class="editbar"><span id="eCnt">${attSel.size}명 선택</span><button class="btn sm" id="eAll">모두</button><button class="btn sm pri" id="eStar">⭐</button><button class="btn sm pri" id="eSet">구분</button><button class="btn sm pri" id="eMove">부서</button><button class="btn sm danger" id="eDel">지우기</button></div>` : ''}`;
     paintAttSave();
     $('#tMode').onclick = () => { mode = 'pray'; render(); window.scrollTo(0, 0); };
     $('#tTheme').onclick = () => { C.theme = isDark() ? 'light' : 'dark'; saveCfg(); applyTheme(); render(); };
@@ -1114,7 +1130,7 @@
     $('#aNext').onclick = () => { const n = addDays(attDate, 7); attDate = n > t ? t : n; render(); };
     const aq = $('#aQ'); aq.oninput = () => { const had = !!attQuery.trim(); attQuery = aq.value; const v = attQuery.replace(/\s+/g, '');
       if (had !== !!v || (v && !showAll)) { const pos = aq.selectionStart; render(); const n = $('#aQ'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } return; }
-      $$('.arow').forEach(r => { const n = r.querySelector('.an b').textContent; r.classList.toggle('hidden', !!v && !n.includes(v)); }); };
+      $$('.arow').forEach(r => { const n = r.querySelector('.an b').textContent.replace('⭐', ''); r.classList.toggle('hidden', !!v && !n.includes(v)); }); };
     $$('[data-sc]').forEach(b => b.onclick = () => { C.attSec = C.attSec || {}; C.attSec[dept] = b.dataset.sc; saveCfg(); attQuery = ''; render(); const tb = $('.sectabs'); if (tb) window.scrollTo(0, tb.getBoundingClientRect().top + window.scrollY - 8); });
     $$('[data-at]').forEach(b => b.onclick = () => {
       if (editMode) { const id = b.dataset.at, on = !attSel.has(id); if (on) attSel.add(id); else attSel.delete(id); b.closest('.arow').classList.toggle('on', on); b.querySelector('.amark').textContent = on ? '✓' : ''; const c = $('#eCnt'); if (c) c.textContent = `${attSel.size}명 선택`; return; }
@@ -1139,6 +1155,7 @@
       $('#eSet').onclick = () => bulkEdit(dept, 'status');
       $('#eMove').onclick = () => bulkEdit(dept, 'dept');
       $('#eDel').onclick = () => bulkEdit(dept, 'del');
+      $('#eStar').onclick = () => bulkEdit(dept, 'star');
     }
     $('#aStat').onclick = () => attStatDlg(dept);
     loadPhotos(people.filter(m => m.pv));
@@ -1830,6 +1847,7 @@
     try { await flush(); await api('load'); }
     catch (e) { const el = $('#loadErr'); if (el) el.innerHTML = `<p class="err">${esc(e.message)}</p><button class="btn pri" id="retry">다시 시도</button>`; const r = $('#retry'); if (r) r.onclick = boot; else toast(e.message); return; }
     render();
+    if ((C.attQ || []).length && isRosterUser()) flushAtt();
     if (myName() && !isRosterUser()) { if (!C.tourDone) { view = 'input'; render(); startTour(0); } else showNotices(false); }
   }
 
