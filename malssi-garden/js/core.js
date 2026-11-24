@@ -1,5 +1,6 @@
 // 말씨정원 공통: 저장, 재화, 연속 학습, 퀘스트, 소리, 발음, 창
 (function () {
+  if (window.parseLangs) window.parseLangs();   // 학습 내용 읽기 (추가 단어장 포함)
   var M = window.M = {};
   var KEY = 'malssi-garden-v1';
   M.$ = function (id) { return document.getElementById(id); };

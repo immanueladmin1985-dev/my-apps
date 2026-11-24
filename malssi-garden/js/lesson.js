@@ -133,6 +133,8 @@
   }
   // 긴 낱말은 글씨를 줄여서 잘리지 않게 한다
   function sizeCls(t) { var n = String(t).replace(/\s/g, '').length; return n > 9 ? ' xl' : n > 5 ? ' lg' : n > 3 ? ' md' : ''; }
+  var HAN = /[\u4e00-\u9fff]/;
+  function jaKanji(o) { return o.lang === 'ja' && o.r && HAN.test(o.t); }   // 한자 단어는 읽는 법을 같이 보여 준다
   function foot(html, cls) { var f = $('lFoot'); f.className = 'lfoot' + (cls ? ' ' + cls : ''); f.innerHTML = html; }
   var TITLES = { steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
 
@@ -140,7 +142,11 @@
     var q = S.qs[S.i]; S.answered = false; q.pick = null; bar();
     if (q.item && !q.opts && (q.type === 'meaning' || q.type === 'target' || q.type === 'listen')) {
       q.opts = options(q.item, q.type === 'meaning' ? 'k' : 't');
-      if (q.opts.length < 2 && q.type === 'meaning') q.opts = options(q.item, 'k');
+      if (q.opts.length < 2) {   // 배운 것이 모자라면 같은 단계의 다른 낱말로 채운다 (보기가 하나뿐이면 안 되므로)
+        var f = q.type === 'meaning' ? 'k' : 't', seen = {}; q.opts.forEach(function (o) { seen[o[f]] = 1; });
+        M.shuffle(stageOf(q.item).items).forEach(function (x) { if (q.opts.length < 3 && !seen[x[f]]) { seen[x[f]] = 1; q.opts.push(x); } });
+        q.opts = M.shuffle(q.opts); M.lowOpts = (M.lowOpts || 0) + 1;
+      }
     }
     var body = $('lBody');
     var h = '<div class="qt">' + TITLES[q.type] + '</div>';
@@ -167,13 +173,13 @@
       h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + (o.e ? '<span class="oe">' + o.e + '</span>' : '') + '<span>' + esc(o.k) + '</span></button>'; }).join('') + '</div>';
     } else if (q.type === 'target') {
       h += '<div class="qcard ko">' + (it.e ? '<div class="bigE">' + it.e + '</div>' : '') + '<div class="fk">' + esc(it.k) + '</div></div>';
-      h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span>' + (o.lang === 'zh' && !o.kana ? '<small>' + esc(o.r.split(' · ')[0]) + '</small>' : '') + '</button>'; }).join('') + '</div>';
+      h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span>' + (o.lang === 'zh' && !o.kana ? '<small>' + esc(o.r.split(' · ')[0]) + '</small>' : jaKanji(o) ? '<small>' + esc(o.r) + '</small>' : '') + '</button>'; }).join('') + '</div>';
     } else if (q.type === 'listen') {
       h += '<div class="qcard listen">' + sayBtn(it.say, true) + '</div>';
-      h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span></button>'; }).join('') + '</div>';
+      h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(jaKanji(o) ? o.r : o.t) + '</span>' + (jaKanji(o) ? '<small>' + esc(o.t) + '</small>' : '') + '</button>'; }).join('') + '</div>';
     } else if (q.type === 'match') {
       var left = M.shuffle(q.items), right = M.shuffle(q.items);
-      h += '<div class="match"><div class="mcol">' + left.map(function (x) { return '<button class="mt lang-' + x.lang + '" data-side="l" data-k="' + esc(x.t) + '" data-say="' + esc(x.say) + '">' + esc(x.t) + '</button>'; }).join('') + '</div>' +
+      h += '<div class="match"><div class="mcol">' + left.map(function (x) { return '<button class="mt lang-' + x.lang + '" data-side="l" data-k="' + esc(x.t) + '" data-say="' + esc(x.say) + '">' + esc(x.t) + (jaKanji(x) ? '<small class="mr">' + esc(x.r) + '</small>' : '') + '</button>'; }).join('') + '</div>' +
         '<div class="mcol">' + right.map(function (x) { return '<button class="mt" data-side="r" data-k="' + esc(x.t) + '">' + (x.e ? x.e + ' ' : '') + esc(x.k) + '</button>'; }).join('') + '</div></div>';
       q.left = q.items.length; q.sel = null;
     } else if (q.type === 'build') {
@@ -403,6 +409,7 @@
     if (q.type === 'teach' || q.type === 'steach') { $('tNext').click(); return q.type; }
     if (q.type === 'meaning' || q.type === 'target' || q.type === 'listen') {
       var idx = q.opts.findIndex(function (o) { return wrong ? o.t !== q.item.t : o.t === q.item.t; });
+      if (idx < 0) idx = q.opts.findIndex(function (o) { return o.t === q.item.t; });
       document.querySelector('.opt[data-i="' + idx + '"]').click();
       $('oCheck').click();
     } else if (q.type === 'match') {

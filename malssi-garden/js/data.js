@@ -838,7 +838,10 @@ chī/cài|요리를 먹다 (吃菜)|吃菜` }
 };
 
 // 문자열로 적은 내용을 객체로 바꾸고, 단계마다 고유 번호를 붙인다.
-(function () {
+// 단어장 추가 파일(data-n5.js 등)을 다 읽은 뒤 core.js 가 한 번 부른다.
+window.parseLangs = function () {
+  if (window.LANGS_PARSED) return; window.LANGS_PARSED = true;
+  (function () {
   Object.keys(window.LANGS).forEach(function (code) {
     var L = window.LANGS[code]; L.code = code; L.stages = [];
     L.units.forEach(function (u, ui) {
@@ -859,6 +862,7 @@ chī/cài|요리를 먹다 (吃菜)|吃菜` }
     });
   });
 })();
+};
 
 // 배우기 카드에 붙이는 도움말
 window.TIPS = {
