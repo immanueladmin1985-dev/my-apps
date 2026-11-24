@@ -33,7 +33,11 @@
   function buildQ(sent, lang) {
     var have = {}; sent.w.forEach(function (w) { have[w] = 1; });
     var st = stageOf(sent), others = [];
-    window.LANGS[lang].stages.forEach(function (s) { if (!!s.kana === !!st.kana) s.sents.forEach(function (x) { x.w.forEach(function (w) { if (!have[w]) others.push(w); }); }); });
+    window.LANGS[lang].stages.forEach(function (s) {
+      if (!!s.kana !== !!st.kana || s.idx > st.idx) return;   // 아직 배우지 않은 단계의 낱말은 섞지 않는다
+      s.sents.forEach(function (x) { x.w.forEach(function (w) { if (!have[w]) others.push(w); }); });
+      if (s.kana) s.items.forEach(function (it) { if (!have[it.t] && it.t.length <= 4) others.push(it.t); });
+    });
     var extra = [], seen = {};
     M.shuffle(others).forEach(function (w) { if (extra.length < (sent.w.length > 3 ? 3 : 2) && !seen[w]) { seen[w] = 1; extra.push(w); } });
     var tiles = M.shuffle(sent.w.concat(extra)).map(function (w, i) { return { w: w, id: i }; });
@@ -44,6 +48,17 @@
     var c = stage.nospeak ? [] : stage.items.slice();
     if (lang !== 'ja' && !stage.kana) c = c.concat(stage.sents.map(function (s) { return { t: s.t, say: s.say, r: '', k: s.k, alt: [], lang: lang, sid: s.sid, sent: true }; }));
     return c;
+  }
+  // 처음 보는 문장은 낱말 뜻과 어순을 먼저 보여 준다
+  function sentKey(s) { return 'S:' + s.lang + ':' + s.t; }
+  function sentPair(s, lang) { var b = buildQ(s, lang); return M.P.srs[sentKey(s)] ? b : [{ type: 'steach', sent: s }, b]; }
+  function flat(a) { var o = []; a.forEach(function (x) { if (Array.isArray(x)) o = o.concat(x); else o.push(x); }); return o; }
+  function gloss(w, lang) {
+    var n = w.toLowerCase().replace(/[,.?!，。？！]/g, '');
+    var L = window.LANGS[lang], hit = '';
+    L.stages.forEach(function (s) { s.items.forEach(function (it) { if (!hit && it.t.toLowerCase() === n) hit = it.k; }); });
+    var G = (window.GLOSS || {})[lang] || {};
+    return hit || G[n] || G[w] || '';
   }
   M.buildLesson = function (lang, stage) {
     var qs = [];
@@ -65,13 +80,14 @@
       qs.splice(mid, 0, { type: 'match', items: M.shuffle(stage.items).slice(0, 5) });
       // 다른 단어도 한 번 더 (같은 단계 안에서 반대 방향으로)
       M.shuffle(stage.items).slice(0, 2).forEach(function (it) { qs.push(pickQ(it, stage.ear ? 'listen' : 'target')); });
-      var rest = M.shuffle(stage.sents).slice(0, 2).map(function (s) { return buildQ(s, lang); });
+      var rest = [];
+      M.shuffle(stage.sents).slice(0, 2).forEach(function (s) { rest.push(sentPair(s, lang)); });
       var sp = speakable(stage, lang);
       if (canSpeak && sp.length) rest.push({ type: 'speak', item: M.pick(sp) });
       var prev = M.learnedItems(lang).filter(function (it) { return it.sid !== stage.id; });
       var due = M.dueItems(lang).filter(function (it) { return it.sid !== stage.id; });
       M.shuffle(due.length >= 2 ? due : prev).slice(0, 2).forEach(function (it) { rest.push(pickQ(it, M.pick(['meaning', 'target', 'listen']))); });
-      qs = qs.concat(M.shuffle(rest));
+      qs = qs.concat(flat(M.shuffle(rest)));
     } else {
       // 복습: 때가 된 단어와 틀렸던 단어 위주
       var due2 = M.shuffle(M.dueItems(lang));
@@ -82,7 +98,7 @@
       if (its.length >= 4) qs.splice(3, 0, { type: 'match', items: M.shuffle(its).slice(0, 5) });
       var ss = [];
       window.LANGS[lang].stages.forEach(function (s) { if (M.P.prog[lang][s.id]) ss = ss.concat(s.sents); });
-      M.shuffle(ss).slice(0, 2).forEach(function (s, k) { qs.splice(Math.min(qs.length, 5 + k * 3), 0, buildQ(s, lang)); });
+      M.shuffle(ss).slice(0, 2).forEach(function (s, k) { var pr = sentPair(s, lang); qs.splice.apply(qs, [Math.min(qs.length, 5 + k * 3), 0].concat(Array.isArray(pr) ? pr : [pr])); });
       if (canSpeak) {
         var sp2 = its.filter(function (it) { return !stageOf(it).nospeak; });
         if (sp2.length) qs.splice(Math.min(qs.length, 7), 0, { type: 'speak', item: M.pick(sp2) });
@@ -113,10 +129,10 @@
       (big ? '<button class="say slow" data-say="' + esc(text) + '" data-slow="1" aria-label="천천히 듣기">🐢</button>' : '');
   }
   function foot(html, cls) { var f = $('lFoot'); f.className = 'lfoot' + (cls ? ' ' + cls : ''); f.innerHTML = html; }
-  var TITLES = { teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
+  var TITLES = { steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
 
   function show() {
-    var q = S.qs[S.i]; S.answered = false; bar();
+    var q = S.qs[S.i]; S.answered = false; q.pick = null; bar();
     var body = $('lBody');
     var h = '<div class="qt">' + TITLES[q.type] + '</div>';
     var it = q.item;
@@ -129,6 +145,14 @@
         '<div class="tk">' + esc(it.k) + '</div>' +
         '<div class="tsay">' + sayBtn(it.say, true) + '</div>' +
         (tip ? '<div class="tip">💡 ' + esc(tip) + '</div>' : '') + '</div>';
+    } else if (q.type === 'steach') {
+      var sn = q.sent, stg = stageOf(sn);
+      h = '<div class="qt"><span class="newtag">문장을 배워요</span></div><div class="teach steach lang-' + sn.lang + '">' +
+        '<div class="tk">' + esc(sn.k) + '</div>' +
+        '<button class="tt sm" data-say="' + esc(sn.say) + '">' + esc(sn.t) + '</button>' +
+        '<div class="gls">' + sn.w.map(function (w) { var g = gloss(w, sn.lang); return '<button class="gl" data-say="' + esc(stg.kana && sn.lang === 'zh' ? '' : w) + '"><b>' + esc(w) + '</b><small>' + esc(g || '·') + '</small></button>'; }).join('') + '</div>' +
+        '<div class="tsay">' + sayBtn(sn.say, true) + '</div>' +
+        (!stg.kana && window.ORDER_TIP ? '<div class="tip">💡 ' + esc(window.ORDER_TIP[sn.lang]) + '</div>' : '') + '</div>';
     } else if (q.type === 'meaning') {
       h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft">' + esc(it.t) + '</div>' + (it.r && !it.kana ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div>' + sayBtn(it.say) + '</div>';
       h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + (o.e ? '<span class="oe">' + o.e + '</span>' : '') + '<span>' + esc(o.k) + '</span></button>'; }).join('') + '</div>';
@@ -153,10 +177,12 @@
       q.fails = q.fails || 0;
     }
     body.innerHTML = h; body.scrollTop = 0;
-    if (q.type === 'teach') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
+    if (q.type === 'teach' || q.type === 'steach') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
+    else if (q.opts) foot('<button class="btn primary wide" id="oCheck" disabled>확인</button>');
     else if (q.type === 'build') foot('<button class="btn primary wide" id="bCheck" disabled>확인</button>');
     else if (q.type === 'speak') foot('<button class="btn ghost wide" id="sSkip">지금은 말할 수 없어요</button>');
     else foot('');
+    if (q.type === 'steach') setTimeout(function () { if (S && S.qs[S.i] === q) M.say(q.sent.say, S.lang); }, M.fast ? 0 : 250);
     var auto = q.type === 'teach' || q.type === 'listen' || (M.P.set.autoAudio && (q.type === 'meaning' || q.type === 'speak'));
     if (auto) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(it.say, S.lang); }, M.fast ? 0 : 250);
   }
@@ -198,15 +224,24 @@
     if (!S) return;
     var t = e.target;
     if (t.closest('#lNext')) { next(); return; }
-    if (t.closest('#tNext')) { S.done++; M.srsHit(S.qs[S.i].item, true); next(); return; }
+    if (t.closest('#tNext')) { var tq = S.qs[S.i]; S.done++; if (tq.item) M.srsHit(tq.item, true); else M.P.srs[sentKey(tq.sent)] = [1, Date.now()]; next(); return; }
     var q = S.qs[S.i];
     var mt = t.closest('.mt');
     if (mt && !mt.classList.contains('gone')) { matchTap(q, mt); return; }
     var sayB = t.closest('[data-say]');
     if (sayB) { M.say(sayB.dataset.say, S.lang, !!sayB.dataset.slow); return; }
     var opt = t.closest('.opt');
-    if (opt && !S.answered) {
-      var o = q.opts[+opt.dataset.i], ok = o.t === q.item.t;
+    if (opt && !S.answered) {   // 먼저 고르기만 한다 (외국어 보기는 소리를 들려준다)
+      q.pick = +opt.dataset.i;
+      Array.prototype.forEach.call(document.querySelectorAll('.opt'), function (b) { b.classList.toggle('pick', b === opt); });
+      if (q.type !== 'meaning') M.say(q.opts[q.pick].say, S.lang); else M.sfx('tap');
+      $('oCheck').disabled = false;
+      return;
+    }
+    if (t.closest('#oCheck') && !S.answered && q.pick != null) {
+      opt = document.querySelector('.opt[data-i="' + q.pick + '"]');
+      var o = q.opts[q.pick], ok = o.t === q.item.t;
+      opt.classList.remove('pick');
       opt.classList.add(ok ? 'right' : 'wrong');
       if (!ok) Array.prototype.forEach.call(document.querySelectorAll('.opt'), function (b) { if (q.opts[+b.dataset.i].t === q.item.t) b.classList.add('right'); });
       judge(ok, q, answerInfo(q.item), q.item.say);
@@ -215,7 +250,7 @@
     var tile = t.closest('.tile');
     if (tile && !S.answered && q.type === 'build') { buildTap(q, tile); return; }
     if (t.closest('#bCheck') && !S.answered) {
-      var got = q.chosen.map(function (id) { return q.tiles[id].w; }).join('\u0001');
+      var got = q.chosen.map(function (id) { return tileOf(q, id).w; }).join('\u0001');
       var ok2 = got === q.sent.w.join('\u0001');
       judge(ok2, q, (ok2 ? '' : '정답: ') + '<b class="lang-' + S.lang + '">' + esc(q.sent.t) + '</b> = ' + esc(q.sent.k), q.sent.say);
       return;
@@ -242,6 +277,7 @@
       setTimeout(function () { a.classList.remove('shakeX'); b.classList.remove('shakeX'); }, 400);
     }
   }
+  function tileOf(q, id) { for (var i = 0; i < q.tiles.length; i++) if (q.tiles[i].id === id) return q.tiles[i]; return { w: '' }; }
   function buildTap(q, tile) {
     var id = +tile.dataset.id;
     var inSlot = tile.parentNode.id === 'bSlots';
@@ -249,9 +285,10 @@
     else {
       if (tile.classList.contains('used')) return;
       q.chosen.push(id); tile.classList.add('used');
-      var c = document.createElement('button'); c.className = 'tile'; c.dataset.id = id; c.textContent = q.tiles[id].w;
+      var w = tileOf(q, id).w;
+      var c = document.createElement('button'); c.className = 'tile'; c.dataset.id = id; c.textContent = w;
       $('bSlots').appendChild(c);
-      if (q.mute) M.sfx('tap'); else M.say(q.tiles[id].w, S.lang);
+      if (q.mute) M.sfx('tap'); else M.say(w, S.lang);
     }
     $('bCheck').disabled = q.chosen.length === 0;
   }
@@ -351,10 +388,11 @@
     if (!S) return 'none';
     var q = S.qs[S.i];
     if (S.answered) { $('lNext').click(); return 'next'; }
-    if (q.type === 'teach') { $('tNext').click(); return 'teach'; }
+    if (q.type === 'teach' || q.type === 'steach') { $('tNext').click(); return q.type; }
     if (q.type === 'meaning' || q.type === 'target' || q.type === 'listen') {
       var idx = q.opts.findIndex(function (o) { return wrong ? o.t !== q.item.t : o.t === q.item.t; });
       document.querySelector('.opt[data-i="' + idx + '"]').click();
+      $('oCheck').click();
     } else if (q.type === 'match') {
       q.items.forEach(function (it) {
         var k = it.t.replace(/"/g, '\\"');

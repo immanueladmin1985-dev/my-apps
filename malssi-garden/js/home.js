@@ -46,6 +46,10 @@
   }
 
   M.renderHome = function (root) {
+    Object.keys(M.P.room.placed).forEach(function (id) {
+      var f = FURN.filter(function (x) { return x.id === id; })[0], p = M.P.room.placed[id]; if (!f || !p) return;
+      var hw = f.size / 2; p.x = Math.max(hw, Math.min(100 - hw, p.x));
+    });
     var P = M.P, p = P.pet, full = M.petFull();
     var face = mood || (full < 30 ? 'sad' : 'normal');
     var line = full < 30 ? '배고파요… 🥕 먹이를 주세요' : M.pick(LINES);
@@ -112,13 +116,18 @@
       var f = FURN.filter(function (x) { return x.id === b.dataset.fid; })[0];
       if (P.room.owned[f.id]) { togglePlace(f); paint(); return; }
       if (!M.spend('coins', f.price)) { M.toast('코인이 ' + (f.price - P.coins) + '개 더 필요해요'); return; }
-      P.room.owned[f.id] = true; togglePlace(f); M.sfx('coin'); M.toast(M.j(f.name, '을', '를') + ' 샀어요! 방에 놓았어요'); paint();
+      P.room.owned[f.id] = true; togglePlace(f); M.sfx('coin'); M.toast(M.j(f.name, '을', '를') + ' 샀어요! ✏️ 꾸미기를 누르면 원하는 곳으로 옮길 수 있어요'); paint();
     });
   }
   function togglePlace(f) {
     var P = M.P;
     if (P.room.placed[f.id]) delete P.room.placed[f.id];
-    else P.room.placed[f.id] = { x: 15 + Math.random() * 70, y: f.wall ? 24 + Math.random() * 18 : f.rug ? 80 + Math.random() * 8 : 66 + Math.random() * 22 };
+    else {
+      // 토끼(가운데 아래)를 가리지 않게 양옆에 놓는다
+      var half = f.size / 2 + 2, room = Math.max(0, 34 - half);   // 가구가 방 밖으로 나가지 않게
+      var side = Math.random() < 0.5, x = f.wall ? half + Math.random() * (100 - 2 * half) : side ? half + Math.random() * room : 100 - half - Math.random() * room;
+      P.room.placed[f.id] = { x: x, y: f.wall ? 18 + Math.random() * 22 : f.rug ? 84 + Math.random() * 6 : 64 + Math.random() * 16 };
+    }
     M.save();
   }
 
@@ -128,15 +137,18 @@
     if (!editing) return;
     var el = e.target.closest && e.target.closest('#room .furn'); if (!el) return;
     var r = $('room').getBoundingClientRect();
-    fd = { el: el, id: el.dataset.f, r: r, x: e.clientX, y: e.clientY, moved: false, pid: e.pointerId };
+    var cur = M.P.room.placed[el.dataset.f] || { x: 50, y: 50 };
+    // 누른 지점과 가구 중심의 차이를 기억해서, 가구가 손가락 위치로 튀지 않게 한다
+    fd = { el: el, id: el.dataset.f, r: r, x: e.clientX, y: e.clientY, moved: false, pid: e.pointerId, ox: (e.clientX - r.left) / r.width * 100 - cur.x, oy: (e.clientY - r.top) / r.height * 100 - cur.y };
     el.classList.add('drag');
   });
   document.addEventListener('pointermove', function (e) {
     if (!fd || e.pointerId !== fd.pid) return;
     if (Math.abs(e.clientX - fd.x) + Math.abs(e.clientY - fd.y) > 6) fd.moved = true;
     if (!fd.moved) return;
-    var x = Math.max(5, Math.min(95, (e.clientX - fd.r.left) / fd.r.width * 100));
-    var y = Math.max(5, Math.min(92, (e.clientY - fd.r.top) / fd.r.height * 100));
+    var fw = (FURN.filter(function (f) { return f.id === fd.id; })[0] || { size: 10 }).size / 2;
+    var x = Math.max(fw, Math.min(100 - fw, (e.clientX - fd.r.left) / fd.r.width * 100 - fd.ox));
+    var y = Math.max(5, Math.min(95, (e.clientY - fd.r.top) / fd.r.height * 100 - fd.oy));
     fd.el.style.left = x + '%'; fd.el.style.top = y + '%'; if (!FURN.filter(function (f) { return f.id === fd.id; })[0].rug) fd.el.style.zIndex = Math.round(y);
     fd.pos = { x: x, y: y }; e.preventDefault();
   }, { passive: false });
