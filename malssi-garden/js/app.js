@@ -71,12 +71,15 @@
       '<button class="dcard" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '"><small>퀘스트</small></button>' +
       '<button class="dcard" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="de">🔁</span><small>복습' + (due ? ' ' + due : '') + '</small></button>' +
       '<button class="dcard" id="dWords"><span class="de">📒</span><small>단어장</small></button>' +
-      '</div><div class="path">';
+      '</div>' + contBtn(L, prog, cur) + '<div class="path">';
     var n = 0;
     L.units.forEach(function (u, ui) {
       var us = L.stages.filter(function (s) { return s.unit === ui; });
       var got = us.reduce(function (a, s) { return a + (prog[s.id] || 0); }, 0);
-      h += '<div class="unit"><b>' + (ui + 1) + '단원 · ' + esc(u.title) + '</b><small>★ ' + got + '/' + us.length * 3 + '</small></div>';
+      var udone = us.every(function (s) { return prog[s.id]; }), ukey = P.lang + ':' + ui;
+      var open = !udone || (P.ui.open || {})[ukey];
+      h += '<button class="unit' + (udone ? ' udone' : '') + '"' + (udone ? ' data-unit="' + ukey + '"' : '') + '><b>' + (udone ? '✔ ' : '') + (ui + 1) + '단원 · ' + esc(u.title) + '</b><small>★ ' + got + '/' + us.length * 3 + (udone ? (open ? ' ▲' : ' ▼') : '') + '</small></button>';
+      if (!open) { n += us.length; return; }
       us.forEach(function (s) {
         var st = prog[s.id] || 0, state = st ? 'done' : (s.idx === cur ? 'cur' : (s.idx < cur ? 'done' : 'lock'));
         var x = SHIFT[n % 4] * 62; n++;
@@ -99,6 +102,16 @@
     }
   }
   var mapScrolled = false;
+  // 마지막으로 하던 단계(끝내지 않았으면 그 단계, 끝냈으면 다음 단계)에서 바로 시작
+  function contTarget(L, prog, cur) {
+    var last = (P.last || {})[P.lang], ls = last && L.stages.filter(function (x) { return x.id === last; })[0];
+    if (ls && !prog[ls.id]) return ls;
+    return cur < L.stages.length ? L.stages[cur] : null;
+  }
+  function contBtn(L, prog, cur) {
+    var t = contTarget(L, prog, cur); if (!t) return '';
+    return '<button class="btn primary wide cont" id="dCont">▶ ' + (P.stats.lessons ? '이어서 하기' : '첫 레슨 시작') + ' <small>' + (t.unit + 1) + '단원 · ' + esc(t.title) + '</small></button>';
+  }
   function stageSheet(sid) {
     var L = window.LANGS[P.lang], s = L.stages.filter(function (x) { return x.id === sid; })[0];
     var prog = P.prog[P.lang], cur = L.stages.findIndex(function (x) { return !prog[x.id]; });
@@ -365,6 +378,8 @@
     if (!t.closest('#learnView')) return;
     var lb = t.closest('[data-lang]'); if (lb) { P.lang = lb.dataset.lang; M.save(); mapScrolled = false; M.render(); return; }
     var nd = t.closest('.node'); if (nd) { stageSheet(nd.dataset.sid); return; }
+    var ub = t.closest('[data-unit]'); if (ub) { P.ui.open = P.ui.open || {}; P.ui.open[ub.dataset.unit] = !P.ui.open[ub.dataset.unit]; M.save(); M.render(); return; }
+    if (t.closest('#dCont')) { var L0 = window.LANGS[P.lang], pr0 = P.prog[P.lang], c0 = L0.stages.findIndex(function (x) { return !pr0[x.id]; }); var tg = contTarget(L0, pr0, c0 < 0 ? L0.stages.length : c0); if (tg) M.startLesson(P.lang, tg); return; }
     if (t.closest('#dQuest') || t.closest('#dGoal')) { quests(); return; }
     if (t.closest('#dReview')) { if (M.learnedCount(P.lang) >= 4) M.startLesson(P.lang, null); return; }
     if (t.closest('#dWords')) { wordBook(); return; }
@@ -379,14 +394,16 @@
       var L = window.LANGS[S.lang], last = L.stages.filter(function (s) { return s.unit === S.stage.unit; }).pop();
       if (last.id === S.stage.id) M.toast('🎉 ' + (S.stage.unit + 1) + '단원을 끝냈어요!');
     }
-    if (P.stats.lessons === 1) setTimeout(function () {
-      M.modal('<div class="center"><img class="bigpet popin" src="img/water.png" alt=""><h3>첫 물방울을 받았어요!</h3><p>아래 <b>🌱 정원</b>에서 씨앗을 뿌리고 키워 보세요.</p><div class="row2"><button class="btn ghost" data-close>나중에</button><button class="btn primary" data-close data-goto="garden">정원 가기</button></div></div>')
-        .querySelector('[data-goto]').addEventListener('click', function () { M.go('garden'); });
-    }, M.fast ? 0 : 300);
+    if (P.stats.lessons === 1) M.queuePopup(function () {   // 다음 레슨을 바로 이어서 하면 레슨이 끝난 뒤에 뜬다
+      var d = M.modal('<div class="center"><img class="bigpet popin" src="img/water.png" alt=""><h3>첫 물방울을 받았어요!</h3><p>아래 <b>🌱 정원</b>에서 생산기를 눌러 재료를 만들고 손님 의뢰를 채워 보세요.</p><div class="row2"><button class="btn ghost" data-close>나중에</button><button class="btn primary" data-close data-goto="garden">정원 가기</button></div></div>');
+      d.querySelector('[data-goto]').addEventListener('click', function () { M.go('garden'); });
+      return d;
+    });
   };
 
   // ---------- 하루가 바뀔 때 알림 차례대로 ----------
   var queue = [];
+  M.queuePopup = function (f) { queue.push(f); setTimeout(runQueue, M.fast ? 0 : 300); };
   function runQueue() {
     if (document.querySelector('.dim') || document.body.classList.contains('in-lesson')) { setTimeout(runQueue, 400); return; }
     var f = queue.shift(); if (!f) return;

@@ -23,7 +23,7 @@
   // ---------- 저장 ----------
   M.defaults = function () {
     return {
-      v: 2, started: false, lang: 'ja', petName: '말랑이',
+      v: 3, started: false, lang: 'ja', petName: '말랑이',
       water: 30, coins: 60, fp: 0, xp: 0,
       prog: { ja: {}, en: {}, zh: {} }, srs: {},
       streak: 0, best: 0, lastDay: '', freeze: 0, miles: {},
@@ -42,7 +42,8 @@
         { id: 'r6', e: '🎁', name: '갖고 싶은 선물', price: 3000 }
       ],
       coupons: [],
-      admin: { pin: '', weekBonus: 30 },
+      admin: { pin: '', weekBonus: 30, rate: 10 },
+      requests: [],
       gifts: [],
       set: { sound: true, autoAudio: true, speak: true, rate: 0.9, autoFS: true, wake: true, goal: 2 },
       ui: { installDismissed: false, seenGarden: false, seenHome: false, seenShop: false },
@@ -63,7 +64,7 @@
     M.P = merge(M.defaults(), raw || {});
     var g = M.P.garden;
     if (!Array.isArray(g.cells)) g.cells = [];   // 밭 줄 수 맞추기는 garden.js 가 한다
-    migrate(M.P);
+    migrate(M.P); migrate3(M.P);
   };
   // 단계 번호가 바뀐 판(v1 → v2)의 진행 기록을 옮긴다
   function migrate(P) {
@@ -81,6 +82,18 @@
       });
     });
     P.prog = np; P.v = 2;
+  }
+  // v2 → v3: 단계 번호(ja-1-3) 대신 단계 이름(ja:さ행)으로 기록한다
+  var V2_TITLES = {"ja-1-1": "あ행", "ja-1-2": "か행", "ja-1-3": "さ행", "ja-1-4": "た행", "ja-1-5": "な행", "ja-1-6": "は행", "ja-1-7": "ま행", "ja-1-8": "や행", "ja-1-9": "ら행", "ja-1-10": "わ·を·ん", "ja-2-1": "하루 인사", "ja-2-2": "고마워요·미안해요", "ja-2-3": "네·아니요", "ja-2-4": "이것·저것", "ja-3-1": "숫자 1 ~ 5", "ja-3-2": "숫자 6 ~ 10", "ja-3-3": "먹고 마시기", "ja-3-4": "식당에서", "ja-4-1": "자기소개", "ja-4-2": "우리 가족", "ja-4-3": "좋아하는 것", "ja-4-4": "어디에 있어요?", "en-1-1": "f 와 p", "en-1-2": "r 과 l", "en-1-3": "b · v · th", "en-2-1": "만나고 헤어질 때", "en-2-2": "고마워요·미안해요", "en-2-3": "네·아니요", "en-2-4": "안부 묻기", "en-3-1": "숫자 1 ~ 5", "en-3-2": "숫자 6 ~ 10", "en-3-3": "색깔", "en-3-4": "동물과 자연", "en-4-1": "마실 것", "en-4-2": "먹을 것", "en-4-3": "카페에서", "en-4-4": "식당에서", "en-5-1": "가족", "en-5-2": "우리 집", "en-5-3": "하는 일", "en-5-4": "어디에 있어요?", "zh-1-1": "네 가지 성조", "zh-1-2": "성조 연습", "zh-1-3": "병음 읽기 ①", "zh-1-4": "병음 읽기 ②", "zh-2-1": "만나고 헤어질 때", "zh-2-2": "고마워요·미안해요", "zh-2-3": "나·너·그", "zh-2-4": "이것·저것", "zh-3-1": "숫자 1 ~ 5", "zh-3-2": "숫자 6 ~ 10", "zh-3-3": "오늘·내일", "zh-3-4": "물건 사기", "zh-4-1": "마실 것·먹을 것", "zh-4-2": "먹고 마시기", "zh-4-3": "좋아하는 음식", "zh-4-4": "식당에서", "zh-5-1": "자기소개", "zh-5-2": "우리 가족", "zh-5-3": "좋아하는 것", "zh-5-4": "어디에 있어요?"};
+  function migrate3(P) {
+    if ((P.v || 1) >= 3) return;
+    ['ja', 'en', 'zh'].forEach(function (c) {
+      var o = P.prog[c] || {}, n = {};
+      Object.keys(o).forEach(function (id) { var t = V2_TITLES[id]; if (t) n[c + ':' + t] = o[id]; else if (id.indexOf(':') > 0) n[id] = o[id]; });
+      P.prog[c] = n;
+    });
+    if (P.last) Object.keys(P.last).forEach(function (c) { var t = V2_TITLES[P.last[c]]; if (t) P.last[c] = c + ':' + t; });
+    P.v = 3;
   }
   // 받침에 맞는 조사를 붙인다: M.j('토끼', '를', '을')가 아니라 M.j(낱말, 받침 있을 때, 받침 없을 때)
   M.j = function (w, withB, noB) {

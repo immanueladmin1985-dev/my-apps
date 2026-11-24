@@ -18,17 +18,20 @@
     for (var i = 0; i < L.stages.length; i++) if (L.stages[i].id === it.sid) return L.stages[i];
     return null;
   }
-  // 정답 하나와 헷갈릴 만한 보기 셋. 같은 단계 것을 먼저 쓴다.
+  // 정답 하나와 보기 셋. 보기는 문제가 나오는 순간에 "이미 배운 것"(이 단계에서 방금 배운 것 포함,
+  // 지금 단계보다 뒤 단계는 제외)으로만 만든다. 같은 단계 것을 먼저 쓴다.
+  function taught(x) { return !!M.P.srs[M.itemKey(x)]; }
   function options(it, field) {
     var seen = {}; seen[it[field]] = 1;
-    var out = [it];
-    var add = function (list) { M.shuffle(list).forEach(function (x) { if (out.length < 4 && !seen[x[field]]) { seen[x[field]] = 1; out.push(x); } }); };
-    add(stageOf(it).items); add(pool(it.lang, it.kana));
+    var out = [it], st = stageOf(it);
+    var add = function (list) { M.shuffle(list).forEach(function (x) { if (out.length < 4 && !seen[x[field]] && taught(x)) { seen[x[field]] = 1; out.push(x); } }); };
+    add(st.items);
+    add(pool(it.lang, it.kana).filter(function (x) { var s2 = stageOf(x); return s2 && s2.idx <= st.idx; }));
     return M.shuffle(out);
   }
   function pickQ(it, type) {
     if (type === 'listen' && !M.ttsOK()) type = 'target';
-    return { type: type, item: it, opts: options(it, type === 'meaning' ? 'k' : 't') };
+    return { type: type, item: it, opts: null };   // 보기는 show() 에서 만든다
   }
   function buildQ(sent, lang) {
     var have = {}; sent.w.forEach(function (w) { have[w] = 1; });
@@ -76,8 +79,7 @@
         chunk.forEach(function (it) { qs.push(pickQ(it, cyc[n++ % 3])); });
       }
       known.forEach(function (it) { qs.push(pickQ(it, cyc[n++ % 3])); });
-      var mid = Math.min(qs.length, Math.max(4, Math.round(qs.length * 0.6)));
-      qs.splice(mid, 0, { type: 'match', items: M.shuffle(stage.items).slice(0, 5) });
+      qs.push({ type: 'match', items: M.shuffle(stage.items).slice(0, 5) });   // 짝 맞추기는 모두 배운 뒤에
       // 다른 단어도 한 번 더 (같은 단계 안에서 반대 방향으로)
       M.shuffle(stage.items).slice(0, 2).forEach(function (it) { qs.push(pickQ(it, stage.ear ? 'listen' : 'target')); });
       var rest = [];
@@ -109,6 +111,7 @@
 
   // ---------- 화면 ----------
   M.startLesson = function (lang, stage) {
+    if (stage) { M.P.last = M.P.last || {}; M.P.last[lang] = stage.id; M.save(); }
     var qs = M.buildLesson(lang, stage);
     S = { lang: lang, stage: stage, review: !stage, qs: qs, total: qs.length, i: 0, done: 0, mistakes: 0, combo: 0, best: 0, listenOK: 0, speakOK: 0, correct: 0, answered: false, t0: Date.now() };
     $('lesson').classList.remove('hidden');
@@ -128,11 +131,17 @@
     return '<button class="say' + (big ? ' big' : '') + '" data-say="' + esc(text) + '" aria-label="발음 듣기">🔊</button>' +
       (big ? '<button class="say slow" data-say="' + esc(text) + '" data-slow="1" aria-label="천천히 듣기">🐢</button>' : '');
   }
+  // 긴 낱말은 글씨를 줄여서 잘리지 않게 한다
+  function sizeCls(t) { var n = String(t).replace(/\s/g, '').length; return n > 9 ? ' xl' : n > 5 ? ' lg' : n > 3 ? ' md' : ''; }
   function foot(html, cls) { var f = $('lFoot'); f.className = 'lfoot' + (cls ? ' ' + cls : ''); f.innerHTML = html; }
   var TITLES = { steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
 
   function show() {
     var q = S.qs[S.i]; S.answered = false; q.pick = null; bar();
+    if (q.item && !q.opts && (q.type === 'meaning' || q.type === 'target' || q.type === 'listen')) {
+      q.opts = options(q.item, q.type === 'meaning' ? 'k' : 't');
+      if (q.opts.length < 2 && q.type === 'meaning') q.opts = options(q.item, 'k');
+    }
     var body = $('lBody');
     var h = '<div class="qt">' + TITLES[q.type] + '</div>';
     var it = q.item;
@@ -140,7 +149,7 @@
       var tip = it.lang === 'ja' && it.kana && window.TIPS[it.t];
       h = '<div class="qt"><span class="newtag">새로 배워요</span></div><div class="teach lang-' + it.lang + '">' +
         (it.e ? '<div class="bigE">' + it.e + '</div>' : '') +
-        '<button class="tt" data-say="' + esc(it.say) + '">' + esc(it.t) + '</button>' +
+        '<button class="tt' + sizeCls(it.t) + '" data-say="' + esc(it.say) + '">' + esc(it.t) + '</button>' +
         (it.r ? '<div class="tr">' + esc(it.r) + '</div>' : '') +
         '<div class="tk">' + esc(it.k) + '</div>' +
         '<div class="tsay">' + sayBtn(it.say, true) + '</div>' +
@@ -154,7 +163,7 @@
         '<div class="tsay">' + sayBtn(sn.say, true) + '</div>' +
         (!stg.kana && window.ORDER_TIP ? '<div class="tip">💡 ' + esc(window.ORDER_TIP[sn.lang]) + '</div>' : '') + '</div>';
     } else if (q.type === 'meaning') {
-      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft">' + esc(it.t) + '</div>' + (it.r && !it.kana ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div>' + sayBtn(it.say) + '</div>';
+      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + esc(it.t) + '</div>' + (it.r && !it.kana ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div>' + sayBtn(it.say) + '</div>';
       h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + (o.e ? '<span class="oe">' + o.e + '</span>' : '') + '<span>' + esc(o.k) + '</span></button>'; }).join('') + '</div>';
     } else if (q.type === 'target') {
       h += '<div class="qcard ko">' + (it.e ? '<div class="bigE">' + it.e + '</div>' : '') + '<div class="fk">' + esc(it.k) + '</div></div>';
@@ -172,7 +181,7 @@
       h += '<div class="slots lang-' + S.lang + '" id="bSlots"></div><div class="tiles lang-' + S.lang + '" id="bTiles">' + q.tiles.map(function (t) { return '<button class="tile" data-id="' + t.id + '">' + esc(t.w) + '</button>'; }).join('') + '</div>';
       q.chosen = [];
     } else if (q.type === 'speak') {
-      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft">' + esc(it.t) + '</div>' + (it.r ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div><div class="fk sm">' + esc(it.k) + '</div>' + sayBtn(it.say) + '</div>';
+      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + esc(it.t) + '</div>' + (it.r ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div><div class="fk sm">' + esc(it.k) + '</div>' + sayBtn(it.say) + '</div>';
       h += '<div class="speak"><button class="mic" id="mic">🎤</button><div class="heard" id="heard">마이크를 누르고 말해 보세요</div></div>';
       q.fails = q.fails || 0;
     }
@@ -199,7 +208,7 @@
       S.combo = 0; S.mistakes++;
       M.sfx('bad'); M.buzz([40, 60, 40]);
       // 틀린 문제는 뒤에 다시 나온다
-      if (!q.again) { var c = JSON.parse(JSON.stringify(q)); c.again = true; if (c.opts) c.opts = M.shuffle(q.opts); if (c.tiles) c.tiles = M.shuffle(q.tiles); S.qs.push(c); S.total++; }
+      if (!q.again) { var c = JSON.parse(JSON.stringify(q)); c.again = true; if (c.opts) c.opts = null; if (c.tiles) c.tiles = M.shuffle(q.tiles); S.qs.push(c); S.total++; }
       else S.done++;
     }
     if (q.item && !q.item.sent) M.srsHit(q.item, ok);
@@ -358,13 +367,16 @@
       (grew ? '<p class="streakMsg">🔥 연속 ' + P.streak + '일째 공부했어요!</p>' : '') +
       (goalHit ? '<p class="streakMsg">🎯 오늘 목표를 달성했어요!</p>' : '') +
       '</div>';
-    foot('<button class="btn primary wide" id="lDone">계속하기</button>');
+    var nextSt = st ? window.LANGS[lang].stages[st.idx + 1] : null;
+    foot(nextSt ? '<div class="row2 fin"><button class="btn" id="lDone">지도로</button><button class="btn primary" id="lGo">다음 단계 ▶<br><small>' + esc(nextSt.title) + '</small></button></div>'
+      : '<button class="btn primary wide" id="lDone">계속하기</button>');
     var done = S; S = null;
-    $('lDone').addEventListener('click', function () {
-      closeLesson();
-      if (goalHit) M.openChest(M.rollChest(false), '오늘 목표 달성 상자');
+    var after = function () {
+      if (goalHit && M.queuePopup) M.queuePopup(function () { return M.openChest(M.rollChest(false), '오늘 목표 달성 상자'); });
       if (M.afterLesson) M.afterLesson(done, first);
-    });
+    };
+    $('lDone').addEventListener('click', function () { closeLesson(); after(); });
+    if (nextSt) $('lGo').addEventListener('click', function () { after(); M.startLesson(lang, nextSt); });
   }
   function closeLesson() {
     S = null;

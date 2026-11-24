@@ -173,7 +173,7 @@
       '<div class="board" id="board" style="--bh:' + (H / 1496).toFixed(4) + ';aspect-ratio:1496/' + H + '"><img class="btop" src="img/garden-top.png" alt=""><img class="bbot" src="img/garden-bot.png" alt="">';
     h += '<div class="bcells" id="grid" style="top:' + (180 / H * 100) + '%;bottom:' + (116 / H * 100) + '%;grid-template-rows:repeat(' + R + ',minmax(0,1fr))">';
     for (var i = 0; i < R * COLS; i++) h += '<div class="cell" data-c="' + i + '"></div>';
-    h += '</div></div><div id="gExpand"></div><div class="gpanel" id="gPanel"></div><div id="gBench"></div><div class="gbook" id="gBook"></div></div>';
+    h += '</div></div><div class="gtools"><button class="buywater" id="gWater"><img src="img/water.png" alt="">물방울 사기</button><div id="gExpand"></div></div><div class="gpanel" id="gPanel"></div><div id="gBench"></div><div class="gbook" id="gBook"></div></div>';
     root.innerHTML = h;
     for (i = 0; i < R * COLS; i++) paintCell(i);
     placeInbox(); paintOrders(); panel(); paintBook(); paintExpand(); paintBench();
@@ -367,7 +367,7 @@
     if (!gen || !gen.g) return false;
     var to = nearEmpty(c);
     if (to < 0) { M.toast('빈 칸이 없어요. 합치거나 팔아서 자리를 만들어요'); M.buzz(40); return false; }
-    if (!M.spend('water', GEN_COST)) { M.toast('물방울이 부족해요. 레슨을 하면 물방울을 받아요 💧'); M.buzz(40); return false; }
+    if (!M.spend('water', GEN_COST)) { M.toast('물방울이 부족해요. 레슨을 하거나 아래 "물방울 사기"로 살 수 있어요 💧'); M.buzz(40); return false; }
     var lucky = Math.random() < 0.08, it = { k: GENS[gen.g].chain, l: lucky ? 2 : 1 };
     g.cells[to] = it; found(it);
     var genEl = cellEl(c);
@@ -459,6 +459,19 @@
     paintOrders(); panel();
     return true;
   };
+  // 물방울 사기: 코인으로 산다. 공부(레슨)가 더 이득이 되도록 비싸게 둔다.
+  var PACKS = [[30, 50], [100, 150], [300, 400]];
+  function waterShop() {
+    var d = M.modal('<h3>💧 물방울 사기</h3><p class="hint">레슨을 하면 물방울을 공짜로 받아요. 급할 때만 코인으로 사세요.</p><div class="list">' + PACKS.map(function (p, i) {
+      return '<button class="litem" data-pack="' + i + '"><span class="le"><img src="img/water.png" alt="" style="width:40px;height:40px"></span><span class="ln">물방울 ' + p[0] + '개<small>생산기 ' + p[0] / GEN_COST + '번</small></span><span class="lp"><img src="img/coin.png" alt="">' + p[1] + '</span></button>';
+    }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pack]'); if (!b) return;
+      var p = PACKS[+b.dataset.pack];
+      if (!M.spend('coins', p[1])) { M.toast('코인이 ' + (p[1] - M.P.coins) + '개 더 필요해요'); return; }
+      M.give({ water: p[0] }); M.sfx('coin'); M.toast('💧 물방울 ' + p[0] + '개를 샀어요'); d.close();
+    });
+  }
   M.gardenExpand = function () {
     var g = G(); if (g.rows >= maxRows()) return false;
     var cost = ROW_COST[g.rows];
@@ -535,6 +548,7 @@
     var t = e.target;
     if (t.closest('#gSell') && sel >= 0) { M.gardenSell(sel); return; }
     var gb = t.closest('[data-give]'); if (gb && !gb.disabled) { M.gardenDeliver(gb.dataset.give); return; }
+    if (t.closest('#gWater')) { waterShop(); return; }
     if (t.closest('#gRow')) { var g = G(); M.confirm('밭 넓히기', '<img class="inl" src="img/coin.png" alt="">' + ROW_COST[g.rows] + '코인으로 밭을 한 줄(' + COLS + '칸) 넓힐까요?', '넓히기', M.gardenExpand); return; }
     var bn = t.closest('[data-bnew]'); if (bn) { recipeSheet(+bn.dataset.bnew); return; }
     var bg = t.closest('[data-bget]'); if (bg) { M.gardenCollect(+bg.dataset.bget); return; }
