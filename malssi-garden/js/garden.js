@@ -59,7 +59,7 @@
   function G() {
     var g = M.P.garden;
     g.found = g.found || {}; g.orders = g.orders || []; g.done = g.done || 0; g.lv = g.lv || 1; g.xp = g.xp || 0;
-    g.friends = g.friends || {}; g.inbox = g.inbox || []; g.bench = g.bench || { slots: [null] }; g.store = g.store || {};
+    g.friends = g.friends || {}; g.inbox = g.inbox || []; g.bench = g.bench || { slots: [null] }; g.store = g.store || {}; g.bag = g.bag || [];
     g.cells.forEach(function (x, i) { if (x && x.p) { g.store[x.p] = (g.store[x.p] || 0) + 1; g.cells[i] = null; } });   // 예전에 밭에 있던 완성품은 보관함으로
     if (g.orders.some(function (o) { return !o || !o.cust; })) g.orders = g.orders.filter(function (o) { return o && o.cust; });   // 예전 판의 주문은 버린다
     if (!g.rows) {   // 예전 판(칸 단위로 열던 밭)에서 옮겨 온다
@@ -173,15 +173,15 @@
     if (!root) return;
     ensureOrders();
     var g = G(), R = g.rows, H = 296 + 191 * R;   // 그림 기준(가로 1496) 높이
-    var h = '<div class="garden"><div class="shophead"><b>🏪 ' + esc(M.P.petName) + '네 정원 가게</b><span class="slv">Lv.' + g.lv + '</span><div class="mbar"><i style="width:' + Math.round(g.xp / xpNeed(g.lv) * 100) + '%"></i></div><small>' + g.xp + '/' + xpNeed(g.lv) + '</small></div>' +
+    var h = '<div class="garden"><div class="shophead"><b>🏪 ' + esc(M.P.petName) + '네 정원 가게</b><span class="slv">Lv.' + g.lv + '</span><button class="helpbtn" id="gHelp" aria-label="도움말">?</button><div class="mbar"><i style="width:' + Math.round(g.xp / xpNeed(g.lv) * 100) + '%"></i></div><small>' + g.xp + '/' + xpNeed(g.lv) + '</small></div>' +
       '<div class="counter" id="gCounter"></div><div class="orders" id="gOrders"></div>' +
       '<div class="board" id="board" style="--bh:' + (H / 1496).toFixed(4) + ';aspect-ratio:1496/' + H + '"><img class="btop" src="img/garden-top.png" alt=""><img class="bbot" src="img/garden-bot.png" alt="">';
     h += '<div class="bcells" id="grid" style="top:' + (180 / H * 100) + '%;bottom:' + (116 / H * 100) + '%;grid-template-rows:repeat(' + R + ',minmax(0,1fr))">';
     for (var i = 0; i < R * COLS; i++) h += '<div class="cell" data-c="' + i + '"></div>';
-    h += '</div></div><div class="gtools"><button class="buywater" id="gWater"><img src="img/waterbag.png" alt="">사기</button><button class="buywater book" id="gBookBtn">📖 도감</button><div id="gExpand"></div></div><div class="gpanel" id="gPanel"></div><div id="gBench"></div></div>';
+    h += '</div></div><div class="gpanel" id="gPanel"></div><div class="gbar" id="gBar"></div></div>';
     root.innerHTML = h;
     for (i = 0; i < R * COLS; i++) paintCell(i);
-    placeInbox(); paintOrders(); panel(); paintBook(); paintExpand(); paintBench();
+    placeInbox(); paintOrders(); panel(); paintBar();
   };
   function cellEl(c) { return document.querySelector('#grid .cell[data-c="' + c + '"]'); }
   function paintCell(c) {
@@ -247,6 +247,7 @@
     var it = sel >= 0 ? G().cells[sel] : null;
     if (!it) {
       var empty = G().cells.filter(function (x) { return !x; }).length;
+      el.innerHTML = '<div class="gp-empty">물건을 누르면 여기에 정보가 나와요</div>'; return;
       el.innerHTML = '<div class="gp-empty"><b>생산기</b>(씨앗 주머니, 도토리 바구니 등)를 누르면 재료가 나와요. 같은 것끼리 <b>끌어다 겹치면</b> 자라고, 손님 의뢰를 채우면 보상을 받아요. <small>빈 칸 ' + empty + '개</small></div>';
       return;
     }
@@ -256,8 +257,62 @@
     else if (it.p) info = '손님 의뢰에 쓰는 특별한 물건이에요';
     else info = it.r === 'gseed' ? '한 번 더 누르면 싹이 터서 3단계 재료가 돼요' : '귀한 손님이 찾는 귀한 물건이에요';
     el.innerHTML = '<span class="gp-ic">' + iconHtml(it, 'pi') + '</span><div class="gp-info"><b>' + esc(nameOf(it)) + '</b>' + (it.k ? ' <small>' + it.l + '단계</small>' : '') + '<br><small>' + info + '</small></div>' +
+      '<button class="btn" id="gStash">🎒<br><span class="mini">가방에</span></button>' +
       (sv ? '<button class="btn" id="gSell">팔기<br><span class="mini">' + M.rewardHtml(sv) + '</span></button>' : '');
   }
+  // ---------- 아래 버튼 줄 ----------
+  var BAG = 10;
+  function paintBar() {
+    var el = $('gBar'); if (!el) return; var g = G(), now = Date.now();
+    var done = g.bench.slots.some(function (x) { return x && x.until <= now; }), run = g.bench.slots.some(function (x) { return x && x.until > now; });
+    var canRow = g.rows < MAX_ROWS && g.rows < maxRows();
+    var bt = function (id, ic, label, badge, lock) { return '<button class="gb' + (lock ? ' lock' : '') + '" id="' + id + '"><span class="gbi">' + ic + '</span><small>' + label + '</small>' + (badge ? '<i class="gbb">' + badge + '</i>' : '') + '</button>'; };
+    el.innerHTML = bt('gBagBtn', '🎒', '가방', g.bag.length ? g.bag.length + '/' + BAG : '') +
+      bt('gBenchBtn', '<img src="img/workbench.png" alt="">', '작업대', g.lv < 4 ? '' : done ? '완성' : run ? '⏳' : '', g.lv < 4) +
+      bt('gWater', '<img src="img/waterbag.png" alt="">', '물방울') +
+      bt('gBookBtn', '📖', '도감') +
+      bt('gRow', '🔨', '넓히기', canRow ? '' : '', !canRow);
+  }
+  M.gardenBar = paintBar;
+  function bagSheet() {
+    var d = M.modal('<h3>🎒 가방</h3><p class="hint">밭이 꽉 차면 물건을 잠시 넣어 둬요. 누르면 밭으로 꺼내요.</p><div id="bagBody"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: function () { paintBar(); } });
+    var paint = function () {
+      var g = G(), h = '<div class="bag">';
+      for (var i = 0; i < BAG; i++) { var it = g.bag[i]; h += '<button class="bslot2' + (it ? '' : ' empty') + '"' + (it ? ' data-take="' + i + '"' : '') + '>' + (it ? iconHtml(it, 'bi') : '') + '</button>'; }
+      h += '</div>' + storeHtml();
+      d.querySelector('#bagBody').innerHTML = h;
+    };
+    paint();
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-take]'); if (!b) return;
+      var g = G(), c = g.cells.indexOf(null);
+      if (c < 0) { M.toast('밭에 빈칸이 없어요'); return; }
+      g.cells[c] = g.bag.splice(+b.dataset.take, 1)[0]; M.save(); paintCell(c); M.sfx('pop'); paint(); afterChange();
+    });
+  }
+  function stash(c) {
+    var g = G(), it = g.cells[c]; if (!it) return;
+    if (g.bag.length >= BAG) { M.toast('가방이 꽉 찼어요 (' + BAG + '칸)'); return; }
+    g.bag.push(it); g.cells[c] = null; sel = -1; M.save(); M.sfx('pop'); paintCell(c); afterChange(); paintBar();
+    M.toast('🎒 ' + M.j(nameOf(it), '을', '를') + ' 가방에 넣었어요');
+  }
+  function benchSheet() {
+    var g = G();
+    if (g.lv < 4) { lockedInfo('작업대', '가게 레벨 4가 되면 열려요. 재료를 조합해 꽃다발, 꽃꿀 같은 특별한 물건을 만들고, 손님 의뢰에 쓰면 보상이 커요.'); return; }
+    M.modal('<div id="gBench"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: function () { paintBar(); } });
+    paintBench();
+  }
+  function lockedInfo(title, text) { M.modal('<h3>🔒 ' + title + '</h3><p>' + text + '</p><button class="btn primary wide" data-close>알겠어요</button>'); }
+  M.gardenHelp = function () {
+    M.modal('<h3>🏪 정원 가게 도움말</h3><ul class="unl">' +
+      '<li><b>생산기</b>(씨앗 주머니·도토리 바구니 등)를 누르면 물방울 5개로 재료가 나와요. 꾹 누르면 계속 나와요.</li>' +
+      '<li>같은 것끼리 <b>끌어다 겹치면</b> 한 단계 자라요. 빠르게 이어서 합치면 콤보 보너스!</li>' +
+      '<li>손님 아래 <b>말풍선</b>에 원하는 물건이 있어요. 다 모이면 <b>주기</b>를 눌러요.</li>' +
+      '<li>밭이 꽉 차면 물건을 골라 <b>🎒 가방</b>에 넣어 두세요.</li>' +
+      '<li><b>작업대</b>에서 만든 완성품은 가방 속 보관함에 쌓여요.</li>' +
+      '<li>가게 레벨이 오르면 새 생산기·손님·제작법이 열리고 밭을 넓힐 수 있어요.</li>' +
+      '<li>물방울은 <b>레슨</b>을 하면 받아요.</li></ul><button class="btn primary wide" data-close>닫기</button>');
+  };
   function afterChange() { paintOrders(); panel(); }
 
   // ---------- 작업대 ----------
@@ -311,14 +366,14 @@
     var now = Date.now();
     g.bench.slots[slot] = { rid: id, at: now, until: now + P.min * 60000 * M.craftScale };
     M.quest('craft', 1); M.sfx('pop'); M.save();
-    paintBench(); afterChange(); M.toast(P.em + ' ' + P.name + ' 만들기 시작!');
+    paintBench(); paintBar(); afterChange(); M.toast(P.em + ' ' + P.name + ' 만들기 시작!');
     return true;
   };
   M.gardenCollect = function (slot) {
     var g = G(), s = g.bench.slots[slot]; if (!s || s.until > Date.now()) return false;
     g.store[s.rid] = (g.store[s.rid] || 0) + 1; g.bench.slots[slot] = null; M.save();   // 밭 칸이 아니라 보관함으로
     var el = $('gBench'); burst(el, ['#ffd84a', '#ff9fc0', '#fff'], 14); floatText(el, PRODUCTS[s.rid].name + ' 완성! 보관함에 넣었어요', 'gold');
-    M.sfx('win'); paintBench(); afterChange();
+    M.sfx('win'); paintBench(); paintBar(); afterChange();
     return true;
   };
   function rush(slot) {
@@ -331,13 +386,14 @@
   }
   setInterval(function () {
     if (!M.P || !M.P.started) return;
-    var el = $('gBench'); if (!el || !el.offsetParent) { if (M.paintBadges) M.paintBadges(); return; }
+    var el = $('gBench'); if (!el || !el.offsetParent) { if (M.paintBadges) M.paintBadges(); if ($('gBar') && $('gBar').offsetParent && Date.now() % 5000 < 1000) paintBar(); return; }
     var g = G(), now = Date.now(), need = false;
     g.bench.slots.forEach(function (s, i) {
       if (!s) return; var t = el.querySelector('[data-left="' + i + '"]');
       if (s.until <= now) { if (t) need = true; } else if (t) t.textContent = fmtLeft(s.until - now) + ' 남음';
     });
     if (need) { paintBench(); M.paintBadges(); }
+    paintBar();
   }, 1000);
 
   // ---------- 효과 ----------
@@ -559,10 +615,16 @@
   document.addEventListener('click', function (e) {
     var t = e.target;
     if (t.closest('#gSell') && sel >= 0) { M.gardenSell(sel); return; }
+    if (t.closest('#gStash') && sel >= 0) { stash(sel); return; }
+    if (t.closest('#gBagBtn')) { bagSheet(); return; }
+    if (t.closest('#gBenchBtn')) { benchSheet(); return; }
+    if (t.closest('#gHelp')) { M.gardenHelp(); return; }
     var gb = t.closest('[data-give]'); if (gb && !gb.disabled) { M.gardenDeliver(gb.dataset.give); return; }
     if (t.closest('#gWater')) { waterShop(); return; }
     if (t.closest('#gBookBtn')) { bookSheet(); return; }
-    if (t.closest('#gRow')) { var g = G(); M.confirm('밭 넓히기', '<img class="inl" src="img/coin.png" alt="">' + ROW_COST[g.rows] + '코인으로 밭을 한 줄(' + COLS + '칸) 넓힐까요?', '넓히기', M.gardenExpand); return; }
+    if (t.closest('#gRow')) { var g = G();
+      if (g.rows >= MAX_ROWS) { M.toast('밭을 끝까지 넓혔어요'); return; }
+      if (g.rows >= maxRows()) { lockedInfo('밭 넓히기', '가게 레벨 ' + (g.rows - 2) + '이 되면 밭을 한 줄 더 넓힐 수 있어요. 손님 의뢰를 채우면 가게 레벨이 올라요.'); return; } M.confirm('밭 넓히기', '<img class="inl" src="img/coin.png" alt="">' + ROW_COST[g.rows] + '코인으로 밭을 한 줄(' + COLS + '칸) 넓힐까요?', '넓히기', M.gardenExpand); return; }
     var bn = t.closest('[data-bnew]'); if (bn) { recipeSheet(+bn.dataset.bnew); return; }
     var bg = t.closest('[data-bget]'); if (bg) { M.gardenCollect(+bg.dataset.bget); return; }
     var bw = t.closest('[data-bnow]'); if (bw) { rush(+bw.dataset.bnow); return; }

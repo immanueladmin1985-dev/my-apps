@@ -417,7 +417,7 @@ span.ni, span.pi, span.bi { position: relative; display: grid; place-items: cent
 span.ni .glv, span.bi .glv { display: none; }
 span.pi { font-size: 40px; }
 .gp-ic { width: 56px; height: 56px; flex: none; display: grid; place-items: center; }
-.shophead { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 8px; background: #fff; border-radius: 16px; padding: 8px 12px; box-shadow: var(--sh); margin-bottom: 8px; font-size: .92rem; }
+.shophead { display: grid; grid-template-columns: auto auto auto 1fr auto; align-items: center; gap: 8px; background: #fff; border-radius: 16px; padding: 8px 12px; box-shadow: var(--sh); margin-bottom: 8px; font-size: .92rem; }
 .shophead .mbar { margin: 0; }
 .shophead small { color: var(--sub); font-variant-numeric: tabular-nums; }
 .slv { background: #ffb02e; color: #fff; font-weight: 900; border-radius: 10px; padding: 1px 8px; font-size: .8rem; }
@@ -648,3 +648,24 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .gtools .expand { white-space: nowrap; padding: 0 8px; }
 .gtools .buywater { padding: 0 10px; }
 .gtools #gExpand { min-width: 0; }
+
+/* 도움말 버튼 */
+.helpbtn { width: 26px; height: 26px; border-radius: 50%; background: #f1edf4; color: var(--sub); font-weight: 900; font-size: .85rem; display: grid; place-items: center; flex: none; }
+.helpbtn.float { position: absolute; right: 0; top: 4px; z-index: 6; box-shadow: var(--sh); background: #fff; }
+.view > section { position: relative; }
+#learnView .langbar { margin-right: 32px; }
+#homeView .home, #shopView .shop { padding-top: 34px; }
+/* 정원 아래 버튼 줄 */
+.gbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 520px; margin: 8px auto 0; }
+.gb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; background: #fff; border-radius: 14px; padding: 6px 2px 4px; box-shadow: var(--sh); font-weight: 700; }
+.gb .gbi { font-size: 1.5rem; line-height: 30px; height: 30px; }
+.gb .gbi img { width: 30px; height: 30px; object-fit: contain; }
+.gb small { font-size: .72rem; }
+.gb.lock { opacity: .55; }
+.gb.lock .gbi::after { content: '🔒'; font-size: .7rem; position: absolute; top: 2px; right: 6px; }
+.gbb { position: absolute; top: -6px; right: -2px; background: var(--red); color: #fff; font-style: normal; font-size: .62rem; font-weight: 800; border-radius: 8px; padding: 1px 5px; border: 2px solid #fff; }
+.gpanel { margin-top: 8px; }
+.bag { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.bslot2 { position: relative; aspect-ratio: 1; border-radius: 12px; background: #f3efe7; border: 2px solid #e6dcc8; }
+.bslot2.empty { opacity: .5; }
+.bslot2 .bi { position: absolute; inset: 6%; width: 88%; height: 88%; }

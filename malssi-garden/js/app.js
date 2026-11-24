@@ -30,6 +30,7 @@
     else if (tab === 'garden') M.renderGarden($('gardenView'));
     else if (tab === 'home') M.renderHome($('homeView'));
     else if (tab === 'shop') M.renderShop($('shopView'));
+    if (tab !== 'garden') { var sec = $(tab + 'View'), hb = document.createElement('button'); hb.className = 'helpbtn float'; hb.dataset.help = tab; hb.textContent = '?'; hb.setAttribute('aria-label', '도움말'); sec.insertBefore(hb, sec.firstChild); }
     paintInstall();
     M.paintBadges();
   };
@@ -37,11 +38,19 @@
     if (t === tab) return;
     if (M.stopEditing) M.stopEditing();
     tab = t; $('view').scrollTop = 0; M.render();
-    var tips = { garden: ['seenGarden', '🏪 정원 가게', '<b>① 생산기 누르기</b>: 밭에 있는 👝 씨앗 주머니, 🪵 도토리 바구니를 누르면 재료가 나와요(물방울 5). 꾹 누르면 계속 나와요.<br><b>② 합치기</b>: 같은 것끼리 끌어다 겹치면 한 단계 자라요.<br><b>③ 손님 의뢰</b>: 위에 온 손님이 원하는 것을 만들어 <b>주기</b>를 누르면 코인, <img class="inl" src="img/flower-point.png" alt="">꽃 포인트, 가게 경험치를 받아요.<br><br>가게 레벨이 오르면 새 생산기, 새 손님, 작업대가 열리고 밭도 넓힐 수 있어요.'],
+    var tipsOld = { garden: ['seenGarden', '🏪 정원 가게', '<b>① 생산기 누르기</b>: 밭에 있는 👝 씨앗 주머니, 🪵 도토리 바구니를 누르면 재료가 나와요(물방울 5). 꾹 누르면 계속 나와요.<br><b>② 합치기</b>: 같은 것끼리 끌어다 겹치면 한 단계 자라요.<br><b>③ 손님 의뢰</b>: 위에 온 손님이 원하는 것을 만들어 <b>주기</b>를 누르면 코인, <img class="inl" src="img/flower-point.png" alt="">꽃 포인트, 가게 경험치를 받아요.<br><br>가게 레벨이 오르면 새 생산기, 새 손님, 작업대가 열리고 밭도 넓힐 수 있어요.'],
       home: ['seenHome', '🏠 ' + esc(P.petName) + '의 집', '코인으로 먹이를 주면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 <b>물방울을 더</b> 받아요.<br><br>가구 상점에서 가구를 사서 방을 꾸며 보세요.'],
       shop: ['seenShop', '🎁 상점', '<b>꽃 포인트</b>를 모아 남편이 등록한 <b>진짜 선물</b>로 바꿀 수 있어요. 바꾸면 쿠폰이 생기고, 남편이 확인하면 선물을 받아요.'] };
-    var tip = tips[t];
-    if (tip && !P.ui[tip[0]]) { P.ui[tip[0]] = true; M.save(); M.modal('<h3>' + tip[1] + '</h3><p>' + tip[2] + '</p><button class="btn primary wide" data-close>알겠어요</button>'); }
+  };
+  // 도움말: 저절로 띄우지 않고, 화면 오른쪽 위 작은 ? 버튼을 눌렀을 때만 보여 준다
+  M.help = function (t) {
+    if (t === 'garden') { M.gardenHelp(); return; }
+    var H = {
+      learn: ['📖 배우기', '<ul class="unl"><li>위 탭에서 <b>기초 / N5 / N4</b>처럼 수준을 고르면 그 단원만 보여요.</li><li><b>▶ 이어서 하기</b>는 마지막으로 하던 단계부터 시작해요.</li><li>끝낸 단계를 누르면 <b>다시 하기</b>를 할 수 있어요. 끝낸 단원은 눌러서 접고 펼쳐요.</li><li><b>✏️ 틀린 것</b>은 마지막에 틀린 낱말만 다시 풀어요. <b>🔁 복습</b>은 잊을 때가 된 낱말을 풀어요.</li><li>레슨을 하면 <b>물방울</b>을 받아 정원에서 써요.</li></ul>'],
+      home: ['🏠 ' + esc(P.petName) + '의 집', '<ul class="unl"><li>코인으로 <b>먹이</b>를 주면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 물방울을 더 받아요.</li><li><b>꾸미기 상점</b>에서 가구·벽지·소품을 사요.</li><li><b>✏️ 꾸미기</b>를 누르면 가구를 끌어서 옮겨요.</li></ul>'],
+      shop: ['🎁 상점', '<ul class="unl"><li><b>꽃 포인트</b>를 모아 남편이 등록한 <b>진짜 선물</b>로 바꿔요. 바꾸면 쿠폰이 생기고, 남편이 확인하면 받아요.</li><li>갖고 싶은 물건은 <b>선물 신청</b>으로 이름·가격·링크를 보내요.</li><li>꽃 포인트는 정원 손님 의뢰, 퀘스트, 주간 목표에서 받아요.</li></ul>']
+    }[t];
+    if (H) M.modal('<h3>' + H[0] + '</h3>' + H[1] + '<button class="btn primary wide" data-close>닫기</button>');
   };
   M.paintBadges = function () {
     var set = function (t, v) { var b = document.querySelector('#nav [data-tab="' + t + '"] .badge'); if (b) { b.textContent = v || ''; b.classList.toggle('hidden', !v); } };
@@ -385,6 +394,7 @@
   // ---------- 누르기 ----------
   document.addEventListener('click', function (e) {
     var t = e.target;
+    var hp = t.closest('[data-help]'); if (hp) { M.help(hp.dataset.help); return; }
     var nb = t.closest('#nav [data-tab]'); if (nb) { M.sfx('tap'); M.go(nb.dataset.tab); return; }
     if (t.closest('#bSet')) { settings(); return; }
     if (t.closest('#tStreakBox')) { quests(); return; }
@@ -409,7 +419,7 @@
       var L = window.LANGS[S.lang], last = L.stages.filter(function (s) { return s.unit === S.stage.unit; }).pop();
       if (last.id === S.stage.id) M.toast('🎉 ' + (S.stage.unit + 1) + '단원을 끝냈어요!');
     }
-    if (P.stats.lessons === 1) M.queuePopup(function () {   // 다음 레슨을 바로 이어서 하면 레슨이 끝난 뒤에 뜬다
+    if (false) M.queuePopup(function () {   // 자동 안내 창은 띄우지 않는다 (도움말 버튼으로 본다)   // 다음 레슨을 바로 이어서 하면 레슨이 끝난 뒤에 뜬다
       var d = M.modal('<div class="center"><img class="bigpet popin" src="img/water.png" alt=""><h3>첫 물방울을 받았어요!</h3><p>아래 <b>🌱 정원</b>에서 생산기를 눌러 재료를 만들고 손님 의뢰를 채워 보세요.</p><div class="row2"><button class="btn ghost" data-close>나중에</button><button class="btn primary" data-close data-goto="garden">정원 가기</button></div></div>');
       d.querySelector('[data-goto]').addEventListener('click', function () { M.go('garden'); });
       return d;
