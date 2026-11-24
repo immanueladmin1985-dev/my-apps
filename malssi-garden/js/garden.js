@@ -271,7 +271,8 @@
       bt('gBenchBtn', '<img src="img/workbench.png" alt="">', '작업대', g.lv < 4 ? '' : done ? '완성' : run ? '⏳' : '', g.lv < 4) +
       bt('gWater', '<img src="img/waterbag.png" alt="">', '물방울') +
       bt('gBookBtn', '📖', '도감') +
-      bt('gRow', '🔨', '넓히기', canRow ? '' : '', !canRow);
+      bt('gRow', '🔨', '넓히기', canRow ? '' : '', !canRow) +
+      bt('gAlbum', '📒', '손님');
   }
   M.gardenBar = paintBar;
   function bagSheet() {
@@ -303,6 +304,28 @@
     paintBench();
   }
   function lockedInfo(title, text) { M.modal('<h3>🔒 ' + title + '</h3><p>' + text + '</p><button class="btn primary wide" data-close>알겠어요</button>'); }
+  // ---------- 손님 이야기·앨범 ----------
+  function storyHtml(c, n) {
+    var lang = M.P.lang, ln = ((window.STORY_LINES || {})[lang] || [])[n - 1], txt = ((window.STORIES || {})[c.id] || [])[n - 1];
+    return '<div class="story">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + '-happy.png" alt="">' : '') + '<p>' + esc(txt || '') + '</p>' +
+      (ln ? '<button class="sline lang-' + lang + '" data-say="' + esc(ln[0]) + '" data-lang="' + lang + '"><b>💬 ' + esc(ln[0]) + '</b>' + (ln[2] ? '<span>' + esc(ln[2]) + '</span>' : '') + '<small>' + esc(ln[1]) + '</small></button>' : '') + '</div>';
+  }
+  function albumSheet() {
+    var g = G();
+    var d = M.modal('<h3>📒 손님 앨범</h3><p class="hint">의뢰를 4번 채울 때마다 ♥가 오르고 이야기가 열려요</p><div class="album">' + CUSTOMERS.map(function (c) {
+      var fr = g.friends[c.id] || 0, lv = Math.min(5, Math.floor(fr / 4)), open = g.lv >= c.lv;
+      return '<button class="acard' + (open ? '' : ' lock') + '" data-cust="' + c.id + '">' + (open && CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + '.png" alt="">' : '<span class="cem">' + (open ? c.em : '❔') + '</span>') +
+        '<b>' + (open ? esc(c.name) : '???') + '</b><small>' + (open ? '♥'.repeat(lv) + '♡'.repeat(5 - lv) : 'Lv.' + c.lv + '에 와요') + '</small></button>';
+    }).join('') + '</div><div id="albumStory"></div><button class="btn ghost wide" data-close>닫기</button>');
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cust]'); if (!b) return;
+      var c = custOf(b.dataset.cust); if (g.lv < c.lv) { M.toast('가게 레벨 ' + c.lv + '이 되면 와요'); return; }
+      var lv = Math.min(5, Math.floor((g.friends[c.id] || 0) / 4)), h = '';
+      for (var i = 1; i <= lv; i++) h += '<h4>♥' + i + '</h4>' + storyHtml(c, i);
+      d.querySelector('#albumStory').innerHTML = h || '<p class="hint center">아직 열린 이야기가 없어요. ' + esc(c.name) + '의 의뢰를 채워 보세요!</p>';
+    });
+  }
+  document.addEventListener('click', function (e) { var sl = e.target.closest && e.target.closest('.sline'); if (sl) M.say(sl.dataset.say, sl.dataset.lang); });
   M.gardenHelp = function () {
     M.modal('<h3>🏪 정원 가게 도움말</h3><ul class="unl">' +
       '<li><b>생산기</b>(씨앗 주머니·도토리 바구니 등)를 누르면 물방울 5개로 재료가 나와요. 꾹 누르면 계속 나와요.</li>' +
@@ -521,7 +544,7 @@
     addXp(o.rw.xp);
     if (fr % 4 === 0) {   // 친밀도가 오르면 선물
       var lvl = fr / 4;
-      setTimeout(function () { M.openChest({ coins: 20 * lvl, fp: 3 * lvl }, c.em + ' ' + M.j(c.name, '과', '와') + ' 더 친해졌어요! ' + '♥'.repeat(Math.min(5, lvl))); }, M.fast ? 0 : 900);
+      setTimeout(function () { var d = M.openChest({ coins: 20 * lvl, fp: 3 * lvl }, c.em + ' ' + M.j(c.name, '과', '와') + ' 더 친해졌어요! ' + '♥'.repeat(Math.min(5, lvl))); if (lvl <= 5) { var st = document.createElement('div'); st.innerHTML = storyHtml(c, lvl); d.querySelector('h3').after(st); } }, M.fast ? 0 : 900);
     }
     setTimeout(function () { ensureOrders(); M.save(); paintOrders(); var n = document.querySelector('#gOrders .order:last-child'); if (n) n.classList.add('slidein'); panel(); }, M.fast ? 0 : 450);
     paintOrders(); panel();
@@ -622,6 +645,7 @@
     var gb = t.closest('[data-give]'); if (gb && !gb.disabled) { M.gardenDeliver(gb.dataset.give); return; }
     if (t.closest('#gWater')) { waterShop(); return; }
     if (t.closest('#gBookBtn')) { bookSheet(); return; }
+    if (t.closest('#gAlbum')) { albumSheet(); return; }
     if (t.closest('#gRow')) { var g = G();
       if (g.rows >= MAX_ROWS) { M.toast('밭을 끝까지 넓혔어요'); return; }
       if (g.rows >= maxRows()) { lockedInfo('밭 넓히기', '가게 레벨 ' + (g.rows - 2) + '이 되면 밭을 한 줄 더 넓힐 수 있어요. 손님 의뢰를 채우면 가게 레벨이 올라요.'); return; } M.confirm('밭 넓히기', '<img class="inl" src="img/coin.png" alt="">' + ROW_COST[g.rows] + '코인으로 밭을 한 줄(' + COLS + '칸) 넓힐까요?', '넓히기', M.gardenExpand); return; }

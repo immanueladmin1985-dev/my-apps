@@ -656,7 +656,7 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 #learnView .langbar { margin-right: 32px; }
 #homeView .home, #shopView .shop { padding-top: 34px; }
 /* 정원 아래 버튼 줄 */
-.gbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 520px; margin: 8px auto 0; }
+.gbar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; max-width: 520px; margin: 8px auto 0; }
 .gb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; background: #fff; border-radius: 14px; padding: 6px 2px 4px; box-shadow: var(--sh); font-weight: 700; }
 .gb .gbi { font-size: 1.5rem; line-height: 30px; height: 30px; }
 .gb .gbi img { width: 30px; height: 30px; object-fit: contain; }
@@ -700,3 +700,18 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .lvtabs button { min-width: 0; flex: 1 1 0; padding: 6px 2px; font-size: .78rem; white-space: nowrap; }
 .lvtabs button small { font-size: .66rem; }
 .qcard .face .ft.lg { padding: 0 34px; }
+
+/* 손님 이야기·앨범 */
+.story { display: flex; flex-direction: column; align-items: center; gap: 6px; background: #fff8ee; border-radius: 16px; padding: 10px 12px; margin: 8px 0; text-align: left; }
+.story img { width: 72px; height: 72px; object-fit: contain; }
+.story p { margin: 0; line-height: 1.55; font-size: .95rem; }
+.sline { display: flex; flex-direction: column; align-items: center; background: #fff; border: 2px solid #f2d4a8; border-radius: 14px; padding: 6px 12px; }
+.sline span { font-size: .78rem; color: var(--sub); }
+.sline small { color: var(--mint-d); font-weight: 700; }
+.album { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.acard { display: flex; flex-direction: column; align-items: center; background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 6px 2px; }
+.acard img { width: 52px; height: 52px; object-fit: contain; }
+.acard .cem { font-size: 2rem; line-height: 52px; }
+.acard b { font-size: .78rem; }
+.acard small { color: #ff6b9a; font-size: .62rem; letter-spacing: -1px; }
+.acard.lock { opacity: .5; }
