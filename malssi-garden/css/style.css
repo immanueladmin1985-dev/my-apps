@@ -937,3 +937,33 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .stallwrap + .orders { margin-top: -15%; position: relative; z-index: 4; }
 .balloons { grid-template-columns: 1fr 1fr; gap: 6px 10px; justify-items: center; }
 .balloon { width: 66%; }
+/* 얼음 낚시 */
+.ice { position: relative; flex: 1; margin-top: 8px; border-radius: 18px; overflow: hidden; background: linear-gradient(#e8f6ff 0 12%, #8fd0f0 12%, #4aa8d8 100%); }
+.icehole { position: absolute; left: 0; right: 0; top: 0; height: 12%; background: repeating-linear-gradient(90deg, #f4fbff 0 40px, #e3f3fc 40px 80px); border-bottom: 3px solid #bfe3f5; }
+.ppg { position: absolute; right: 8px; top: 1%; font-size: 1.8rem; }
+.fishb { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,.92); border-radius: 22px; padding: 3px 10px 3px 4px; box-shadow: 0 3px 0 rgba(0,0,0,.12); white-space: nowrap; }
+.fishb.rev { flex-direction: row-reverse; padding: 3px 4px 3px 10px; } .fishb.rev .fe { transform: scaleX(-1); }
+.fishb .fe { font-size: 1.8rem; } .fishb .fw { display: flex; flex-direction: column; align-items: center; } .fishb b { font-size: 1.05rem; } .fishb small { font-size: .62rem; color: var(--sub); }
+.fishb.caught { animation: hook .5s forwards; } .fishb.miss { opacity: .35; }
+@keyframes hook { to { transform: translate(-50%, -400%) rotate(-20deg); opacity: 0; } }
+/* 카페 */
+.cafe { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.cguest { display: flex; align-items: flex-start; gap: 8px; background: #fff3e6; border-radius: 18px; padding: 10px; }
+.gface { font-size: 2.6rem; line-height: 1; }
+.cbub { flex: 1; text-align: left; background: #fff; border-radius: 16px; border-bottom-left-radius: 4px; padding: 8px 12px; box-shadow: var(--sh); display: flex; flex-direction: column; gap: 2px; }
+.cbub b { font-size: 1.15rem; } .cbub small { color: var(--mint-d); font-size: .75rem; } .cbub em { font-style: normal; color: var(--sub); font-size: .8rem; }
+.cme { font-weight: 800; } .cme small { color: var(--sub); font-weight: 600; margin-left: 4px; }
+.copts { display: flex; flex-direction: column; gap: 8px; }
+.copt { padding: 12px; border-radius: 14px; background: #fff; border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); font-size: 1.05rem; font-weight: 700; }
+.copt.ok { border-color: var(--mint); background: #effbf5; } .copt.miss { opacity: .35; }
+/* 털실 */
+.yarn { position: relative; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-content: center; }
+.ysvg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.ythread { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 2 7; }
+.ycol { display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 2; }
+.yl, .yr { position: relative; min-height: 54px; border-radius: 16px; background: #fff; border: 3px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; padding: 4px; }
+.yl b { font-size: 1.1rem; } .yl small { font-size: .65rem; color: var(--sub); }
+.yl.on { border-color: #ff8fab; background: #fff0f5; } .yl.done, .yr.done { background: #fbfaf7; }
+.yr.shake { animation: shakeX .3s; }
+.knot { position: absolute; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: #e8dcc8; border: 2px solid #c9b48f; }
+.yl .knot { right: -8px; } .yr .knot { left: -8px; }

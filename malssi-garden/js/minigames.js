@@ -20,7 +20,13 @@
     { id: 'riddle', cust: 'fox', heart: 1, icon: '🦊', name: '여우의 수수께끼',
       ask: '후후, 수수께끼 놀이 해요! 제가 그림을 보여 주면 무엇인지 외국 말로 맞혀 보세요. 연달아 맞히면 점수가 쑥쑥!', how: '그림을 보고 알맞은 낱말을 골라요. 연속으로 맞히면 점수가 커져요.', thanks: '대단해요! 제 수수께끼를 이렇게 잘 푸는 친구는 처음이에요.' },
     { id: 'dict', cust: 'owl', heart: 1, icon: '🦉', name: '부엉 박사의 받아쓰기',
-      ask: '부엉, 오늘은 받아쓰기 시간이에요. 제가 낱말을 읽어 줄 테니 글자 조각을 모아 써 보세요.', how: '소리를 듣고 글자 조각을 순서대로 눌러 낱말을 완성해요. 잘못 누른 조각은 다시 눌러 빼요.', thanks: '부엉부엉! 백 점짜리 받아쓰기예요.' }
+      ask: '부엉, 오늘은 받아쓰기 시간이에요. 제가 낱말을 읽어 줄 테니 글자 조각을 모아 써 보세요.', how: '소리를 듣고 글자 조각을 순서대로 눌러 낱말을 완성해요. 잘못 누른 조각은 다시 눌러 빼요.', thanks: '부엉부엉! 백 점짜리 받아쓰기예요.' },
+    { id: 'fish', cust: 'penguin', heart: 1, icon: '🎣', name: '펭펭의 얼음 낚시',
+      ask: '얼음 아래 물고기들이 저마다 이름표를 달고 있대요! 제가 부르는 이름의 물고기만 낚아 주세요. 다른 물고기는 놓아주고요!', how: '소리를 듣고, 그 말이 적힌 물고기가 헤엄쳐 지나갈 때 눌러요. 놓치면 다시 와요.', thanks: '와, 오늘 저녁은 잔치예요! 고마워요, 펭펭!' },
+    { id: 'cafe', cust: 'cat', heart: 1, icon: '☕', name: '나비의 카페 주문 받기',
+      ask: '냐아… 오늘 하루만 우리 카페 점원을 해 줄래요? 외국 손님이 말을 걸면 알맞게 대답해 주면 돼요. 팁은 반반!', how: '손님의 말을 듣고 알맞은 대답을 골라요. 회화 단원에 나온 말이에요.', thanks: '훌륭한 점원이었어요. 팁 여기요, 냐.' },
+    { id: 'yarn', cust: 'sheep', heart: 1, icon: '🧶', name: '몽실이의 털실 잇기',
+      ask: '목도리를 뜨려는데 털실 끝마다 낱말과 뜻이 붙어 있어요. 같은 뜻끼리 털실을 이어 줄래요?', how: '왼쪽 낱말을 누르고 오른쪽 뜻을 눌러 털실로 이어요. 세 판을 이으면 목도리 완성!', thanks: '포근한 목도리가 완성됐어요! 하나는 선물이에요.' }
   ];
   function gs() { return M.gardenState(); }
   function state() { var g = gs(); g.mini = g.mini || { day: '', done: {}, best: {}, seen: {} }; if (g.mini.day !== M.today()) { g.mini.day = M.today(); g.mini.done = {}; } return g.mini; }
@@ -306,6 +312,109 @@
       });
     }
     round(); timeBar(g, 120, function () { finish(g, list.length * 15); });
+  };
+
+  // 얼음 낚시: 소리를 듣고, 그 말이 적힌 물고기가 지나갈 때 누른다 (10마리)
+  GAMES.fish = function (g) {
+    var pool = words(16); if (pool.length < 4) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
+    var n = 0, target = null, fishes = [], speed = 1.1;
+    $('mBody').innerHTML = '<div class="sq"><button class="say big" id="fPlay">🔊</button><small id="fN">1 / 10</small></div><div class="ice" id="fI"><div class="icehole"></div><span class="ppg">🐧🎣</span></div>';
+    $('fPlay').onclick = function () { if (target) M.say(target.say, target.lang); };
+    var pond = $('fI'), lanes = [0.18, 0.4, 0.62, 0.82];
+    function round() {
+      if (!g.alive) return;
+      if (n >= 10) { finish(g, 130); return; }
+      n++; $('fN').textContent = n + ' / 10';
+      fishes.forEach(function (f) { f.el.remove(); }); fishes = [];
+      var four = M.shuffle(pool).slice(0, 4); target = four[0];
+      M.shuffle(four).forEach(function (it, i) {
+        var el = document.createElement('button'), dir = i % 2 ? -1 : 1;
+        el.className = 'fishb' + (dir < 0 ? ' rev' : ''); el.innerHTML = '<span class="fe">' + ['🐟', '🐠', '🐡', '🦐'][i] + '</span><span class="fw">' + wordHtml(it) + '</span>';
+        el.style.top = (lanes[i] * 100) + '%'; pond.appendChild(el);
+        var f = { el: el, it: it, x: 0.12 + ((i * 0.27 + Math.random() * 0.1) % 0.8), dir: dir, v: speed * (0.8 + Math.random() * 0.4) };
+        fishes.push(f);
+        el.onclick = function () {
+          if (!g.alive || el.classList.contains('miss')) return;
+          if (it === target) { setScore(g, g.score + 10 + Math.round(speed * 2)); el.classList.add('caught'); M.sfx('ok'); speed = Math.min(2.2, speed + 0.1); setTimeout(round, 500); }
+          else { el.classList.add('miss'); M.sfx('bad'); setScore(g, g.score - 3); }
+        };
+      });
+      setTimeout(function () { if (g.alive) M.say(target.say, target.lang); }, 300);
+    }
+    var last = performance.now();
+    function tick(t) {
+      if (!g.alive) return;
+      var dt = Math.min(50, t - last) / 1000; last = t;
+      fishes.forEach(function (f) {
+        if (f.el.classList.contains('caught')) return;
+        f.x += f.dir * f.v * 0.22 * dt;
+        if (f.dir > 0 && f.x > 1.1) f.x = -0.35; if (f.dir < 0 && f.x < -0.35) f.x = 1.1;   // 놓치면 다시 헤엄쳐 온다
+        f.el.style.left = (f.x * 100) + '%';
+      });
+      g.raf = requestAnimationFrame(tick);
+    }
+    round(); g.raf = requestAnimationFrame(tick); timeBar(g, 75, function () { finish(g, 130); });
+  };
+  // 카페 주문 받기: 회화 단원의 "상대 말 → 알맞은 대답" 문제를 손님 말로 낸다 (6손님)
+  GAMES.cafe = function (g) {
+    var lang = M.P.lang, L = window.LANGS[lang], done = [], all = [];
+    L.stages.forEach(function (st) { if (st.conv) st.xf.forEach(function (x) { if (x.w && x.w.length >= 2) { all.push(x); if (M.P.prog[lang][st.id]) done.push(x); } }); });
+    var list = M.shuffle(done.length >= 6 ? done : all).slice(0, 6);
+    if (list.length < 3) { $('mBody').innerHTML = '<p class="center">회화를 조금 더 배우고 와 주세요!</p>'; return; }
+    var guests = ['🐰', '🐻', '🦊', '🐼', '🐨', '🐹', '🐸', '🦁'], n = 0;
+    function round() {
+      if (!g.alive) return;
+      if (n >= list.length) { finish(g, list.length * 20); return; }
+      var x = list[n++], opts = M.shuffle([x.a].concat((x.alts || []).map(function (a) { return a.t; }), x.w.slice(0, 3 - (x.alts || []).length))), t0 = Date.now(), tries = 0;
+      var right = function (o) { return o === x.a || (x.alts || []).some(function (a) { return a.t === o; }); };
+      $('mBody').innerHTML = '<div class="cafe"><div class="cguest"><span class="gface">' + guests[(n * 3) % guests.length] + '</span><button class="cbub lang-' + lang + '" data-say="' + esc(x.p) + '"><b>' + esc(x.p) + '</b>' + (x.pr ? '<small>' + esc(x.pr) + '</small>' : '') + '<em>' + esc(x.pk || '') + '</em></button></div><div class="cme">🐱 내 대답은? <small>' + n + ' / ' + list.length + '</small></div>' +
+        '<div class="copts">' + opts.map(function (o, i) { return '<button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(o) + '</button>'; }).join('') + '</div></div>';
+      setTimeout(function () { if (g.alive) M.say(x.p, lang); }, 250);
+      document.querySelector('.cbub').onclick = function () { M.say(x.p, lang); };
+      Array.prototype.forEach.call(document.querySelectorAll('.copt'), function (b) {
+        b.onclick = function () {
+          if (!g.alive || b.disabled) return;
+          var o = opts[+b.dataset.i];
+          if (right(o)) { var sec = (Date.now() - t0) / 1000; setScore(g, g.score + Math.max(8, 20 - tries * 6 - Math.floor(sec / 3))); b.classList.add('ok'); M.sfx('ok'); M.say(o, lang); setTimeout(round, 1300); }
+          else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
+        };
+      });
+    }
+    round(); timeBar(g, 110, function () { finish(g, list.length * 20); });
+  };
+  // 털실 잇기: 왼쪽 낱말과 오른쪽 뜻을 털실로 잇는다 (5쌍 × 3판)
+  GAMES.yarn = function (g) {
+    var pool = words(15); if (pool.length < 5) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
+    var board = 0, colors = ['#ff8fab', '#7ec8f0', '#ffd166', '#9ad77c', '#c49bff'];
+    function round() {
+      if (!g.alive) return;
+      if (board >= 3 || board * 5 >= pool.length) { finish(g, 3 * 5 * 6); return; }
+      var set = pool.slice(board * 5, board * 5 + 5); board++;
+      var right = M.shuffle(set.slice()), sel = null, joined = 0, miss = 0;
+      $('mBody').innerHTML = '<p class="hint center">' + board + ' / 3판 · 낱말을 누르고 뜻을 눌러요</p><div class="yarn" id="yB"><svg class="ysvg" id="yS"></svg><div class="ycol">' +
+        set.map(function (it, i) { return '<button class="yl" data-i="' + i + '">' + wordHtml(it) + '<i class="knot"></i></button>'; }).join('') + '</div><div class="ycol">' +
+        right.map(function (it) { return '<button class="yr" data-i="' + set.indexOf(it) + '"><i class="knot"></i>' + esc(it.k) + '</button>'; }).join('') + '</div></div>';
+      var box = $('yB'), svg = $('yS');
+      function line(a, b, col) {
+        var r = box.getBoundingClientRect(), p = a.querySelector('.knot').getBoundingClientRect(), q = b.querySelector('.knot').getBoundingClientRect();
+        var x1 = p.left + p.width / 2 - r.left, y1 = p.top + p.height / 2 - r.top, x2 = q.left + q.width / 2 - r.left, y2 = q.top + q.height / 2 - r.top, mx = (x1 + x2) / 2;
+        var el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        el.setAttribute('d', 'M' + x1 + ' ' + y1 + ' C' + mx + ' ' + (y1 + 18) + ' ' + mx + ' ' + (y2 - 18) + ' ' + x2 + ' ' + y2);
+        el.setAttribute('stroke', col); el.setAttribute('class', 'ythread'); svg.appendChild(el);
+      }
+      box.onclick = function (e) {
+        if (!g.alive) return;
+        var b = e.target.closest('.yl, .yr'); if (!b || b.classList.contains('done')) return;
+        if (b.classList.contains('yl')) { if (sel) sel.classList.remove('on'); sel = b; b.classList.add('on'); M.say(set[+b.dataset.i].say, set[+b.dataset.i].lang); return; }
+        if (!sel) { M.toast('왼쪽 낱말을 먼저 눌러요'); return; }
+        if (sel.dataset.i === b.dataset.i) {
+          var col = colors[joined % colors.length]; line(sel, b, col); sel.classList.remove('on'); sel.classList.add('done'); b.classList.add('done'); sel.style.borderColor = b.style.borderColor = col;
+          sel = null; joined++; M.sfx('ok'); setScore(g, g.score + 6);
+          if (joined === set.length) { setScore(g, g.score + Math.max(0, 6 - miss * 2)); M.sfx('win'); setTimeout(round, 900); }
+        } else { miss++; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); M.sfx('bad'); setScore(g, g.score - 2); }
+      };
+    }
+    round(); timeBar(g, 100, function () { finish(g, 3 * 5 * 6); });
   };
 
   M.MINIS = MINIS;
