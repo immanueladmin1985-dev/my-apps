@@ -173,7 +173,7 @@
       '<div class="board" id="board" style="--bh:' + (H / 1496).toFixed(4) + ';aspect-ratio:1496/' + H + '"><img class="btop" src="img/garden-top.png" alt=""><img class="bbot" src="img/garden-bot.png" alt="">';
     h += '<div class="bcells" id="grid" style="top:' + (180 / H * 100) + '%;bottom:' + (116 / H * 100) + '%;grid-template-rows:repeat(' + R + ',minmax(0,1fr))">';
     for (var i = 0; i < R * COLS; i++) h += '<div class="cell" data-c="' + i + '"></div>';
-    h += '</div></div><div class="gtools"><button class="buywater" id="gWater"><img src="img/water.png" alt="">물방울 사기</button><div id="gExpand"></div></div><div class="gpanel" id="gPanel"></div><div id="gBench"></div><div class="gbook" id="gBook"></div></div>';
+    h += '</div></div><div class="gtools"><button class="buywater" id="gWater"><img src="img/waterbag.png" alt="">물방울 사기</button><div id="gExpand"></div></div><div class="gpanel" id="gPanel"></div><div id="gBench"></div><div class="gbook" id="gBook"></div></div>';
     root.innerHTML = h;
     for (i = 0; i < R * COLS; i++) paintCell(i);
     placeInbox(); paintOrders(); panel(); paintBook(); paintExpand(); paintBench();
@@ -463,7 +463,7 @@
   var PACKS = [[30, 50], [100, 150], [300, 400]];
   function waterShop() {
     var d = M.modal('<h3>💧 물방울 사기</h3><p class="hint">레슨을 하면 물방울을 공짜로 받아요. 급할 때만 코인으로 사세요.</p><div class="list">' + PACKS.map(function (p, i) {
-      return '<button class="litem" data-pack="' + i + '"><span class="le"><img src="img/water.png" alt="" style="width:40px;height:40px"></span><span class="ln">물방울 ' + p[0] + '개<small>생산기 ' + p[0] / GEN_COST + '번</small></span><span class="lp"><img src="img/coin.png" alt="">' + p[1] + '</span></button>';
+      return '<button class="litem" data-pack="' + i + '"><span class="le"><img src="img/' + (i === 0 ? 'water' : i === 1 ? 'waterbag' : 'waterbarrel') + '.png" alt="" style="width:44px;height:44px"></span><span class="ln">물방울 ' + p[0] + '개<small>생산기 ' + p[0] / GEN_COST + '번</small></span><span class="lp"><img src="img/coin.png" alt="">' + p[1] + '</span></button>';
     }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-pack]'); if (!b) return;

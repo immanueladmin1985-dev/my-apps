@@ -13,8 +13,20 @@
     ['window', '🪟', '창문', 90, 'w', 22], ['plant', '🪴', '화분', 40, 'f', 13], ['clock', '🕰️', '벽시계', 60, 'w', 11], ['frame', '🖼️', '액자', 50, 'w', 12],
     ['cushion', '🎀', '쿠션', 30, 'f', 11], ['toys', '🧸', '장난감 상자', 80, 'f', 17], ['petbed', '🥕', '당근 방석', 120, 'f', 17], ['desk', '🖥️', '책상', 150, 'f', 24],
     ['tea', '🫖', '찻잔 세트', 70, 'f', 14], ['shelf', '🏺', '벽 선반', 60, 'w', 20], ['lights', '✨', '꼬마전구', 90, 'w', 44], ['fish', '🐠', '어항', 160, 'f', 20],
-    ['sakura', '🌸', '벚꽃 화분', 250, 'f', 20]
+    ['sakura', '🌸', '벚꽃 화분', 250, 'f', 20],
+    ['wardrobe', '🚪', '옷장', 220, 'f', 24], ['dresser', '🪞', '화장대', 200, 'f', 24], ['mirror', '🪞', '전신 거울', 120, 'f', 15], ['armchair', '🛋️', '분홍 안락의자', 180, 'f', 22],
+    ['sidetable', '☕', '동그란 찻상', 90, 'f', 16], ['floorcush', '🟡', '방석 세트', 70, 'r', 22], ['piano', '🎹', '피아노', 400, 'f', 28], ['fireplace', '🔥', '벽난로', 350, 'f', 26],
+    ['tv', '📺', 'TV 장', 260, 'f', 26], ['teatable', '🍪', '낮은 차 탁자', 140, 'f', 26], ['hangplant', '🌿', '걸이 화분', 80, 'w', 14], ['tulips', '🌷', '튤립 꽃병', 90, 'f', 13],
+    ['kitchen', '🍳', '부엌 조리대', 380, 'f', 32], ['fridge', '🧊', '당근 냉장고', 300, 'f', 18], ['dining', '🍽️', '2인 식탁', 320, 'f', 32], ['coffee', '☕', '커피 머신', 160, 'f', 14],
+    ['cakestand', '🧁', '컵케이크 진열대', 150, 'f', 14], ['cattower', '🐾', '캣타워', 200, 'f', 18], ['hutch', '🏠', '토끼 집', 300, 'f', 24], ['guitar', '🎸', '기타', 150, 'f', 13],
+    ['plush', '🧸', '인형 더미', 180, 'f', 20], ['stars', '⭐', '별 가랜드', 80, 'w', 30], ['painting', '🖼️', '집 그림 액자', 120, 'w', 16]
   ].map(function (a) { return { id: a[0], e: a[1], name: a[2], price: a[3], wall: a[4] === 'w', rug: a[4] === 'r', size: a[5] }; });
+  var WALLS = [{ id: 0, name: '기본 (아이보리)', price: 0, src: 'img/bg-room.jpg' }, { id: 1, name: '분홍 줄무늬', price: 300, src: 'img/wall-1.jpg' }, { id: 2, name: '민트 물방울', price: 300, src: 'img/wall-2.jpg' },
+    { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' }];
+  // 소품: 토끼 그림 위에 겹쳐 그린다. x·y 는 토끼 그림 안의 위치(%), w 는 너비(%)
+  var ACCS = [{ id: 'ribbon', name: '빨간 리본', price: 120, x: 66, y: 10, w: 32 }, { id: 'crown', name: '꽃 화관', price: 200, x: 50, y: 18, w: 56 }, { id: 'strawhat', name: '밀짚모자', price: 250, x: 50, y: 12, w: 64 },
+    { id: 'chefhat', name: '요리사 모자', price: 250, x: 50, y: 12, w: 60 }, { id: 'glasses', name: '동그란 안경', price: 150, x: 50, y: 50, w: 46 }, { id: 'starpin', name: '별 머리핀', price: 100, x: 66, y: 26, w: 22 }];
+  M.ACCS = ACCS;
   M.FURN = FURN; M.FOODS = FOODS;
 
   var LINES = ['오늘도 같이 공부해요!', '레슨 한 판 할까요?', '정원에 꽃이 피면 좋겠어요 🌸', '말을 배우면 씨앗이 자라요!', '쓰다듬어 줘서 고마워요 💕', '오늘 목표까지 조금만 더!'];
@@ -56,15 +68,15 @@
     var placed = Object.keys(P.room.placed).map(function (id) { return FURN.filter(function (f) { return f.id === id; })[0]; }).filter(Boolean);
     placed.sort(function (a, b) { return P.room.placed[a.id].y - P.room.placed[b.id].y; });
     var h = '<div class="home">' +
-      '<div class="room' + (editing ? ' editing' : '') + '" id="room">' +
+      '<div class="room' + (editing ? ' editing' : '') + '" id="room" style="background-image:url(' + wallSrc() + ')">' +
       placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + f.size + '%;z-index:' + (f.rug ? 1 : Math.round(pos.y)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false"></div>'; }).join('') +
-      '<div class="pet" id="pet" style="z-index:70"><div class="bubble" id="petSay">' + esc(line) + '</div><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '"></div>' +
+      '<div class="pet" id="pet" style="z-index:70"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml() + '</div></div>' +
       (editing ? '<div class="edithint">가구를 끌어서 옮기고, 누르면 보관할 수 있어요</div>' : '') +
       '</div>' +
       '<div class="card petcard"><div class="pname"><b>' + esc(P.petName) + '</b> <span class="lv">Lv.' + p.lv + '</span><span class="bonus">💧 +' + M.petBonus() + '%</span></div>' +
       '<div class="meter"><span>친밀도</span><div class="mbar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></div><small>' + p.exp + '/' + needExp(p.lv) + '</small></div>' +
       '<div class="meter"><span>배부름</span><div class="mbar full"><i style="width:' + M.petFullPct() + '%"></i></div><small>' + (full >= 100 ? '아주 배부름' : full < 30 ? '배고파요' : full + '%') + '</small></div>' +
-      '<div class="row3"><button class="btn primary" id="hFeed">🥕 먹이 주기</button><button class="btn" id="hShop">🛋️ 가구 상점</button><button class="btn' + (editing ? ' on' : '') + '" id="hEdit">' + (editing ? '✅ 꾸미기 끝' : '✏️ 꾸미기') + '</button></div>' +
+      '<div class="row3"><button class="btn primary" id="hFeed">🥕 먹이 주기</button><button class="btn" id="hShop">🛋️ 꾸미기 상점</button><button class="btn' + (editing ? ' on' : '') + '" id="hEdit">' + (editing ? '✅ 꾸미기 끝' : '✏️ 꾸미기') + '</button></div>' +
       '<p class="hint">레벨 5와 10이 되면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 물방울을 더 받아요.</p></div></div>';
     root.innerHTML = h;
   };
@@ -100,10 +112,38 @@
       pet.appendChild(h); setTimeout(h.remove.bind(h), 1400);
     }
   }
+  function wallSrc() { var w = WALLS[M.P.room.wall || 0] || WALLS[0]; return w.src; }
+  function accHtml() {
+    var a = ACCS.filter(function (x) { return x.id === M.P.pet.acc; })[0]; if (!a) return '';
+    var st = M.petStage(), dy = st === 1 ? 6 : st === 2 ? 3 : 0;   // 아기 토끼는 머리가 조금 낮다
+    return '<img class="acc" src="img/acc-' + a.id + '.png" alt="" style="left:' + a.x + '%;top:' + (a.y + dy) + '%;width:' + a.w + '%">';
+  }
   function furnShop() {
     var P = M.P;
-    var d = M.modal('<h3>가구 상점</h3><p class="hint">산 가구는 방에 놓이고, 꾸미기에서 옮길 수 있어요</p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
+    var tab = 'furn';
+    var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">' + esc(P.petName) + ' 소품</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
+    var tabs = function () { Array.prototype.forEach.call(d.querySelectorAll('[data-st]'), function (b) { b.classList.toggle('on', b.dataset.st === tab); }); };
+    var paintOther = function () {
+      var R = P.room, ow = R.walls || {}, oa = P.pet.accs || {};
+      if (tab === 'wall') {
+        d.querySelector('#fHint').textContent = '방 전체의 벽지와 바닥을 바꿔요';
+        d.querySelector('#fList').innerHTML = '<div class="walls">' + WALLS.map(function (w) {
+          var own = !w.price || ow[w.id], on = (R.wall || 0) === w.id;
+          return '<button class="wallc' + (on ? ' on' : '') + '" data-wid="' + w.id + '"><img src="' + w.src + '" alt=""><b>' + w.name + '</b><small>' + (on ? '사용 중' : own ? '바꾸기' : '<img src="img/coin.png" alt="">' + w.price) + '</small></button>';
+        }).join('') + '</div>';
+      } else {
+        d.querySelector('#fHint').textContent = M.j(P.petName, '이', '') + '에게 하나씩 씌울 수 있어요';
+        d.querySelector('#fList').innerHTML = ACCS.map(function (a) {
+          var own = oa[a.id], on = P.pet.acc === a.id;
+          return '<button class="litem" data-aid="' + a.id + '"><span class="le"><img src="img/acc-' + a.id + '.png" alt=""></span><span class="ln">' + a.name + (own ? '<small>' + (on ? '쓰고 있어요 · 눌러서 벗기' : '눌러서 씌우기') + '</small>' : '') + '</span>' +
+            (own ? '<span class="lp own">' + (on ? '벗기' : '쓰기') + '</span>' : '<span class="lp"><img src="img/coin.png" alt="">' + a.price + '</span>') + '</button>';
+        }).join('');
+      }
+    };
     var paint = function () {
+      tabs();
+      if (tab !== 'furn') { paintOther(); return; }
+      d.querySelector('#fHint').textContent = '산 가구는 방에 놓이고, ✏️ 꾸미기에서 옮길 수 있어요';
       d.querySelector('#fList').innerHTML = FURN.map(function (f) {
         var own = P.room.owned[f.id], on = !!P.room.placed[f.id];
         return '<button class="litem" data-fid="' + f.id + '"><span class="le"><img src="img/furn-' + f.id + '.png" alt=""></span><span class="ln">' + f.name + (own ? '<small>' + (on ? '방에 있어요 · 눌러서 보관' : '보관 중 · 눌러서 꺼내기') + '</small>' : '') + '</span>' +
@@ -112,6 +152,19 @@
     };
     paint();
     d.addEventListener('click', function (e) {
+      var tb = e.target.closest('[data-st]'); if (tb) { tab = tb.dataset.st; paint(); return; }
+      var wb = e.target.closest('[data-wid]');
+      if (wb) {
+        var w = WALLS[+wb.dataset.wid]; P.room.walls = P.room.walls || {};
+        if (w.price && !P.room.walls[w.id]) { if (!M.spend('coins', w.price)) { M.toast('코인이 ' + (w.price - P.coins) + '개 더 필요해요'); return; } P.room.walls[w.id] = true; M.sfx('coin'); }
+        P.room.wall = w.id; M.save(); M.toast('🏠 벽지를 ' + M.j(w.name, '으로', '로') + ' 바꿨어요'); paint(); rerender(); return;
+      }
+      var ab = e.target.closest('[data-aid]');
+      if (ab) {
+        var a = ACCS.filter(function (x) { return x.id === ab.dataset.aid; })[0]; P.pet.accs = P.pet.accs || {};
+        if (!P.pet.accs[a.id]) { if (!M.spend('coins', a.price)) { M.toast('코인이 ' + (a.price - P.coins) + '개 더 필요해요'); return; } P.pet.accs[a.id] = true; M.sfx('coin'); }
+        P.pet.acc = P.pet.acc === a.id ? '' : a.id; M.save(); paint(); rerender(); return;
+      }
       var b = e.target.closest('[data-fid]'); if (!b) return;
       var f = FURN.filter(function (x) { return x.id === b.dataset.fid; })[0];
       if (P.room.owned[f.id]) { togglePlace(f); paint(); return; }

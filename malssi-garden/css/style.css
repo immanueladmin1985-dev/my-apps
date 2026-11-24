@@ -483,7 +483,7 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 /* 토끼 집 */
 .home { padding-top: 10px; }
 .room { position: relative; aspect-ratio: 10 / 7; max-height: 62svh; margin: 0 auto; border-radius: 24px; overflow: hidden; box-shadow: var(--sh); touch-action: pan-y;
-  background: url(../img/bg-room.jpg) center bottom / cover no-repeat, linear-gradient(#fff6ea 55%, #e9a85c 55%); }
+  background: #f6e3cb center bottom / cover no-repeat; }
 .room.editing { touch-action: none; outline: 3px dashed var(--mint); }
 .furn { position: absolute; transform: translate(-50%, -50%); filter: drop-shadow(0 3px 2px rgba(0,0,0,.15)); }
 .furn img { width: 100%; display: block; pointer-events: none; }
@@ -491,7 +491,8 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .furn.drag { animation: none; transform: translate(-50%, -50%) scale(1.12); }
 .pet { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%); width: 30%; max-width: 200px; z-index: 95 !important; }
 .room.editing .pet { opacity: .45; pointer-events: none; }
-.pet img { width: 100%; aspect-ratio: 1; display: block; animation: hop 2.4s infinite; }
+.petfig { animation: hop 2.4s infinite; }
+.pet #petImg { width: 100%; aspect-ratio: 1; display: block; }
 .bubble { position: absolute; bottom: 92%; left: 50%; transform: translateX(-50%); background: #fff; padding: 6px 12px; border-radius: 14px; font-weight: 700; font-size: .85rem; white-space: nowrap; box-shadow: var(--sh); }
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; border: 8px solid transparent; border-top-color: #fff; border-bottom: 0; transform: translateX(-50%); }
 .heart { position: absolute; bottom: 60%; font-size: 1.6rem; animation: floatup 1.2s ease-out backwards; pointer-events: none; }
@@ -503,6 +504,16 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .meter { display: grid; grid-template-columns: 56px 1fr 64px; align-items: center; gap: 8px; margin-top: 8px; font-size: .85rem; font-weight: 700; }
 .meter .mbar { height: 14px; margin: 0; }
 .meter small { text-align: right; color: var(--sub); }
+
+/* 꾸미기 상점·소품 */
+.petfig { position: relative; }
+.acc { position: absolute; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+.walls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wallc { display: flex; flex-direction: column; gap: 2px; border: 2px solid var(--line); border-radius: 14px; padding: 6px; background: #fff; text-align: left; }
+.wallc > img { width: 100%; aspect-ratio: 3/2; object-fit: cover; border-radius: 10px; }
+.wallc.on { border-color: var(--mint); background: #effbf5; }
+.wallc small { color: var(--sub); display: flex; align-items: center; gap: 2px; }
+.wallc small img { width: 16px; height: 16px; }
 
 /* 상점 */
 .shop { padding-top: 10px; }
@@ -528,6 +539,7 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 
 /* 선물 신청 */
 .req-btn { margin-top: 10px; border-style: dashed; color: var(--pink-d); }
+.req-btn img { width: 30px; height: 30px; }
 .reqs { margin-top: 8px; }
 .lnk { font-size: .78rem; font-weight: 700; color: #2d7bb8; background: #e6f4ff; border-radius: 8px; padding: 1px 6px; }
 .won { color: var(--sub); }

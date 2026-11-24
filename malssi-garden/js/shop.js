@@ -24,7 +24,7 @@
         '<button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-redeem="' + r.id + '"><img src="img/flower-point.png" alt="">' + M.fmt(r.price) + '</button></div>';
     }).join('') + (P.rewards.length ? '' : '<p class="hint">아직 등록된 선물이 없어요. 남편에게 등록을 부탁해 보세요.</p>') + '</div>';
     var reqs = (P.requests || []).filter(function (q) { return q.status === 'wait'; });
-    h += '<button class="btn wide req-btn" id="sReq">🙋 갖고 싶은 선물 신청하기</button>';
+    h += '<button class="btn wide req-btn" id="sReq"><img src="img/giftcard.png" alt="">갖고 싶은 선물 신청하기</button>';
     if (reqs.length) h += '<div class="list reqs">' + reqs.map(function (q) {
       return '<div class="hist">' + q.e + ' <b>' + esc(q.name) + '</b>' + (q.won ? ' · ' + M.fmt(q.won) + '원' : '') + (q.link ? ' <button class="lnk" data-link="' + esc(q.link) + '">🔗</button>' : '') + ' <small>남편 확인 기다리는 중</small></div>';
     }).join('') + '</div>';
