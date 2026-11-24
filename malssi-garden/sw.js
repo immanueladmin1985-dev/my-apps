@@ -1,4 +1,4 @@
-const CACHE = 'malssi-garden-v17';
+const CACHE = 'malssi-garden-v18';
 const CORE = [
   './',
   './index.html',

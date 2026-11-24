@@ -1,5 +1,6 @@
 // 상황 회화 (말씨정원). 장면별 짧은 대화를 직접 지었다.
 // 한 줄: 말하는 사람(A/B)|말|뜻|읽기(중국어 병음)
+// 말하는 사람 뒤의 * 는 "앞 말에 대한 대답이 아님"(화제를 바꾸거나 이어서 말함) → 대답 고르기 문제로 내지 않는다
 (function () {
   function C(title, dlg) { return { title: title, dlg: dlg }; }
 
@@ -9,7 +10,7 @@ A|はじめまして。キムです。|처음 뵙겠습니다. 김입니다.
 B|はじめまして。田中です。|처음 뵙겠습니다. 다나카입니다.
 A|田中さんは学生ですか。|다나카 씨는 학생이에요?
 B|いいえ、会社員です。|아니요, 회사원이에요.
-A|よろしくお願いします。|잘 부탁합니다.
+A*|よろしくお願いします。|잘 부탁합니다.
 B|こちらこそ、よろしくお願いします。|저야말로 잘 부탁합니다.`),
     C('카페에서 주문', `
 A|いらっしゃいませ。ご注文は？|어서 오세요. 주문하시겠어요?
@@ -22,8 +23,8 @@ B|いいえ、持ち帰りで。|아니요, 포장이요.`),
 A|何名様ですか。|몇 분이세요?
 B|二人です。|두 명이에요.
 A|こちらへどうぞ。|이쪽으로 오세요.
-B|すみません、メニューをください。|저기요, 메뉴 주세요.
-A|お決まりですか。|정하셨어요?
+B*|すみません、メニューをください。|저기요, 메뉴 주세요.
+A*|お決まりですか。|정하셨어요?
 B|ラーメンを二つお願いします。|라멘 두 개 부탁해요.`),
     C('가게에서 가격 묻기', `
 A|すみません、これはいくらですか。|저기요, 이거 얼마예요?
@@ -44,8 +45,8 @@ A|いらっしゃいませ。|어서 오세요.
 B|予約したキムです。|예약한 김이에요.
 A|パスポートをお願いします。|여권 부탁드립니다.
 B|はい、どうぞ。|네, 여기요.
-A|お部屋は五階です。|방은 5층입니다.
-B|朝ごはんは何時からですか。|아침밥은 몇 시부터예요?`),
+A*|お部屋は五階です。|방은 5층입니다.
+B*|朝ごはんは何時からですか。|아침밥은 몇 시부터예요?`),
     C('약국·병원', `
 A|どうしましたか。|어디가 불편하세요?
 B|頭が痛いです。|머리가 아파요.
@@ -70,9 +71,9 @@ B|いいえ、乗り換えはありません。|아니요, 안 갈아타도 돼�
     C('날씨와 안부', `
 A|おはようございます。今日は寒いですね。|안녕하세요. 오늘 춥네요.
 B|そうですね。雪が降りそうです。|그러네요. 눈이 올 것 같아요.
-A|お元気ですか。|잘 지내세요?
+A*|お元気ですか。|잘 지내세요?
 B|はい、おかげさまで。|네, 덕분에요.
-A|週末は何をしますか。|주말에는 뭐 해요?
+A*|週末は何をしますか。|주말에는 뭐 해요?
 B|家でゆっくり休みます。|집에서 푹 쉴 거예요.`)
   ] });
 
@@ -82,7 +83,7 @@ A|你好！我叫美娜。|안녕하세요! 저는 미나예요.|nǐ hǎo! wǒ j
 B|你好！我叫王明。|안녕하세요! 저는 왕밍이에요.|nǐ hǎo! wǒ jiào Wáng Míng.
 A|你是哪国人？|어느 나라 사람이에요?|nǐ shì nǎ guó rén?
 B|我是中国人。|저는 중국 사람이에요.|wǒ shì Zhōngguó rén.
-A|认识你很高兴。|만나서 반가워요.|rènshi nǐ hěn gāoxìng.
+A*|认识你很高兴。|만나서 반가워요.|rènshi nǐ hěn gāoxìng.
 B|我也很高兴。|저도 반가워요.|wǒ yě hěn gāoxìng.`),
     C('카페에서 주문', `
 A|你好，要喝什么？|안녕하세요, 뭐 드시겠어요?|nǐ hǎo, yào hē shénme?
@@ -117,8 +118,8 @@ A|您好，有预订吗？|안녕하세요, 예약하셨어요?|nín hǎo, yǒu 
 B|有，我叫金美娜。|네, 김미나예요.|yǒu, wǒ jiào Jīn Měinà.
 A|请给我您的护照。|여권 주세요.|qǐng gěi wǒ nín de hùzhào.
 B|给您。|여기요.|gěi nín.
-A|您的房间在五楼。|방은 5층이에요.|nín de fángjiān zài wǔ lóu.
-B|早饭几点开始？|아침은 몇 시에 시작해요?|zǎofàn jǐ diǎn kāishǐ?`),
+A*|您的房间在五楼。|방은 5층이에요.|nín de fángjiān zài wǔ lóu.
+B*|早饭几点开始？|아침은 몇 시에 시작해요?|zǎofàn jǐ diǎn kāishǐ?`),
     C('약국·병원', `
 A|你哪儿不舒服？|어디가 불편하세요?|nǐ nǎr bù shūfu?
 B|我头疼。|머리가 아파요.|wǒ tóu téng.
@@ -145,7 +146,7 @@ A|最近怎么样？|요즘 어때?|zuìjìn zěnmeyàng?
 B|挺好的，你呢？|잘 지내, 너는?|tǐng hǎo de, nǐ ne?
 A|我也很好。今天真冷啊！|나도 잘 지내. 오늘 정말 춥다!|wǒ yě hěn hǎo. jīntiān zhēn lěng a!
 B|是啊，明天会下雪。|그러게, 내일 눈 온대.|shì a, míngtiān huì xià xuě.
-A|周末你做什么？|주말에 뭐 해?|zhōumò nǐ zuò shénme?
+A*|周末你做什么？|주말에 뭐 해?|zhōumò nǐ zuò shénme?
 B|在家休息。|집에서 쉬어.|zài jiā xiūxi.`)
   ] });
 
@@ -155,7 +156,7 @@ A|Hi, I'm Mina. Nice to meet you.|안녕하세요, 미나예요. 반가워요.
 B|Nice to meet you too. I'm Tom.|저도 반가워요. 저는 톰이에요.
 A|Where are you from?|어디서 왔어요?
 B|I'm from Canada.|캐나다에서 왔어요.
-A|What do you do?|무슨 일 하세요?
+A*|What do you do?|무슨 일 하세요?
 B|I'm a teacher.|선생님이에요.`),
     C('카페에서 주문', `
 A|Hi, what can I get for you?|안녕하세요, 뭐 드릴까요?
@@ -167,16 +168,16 @@ B|To go, please.|가져갈게요.`),
     C('식당에서 주문하기', `
 A|How many people?|몇 분이세요?
 B|Two, please.|두 명이요.
-A|Are you ready to order?|주문하시겠어요?
+A*|Are you ready to order?|주문하시겠어요?
 B|Yes, I'll have the pasta.|네, 파스타로 할게요.
 A|Anything to drink?|마실 건요?
 B|Just water, please.|물만 주세요.`),
     C('가게에서 가격 묻기', `
 A|Excuse me, how much is this?|실례지만, 이거 얼마예요?
 B|It's twenty dollars.|20달러예요.
-A|Do you have it in blue?|파란색도 있어요?
+A*|Do you have it in blue?|파란색도 있어요?
 B|Yes, here you are.|네, 여기 있어요.
-A|Can I try it on?|입어 봐도 돼요?
+A*|Can I try it on?|입어 봐도 돼요?
 B|Sure, the fitting room is over there.|그럼요, 탈의실은 저쪽이에요.`),
     C('길 묻기', `
 A|Excuse me, where is the station?|실례합니다, 역이 어디예요?
@@ -190,8 +191,8 @@ A|Good evening. Do you have a reservation?|안녕하세요. 예약하셨어요?
 B|Yes, my name is Mina Kim.|네, 김미나예요.
 A|Can I see your passport, please?|여권 좀 보여 주시겠어요?
 B|Here it is.|여기 있어요.
-A|Your room is on the fifth floor.|방은 5층이에요.
-B|What time is breakfast?|아침은 몇 시예요?`),
+A*|Your room is on the fifth floor.|방은 5층이에요.
+B*|What time is breakfast?|아침은 몇 시예요?`),
     C('약국·병원', `
 A|What's wrong?|어디가 안 좋으세요?
 B|I have a headache.|머리가 아파요.

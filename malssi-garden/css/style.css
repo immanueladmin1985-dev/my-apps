@@ -755,3 +755,15 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .order .hearts { position: absolute; top: -8px; right: 4px; font-size: .7rem; }
 .order:nth-child(1):nth-last-child(3)::before { left: 88%; }
 .order:nth-child(3):nth-last-child(1)::before { left: 12%; }
+
+/* 회화 역할극: 채팅처럼 */
+.qt .sub { font-size: .78rem; color: var(--mint-d); font-weight: 800; margin-left: 6px; }
+.chat { display: flex; flex-direction: column; gap: 6px; max-height: 38svh; overflow-y: auto; padding: 10px; background: #f6f3f8; border-radius: 18px; margin-bottom: 12px; }
+.chat .cb { max-width: 82%; text-align: left; padding: 7px 11px; border-radius: 16px; display: flex; flex-direction: column; gap: 1px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.chat .cb b { font-size: 1rem; font-weight: 700; }
+.chat .cb small { color: var(--sub); font-size: .76rem; }
+.chat .cb .dr { font-size: .74rem; color: var(--mint-d); }
+.chat .you { align-self: flex-start; background: #fff; border-bottom-left-radius: 4px; }
+.chat .me { align-self: flex-end; background: #dff7ec; border-bottom-right-radius: 4px; }
+.chat .wait { color: var(--mint-d); font-weight: 900; letter-spacing: 2px; animation: bob 1.2s ease-in-out infinite; }
+.dlgme { margin: 0 0 6px; font-size: .8rem; color: var(--sub); }

@@ -856,9 +856,9 @@ window.parseLangs = function () {
         s.unit = ui; s.idx = L.stages.length; s.lang = code;
         if (s.dlg) {   // 회화 단계: "A|말|뜻|읽기" 줄들. 앞사람 말 다음 줄이 대답 문제가 된다
           s.gram = true; s.conv = true;
-          s.dlg = s.dlg.trim().split('\n').map(function (line) { var f = line.split('|'); return { who: f[0], t: f[1], k: f[2] || '', r: f[3] || '' }; });
-          var xs = [];
-          s.dlg.forEach(function (d, i) { if (i > 0 && d.who !== s.dlg[i - 1].who) xs.push(s.dlg[i - 1].t + '|' + d.t + '|-,-,-|' + d.k); });
+          s.dlg = s.dlg.trim().split('\n').map(function (line) { var f = line.split('|'); return { who: f[0].charAt(0), nr: f[0].indexOf('*') > 0, t: f[1], k: f[2] || '', r: f[3] || '' }; });
+          var xs = []; s.dli = [];
+          s.dlg.forEach(function (d, i) { if (i > 0 && !d.nr && d.who !== s.dlg[i - 1].who) { xs.push(s.dlg[i - 1].t + '|' + d.t + '|-,-,-|' + d.k); s.dli.push(i); } });   // 앞 말에 진짜로 대답하는 줄만
           s.xf = xs.join('\n');
         }
         if (s.xf) {   // 문법 단계: "바꾸기 전 → 형태|정답|오답,오답,오답|뜻"
@@ -871,7 +871,7 @@ window.parseLangs = function () {
           return { t: f[0], r: f[1] || '', k: f[2] || '', e: f[3] || '', alt: f[4] ? f[4].split(',') : [], say: f[5] || f[0], lang: code, sid: s.id, kana: !!s.kana };
         });
         if (s.gram) s.xf.forEach(function (x, i) { x.item = s.items[i]; });
-        if (s.conv) s.xf.forEach(function (x, i) { var pi = -1; s.dlg.forEach(function (d, j) { if (d.t === x.p && pi < 0 && s.dlg[j + 1] && s.dlg[j + 1].t === x.a) pi = j; }); x.pk = pi >= 0 ? s.dlg[pi].k : ''; x.pr = pi >= 0 ? s.dlg[pi].r : ''; x.item.r = (s.dlg[pi + 1] || {}).r || ''; });
+        if (s.conv) s.xf.forEach(function (x, i) { var ai = s.dli[i], pv = s.dlg[ai - 1]; x.di = ai; x.pk = pv.k; x.pr = pv.r; x.item.r = s.dlg[ai].r || ''; });
         if (!(s.sents || '').trim() && SM[code] && SM[code][s.title]) s.sents = SM[code][s.title];
         s.sents = (s.sents || '').trim().split('\n').filter(Boolean).map(function (line) {
           var f = line.split('|'), toks = f[0].split('/'), sep = s.sep != null ? s.sep : L.sep;
@@ -883,15 +883,24 @@ window.parseLangs = function () {
         L.stages.push(s);
       });
     });
-    // 회화 대답 문제의 오답: 같은 장면의 다른 대답 → 다른 장면의 대답 순으로 3개
+    // 회화 대답 문제의 오답: 다른 장면의 대답 중에서 고른다.
+    // 같은 장면의 대사는 흐름상 그럴듯해서 헷갈리므로 넣지 않는다. 첫머리가 같은 대답(아니요…, 네…)을 먼저 골라 너무 쉽지 않게 한다.
+    // 고맙다·여기 있어요 같은 말은 어느 자리에서나 말이 되므로 오답으로 쓰지 않는다
+    var GENERIC = /감사|고마|여기 있|여기요|천만에|물론|^돼요|^좋아요|^네, 조금/;
+    var isQ = function (t) { return /[?？]\s*$|か[。？]?\s*$|吗[？?]?\s*$/.test(t); };
     var allB = [];
-    L.stages.forEach(function (s) { if (s.conv) s.xf.forEach(function (x) { allB.push(x.a); }); });
+    L.stages.forEach(function (s) { if (s.conv) s.xf.forEach(function (x) { allB.push({ a: x.a, k: x.k, sid: s.id }); }); });
     L.stages.forEach(function (s, si) {
       if (!s.conv) return;
+      var lines = s.dlg.map(function (d) { return d.t; });
       s.xf.forEach(function (x, xi) {
-        var mine = s.xf.map(function (y) { return y.a; }).filter(function (a) { return a !== x.a; });
-        var w = mine.slice(0, 2), k = (si * 7 + xi * 3) % Math.max(1, allB.length);
-        while (w.length < 3 && allB.length > 3) { var c = allB[k % allB.length]; if (c !== x.a && w.indexOf(c) < 0) w.push(c); k += 5; }
+        var head = x.a.replace(/^[¿¡]/, '').slice(0, 2).toLowerCase();
+        // 정답이 내가 묻는 말이면 다른 질문은 오답으로 쓰지 않는다(그 자리에서 물어도 말이 되므로)
+        var cand = allB.filter(function (b) { return b.sid !== s.id && lines.indexOf(b.a) < 0 && b.k !== x.k && b.a !== x.a && !(isQ(x.a) && isQ(b.a)) && !GENERIC.test(b.k); });
+        cand.forEach(function (b, bi) { b.sc = (b.a.slice(0, 2).toLowerCase() === head ? 0 : 10) + Math.abs(b.a.length - x.a.length) / 4 + ((bi * 13 + si * 7 + xi * 5) % 11) / 2; });
+        cand.sort(function (p, q) { return p.sc - q.sc; });
+        var w = [];
+        cand.forEach(function (b) { if (w.length < 3 && w.indexOf(b.a) < 0) w.push(b.a); });
         x.w = w;
       });
     });
