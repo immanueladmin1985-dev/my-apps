@@ -1,10 +1,11 @@
-const CACHE = 'malssi-garden-v7';
+const CACHE = 'malssi-garden-v8';
 const CORE = [
   './',
   './index.html',
   './css/style.css',
   './js/data.js',
   './js/data-n5.js',
+  './js/data-hsk1.js',
   './js/core.js',
   './js/lesson.js',
   './js/garden.js',
