@@ -284,8 +284,24 @@
     g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + t0 + dur);
     o.connect(g); g.connect(c.destination); o.start(c.currentTime + t0); o.stop(c.currentTime + t0 + dur + 0.05);
   }
+  // 효과음 파일 (uisfx 의 CC0 소리, sfx/LICENSE-AUDIO.txt). 분위기는 설정에서 고른다. 불러오기 전이나 실패하면 예전 소리(tone)로 낸다
+  var SFX = { ok: 'success', bad: 'error', pop: 'drop', merge: 'snap', coin: 'reward', win: 'level-up', tap: 'press' };
+  M.SFX_THEMES = [['rubber', '말랑'], ['glass', '반짝'], ['arcade', '오락실'], ['soft', '포근'], ['beep', '예전 소리']];
+  var bufs = {}, loading = {};
+  function loadTheme(th) {
+    var c = actx(); if (!c || loading[th] || th === 'beep') return; loading[th] = true; bufs[th] = bufs[th] || {};
+    Object.keys(SFX).forEach(function (k) {
+      fetch('sfx/' + th + '/' + SFX[k] + '.mp3').then(function (r) { return r.arrayBuffer(); })
+        .then(function (b) { return new Promise(function (ok, no) { c.decodeAudioData(b, ok, no); }); })
+        .then(function (buf) { bufs[th][k] = buf; }).catch(function () {});
+    });
+  }
+  M.sfxTheme = function () { return (M.P && M.P.set.sfx) || 'rubber'; };
   M.sfx = function (name) {
     if (!M.P || !M.P.set.sound) return;
+    var th = M.sfxTheme(), b = bufs[th] && bufs[th][name];
+    if (b) { try { var c = actx(), src = c.createBufferSource(), g = c.createGain(); g.gain.value = 0.7; src.buffer = b; src.connect(g); g.connect(c.destination); src.start(); return; } catch (e) {} }
+    loadTheme(th);
     try {
       if (name === 'ok') { tone(784, 0, 0.12); tone(1175, 0.09, 0.2); }
       else if (name === 'bad') { tone(220, 0, 0.18, 'triangle', 0.2); tone(180, 0.12, 0.22, 'triangle', 0.2); }
@@ -303,18 +319,32 @@
   function loadVoices() { try { voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { voices = []; } }
   if (window.speechSynthesis) { loadVoices(); try { speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
   // 여러 문장을 차례로 읽는다 (대화 전체 듣기)
-  M.sayList = function (list, lang) { try { speechSynthesis.cancel(); } catch (e) {} list.forEach(function (t) { M.say(t, lang, false, true); }); };
+  M.sayList = function (list, lang, whos) { try { speechSynthesis.cancel(); } catch (e) {} list.forEach(function (t, i) { M.say(t, lang, false, true, whos && whos[i]); }); };
   M.ttsOK = function () { return !!window.speechSynthesis; };
-  M.say = function (text, lang, slow, keep) {
+  // who: 회화에서 말하는 사람('A' 또는 'B'). 기기에 목소리가 둘 이상 있으면 서로 다른 목소리를 쓰고,
+  // 하나뿐이어도 높낮이를 바꿔 A 는 여자 목소리처럼(높게), B 는 남자 목소리처럼(낮게) 들리게 한다
+  function langVoices(code) {
+    var pre = code.slice(0, 2), exact = voices.filter(function (x) { return x.lang && x.lang.replace('_', '-').indexOf(code) === 0; });
+    return exact.length ? exact : voices.filter(function (x) { return x.lang && x.lang.slice(0, 2) === pre; });
+  }
+  function genderOf(v) { var n = (v.name + ' ' + (v.voiceURI || '')).toLowerCase(); return /female|woman|女|kyoko|haruka|ayumi|nanami|samantha|zira|ting-ting|tingting|huihui|xiaoxiao|yuna|sora|-x-[a-z]*f|#female/.test(n) ? 'f' : /male|man|男|otoya|ichiro|keita|daniel|david|alex|yunyang|kangkang|-x-[a-z]*m|#male/.test(n) ? 'm' : ''; }
+  function voiceFor(code, who) {
+    var vs = langVoices(code); if (!who || vs.length < 2) return vs[0];
+    var want = who === 'A' ? 'f' : 'm', hit = vs.filter(function (v) { return genderOf(v) === want; })[0];
+    if (hit) return hit;
+    var local = vs.filter(function (v) { return v.localService; }); if (local.length >= 2) vs = local;
+    return vs[who === 'A' ? 0 : 1];
+  }
+  M.say = function (text, lang, slow, keep, who) {
     if (!window.speechSynthesis) return;
     try {
       var code = window.LANGS[lang].voice;
       if (!keep) speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.lang = code; u.rate = slow ? 0.55 : (M.P.set.rate || 0.9);
-      var pre = code.slice(0, 2), v = voices.filter(function (x) { return x.lang && x.lang.replace('_', '-').indexOf(code) === 0; })[0] ||
-        voices.filter(function (x) { return x.lang && x.lang.slice(0, 2) === pre; })[0];
+      var v = voiceFor(code, who);
       if (v) u.voice = v;
+      if (who) { var g2 = v && genderOf(v), vs2 = langVoices(code); u.pitch = who === 'A' ? (g2 === 'f' || vs2.length > 1 ? 1.12 : 1.3) : (g2 === 'm' || vs2.length > 1 ? 0.9 : 0.72); }
       speechSynthesis.speak(u);
     } catch (e) {}
   };

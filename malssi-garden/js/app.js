@@ -249,7 +249,9 @@
   function settings() {
     var tg = function (k, label, sub) { return '<label class="tg"><span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="checkbox" data-s="' + k + '"' + (P.set[k] ? ' checked' : '') + '><i></i></label>'; };
     var h = '<h3>⚙️ 설정</h3>' +
-      tg('sound', '효과음') + tg('autoAudio', '발음 자동으로 듣기') +
+      tg('sound', '효과음') +
+      '<label class="sel"><span>효과음 느낌</span><select data-sfx>' + M.SFX_THEMES.map(function (t) { return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('') + '</select></label>' +
+      tg('autoAudio', '발음 자동으로 듣기') +
       tg('speak', '따라 말하기 문제', M.speechOK() ? '마이크로 발음을 확인해요' : '이 브라우저는 음성 인식을 지원하지 않아요') +
       '<label class="sel"><span>발음 빠르기</span><select data-v="rate"><option value="0.7">느리게</option><option value="0.9">보통</option><option value="1.05">빠르게</option></select></label>' +
       '<label class="sel"><span>하루 목표</span><select data-v="goal"><option value="1">1판</option><option value="2">2판</option><option value="3">3판</option><option value="5">5판</option></select></label>' +
@@ -263,12 +265,14 @@
       '<button class="btn primary wide" data-close>닫기</button>';
     var d = M.modal(h, { onClose: M.render });
     d.querySelector('[data-v="rate"]').value = String(P.set.rate);
+    d.querySelector('[data-sfx]').value = M.sfxTheme();
     d.querySelector('[data-v="goal"]').value = String(P.set.goal);
     d.addEventListener('change', function (e) {
       var s = e.target.dataset.s, v = e.target.dataset.v;
       if (s) { P.set[s] = e.target.checked; if (s === 'autoFS' && P.set.autoFS) FS.userExit = false; }
       if (v) P.set[v] = parseFloat(e.target.value);
       if (e.target.dataset.name !== undefined) P.petName = e.target.value.trim() || '말랑이';
+      if (e.target.dataset.sfx !== undefined) { P.set.sfx = e.target.value; M.save(); M.sfx('win'); setTimeout(function () { M.sfx('win'); }, 400); }   // 처음엔 불러오는 중이라 한 번 더 들려준다
       M.save();
     });
     d.addEventListener('click', function (e) {

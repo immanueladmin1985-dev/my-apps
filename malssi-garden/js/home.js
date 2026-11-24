@@ -29,7 +29,7 @@
     { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' }];
   // 소품: 토끼 그림 위에 겹쳐 그린다. x·y 는 토끼 그림 안의 위치(%), w 는 너비(%)
   var ACCS = [{ id: 'ribbon', name: '빨간 리본', price: 120, x: 66, y: 10, w: 32 }, { id: 'crown', name: '꽃 화관', price: 200, x: 50, y: 18, w: 56 }, { id: 'strawhat', name: '밀짚모자', price: 250, x: 50, y: 12, w: 64 },
-    { id: 'chefhat', name: '요리사 모자', price: 250, x: 50, y: 12, w: 60 }, { id: 'glasses', name: '동그란 안경', price: 150, x: 50, y: 50, w: 46 }, { id: 'starpin', name: '별 머리핀', price: 100, x: 66, y: 26, w: 22 }];
+    { id: 'chefhat', name: '요리사 모자', price: 250, x: 50, y: 12, w: 60 }, { id: 'glasses', name: '동그란 안경', price: 150, eyes: true }, { id: 'starpin', name: '별 머리핀', price: 100, x: 66, y: 26, w: 22 }];
   M.ACCS = ACCS;
   M.FURN = FURN; M.FOODS = FOODS;
 
@@ -74,7 +74,7 @@
     var h = '<div class="home">' +
       '<div class="room' + (editing ? ' editing' : '') + '" id="room" style="background-image:url(' + wallSrc() + ')">' +
       placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false"></div>'; }).join('') +
-      '<div class="pet" id="pet" style="z-index:70"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml() + '</div></div>' +
+      '<div class="pet" id="pet" style="z-index:70"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
       (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구를 끌어서 옮기고, 눌러서 골라요') + '</div>' : '') +
       '</div>' + (editing && fsel && P.room.placed[fsel] ? '<div class="ftools"><b>' + esc((FURN.filter(function (x) { return x.id === fsel; })[0] || {}).name || '') + '</b><button data-ft="small">－ 작게</button><button data-ft="big">＋ 크게</button><button data-ft="flip">↔ 뒤집기</button><button data-ft="front">⬆ 앞으로</button><button data-ft="back">⬇ 뒤로</button><button data-ft="store">📦 보관</button></div>' : '') +
       '<div class="card petcard"><div class="pname"><b>' + esc(P.petName) + '</b> <span class="lv">Lv.' + p.lv + '</span><span class="bonus">💧 +' + M.petBonus() + '%</span></div>' +
@@ -106,7 +106,7 @@
     mood = 'happy'; rerender();
     var s = $('petSay'); if (s && text) s.textContent = text;
     hearts();
-    clearTimeout(happy.t); happy.t = setTimeout(function () { mood = ''; var i = $('petImg'); if (i) i.src = M.petImg(); }, M.fast ? 0 : 1600);
+    clearTimeout(happy.t); happy.t = setTimeout(function () { mood = ''; setFace(); }, M.fast ? 0 : 1600);
   }
   function hearts() {
     var pet = $('pet'); if (!pet) return;
@@ -117,10 +117,23 @@
     }
   }
   function wallSrc() { var w = WALLS[M.P.room.wall || 0] || WALLS[0]; return w.src; }
-  function accHtml() {
+  // 토끼 그림마다 두 눈 가운데(x·y)와 눈 사이 거리(d), 그림 크기에 대한 % (그림에서 눈을 찾아 잰 값). 안경은 여기에 맞춘다
+  var EYES = { '1-normal': [39.5, 51.8, 23.8], '1-happy': [44, 40.5, 20.2], '1-sad': [39.6, 56, 23.7], '2-normal': [46.3, 48.5, 23.1], '2-happy': [44.8, 43.9, 21.9],
+    '2-sad': [49.1, 49.3, 23.2], '3-normal': [44.1, 44.5, 21.1], '3-happy': [41.1, 39.4, 20.3], '3-sad': [51.6, 50.7, 18.6] };
+  function accStyle(a, face) {
+    var st = M.petStage();
+    if (a.eyes) { var e = EYES[st + '-' + (face || 'normal')] || EYES[st + '-normal']; return 'left:' + e[0] + '%;top:' + e[1] + '%;width:' + (e[2] * 2.1).toFixed(1) + '%'; }
+    var dy = st === 1 ? 6 : st === 2 ? 3 : 0;   // 아기 토끼는 머리가 조금 낮다
+    return 'left:' + a.x + '%;top:' + (a.y + dy) + '%;width:' + a.w + '%';
+  }
+  function accHtml(face) {
     var a = ACCS.filter(function (x) { return x.id === M.P.pet.acc; })[0]; if (!a) return '';
-    var st = M.petStage(), dy = st === 1 ? 6 : st === 2 ? 3 : 0;   // 아기 토끼는 머리가 조금 낮다
-    return '<img class="acc" src="img/acc-' + a.id + '.png" alt="" style="left:' + a.x + '%;top:' + (a.y + dy) + '%;width:' + a.w + '%">';
+    return '<img class="acc" id="petAcc" src="img/acc-' + a.id + '.png" alt="" style="' + accStyle(a, face) + '">';
+  }
+  function setFace(face) {   // 표정을 바꾸면 안경도 같이 옮긴다
+    var i = $('petImg'); if (i) i.src = M.petImg(face);
+    var a = ACCS.filter(function (x) { return x.id === M.P.pet.acc; })[0], el = $('petAcc');
+    if (a && el) el.setAttribute('style', accStyle(a, face || (M.petFull() < 30 ? 'sad' : 'normal')));
   }
   function furnShop() {
     var P = M.P;

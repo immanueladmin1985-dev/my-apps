@@ -369,13 +369,13 @@
       var right = function (o) { return o === x.a || (x.alts || []).some(function (a) { return a.t === o; }); };
       $('mBody').innerHTML = '<div class="cafe"><img class="cafeimg" src="img/mg-cafe.png" alt=""><div class="cguest"><span class="gface">' + guests[(n * 3) % guests.length] + '</span><button class="cbub lang-' + lang + '" data-say="' + esc(x.p) + '"><b>' + esc(x.p) + '</b>' + (x.pr ? '<small>' + esc(x.pr) + '</small>' : '') + '<em>' + esc(x.pk || '') + '</em></button></div><div class="cme">🐱 내 대답은? <small>' + n + ' / ' + list.length + '</small></div>' +
         '<div class="copts">' + opts.map(function (o, i) { return '<button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(o) + '</button>'; }).join('') + '</div></div>';
-      setTimeout(function () { if (g.alive) M.say(x.p, lang); }, 250);
-      document.querySelector('.cbub').onclick = function () { M.say(x.p, lang); };
+      setTimeout(function () { if (g.alive) M.say(x.p, lang, false, false, 'A'); }, 250);
+      document.querySelector('.cbub').onclick = function () { M.say(x.p, lang, false, false, 'A'); };
       Array.prototype.forEach.call(document.querySelectorAll('.copt'), function (b) {
         b.onclick = function () {
           if (!g.alive || b.disabled) return;
           var o = opts[+b.dataset.i];
-          if (right(o)) { var sec = (Date.now() - t0) / 1000; setScore(g, g.score + Math.max(8, 20 - tries * 6 - Math.floor(sec / 3))); b.classList.add('ok'); M.sfx('ok'); M.say(o, lang); setTimeout(round, 1300); }
+          if (right(o)) { var sec = (Date.now() - t0) / 1000; setScore(g, g.score + Math.max(8, 20 - tries * 6 - Math.floor(sec / 3))); b.classList.add('ok'); M.sfx('ok'); M.say(o, lang, false, false, 'B'); setTimeout(round, 1300); }
           else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
         };
       });

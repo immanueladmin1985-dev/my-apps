@@ -55,7 +55,7 @@
   function xformQ(x, lang) {
     var alts = (x.alts || []).map(function (a) { return { t: a.t, say: a.t, k: a.k, r: a.r, lang: lang, ok: true }; });
     var opts = [x.item].concat(alts, x.w.slice(0, 3 - alts.length).map(function (w) { return { t: w, say: w, k: '', lang: lang }; }));
-    return { type: 'xform', item: x.item, p: x.p, di: x.di, opts: M.shuffle(opts) };
+    return { type: 'xform', item: x.item, p: x.p, di: x.di, pw: x.pw, aw: x.aw, opts: M.shuffle(opts) };
   }
   // 처음 보는 문장은 낱말 뜻과 어순을 먼저 보여 준다
   function sentKey(s) { return 'S:' + s.lang + ':' + s.t; }
@@ -220,15 +220,15 @@
     } else if (q.type === 'dialog') {
       var dg = q.stage;
       h = '<div class="qt"><span class="newtag">대화를 들어 봐요</span> <button class="say mini" data-sayall="1">▶ 전체 듣기</button></div><div class="dlg lang-' + dg.lang + '"><h3>' + esc(dg.title) + '</h3><p class="dlgme">오른쪽 초록 말풍선이 내 역할이에요. 잘 듣고 내 대사를 익혀 두세요</p>' +
-        dg.dlg.map(function (d, i) { return '<button class="dl ' + (d.who === 'A' ? 'a' : 'b') + '" data-say="' + esc(d.t) + '" data-dl="' + i + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>' +
-          d.alts.map(function (a) { return '<button class="dl b alt" data-say="' + esc(a.t) + '"><em>또는</em><b>' + esc(a.t) + '</b>' + (a.r ? '<span class="dr">' + esc(a.r) + '</span>' : '') + '<small>' + esc(a.k) + '</small></button>'; }).join(''); }).join('') + '</div>';
+        dg.dlg.map(function (d, i) { return '<button class="dl ' + (d.who === 'A' ? 'a' : 'b') + '" data-say="' + esc(d.t) + '" data-who="' + d.who + '" data-dl="' + i + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>' +
+          d.alts.map(function (a) { return '<button class="dl b alt" data-say="' + esc(a.t) + '" data-who="' + d.who + '"><em>또는</em><b>' + esc(a.t) + '</b>' + (a.r ? '<span class="dr">' + esc(a.r) + '</span>' : '') + '<small>' + esc(a.k) + '</small></button>'; }).join(''); }).join('') + '</div>';
     } else if (q.type === 'rule') {
       var g = q.stage;
       h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
         '<div class="rex">' + g.xf.slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + esc(x.p) + '</span><b>' + esc(x.item.t) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + '</div></div>';
     } else if (q.type === 'xform') {
       if (q.audio) h = '<div class="qt">잘 듣고 알맞은 대답을 골라 보세요</div><div class="qcard listen">' + sayBtn(q.audio, true) + '</div>';
-      else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { d = (S.alt && S.alt[d.i]) || d; return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';
+      else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { d = (S.alt && S.alt[d.i]) || d; return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '" data-who="' + (d.me ? 'B' : 'A') + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';
       else if (q.sub != null) h = '<div class="qt">알맞은 대답을 골라 보세요</div><div class="qcard"><div class="face lang-' + q.item.lang + '"><div class="ft lg">' + esc(q.p) + '</div>' + (q.pr ? '<div class="fr">' + esc(q.pr) + '</div>' : '') + '</div><div class="fk sm">' + esc(q.sub) + '</div>' + sayBtn(q.p) + '</div>';
       else h += '<div class="qcard ko"><div class="fk lang-' + q.item.lang + '">' + esc(q.p) + '</div><div class="fk sm">' + esc(q.item.k) + '</div></div>';
       h += '<div class="opts xf">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span></button>'; }).join('') + '</div>';
@@ -273,7 +273,7 @@
     if (q.type === 'steach') setTimeout(function () { if (S && S.qs[S.i] === q) M.say(q.sent.say, S.lang); }, M.fast ? 0 : 250);
     var auto = q.type === 'teach' || q.type === 'listen' || (M.P.set.autoAudio && (q.type === 'meaning' || q.type === 'speak'));
     var convSay = q.type === 'xform' && (q.audio || q.sub != null) ? (q.audio || q.p) : null;   // 회화: 상대 말을 읽어 준다
-    if (convSay) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(convSay, S.lang); }, M.fast ? 0 : 250);
+    if (convSay) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(convSay, S.lang, false, false, q.pw); }, M.fast ? 0 : 250);
     else if (auto) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(it.say, S.lang); }, M.fast ? 0 : 250);
   }
 
@@ -320,9 +320,9 @@
     if (mt && !mt.classList.contains('gone')) { matchTap(q, mt); return; }
     var pp = t.closest('[data-pairplay]');
     if (pp) { var w2 = q.pair.map(function (x) { return x.say; }); if (pp.dataset.pairplay === 'slow') { M.say(w2[0], S.lang, true); setTimeout(function () { M.say(w2[1], S.lang, true); }, 1400); } else M.sayList(w2.concat(w2), S.lang); return; }
-    if (t.closest('[data-sayall]')) { M.sayList(q.stage.dlg.map(function (d) { return d.t; }), S.lang); return; }
+    if (t.closest('[data-sayall]')) { M.sayList(q.stage.dlg.map(function (d) { return d.t; }), S.lang, q.stage.dlg.map(function (d) { return d.who; })); return; }
     var sayB = t.closest('[data-say]');
-    if (sayB) { M.say(sayB.dataset.say, S.lang, !!sayB.dataset.slow); return; }
+    if (sayB) { M.say(sayB.dataset.say, S.lang, !!sayB.dataset.slow, false, sayB.dataset.who || (q.pw && q.audio && sayB.dataset.say === q.audio ? q.pw : q.pw && sayB.dataset.say === q.p ? q.pw : undefined)); return; }
     var opt = t.closest('.opt');
     if (opt && !S.answered) {   // 먼저 고르기만 한다 (외국어 보기는 소리를 들려준다)
       q.pick = +opt.dataset.i;

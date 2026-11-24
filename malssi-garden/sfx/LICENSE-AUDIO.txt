@@ -1,0 +1,10 @@
+The audio files under `sounds/` are dedicated to the public domain under the
+Creative Commons CC0 1.0 Universal Public Domain Dedication.
+
+You may copy, modify, distribute, and use these files, including commercially,
+without asking permission. Attribution is appreciated but not required.
+
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+SPDX identifier: CC0-1.0
+
+출처: uisfx 0.4.0 (npm, https://www.npmjs.com/package/uisfx) 의 sounds/ 폴더. 말씨정원에서는 rubber·glass·arcade·soft 의 일부 소리만 쓴다.

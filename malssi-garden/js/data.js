@@ -902,7 +902,7 @@ window.parseLangs = function () {
           return { t: f[0], r: f[1] || '', k: f[2] || '', e: f[3] || '', alt: f[4] ? f[4].split(',') : [], say: f[5] || f[0], lang: code, sid: s.id, kana: !!s.kana };
         });
         if (s.gram) s.xf.forEach(function (x, i) { x.item = s.items[i]; });
-        if (s.conv) s.xf.forEach(function (x, i) { var ai = s.dli[i], pv = s.dlg[ai - 1]; x.di = ai; x.alts = s.dlg[ai].alts; x.pk = pv.k; x.pr = pv.r; x.item.r = s.dlg[ai].r || ''; });
+        if (s.conv) s.xf.forEach(function (x, i) { var ai = s.dli[i], pv = s.dlg[ai - 1]; x.di = ai; x.alts = s.dlg[ai].alts; x.pw = pv.who; x.aw = s.dlg[ai].who; x.pk = pv.k; x.pr = pv.r; x.item.r = s.dlg[ai].r || ''; });
         if (!(s.sents || '').trim() && SM[code] && SM[code][s.title]) s.sents = SM[code][s.title];
         s.sents = (s.sents || '').trim().split('\n').filter(Boolean).map(function (line) {
           var f = line.split('|'), toks = f[0].split('/'), sep = s.sep != null ? s.sep : L.sep;
