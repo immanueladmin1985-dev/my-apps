@@ -922,3 +922,18 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .acorn b { word-break: break-all; } .pot .face b { word-break: break-all; }
 .pot .face { inset: 36% 16% 20%; padding: 2px; }
 .rsign b.w3 { font-size: .9rem; }
+
+.balloon { background: center top / contain no-repeat; box-shadow: none; border-radius: 0; aspect-ratio: 150 / 280; justify-content: flex-start; }
+.balloon::after { display: none; }
+.balloon .bw { margin-top: 22%; width: 80%; display: flex; flex-direction: column; align-items: center; }
+.balloon b.w1 { font-size: 1.6rem; } .balloon b.w2 { font-size: 1.15rem; } .balloon b.w3 { font-size: .85rem; word-break: break-all; }
+.balloons { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+/* 포장마차: 더 크게(양옆은 잘려도 됨), 손님이 기둥·등에 가리지 않게 */
+.stallwrap .counter { width: 150%; margin-left: -25%; }
+.cust { width: 17%; bottom: 24%; }
+/* 손님을 가판대 앞에 세운다: 손님 그림의 나무 받침이 가판대 윗면에 얹힌다 (등·기둥에 가리지 않게) */
+.stallwrap .custs { position: absolute; inset: 0; z-index: 3; }
+.stallwrap .cust { width: 18%; bottom: 33%; }
+.stallwrap + .orders { margin-top: -15%; position: relative; z-index: 4; }
+.balloons { grid-template-columns: 1fr 1fr; gap: 6px 10px; justify-items: center; }
+.balloon { width: 66%; }

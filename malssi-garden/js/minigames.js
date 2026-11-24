@@ -157,8 +157,8 @@
       if (!g.alive) return;
       if (n >= 10) { finish(g, 120); return; }
       n++; var four = M.shuffle(pool).slice(0, 4); target = four[0]; t0 = Date.now();
-      var colors = ['#ff8fab', '#7ed6a5', '#8ec5ff', '#ffd166'];
-      $('sB').innerHTML = M.shuffle(four).map(function (it, i) { return '<button class="balloon" data-i="' + pool.indexOf(it) + '" style="--bc:' + colors[i] + ';animation-delay:' + (i * 0.15) + 's">' + wordHtml(it) + '</button>'; }).join('');
+      var colors = ['pink', 'mint', 'sky', 'lemon'];
+      $('sB').innerHTML = M.shuffle(four).map(function (it, i) { return '<button class="balloon" data-i="' + pool.indexOf(it) + '" style="background-image:url(img/mg-balloon-' + colors[i] + '.png);animation-delay:' + (i * 0.15) + 's"><span class="bw">' + wordHtml(it) + '</span></button>'; }).join('');
       setTimeout(function () { if (g.alive) M.say(target.say, target.lang); }, 250);
       Array.prototype.forEach.call(document.querySelectorAll('.balloon'), function (b) {
         b.onclick = function () {
