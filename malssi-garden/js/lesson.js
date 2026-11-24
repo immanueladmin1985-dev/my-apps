@@ -165,7 +165,7 @@
       h = '<div class="qt"><span class="newtag">문장을 배워요</span></div><div class="teach steach lang-' + sn.lang + '">' +
         '<div class="tk">' + esc(sn.k) + '</div>' +
         '<button class="tt sm" data-say="' + esc(sn.say) + '">' + esc(sn.t) + '</button>' +
-        '<div class="gls">' + sn.w.map(function (w) { var g = gloss(w, sn.lang); return '<button class="gl" data-say="' + esc(stg.kana && sn.lang === 'zh' ? '' : w) + '"><b>' + esc(w) + '</b><small>' + esc(g || '·') + '</small></button>'; }).join('') + '</div>' +
+        '<div class="gls">' + sn.w.map(function (w, wi) { var g = (sn.g && sn.g[wi]) || gloss(w, sn.lang); return '<button class="gl" data-say="' + esc(stg.kana && sn.lang === 'zh' ? '' : w) + '"><b>' + esc(w) + '</b><small>' + esc(g || '·') + '</small></button>'; }).join('') + '</div>' +
         '<div class="tsay">' + sayBtn(sn.say, true) + '</div>' +
         (!stg.kana && window.ORDER_TIP ? '<div class="tip">💡 ' + esc(window.ORDER_TIP[sn.lang]) + '</div>' : '') + '</div>';
     } else if (q.type === 'meaning') {

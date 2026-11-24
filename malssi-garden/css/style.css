@@ -617,3 +617,4 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 @media (orientation: landscape) and (max-height: 560px) {
   .garden .board { width: max(280px, calc((100svh - 76px) / var(--bh))); }
 }
+.teach.steach .tt { font-size: 1.7rem; }

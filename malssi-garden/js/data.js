@@ -842,6 +842,12 @@ chī/cài|요리를 먹다 (吃菜)|吃菜` }
 window.parseLangs = function () {
   if (window.LANGS_PARSED) return; window.LANGS_PARSED = true;
   (function () {
+  // 예문 파일(data-sents.js)의 "단계 이름 ⇥ 예문" 을 단계에 붙인다
+  var SM = {};
+  Object.keys(window.SENTS || {}).forEach(function (code) {
+    SM[code] = {};
+    window.SENTS[code].trim().split('\n').forEach(function (line) { var k = line.indexOf('\t'); if (k > 0) { var t = line.slice(0, k); SM[code][t] = (SM[code][t] ? SM[code][t] + '\n' : '') + line.slice(k + 1); } });
+  });
   Object.keys(window.LANGS).forEach(function (code) {
     var L = window.LANGS[code]; L.code = code; L.stages = [];
     L.units.forEach(function (u, ui) {
@@ -852,10 +858,12 @@ window.parseLangs = function () {
           var f = line.split('|');
           return { t: f[0], r: f[1] || '', k: f[2] || '', e: f[3] || '', alt: f[4] ? f[4].split(',') : [], say: f[5] || f[0], lang: code, sid: s.id, kana: !!s.kana };
         });
+        if (!(s.sents || '').trim() && SM[code] && SM[code][s.title]) s.sents = SM[code][s.title];
         s.sents = (s.sents || '').trim().split('\n').filter(Boolean).map(function (line) {
-          var f = line.split('|'), w = f[0].split('/'), sep = s.sep != null ? s.sep : L.sep;
+          var f = line.split('|'), toks = f[0].split('/'), sep = s.sep != null ? s.sep : L.sep;
+          var w = toks.map(function (x) { return x.split('=')[0]; }), g = toks.map(function (x) { return x.split('=')[1] || ''; });
           var t = w.join(sep);
-          return { w: w, t: t, k: f[1], say: f[2] || t, lang: code, sid: s.id };
+          return { w: w, g: g, t: t, k: f[1], say: f[2] || t, lang: code, sid: s.id };
         });
         L.stages.push(s);
       });
