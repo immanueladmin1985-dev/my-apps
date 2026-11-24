@@ -52,6 +52,10 @@
     if (lang !== 'ja' && !stage.kana) c = c.concat(stage.sents.map(function (s) { return { t: s.t, say: s.say, r: '', k: s.k, alt: [], lang: lang, sid: s.sid, sent: true }; }));
     return c;
   }
+  function xformQ(x, lang) {
+    var opts = [x.item].concat(x.w.map(function (w) { return { t: w, say: w, k: '', lang: lang }; }));
+    return { type: 'xform', item: x.item, p: x.p, opts: M.shuffle(opts) };
+  }
   // 처음 보는 문장은 낱말 뜻과 어순을 먼저 보여 준다
   function sentKey(s) { return 'S:' + s.lang + ':' + s.t; }
   function sentPair(s, lang) { var b = buildQ(s, lang); return M.P.srs[sentKey(s)] ? b : [{ type: 'steach', sent: s }, b]; }
@@ -66,6 +70,13 @@
   M.buildLesson = function (lang, stage) {
     var qs = [];
     var canSpeak = M.P.set.speak && M.speechOK();
+    if (stage && stage.gram) {
+      // 문법: 규칙 카드 → 바꿔 쓰기 → 예문 카드·문장 만들기
+      qs.push({ type: 'rule', stage: stage });
+      M.shuffle(stage.xf).forEach(function (x) { qs.push(xformQ(x, lang)); });
+      M.shuffle(stage.sents).forEach(function (s) { var pr = sentPair(s, lang); qs = qs.concat(Array.isArray(pr) ? pr : [pr]); });
+      return qs;
+    }
     if (stage) {
       var items = M.shuffle(stage.items);
       var isNew = function (it) { return !M.P.srs[M.itemKey(it)]; };
@@ -139,7 +150,7 @@
   var HAN = /[\u4e00-\u9fff]/;
   function jaKanji(o) { return o.lang === 'ja' && o.r && HAN.test(o.t); }   // 한자 단어는 읽는 법을 같이 보여 준다
   function foot(html, cls) { var f = $('lFoot'); f.className = 'lfoot' + (cls ? ' ' + cls : ''); f.innerHTML = html; }
-  var TITLES = { steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
+  var TITLES = { rule: '문법을 배워요', xform: '알맞게 바꿔 보세요', steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
 
   function show() {
     var q = S.qs[S.i]; S.answered = false; q.pick = null; bar();
@@ -163,6 +174,13 @@
         '<div class="tk">' + esc(it.k) + '</div>' +
         '<div class="tsay">' + sayBtn(it.say, true) + '</div>' +
         (tip ? '<div class="tip">💡 ' + esc(tip) + '</div>' : '') + '</div>';
+    } else if (q.type === 'rule') {
+      var g = q.stage;
+      h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
+        '<div class="rex">' + g.xf.slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + esc(x.p) + '</span><b>' + esc(x.item.t) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + '</div></div>';
+    } else if (q.type === 'xform') {
+      h += '<div class="qcard ko"><div class="fk lang-' + q.item.lang + '">' + esc(q.p) + '</div><div class="fk sm">' + esc(q.item.k) + '</div></div>';
+      h += '<div class="opts xf">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span></button>'; }).join('') + '</div>';
     } else if (q.type === 'steach') {
       var sn = q.sent, stg = stageOf(sn);
       h = '<div class="qt"><span class="newtag">문장을 배워요</span></div><div class="teach steach lang-' + sn.lang + '">' +
@@ -195,7 +213,7 @@
       q.fails = q.fails || 0;
     }
     body.innerHTML = h; body.scrollTop = 0;
-    if (q.type === 'teach' || q.type === 'steach') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
+    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
     else if (q.opts) foot('<button class="btn primary wide" id="oCheck" disabled>확인</button>');
     else if (q.type === 'build') foot('<button class="btn primary wide" id="bCheck" disabled>확인</button>');
     else if (q.type === 'speak') foot('<button class="btn ghost wide" id="sSkip">지금은 말할 수 없어요</button>');
@@ -217,7 +235,7 @@
       S.combo = 0; S.mistakes++;
       M.sfx('bad'); M.buzz([40, 60, 40]);
       // 틀린 문제는 뒤에 다시 나온다
-      if (!q.again) { var c = JSON.parse(JSON.stringify(q)); c.again = true; if (c.opts) c.opts = null; if (c.tiles) c.tiles = M.shuffle(q.tiles); S.qs.push(c); S.total++; }
+      if (!q.again) { var c = JSON.parse(JSON.stringify(q)); c.again = true; if (c.opts && c.type !== 'xform') c.opts = null; else if (c.opts) c.opts = M.shuffle(q.opts); if (c.tiles) c.tiles = M.shuffle(q.tiles); S.qs.push(c); S.total++; }
       else S.done++;
     }
     if (q.item && !q.item.sent) M.srsHit(q.item, ok);
@@ -242,7 +260,7 @@
     if (!S) return;
     var t = e.target;
     if (t.closest('#lNext')) { next(); return; }
-    if (t.closest('#tNext')) { var tq = S.qs[S.i]; S.done++; if (tq.item) M.srsHit(tq.item, true); else M.P.srs[sentKey(tq.sent)] = [1, Date.now()]; next(); return; }
+    if (t.closest('#tNext')) { var tq = S.qs[S.i]; S.done++; if (tq.type === 'rule') { next(); return; } if (tq.item) M.srsHit(tq.item, true); else M.P.srs[sentKey(tq.sent)] = [1, Date.now()]; next(); return; }
     var q = S.qs[S.i];
     var mt = t.closest('.mt');
     if (mt && !mt.classList.contains('gone')) { matchTap(q, mt); return; }
@@ -409,8 +427,8 @@
     if (!S) return 'none';
     var q = S.qs[S.i];
     if (S.answered) { $('lNext').click(); return 'next'; }
-    if (q.type === 'teach' || q.type === 'steach') { $('tNext').click(); return q.type; }
-    if (q.type === 'meaning' || q.type === 'target' || q.type === 'listen') {
+    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule') { $('tNext').click(); return q.type; }
+    if (q.type === 'meaning' || q.type === 'target' || q.type === 'listen' || q.type === 'xform') {
       var idx = q.opts.findIndex(function (o) { return wrong ? o.t !== q.item.t : o.t === q.item.t; });
       if (idx < 0) idx = q.opts.findIndex(function (o) { return o.t === q.item.t; });
       document.querySelector('.opt[data-i="' + idx + '"]').click();

@@ -64,11 +64,13 @@
 
   // ---------- 배우기 지도 ----------
   var SHIFT = [0, 1, 0, -1];
-  var LVNAME = { base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
+  // 문법 단원(GR)은 단어 단계와 따로 진행한다 (단어를 다 끝내지 않아도 시작할 수 있다)
+  function gr(s) { return (window.LANGS[s.lang].units[s.unit].level || '') === 'GR'; }
+  function firstOpen(L, prog, wantGr) { var i = L.stages.findIndex(function (s) { return !prog[s.id] && gr(s) === wantGr; }); return i < 0 ? L.stages.length : i; }
+  var LVNAME = { GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
   function renderMap(root) {
     var L = window.LANGS[P.lang], prog = P.prog[P.lang];
-    var cur = L.stages.findIndex(function (s) { return !prog[s.id]; });
-    if (cur < 0) cur = L.stages.length;
+    var cur = firstOpen(L, prog, false);
     var D = M.dailyState(), today = (P.log[M.today()] || {}).l || 0;
     var goalPct = Math.min(100, Math.round(today / P.set.goal * 100));
     var ready = M.questReady();
@@ -103,7 +105,8 @@
       h += '<button class="unit' + (udone ? ' udone' : '') + '"' + (udone ? ' data-unit="' + ukey + '"' : '') + '><b>' + (udone ? '✔ ' : '') + unum + '단원 · ' + esc(u.title) + '</b><small>★ ' + got + '/' + us.length * 3 + (udone ? (open ? ' ▲' : ' ▼') : '') + '</small></button>';
       if (!open) { n += us.length; return; }
       us.forEach(function (s) {
-        var st = prog[s.id] || 0, state = st ? 'done' : (s.idx === cur ? 'cur' : (s.idx < cur ? 'done' : 'lock'));
+        var cT = tab === 'GR' ? firstOpen(L, prog, true) : cur;
+        var st = prog[s.id] || 0, state = st ? 'done' : (s.idx === cT ? 'cur' : (s.idx < cT ? 'done' : 'lock'));
         var x = SHIFT[n % 4] * 62; n++;
         var DECO = { ja: ['🌸', '🗻', '🍡', '⛩️'], en: ['🎈', '🏰', '🌷', '☕'], zh: ['🎋', '🏮', '🐼', '🥟'] }[P.lang];
         var deco = n % 3 === 1 ? '<span class="deco" style="' + (x > 0 ? 'left:-' : x < 0 ? 'right:-' : (n % 2 ? 'left:-' : 'right:-')) + '95px">' + DECO[(n >> 1) % 4] + '</span>' : '';
@@ -136,8 +139,8 @@
   }
   function stageSheet(sid) {
     var L = window.LANGS[P.lang], s = L.stages.filter(function (x) { return x.id === sid; })[0];
-    var prog = P.prog[P.lang], cur = L.stages.findIndex(function (x) { return !prog[x.id]; });
-    if (cur >= 0 && s.idx > cur) { M.toast('🔒 앞 단계를 먼저 끝내 주세요'); M.buzz(30); return; }
+    var prog = P.prog[P.lang], cur = firstOpen(L, prog, gr(s));
+    if (s.idx > cur) { M.toast('🔒 앞 단계를 먼저 끝내 주세요'); M.buzz(30); return; }
     var st = prog[s.id] || 0;
     var d = M.modal('<div class="ssheet"><small>' + L.flag + ' ' + esc(L.units[s.unit].title) + '</small><h3>' + esc(s.title) + '</h3>' +
       (st ? '<div class="stars sm">' + [1, 2, 3].map(function (i) { return '<span class="st' + (i <= st ? ' on' : '') + '">★</span>'; }).join('') + '</div>' : '') +
@@ -402,7 +405,7 @@
     var lb = t.closest('[data-lang]'); if (lb) { P.lang = lb.dataset.lang; M.save(); mapScrolled = false; M.render(); return; }
     var nd = t.closest('.node'); if (nd) { stageSheet(nd.dataset.sid); return; }
     var ub = t.closest('[data-unit]'); if (ub) { P.ui.open = P.ui.open || {}; P.ui.open[ub.dataset.unit] = !P.ui.open[ub.dataset.unit]; M.save(); M.render(); return; }
-    if (t.closest('#dCont')) { var L0 = window.LANGS[P.lang], pr0 = P.prog[P.lang], c0 = L0.stages.findIndex(function (x) { return !pr0[x.id]; }); var tg = contTarget(L0, pr0, c0 < 0 ? L0.stages.length : c0); if (tg) M.startLesson(P.lang, tg); return; }
+    if (t.closest('#dCont')) { var L0 = window.LANGS[P.lang], pr0 = P.prog[P.lang], c0 = firstOpen(L0, pr0, false); var tg = contTarget(L0, pr0, c0); if (tg) M.startLesson(P.lang, tg); return; }
     if (t.closest('#dQuest') || t.closest('#dGoal')) { quests(); return; }
     if (t.closest('#dReview')) { if (M.learnedCount(P.lang) >= 4) M.startLesson(P.lang, null); return; }
     if (t.closest('#dWrong')) { if (M.wrongItems(P.lang).length) M.startLesson(P.lang, null, true); return; }

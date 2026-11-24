@@ -669,3 +669,20 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .bslot2 { position: relative; aspect-ratio: 1; border-radius: 12px; background: #f3efe7; border: 2px solid #e6dcc8; }
 .bslot2.empty { opacity: .5; }
 .bslot2 .bi { position: absolute; inset: 6%; width: 88%; height: 88%; }
+
+/* 문법 규칙 카드 */
+.rule { background: #f8f6fa; border-radius: 22px; padding: 16px; }
+.rule h3 { margin: 0 0 8px; color: var(--mint-d); }
+.rule p { margin: 6px 0; line-height: 1.6; }
+.rule table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: .92rem; background: #fff; border-radius: 12px; overflow: hidden; }
+.rule td, .rule th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.rule th { background: #effbf5; }
+.rex { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.rx { display: grid; grid-template-columns: 1fr auto; text-align: left; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.rx span { color: var(--sub); font-size: .82rem; grid-column: 1 / -1; }
+.rx b { font-size: 1.15rem; }
+.rx small { color: var(--mint-d); font-weight: 700; align-self: center; }
+
+.opts.xf { grid-template-columns: 1fr; grid-auto-rows: auto; }
+.opts.xf .opt { min-height: 54px; padding: 8px 12px; }
+.opts.xf .opt .ot { font-size: 1.1rem; }

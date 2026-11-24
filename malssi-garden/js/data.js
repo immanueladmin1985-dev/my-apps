@@ -854,10 +854,16 @@ window.parseLangs = function () {
       u.stages.forEach(function (s, si) {
         s.id = code + ':' + s.title;   // 단계를 끼워 넣어도 기록이 섞이지 않게 이름으로 구분한다
         s.unit = ui; s.idx = L.stages.length; s.lang = code;
+        if (s.xf) {   // 문법 단계: "바꾸기 전 → 형태|정답|오답,오답,오답|뜻"
+          s.gram = true;
+          s.xf = s.xf.trim().split('\n').map(function (line) { var f = line.split('|'); return { p: f[0], a: f[1], w: f[2].split(','), k: f[3] || '' }; });
+          s.items = s.xf.map(function (x) { return x.a + '||' + x.k + '|||' + x.a; }).join('\n');
+        }
         s.items = s.items.trim().split('\n').map(function (line) {
           var f = line.split('|');
           return { t: f[0], r: f[1] || '', k: f[2] || '', e: f[3] || '', alt: f[4] ? f[4].split(',') : [], say: f[5] || f[0], lang: code, sid: s.id, kana: !!s.kana };
         });
+        if (s.gram) s.xf.forEach(function (x, i) { x.item = s.items[i]; });
         if (!(s.sents || '').trim() && SM[code] && SM[code][s.title]) s.sents = SM[code][s.title];
         s.sents = (s.sents || '').trim().split('\n').filter(Boolean).map(function (line) {
           var f = line.split('|'), toks = f[0].split('/'), sep = s.sep != null ? s.sep : L.sep;
