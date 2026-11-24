@@ -899,3 +899,26 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .dtile { width: 54px; height: 54px; border-radius: 14px; background: #fff; border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); font-size: 1.5rem; font-weight: 700; }
 .dtile.used { opacity: .25; }
 .btower::after { content: "🐼"; font-size: 2.6rem; order: 99; }
+
+/* 부탁 게임 그림 */
+.acorn { background: url(../img/mg-acorn.png) center / contain no-repeat; border: 0; box-shadow: none; aspect-ratio: 335 / 335; padding: 0; justify-content: center; border-radius: 0; }
+.acorn .aw { margin-top: 18%; width: 74%; display: flex; flex-direction: column; align-items: center; }
+.acorn.got { background-color: transparent; filter: drop-shadow(0 0 6px #4cc79a); } .acorn.miss { opacity: .35; }
+.pot { background: none; border: 0; box-shadow: none; padding: 0; position: relative; }
+.pot .lid { width: 100%; height: 100%; object-fit: contain; font-size: 0; }
+.pot.open, .pot.done { background: url(../img/mg-pot-open.png) center / contain no-repeat; }
+.pot .face { position: absolute; inset: 34% 14% 18%; background: rgba(255,255,255,.88); border-radius: 12px; justify-content: center; }
+.pot.done { filter: drop-shadow(0 0 5px #4cc79a); background-color: transparent; }
+.rsign { background: url(../img/mg-sign.png) center / contain no-repeat; border: 0; box-shadow: none; aspect-ratio: 338 / 270; padding: 0; justify-content: flex-start; }
+.rsign.right { transform: scaleX(-1); } .rsign.right .sw { transform: scaleX(-1); }
+.rsign .sw { margin-top: 12%; margin-left: 10%; width: 82%; display: flex; flex-direction: column; align-items: center; }
+.rhog { width: 90px; height: auto; font-size: 0; }
+.tseg { background: url(../img/mg-bamboo.png) center / 100% 100% no-repeat; border: 0; padding: 12px 28px; min-width: 50%; }
+.rstage { display: block; width: 46%; max-width: 180px; margin: 0 auto 4px; }
+.dq { flex-direction: row; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.dq .dowl { width: 120px; } .dq small { width: 100%; text-align: center; }
+.acorn { width: 26%; }
+.acorn b.w1, .pot .face b.w1 { font-size: 1.3rem; } .acorn b.w2, .pot .face b.w2 { font-size: .95rem; } .acorn b.w3, .pot .face b.w3 { font-size: .72rem; line-height: 1.15; }
+.acorn b { word-break: break-all; } .pot .face b { word-break: break-all; }
+.pot .face { inset: 36% 16% 20%; padding: 2px; }
+.rsign b.w3 { font-size: .9rem; }

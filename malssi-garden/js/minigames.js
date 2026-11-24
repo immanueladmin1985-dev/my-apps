@@ -54,7 +54,7 @@
     M.shuffle(src).forEach(function (it) { if (out.length < n && !seen[it.k] && !seen[it.t]) { seen[it.k] = seen[it.t] = 1; out.push(it); } });
     return out;
   }
-  function wordHtml(it) { return '<b class="lang-' + it.lang + '">' + esc(it.t) + '</b>' + (it.lang === 'ja' && it.r && HAN.test(it.t) ? '<small>' + esc(it.r) + '</small>' : it.lang === 'zh' && it.r && !it.kana ? '<small>' + esc(it.r.split(' · ')[0]) + '</small>' : ''); }
+  function wordHtml(it) { var n = it.t.length, sz = it.lang === 'en' ? (n <= 5 ? 'w1' : n <= 9 ? 'w2' : 'w3') : (n <= 3 ? 'w1' : n <= 5 ? 'w2' : 'w3'); return '<b class="' + sz + ' lang-' + it.lang + '">' + esc(it.t) + '</b>' + (it.lang === 'ja' && it.r && HAN.test(it.t) ? '<small>' + esc(it.r) + '</small>' : it.lang === 'zh' && it.r && !it.kana ? '<small>' + esc(it.r.split(' · ')[0]) + '</small>' : ''); }
 
   // ---------- 화면 ----------
   var cur = null, pendingExp = 0;   // 지금 하는 놀이, 나갈 때 줄 토끼 경험치
@@ -128,8 +128,8 @@
       var four = M.shuffle(pool).slice(0, 4); target = four[0];
       $('aQ').innerHTML = (target.e ? '<span class="ae">' + target.e + '</span>' : '') + '<b>' + esc(target.k) + '</b>';
       M.shuffle(four).forEach(function (it, i) {
-        var b = document.createElement('button'); b.className = 'acorn'; b.innerHTML = '<span class="anut">🌰</span>' + wordHtml(it);
-        b.style.left = (4 + i * 24) + '%'; field.appendChild(b);
+        var b = document.createElement('button'); b.className = 'acorn'; b.innerHTML = '<span class="aw">' + wordHtml(it) + '</span>';
+        b.style.left = (i * 24.5) + '%'; field.appendChild(b);
         var o = { el: b, it: it, y: -20 - Math.random() * 60 }; drops.push(o);
         b.onclick = function () {
           if (!g.alive) return;
@@ -178,7 +178,7 @@
     pool.forEach(function (it, i) { cards.push({ p: i, side: 'w', it: it }); cards.push({ p: i, side: 'k', it: it }); });
     cards = M.shuffle(cards);
     $('mBody').innerHTML = '<p class="hint center" id="mFlips">뒤집은 횟수 0</p><div class="pots" id="mP">' + cards.map(function (c, i) {
-      return '<button class="pot" data-i="' + i + '"><span class="lid">🍯</span><span class="face">' + (c.side === 'w' ? wordHtml(c.it) : '<b>' + esc(c.it.k) + '</b>') + '</span></button>';
+      return '<button class="pot" data-i="' + i + '"><img class="lid" src="img/mg-pot.png" alt=""><span class="face">' + (c.side === 'w' ? wordHtml(c.it) : '<b>' + esc(c.it.k) + '</b>') + '</span></button>';
     }).join('') + '</div>';
     var open = [], flips = 0, found = 0, busy = false;
     Array.prototype.forEach.call(document.querySelectorAll('.pot'), function (b) {
@@ -202,14 +202,14 @@
   GAMES.road = function (g) {
     var pool = words(16); if (pool.length < 4) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
     var n = 0, combo = 0;
-    $('mBody').innerHTML = '<div class="aq" id="rQ"></div><div class="road"><div class="rsigns" id="rS"></div><div class="rpath"><span class="rhog" id="rH">🦔🫖</span></div><div class="rprog" id="rP"></div></div>';
+    $('mBody').innerHTML = '<div class="aq" id="rQ"></div><div class="road"><div class="rsigns" id="rS"></div><div class="rpath"><img class="rhog" id="rH" src="img/mg-hog.png" alt=""></div><div class="rprog" id="rP"></div></div>';
     function round() {
       if (!g.alive) return;
       if (n >= 12) { finish(g, 150); return; }
       n++; $('rP').textContent = n + ' / 12';
       var two = M.shuffle(pool).slice(0, 2), target = two[0], pair = M.shuffle(two.slice());
       $('rQ').innerHTML = '🏠 <b>' + esc(target.k) + '</b>' + (target.e ? ' <span class="ae">' + target.e + '</span>' : '');
-      $('rS').innerHTML = pair.map(function (it, i) { return '<button class="rsign ' + (i ? 'right' : 'left') + '" data-i="' + i + '">' + (i ? '' : '⬅ ') + wordHtml(it) + (i ? ' ➡' : '') + '</button>'; }).join('');
+      $('rS').innerHTML = pair.map(function (it, i) { return '<button class="rsign ' + (i ? 'right' : 'left') + '" data-i="' + i + '"><span class="sw">' + wordHtml(it) + '</span></button>'; }).join('');
       Array.prototype.forEach.call(document.querySelectorAll('.rsign'), function (b) {
         b.onclick = function () {
           if (!g.alive || b.disabled) return;
@@ -262,7 +262,7 @@
       if (n >= 10) { finish(g, 150); return; }
       n++; var four = M.shuffle(pool).slice(0, 4), target = four[0], rev = n % 3 === 0;
       four = M.shuffle(four);
-      $('mBody').innerHTML = '<div class="rq"><small>수수께끼 ' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>' + (rev ? '<div class="rword">' + wordHtml(target) + '</div><p>이 말은 어떤 그림일까요?</p>' : '<div class="remoji">' + target.e + '</div><p>나는 누구일까요?</p>') + '</div>' +
+      $('mBody').innerHTML = '<div class="rq"><img class="rstage" src="img/mg-fox-stage.png" alt=""><small>수수께끼 ' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>' + (rev ? '<div class="rword">' + wordHtml(target) + '</div><p>이 말은 어떤 그림일까요?</p>' : '<div class="remoji">' + target.e + '</div><p>나는 누구일까요?</p>') + '</div>' +
         '<div class="ropts' + (rev ? ' em' : '') + '">' + four.map(function (it, i) { return '<button class="ropt" data-i="' + i + '">' + (rev ? '<span class="remoji sm">' + it.e + '</span>' : wordHtml(it)) + '</button>'; }).join('') + '</div>';
       if (rev) M.say(target.say, target.lang);
       Array.prototype.forEach.call(document.querySelectorAll('.ropt'), function (b) {
@@ -289,7 +289,7 @@
       var it = list[n++], ans = chars(it), picked = [], miss = 0;
       var decoy = []; M.shuffle(pool).forEach(function (o) { if (o !== it) chars(o).forEach(function (c) { if (decoy.length < 3 && ans.indexOf(c) < 0 && decoy.indexOf(c) < 0) decoy.push(c); }); });
       var tiles = M.shuffle(ans.concat(decoy).map(function (c, i) { return { c: c, id: i }; }));
-      $('mBody').innerHTML = '<div class="sq"><button class="say big" id="dPlay">🔊</button><small>' + n + ' / ' + list.length + ' · 뜻: ' + esc(it.k) + '</small></div><div class="dslots lang-' + lang + '" id="dS">' + ans.map(function () { return '<span class="dslot"></span>'; }).join('') + '</div>' +
+      $('mBody').innerHTML = '<div class="sq dq"><img class="dowl" src="img/mg-owl-board.png" alt=""><button class="say big" id="dPlay">🔊</button><small>' + n + ' / ' + list.length + ' · 뜻: ' + esc(it.k) + '</small></div><div class="dslots lang-' + lang + '" id="dS">' + ans.map(function () { return '<span class="dslot"></span>'; }).join('') + '</div>' +
         '<div class="dtiles lang-' + lang + '">' + tiles.map(function (t) { return '<button class="dtile" data-id="' + t.id + '">' + esc(t.c) + '</button>'; }).join('') + '</div>' + '<button class="btn ghost wide" id="dUndo">⌫ 하나 지우기</button>';
       var play = function () { M.say(it.say, lang); }; $('dPlay').onclick = play; setTimeout(play, 250);
       function paint() { Array.prototype.forEach.call(document.querySelectorAll('.dslot'), function (sl, k) { sl.textContent = picked[k] ? picked[k].c : ''; }); }
