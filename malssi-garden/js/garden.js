@@ -97,6 +97,35 @@
     var em = src ? '<img src="img/' + src + '.png" alt="" draggable="false">' : CHAINS[x.k].em[x.l - 1];
     return '<span class="' + cls + ' ge ' + kind + (src ? ' hasimg' : '') + '">' + em + (x.k ? '<i class="glv">' + x.l + '</i>' : '') + (x.g ? '<i class="gcost">💧' + GEN_COST + '</i>' : '') + '</span>';
   }
+  function isFound(r) {
+    var g = G();
+    if (r.p) return !!((g.pfound || {})[r.p] || g.store[r.p]);
+    if (r.r) return !!((g.rfound || {})[r.r] || count('r:' + r.r) || g.bag.some(function (x) { return x && x.r === r.r; }));
+    return r.l <= 1 || (g.found[r.k] || 0) >= r.l;   // 1단계는 생산기에서 바로 나오므로 처음부터 보여 준다
+  }
+  function nkey(r) { return r.p ? 'p:' + r.p : r.r ? 'r:' + r.r : 'k:' + r.k + ':' + r.l; }
+  function needHtml(r, showCount) {
+    var have = Math.min(count(needKey(r)), r.n || 1);
+    return '<button class="need' + (showCount && have >= r.n ? ' got' : '') + (isFound(r) ? '' : ' unk') + '" data-nk="' + nkey(r) + '"><span class="nimg">' + (r.p ? '<img src="img/prod-' + r.p + '.png" alt="" draggable="false">' : needIcon(r)) + '</span>' + (showCount ? '<i>' + have + '/' + r.n + '</i>' : '') + '</button>';
+  }
+  function howSheet(key) {
+    var f = key.split(':'), g = G(), h = '', title = '';
+    if (f[0] === 'k') {
+      var k = f[1], l = +f[2], C = CHAINS[k], gen = GENS[C.gen];
+      title = isFound({ k: k, l: l }) ? C.names[l - 1] : '아직 못 만든 물건';
+      h = '<div class="howpath">' + [1, 2, 3, 4, 5].slice(0, l).map(function (i) { return needHtml({ k: k, l: i }, false) + '<small>' + (isFound({ k: k, l: i }) ? C.names[i - 1] : '???') + '</small>'; }).map(function (x) { return '<span>' + x + '</span>'; }).join('<b class="arr">›</b>') + '</div>' +
+        '<p>' + (chainOn(k) ? '밭의 <b>' + gen.name + '</b>을(를) 누르면 ' + C.names[0] + '이(가) 나와요.' : '<b>' + gen.name + '</b>은(는) 가게 레벨 ' + gen.lv + '에 생겨요.') + ' 같은 물건 두 개를 겹치면 다음 단계가 돼요' + (l > 1 ? '. ' + C.names[0] + ' 기준으로 ' + Math.pow(2, l - 1) + '개가 필요해요' : '') + '.</p>';
+    } else if (f[0] === 'p') {
+      var P = PRODUCTS[f[1]], nd = recipeNeed(P);
+      title = P.name;
+      h = '<div class="howprod"><img src="img/prod-' + f[1] + '.png" alt="" class="' + (isFound({ p: f[1] }) ? '' : 'unkimg') + '"></div><p><b>작업대</b>에서 아래 재료로 만들어요 (⏱ ' + (P.min >= 60 ? P.min / 60 + '시간' : P.min + '분') + ')' + (P.lv > g.lv ? ' · 가게 레벨 ' + P.lv + '에 열려요' : '') + '</p>' +
+        '<div class="needs howneeds">' + nd.map(function (r) { return '<span>' + needHtml(r, true) + '<small>' + (isFound(r) ? nameOf(r) : '???') + '</small></span>'; }).join('') + '</div><p class="hint">재료를 누르면 만드는 법이 나와요</p>';
+    } else {
+      var R = RARES[f[1]]; title = isFound({ r: f[1] }) ? R.name : '귀한 물건';
+      h = '<div class="howprod">' + needHtml({ r: f[1] }, false) + '</div><p>생산기를 누르다 보면 가끔 나오는 귀한 물건이에요.</p>';
+    }
+    M.modal('<h3>' + esc(title) + '</h3>' + h + '<button class="btn primary wide" data-close>알겠어요</button>');
+  }
   function needIcon(r) { return iconHtml(r.p ? { p: r.p } : r.r ? { r: r.r } : { k: r.k, l: r.l }, 'ni'); }
 
   // ---------- 가게 레벨 ----------
@@ -207,11 +236,8 @@
     el.innerHTML = g.orders.map(function (o) {
       var c = custOf(o.cust), ok = ready(o), fr = g.friends[o.cust] || 0, hearts = Math.min(5, Math.floor(fr / 4));
       return '<div class="order' + (ok ? ' ok' : '') + (o.rare ? ' rare' : '') + '" data-o="' + o.id + '">' +
-        (hearts ? '<span class="hearts">' + '♥'.repeat(hearts) + '</span>' : '') +
-        '<div class="bubble2"><div class="needs">' + o.need.map(function (r) {
-          var have = Math.min(count(needKey(r)), r.n);
-          return '<div class="need' + (have >= r.n ? ' got' : '') + '">' + needIcon(r) + '<i>' + have + '/' + r.n + '</i></div>';
-        }).join('') + '</div></div>' +
+        '<div class="cname">' + esc(c.name) + (hearts ? ' <span class="hearts">' + '♥'.repeat(hearts) + '</span>' : '') + '</div>' +
+        '<div class="bubble2"><div class="needs">' + o.need.map(function (r) { return needHtml(r, true); }).join('') + '</div></div>' +
         '<button class="give" data-give="' + o.id + '"' + (ok ? '' : ' disabled') + '>' + (ok ? '주기' : '<span class="mini">' + M.rewardHtml({ coins: o.rw.coins, fp: o.rw.fp }) + '</span>') + '</button></div>';
     }).join('');
     if (M.paintBadges) M.paintBadges();
@@ -250,10 +276,10 @@
     var g = G();
     return Object.keys(CHAINS).filter(chainOn).map(function (k) {
       return '<div class="gline">' + [1, 2, 3, 4, 5].map(function (l) {
-        var ok = (g.found[k] || 0) >= l;
+        var ok = isFound({ k: k, l: l });
         return '<span class="bk' + (ok ? '' : ' unk') + '" title="' + (ok ? CHAINS[k].names[l - 1] : '???') + '">' + iconHtml({ k: k, l: l }, 'bi') + '</span>';
       }).join('<span class="arr">›</span>') + '</div>';
-    }).join('');
+    }).join('') + '<div class="gline prods"><small>작업대 완성품 · 누르면 만드는 법</small>' + Object.keys(PRODUCTS).map(function (id) { return needHtml({ p: id }, false); }).join('') + '</div>';
   }
   function sellValue(it) {
     if (it.k) return it.k === 'f' && it.l === 5 ? { coins: 15, fp: 8 } : SELL[it.l - 1];
@@ -388,7 +414,7 @@
     var d = M.modal('<h3>🛠️ 무엇을 만들까요?</h3><p class="hint">밭에 있는 재료를 써서 만들어요. 다 만들어지면 받으러 와 주세요.</p><div class="list">' + list.map(function (id) {
       var P = PRODUCTS[id], nd = recipeNeed(P), ok = nd.every(function (r) { return count(needKey(r)) >= r.n; });
       return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le"><img src="img/prod-' + id + '.png" alt=""></span><div class="ln">' + P.name + ' <small>⏱ ' + (P.min >= 60 ? P.min / 60 + '시간' : P.min + '분') + '</small><div class="needs">' +
-        nd.map(function (r) { var have = Math.min(count(needKey(r)), r.n); return '<div class="need' + (have >= r.n ? ' got' : '') + '">' + needIcon(r) + '<i>' + have + '/' + r.n + '</i></div>'; }).join('') +
+        nd.map(function (r) { return needHtml(r, true); }).join('') +
         '</div></div><button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-make="' + id + '"' + (ok ? '' : ' disabled') + '>만들기</button></div>';
     }).join('') + '</div>' + (lockedNext ? '<p class="hint">' + PRODUCTS[lockedNext].em + ' ' + PRODUCTS[lockedNext].name + ' 제작법은 가게 레벨 ' + PRODUCTS[lockedNext].lv + '에 열려요</p>' : '') + '<button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) { var b = e.target.closest('[data-make]'); if (b && !b.disabled) { d.close(); M.gardenCraft(slot, b.dataset.make); } });
@@ -413,7 +439,7 @@
   };
   M.gardenCollect = function (slot) {
     var g = G(), s = g.bench.slots[slot]; if (!s || s.until > Date.now()) return false;
-    g.store[s.rid] = (g.store[s.rid] || 0) + 1; g.bench.slots[slot] = null; M.save();   // 밭 칸이 아니라 보관함으로
+    g.store[s.rid] = (g.store[s.rid] || 0) + 1; g.pfound = g.pfound || {}; g.pfound[s.rid] = 1; g.bench.slots[slot] = null; M.save();   // 밭 칸이 아니라 보관함으로
     var el = $('gBench'); burst(el, ['#ffd84a', '#ff9fc0', '#fff'], 14); floatText(el, PRODUCTS[s.rid].name + ' 완성! 보관함에 넣었어요', 'gold');
     M.sfx('win'); paintBench(); paintBar(); afterChange();
     return true;
@@ -486,7 +512,7 @@
     if (lucky) setTimeout(function () { floatText(cellEl(to), '🍀 행운!', 'gold'); }, 350);
     if (Math.random() < 0.03) {   // 가끔 귀한 물건이 같이 나온다
       var to2 = nearEmpty(c);
-      if (to2 >= 0) { var rr = Math.random(), rid = rr < 0.6 ? 'clover' : rr < 0.85 ? 'gseed' : 'rainbow'; g.cells[to2] = { r: rid }; paintCell(to2); dropIn(to2, genEl); setTimeout(function () { floatText(cellEl(to2), RARES[rid].em + ' 귀한 물건!', 'gold'); M.sfx('win'); }, 350); }
+      if (to2 >= 0) { var rr = Math.random(), rid = rr < 0.6 ? 'clover' : rr < 0.85 ? 'gseed' : 'rainbow'; g.cells[to2] = { r: rid }; g.rfound = g.rfound || {}; g.rfound[rid] = 1; paintCell(to2); dropIn(to2, genEl); setTimeout(function () { floatText(cellEl(to2), RARES[rid].em + ' 귀한 물건!', 'gold'); M.sfx('win'); }, 350); }
     }
     M.save(); afterChange();
     return true;
@@ -662,6 +688,7 @@
     if (t.closest('#gBenchBtn')) { benchSheet(); return; }
     if (t.closest('#gHelp')) { M.gardenHelp(); return; }
     if (t.closest('#gDeco')) { decoSheet(); return; }
+    var nk = t.closest('[data-nk]'); if (nk) { howSheet(nk.dataset.nk); return; }
     var gb = t.closest('[data-give]'); if (gb && !gb.disabled) { M.gardenDeliver(gb.dataset.give); return; }
     if (t.closest('#gWater')) { waterShop(); return; }
     if (t.closest('#gBookBtn')) { bookSheet(); return; }

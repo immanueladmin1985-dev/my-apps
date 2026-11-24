@@ -771,3 +771,30 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .dlgme { margin: 0 0 6px; font-size: .8rem; color: var(--sub); }
 .dl.alt { border-style: dashed; opacity: .9; }
 .dl.alt em { font-style: normal; font-size: .7rem; font-weight: 800; color: var(--mint-d); }
+
+/* 포장마차는 양옆이 조금 잘려도 크게 */
+.stallwrap { overflow: hidden; }
+.stallwrap .counter { width: 132%; margin-left: -16%; }
+.cust { width: 17%; }
+.cust .cn { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); z-index: 3; white-space: nowrap; font-size: .68rem; font-weight: 800; color: #6b4a2b; background: rgba(255,255,255,.9); border-radius: 8px; padding: 0 6px; }
+/* 필요한 개수는 그림 아래에 (그림을 가리지 않게) */
+.need { position: relative; width: auto !important; height: auto !important; display: inline-flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 0; }
+.need .nimg { display: block; width: 32px; height: 32px; }
+.need .nimg img, .need .nimg .ge { width: 100%; height: 100%; object-fit: contain; }
+.need i { position: static; margin-top: 1px; font-size: .64rem; line-height: 1.2; padding: 0 4px; }
+.need.unk .nimg { filter: brightness(0) opacity(.22); }
+.recipe .need .nimg { width: 38px; height: 38px; }
+.unkimg { filter: brightness(0) opacity(.22); }
+.howpath { display: flex; align-items: flex-start; justify-content: center; gap: 2px; flex-wrap: wrap; margin: 6px 0; }
+.howpath > span, .howneeds > span { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 58px; }
+.howpath small, .howneeds small { font-size: .7rem; font-weight: 700; text-align: center; line-height: 1.2; }
+.howpath .need .nimg, .howneeds .need .nimg { width: 46px; height: 46px; }
+.howpath .arr { align-self: center; color: var(--sub); }
+.howprod { text-align: center; } .howprod img { width: 90px; height: 90px; object-fit: contain; }
+.howneeds { gap: 10px; margin: 8px 0; }
+.gline.prods { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.gline.prods small { width: 100%; color: var(--sub); font-weight: 700; font-size: .75rem; }
+.gline.prods .need .nimg { width: 40px; height: 40px; }
+.cust .cn { bottom: auto; top: -10px; }
+.order .cname { width: 100%; text-align: center; font-size: .66rem; line-height: 1.1; margin-bottom: -1px; }
+.order .cname .hearts { position: static; font-size: .62rem; }
