@@ -37,7 +37,7 @@
     if (t === tab) return;
     if (M.stopEditing) M.stopEditing();
     tab = t; $('view').scrollTop = 0; M.render();
-    var tips = { garden: ['seenGarden', '🌱 정원', '<b>① 씨앗 뿌리기</b>: 레슨에서 받은 물방울로 씨앗을 뿌려요. 꾹 누르면 계속 뿌려요.<br><b>② 합치기</b>: 같은 것끼리 끌어다 겹치면 한 단계 자라요. 빠르게 이어서 합치면 콤보!<br><b>③ 주문 채우기</b>: 위에 있는 동물 친구들이 원하는 것을 키워서 <b>주기</b>를 누르면 코인과 <img class="inl" src="img/flower-point.png" alt="">꽃 포인트를 받아요.'],
+    var tips = { garden: ['seenGarden', '🏪 정원 가게', '<b>① 생산기 누르기</b>: 밭에 있는 👝 씨앗 주머니, 🪵 도토리 바구니를 누르면 재료가 나와요(물방울 5). 꾹 누르면 계속 나와요.<br><b>② 합치기</b>: 같은 것끼리 끌어다 겹치면 한 단계 자라요.<br><b>③ 손님 의뢰</b>: 위에 온 손님이 원하는 것을 만들어 <b>주기</b>를 누르면 코인, <img class="inl" src="img/flower-point.png" alt="">꽃 포인트, 가게 경험치를 받아요.<br><br>가게 레벨이 오르면 새 생산기, 새 손님, 작업대가 열리고 밭도 넓힐 수 있어요.'],
       home: ['seenHome', '🏠 ' + esc(P.petName) + '의 집', '코인으로 먹이를 주면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 <b>물방울을 더</b> 받아요.<br><br>가구 상점에서 가구를 사서 방을 꾸며 보세요.'],
       shop: ['seenShop', '🎁 상점', '<b>꽃 포인트</b>를 모아 남편이 등록한 <b>진짜 선물</b>로 바꿀 수 있어요. 바꾸면 쿠폰이 생기고, 남편이 확인하면 선물을 받아요.'] };
     var tip = tips[t];

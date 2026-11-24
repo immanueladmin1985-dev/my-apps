@@ -62,9 +62,7 @@
     try { raw = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { raw = null; }
     M.P = merge(M.defaults(), raw || {});
     var g = M.P.garden;
-    // 밭: 6칸×4줄짜리 밭 두 개(48칸). 예전 30칸 기록은 앞에서부터 옮긴다.
-    if (!Array.isArray(g.cells)) g.cells = [];
-    if (g.cells.length !== 48) { var nc = new Array(48).fill(null); g.cells.slice(0, 48).forEach(function (x, i) { nc[i] = x || null; }); g.cells = nc; }
+    if (!Array.isArray(g.cells)) g.cells = [];   // 밭 줄 수 맞추기는 garden.js 가 한다
     migrate(M.P);
   };
   // 단계 번호가 바뀐 판(v1 → v2)의 진행 기록을 옮긴다
@@ -184,7 +182,8 @@
     combo: { needs: [5, 8], text: function (n) { return n + '문제 연속으로 맞히기'; }, icon: '🔥', max: true },
     review: { needs: [1], text: function () { return '복습 1판 하기'; }, icon: '🔁', ok: function () { return M.learnedCount() >= 6; } },
     harvest: { needs: [2], text: function (n) { return '정원에서 ' + n + '번 팔기'; }, icon: '🧺' },
-    order: { needs: [2, 3], text: function (n) { return '정원 주문 ' + n + '개 채우기'; }, icon: '📦' }
+    order: { needs: [2, 3], text: function (n) { return '손님 의뢰 ' + n + '개 채우기'; }, icon: '📦' },
+    craft: { needs: [1], text: function () { return '작업대에서 1개 만들기'; }, icon: '🛠️', ok: function () { return (M.P.garden.lv || 1) >= 4; } }
   };
   M.QUESTS = QUESTS;
   M.dailyState = function () {
