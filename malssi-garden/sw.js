@@ -1,4 +1,4 @@
-const CACHE = 'malssi-garden-v16';
+const CACHE = 'malssi-garden-v17';
 const CORE = [
   './',
   './index.html',
@@ -142,6 +142,11 @@ const CORE = [
   './img/rare-gseed.png',
   './img/rare-rainbow.png',
   './img/stall.png',
+  './img/stall-mint.png',
+  './img/stall-sky.png',
+  './img/stall-lemon.png',
+  './img/stall-lilac.png',
+  './img/stall-coral.png',
   './img/tea-1.png',
   './img/tea-2.png',
   './img/tea-3.png',

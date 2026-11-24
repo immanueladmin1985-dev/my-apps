@@ -715,3 +715,43 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .acard b { font-size: .78rem; }
 .acard small { color: #ff6b9a; font-size: .62rem; letter-spacing: -1px; }
 .acard.lock { opacity: .5; }
+
+/* 토끼 집: 화면 끝까지 */
+.home .room { margin: 0 -16px; border-radius: 0; max-height: none; aspect-ratio: 3 / 2; box-shadow: none; }
+@media (min-width: 712px) { .home .room { margin: 0 auto; border-radius: 24px; } }
+.furn.flip img { transform: scaleX(-1); }
+.furn.fsel { outline: 3px dashed var(--mint); outline-offset: 2px; border-radius: 8px; }
+.ftools { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 8px 0; }
+.ftools b { width: 100%; font-size: .85rem; }
+.ftools button { flex: 1 0 30%; padding: 8px 4px; border-radius: 12px; background: #fff; border: 2px solid var(--line); font-weight: 700; font-size: .85rem; }
+/* 꾸미기 상점: 분류와 3열 */
+.fcats { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
+.fcats button { flex: none; padding: 5px 9px; border-radius: 10px; background: #f6f3f8; font-weight: 700; font-size: .8rem; }
+.fcats button.on { background: var(--mint); color: #fff; }
+.fgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fcard { display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 6px 4px; }
+.fcard.on { border-color: var(--mint); background: #f3fbf7; }
+.fcard > img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+.fcard b { font-size: .78rem; line-height: 1.2; text-align: center; }
+.fcard small { font-size: .74rem; font-weight: 800; display: flex; align-items: center; gap: 2px; }
+.fcard small img { width: 14px; height: 14px; }
+.fcard .price { color: var(--gold-d); }
+
+/* 가게: 화면 끝까지, 가게 정보는 차양 위에 */
+.stallwrap { position: relative; margin: 0 -16px; }
+.stallwrap .counter { max-width: none; margin: 0; }
+.stallwrap .shophead { position: absolute; z-index: 4; left: 50%; top: 0; transform: translateX(-50%); width: min(78%, 420px); margin: 0; padding: 3px 8px; gap: 6px;
+  grid-template-columns: auto auto 1fr auto auto auto; background: rgba(255,255,255,.88); border-radius: 12px; font-size: .8rem; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.stallwrap .shophead .helpbtn { position: static; width: 24px; height: 24px; font-size: .8rem; }
+.stallwrap .counter { padding-top: 0; }
+.cust { width: 21%; bottom: 23%; }
+@media (min-width: 712px) { .stallwrap { margin: 0 auto; max-width: 640px; } }
+.orders { padding: 0 2%; gap: 5px; margin-top: -6px; }
+.order { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; padding: 4px 4px; gap: 3px; }
+.order .bubble2 { margin: 0; }
+.order .needs { flex-wrap: nowrap; gap: 2px; }
+.order .need { width: 30px; height: 30px; }
+.order .give { height: 28px; min-width: 40px; flex: 1 0 auto; max-width: 100%; }
+.order .hearts { position: absolute; top: -8px; right: 4px; font-size: .7rem; }
+.order:nth-child(1):nth-last-child(3)::before { left: 88%; }
+.order:nth-child(3):nth-last-child(1)::before { left: 12%; }

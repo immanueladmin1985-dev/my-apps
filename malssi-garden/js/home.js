@@ -21,6 +21,10 @@
     ['cakestand', '🧁', '컵케이크 진열대', 150, 'f', 14], ['cattower', '🐾', '캣타워', 200, 'f', 18], ['hutch', '🏠', '토끼 집', 300, 'f', 24], ['guitar', '🎸', '기타', 150, 'f', 13],
     ['plush', '🧸', '인형 더미', 180, 'f', 20], ['stars', '⭐', '별 가랜드', 80, 'w', 30], ['painting', '🖼️', '집 그림 액자', 120, 'w', 16]
   ].map(function (a) { return { id: a[0], e: a[1], name: a[2], price: a[3], wall: a[4] === 'w', rug: a[4] === 'r', size: a[5] }; });
+  var FCAT = { living: ['🛋️ 거실', 'sofa,armchair,table,sidetable,teatable,tv,fireplace,books,lamp,piano'], bed: ['🛏️ 침실', 'bed,wardrobe,dresser,mirror,desk,chair,cushion'],
+    kitchen: ['🍳 부엌', 'kitchen,fridge,dining,coffee,cakestand,tea'], deco: ['🌷 장식', 'plant,sakura,tulips,hangplant,fish,toys,plush,guitar,petbed,cattower,hutch'],
+    wall: ['🖼️ 벽', 'window,clock,frame,shelf,lights,stars,painting'], rug: ['🧶 깔개', 'rug,rug2,floorcush'] };
+  var fcat = 'living';
   var WALLS = [{ id: 0, name: '기본 (아이보리)', price: 0, src: 'img/bg-room.jpg' }, { id: 1, name: '분홍 줄무늬', price: 300, src: 'img/wall-1.jpg' }, { id: 2, name: '민트 물방울', price: 300, src: 'img/wall-2.jpg' },
     { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' }];
   // 소품: 토끼 그림 위에 겹쳐 그린다. x·y 는 토끼 그림 안의 위치(%), w 는 너비(%)
@@ -30,7 +34,7 @@
   M.FURN = FURN; M.FOODS = FOODS;
 
   var LINES = ['오늘도 같이 공부해요!', '레슨 한 판 할까요?', '정원에 꽃이 피면 좋겠어요 🌸', '말을 배우면 씨앗이 자라요!', '쓰다듬어 줘서 고마워요 💕', '오늘 목표까지 조금만 더!'];
-  var editing = false, mood = '';
+  var editing = false, mood = '', fsel = '';
 
   M.petFull = function () {
     var p = M.P.pet; return Math.max(0, Math.round(p.full - (Date.now() - p.fullAt) / 86400000 * 25));
@@ -69,10 +73,10 @@
     placed.sort(function (a, b) { return P.room.placed[a.id].y - P.room.placed[b.id].y; });
     var h = '<div class="home">' +
       '<div class="room' + (editing ? ' editing' : '') + '" id="room" style="background-image:url(' + wallSrc() + ')">' +
-      placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + f.size + '%;z-index:' + (f.rug ? 1 : Math.round(pos.y)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false"></div>'; }).join('') +
+      placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false"></div>'; }).join('') +
       '<div class="pet" id="pet" style="z-index:70"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml() + '</div></div>' +
-      (editing ? '<div class="edithint">가구를 끌어서 옮기고, 누르면 보관할 수 있어요</div>' : '') +
-      '</div>' +
+      (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구를 끌어서 옮기고, 눌러서 골라요') + '</div>' : '') +
+      '</div>' + (editing && fsel && P.room.placed[fsel] ? '<div class="ftools"><b>' + esc((FURN.filter(function (x) { return x.id === fsel; })[0] || {}).name || '') + '</b><button data-ft="small">－ 작게</button><button data-ft="big">＋ 크게</button><button data-ft="flip">↔ 뒤집기</button><button data-ft="front">⬆ 앞으로</button><button data-ft="back">⬇ 뒤로</button><button data-ft="store">📦 보관</button></div>' : '') +
       '<div class="card petcard"><div class="pname"><b>' + esc(P.petName) + '</b> <span class="lv">Lv.' + p.lv + '</span><span class="bonus">💧 +' + M.petBonus() + '%</span></div>' +
       '<div class="meter"><span>친밀도</span><div class="mbar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></div><small>' + p.exp + '/' + needExp(p.lv) + '</small></div>' +
       '<div class="meter"><span>배부름</span><div class="mbar full"><i style="width:' + M.petFullPct() + '%"></i></div><small>' + (full >= 100 ? '아주 배부름' : full < 30 ? '배고파요' : full + '%') + '</small></div>' +
@@ -143,16 +147,18 @@
     var paint = function () {
       tabs();
       if (tab !== 'furn') { paintOther(); return; }
-      d.querySelector('#fHint').textContent = '산 가구는 방에 놓이고, ✏️ 꾸미기에서 옮길 수 있어요';
-      d.querySelector('#fList').innerHTML = FURN.map(function (f) {
+      d.querySelector('#fHint').innerHTML = '<span class="fcats">' + Object.keys(FCAT).map(function (k) { return '<button data-fc="' + k + '" class="' + (k === fcat ? 'on' : '') + '">' + FCAT[k][0] + '</button>'; }).join('') + '</span>';
+      var ids = FCAT[fcat][1].split(',');
+      d.querySelector('#fList').innerHTML = '<div class="fgrid">' + FURN.filter(function (f) { return ids.indexOf(f.id) >= 0; }).map(function (f) {
         var own = P.room.owned[f.id], on = !!P.room.placed[f.id];
-        return '<button class="litem" data-fid="' + f.id + '"><span class="le"><img src="img/furn-' + f.id + '.png" alt=""></span><span class="ln">' + f.name + (own ? '<small>' + (on ? '방에 있어요 · 눌러서 보관' : '보관 중 · 눌러서 꺼내기') + '</small>' : '') + '</span>' +
-          (own ? '<span class="lp own">' + (on ? '보관' : '꺼내기') + '</span>' : '<span class="lp"><img src="img/coin.png" alt="">' + f.price + '</span>') + '</button>';
-      }).join('');
+        return '<button class="fcard' + (on ? ' on' : '') + '" data-fid="' + f.id + '"><img src="img/furn-' + f.id + '.png" alt=""><b>' + f.name + '</b>' +
+          (own ? '<small class="own">' + (on ? '방에 있음 · 보관' : '꺼내기') + '</small>' : '<small class="price"><img src="img/coin.png" alt="">' + f.price + '</small>') + '</button>';
+      }).join('') + '</div>';
     };
     paint();
     d.addEventListener('click', function (e) {
       var tb = e.target.closest('[data-st]'); if (tb) { tab = tb.dataset.st; paint(); return; }
+      var fc = e.target.closest('[data-fc]'); if (fc) { fcat = fc.dataset.fc; paint(); return; }
       var wb = e.target.closest('[data-wid]');
       if (wb) {
         var w = WALLS[+wb.dataset.wid]; P.room.walls = P.room.walls || {};
@@ -208,15 +214,25 @@
   document.addEventListener('pointerup', function (e) {
     if (!fd || e.pointerId !== fd.pid) return;
     var d = fd; fd = null; d.el.classList.remove('drag');
-    if (d.moved && d.pos) { M.P.room.placed[d.id] = d.pos; M.save(); return; }
-    var f = FURN.filter(function (x) { return x.id === d.id; })[0];
-    M.confirm(f.e + ' ' + f.name, '이 가구를 보관할까요? 가구 상점에서 다시 꺼낼 수 있어요.', '보관하기', function () { togglePlace(f); rerender(); });
+    var cur = M.P.room.placed[d.id] || {};
+    if (d.moved && d.pos) { cur.x = d.pos.x; cur.y = d.pos.y; M.P.room.placed[d.id] = cur; fsel = d.id; M.save(); rerender(); return; }
+    fsel = fsel === d.id ? '' : d.id; rerender();
   });
 
   document.addEventListener('click', function (e) {
     if (e.target.closest('#hFeed')) feedSheet();
     else if (e.target.closest('#hShop')) furnShop();
-    else if (e.target.closest('#hEdit')) { editing = !editing; rerender(); }
+    else if (e.target.closest('#hEdit')) { editing = !editing; fsel = ''; rerender(); }
+    else if (e.target.closest('[data-ft]') && fsel) {
+      var a = e.target.closest('[data-ft]').dataset.ft, pos = M.P.room.placed[fsel], f = FURN.filter(function (x) { return x.id === fsel; })[0];
+      if (a === 'small') pos.s = Math.max(0.5, (pos.s || 1) - 0.15);
+      else if (a === 'big') pos.s = Math.min(2.2, (pos.s || 1) + 0.15);
+      else if (a === 'flip') pos.f = !pos.f;
+      else if (a === 'front') pos.z = (pos.z || 0) + 30;
+      else if (a === 'back') pos.z = (pos.z || 0) - 30;
+      else if (a === 'store') { togglePlace(f); fsel = ''; }
+      M.sfx('tap'); M.save(); rerender();
+    }
     else if (e.target.closest('#pet') && !editing) {
       var p = M.P.pet, t = M.today();
       if (p.petDay !== t) { p.petDay = t; p.petN = 0; }

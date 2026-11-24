@@ -173,8 +173,8 @@
     if (!root) return;
     ensureOrders();
     var g = G(), R = g.rows, H = 296 + 191 * R;   // 그림 기준(가로 1496) 높이
-    var h = '<div class="garden"><div class="shophead"><b>🏪 ' + esc(M.P.petName) + '네 정원 가게</b><span class="slv">Lv.' + g.lv + '</span><button class="helpbtn" id="gHelp" aria-label="도움말">?</button><div class="mbar"><i style="width:' + Math.round(g.xp / xpNeed(g.lv) * 100) + '%"></i></div><small>' + g.xp + '/' + xpNeed(g.lv) + '</small></div>' +
-      '<div class="counter" id="gCounter"></div><div class="orders" id="gOrders"></div>' +
+    var h = '<div class="garden"><div class="stallwrap"><div class="shophead"><b>' + esc(M.P.petName) + '네 가게</b><span class="slv">Lv.' + g.lv + '</span><div class="mbar"><i style="width:' + Math.round(g.xp / xpNeed(g.lv) * 100) + '%"></i></div><small>' + g.xp + '/' + xpNeed(g.lv) + '</small><button class="helpbtn" id="gDeco" aria-label="가게 꾸미기">🎨</button><button class="helpbtn" id="gHelp" aria-label="도움말">?</button></div>' +
+      '<div class="counter" id="gCounter"></div></div><div class="orders" id="gOrders"></div>' +
       '<div class="board" id="board" style="--bh:' + (H / 1496).toFixed(4) + ';aspect-ratio:1496/' + H + '"><img class="btop" src="img/garden-top.png" alt=""><img class="bbot" src="img/garden-bot.png" alt="">';
     h += '<div class="bcells" id="grid" style="top:' + (180 / H * 100) + '%;bottom:' + (116 / H * 100) + '%;grid-template-rows:repeat(' + R + ',minmax(0,1fr))">';
     for (var i = 0; i < R * COLS; i++) h += '<div class="cell" data-c="' + i + '"></div>';
@@ -202,12 +202,12 @@
     var ct = $('gCounter');
     if (ct) ct.innerHTML = '<div class="custs">' + g.orders.map(function (o, i) {
       var c = custOf(o.cust), ok = ready(o);
-      return '<div class="cust' + (ok ? ' happy' : '') + '" style="left:' + (35 + i * 15) + '%">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + (ok ? '-happy' : '') + '.png" alt="' + esc(c.name) + '">' : '<span class="cem">' + c.em + '</span>') + (o.rare ? '<i class="rmark">✨</i>' : '') + '</div>';
-    }).join('') + '</div><img class="stallimg" src="img/stall.png" alt="">';
+      return '<div class="cust' + (ok ? ' happy' : '') + '" style="left:' + (g.orders.length === 1 ? 50 : g.orders.length === 2 ? 38 + i * 24 : 30 + i * 20) + '%">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + (ok ? '-happy' : '') + '.png" alt="' + esc(c.name) + '">' : '<span class="cem">' + c.em + '</span>') + (o.rare ? '<i class="rmark">✨</i>' : '') + '</div>';
+    }).join('') + '</div><img class="stallimg" src="img/stall' + (g.awn ? '-' + g.awn : '') + '.png" alt="">';
     el.innerHTML = g.orders.map(function (o) {
       var c = custOf(o.cust), ok = ready(o), fr = g.friends[o.cust] || 0, hearts = Math.min(5, Math.floor(fr / 4));
       return '<div class="order' + (ok ? ' ok' : '') + (o.rare ? ' rare' : '') + '" data-o="' + o.id + '">' +
-        '<div class="cname">' + esc(c.name) + (hearts ? ' <span class="hearts">' + '♥'.repeat(hearts) + '</span>' : '') + '</div>' +
+        (hearts ? '<span class="hearts">' + '♥'.repeat(hearts) + '</span>' : '') +
         '<div class="bubble2"><div class="needs">' + o.need.map(function (r) {
           var have = Math.min(count(needKey(r)), r.n);
           return '<div class="need' + (have >= r.n ? ' got' : '') + '">' + needIcon(r) + '<i>' + have + '/' + r.n + '</i></div>';
@@ -221,6 +221,25 @@
     if (g.rows >= MAX_ROWS) { el.innerHTML = ''; return; }
     if (g.rows >= maxRows()) { el.innerHTML = '<div class="expand off">🔨 Lv.' + (g.rows - 2) + '에 넓히기</div>'; return; }
     el.innerHTML = '<button class="expand" id="gRow">🔨 넓히기 <span class="cost"><img src="img/coin.png" alt="">' + ROW_COST[g.rows] + '</span></button>';
+  }
+  var AWNS = [['', '딸기 분홍', 0], ['mint', '민트', 150], ['sky', '하늘', 150], ['lemon', '레몬', 200], ['lilac', '라일락', 250], ['coral', '산호', 300]];
+  function decoSheet() {
+    var g = G(); g.awns = g.awns || {};
+    var d = M.modal('<h3>🎨 가게 꾸미기</h3><p class="hint">차양 색을 골라요. 한 번 산 색은 언제든 바꿀 수 있어요.</p><div class="fgrid" id="awList"></div><button class="btn ghost wide" data-close>닫기</button>');
+    function paint() {
+      d.querySelector('#awList').innerHTML = AWNS.map(function (a) {
+        var own = !a[2] || g.awns[a[0]], on = (g.awn || '') === a[0];
+        return '<button class="fcard' + (on ? ' on' : '') + '" data-aw="' + a[0] + '"><img src="img/stall' + (a[0] ? '-' + a[0] : '') + '.png" alt="" style="aspect-ratio:900/369"><b>' + a[1] + '</b>' +
+          (on ? '<small class="own">사용 중</small>' : own ? '<small class="own">바꾸기</small>' : '<small class="price"><img src="img/coin.png" alt="">' + a[2] + '</small>') + '</button>';
+      }).join('');
+    }
+    paint();
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-aw]'); if (!b) return;
+      var a = AWNS.filter(function (x) { return x[0] === b.dataset.aw; })[0];
+      if (a[2] && !g.awns[a[0]]) { if (!M.spend('coins', a[2])) { M.toast('코인이 모자라요'); return; } g.awns[a[0]] = true; M.sfx('coin'); }
+      g.awn = a[0]; M.save(); paint(); paintOrders(); M.paintTop && M.paintTop();
+    });
   }
   function bookSheet() {
     var g = G();
@@ -642,6 +661,7 @@
     if (t.closest('#gBagBtn')) { bagSheet(); return; }
     if (t.closest('#gBenchBtn')) { benchSheet(); return; }
     if (t.closest('#gHelp')) { M.gardenHelp(); return; }
+    if (t.closest('#gDeco')) { decoSheet(); return; }
     var gb = t.closest('[data-give]'); if (gb && !gb.disabled) { M.gardenDeliver(gb.dataset.give); return; }
     if (t.closest('#gWater')) { waterShop(); return; }
     if (t.closest('#gBookBtn')) { bookSheet(); return; }
