@@ -353,6 +353,9 @@
   }, true);
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (n) { document.addEventListener(n, paintInstall); });
 
+  // 길게 누를 때 뜨는 이미지 복사·저장 메뉴를 막는다 (글자 입력칸은 그대로 둔다)
+  document.addEventListener('contextmenu', function (e) { if (!e.target.closest('input, textarea')) e.preventDefault(); });
+
   // ---------- 누르기 ----------
   document.addEventListener('click', function (e) {
     var t = e.target;

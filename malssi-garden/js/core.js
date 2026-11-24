@@ -62,7 +62,9 @@
     try { raw = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { raw = null; }
     M.P = merge(M.defaults(), raw || {});
     var g = M.P.garden;
-    if (!Array.isArray(g.cells) || g.cells.length !== 30) g.cells = new Array(30).fill(null);
+    // 밭: 6칸×4줄짜리 밭 두 개(48칸). 예전 30칸 기록은 앞에서부터 옮긴다.
+    if (!Array.isArray(g.cells)) g.cells = [];
+    if (g.cells.length !== 48) { var nc = new Array(48).fill(null); g.cells.slice(0, 48).forEach(function (x, i) { nc[i] = x || null; }); g.cells = nc; }
     migrate(M.P);
   };
   // 단계 번호가 바뀐 판(v1 → v2)의 진행 기록을 옮긴다

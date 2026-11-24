@@ -1,7 +1,7 @@
 // 말씨정원 머지 정원: 씨앗을 뿌리고, 같은 것끼리 합쳐 키우고, 동물 친구들의 주문을 채운다
 (function () {
   var M = window.M, $ = M.$, esc = M.esc;
-  var CELLS = 30, SEED_COST = 5;
+  var CELLS = 48, PLOT = 24, SEED_COST = 5;
   var KINDS = {
     f: { names: ['꽃씨', '새싹', '꽃봉오리', '분홍 꽃', '황금 꽃'], img: 'flower', sell: [null, { coins: 1 }, { coins: 2 }, { coins: 5 }, { coins: 15, fp: 8 }] },
     t: { names: ['도토리', '어린 나무', '나무', '사과나무', '황금 사과나무'], img: 'tree', sell: [null, { coins: 1 }, { coins: 3 }, { coins: 8 }, { coins: 30, fp: 3 }] }
@@ -46,7 +46,11 @@
   M.renderGarden = function (root) {
     ensureOrders();
     var g = G(), h = '<div class="garden"><div class="orders" id="gOrders"></div><div class="grid" id="grid">';
-    for (var i = 0; i < CELLS; i++) h += '<div class="cell" data-c="' + i + '"></div>';
+    for (var i = 0; i < CELLS; i++) {
+      if (i % PLOT === 0) h += '<div class="plot"><div class="pgrid">';
+      h += '<div class="cell" data-c="' + i + '"></div>';
+      if (i % PLOT === PLOT - 1) h += '</div></div>';
+    }
     h += '</div><div class="gpanel" id="gPanel"></div>' +
       '<button class="btn seed wide" id="gSeed"><span>🌰 씨앗 뿌리기 <small>꾹 누르면 계속</small></span><span class="cost"><img src="img/water.png" alt="">' + SEED_COST + '</span></button>' +
       '<div class="gbook" id="gBook"></div></div>';
@@ -239,7 +243,7 @@
     if (!cell) return;
     lastAct = Date.now();
     var c = +cell.dataset.c;
-    if (cell.classList.contains('lock')) { if (c === G().open) unlock(); return; }
+    if (cell.classList.contains('lock')) return;   // 잠긴 칸은 click 에서 연다
     drag = { c: c, x: e.clientX, y: e.clientY, on: false, id: e.pointerId, has: !!G().cells[c] };
   });
   document.addEventListener('pointermove', function (e) {
@@ -297,6 +301,7 @@
   }
   function stopSeeding() { if (seedT) { clearTimeout(seedT); seedT = null; } }
   document.addEventListener('click', function (e) {
+    var lk = e.target.closest('#grid .cell.lock'); if (lk && +lk.dataset.c === G().open) { unlock(); return; }
     if (e.target.closest('#gSell') && sel >= 0) M.gardenSell(sel);
     var gb = e.target.closest('[data-give]'); if (gb && !gb.disabled) M.gardenDeliver(gb.dataset.give);
   });
