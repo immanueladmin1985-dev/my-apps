@@ -769,3 +769,5 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .chat .me { align-self: flex-end; background: #dff7ec; border-bottom-right-radius: 4px; }
 .chat .wait { color: var(--mint-d); font-weight: 900; letter-spacing: 2px; animation: bob 1.2s ease-in-out infinite; }
 .dlgme { margin: 0 0 6px; font-size: .8rem; color: var(--sub); }
+.dl.alt { border-style: dashed; opacity: .9; }
+.dl.alt em { font-style: normal; font-size: .7rem; font-weight: 800; color: var(--mint-d); }

@@ -222,4 +222,148 @@ B|Yes, it might snow tonight.|네, 오늘 밤에 눈이 올지도 몰라요.
 A|What are you doing this weekend?|이번 주말에 뭐 해요?
 B|I'm just going to relax at home.|그냥 집에서 쉬려고요.`)
   ] });
+  // 더 많은 장면: "B+" 는 갈림길(이렇게 말해도 되는 다른 대답). 다음 줄은 어느 대답에도 어울리게 지었다
+  window.LANGS.ja.units.push({ title: '회화 · 더 많은 장면', level: 'CV', stages: [
+    C('택시 타기', `
+A|どちらまで？|어디까지 가세요?
+B|東京駅までお願いします。|도쿄역까지 부탁해요.
+B+|このホテルまでお願いします。|이 호텔까지 부탁해요.
+A|はい、わかりました。|네, 알겠습니다.
+B*|どのぐらいかかりますか。|얼마나 걸려요?
+A|二十分ぐらいです。|20분쯤 걸려요.
+A*|着きました。千五百円です。|도착했습니다. 1,500엔입니다.
+B|カードでいいですか。|카드로 돼요?
+A|はい、大丈夫です。|네, 괜찮아요.`),
+    C('옷 교환하기', `
+A|いらっしゃいませ。|어서 오세요.
+B|すみません、これを交換したいです。|저기요, 이거 교환하고 싶어요.
+A|どうしましたか。|무슨 문제가 있으세요?
+B|ちょっと小さいです。|좀 작아요.
+B+|色があまり好きじゃないです。|색이 별로 마음에 안 들어요.
+A|レシートはありますか。|영수증 있으세요?
+B|はい、これです。|네, 이거예요.
+A|では、こちらから選んでください。|그럼 이쪽에서 골라 주세요.`),
+    C('전화 받기', `
+A|もしもし、キムさんですか。|여보세요, 김 씨예요?
+B|はい、そうです。|네, 맞아요.
+A|佐藤です。今、大丈夫ですか。|사토예요. 지금 괜찮아요?
+B|はい、大丈夫ですよ。|네, 괜찮아요.
+B+|すみません、今ちょっと忙しいです。|미안해요, 지금 좀 바빠요.
+A*|じゃあ、明日は時間ありますか。|그럼 내일은 시간 있어요?
+B|はい、明日はひまです。|네, 내일은 한가해요.
+A|よかった。また電話しますね。|다행이다. 또 전화할게요.`),
+    C('생일 축하', `
+A|お誕生日おめでとう！|생일 축하해!
+B|わあ、ありがとう！|와, 고마워!
+A*|これ、プレゼント。|이거, 선물이야.
+B|開けてもいい？|열어 봐도 돼?
+A|うん、どうぞ。|응, 열어 봐.
+A*|どう？|어때?
+B|かわいい！大切にするね。|귀여워! 소중히 할게.
+B+|すごい！ずっとほしかったの！|대박! 계속 갖고 싶었어!`),
+    C('사진 부탁하기', `
+A|すみません、写真を撮ってもらえますか。|저기요, 사진 좀 찍어 주실래요?
+B|いいですよ。|좋아요.
+B+|はい、もちろん。|네, 물론이죠.
+A|このボタンを押してください。|이 버튼을 눌러 주세요.
+B|わかりました。はい、チーズ！|알겠어요. 자, 치즈!
+A|ありがとうございます！|감사합니다!
+B|どういたしまして。|천만에요.`)
+  ] });
+
+  window.LANGS.zh.units.push({ title: '회화 · 더 많은 장면', level: 'CV', stages: [
+    C('택시 타기', `
+A|您去哪儿？|어디 가세요?|nín qù nǎr?
+B|去北京站。|베이징역으로 가 주세요.|qù Běijīng zhàn.
+B+|去这个酒店。|이 호텔로 가 주세요.|qù zhège jiǔdiàn.
+A|好的。|네.|hǎo de.
+B*|要多长时间？|얼마나 걸려요?|yào duō cháng shíjiān?
+A|二十分钟左右。|20분 정도요.|èrshí fēnzhōng zuǒyòu.
+A*|到了，三十五块。|도착했어요, 35위안이에요.|dào le, sānshíwǔ kuài.
+B|可以用微信付吗？|위챗으로 내도 돼요?|kěyǐ yòng Wēixìn fù ma?
+A|可以，扫这个吧。|돼요, 이걸 스캔하세요.|kěyǐ, sǎo zhège ba.`),
+    C('옷 교환하기', `
+A|你好，有什么事吗？|안녕하세요, 무슨 일이세요?|nǐ hǎo, yǒu shénme shì ma?
+B|我想换这件衣服。|이 옷을 바꾸고 싶어요.|wǒ xiǎng huàn zhè jiàn yīfu.
+A|怎么了？|왜 그러세요?|zěnme le?
+B|有点儿小。|좀 작아요.|yǒudiǎnr xiǎo.
+B+|我不太喜欢这个颜色。|이 색이 별로 마음에 안 들어요.|wǒ bú tài xǐhuan zhège yánsè.
+A|有小票吗？|영수증 있어요?|yǒu xiǎopiào ma?
+B|有，在这儿。|있어요, 여기요.|yǒu, zài zhèr.
+A|好，您去那边选吧。|네, 저쪽에서 고르세요.|hǎo, nín qù nàbiān xuǎn ba.`),
+    C('전화 받기', `
+A|喂，是美娜吗？|여보세요, 미나야?|wéi, shì Měinà ma?
+B|是我，你是哪位？|나야, 누구세요?|shì wǒ, nǐ shì nǎ wèi?
+A|我是王明。你现在忙吗？|나 왕밍이야. 지금 바빠?|wǒ shì Wáng Míng. nǐ xiànzài máng ma?
+B|不忙，怎么了？|안 바빠, 왜?|bù máng, zěnme le?
+B+|有点儿忙，等会儿再说吧。|좀 바빠, 이따가 얘기하자.|yǒudiǎnr máng, děng huìr zài shuō ba.
+A*|明天一起吃饭吧。|내일 같이 밥 먹자.|míngtiān yìqǐ chīfàn ba.
+B|好啊，几点？|좋아, 몇 시에?|hǎo a, jǐ diǎn?
+A|中午十二点怎么样？|낮 열두 시 어때?|zhōngwǔ shí'èr diǎn zěnmeyàng?`),
+    C('생일 축하', `
+A|生日快乐！|생일 축하해!|shēngrì kuàilè!
+B|哇，谢谢！|와, 고마워!|wa, xièxie!
+A*|这是给你的礼物。|이거 너 주는 선물이야.|zhè shì gěi nǐ de lǐwù.
+B|我可以打开吗？|열어 봐도 돼?|wǒ kěyǐ dǎkāi ma?
+A|当然可以。|당연하지.|dāngrán kěyǐ.
+A*|喜欢吗？|마음에 들어?|xǐhuan ma?
+B|太可爱了！我很喜欢。|너무 귀엽다! 정말 마음에 들어.|tài kě'ài le! wǒ hěn xǐhuan.
+B+|我一直想要这个！|이거 계속 갖고 싶었어!|wǒ yìzhí xiǎng yào zhège!`),
+    C('사진 부탁하기', `
+A|你好，能帮我们拍张照吗？|안녕하세요, 사진 좀 찍어 주실 수 있어요?|nǐ hǎo, néng bāng wǒmen pāi zhāng zhào ma?
+B|可以啊。|좋아요.|kěyǐ a.
+B+|没问题。|문제없어요.|méi wèntí.
+A|按这个就行。|이거 누르면 돼요.|àn zhège jiù xíng.
+B|好的。一、二、三！|네. 하나, 둘, 셋!|hǎo de. yī, èr, sān!
+A|谢谢你！|고마워요!|xièxie nǐ!
+B|不客气。|천만에요.|bú kèqi.`)
+  ] });
+
+  window.LANGS.en.units.push({ title: '회화 · 더 많은 장면', level: 'CV', stages: [
+    C('택시 타기', `
+A|Where to?|어디로 가세요?
+B|To the station, please.|역으로 가 주세요.
+B+|To this hotel, please.|이 호텔로 가 주세요.
+A|Sure.|네.
+B*|How long will it take?|얼마나 걸려요?
+A|About twenty minutes.|20분쯤 걸려요.
+A*|Here we are. That's fifteen dollars.|다 왔어요. 15달러예요.
+B|Do you take cards?|카드 받으세요?
+A|Yes, we do.|네, 받아요.`),
+    C('옷 교환하기', `
+A|Hi, can I help you?|안녕하세요, 도와드릴까요?
+B|I'd like to exchange this shirt.|이 셔츠를 교환하고 싶어요.
+A|What's wrong with it?|무슨 문제가 있나요?
+B|It's a little small.|좀 작아요.
+B+|I don't really like the color.|색이 별로 마음에 안 들어요.
+A|Do you have the receipt?|영수증 있으세요?
+B|Yes, here you go.|네, 여기요.
+A|Okay, you can choose another one.|네, 다른 걸로 고르셔도 돼요.`),
+    C('전화 받기', `
+A|Hello, is this Mina?|여보세요, 미나 씨예요?
+B|Yes, speaking. Who's calling?|네, 전데요. 누구세요?
+A|It's Tom. Do you have a minute?|톰이에요. 잠깐 시간 돼요?
+B|Sure, what's up?|그럼요, 무슨 일이에요?
+B+|Sorry, I'm a bit busy right now.|미안해요, 지금 좀 바빠요.
+A*|Do you want to have dinner tomorrow?|내일 저녁 같이 먹을래요?
+B|I'd love to! What time?|좋아요! 몇 시에요?
+A|How about seven?|7시 어때요?`),
+    C('생일 축하', `
+A|Happy birthday!|생일 축하해!
+B|Aww, thank you!|와, 고마워!
+A*|This is for you.|이거 너 주는 선물이야.
+B|Can I open it now?|지금 열어 봐도 돼?
+A|Of course!|물론이지!
+A*|Do you like it?|마음에 들어?
+B|It's so cute! I love it.|너무 귀엽다! 정말 좋아.
+B+|I've always wanted this!|이거 정말 갖고 싶었어!`),
+    C('사진 부탁하기', `
+A|Excuse me, could you take a picture of us?|실례지만, 저희 사진 좀 찍어 주시겠어요?
+B|Sure.|그럼요.
+B+|No problem.|문제없어요.
+A|Just press this button.|이 버튼만 누르면 돼요.
+B|Okay. Say cheese!|네. 치즈!
+A|Thank you so much!|정말 고마워요!
+B|You're welcome.|천만에요.`)
+  ] });
 })();

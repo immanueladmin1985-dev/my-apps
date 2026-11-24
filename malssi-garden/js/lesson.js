@@ -53,8 +53,9 @@
     return c;
   }
   function xformQ(x, lang) {
-    var opts = [x.item].concat(x.w.map(function (w) { return { t: w, say: w, k: '', lang: lang }; }));
-    return { type: 'xform', item: x.item, p: x.p, opts: M.shuffle(opts) };
+    var alts = (x.alts || []).map(function (a) { return { t: a.t, say: a.t, k: a.k, r: a.r, lang: lang, ok: true }; });
+    var opts = [x.item].concat(alts, x.w.slice(0, 3 - alts.length).map(function (w) { return { t: w, say: w, k: '', lang: lang }; }));
+    return { type: 'xform', item: x.item, p: x.p, di: x.di, opts: M.shuffle(opts) };
   }
   // 처음 보는 문장은 낱말 뜻과 어순을 먼저 보여 준다
   function sentKey(s) { return 'S:' + s.lang + ':' + s.t; }
@@ -76,7 +77,7 @@
       // 역할극: 앞 대화가 채팅처럼 쌓이고, 내 차례에 알맞은 대사를 고른다
       // 나는 늘 B 역할을 맡는다(문제마다 역할이 바뀌면 헷갈리므로). A 쪽 대답은 듣고 고르기로 낸다
       var mine = stage.xf.filter(function (x) { return stage.dlg[x.di].who === 'B'; }), other = stage.xf.filter(function (x) { return stage.dlg[x.di].who !== 'B'; });
-      mine.forEach(function (x) { var q = xformQ(x, lang); q.sub = x.pk; q.pr = x.pr; q.chat = stage.dlg.slice(0, x.di).map(function (d) { return { t: d.t, k: d.k, r: d.r, me: d.who === 'B' }; }); qs.push(q); });
+      mine.forEach(function (x) { var q = xformQ(x, lang); q.sub = x.pk; q.pr = x.pr; q.chat = stage.dlg.slice(0, x.di).map(function (d, i) { return { i: i, t: d.t, k: d.k, r: d.r, me: d.who === 'B' }; }); qs.push(q); });
       other.concat(M.shuffle(mine).slice(0, Math.max(0, 3 - other.length))).forEach(function (x) { var q = xformQ(x, lang); q.audio = x.p; qs.push(q); });
       return qs;
     }
@@ -187,14 +188,15 @@
     } else if (q.type === 'dialog') {
       var dg = q.stage;
       h = '<div class="qt"><span class="newtag">대화를 들어 봐요</span> <button class="say mini" data-sayall="1">▶ 전체 듣기</button></div><div class="dlg lang-' + dg.lang + '"><h3>' + esc(dg.title) + '</h3><p class="dlgme">오른쪽 초록 말풍선이 내 역할이에요. 잘 듣고 내 대사를 익혀 두세요</p>' +
-        dg.dlg.map(function (d, i) { return '<button class="dl ' + (d.who === 'A' ? 'a' : 'b') + '" data-say="' + esc(d.t) + '" data-dl="' + i + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '</div>';
+        dg.dlg.map(function (d, i) { return '<button class="dl ' + (d.who === 'A' ? 'a' : 'b') + '" data-say="' + esc(d.t) + '" data-dl="' + i + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>' +
+          d.alts.map(function (a) { return '<button class="dl b alt" data-say="' + esc(a.t) + '"><em>또는</em><b>' + esc(a.t) + '</b>' + (a.r ? '<span class="dr">' + esc(a.r) + '</span>' : '') + '<small>' + esc(a.k) + '</small></button>'; }).join(''); }).join('') + '</div>';
     } else if (q.type === 'rule') {
       var g = q.stage;
       h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
         '<div class="rex">' + g.xf.slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + esc(x.p) + '</span><b>' + esc(x.item.t) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + '</div></div>';
     } else if (q.type === 'xform') {
       if (q.audio) h = '<div class="qt">잘 듣고 알맞은 대답을 골라 보세요</div><div class="qcard listen">' + sayBtn(q.audio, true) + '</div>';
-      else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';
+      else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { d = (S.alt && S.alt[d.i]) || d; return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';
       else if (q.sub != null) h = '<div class="qt">알맞은 대답을 골라 보세요</div><div class="qcard"><div class="face lang-' + q.item.lang + '"><div class="ft lg">' + esc(q.p) + '</div>' + (q.pr ? '<div class="fr">' + esc(q.pr) + '</div>' : '') + '</div><div class="fk sm">' + esc(q.sub) + '</div>' + sayBtn(q.p) + '</div>';
       else h += '<div class="qcard ko"><div class="fk lang-' + q.item.lang + '">' + esc(q.p) + '</div><div class="fk sm">' + esc(q.item.k) + '</div></div>';
       h += '<div class="opts xf">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span></button>'; }).join('') + '</div>';
@@ -297,11 +299,14 @@
     }
     if (t.closest('#oCheck') && !S.answered && q.pick != null) {
       opt = document.querySelector('.opt[data-i="' + q.pick + '"]');
-      var o = q.opts[q.pick], ok = o.t === q.item.t;
+      var o = q.opts[q.pick], ok = o.t === q.item.t || !!o.ok;
       opt.classList.remove('pick');
       opt.classList.add(ok ? 'right' : 'wrong');
-      if (!ok) Array.prototype.forEach.call(document.querySelectorAll('.opt'), function (b) { if (q.opts[+b.dataset.i].t === q.item.t) b.classList.add('right'); });
-      judge(ok, q, answerInfo(q.item), q.item.say);
+      if (!ok) Array.prototype.forEach.call(document.querySelectorAll('.opt'), function (b) { var oo = q.opts[+b.dataset.i]; if (oo.t === q.item.t || oo.ok) b.classList.add('right'); });
+      var others = q.opts.filter(function (oo) { return (oo.t === q.item.t || oo.ok) && oo !== (ok ? o : q.item); });
+      if (q.di != null) { S.alt = S.alt || {}; S.alt[q.di] = ok ? { t: o.t, k: o.k || q.item.k, r: o.r || '', me: true } : null; }   // 고른 대답대로 다음 대화를 보여 준다
+      var shown = ok ? (o.ok ? o : q.item) : q.item;
+      judge(ok, q, answerInfo(shown) + (others.length ? '<br><small>' + (ok ? '이렇게도 말할 수 있어요' : '이것도 정답') + ': <b class="lang-' + S.lang + '">' + esc(others[0].t) + '</b> = ' + esc(others[0].k) + '</small>' : ''), shown.say);
       return;
     }
     var tile = t.closest('.tile');
