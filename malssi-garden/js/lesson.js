@@ -92,7 +92,7 @@
       qs = qs.concat(flat(M.shuffle(rest)));
     } else {
       // 복습: 때가 된 단어와 틀렸던 단어 위주
-      var due2 = M.shuffle(M.dueItems(lang));
+      var due2 = M.shuffle(M.wrongMode ? M.wrongItems(lang) : M.dueItems(lang));
       var all = M.shuffle(M.learnedItems(lang));
       var its = due2.concat(all.filter(function (x) { return due2.indexOf(x) < 0; })).slice(0, 8);
       var types = ['meaning', 'target', 'listen'];
@@ -110,8 +110,11 @@
   };
 
   // ---------- 화면 ----------
-  M.startLesson = function (lang, stage) {
-    if (stage) { M.P.last = M.P.last || {}; M.P.last[lang] = stage.id; M.save(); }
+  // 마지막으로 풀 때 틀린 낱말 (간격 반복 단계가 0인 것)
+  M.wrongItems = function (lang) { return M.learnedItems(lang).filter(function (it) { var r = M.P.srs[M.itemKey(it)]; return r && r[0] === 0; }); };
+  M.startLesson = function (lang, stage, wrong) {
+    M.wrongMode = !!wrong;
+    if (stage) { M.P.last = M.P.last || {}; M.P.last[lang] = stage.id; M.P.ui.lv = M.P.ui.lv || {}; M.P.ui.lv[lang] = window.LANGS[lang].units[stage.unit].level || 'base'; M.save(); }
     var qs = M.buildLesson(lang, stage);
     S = { lang: lang, stage: stage, review: !stage, qs: qs, total: qs.length, i: 0, done: 0, mistakes: 0, combo: 0, best: 0, listenOK: 0, speakOK: 0, correct: 0, answered: false, t0: Date.now() };
     $('lesson').classList.remove('hidden');

@@ -59,7 +59,8 @@
   function G() {
     var g = M.P.garden;
     g.found = g.found || {}; g.orders = g.orders || []; g.done = g.done || 0; g.lv = g.lv || 1; g.xp = g.xp || 0;
-    g.friends = g.friends || {}; g.inbox = g.inbox || []; g.bench = g.bench || { slots: [null] };
+    g.friends = g.friends || {}; g.inbox = g.inbox || []; g.bench = g.bench || { slots: [null] }; g.store = g.store || {};
+    g.cells.forEach(function (x, i) { if (x && x.p) { g.store[x.p] = (g.store[x.p] || 0) + 1; g.cells[i] = null; } });   // 예전에 밭에 있던 완성품은 보관함으로
     if (g.orders.some(function (o) { return !o || !o.cust; })) g.orders = g.orders.filter(function (o) { return o && o.cust; });   // 예전 판의 주문은 버린다
     if (!g.rows) {   // 예전 판(칸 단위로 열던 밭)에서 옮겨 온다
       g.rows = Math.min(MAX_ROWS, Math.max(4, Math.ceil((g.open || 20) / COLS)));
@@ -81,7 +82,11 @@
   function N() { return G().rows * COLS; }
   function keyOf(x) { return !x ? '' : x.k ? x.k + x.l : x.p ? 'p:' + x.p : x.r ? 'r:' + x.r : 'g:' + x.g; }
   function needKey(r) { return r.p ? 'p:' + r.p : r.r ? 'r:' + r.r : r.k + r.l; }
-  function count(key) { var g = G(), n = 0; for (var i = 0; i < N(); i++) if (keyOf(g.cells[i]) === key) n++; return n; }
+  function count(key) {
+    var g = G(), n = 0; for (var i = 0; i < N(); i++) if (keyOf(g.cells[i]) === key) n++;
+    if (key.indexOf('p:') === 0) n += g.store[key.slice(2)] || 0;   // 완성품은 보관함에도 있다
+    return n;
+  }
   function nameOf(x) { return x.k ? CHAINS[x.k].names[x.l - 1] : x.p ? PRODUCTS[x.p].name : x.r ? RARES[x.r].name : GENS[x.g].name; }
   function chainOn(k) { return G().lv >= GENS[CHAINS[k].gen].lv; }
   function iconHtml(x, cls) {
@@ -173,7 +178,7 @@
       '<div class="board" id="board" style="--bh:' + (H / 1496).toFixed(4) + ';aspect-ratio:1496/' + H + '"><img class="btop" src="img/garden-top.png" alt=""><img class="bbot" src="img/garden-bot.png" alt="">';
     h += '<div class="bcells" id="grid" style="top:' + (180 / H * 100) + '%;bottom:' + (116 / H * 100) + '%;grid-template-rows:repeat(' + R + ',minmax(0,1fr))">';
     for (var i = 0; i < R * COLS; i++) h += '<div class="cell" data-c="' + i + '"></div>';
-    h += '</div></div><div class="gtools"><button class="buywater" id="gWater"><img src="img/waterbag.png" alt="">물방울 사기</button><div id="gExpand"></div></div><div class="gpanel" id="gPanel"></div><div id="gBench"></div><div class="gbook" id="gBook"></div></div>';
+    h += '</div></div><div class="gtools"><button class="buywater" id="gWater"><img src="img/waterbag.png" alt="">사기</button><button class="buywater book" id="gBookBtn">📖 도감</button><div id="gExpand"></div></div><div class="gpanel" id="gPanel"></div><div id="gBench"></div></div>';
     root.innerHTML = h;
     for (i = 0; i < R * COLS; i++) paintCell(i);
     placeInbox(); paintOrders(); panel(); paintBook(); paintExpand(); paintBench();
@@ -197,12 +202,11 @@
     var ct = $('gCounter');
     if (ct) ct.innerHTML = '<div class="custs">' + g.orders.map(function (o, i) {
       var c = custOf(o.cust), ok = ready(o);
-      return '<div class="cust' + (ok ? ' happy' : '') + '" style="left:' + (34 + i * 16) + '%">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + (ok ? '-happy' : '') + '.png" alt="' + esc(c.name) + '">' : '<span class="cem">' + c.em + '</span>') + (o.rare ? '<i class="rmark">✨</i>' : '') + '</div>';
+      return '<div class="cust' + (ok ? ' happy' : '') + '" style="left:' + (35 + i * 15) + '%">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + (ok ? '-happy' : '') + '.png" alt="' + esc(c.name) + '">' : '<span class="cem">' + c.em + '</span>') + (o.rare ? '<i class="rmark">✨</i>' : '') + '</div>';
     }).join('') + '</div><img class="stallimg" src="img/stall.png" alt="">';
     el.innerHTML = g.orders.map(function (o) {
       var c = custOf(o.cust), ok = ready(o), fr = g.friends[o.cust] || 0, hearts = Math.min(5, Math.floor(fr / 4));
-      var face = '';
-      return '<div class="order' + (ok ? ' ok' : '') + (o.rare ? ' rare' : '') + '" data-o="' + o.id + '">' + face +
+      return '<div class="order' + (ok ? ' ok' : '') + (o.rare ? ' rare' : '') + '" data-o="' + o.id + '">' +
         '<div class="cname">' + esc(c.name) + (hearts ? ' <span class="hearts">' + '♥'.repeat(hearts) + '</span>' : '') + '</div>' +
         '<div class="bubble2"><div class="needs">' + o.need.map(function (r) {
           var have = Math.min(count(needKey(r)), r.n);
@@ -215,12 +219,17 @@
   function paintExpand() {
     var el = $('gExpand'); if (!el) return; var g = G();
     if (g.rows >= MAX_ROWS) { el.innerHTML = ''; return; }
-    if (g.rows >= maxRows()) { el.innerHTML = '<div class="expand off">🔨 가게 레벨 ' + (g.rows - 2) + '부터 밭을 한 줄 더 넓힐 수 있어요</div>'; return; }
-    el.innerHTML = '<button class="expand" id="gRow">🔨 밭 한 줄 넓히기 <span class="cost"><img src="img/coin.png" alt="">' + ROW_COST[g.rows] + '</span></button>';
+    if (g.rows >= maxRows()) { el.innerHTML = '<div class="expand off">🔨 Lv.' + (g.rows - 2) + '에 넓히기</div>'; return; }
+    el.innerHTML = '<button class="expand" id="gRow">🔨 넓히기 <span class="cost"><img src="img/coin.png" alt="">' + ROW_COST[g.rows] + '</span></button>';
   }
-  function paintBook() {
-    var el = $('gBook'); if (!el) return; var g = G();
-    el.innerHTML = '<small>도감</small>' + Object.keys(CHAINS).filter(chainOn).map(function (k) {
+  function bookSheet() {
+    var g = G();
+    M.modal('<h3>📖 도감</h3><p class="hint">합쳐서 처음 만든 것은 도감에 그림이 채워져요</p><div class="gbook">' + bookHtml() + '</div><button class="btn primary wide" data-close>닫기</button>');
+  }
+  function paintBook() {}
+  function bookHtml() {
+    var g = G();
+    return Object.keys(CHAINS).filter(chainOn).map(function (k) {
       return '<div class="gline">' + [1, 2, 3, 4, 5].map(function (l) {
         var ok = (g.found[k] || 0) >= l;
         return '<span class="bk' + (ok ? '' : ' unk') + '" title="' + (ok ? CHAINS[k].names[l - 1] : '???') + '">' + iconHtml({ k: k, l: l }, 'bi') + '</span>';
@@ -269,7 +278,11 @@
       if (left <= 0) return '<div class="bslot done">' + pim + '<b>' + P.name + ' 완성!</b><button class="btn primary" data-bget="' + i + '">받기</button></div>';
       var pct = Math.round((1 - left / Math.max(1, s.until - s.at)) * 100);
       return '<div class="bslot run">' + pim + '<div class="bmid"><b>' + P.name + '</b><div class="mbar"><i style="width:' + pct + '%"></i></div><small data-left="' + i + '">' + fmtLeft(left) + ' 남음</small></div><button class="btn" data-bnow="' + i + '">바로 완성<br><span class="mini">' + M.rewardHtml({ coins: rushCost(left) }) + '</span></button></div>';
-    }).join('') + '</div>';
+    }).join('') + storeHtml() + '</div>';
+  }
+  function storeHtml() {
+    var g = G(), ks = Object.keys(g.store).filter(function (k) { return g.store[k] > 0; });
+    return '<div class="store"><small>📦 보관함</small>' + (ks.length ? ks.map(function (k) { return '<span class="sitem"><img src="img/prod-' + k + '.png" alt="" title="' + PRODUCTS[k].name + '"><i>' + g.store[k] + '</i></span>'; }).join('') : '<small class="hint"> 완성품은 밭이 아니라 여기에 쌓여요</small>') + '</div>';
   }
   function recipeSheet(slot) {
     var g = G();
@@ -287,6 +300,7 @@
     var g = G();
     need.forEach(function (r) {
       var left = r.n, key = needKey(r);
+      if (r.p) { var have = g.store[r.p] || 0, use = Math.min(have, left); g.store[r.p] = have - use; left -= use; }
       for (var i = N() - 1; i >= 0 && left; i--) if (keyOf(g.cells[i]) === key) { g.cells[i] = null; if (sel === i) sel = -1; paintCell(i); left--; }
     });
   }
@@ -302,10 +316,8 @@
   };
   M.gardenCollect = function (slot) {
     var g = G(), s = g.bench.slots[slot]; if (!s || s.until > Date.now()) return false;
-    var c = g.cells.indexOf(null);
-    if (c < 0) { M.toast('밭에 빈칸이 있어야 받을 수 있어요'); return false; }
-    g.cells[c] = { p: s.rid }; g.bench.slots[slot] = null; M.save();
-    var el = paintCell(c); burst(el, ['#ffd84a', '#ff9fc0', '#fff'], 14); floatText(el, PRODUCTS[s.rid].name + ' 완성!', 'gold');
+    g.store[s.rid] = (g.store[s.rid] || 0) + 1; g.bench.slots[slot] = null; M.save();   // 밭 칸이 아니라 보관함으로
+    var el = $('gBench'); burst(el, ['#ffd84a', '#ff9fc0', '#fff'], 14); floatText(el, PRODUCTS[s.rid].name + ' 완성! 보관함에 넣었어요', 'gold');
     M.sfx('win'); paintBench(); afterChange();
     return true;
   };
@@ -549,6 +561,7 @@
     if (t.closest('#gSell') && sel >= 0) { M.gardenSell(sel); return; }
     var gb = t.closest('[data-give]'); if (gb && !gb.disabled) { M.gardenDeliver(gb.dataset.give); return; }
     if (t.closest('#gWater')) { waterShop(); return; }
+    if (t.closest('#gBookBtn')) { bookSheet(); return; }
     if (t.closest('#gRow')) { var g = G(); M.confirm('밭 넓히기', '<img class="inl" src="img/coin.png" alt="">' + ROW_COST[g.rows] + '코인으로 밭을 한 줄(' + COLS + '칸) 넓힐까요?', '넓히기', M.gardenExpand); return; }
     var bn = t.closest('[data-bnew]'); if (bn) { recipeSheet(+bn.dataset.bnew); return; }
     var bg = t.closest('[data-bget]'); if (bg) { M.gardenCollect(+bg.dataset.bget); return; }

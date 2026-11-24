@@ -55,6 +55,7 @@
 
   // ---------- 배우기 지도 ----------
   var SHIFT = [0, 1, 0, -1];
+  var LVNAME = { base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
   function renderMap(root) {
     var L = window.LANGS[P.lang], prog = P.prog[P.lang];
     var cur = L.stages.findIndex(function (s) { return !prog[s.id]; });
@@ -62,7 +63,12 @@
     var D = M.dailyState(), today = (P.log[M.today()] || {}).l || 0;
     var goalPct = Math.min(100, Math.round(today / P.set.goal * 100));
     var ready = M.questReady();
-    var due = M.dueItems(P.lang).length;
+    var due = M.dueItems(P.lang).length, wrongN = M.wrongItems(P.lang).length;
+    // 수준별 탭: 기초 / N5 / N4 처럼 나눈다. 고른 탭이 없으면 지금 배우는 단계가 있는 탭
+    var levels = []; L.units.forEach(function (u) { var lv = u.level || 'base'; if (levels.indexOf(lv) < 0) levels.push(lv); });
+    var lvOf = function (s) { return L.units[s.unit].level || 'base'; };
+    P.ui.lv = P.ui.lv || {};
+    var tab = P.ui.lv[P.lang]; if (levels.indexOf(tab) < 0) tab = cur < L.stages.length ? lvOf(L.stages[cur]) : levels[levels.length - 1];
     var h = '<div class="map theme-' + P.lang + '">' +
       '<div class="langbar">' + ['ja', 'en', 'zh'].map(function (c) { var X = window.LANGS[c]; return '<button data-lang="' + c + '" class="' + (c === P.lang ? 'on' : '') + '">' + X.flag + ' ' + X.name + '</button>'; }).join('') + '</div>' +
       '<img class="scene" src="img/bg-map-' + P.lang + '.png" alt="">' +
@@ -70,15 +76,22 @@
       '<button class="dcard" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><small>오늘 목표</small></button>' +
       '<button class="dcard" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '"><small>퀘스트</small></button>' +
       '<button class="dcard" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="de">🔁</span><small>복습' + (due ? ' ' + due : '') + '</small></button>' +
+      '<button class="dcard" id="dWrong"' + (wrongN ? '' : ' disabled') + '>' + (wrongN ? '<i class="dot">' + wrongN + '</i>' : '') + '<span class="de">✏️</span><small>틀린 것</small></button>' +
       '<button class="dcard" id="dWords"><span class="de">📒</span><small>단어장</small></button>' +
-      '</div>' + contBtn(L, prog, cur) + '<div class="path">';
+      '</div>' + contBtn(L, prog, cur) +
+      '<div class="lvtabs">' + levels.map(function (lv) {
+        var us = L.stages.filter(function (s) { return lvOf(s) === lv; }), dn = us.filter(function (s) { return prog[s.id]; }).length;
+        return '<button data-lv="' + esc(lv) + '" class="' + (lv === tab ? 'on' : '') + '"><b>' + esc(LVNAME[lv] || lv) + '</b><small>' + dn + '/' + us.length + '</small></button>';
+      }).join('') + '</div><div class="path">';
     var n = 0;
     L.units.forEach(function (u, ui) {
+      if ((u.level || 'base') !== tab) return;   // 고른 수준의 단원만 보여 준다
+      var unum = L.units.slice(0, ui + 1).filter(function (x) { return (x.level || 'base') === tab; }).length;
       var us = L.stages.filter(function (s) { return s.unit === ui; });
       var got = us.reduce(function (a, s) { return a + (prog[s.id] || 0); }, 0);
       var udone = us.every(function (s) { return prog[s.id]; }), ukey = P.lang + ':' + ui;
       var open = !udone || (P.ui.open || {})[ukey];
-      h += '<button class="unit' + (udone ? ' udone' : '') + '"' + (udone ? ' data-unit="' + ukey + '"' : '') + '><b>' + (udone ? '✔ ' : '') + (ui + 1) + '단원 · ' + esc(u.title) + '</b><small>★ ' + got + '/' + us.length * 3 + (udone ? (open ? ' ▲' : ' ▼') : '') + '</small></button>';
+      h += '<button class="unit' + (udone ? ' udone' : '') + '"' + (udone ? ' data-unit="' + ukey + '"' : '') + '><b>' + (udone ? '✔ ' : '') + unum + '단원 · ' + esc(u.title) + '</b><small>★ ' + got + '/' + us.length * 3 + (udone ? (open ? ' ▲' : ' ▼') : '') + '</small></button>';
       if (!open) { n += us.length; return; }
       us.forEach(function (s) {
         var st = prog[s.id] || 0, state = st ? 'done' : (s.idx === cur ? 'cur' : (s.idx < cur ? 'done' : 'lock'));
@@ -110,14 +123,14 @@
   }
   function contBtn(L, prog, cur) {
     var t = contTarget(L, prog, cur); if (!t) return '';
-    return '<button class="btn primary wide cont" id="dCont">▶ ' + (P.stats.lessons ? '이어서 하기' : '첫 레슨 시작') + ' <small>' + (t.unit + 1) + '단원 · ' + esc(t.title) + '</small></button>';
+    return '<button class="btn primary wide cont" id="dCont">▶ ' + (P.stats.lessons ? '이어서 하기' : '첫 레슨 시작') + ' <small>' + esc(t.title) + '</small></button>';
   }
   function stageSheet(sid) {
     var L = window.LANGS[P.lang], s = L.stages.filter(function (x) { return x.id === sid; })[0];
     var prog = P.prog[P.lang], cur = L.stages.findIndex(function (x) { return !prog[x.id]; });
     if (cur >= 0 && s.idx > cur) { M.toast('🔒 앞 단계를 먼저 끝내 주세요'); M.buzz(30); return; }
     var st = prog[s.id] || 0;
-    var d = M.modal('<div class="ssheet"><small>' + L.flag + ' ' + (s.unit + 1) + '단원 · ' + esc(L.units[s.unit].title) + '</small><h3>' + esc(s.title) + '</h3>' +
+    var d = M.modal('<div class="ssheet"><small>' + L.flag + ' ' + esc(L.units[s.unit].title) + '</small><h3>' + esc(s.title) + '</h3>' +
       (st ? '<div class="stars sm">' + [1, 2, 3].map(function (i) { return '<span class="st' + (i <= st ? ' on' : '') + '">★</span>'; }).join('') + '</div>' : '') +
       '<p class="hint">' + (st ? (st < 3 ? '실수 없이 풀면 별 3개를 받아요' : '별을 다 모았어요! 다시 풀어도 물방울을 받아요') : '처음 끝내면 물방울 보너스 +15') + '</p>' +
       '<div class="chips">' + s.items.map(function (it) { return '<button class="chip lang-' + it.lang + '" data-say="' + esc(it.t) + '"><b>' + esc(it.t) + '</b><small>' + esc(it.k) + '</small></button>'; }).join('') + '</div>' +
@@ -382,6 +395,8 @@
     if (t.closest('#dCont')) { var L0 = window.LANGS[P.lang], pr0 = P.prog[P.lang], c0 = L0.stages.findIndex(function (x) { return !pr0[x.id]; }); var tg = contTarget(L0, pr0, c0 < 0 ? L0.stages.length : c0); if (tg) M.startLesson(P.lang, tg); return; }
     if (t.closest('#dQuest') || t.closest('#dGoal')) { quests(); return; }
     if (t.closest('#dReview')) { if (M.learnedCount(P.lang) >= 4) M.startLesson(P.lang, null); return; }
+    if (t.closest('#dWrong')) { if (M.wrongItems(P.lang).length) M.startLesson(P.lang, null, true); return; }
+    var lvb = t.closest('[data-lv]'); if (lvb) { P.ui.lv = P.ui.lv || {}; P.ui.lv[P.lang] = lvb.dataset.lv; M.save(); mapScrolled = false; M.render(); return; }
     if (t.closest('#dWords')) { wordBook(); return; }
     if (t.closest('#hInst')) installSheet();
   });

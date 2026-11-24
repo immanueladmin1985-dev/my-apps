@@ -153,7 +153,7 @@ small { font-size: .78rem; }
 .langbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #fff; padding: 5px; border-radius: 18px; box-shadow: var(--sh); }
 .langbar button { padding: 8px 2px; border-radius: 14px; font-weight: 800; font-size: .92rem; color: var(--sub); }
 .langbar button.on { background: var(--mint); color: #fff; }
-.dash { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 6px; }
+.dash { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0 6px; }
 .dcard { position: relative; background: #fff; border-radius: 18px; padding: 8px 2px 6px; box-shadow: var(--sh); display: flex; flex-direction: column; align-items: center; gap: 2px; font-weight: 700; }
 .dcard small { font-size: .75rem; }
 .dcard img { width: 40px; height: 40px; }
@@ -466,10 +466,13 @@ span.pi { font-size: 40px; }
 .counter { position: relative; max-width: 520px; margin: 0 auto; aspect-ratio: 900 / 369; }
 .counter .stallimg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 .custs { position: absolute; inset: 0; z-index: 1; }
-.cust { position: absolute; bottom: 25%; width: 17%; transform: translateX(-50%); transition: transform .2s; }
+.cust { position: absolute; bottom: 25%; width: 14%; transform: translateX(-50%); transition: transform .2s; }
 .cust img { width: 100%; display: block; aspect-ratio: 1; object-fit: contain; }
 .cust .cem { font-size: 3rem; display: block; text-align: center; }
-.cust.happy { animation: hop 1s infinite; }
+.cust img, .cust .cem { animation: bob 1.6s ease-in-out infinite; }
+.cust:nth-child(2) img { animation-delay: .3s; } .cust:nth-child(3) img { animation-delay: .6s; }
+.cust.happy img, .cust.happy .cem { animation: bob .45s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-4%); } }
 .cust .rmark { position: absolute; top: 0; right: 0; font-style: normal; font-size: 1.2rem; }
 .orders { margin-top: -4px; position: relative; z-index: 3; }
 .ge.hasimg img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
@@ -618,3 +621,30 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
   .garden .board { width: max(280px, calc((100svh - 76px) / var(--bh))); }
 }
 .teach.steach .tt { font-size: 1.7rem; }
+
+/* 손님 말풍선: 손님 바로 아래에 붙인다 (손님은 카운터의 25·50·75% 자리) */
+.orders { padding: 0 2%; gap: 4px; margin-top: -10px; }
+.order { background: #fff; border-radius: 14px; padding: 4px 3px; box-shadow: 0 2px 6px rgba(0,0,0,.12); border: 2px solid #f0e6d8; }
+.order::before { content: ''; position: absolute; top: -9px; left: 50%; transform: translateX(-50%); border: 8px solid transparent; border-bottom-color: #fff; border-top: 0; }
+.order.ok::before { border-bottom-color: #effbf5; }
+.order .cname { font-size: .68rem; }
+.order .bubble2 { background: none; padding: 0; margin: 0 0 2px; }
+.order .need { width: 34px; height: 34px; }
+.order .give { height: 26px; font-size: .78rem; }
+.gtools .book { background: #fff5e6; border-color: #f2c98b; color: #a0661c; }
+.store { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.store .sitem { position: relative; width: 40px; height: 40px; }
+.store .sitem img { width: 100%; height: 100%; object-fit: contain; }
+.store .sitem i { position: absolute; right: -4px; bottom: -4px; font-style: normal; font-size: .7rem; font-weight: 800; background: var(--mint); color: #fff; border-radius: 8px; padding: 0 5px; }
+
+.lvtabs { display: flex; gap: 6px; overflow-x: auto; margin: 12px 0 0; padding-bottom: 2px; position: sticky; top: 0; z-index: 4; background: var(--bg); padding-top: 6px; }
+.lvtabs button { flex: 1 0 auto; min-width: 84px; display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border-radius: 14px; background: #fff; border: 2px solid var(--line); font-weight: 800; font-size: .88rem; }
+.lvtabs button small { color: var(--sub); font-weight: 600; font-size: .72rem; }
+.lvtabs button.on { background: var(--mint); border-color: var(--mint-d); color: #fff; }
+.lvtabs button.on small { color: #e8fff5; }
+
+.orders { padding: 0 12%; }
+.order .needs { flex-wrap: wrap; }
+.gtools .expand { white-space: nowrap; padding: 0 8px; }
+.gtools .buywater { padding: 0 10px; }
+.gtools #gExpand { min-width: 0; }
