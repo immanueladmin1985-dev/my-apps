@@ -173,6 +173,21 @@
   var HAN = /[\u4e00-\u9fff]/;
   function jaKanji(o) { return o.lang === 'ja' && o.r && HAN.test(o.t); }   // 한자 단어는 읽는 법을 같이 보여 준다
   function foot(html, cls) { var f = $('lFoot'); f.className = 'lfoot' + (cls ? ' ' + cls : ''); f.innerHTML = html; }
+  // 혀 위치 단면도 (오른쪽을 보는 옆얼굴). L: 혀끝이 윗잇몸에 닿음, R: 혀끝을 말아 어디에도 닿지 않음 + 입술 동그랗게
+  function mouthSvg(kind) {
+    var R = kind === 'R';
+    var tongue = R ? 'M36 128 Q42 96 78 84 Q100 77 112 74 Q116 64 124 66 Q128 70 122 76 Q120 84 132 92 Q146 100 149 128 Z'
+      : 'M36 128 Q42 100 80 92 Q116 86 132 78 Q138 70 143 67 Q149 70 147 84 Q146 104 149 128 Z';
+    var lips = R ? '<path d="M150 58 Q176 60 174 74 Q172 80 156 80" fill="#f4a7a7" stroke="#c46b6b" stroke-width="2"/><path d="M156 88 Q172 88 174 96 Q174 108 150 110" fill="#f4a7a7" stroke="#c46b6b" stroke-width="2"/>'
+      : '<path d="M150 60 Q166 62 166 74 Q160 79 152 79" fill="#f4a7a7" stroke="#c46b6b" stroke-width="2"/><path d="M152 89 Q162 90 165 97 Q162 108 150 108" fill="#f4a7a7" stroke="#c46b6b" stroke-width="2"/>';
+    return '<svg class="mouth" viewBox="0 0 190 140" role="img" aria-label="' + (R ? 'R 혀 위치' : 'L 혀 위치') + '">' +
+      '<path d="M20 40 Q60 20 130 34 Q150 40 152 58 L150 112 Q140 132 100 134 L20 134 Z" fill="#fde6d6" stroke="#d9a98c" stroke-width="2"/>' +
+      '<path d="M146 66 Q140 56 120 54 Q80 50 30 62" fill="none" stroke="#b07a62" stroke-width="3" stroke-linecap="round"/>' +
+      '<rect x="140" y="64" width="9" height="13" rx="2" fill="#fff" stroke="#bbb"/><rect x="140" y="90" width="9" height="12" rx="2" fill="#fff" stroke="#bbb"/>' +
+      lips + '<path d="' + tongue + '" fill="#f08a9a" stroke="#c4566a" stroke-width="2"/>' +
+      (R ? '<circle cx="121" cy="63" r="7" fill="none" stroke="#e5484d" stroke-width="2" stroke-dasharray="3 2"/>' : '<circle cx="141" cy="66" r="6" fill="none" stroke="#2a9d6f" stroke-width="2.5"/>') +
+      '</svg><span class="mcap">' + (R ? '혀끝을 뒤로 말고, 어디에도 닿지 않아요 · 입술은 “우”' : '혀끝이 윗니 뒤 잇몸에 딱 닿아요') + '</span>';
+  }
   var TITLES = { pairteach: '두 소리를 비교해요', dialog: '대화를 들어 봐요', rule: '문법을 배워요', xform: '알맞게 바꿔 보세요', steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
 
   function show() {
@@ -200,7 +215,7 @@
     } else if (q.type === 'pairteach') {
       var pa = q.pair;
       h = '<div class="qt"><span class="newtag">두 소리를 비교해요</span></div><div class="pairt lang-' + pa[0].lang + '">' + pa.map(function (x) {
-        return '<button class="pw" data-say="' + esc(x.say) + '">' + (x.e ? '<span class="bigE">' + x.e + '</span>' : '') + '<b>' + esc(x.t) + '</b><small>' + esc(x.k) + '</small><em>' + esc(x.r) + '</em></button>';
+        return '<button class="pw" data-say="' + esc(x.say) + '">' + (x.e ? '<span class="bigE">' + x.e + '</span>' : '') + '<b>' + esc(x.t) + '</b><small>' + esc(x.k) + '</small><em>' + esc(x.r) + '</em>' + (/^\[(R|L)\]/.test(x.r) ? '<span class="mbox">' + mouthSvg(x.r.charAt(1)) + '</span>' : '') + '</button>';
       }).join('') + '</div><div class="tsay"><button class="btn" data-pairplay="1">▶ 번갈아 듣기</button><button class="btn ghost" data-pairplay="slow">🐢 천천히</button></div>';
     } else if (q.type === 'dialog') {
       var dg = q.stage;

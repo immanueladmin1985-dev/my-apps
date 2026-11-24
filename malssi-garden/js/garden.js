@@ -12,14 +12,19 @@
     t: { name: '과일나무', names: ['도토리', '어린 나무', '나무', '사과나무', '황금 사과나무'], img: 'tree', gen: 'acorn' },
     h: { name: '꿀', names: ['꿀방울', '꿀병', '꿀단지', '벌집', '황금 꿀단지'], img: 'honey', gen: 'hive' },
     b: { name: '블루베리', names: ['블루베리 한 알', '블루베리 송이', '블루베리 바구니', '블루베리잼', '블루베리 파이'], img: 'berry', gen: 'bush' },
-    c: { name: '차', names: ['찻잎', '찻잎 묶음', '찻잔', '찻주전자', '황금 티세트'], img: 'tea', gen: 'tea' }
+    c: { name: '차', names: ['찻잎', '찻잎 묶음', '찻잔', '찻주전자', '황금 티세트'], img: 'tea', gen: 'tea' },
+    // 우유·밀 그림은 이모지로 만든 임시 그림이다 (같은 이름의 진짜 그림으로 바꾸면 된다)
+    m: { name: '우유', names: ['우유 방울', '우유병', '우유 한 잔', '치즈', '황금 치즈'], img: 'milk', gen: 'cow' },
+    w: { name: '밀', names: ['밀 싹', '밀 이삭', '크루아상', '식빵', '생일 케이크'], img: 'wheat', gen: 'wheat' }
   };
   var GENS = {
     seed: { name: '씨앗 주머니', em: '👝', chain: 'f', lv: 1 },
     acorn: { name: '도토리 바구니', em: '🪵', chain: 't', lv: 1 },
     hive: { name: '벌통', em: '🐝', chain: 'h', lv: 3 },
     bush: { name: '베리 덤불', em: '🌳', chain: 'b', lv: 5 },
-    tea: { name: '찻잎 화분', em: '🪴', chain: 'c', lv: 7 }
+    tea: { name: '찻잎 화분', em: '🪴', chain: 'c', lv: 7 },
+    cow: { name: '젖소', em: '🐄', chain: 'm', lv: 11 },
+    wheat: { name: '밀밭 트랙터', em: '🚜', chain: 'w', lv: 12 }
   };
   var PRODUCTS = {
     bouquet: { name: '꽃다발', em: '💐', need: [['f', 4, 2]], min: 3, lv: 4 },
@@ -29,7 +34,10 @@
     honeycake: { name: '허니 케이크', em: '🍰', need: [['h', 4, 1], ['b', 2, 2]], min: 30, lv: 6 },
     wreath: { name: '화관', em: '🌼', need: [['f', 3, 2], ['clover', 0, 1]], min: 20, lv: 7 },
     tart: { name: '베리 타르트', em: '🍮', need: [['b', 4, 1], ['c', 3, 1]], min: 30, lv: 8 },
-    giftbox: { name: '선물 상자', em: '🎁', need: [['f', 5, 1], ['h', 5, 1]], min: 60, lv: 10 }
+    giftbox: { name: '선물 상자', em: '🎁', need: [['f', 5, 1], ['h', 5, 1]], min: 60, lv: 10 },
+    sandwich: { name: '샌드위치', em: '🥪', need: [['w', 4, 1], ['m', 3, 1]], min: 20, lv: 12 },
+    cheesecake: { name: '치즈케이크', em: '🍰', need: [['m', 4, 1], ['b', 3, 1]], min: 40, lv: 13 },
+    picnic: { name: '소풍 바구니', em: '🧺', need: [['w', 4, 1], ['c', 4, 1], ['t', 4, 1]], min: 90, lv: 14 }
   };
   var RARES = {
     clover: { name: '네잎클로버', em: '🍀', sell: { coins: 15 } },
@@ -44,9 +52,13 @@
     { id: 'panda', em: '🐼', name: '판다', lv: 5, likes: ['b', 't', 'p'] },
     { id: 'fox', em: '🦊', name: '여우', lv: 7, likes: ['c', 'p'] },
     { id: 'koala', em: '🐨', name: '코알라', lv: 8, likes: ['c', 'h', 'p'] },
-    { id: 'hamster', em: '🐹', name: '햄찌', lv: 10, likes: ['p', 'b'] }
+    { id: 'hamster', em: '🐹', name: '햄찌', lv: 10, likes: ['p', 'b'] },
+    { id: 'penguin', em: '🐧', name: '펭펭', lv: 11, likes: ['m', 'c'] },
+    { id: 'cat', em: '🐱', name: '나비', lv: 12, likes: ['m', 'w', 'p'] },
+    { id: 'sheep', em: '🐑', name: '몽실이', lv: 13, likes: ['w', 'f', 'p'] },
+    { id: 'owl', em: '🦉', name: '부엉 박사', lv: 14, likes: ['c', 'p', 'h'] }
   ];
-  var CUST_IMG = { bear: 1, squirrel: 1, hedgehog: 1, chick: 1, panda: 1, fox: 1, koala: 1, hamster: 1 };   // 손님 그림이 생기면 { bear: 1, ... } 로 켠다 (img/cust-bear.png, img/cust-bear-happy.png)
+  var CUST_IMG = { bear: 1, squirrel: 1, hedgehog: 1, chick: 1, panda: 1, fox: 1, koala: 1, hamster: 1, penguin: 1, cat: 1, sheep: 1, owl: 1 };   // 손님 그림이 생기면 { bear: 1, ... } 로 켠다 (img/cust-bear.png, img/cust-bear-happy.png)
   var VAL = { 1: 1, 2: 4, 3: 9, 4: 20, 5: 45 }, FPV = { 2: 1, 3: 3, 4: 6, 5: 15 };
   var SELL = [null, { coins: 1 }, { coins: 3 }, { coins: 8 }, { coins: 30, fp: 3 }];
   var ROW_COST = { 4: 100, 5: 180, 6: 280, 7: 400, 8: 550, 9: 720 };
@@ -71,6 +83,8 @@
     while (g.cells.length < g.rows * COLS) g.cells.push(null);
     if (g.cells.length > g.rows * COLS) g.cells.length = g.rows * COLS;
     if (!g.gensPlaced) { g.gensPlaced = true; giveGen(g, 'seed', 0); giveGen(g, 'acorn', 1); }
+    if (!g.gotGens) { g.gotGens = {}; Object.keys(GENS).forEach(function (id) { if (GENS[id].lv <= g.lv && GENS[id].lv <= 10) g.gotGens[id] = 1; }); }   // 예전 생산기는 이미 받았다고 본다
+    Object.keys(GENS).forEach(function (id) { if (GENS[id].lv <= g.lv && !g.gotGens[id]) { g.gotGens[id] = 1; giveGen(g, id); } });
     var slots = g.lv >= 10 ? 2 : 1; while (g.bench.slots.length < slots) g.bench.slots.push(null);
     return g;
   }
@@ -231,12 +245,13 @@
     var ct = $('gCounter');
     if (ct) ct.innerHTML = '<div class="custs">' + g.orders.map(function (o, i) {
       var c = custOf(o.cust), ok = ready(o);
-      return '<div class="cust' + (ok ? ' happy' : '') + '" style="left:' + (g.orders.length === 1 ? 50 : g.orders.length === 2 ? 38 + i * 24 : 30 + i * 20) + '%">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + (ok ? '-happy' : '') + '.png" alt="' + esc(c.name) + '">' : '<span class="cem">' + c.em + '</span>') + (o.rare ? '<i class="rmark">✨</i>' : '') + '</div>';
+      var mq = M.miniAvail ? M.miniAvail(c.id) : null;
+      return '<div class="cust' + (ok ? ' happy' : '') + (mq ? ' hasq' : '') + '"' + (mq ? ' data-mq="' + mq + '"' : '') + ' style="left:' + (g.orders.length === 1 ? 50 : g.orders.length === 2 ? 38 + i * 24 : 30 + i * 20) + '%">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + (ok ? '-happy' : '') + '.png" alt="' + esc(c.name) + '">' : '<span class="cem">' + c.em + '</span>') + (o.rare ? '<i class="rmark">✨</i>' : '') + (mq ? '<i class="qmark">❗</i>' : '') + '</div>';
     }).join('') + '</div><img class="stallimg" src="img/stall' + (g.awn ? '-' + g.awn : '') + '.png" alt="">';
     el.innerHTML = g.orders.map(function (o) {
       var c = custOf(o.cust), ok = ready(o), fr = g.friends[o.cust] || 0, hearts = Math.min(5, Math.floor(fr / 4));
       return '<div class="order' + (ok ? ' ok' : '') + (o.rare ? ' rare' : '') + '" data-o="' + o.id + '">' +
-        '<div class="cname">' + esc(c.name) + (hearts ? ' <span class="hearts">' + '♥'.repeat(hearts) + '</span>' : '') + '</div>' +
+        '<div class="cname">' + esc(c.name) + (hearts ? ' <span class="hearts">' + '♥'.repeat(hearts) + '</span>' : '') + (M.miniAvail && M.miniAvail(c.id) ? '<span class="mqchip" data-mq="' + M.miniAvail(c.id) + '">❗부탁</span>' : '') + '</div>' +
         '<div class="bubble2"><div class="needs">' + o.need.map(function (r) { return needHtml(r, true); }).join('') + '</div></div>' +
         '<button class="give" data-give="' + o.id + '"' + (ok ? '' : ' disabled') + '>' + (ok ? '주기' : '<span class="mini">' + M.rewardHtml({ coins: o.rw.coins, fp: o.rw.fp }) + '</span>') + '</button></div>';
     }).join('');
@@ -367,7 +382,9 @@
       var c = custOf(b.dataset.cust); if (g.lv < c.lv) { M.toast('가게 레벨 ' + c.lv + '이 되면 와요'); return; }
       var lv = Math.min(5, Math.floor((g.friends[c.id] || 0) / 4)), h = '';
       for (var i = 1; i <= lv; i++) h += '<h4>♥' + i + '</h4>' + storyHtml(c, i);
-      d.querySelector('#albumStory').innerHTML = h || '<p class="hint center">아직 열린 이야기가 없어요. ' + esc(c.name) + '의 의뢰를 채워 보세요!</p>';
+      var mb = M.miniFor ? M.miniFor(c.id) : null;
+      d.querySelector('#albumStory').innerHTML = (mb ? '<button class="btn primary wide" data-mplay="' + mb.id + '">' + mb.icon + ' ' + esc(mb.name) + (mb.open ? '' : ' · ♥' + mb.heart + '에 열려요') + '</button>' : '') + (h || '<p class="hint center">아직 열린 이야기가 없어요. ' + esc(c.name) + '의 의뢰를 채워 보세요!</p>');
+      var pb = d.querySelector('[data-mplay]'); if (pb) pb.onclick = function () { if (!mb.open) { M.toast(c.name + '와(과) ♥' + mb.heart + '이 되면 부탁해요'); return; } d.close(); M.miniIntro(mb.id); };
     });
   }
   document.addEventListener('click', function (e) { var sl = e.target.closest && e.target.closest('.sline'); if (sl) M.say(sl.dataset.say, sl.dataset.lang); });
@@ -577,7 +594,7 @@
     takeItems(o.need);
     g.orders = g.orders.filter(function (x) { return x !== o; });
     g.done++;
-    var fr = (g.friends[o.cust] || 0) + 1; g.friends[o.cust] = fr;
+    var fr = friendUp(o.cust, true);
     M.give({ coins: o.rw.coins, fp: o.rw.fp });
     if (card && M.fly) { M.fly(card, 'img/coin.png', 'tCoin', 5); if (o.rw.fp) M.fly(card, 'img/flower-point.png', 'tFp', 4); }
     if (M.petExp) M.petExp(Math.ceil(o.rw.xp / 2));
@@ -587,10 +604,7 @@
     if (card) { burst(card, ['#ffd84a', '#ff9fc0', '#9be36b'], 14); floatText(card, c.em + ' 고마워요!', 'pink'); }
     M.save();
     addXp(o.rw.xp);
-    if (fr % 4 === 0) {   // 친밀도가 오르면 선물
-      var lvl = fr / 4;
-      setTimeout(function () { var d = M.openChest({ coins: 20 * lvl, fp: 3 * lvl }, c.em + ' ' + M.j(c.name, '과', '와') + ' 더 친해졌어요! ' + '♥'.repeat(Math.min(5, lvl))); if (lvl <= 5) { var st = document.createElement('div'); st.innerHTML = storyHtml(c, lvl); d.querySelector('h3').after(st); } }, M.fast ? 0 : 900);
-    }
+    if (fr % 4 === 0) heartUp(c, fr / 4, M.fast ? 0 : 900);
     setTimeout(function () { ensureOrders(); M.save(); paintOrders(); var n = document.querySelector('#gOrders .order:last-child'); if (n) n.classList.add('slidein'); panel(); }, M.fast ? 0 : 450);
     paintOrders(); panel();
     return true;
@@ -689,6 +703,7 @@
     if (t.closest('#gHelp')) { M.gardenHelp(); return; }
     if (t.closest('#gDeco')) { decoSheet(); return; }
     var nk = t.closest('[data-nk]'); if (nk) { howSheet(nk.dataset.nk); return; }
+    var mq = t.closest('[data-mq]'); if (mq && M.miniIntro) { M.miniIntro(mq.dataset.mq); return; }
     var gb = t.closest('[data-give]'); if (gb && !gb.disabled) { M.gardenDeliver(gb.dataset.give); return; }
     if (t.closest('#gWater')) { waterShop(); return; }
     if (t.closest('#gBookBtn')) { bookSheet(); return; }
@@ -712,5 +727,21 @@
     }
   }, 1000);
   M.gardenSel = function () { return sel; };
+  // 친밀도: 의뢰를 채우거나 부탁(미니게임)을 들어주면 오른다. 4번마다 ♥ 하나와 이야기
+  function friendUp(id, quiet) {
+    var g = G(), fr = (g.friends[id] || 0) + 1; g.friends[id] = fr; M.save();
+    if (!quiet && fr % 4 === 0) heartUp(custOf(id), fr / 4, 400);
+    return fr;
+  }
+  function heartUp(c, lvl, delay) {
+    setTimeout(function () {
+      var d = M.openChest({ coins: 20 * lvl, fp: 3 * lvl }, c.em + ' ' + M.j(c.name, '과', '와') + ' 더 친해졌어요! ' + '♥'.repeat(Math.min(5, lvl)));
+      if (lvl <= 5) { var st = document.createElement('div'); st.innerHTML = storyHtml(c, lvl); d.querySelector('h3').after(st); }
+      if (M.miniUnlockedNow) M.miniUnlockedNow(c.id, lvl);
+    }, delay);
+  }
+  M.gardenFriendUp = function (id) { return friendUp(id, false); };
+  M.custImg = function (id, happy) { return CUST_IMG[id] ? 'img/cust-' + id + (happy ? '-happy' : '') + '.png' : ''; };
+  M.custOf = custOf;
   M.gardenState = G;
 })();
