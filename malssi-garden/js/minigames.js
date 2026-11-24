@@ -318,9 +318,9 @@
   GAMES.fish = function (g) {
     var pool = words(16); if (pool.length < 4) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
     var n = 0, target = null, fishes = [], speed = 1.1;
-    $('mBody').innerHTML = '<div class="sq"><button class="say big" id="fPlay">🔊</button><small id="fN">1 / 10</small></div><div class="ice" id="fI"><div class="icehole"></div><span class="ppg">🐧🎣</span></div>';
+    $('mBody').innerHTML = '<div class="sq"><button class="say big" id="fPlay">🔊</button><small id="fN">1 / 10</small></div><div class="ice" id="fI"><div class="icehole"></div><img class="ppg" src="img/mg-penguin-fish.png" alt=""></div>';
     $('fPlay').onclick = function () { if (target) M.say(target.say, target.lang); };
-    var pond = $('fI'), lanes = [0.18, 0.4, 0.62, 0.82];
+    var pond = $('fI'), lanes = [0.42, 0.58, 0.74, 0.9];
     function round() {
       if (!g.alive) return;
       if (n >= 10) { finish(g, 130); return; }
@@ -329,7 +329,7 @@
       var four = M.shuffle(pool).slice(0, 4); target = four[0];
       M.shuffle(four).forEach(function (it, i) {
         var el = document.createElement('button'), dir = i % 2 ? -1 : 1;
-        el.className = 'fishb' + (dir < 0 ? ' rev' : ''); el.innerHTML = '<span class="fe">' + ['🐟', '🐠', '🐡', '🦐'][i] + '</span><span class="fw">' + wordHtml(it) + '</span>';
+        el.className = 'fishb' + (dir > 0 ? ' rev' : ''); el.innerHTML = '<img class="fimg" src="img/mg-fish-' + ['yellow', 'purple', 'blue', 'orange'][i] + '.png" alt=""><span class="fw">' + wordHtml(it) + '</span>';   // 그림은 왼쪽을 본다: 오른쪽으로 가는 물고기만 뒤집는다
         el.style.top = (lanes[i] * 100) + '%'; pond.appendChild(el);
         var f = { el: el, it: it, x: 0.12 + ((i * 0.27 + Math.random() * 0.1) % 0.8), dir: dir, v: speed * (0.8 + Math.random() * 0.4) };
         fishes.push(f);
@@ -367,7 +367,7 @@
       if (n >= list.length) { finish(g, list.length * 20); return; }
       var x = list[n++], opts = M.shuffle([x.a].concat((x.alts || []).map(function (a) { return a.t; }), x.w.slice(0, 3 - (x.alts || []).length))), t0 = Date.now(), tries = 0;
       var right = function (o) { return o === x.a || (x.alts || []).some(function (a) { return a.t === o; }); };
-      $('mBody').innerHTML = '<div class="cafe"><div class="cguest"><span class="gface">' + guests[(n * 3) % guests.length] + '</span><button class="cbub lang-' + lang + '" data-say="' + esc(x.p) + '"><b>' + esc(x.p) + '</b>' + (x.pr ? '<small>' + esc(x.pr) + '</small>' : '') + '<em>' + esc(x.pk || '') + '</em></button></div><div class="cme">🐱 내 대답은? <small>' + n + ' / ' + list.length + '</small></div>' +
+      $('mBody').innerHTML = '<div class="cafe"><img class="cafeimg" src="img/mg-cafe.png" alt=""><div class="cguest"><span class="gface">' + guests[(n * 3) % guests.length] + '</span><button class="cbub lang-' + lang + '" data-say="' + esc(x.p) + '"><b>' + esc(x.p) + '</b>' + (x.pr ? '<small>' + esc(x.pr) + '</small>' : '') + '<em>' + esc(x.pk || '') + '</em></button></div><div class="cme">🐱 내 대답은? <small>' + n + ' / ' + list.length + '</small></div>' +
         '<div class="copts">' + opts.map(function (o, i) { return '<button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(o) + '</button>'; }).join('') + '</div></div>';
       setTimeout(function () { if (g.alive) M.say(x.p, lang); }, 250);
       document.querySelector('.cbub').onclick = function () { M.say(x.p, lang); };
@@ -385,15 +385,15 @@
   // 털실 잇기: 왼쪽 낱말과 오른쪽 뜻을 털실로 잇는다 (5쌍 × 3판)
   GAMES.yarn = function (g) {
     var pool = words(15); if (pool.length < 5) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
-    var board = 0, colors = ['#ff8fab', '#7ec8f0', '#ffd166', '#9ad77c', '#c49bff'];
+    var board = 0, colors = ['#ff8fab', '#7ec8f0', '#ffd166', '#9ad77c', '#c49bff'], YC = ['blue', 'pink', 'yellow'];
     function round() {
       if (!g.alive) return;
-      if (board >= 3 || board * 5 >= pool.length) { finish(g, 3 * 5 * 6); return; }
+      if (board >= 3 || board * 5 >= pool.length) { $('mBody').innerHTML = '<div class="scarfdone"><img src="img/mg-scarf.png" alt=""><b>목도리 완성!</b></div>'; M.sfx('win'); setTimeout(function () { finish(g, 3 * 5 * 6); }, 1200); return; }
       var set = pool.slice(board * 5, board * 5 + 5); board++;
       var right = M.shuffle(set.slice()), sel = null, joined = 0, miss = 0;
       $('mBody').innerHTML = '<p class="hint center">' + board + ' / 3판 · 낱말을 누르고 뜻을 눌러요</p><div class="yarn" id="yB"><svg class="ysvg" id="yS"></svg><div class="ycol">' +
-        set.map(function (it, i) { return '<button class="yl" data-i="' + i + '">' + wordHtml(it) + '<i class="knot"></i></button>'; }).join('') + '</div><div class="ycol">' +
-        right.map(function (it) { return '<button class="yr" data-i="' + set.indexOf(it) + '"><i class="knot"></i>' + esc(it.k) + '</button>'; }).join('') + '</div></div>';
+        set.map(function (it, i) { return '<button class="yl" data-i="' + i + '">' + wordHtml(it) + '<img class="knot" src="img/mg-yarn-' + YC[i % 3] + '.png" alt=""></button>'; }).join('') + '</div><div class="ycol">' +
+        right.map(function (it, i) { return '<button class="yr" data-i="' + set.indexOf(it) + '"><img class="knot" src="img/mg-yarn-' + YC[(i + 1) % 3] + '.png" alt="">' + esc(it.k) + '</button>'; }).join('') + '</div></div>';
       var box = $('yB'), svg = $('yS');
       function line(a, b, col) {
         var r = box.getBoundingClientRect(), p = a.querySelector('.knot').getBoundingClientRect(), q = b.querySelector('.knot').getBoundingClientRect();

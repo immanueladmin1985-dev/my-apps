@@ -967,3 +967,25 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .yr.shake { animation: shakeX .3s; }
 .knot { position: absolute; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: #e8dcc8; border: 2px solid #c9b48f; }
 .yl .knot { right: -8px; } .yr .knot { left: -8px; }
+
+/* 얼음 낚시 그림 */
+.ice { background: linear-gradient(#eef8ff 0 30%, #8fd0f0 30%, #4aa8d8 100%); }
+.icehole { height: 30%; background: linear-gradient(#f7fcff, #e3f3fc); border-bottom: 4px solid #bfe3f5; }
+.ppg { right: auto; left: 4%; top: 2%; width: 46%; max-width: 220px; height: auto; font-size: 0; z-index: 2; pointer-events: none; }
+.fishb { background: none; box-shadow: none; padding: 0; width: 132px; display: block; border-radius: 0; }
+.fishb.rev { padding: 0; } .fishb .fimg { width: 100%; display: block; } .fishb.rev .fimg { transform: scaleX(-1); }
+.fishb .fw { position: absolute; left: 31%; top: 58%; width: 63%; height: 24%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+.fishb.rev .fw { left: 6%; }
+.fishb b { font-size: .95rem; line-height: 1; white-space: nowrap; } .fishb b.w3 { font-size: .7rem; } .fishb small { display: none; }
+/* 카페 그림 */
+.cafeimg { width: 62%; max-width: 260px; margin: 0 auto -6px; display: block; }
+.cafe { gap: 8px; }
+/* 털실 뭉치 매듭 */
+img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: none; border-radius: 0; object-fit: contain; }
+.yl img.knot { right: -20px; } .yr img.knot { left: -20px; }
+.yarn { gap: 48px; }
+.scarfdone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; animation: popin .5s; }
+.scarfdone img { width: 80%; max-width: 320px; } .scarfdone b { font-size: 1.4rem; color: var(--mint-d); }
+.fishb .fw { width: auto; min-width: 60%; height: auto; left: 62%; transform: translateX(-50%); top: 57%; padding: 2px 6px; background: #fff6e6; border: 2px solid #8a6236; border-radius: 8px; overflow: visible; }
+.fishb.rev .fw { left: 38%; }
+.fishb b { font-size: 1rem; } .fishb b.w3 { font-size: .85rem; }
