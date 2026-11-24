@@ -329,8 +329,10 @@ function shared() {
   out.mem = mem;                        // 개인 정보 — state() 에서 권한대로 걸러서 보냄
   out.attBy = attendByDept(mem);        // { 부서: { 날짜: [ID…] } }
   out.vis = liveVisits();
-  out.cnt = {};                         // 공개: { 부서: { 날짜: 출석 인원 } }
-  Object.keys(out.attBy).forEach(function (d) { var o = out.cnt[d] = {}; Object.keys(out.attBy[d]).forEach(function (k) { o[k] = out.attBy[d][k].length; }); });
+  out.cnt = {};                         // 공개: { 부서: { 날짜: 출석 인원 } } — 특별기도 목표 인원용이라 교사는 세지 않음
+  var tnm = teacherNames(), isTch = {};
+  mem.forEach(function (m) { if (m.status === '교사' || tnm[m.name]) isTch[m.id] = 1; });
+  Object.keys(out.attBy).forEach(function (d) { var o = out.cnt[d] = {}; Object.keys(out.attBy[d]).forEach(function (k) { o[k] = out.attBy[d][k].filter(function (id) { return !isTch[id]; }).length; }); });
   out.sp = specialShared(mem);
   cachePut(JSON.stringify(out));
   return out;

@@ -655,7 +655,7 @@
       <p class="small muted spdate">${dotDate(c.start)} ~ ${dotDate(c.end)} · <b>${status}</b></p>
       ${c.goalN ? `<div class="goal"><div class="goalt"><span>🎯 ${esc(c.goal || '목표')}</span><b>${lastN} / ${c.goalN}명</b></div>
         <div class="bar big"><i style="width:${pct}%"></i></div>
-        <span class="small muted">${days.length ? `최근 예배 ${md(days[days.length - 1])} 기준${maxN > lastN ? ` · 가장 많았던 날 ${maxN}명` : ''}` : '출석부에 출석을 넣으면 인원이 저절로 나와요'}</span></div>` : (c.goal ? `<p class="goalp">🎯 ${esc(c.goal)}</p>` : '')}
+        <span class="small muted">${days.length ? `최근 예배 ${md(days[days.length - 1])} 기준 · 교사 제외${maxN > lastN ? ` · 가장 많았던 날 ${maxN}명` : ''}` : '출석부에 출석을 넣으면 인원이 저절로 나와요'}</span></div>` : (c.goal ? `<p class="goalp">🎯 ${esc(c.goal)}</p>` : '')}
       ${c.how ? `<button class="howbtn" id="spHow">${spState.showHow ? '기도 방법 접기 ▲' : '📢 기도 방법 보기 ▼'}</button>${spState.showHow ? `<div class="notice how">${esc(c.how)}</div>` : ''}` : ''}
     </div>`;
   }
