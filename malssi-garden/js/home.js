@@ -64,7 +64,7 @@
   M.renderHome = function (root) {
     Object.keys(M.P.room.placed).forEach(function (id) {
       var f = FURN.filter(function (x) { return x.id === id; })[0], p = M.P.room.placed[id]; if (!f || !p) return;
-      var hw = f.size / 2; p.x = Math.max(hw, Math.min(100 - hw, p.x));
+      var hw = Math.min(50, f.size * (p.s || 1) / 2); p.x = Math.max(hw, Math.min(100 - hw, p.x));
     });
     var P = M.P, p = P.pet, full = M.petFull();
     var face = mood || (full < 30 ? 'sad' : 'normal');
@@ -205,10 +205,10 @@
     if (!fd || e.pointerId !== fd.pid) return;
     if (Math.abs(e.clientX - fd.x) + Math.abs(e.clientY - fd.y) > 6) fd.moved = true;
     if (!fd.moved) return;
-    var fw = (FURN.filter(function (f) { return f.id === fd.id; })[0] || { size: 10 }).size / 2;
+    var fw = Math.min(50, (FURN.filter(function (f) { return f.id === fd.id; })[0] || { size: 10 }).size * ((M.P.room.placed[fd.id] || {}).s || 1) / 2);
     var x = Math.max(fw, Math.min(100 - fw, (e.clientX - fd.r.left) / fd.r.width * 100 - fd.ox));
     var y = Math.max(5, Math.min(95, (e.clientY - fd.r.top) / fd.r.height * 100 - fd.oy));
-    fd.el.style.left = x + '%'; fd.el.style.top = y + '%'; if (!FURN.filter(function (f) { return f.id === fd.id; })[0].rug) fd.el.style.zIndex = Math.round(y);
+    fd.el.style.left = x + '%'; fd.el.style.top = y + '%'; if (!FURN.filter(function (f) { return f.id === fd.id; })[0].rug) fd.el.style.zIndex = Math.round(y) + ((M.P.room.placed[fd.id] || {}).z || 0);
     fd.pos = { x: x, y: y }; e.preventDefault();
   }, { passive: false });
   document.addEventListener('pointerup', function (e) {

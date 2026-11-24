@@ -490,7 +490,9 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .room.editing { touch-action: none; outline: 3px dashed var(--mint); }
 .furn { position: absolute; transform: translate(-50%, -50%); filter: drop-shadow(0 3px 2px rgba(0,0,0,.15)); }
 .furn img { width: 100%; display: block; pointer-events: none; }
-.editing .furn { cursor: grab; animation: shake 2s infinite; }
+.editing .furn { cursor: grab; }
+.editing .furn img { animation: shake 2s infinite; }   /* 흔들기는 그림에만: 가구 자리(가운데 기준)는 그대로 둔다 */
+.editing .furn.flip img { animation: none; }
 .furn.drag { animation: none; transform: translate(-50%, -50%) scale(1.12); }
 .pet { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%); width: 30%; max-width: 200px; z-index: 95 !important; }
 .room.editing .pet { opacity: .45; pointer-events: none; }
