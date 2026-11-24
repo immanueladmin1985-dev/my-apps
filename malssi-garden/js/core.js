@@ -302,12 +302,14 @@
   var voices = [];
   function loadVoices() { try { voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { voices = []; } }
   if (window.speechSynthesis) { loadVoices(); try { speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
+  // 여러 문장을 차례로 읽는다 (대화 전체 듣기)
+  M.sayList = function (list, lang) { try { speechSynthesis.cancel(); } catch (e) {} list.forEach(function (t) { M.say(t, lang, false, true); }); };
   M.ttsOK = function () { return !!window.speechSynthesis; };
-  M.say = function (text, lang, slow) {
+  M.say = function (text, lang, slow, keep) {
     if (!window.speechSynthesis) return;
     try {
       var code = window.LANGS[lang].voice;
-      speechSynthesis.cancel();
+      if (!keep) speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.lang = code; u.rate = slow ? 0.55 : (M.P.set.rate || 0.9);
       var pre = code.slice(0, 2), v = voices.filter(function (x) { return x.lang && x.lang.replace('_', '-').indexOf(code) === 0; })[0] ||

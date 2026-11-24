@@ -854,6 +854,13 @@ window.parseLangs = function () {
       u.stages.forEach(function (s, si) {
         s.id = code + ':' + s.title;   // 단계를 끼워 넣어도 기록이 섞이지 않게 이름으로 구분한다
         s.unit = ui; s.idx = L.stages.length; s.lang = code;
+        if (s.dlg) {   // 회화 단계: "A|말|뜻|읽기" 줄들. 앞사람 말 다음 줄이 대답 문제가 된다
+          s.gram = true; s.conv = true;
+          s.dlg = s.dlg.trim().split('\n').map(function (line) { var f = line.split('|'); return { who: f[0], t: f[1], k: f[2] || '', r: f[3] || '' }; });
+          var xs = [];
+          s.dlg.forEach(function (d, i) { if (i > 0 && d.who !== s.dlg[i - 1].who) xs.push(s.dlg[i - 1].t + '|' + d.t + '|-,-,-|' + d.k); });
+          s.xf = xs.join('\n');
+        }
         if (s.xf) {   // 문법 단계: "바꾸기 전 → 형태|정답|오답,오답,오답|뜻"
           s.gram = true;
           s.xf = s.xf.trim().split('\n').map(function (line) { var f = line.split('|'); return { p: f[0], a: f[1], w: f[2].split(','), k: f[3] || '' }; });
@@ -864,6 +871,7 @@ window.parseLangs = function () {
           return { t: f[0], r: f[1] || '', k: f[2] || '', e: f[3] || '', alt: f[4] ? f[4].split(',') : [], say: f[5] || f[0], lang: code, sid: s.id, kana: !!s.kana };
         });
         if (s.gram) s.xf.forEach(function (x, i) { x.item = s.items[i]; });
+        if (s.conv) s.xf.forEach(function (x, i) { var pi = -1; s.dlg.forEach(function (d, j) { if (d.t === x.p && pi < 0 && s.dlg[j + 1] && s.dlg[j + 1].t === x.a) pi = j; }); x.pk = pi >= 0 ? s.dlg[pi].k : ''; x.pr = pi >= 0 ? s.dlg[pi].r : ''; x.item.r = (s.dlg[pi + 1] || {}).r || ''; });
         if (!(s.sents || '').trim() && SM[code] && SM[code][s.title]) s.sents = SM[code][s.title];
         s.sents = (s.sents || '').trim().split('\n').filter(Boolean).map(function (line) {
           var f = line.split('|'), toks = f[0].split('/'), sep = s.sep != null ? s.sep : L.sep;
@@ -871,7 +879,20 @@ window.parseLangs = function () {
           var t = w.join(sep);
           return { w: w, g: g, t: t, k: f[1], say: f[2] || t, lang: code, sid: s.id };
         });
+        if (L.stages.some(function (x) { return x.id === s.id; })) console.warn('같은 이름의 단계:', s.id);
         L.stages.push(s);
+      });
+    });
+    // 회화 대답 문제의 오답: 같은 장면의 다른 대답 → 다른 장면의 대답 순으로 3개
+    var allB = [];
+    L.stages.forEach(function (s) { if (s.conv) s.xf.forEach(function (x) { allB.push(x.a); }); });
+    L.stages.forEach(function (s, si) {
+      if (!s.conv) return;
+      s.xf.forEach(function (x, xi) {
+        var mine = s.xf.map(function (y) { return y.a; }).filter(function (a) { return a !== x.a; });
+        var w = mine.slice(0, 2), k = (si * 7 + xi * 3) % Math.max(1, allB.length);
+        while (w.length < 3 && allB.length > 3) { var c = allB[k % allB.length]; if (c !== x.a && w.indexOf(c) < 0) w.push(c); k += 5; }
+        x.w = w;
       });
     });
   });

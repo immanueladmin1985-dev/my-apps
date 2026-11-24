@@ -686,3 +686,17 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .opts.xf { grid-template-columns: 1fr; grid-auto-rows: auto; }
 .opts.xf .opt { min-height: 54px; padding: 8px 12px; }
 .opts.xf .opt .ot { font-size: 1.1rem; }
+
+/* 회화 카드 */
+.dlg { background: #f8f6fa; border-radius: 22px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.dlg h3 { margin: 0 0 4px; color: var(--mint-d); }
+.dl { display: flex; flex-direction: column; text-align: left; max-width: 86%; padding: 8px 12px; border-radius: 16px; background: #fff; border: 2px solid var(--line); }
+.dl.a { align-self: flex-start; border-bottom-left-radius: 4px; }
+.dl.b { align-self: flex-end; background: #e7f8f0; border-color: #bfe9d6; border-bottom-right-radius: 4px; }
+.dl b { font-size: 1.05rem; }
+.dl .dr { font-size: .78rem; color: var(--sub); }
+.dl small { color: var(--mint-d); font-weight: 600; }
+.qt .say.mini { width: auto; height: 28px; border-radius: 14px; padding: 0 10px; font-size: .78rem; vertical-align: middle; }
+.lvtabs button { min-width: 0; flex: 1 1 0; padding: 6px 2px; font-size: .78rem; white-space: nowrap; }
+.lvtabs button small { font-size: .66rem; }
+.qcard .face .ft.lg { padding: 0 34px; }
