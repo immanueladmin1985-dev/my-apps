@@ -81,6 +81,18 @@
       other.concat(M.shuffle(mine).slice(0, Math.max(0, 3 - other.length))).forEach(function (x) { var q = xformQ(x, lang); q.audio = x.p; qs.push(q); });
       return qs;
     }
+    if (stage && stage.ear === 2) {
+      // L/R 같은 짝 소리: 짝 비교 카드 → 둘 중 무엇인지 듣고 고르기를 여러 번
+      var prs = [];
+      for (var pi = 0; pi + 1 < stage.items.length; pi += 2) prs.push([stage.items[pi], stage.items[pi + 1]]);
+      prs.forEach(function (pr, k) {
+        qs.push({ type: 'pairteach', pair: pr, item: pr[0] });
+        [0, 1, 0, 1].forEach(function () { var it = M.pick(pr); qs.push({ type: 'listen', item: it, opts: M.shuffle(pr.slice()), fixed: true }); });
+      });
+      for (var r = 0; r < 8; r++) { var pr2 = M.pick(prs), it2 = M.pick(pr2); qs.push({ type: 'listen', item: it2, opts: M.shuffle(pr2.slice()), fixed: true }); }
+      qs.push({ type: 'match', items: M.shuffle(stage.items).slice(0, 6) });
+      return qs;
+    }
     if (stage && stage.gram) {
       // 문법: 규칙 카드 → 바꿔 쓰기 → 예문 카드·문장 만들기
       qs.push({ type: 'rule', stage: stage });
@@ -161,7 +173,7 @@
   var HAN = /[\u4e00-\u9fff]/;
   function jaKanji(o) { return o.lang === 'ja' && o.r && HAN.test(o.t); }   // 한자 단어는 읽는 법을 같이 보여 준다
   function foot(html, cls) { var f = $('lFoot'); f.className = 'lfoot' + (cls ? ' ' + cls : ''); f.innerHTML = html; }
-  var TITLES = { dialog: '대화를 들어 봐요', rule: '문법을 배워요', xform: '알맞게 바꿔 보세요', steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
+  var TITLES = { pairteach: '두 소리를 비교해요', dialog: '대화를 들어 봐요', rule: '문법을 배워요', xform: '알맞게 바꿔 보세요', steach: '문장을 배워요', teach: '새로 배워요', meaning: '뜻을 골라 보세요', target: '알맞은 말을 골라 보세요', listen: '잘 듣고 골라 보세요', match: '짝을 맞춰 보세요', build: '순서대로 눌러 만들어 보세요', speak: '소리 내어 따라 말해 보세요' };
 
   function show() {
     var q = S.qs[S.i]; S.answered = false; q.pick = null; bar();
@@ -185,6 +197,11 @@
         '<div class="tk">' + esc(it.k) + '</div>' +
         '<div class="tsay">' + sayBtn(it.say, true) + '</div>' +
         (tip ? '<div class="tip">💡 ' + esc(tip) + '</div>' : '') + '</div>';
+    } else if (q.type === 'pairteach') {
+      var pa = q.pair;
+      h = '<div class="qt"><span class="newtag">두 소리를 비교해요</span></div><div class="pairt lang-' + pa[0].lang + '">' + pa.map(function (x) {
+        return '<button class="pw" data-say="' + esc(x.say) + '">' + (x.e ? '<span class="bigE">' + x.e + '</span>' : '') + '<b>' + esc(x.t) + '</b><small>' + esc(x.k) + '</small><em>' + esc(x.r) + '</em></button>';
+      }).join('') + '</div><div class="tsay"><button class="btn" data-pairplay="1">▶ 번갈아 듣기</button><button class="btn ghost" data-pairplay="slow">🐢 천천히</button></div>';
     } else if (q.type === 'dialog') {
       var dg = q.stage;
       h = '<div class="qt"><span class="newtag">대화를 들어 봐요</span> <button class="say mini" data-sayall="1">▶ 전체 듣기</button></div><div class="dlg lang-' + dg.lang + '"><h3>' + esc(dg.title) + '</h3><p class="dlgme">오른쪽 초록 말풍선이 내 역할이에요. 잘 듣고 내 대사를 익혀 두세요</p>' +
@@ -233,7 +250,7 @@
     }
     body.innerHTML = h; body.scrollTop = 0;
     var cbx = $('chatBox'); if (cbx) cbx.scrollTop = cbx.scrollHeight;
-    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
+    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog' || q.type === 'pairteach') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
     else if (q.opts) foot('<button class="btn primary wide" id="oCheck" disabled>확인</button>');
     else if (q.type === 'build') foot('<button class="btn primary wide" id="bCheck" disabled>확인</button>');
     else if (q.type === 'speak') foot('<button class="btn ghost wide" id="sSkip">지금은 말할 수 없어요</button>');
@@ -257,7 +274,7 @@
       S.combo = 0; S.mistakes++;
       M.sfx('bad'); M.buzz([40, 60, 40]);
       // 틀린 문제는 뒤에 다시 나온다
-      if (!q.again) { var c = JSON.parse(JSON.stringify(q)); c.again = true; if (c.opts && c.type !== 'xform') c.opts = null; else if (c.opts) c.opts = M.shuffle(q.opts); if (c.tiles) c.tiles = M.shuffle(q.tiles); S.qs.push(c); S.total++; }
+      if (!q.again) { var c = JSON.parse(JSON.stringify(q)); c.again = true; if (c.opts && c.type !== 'xform' && !c.fixed) c.opts = null; else if (c.opts) c.opts = M.shuffle(q.opts); if (c.tiles) c.tiles = M.shuffle(q.tiles); S.qs.push(c); S.total++; }
       else S.done++;
     }
     if (q.item && !q.item.sent) M.srsHit(q.item, ok);
@@ -282,10 +299,12 @@
     if (!S) return;
     var t = e.target;
     if (t.closest('#lNext')) { next(); return; }
-    if (t.closest('#tNext')) { var tq = S.qs[S.i]; S.done++; if (tq.type === 'rule' || tq.type === 'dialog') { next(); return; } if (tq.item) M.srsHit(tq.item, true); else M.P.srs[sentKey(tq.sent)] = [1, Date.now()]; next(); return; }
+    if (t.closest('#tNext')) { var tq = S.qs[S.i]; S.done++; if (tq.type === 'rule' || tq.type === 'dialog') { next(); return; } if (tq.pair) { tq.pair.forEach(function (x) { M.srsHit(x, true); }); next(); return; } if (tq.item) M.srsHit(tq.item, true); else M.P.srs[sentKey(tq.sent)] = [1, Date.now()]; next(); return; }
     var q = S.qs[S.i];
     var mt = t.closest('.mt');
     if (mt && !mt.classList.contains('gone')) { matchTap(q, mt); return; }
+    var pp = t.closest('[data-pairplay]');
+    if (pp) { var w2 = q.pair.map(function (x) { return x.say; }); if (pp.dataset.pairplay === 'slow') { M.say(w2[0], S.lang, true); setTimeout(function () { M.say(w2[1], S.lang, true); }, 1400); } else M.sayList(w2.concat(w2), S.lang); return; }
     if (t.closest('[data-sayall]')) { M.sayList(q.stage.dlg.map(function (d) { return d.t; }), S.lang); return; }
     var sayB = t.closest('[data-say]');
     if (sayB) { M.say(sayB.dataset.say, S.lang, !!sayB.dataset.slow); return; }
@@ -354,22 +373,52 @@
     }
     $('bCheck').disabled = q.chosen.length === 0;
   }
+  // 정답과 들린 말을 맞춰 보고, 정답에서 들리지 않은 부분을 빨갛게 표시한다 (영어는 낱말, 나머지는 글자 단위)
+  function speakDiff(target, heardText, lang) {
+    var word = lang === 'en';
+    var tu = word ? target.split(/\s+/) : Array.from(target), hu = word ? heardText.split(/\s+/) : Array.from(heardText);
+    var nz = function (x) { return M.norm(x, lang); };
+    var tn = tu.map(nz), hn = hu.map(nz), m = tn.length, n = hn.length, L = [];
+    for (var i = 0; i <= m; i++) { L[i] = []; for (var j = 0; j <= n; j++) L[i][j] = 0; }
+    for (i = m - 1; i >= 0; i--) for (j = n - 1; j >= 0; j--) L[i][j] = tn[i] && tn[i] === hn[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    var ok = [], a = 0, b = 0;
+    while (a < m && b < n) { if (tn[a] && tn[a] === hn[b]) { ok[a] = 1; a++; b++; } else if (L[a + 1][b] >= L[a][b + 1]) a++; else b++; }
+    return '정답: ' + tu.map(function (u, k) { var punct = !tn[k]; return '<span class="' + (punct || ok[k] ? 'sok' : 'sbad') + '">' + esc(u) + '</span>'; }).join(word ? ' ' : '');
+  }
+  // 영어에서 L과 R이 바뀌어 들렸는지 찾는다
+  function lrTip(target, heardText) {
+    var tw = M.norm(target, 'en') && target.toLowerCase().split(/\s+/).map(function (w) { return w.replace(/[^a-z']/g, ''); }),
+      hw = heardText.toLowerCase().split(/\s+/).map(function (w) { return w.replace(/[^a-z']/g, ''); });
+    var key = function (w) { return w.replace(/[lr]/g, '#'); };
+    for (var i = 0; i < tw.length; i++) {
+      var w = tw[i]; if (!/[lr]/.test(w) || hw.indexOf(w) >= 0) continue;
+      var h = hw.filter(function (x) { return x !== w && key(x) === key(w); })[0];
+      if (!h) continue;
+      for (var k = 0; k < w.length; k++) if (w[k] !== h[k] && /[lr]/.test(w[k])) {
+        return '‘' + w + '’의 ' + w[k].toUpperCase() + '가 ' + h[k].toUpperCase() + '처럼 들렸어요. ' + (w[k] === 'r' ? 'R은 혀끝을 어디에도 대지 않고 살짝 뒤로 말고, 입술을 “우” 하듯 동그랗게 해요.' : 'L은 혀끝을 윗니 뒤 잇몸에 꼭 댄 채로 소리 내요.');
+      }
+    }
+    return '';
+  }
   function speak(q) {
     var mic = $('mic'), heard = $('heard');
     if (mic.classList.contains('on')) { try { M._rec.stop(); } catch (e) {} return; }
     mic.classList.add('on'); heard.textContent = '듣고 있어요… 말해 보세요';
     var targets = [q.item.t, q.item.say].concat(q.item.alt || []);
+    if (q.item.r && S.lang === 'ja') targets.push(q.item.r.split(' · ')[0]);   // 한자 단어는 읽기(가나)로도 비교한다
     var skipBtn = function () { foot('<button class="btn ghost wide" id="sSkip">넘어가기</button>'); };
     M.listen(S.lang).then(function (res) {
       mic.classList.remove('on');
       if (!S || S.qs[S.i] !== q) return;
       if (!res.length) { heard.textContent = '소리가 들리지 않았어요. 다시 눌러 보세요'; return; }
-      var score = M.similar(res, targets, S.lang);
-      heard.innerHTML = '들린 말: <b>' + esc(res[0]) + '</b>';
+      var bm = M.bestMatch(res, targets, S.lang), score = bm.s;
+      heard.innerHTML = '들린 말: <b>' + esc(bm.h) + '</b>' + (score < 0.98 ? '<div class="sdiff lang-' + S.lang + '">' + speakDiff(bm.t, bm.h, S.lang) + '</div>' : '');
+      var lr = S.lang === 'en' ? lrTip(bm.t, bm.h) : '';
+      if (lr) heard.innerHTML += '<small class="sdtip lrtip">' + lr + '</small>';
       if (score >= 0.6) { M.P.stats.speak++; judge(true, q, '발음이 좋아요! ' + Math.round(score * 100) + '점'); }
       else {
         q.fails++;
-        heard.innerHTML += '<br>조금 다르게 들렸어요. 🔊로 다시 듣고 한 번 더 해 볼까요?';
+        heard.innerHTML += '<small class="sdtip">빨간 부분이 다르게 들렸어요. 🔊로 그 부분을 잘 듣고 한 번 더 해 볼까요?' + (S.lang === 'ja' && /[\u4e00-\u9fff]/.test(bm.h) && !/[\u4e00-\u9fff]/.test(bm.t) ? '<br>※ 기계가 한자로 받아 적으면 맞게 말해도 다르게 보일 수 있어요.' : '') + '</small>';
         M.sfx('bad');
         if (q.fails >= 2) skipBtn();
       }
@@ -453,7 +502,7 @@
     if (!S) return 'none';
     var q = S.qs[S.i];
     if (S.answered) { $('lNext').click(); return 'next'; }
-    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog') { $('tNext').click(); return q.type; }
+    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog' || q.type === 'pairteach') { $('tNext').click(); return q.type; }
     if (q.type === 'meaning' || q.type === 'target' || q.type === 'listen' || q.type === 'xform') {
       var idx = q.opts.findIndex(function (o) { return wrong ? o.t !== q.item.t : o.t === q.item.t; });
       if (idx < 0) idx = q.opts.findIndex(function (o) { return o.t === q.item.t; });

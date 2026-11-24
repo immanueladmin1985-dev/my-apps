@@ -798,3 +798,14 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .cust .cn { bottom: auto; top: -10px; }
 .order .cname { width: 100%; text-align: center; font-size: .66rem; line-height: 1.1; margin-bottom: -1px; }
 .order .cname .hearts { position: static; font-size: .62rem; }
+.sdiff { margin-top: 6px; font-size: 1.1rem; font-weight: 700; color: var(--fg); }
+.sdiff .sok { color: #2a9d6f; }
+.sdiff .sbad { color: #e5484d; text-decoration: underline wavy; text-underline-offset: 4px; }
+.sdtip { display: block; margin-top: 6px; font-size: .8rem; }
+.pairt { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.pairt .pw { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border-radius: 20px; background: #fff; border: 2px solid var(--line); box-shadow: 0 4px 0 var(--line); }
+.pairt .pw .bigE { font-size: 2.6rem; }
+.pairt .pw b { font-size: 1.8rem; }
+.pairt .pw small { color: var(--sub); font-weight: 700; }
+.pairt .pw em { font-style: normal; font-size: .78rem; color: var(--mint-d); line-height: 1.3; }
+.lrtip { color: #c2410c; font-weight: 700; }

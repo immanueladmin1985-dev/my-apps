@@ -337,7 +337,9 @@
     });
   };
   M.norm = function (s, lang) {
-    return String(s || '').toLowerCase().replace(/[\s.,!?！？。、，'’"・~]/g, '');
+    s = String(s || '').toLowerCase().replace(/[\s.,!?！？。、，'’"・~]/g, '');
+    if (lang === 'ja') s = s.replace(/[\u30a1-\u30f6]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });   // 가타카나로 알아들어도 히라가나와 같게 본다
+    return s;
   };
   function lev(a, b) {
     var m = a.length, n = b.length, d = [];
@@ -346,19 +348,21 @@
     for (i = 1; i <= m; i++) for (j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
     return d[m][n];
   }
-  M.similar = function (heard, targets, lang) {
-    var best = 0;
+  // 들린 말 여러 후보 × 정답 여러 형태 중 가장 비슷한 짝을 찾는다
+  M.bestMatch = function (heard, targets, lang) {
+    var best = { s: 0, h: heard[0] || '', t: targets[0] || '' };
     heard.forEach(function (h) {
       var a = M.norm(h, lang);
       targets.forEach(function (t) {
         var b = M.norm(t, lang); if (!a || !b) return;
         var s = 1 - lev(a, b) / Math.max(a.length, b.length);
         if (a.indexOf(b) >= 0) s = Math.max(s, 0.9);
-        best = Math.max(best, s);
+        if (s > best.s) best = { s: s, h: h, t: t };
       });
     });
     return best;
   };
+  M.similar = function (heard, targets, lang) { return M.bestMatch(heard, targets, lang).s; };
 
   // ---------- 알림 띠·창 ----------
   var toastQ = [], toastOn = false;

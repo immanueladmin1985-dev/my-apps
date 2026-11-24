@@ -446,6 +446,35 @@ sink|[s] 씽크|싱크대|🚰|sync`, sents: `
 a/very/big/boat|아주 큰 배
 I/think/so|그렇게 생각해요` }
       ] },
+      { title: 'L과 R 집중 연습', stages: [
+        { title: 'L·R ① 첫소리', ear: 2, items: `
+rice|[R] 혀끝을 어디에도 대지 않고 살짝 말아요|쌀·밥|🍚|rise
+lice|[L] 혀끝을 윗니 뒤 잇몸에 꼭 대요|머릿니|🐜
+right|[R] 입술을 “우” 하듯 동그랗게 하고 시작|오른쪽|➡️|write
+light|[L] 혀끝을 붙였다 떼며 시작|불빛|💡|lite
+road|[R] “우로드”처럼 입술을 오므리고|길|🛣️|rode
+load|[L] 혀끝을 대고 “을로드”|짐|📦
+red|[R] 혀끝이 입천장에 닿지 않게|빨간색|🔴|read
+led|[L] 혀끝을 대고|이끌었다·LED|🔦|lead`, sents: `` },
+        { title: 'L·R ② 자음 뒤에서', ear: 2, items: `
+grass|[R] g 뒤에 혀를 말아서|잔디|🌱
+glass|[L] g 뒤에 혀끝을 대고|유리컵|🥛
+fry|[R] f 뒤에 혀를 말아서|튀기다|🍳
+fly|[L] f 뒤에 혀끝을 대고|날다|🦋
+pray|[R] p 뒤에 혀를 말아서|기도하다|🙏|prey
+play|[L] p 뒤에 혀끝을 대고|놀다|⚽
+crowd|[R] k 뒤에 혀를 말아서|군중|👥
+cloud|[L] k 뒤에 혀끝을 대고|구름|☁️`, sents: `` },
+        { title: 'L·R ③ 가운데와 끝', ear: 2, items: `
+correct|[R] 가운데에서 혀를 말아요|맞는|✅
+collect|[L] 가운데에서 혀끝을 대요|모으다|🧺
+arrive|[R] 혀를 말며 이어서|도착하다|🛬
+alive|[L] 혀끝을 대며 이어서|살아 있는|🌿
+berry|[R] 혀끝이 닿지 않게|열매|🫐|bury
+belly|[L] 혀끝을 대고|배(몸)|🤰
+fire|[R] 끝에서 혀를 말아요|불|🔥
+file|[L] 끝에서 혀끝을 윗니 뒤에|파일·서류철|📁`, sents: `` }
+      ] },
       { title: '첫인사', stages: [
         { title: '만나고 헤어질 때', items: `
 hello|헬로|안녕하세요|👋

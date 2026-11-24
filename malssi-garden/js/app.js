@@ -67,7 +67,7 @@
   // 문법 단원(GR)은 단어 단계와 따로 진행한다 (단어를 다 끝내지 않아도 시작할 수 있다)
   function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV'; }
   function firstOpen(L, prog, wantGr) { var i = L.stages.findIndex(function (s) { return !prog[s.id] && gr(s) === wantGr; }); return i < 0 ? L.stages.length : i; }
-  var LVNAME = { CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
+  var LVNAME = { CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
   function renderMap(root) {
     var L = window.LANGS[P.lang], prog = P.prog[P.lang];
     var cur = firstOpen(L, prog, false);
