@@ -197,6 +197,7 @@
         '<p class="hint">하루에 레슨 5판 정도 하면 꽃 포인트를 30점 안팎 모아요. 1점 = 10원이면 하루 300원어치예요.</p>' +
         '<label class="fld">주간 목표(주 5일 공부) 보너스 꽃 포인트<input id="wBonus" type="number" inputmode="numeric" min="0" max="1000" value="' + P.admin.weekBonus + '"></label>' +
         '<button class="btn wide" data-act="saveW">저장</button>' +
+        '<button class="btn wide" data-act="remote">📡 원격 관리 연결 (남편 폰)' + (M.Remote && M.Remote.state().player ? ' ✔' : '') + '</button>' +
         '<button class="btn wide" data-act="pin">PIN 바꾸기</button>' +
         '<button class="btn wide" data-act="import">백업 파일 불러오기</button>' +
         '<p class="hint">백업 파일을 불러오면 지금 기록이 그 파일 내용으로 바뀌어요.</p>';
@@ -239,6 +240,7 @@
       M.P.gifts.push({ fp: n, msg: msg }); M.save(); M.toast('선물을 준비했어요. 메뉴를 닫으면 열려요 💝');
     },
     saveW: function (id, body) { var rt = body.querySelector('#wRate'); if (rt) M.P.admin.rate = Math.max(1, Math.min(1000, parseInt(rt.value, 10) || 10)); M.P.admin.weekBonus = Math.max(0, Math.min(1000, parseInt(body.querySelector('#wBonus').value, 10) || 0)); M.save(); M.toast('저장했어요'); },
+    remote: function (id, body, paint, d) { d.close(); M.Remote.playerSheet(); },
     pin: function (id, body, paint, d) { d.close(); M.P.admin.pin = ''; M.save(); M.askPin('', adminPanel); },
     import: function (id, body, paint, d) { d.close(); M.pickBackup(); }
   };

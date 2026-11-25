@@ -1,4 +1,4 @@
-const CACHE = 'malssi-garden-v54';
+const CACHE = 'malssi-garden-v55';
 const CORE = [
   './',
   './index.html',
@@ -28,6 +28,7 @@ const CORE = [
   './js/gather.js',
   './js/dig.js',
   './js/extras.js',
+  './js/remote.js',
   './js/app.js',
   './manifest.webmanifest',
   './icon-192.png',
