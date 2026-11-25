@@ -335,6 +335,14 @@
     var local = vs.filter(function (v) { return v.localService; }); if (local.length >= 2) vs = local;
     return vs[who === 'A' ? 0 : 1];
   }
+  // 다 읽은 뒤에 다음 일을 한다 (읽기가 안 되거나 소식이 없으면 글자 수만큼 기다린다)
+  M.sayThen = function (text, lang, who, then) {
+    var done = false, fin = function () { if (done) return; done = true; setTimeout(then, 250); };
+    var guess = 900 + String(text).length * (lang === 'en' ? 90 : 230);
+    if (M.fast) { then(); return; }
+    var u = M.say(text, lang, false, false, who);
+    if (u) { u.onend = fin; u.onerror = fin; setTimeout(fin, guess * 2.2); } else setTimeout(fin, guess);
+  };
   M.say = function (text, lang, slow, keep, who) {
     if (!window.speechSynthesis) return;
     try {
@@ -345,7 +353,7 @@
       var v = voiceFor(code, who);
       if (v) u.voice = v;
       if (who) { var g2 = v && genderOf(v), vs2 = langVoices(code); u.pitch = who === 'A' ? (g2 === 'f' || vs2.length > 1 ? 1.12 : 1.3) : (g2 === 'm' || vs2.length > 1 ? 0.9 : 0.72); }
-      speechSynthesis.speak(u);
+      speechSynthesis.speak(u); return u;
     } catch (e) {}
   };
 

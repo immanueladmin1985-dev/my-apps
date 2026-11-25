@@ -185,8 +185,8 @@
       if (!d.isConnected) return;
       if (i >= sc.dlg.length) { wordQuiz(); return; }
       var line = sc.dlg[i], x = sc.xf.filter(function (q) { return q.di === i && q.aw === 'B'; })[0];
-      if (line.who === 'A') { bubble(line.t, line.k, false, line.r); M.say(line.t, lang, false, false, 'A'); i++; setTimeout(step, M.fast ? 0 : 1300); return; }
-      if (!x) { bubble(line.t, line.k, true, line.r); i++; setTimeout(step, M.fast ? 0 : 500); return; }
+      if (line.who === 'A') { bubble(line.t, line.k, false, line.r); i++; M.sayThen(line.t, lang, 'A', step); return; }
+      if (!x) { bubble(line.t, line.k, true, line.r); i++; M.sayThen(line.t, lang, 'B', step); return; }
       total++;
       var right = [x.a].concat((x.alts || []).map(function (a) { return a.t; }));
       var list = M.shuffle(right.concat(x.w.slice(0, Math.max(1, 3 - right.length))));
@@ -199,8 +199,8 @@
             if (!tries) ok++;
             M.sfx('ok'); opts.innerHTML = '';
             var alt = (x.alts || []).filter(function (a) { return a.t === o; })[0];
-            bubble(o, alt ? alt.k : line.k, true, alt ? alt.r : line.r); M.say(o, lang, false, false, 'B');
-            i++; setTimeout(step, M.fast ? 0 : 1100);
+            bubble(o, alt ? alt.k : line.k, true, alt ? alt.r : line.r);
+            i++; M.sayThen(o, lang, 'B', step);
           } else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
         };
       });

@@ -376,7 +376,7 @@
         b.onclick = function () {
           if (!g.alive || b.disabled) return;
           var o = opts[+b.dataset.i];
-          if (right(o)) { var sec = (Date.now() - t0) / 1000; setScore(g, g.score + Math.max(8, 20 - tries * 6 - Math.floor(sec / 3))); b.classList.add('ok'); M.sfx('ok'); M.say(o, lang, false, false, 'B'); setTimeout(round, 1300); }
+          if (right(o)) { var sec = (Date.now() - t0) / 1000; setScore(g, g.score + Math.max(8, 20 - tries * 6 - Math.floor(sec / 3))); b.classList.add('ok'); M.sfx('ok'); M.sayThen(o, lang, 'B', round); }
           else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
         };
       });
