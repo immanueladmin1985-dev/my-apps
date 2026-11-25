@@ -127,7 +127,7 @@
   GAMES.acorn = function (g) {
     var pool = words(16); if (pool.length < 4) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
     $('mBody').innerHTML = '<div class="aq" id="aQ"></div><div class="afield" id="aF"></div>';
-    var field = $('aF'), speed = 0.18, drops = [], target = null;
+    var field = $('aF'), speed = 0.11, drops = [], target = null, last = 0, missed = 0;   // speed: 1초에 내려오는 거리(밭 높이의 비율)
     function round() {
       if (!g.alive) return;
       field.innerHTML = ''; drops = [];
@@ -136,22 +136,23 @@
       M.shuffle(four).forEach(function (it, i) {
         var b = document.createElement('button'); b.className = 'acorn'; b.innerHTML = '<span class="aw">' + wordHtml(it) + '</span>';
         b.style.left = (i * 24.5) + '%'; field.appendChild(b);
-        var o = { el: b, it: it, y: -20 - Math.random() * 60 }; drops.push(o);
+        var o = { el: b, it: it, y: -0.12 - Math.random() * 0.18 }; drops.push(o);
         b.onclick = function () {
           if (!g.alive) return;
-          if (it === target) { setScore(g, g.score + 1); M.sfx('ok'); M.say(it.say, it.lang); b.classList.add('got'); speed = Math.min(0.5, speed + 0.015); setTimeout(round, 350); }
+          if (it === target) { setScore(g, g.score + 1); M.sfx('ok'); M.say(it.say, it.lang); b.classList.add('got'); speed = Math.min(0.2, speed + 0.006); setTimeout(round, 450); }
           else { M.sfx('bad'); b.classList.add('miss'); g.left = Math.max(0, g.left - 3); }
         };
       });
     }
-    function tick() {
+    function tick(now) {   // 걸린 시간만큼 내려간다 (화면 새로 고침이 빠른 폰에서도 같은 빠르기)
       if (!g.alive) return;
+      var dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
       var h = field.clientHeight, fallen = 0;
-      drops.forEach(function (o) { o.y += speed * 16; o.el.style.transform = 'translateY(' + o.y + 'px)'; if (o.y > h) fallen++; });
-      if (drops.length && fallen === drops.length) round();
+      drops.forEach(function (o) { if (o.el.classList.contains('got')) return; o.y += speed * dt; o.el.style.transform = 'translateY(' + (o.y * h) + 'px)'; if (o.y > 1) fallen++; });
+      if (drops.length && fallen === drops.length) { missed++; speed = Math.max(0.09, speed - 0.01); round(); }   // 놓치면 조금 느려진다
       g.raf = requestAnimationFrame(tick);
     }
-    round(); tick(); timeBar(g, 45, function () { finish(g, 15); });
+    round(); g.raf = requestAnimationFrame(tick); timeBar(g, 60, function () { finish(g, 15); });
   };
   // 소리 풍선: 소리를 듣고 같은 말이 적힌 풍선을 누른다 (10번)
   GAMES.song = function (g) {
