@@ -21,6 +21,7 @@
     { id: 'tuna', ko: '참치', em: '🐟', at: 'sea', t: 'md', r: 3, size: [80, 200], price: 150, ja: ['マグロ', 'まぐろ'], en: ['tuna'], zh: ['金枪鱼', 'jīnqiāngyú'] },
     { id: 'shark', ko: '상어', em: '🦈', at: 'sea', t: 'en', r: 3, size: [100, 300], price: 200, ja: ['サメ', 'さめ'], en: ['shark'], zh: ['鲨鱼', 'shāyú'] }
   ];
+  function fimg(f) { return '<img src="img/w/fish-' + f.id + '.png" alt="' + f.ko + '">'; }
   var TNAME = { m: '아침', d: '낮', e: '저녁', n: '밤' };
   M.FISH = FISH;
   function slot() { var h = new Date().getHours(); return h >= 5 && h < 10 ? 'm' : h < 17 && h >= 10 ? 'd' : h >= 17 && h < 20 ? 'e' : 'n'; }
@@ -83,7 +84,7 @@
       var rec = d[f.id] || { n: 0, max: 0 }; rec.n++; var best = size > rec.max; rec.max = Math.max(rec.max, size); d[f.id] = rec;
       var price = Math.round(f.price * (0.7 + 0.6 * (size - f.size[0]) / (f.size[1] - f.size[0] || 1)));
       M.save(); M.quest && M.quest('fish', 1);
-      el.innerHTML = '<div class="fcatch"><div class="fbig">' + f.em + '</div><h3>' + f.ko + (first ? ' <span class="newtag">처음!</span>' : '') + '</h3>' +
+      el.innerHTML = '<div class="fcatch"><div class="fbig">' + fimg(f) + '</div><h3>' + f.ko + (first ? ' <span class="newtag">처음!</span>' : '') + '</h3>' +
         '<button class="fname lang-' + lang + '" data-fsay="' + esc(nm.t) + '">🔊 <b>' + esc(nm.t) + '</b>' + (nm.r ? '<small>' + esc(nm.r) + '</small>' : '') + '</button>' +
         '<p>' + size + 'cm' + (best && !first ? ' · 최고 기록!' : '') + (bonus ? ' · 이름 맞힘 보너스 +20%' : '') + '</p>' +
         '<div class="row2"><button class="btn" id="fRel">놓아주기</button><button class="btn primary" id="fSell">팔기 <img class="inl" src="img/coin.png" alt="">' + price + '</button></div>' +
@@ -98,7 +99,7 @@
     // 세 종류 이상 잡았으면 이름 맞히기 (맞히면 크기 보너스)
     if (known.length >= 3 && !first) {
       var opts = M.shuffle([f].concat(M.shuffle(known.filter(function (x) { return x !== f; })).slice(0, 2)));
-      el.innerHTML = '<div class="fcatch"><div class="fbig">' + f.em + '</div><h3>' + f.ko + '를 낚았어요!</h3><p>이 물고기를 배우는 말로 뭐라고 할까요?</p><div class="copts">' +
+      el.innerHTML = '<div class="fcatch"><div class="fbig">' + fimg(f) + '</div><h3>' + M.j(f.ko, '을', '를') + ' 낚았어요!</h3><p>이 물고기를 배우는 말로 뭐라고 할까요?</p><div class="copts">' +
         opts.map(function (x, i) { var n2 = nameOf(x, lang); return '<button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(n2.t) + (n2.r && n2.r !== n2.t ? ' <small>' + esc(n2.r) + '</small>' : '') + '</button>'; }).join('') + '</div></div>';
       Array.prototype.forEach.call(el.querySelectorAll('.copt'), function (b) {
         b.onclick = function () { var ok = opts[+b.dataset.i] === f; M.sfx(ok ? 'ok' : 'bad'); show(ok); };
@@ -111,7 +112,7 @@
     var d = dex(), lang = M.P.lang, n = FISH.filter(function (f) { return d[f.id]; }).length;
     M.modal('<h3>🐟 물고기 도감 <small>' + n + ' / ' + FISH.length + '</small></h3><p class="hint">지금은 <b>' + TNAME[slot()] + '</b>이에요. 시간대마다 나오는 물고기가 달라요.</p><div class="fdex">' + FISH.map(function (f) {
       var r = d[f.id], nm = nameOf(f, lang);
-      return '<div class="fd' + (r ? '' : ' unk') + '"><span class="fde">' + f.em + '</span><b>' + (r ? f.ko : '???') + '</b>' + (r ? '<small class="lang-' + lang + '">' + esc(nm.t) + '</small><small>최고 ' + r.max + 'cm · ' + r.n + '마리</small>' : '') +
+      return '<div class="fd' + (r ? '' : ' unk') + '"><span class="fde">' + fimg(f) + '</span><b>' + (r ? f.ko : '???') + '</b>' + (r ? '<small class="lang-' + lang + '">' + esc(nm.t) + '</small><small>최고 ' + r.max + 'cm · ' + r.n + '마리</small>' : '') +
         '<small>' + (f.at === 'river' ? '강' : '바다') + ' · ' + f.t.split('').map(function (k) { return TNAME[k]; }).join('·') + '</small></div>';
     }).join('') + '</div><button class="btn primary wide" data-close>닫기</button>');
   };

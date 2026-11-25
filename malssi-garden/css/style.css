@@ -1075,3 +1075,14 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .fd { display: flex; flex-direction: column; align-items: center; border: 2px solid var(--line); border-radius: 14px; padding: 6px 4px; text-align: center; background: #fff; }
 .fd .fde { font-size: 2rem; } .fd b { font-size: .85rem; } .fd small { font-size: .66rem; color: var(--sub); line-height: 1.25; }
 .fd.unk .fde { filter: brightness(0) opacity(.25); }
+/* 가판대 손님: 전신 그림을 가판대 뒤에 세운다 (다리는 가판대에 가린다) */
+.stallwrap .custs { z-index: 1; }
+.stallwrap .cust.full { width: 15%; bottom: 22%; }
+.cust.full img { aspect-ratio: auto; animation: bob 1.6s ease-in-out infinite; }
+.cust.full.happy img { animation: bob .45s ease-in-out infinite; }
+.cust.full.leaving { transition: left 1.6s linear; z-index: 1; }
+.cust.full.leaving img { animation: hop .3s ease-in-out infinite; }
+.stallwrap .cust .qmark, .stallwrap .cust .rmark { z-index: 5; }
+.stallwrap .custfx { position: absolute; top: 0; bottom: 0; left: -25%; width: 150%; z-index: 3; pointer-events: none; }
+.custfx .cust.leaving { bottom: 6%; width: 14%; }
+.fcatch .fbig img { height: 70px; max-width: 160px; object-fit: contain; } .fd .fde img { height: 40px; max-width: 80px; object-fit: contain; }

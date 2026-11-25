@@ -245,7 +245,7 @@
     if (ct) ct.innerHTML = '<div class="custs">' + g.orders.map(function (o, i) {
       var c = custOf(o.cust), ok = ready(o);
       var mq = M.miniAvail ? M.miniAvail(c.id) : null;
-      return '<div class="cust' + (ok ? ' happy' : '') + (mq ? ' hasq' : '') + '"' + (mq ? ' data-mq="' + mq + '"' : '') + ' style="left:' + (g.orders.length === 1 ? 50 : g.orders.length === 2 ? 41 + i * 18 : 34 + i * 16) + '%">' + (CUST_IMG[c.id] ? '<img src="img/cust-' + c.id + (ok ? '-happy' : '') + '.png" alt="' + esc(c.name) + '">' : '<span class="cem">' + c.em + '</span>') + (o.rare ? '<i class="rmark">✨</i>' : '') + (mq ? '<i class="qmark">❗</i>' : '') + '</div>';
+      return '<div class="cust full' + (ok ? ' happy' : '') + (mq ? ' hasq' : '') + '"' + (mq ? ' data-mq="' + mq + '"' : '') + ' style="left:' + (g.orders.length === 1 ? 50 : g.orders.length === 2 ? 41 + i * 18 : 34 + i * 16) + '%">' + '<img src="img/w/ch-' + c.id + (ok ? '-happy' : '-front') + '.png" alt="' + esc(c.name) + '">' + (o.rare ? '<i class="rmark">✨</i>' : '') + (mq ? '<i class="qmark">❗</i>' : '') + '</div>';
     }).join('') + '</div><img class="stallimg" src="img/stall' + (g.awn ? '-' + g.awn : '') + '.png" alt="">';
     el.innerHTML = g.orders.map(function (o) {
       var c = custOf(o.cust), ok = ready(o), fr = g.friends[o.cust] || 0, hearts = Math.min(5, Math.floor(fr / 4));
@@ -581,6 +581,14 @@
     if (!o || !ready(o)) return false;
     lastAct = Date.now();
     var card = document.querySelector('.order[data-o="' + id + '"]');
+    // 의뢰를 채운 손님은 옆모습으로 걸어 나간다
+    var ci = g.orders.indexOf(o), cel = document.querySelectorAll('#gCounter .cust')[ci];
+    if (cel && !M.fast) {
+      var gone = cel.cloneNode(true), sw = document.querySelector('.stallwrap'), box = sw.querySelector('.custfx') || sw.appendChild(Object.assign(document.createElement('div'), { className: 'custfx' })), toRight = ci >= g.orders.length / 2 - 0.01 || g.orders.length === 1;
+      gone.className = 'cust full leaving'; gone.removeAttribute('data-mq'); gone.querySelectorAll('i').forEach(function (z) { z.remove(); });
+      var gi = gone.querySelector('img'); gi.src = 'img/w/ch-' + o.cust + '-side.png'; if (!toRight) gi.style.transform = 'scaleX(-1)';
+      setTimeout(function () { box.appendChild(gone); void gone.offsetWidth; gone.style.left = (toRight ? 125 : -25) + '%'; setTimeout(function () { gone.remove(); }, 1700); }, 320);
+    }
     if (card && !M.fast) o.need.forEach(function (r) {   // 물건이 손님에게 날아간다
       var key = needKey(r), left = r.n;
       for (var i = N() - 1; i >= 0 && left; i--) if (keyOf(g.cells[i]) === key) {

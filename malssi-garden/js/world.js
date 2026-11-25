@@ -7,6 +7,11 @@
   var STEP = 170;               // 한 칸 걷는 시간(ms)
   // 그림이 오면 켠다. 예: tree: 'img/w-tree.png', house_bear: 'img/w-house-bear.png', ch_rabbit: 'img/ch-rabbit.png'(앞·뒤·옆 세 칸)
   var IMG = {};
+  var WI = 'img/w/';
+  var TILES = ['grass1', 'grass3', 'path', 'water', 'sand', 'plaza', 'plankh', 'flowers'];
+  var TREES = ['t-green', 't-autumn', 't-cherry', 't-pine', 't-green2', 't-cherry2', 't-pine2', 't-green3', 't-cherry3'];
+  var FLOWERS = ['d-flower1', 'd-flower2', 'd-tulip', 'd-grass1', 'd-grass2'];
+  var DECO = ['d-bush1', 'd-bush2', 'd-bush3', 'd-bush4', 'd-bush5', 'd-bush6', 'd-bush7', 'd-flowerbush', 'd-rock', 'd-rock2', 'd-rock3', 'd-rock4', 'd-rocks', 'd-stump'];
 
   // ---------- 지도 만들기 ----------
   // 바닥: 0 풀, 1 길, 2 물, 3 모래, 4 다리, 5 돌바닥(광장)
@@ -58,18 +63,28 @@
       var py = lot.door.y; while (py < H && G[py * W + lot.door.x] !== 1) { set(lot.door.x, py, 1); py++; }
       OBJ.push({ kind: 'lot', lot: lot, y: lot.y + 3 });
     });
-    // 게시판·선착장
-    solid(BOARD.x, BOARD.y); OBJ.push({ kind: 'board', x: BOARD.x, y: BOARD.y + 1 }); DOORS[BOARD.x + ',' + (BOARD.y + 1)] = { type: 'place', id: 'board' };
-    DOORS[PIER.x + ',' + PIER.y] = { type: 'place', id: 'pier' }; OBJ.push({ kind: 'pierSign', x: PIER.x + 1, y: PIER.y });
-    solid(PIER.x + 1, PIER.y);
-    // 숲 테두리와 흩어진 나무·꽃
+    // 게시판·선착장·다리
+    solid(BOARD.x, BOARD.y); solid(BOARD.x + 1, BOARD.y); OBJ.push({ kind: 'board', x: BOARD.x, y: BOARD.y + 1 }); DOORS[BOARD.x + ',' + (BOARD.y + 1)] = { type: 'place', id: 'board' };
+    DOORS[PIER.x + ',' + PIER.y] = { type: 'place', id: 'pier' };
+    OBJ.push({ kind: 'img', src: 'b-pier', x: PIER.x + 0.5, y: 40.3, w: 3.2 }); OBJ.push({ kind: 'label', text: '낚시터', x: PIER.x + 0.5, y: 39.2, z: 40.3 });
+    OBJ.push({ kind: 'img', src: 'm-arch', x: 18, y: 12.6, w: 3.2 });
+    // 광장 꾸미기: 가로등·벤치·꽃밭
+    [[13, 13, 'o-lamp'], [22, 13, 'o-lamp1'], [13, 19, 'o-lamp2'], [22, 19, 'o-lamp3']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, w: 0.9 }); });
+    [[20, 15, 'o-bench'], [20, 18, 'o-bench1'], [14, 17, 'o-bench2']].forEach(function (q) { solid(q[0], q[1]); solid(q[0] + 1, q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 1, y: q[1] + 1, w: 1.8 }); });
+    [[16, 13, 'o-planter'], [19, 13, 'o-flowerbed']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, w: 1.4 }); });
+    solid(15, 19); OBJ.push({ kind: 'img', src: 'o-well', x: 15.5, y: 20, w: 1.6 });
+    // 주민 집 옆 우체통
+    LOTS.forEach(function (l, k) { solid(l[0] + 3, l[1] + 2, 2 + k); OBJ.push({ kind: 'mail', k: k, x: l[0] + 3.5, y: l[1] + 3 }); });
+    // 숲 테두리와 흩어진 나무·덤불·바위·꽃
     var r = rnd(7);
     for (y = 0; y < 34; y++) for (x = 0; x < W; x++) {
       var edge = y < 3 || x < 2 || x > W - 3;
       if (G[y * W + x] !== 0 || SOLID[y * W + x]) continue;
-      var nearPath = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(function (d) { var v = G[(y + d[1]) * W + x + d[0]]; return v === 1 || v === 5; });
-      if (edge ? r() < 0.85 : (!nearPath && r() < 0.08)) { solid(x, y); OBJ.push({ kind: 'tree', x: x, y: y + 1, v: Math.floor(r() * 3) }); }
-      else if (r() < 0.09) OBJ.push({ kind: 'flower', x: x, y: y + 1, v: Math.floor(r() * 3) });
+      var nearPath = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1]].some(function (d) { var v = G[(y + d[1]) * W + x + d[0]]; return v === 1 || v === 5 || SOLID[(y + d[1]) * W + x + d[0]]; });
+      var q = r();
+      if (edge ? q < 0.7 : (!nearPath && q < 0.06)) { solid(x, y); OBJ.push({ kind: 'img', src: TREES[Math.floor(r() * TREES.length)], x: x + 0.5, y: y + 1, w: 1.9 + r() * 0.4 }); }
+      else if (!nearPath && q < 0.11) { solid(x, y); OBJ.push({ kind: 'img', src: DECO[Math.floor(r() * DECO.length)], x: x + 0.5, y: y + 1, w: 1.05 }); }
+      else if (q < 0.2) OBJ.push({ kind: 'img', src: FLOWERS[Math.floor(r() * FLOWERS.length)], x: x + 0.5, y: y + 1, w: 0.65, flat: true });
     }
     for (x = 0; x < W; x++) if (r() < 0.25 && G[36 * W + x] === 3 && x !== 17 && x !== 18) OBJ.push({ kind: 'shell', x: x, y: 37 });
   }
@@ -85,58 +100,60 @@
 
   // ---------- 바닥 그리기 (한 번만 그려 둔다) ----------
   var ground = null, groundScale = 1;
+  // 바닥 그림(이음매 없이 이어지게 만든 64px 타일)을 먼저 불러온다
+  var tileImg = {}, tilesReady = false;
+  function loadTiles(done) {
+    var left = TILES.length;
+    TILES.forEach(function (n) { var im = new Image(); im.onload = im.onerror = function () { if (--left === 0) done(); }; im.src = WI + 'tile-' + n + '.png'; tileImg[n] = im; });
+  }
   function drawGround() {
     var sc = Math.min(2, window.devicePixelRatio || 1); groundScale = sc;
     var c = document.createElement('canvas'); c.width = W * T * sc; c.height = H * T * sc;
     var g = c.getContext('2d'); g.scale(sc, sc);
+    var pat = {};
+    TILES.forEach(function (n) {
+      var im = tileImg[n]; if (!im || !im.naturalWidth) return;
+      var p = g.createPattern(im, 'repeat'); if (p.setTransform && window.DOMMatrix) p.setTransform(new DOMMatrix().scale(T / im.naturalWidth));
+      pat[n] = p;
+    });
+    var P = function (n, fb) { return pat[n] || fb; };
     var r = rnd(11), x, y;
-    var col = { 0: '#a7dc8a', 1: '#ead1a0', 2: '#79c4ea', 3: '#f4e3b5', 4: '#79c4ea', 5: '#e4dccd' };
-    for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
-      var v = G[y * W + x];
-      g.fillStyle = v === 1 || v === 5 ? col[0] : col[v]; g.fillRect(x * T, y * T, T, T);
-      if (v === 0 || v === 1 || v === 5) for (var k = 0; k < 3; k++) { g.fillStyle = r() < 0.5 ? '#98d27b' : '#b6e49b'; g.fillRect(x * T + r() * 28, y * T + r() * 28, 3, 2); }
-      if (v === 2 && r() < 0.25) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.beginPath(); var wx = x * T + 6 + r() * 14, wy = y * T + 10 + r() * 14; g.moveTo(wx, wy); g.quadraticCurveTo(wx + 5, wy - 4, wx + 10, wy); g.stroke(); }
-    }
-    // 길·광장: 이웃이 같으면 이어서, 가장자리는 둥글게
-    function blob(type, fill, edge, inset) {
-      [0, 1].forEach(function (pass) {   // 테두리를 먼저 다 그리고, 안쪽을 나중에 칠해서 칸 사이 줄이 안 보이게
-        for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
-          if (!same(x, y)) continue;
-          var l = same(x - 1, y), rr = same(x + 1, y), u = same(x, y - 1), d = same(x, y + 1);
-          var x0 = x * T + (l ? 0 : inset), x1 = x * T + T - (rr ? 0 : inset), y0 = y * T + (u ? 0 : inset), y1 = y * T + T - (d ? 0 : inset);
-          if (!pass) { g.fillStyle = edge; rect(x0 - 2, y0 - 2, x1 - x0 + 4, y1 - y0 + 4, l, rr, u, d); }
-          else { g.fillStyle = fill; rect(x0 - (l ? 1 : 0), y0 - (u ? 1 : 0), x1 - x0 + (l ? 1 : 0) + (rr ? 1 : 0), y1 - y0 + (u ? 1 : 0) + (d ? 1 : 0), l, rr, u, d); }
-        }
-      });
-      function same(a, b) { if (a < 0 || b < 0 || a >= W || b >= H) return false; var t = G[b * W + a]; return type.indexOf(t) >= 0; }
-    }
+    // 풀밭 전체, 군데군데 꽃밭
+    g.fillStyle = P('grass1', '#a7dc8a'); g.fillRect(0, 0, W * T, H * T);
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) if (G[y * W + x] === 0 && r() < 0.025) { g.fillStyle = P('flowers', '#b6e49b'); g.globalAlpha = 0.9; g.beginPath(); g.ellipse(x * T + T / 2, y * T + T / 2, T * 0.9, T * 0.6, 0, 0, 7); g.fill(); g.globalAlpha = 1; }
+    // 물·모래: 이웃이 같으면 이어서, 가장자리는 둥글게
     function rect(x0, y0, w, h, l, rr, u, d) {
-      var rad = 7; g.beginPath();
+      var rad = 9; g.beginPath();
       g.moveTo(x0 + (u || l ? 0 : rad), y0); g.lineTo(x0 + w - (u || rr ? 0 : rad), y0);
       g.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + (u || rr ? 0 : rad)); g.lineTo(x0 + w, y0 + h - (d || rr ? 0 : rad));
       g.quadraticCurveTo(x0 + w, y0 + h, x0 + w - (d || rr ? 0 : rad), y0 + h); g.lineTo(x0 + (d || l ? 0 : rad), y0 + h);
       g.quadraticCurveTo(x0, y0 + h, x0, y0 + h - (d || l ? 0 : rad)); g.lineTo(x0, y0 + (u || l ? 0 : rad));
       g.quadraticCurveTo(x0, y0, x0 + (u || l ? 0 : rad), y0); g.fill();
     }
-    blob([1, 4], '#ead1a0', '#d6b77f', 3);
-    blob([5], '#e4dccd', '#cbbfa9', 2);
-    for (y = 13; y <= 19; y++) for (x = 13; x <= 22; x++) { g.strokeStyle = 'rgba(160,145,120,.13)'; g.strokeRect(x * T + 2, y * T + 2, T - 4, T - 4); }
-    // 물가: 풀과 만나는 곳에 밝은 테두리
-    for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
-      if (G[y * W + x] !== 2) continue;
-      [[0, -1], [0, 1], [-1, 0], [1, 0]].forEach(function (d) {
-        var nx = x + d[0], ny = y + d[1]; if (nx < 0 || ny < 0 || nx >= W || ny >= H) return; var t = G[ny * W + nx];
-        if (t === 2 || t === 4) return;
-        g.fillStyle = t === 3 ? '#fff6d8' : '#e9f6ff';
-        if (d[1] === -1) g.fillRect(x * T, y * T, T, 4); if (d[1] === 1) g.fillRect(x * T, y * T + T - 4, T, 4);
-        if (d[0] === -1) g.fillRect(x * T, y * T, 4, T); if (d[0] === 1) g.fillRect(x * T + T - 4, y * T, 4, T);
+    function blob(type, fill, edge, inset) {
+      function same(a, b) { if (a < 0 || b < 0 || a >= W || b >= H) return type.indexOf(G[Math.max(0, Math.min(H - 1, b)) * W + Math.max(0, Math.min(W - 1, a))]) >= 0; return type.indexOf(G[b * W + a]) >= 0; }
+      [0, 1].forEach(function (pass) {   // 테두리를 먼저 다 그리고, 안쪽을 나중에 칠해서 칸 사이 줄이 안 보이게
+        for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
+          if (!same(x, y)) continue;
+          var l = same(x - 1, y), rr = same(x + 1, y), u = same(x, y - 1), d = same(x, y + 1);
+          var x0 = x * T + (l ? 0 : inset), x1 = x * T + T - (rr ? 0 : inset), y0 = y * T + (u ? 0 : inset), y1 = y * T + T - (d ? 0 : inset);
+          if (!pass) { g.fillStyle = edge; rect(x0 - 3, y0 - 3, x1 - x0 + 6, y1 - y0 + 6, l, rr, u, d); }
+          else { g.fillStyle = fill; rect(x0 - (l ? 1 : 0), y0 - (u ? 1 : 0), x1 - x0 + (l ? 1 : 0) + (rr ? 1 : 0), y1 - y0 + (u ? 1 : 0) + (d ? 1 : 0), l, rr, u, d); }
+        }
       });
     }
-    // 다리 판자
+    blob([3], P('sand', '#f4e3b5'), '#e6cf95', 0);
+    blob([2, 4], P('water', '#79c4ea'), '#eaf7ff', 2);
+    // 다리와 선착장: 가로 판자, 양옆 난간
     for (y = 0; y < H; y++) for (x = 0; x < W; x++) if (G[y * W + x] === 4) {
-      g.fillStyle = '#c99a5b'; g.fillRect(x * T, y * T, T, T);
-      g.strokeStyle = '#9c6f3a'; g.lineWidth = 2; for (var p = 0; p < 4; p++) { g.beginPath(); g.moveTo(x * T, y * T + p * 8 + 1); g.lineTo(x * T + T, y * T + p * 8 + 1); g.stroke(); }
+      g.fillStyle = P('plankh', '#c99a5b'); g.fillRect(x * T, y * T - 2, T, T + 4);
+      var lw = G[y * W + x - 1] === 4, rw = G[y * W + x + 1] === 4;
+      g.fillStyle = '#8a5a2b';
+      if (!lw) { g.fillRect(x * T - 3, y * T - 4, 6, T + 8); g.beginPath(); g.arc(x * T, y * T + 2, 5, 0, 7); g.fill(); }
+      if (!rw) { g.fillRect(x * T + T - 3, y * T - 4, 6, T + 8); g.beginPath(); g.arc(x * T + T, y * T + 2, 5, 0, 7); g.fill(); }
     }
+    blob([1], P('path', '#ead1a0'), '#d2b07a', 3);
+    blob([5], P('plaza', '#e4dccd'), '#c9b99c', 2);
     ground = c;
   }
 
@@ -217,7 +234,8 @@
     ctx.drawImage(ground, cam.x * groundScale, cam.y * groundScale, vw * groundScale, vh * groundScale, 0, 0, vw, vh);
     ctx.translate(-cam.x, -cam.y);
     // 물체와 캐릭터를 아래쪽(y)이 큰 순서로 그려 앞뒤를 맞춘다
-    var list = OBJ.filter(function (o) { var oy = o.y * T; return oy > cam.y - 40 && oy < cam.y + vh + 200; }).map(function (o) { return { y: o.y, o: o }; });
+    OBJ.forEach(function (o) { if (o.under) drawObj(o); });
+    var list = OBJ.filter(function (o) { var oy = o.y * T; return !o.under && oy > cam.y - 40 && oy < cam.y + vh + 260; }).map(function (o) { return { y: o.z || o.y, o: o }; });
     [me].concat(npcs).forEach(function (a) { var p = pos(a); list.push({ y: p.y + 1, a: a, p: p }); });
     list.sort(function (A, B) { return A.y - B.y; });
     list.forEach(function (it) { if (it.o) drawObj(it.o); else drawActor(it.a, it.p, now); });
@@ -242,66 +260,58 @@
     ctx.fillStyle = roof; ctx.beginPath(); ctx.moveTo(X - 4, Y + HH * 0.48); ctx.lineTo(X + WW / 2, Y - 6); ctx.lineTo(X + WW + 4, Y + HH * 0.48); ctx.closePath(); ctx.fill(); ctx.stroke();
     var dw = T * 0.7; ctx.fillStyle = '#8a5a2b'; roundRect(X + WW / 2 - dw / 2, Y + HH - T * 0.95, dw, T * 0.95 - 2, 6); ctx.fill(); ctx.stroke();
   }
+  // 그림을 가로 w칸 너비로, 아래쪽 가운데가 (x, y) 칸 좌표에 오게 그린다
+  function sprite(name, x, y, w, flip) {
+    var im = img(WI + name + '.png'); if (!im) return false;
+    var dw = w * T, dh = dw * im.naturalHeight / im.naturalWidth, X = x * T - dw / 2, Y = y * T - dh;
+    if (flip) { ctx.save(); ctx.translate(X + dw, Y); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, dw, dh); ctx.restore(); }
+    else ctx.drawImage(im, X, Y, dw, dh);
+    return { top: Y, h: dh };
+  }
   function drawObj(o) {
-    var X, Y, im;
-    if (o.kind === 'tree') {
-      X = o.x * T; Y = (o.y - 1) * T; im = img(IMG['tree' + o.v] || IMG.tree);
-      if (im) { ctx.drawImage(im, X - T * 0.35, Y - T * 1.1, T * 1.7, T * 2.1); return; }
-      ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T - 3, T * 0.42, T * 0.18, 0, 0, 7); ctx.fill();
-      ctx.fillStyle = '#8a5a2b'; ctx.fillRect(X + T * 0.4, Y + T * 0.35, T * 0.2, T * 0.6);
-      ctx.fillStyle = ['#5fae55', '#4f9e4a', '#ff9fc0'][o.v]; ctx.strokeStyle = '#3c6e2f'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(X + T / 2, Y + T * 0.1, T * 0.55, 0, 7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.arc(X + T * 0.35, Y - T * 0.05, T * 0.18, 0, 7); ctx.fill();
-    } else if (o.kind === 'flower') {
-      emoji(['🌼', '🌸', '🌷'][o.v], o.x * T + T / 2, (o.y - 1) * T + T / 2, 14);
-    } else if (o.kind === 'shell') {
-      emoji('🐚', o.x * T + T / 2, (o.y - 1) * T + T / 2, 13);
-    } else if (o.kind === 'build') {
-      var b = o.b; im = img(IMG['b_' + b.id]);
-      if (im) ctx.drawImage(im, b.x * T - 6, b.y * T - T, b.w * T + 12, b.h * T + T);
-      else { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); }
-      label(b.name, (b.x + b.w / 2) * T, b.y * T - 8);
-      if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, b.y * T, 18);
+    var X, Y, r;
+    if (o.kind === 'img') { sprite(o.src, o.x, o.y + (o.flat ? -0.1 : 0.05), o.w); }
+    else if (o.kind === 'label') { label(o.text, o.x * T, o.y * T); }
+    else if (o.kind === 'shell') { emoji('🐚', o.x * T + T / 2, (o.y - 1) * T + T / 2, 13); }
+    else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0.8); }
+    else if (o.kind === 'build') {
+      var b = o.b, nm = b.id === 'home' ? 'h-pink' : 'b-' + b.id;
+      r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.w + (b.id === 'home' ? 0.6 : 1));
+      if (!r) { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); r = { top: b.y * T }; }
+      label(b.name, (b.x + b.w / 2) * T, r.top + 4);
+      if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, r.top + 10, 18);
     } else if (o.kind === 'lot') {
       var l = o.lot, c = residentAt(l.k);
       if (c) {
-        im = img(IMG['house_' + c.id]);
-        if (im) ctx.drawImage(im, l.x * T - 6, l.y * T - T, 3 * T + 12, 4 * T);
-        else house(l.x, l.y, 3, 3, HOUSE_COL[c.id] || '#fff', '#c46b6b');
-        label(c.name + (M.V.hearts(c.id) ? ' ♥' + M.V.hearts(c.id) : ''), (l.x + 1.5) * T, l.y * T - 8);
+        r = sprite('h-' + c.id, l.x + 1.5, l.y + 3.15, 3.5);
+        if (!r) { house(l.x, l.y, 3, 3, HOUSE_COL[c.id] || '#fff', '#c46b6b'); r = { top: l.y * T }; }
+        label(c.name + (M.V.hearts(c.id) ? ' ♥' + M.V.hearts(c.id) : ''), (l.x + 1.5) * T, r.top + 2);
       } else if (l.k === M.V.residents().length && M.V.nextMover()) {
-        ctx.strokeStyle = '#b98a52'; ctx.setLineDash([6, 5]); ctx.lineWidth = 2; ctx.strokeRect(l.x * T + 4, l.y * T + 4, 3 * T - 8, 3 * T - 8); ctx.setLineDash([]);
-        emoji('🚧', (l.x + 1.5) * T, (l.y + 1.5) * T, 22); label('이사 예정', (l.x + 1.5) * T, l.y * T + 2);
+        r = sprite('b-lot', l.x + 1.5, l.y + 3.1, 3.6);
+        sprite('m-boxes', l.x + 0.9, l.y + 2.4, 1.3);
+        label('이사 예정', (l.x + 1.5) * T, (r ? r.top : l.y * T) + 4);
       }
     } else if (o.kind === 'board') {
-      X = o.x * T; Y = (o.y - 1) * T;
-      ctx.fillStyle = '#8a5a2b'; ctx.fillRect(X + 6, Y + 12, 4, 20); ctx.fillRect(X + T - 10, Y + 12, 4, 20);
-      ctx.fillStyle = '#c99a5b'; ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = 2; roundRect(X - 4, Y - 8, T + 8, 24, 4); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.fillRect(X + 2, Y - 4, 10, 12); ctx.fillRect(X + 16, Y - 3, 10, 10);
-      label('게시판', X + T / 2, Y - 18); if (M.V.boardNews()) emoji('❗', X + T + 4, Y - 10, 16);
-    } else if (o.kind === 'pierSign') {
-      emoji('🎣', o.x * T + T / 2, (o.y - 1) * T + T / 2, 20); label('낚시터', o.x * T + T / 2, (o.y - 1) * T - 6);
+      r = sprite('b-board', o.x + 1, o.y + 0.05, 2.2);
+      label('게시판', (o.x + 1) * T, (r ? r.top : (o.y - 2) * T) + 2);
+      if (M.V.boardNews()) emoji('❗', (o.x + 2.1) * T, (r ? r.top : (o.y - 2) * T) + 8, 16);
     }
   }
+  // 토끼: ch-rabbit<단계>-<front|back|side><1|2>, 주민: ch-<id>-<front|back|side>. 옆모습 그림은 오른쪽을 본다
   function drawActor(a, p, now) {
-    var X = p.x * T, Y = p.y * T, walking = a.t < 1, bob = walking ? Math.abs(Math.sin(now / 70)) * 4 : 0;
+    var X = p.x * T, Y = p.y * T, walking = a.t < 1 || (a.path && a.path.length), step = Math.floor(now / 160) % 2;
+    var bob = walking ? Math.abs(Math.sin(now / 80)) * 2.5 : 0;
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T - 3, T * 0.34, T * 0.13, 0, 0, 7); ctx.fill();
-    var key = a.kind === 'me' ? 'ch_rabbit' : 'ch_' + a.id, sheet = img(IMG[key]);
-    var size = T * 1.45, dx = X + T / 2 - size / 2, dy = Y + T - size - bob + 2;
-    ctx.save();
-    if (sheet) {   // 앞·뒤·왼쪽 세 칸짜리 그림
-      var fw = sheet.naturalWidth / 3, col = a.d === 'up' ? 1 : a.d === 'down' ? 0 : 2;
-      if (a.d === 'right') { ctx.translate(dx + size, 0); ctx.scale(-1, 1); dx = 0; }
-      ctx.drawImage(sheet, fw * col, 0, fw, sheet.naturalHeight, dx, dy, size, size * sheet.naturalHeight / fw);
-    } else {
-      var src = a.kind === 'me' ? M.petImg('normal') : M.custImg(a.id), im = img(src);
-      if (a.d === 'left' && a.kind === 'me' || a.d === 'right' && a.kind !== 'me') { ctx.translate(dx + size, 0); ctx.scale(-1, 1); dx = 0; }
-      if (im) ctx.drawImage(im, dx, dy, size, size);
+    var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
+    var name = a.kind === 'me' ? 'ch-rabbit' + M.petStage() + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
+    var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, a.kind === 'me' ? 1.25 : 1.3, flip);
+    if (!r) {
+      var src = a.kind === 'me' ? M.petImg('normal') : M.custImg(a.id), im = img(src), size = T * 1.45;
+      if (im) ctx.drawImage(im, X + T / 2 - size / 2, Y + T - size, size, size);
     }
-    ctx.restore();
     if (a.kind === 'npc') {
       var mq = M.miniAvail && M.miniAvail(a.id);
-      if (mq) emoji('❗', X + T * 0.95, Y - T * 0.45, 15);
+      if (mq) emoji('❗', X + T * 0.95, (r ? r.top : Y - T * 0.45) + 6, 15);
     }
   }
 
@@ -373,7 +383,7 @@
   // ---------- 붙이기 ----------
   M.World = {
     mount: function (root) {
-      build(); if (!ground) drawGround();
+      build(); if (!ground) { if (!tilesReady) { loadTiles(function () { tilesReady = true; ground = null; drawGround(); }); } drawGround(); }
       var w = Wst();
       if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 17; me.y = me.py = me.ty = 22; } }
       syncNpcs();
