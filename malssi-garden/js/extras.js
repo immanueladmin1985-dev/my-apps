@@ -37,7 +37,7 @@
     var x = X(), m = x.mail[i], c = M.custOf(m.from), lang = M.P.lang, o = OPEN[lang] || OPEN.en, cl = CLOSE[lang] || CLOSE.en;
     var opts = M.shuffle([m.k].concat(m.wrong));
     var d = M.modal('<div class="letter"><img class="lt-env" src="img/w/mail-open.png" alt=""><div class="lt-from"><img src="' + M.custImg(m.from) + '" alt=""><b>' + esc(c.name) + '</b></div>' +
-      '<p class="lt-body lang-' + lang + '">' + esc(o[0]) + '<br><button class="lt-line" data-say="' + esc(m.say) + '">🔊 ' + esc(m.t) + '</button><br>' + esc(cl[0]) + '</p></div>' +
+      '<p class="lt-body lang-' + lang + '">' + esc(o[0]) + '<br><button class="lt-line" data-say="' + esc(m.say) + '">🔊 ' + M.fz(m.t, lang) + '</button><br>' + esc(cl[0]) + '</p></div>' +
       (m.read ? '<p class="center"><b>' + esc(m.k) + '</b></p><button class="btn primary wide" data-close>닫기</button>' :
         '<p class="hint center">가운데 문장은 무슨 뜻일까요? 맞히면 선물을 받아요</p><div class="copts">' + opts.map(function (k) { return '<button class="copt" data-k="' + esc(k) + '">' + esc(k) + '</button>'; }).join('') + '</div>'));
     M.say(m.say, lang, false, false, 'A');

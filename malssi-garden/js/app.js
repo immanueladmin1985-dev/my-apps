@@ -253,6 +253,7 @@
       tg('sound', '효과음') +
       '<label class="sel"><span>효과음 느낌</span><select data-sfx>' + M.SFX_THEMES.map(function (t) { return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('') + '</select></label>' +
       tg('autoAudio', '발음 자동으로 듣기') +
+      tg('furi', '한자 위에 읽기(후리가나) 표시', '일본어 한자 위에 히라가나를 작게 달아요') +
       tg('speak', '따라 말하기 문제', M.speechOK() ? '마이크로 발음을 확인해요' : '이 브라우저는 음성 인식을 지원하지 않아요') +
       '<label class="sel"><span>발음 빠르기</span><select data-v="rate"><option value="0.7">느리게</option><option value="0.9">보통</option><option value="1.05">빠르게</option></select></label>' +
       '<label class="sel"><span>하루 목표</span><select data-v="goal"><option value="1">1판</option><option value="2">2판</option><option value="3">3판</option><option value="5">5판</option></select></label>' +

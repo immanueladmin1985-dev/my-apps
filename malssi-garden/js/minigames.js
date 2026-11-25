@@ -368,8 +368,8 @@
       if (n >= list.length) { finish(g, list.length * 20); return; }
       var x = list[n++], opts = M.shuffle([x.a].concat((x.alts || []).map(function (a) { return a.t; }), x.w.slice(0, 3 - (x.alts || []).length))), t0 = Date.now(), tries = 0;
       var right = function (o) { return o === x.a || (x.alts || []).some(function (a) { return a.t === o; }); };
-      $('mBody').innerHTML = '<div class="cafe"><img class="cafeimg" src="img/mg-cafe.png" alt=""><div class="cguest"><span class="gface">' + guests[(n * 3) % guests.length] + '</span><button class="cbub lang-' + lang + '" data-say="' + esc(x.p) + '"><b>' + esc(x.p) + '</b>' + (x.pr ? '<small>' + esc(x.pr) + '</small>' : '') + '<em>' + esc(x.pk || '') + '</em></button></div><div class="cme">🐱 내 대답은? <small>' + n + ' / ' + list.length + '</small></div>' +
-        '<div class="copts">' + opts.map(function (o, i) { return '<button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(o) + '</button>'; }).join('') + '</div></div>';
+      $('mBody').innerHTML = '<div class="cafe"><img class="cafeimg" src="img/mg-cafe.png" alt=""><div class="cguest"><span class="gface">' + guests[(n * 3) % guests.length] + '</span><button class="cbub lang-' + lang + '" data-say="' + esc(x.p) + '"><b>' + M.fz(x.p, lang) + '</b>' + (x.pr ? '<small>' + esc(x.pr) + '</small>' : '') + '<em>' + esc(x.pk || '') + '</em></button></div><div class="cme">🐱 내 대답은? <small>' + n + ' / ' + list.length + '</small></div>' +
+        '<div class="copts">' + opts.map(function (o, i) { return '<button class="copt lang-' + lang + '" data-i="' + i + '">' + M.fz(o, lang) + '</button>'; }).join('') + '</div></div>';
       setTimeout(function () { if (g.alive) M.say(x.p, lang, false, false, 'A'); }, 250);
       document.querySelector('.cbub').onclick = function () { M.say(x.p, lang, false, false, 'A'); };
       Array.prototype.forEach.call(document.querySelectorAll('.copt'), function (b) {

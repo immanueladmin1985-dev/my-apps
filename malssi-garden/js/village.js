@@ -179,7 +179,7 @@
     var chat = d.querySelector('#tChat'), opts = d.querySelector('#tOpts');
     function bubble(t, k, me, r) {
       var b = document.createElement('button'); b.className = 'cb ' + (me ? 'me' : 'you'); b.dataset.say = t; b.dataset.who = me ? 'B' : 'A';
-      b.innerHTML = '<b>' + esc(t) + '</b>' + (r ? '<span class="dr">' + esc(r) + '</span>' : '') + '<small>' + esc(k) + '</small>';
+      b.innerHTML = '<b>' + M.fz(t, lang) + '</b>' + (r ? '<span class="dr">' + esc(r) + '</span>' : '') + '<small>' + esc(k) + '</small>';
       chat.appendChild(b); chat.scrollTop = chat.scrollHeight;
     }
     function step() {
@@ -191,7 +191,7 @@
       total++;
       var right = [x.a].concat((x.alts || []).map(function (a) { return a.t; }));
       var list = M.shuffle(right.concat(x.w.slice(0, Math.max(1, 3 - right.length))));
-      opts.innerHTML = '<div class="cme">💬 내 차례예요</div>' + list.map(function (o, k) { return '<button class="copt lang-' + lang + '" data-o="' + k + '">' + esc(o) + '</button>'; }).join('');
+      opts.innerHTML = '<div class="cme">💬 내 차례예요</div>' + list.map(function (o, k) { return '<button class="copt lang-' + lang + '" data-o="' + k + '">' + M.fz(o, lang) + '</button>'; }).join('');
       var tries = 0;
       Array.prototype.forEach.call(opts.querySelectorAll('.copt'), function (b) {
         b.onclick = function () {

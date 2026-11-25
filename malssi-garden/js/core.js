@@ -4,6 +4,40 @@
   var M = window.M = {};
   var KEY = 'malssi-garden-v1';
   M.$ = function (id) { return document.getElementById(id); };
+  // 한자 위에 읽기(후리가나)를 단다. 읽기는 앱의 일본어 낱말 목록(한자 낱말|읽기)에서 찾는다.
+  // 동사·형용사는 한자 부분과 바로 뒤 가나 한 글자가 같을 때만 단다 (食べる → 食べます의 食)
+  var FURI = null, HANRE = /[\u4e00-\u9fff々]/;
+  function furiList() {
+    if (FURI) return FURI; FURI = []; var seen = {};
+    (window.LANGS && window.LANGS.ja ? window.LANGS.ja.stages : []).forEach(function (st) { (st.items || []).forEach(function (it) {
+      var t = String(it.t || '').replace(/[～~]/g, ''), r = String(it.r || '').split(' · ')[0].split('・')[0].replace(/[～~\s]/g, '');
+      if (!t || !r || !HANRE.test(t) || /[^\u3040-\u30ff\u4e00-\u9fff々ー]/.test(t) || /[^\u3040-\u30ffー]/.test(r)) return;
+      var k = t, rr = r, tail = '';
+      while (k.length > 1 && !HANRE.test(k.charAt(k.length - 1)) && k.charAt(k.length - 1) === rr.charAt(rr.length - 1)) { tail = k.charAt(k.length - 1); k = k.slice(0, -1); rr = rr.slice(0, -1); }
+      if (/^[\u3040-\u30ff]/.test(k) || !rr || rr === k) return;
+      var key = k + '|' + tail; if (seen[key]) return; seen[key] = 1;
+      FURI.push({ k: k, r: rr, tail: k === t ? '' : tail });
+    }); });
+    ('田中:たなか 山田:やまだ 佐藤:さとう 鈴木:すずき 東京:とうきょう 京都:きょうと 大阪:おおさか 韓国:かんこく 日本:にほん 中国:ちゅうごく 料理:りょうり 学校:がっこう 駅:えき 映画:えいが 先生:せんせい 学生:がくせい 店内:てんない 三線:さんせん 線:せん 手洗:てあら 手伝:てつだ 頑張:がんば 有難:ありがと 貴方:あなた 寿司:すし 鮨:すし 馳走:ちそう 主婦:しゅふ 家族:かぞく 私:わたし 茶:ちゃ 箸:はし 水:みず 子:こ 名前:なまえ 気:き 金曜日:きんようび 木曜日:もくようび 水曜日:すいようび 一:いち 二:に 三:さん 四:よん 五:ご 六:ろく 七:なな 八:はち 九:きゅう 十:じゅう 百:ひゃく 千:せん 万:まん 円:えん 時:じ 分:ふん 人:ひと 日:ひ 月:つき 年:ねん 今日:きょう 明日:あした 昨日:きのう 毎日:まいにち 会社員:かいしゃいん 引越:ひっこ 引:ひ 越:こ 謝:あやま 美:うつく').split(' ').forEach(function (w) { var a = w.split(':'), key = a[0] + '|'; if (!seen[key]) { seen[key] = 1; FURI.push({ k: a[0], r: a[1], tail: '' }); } });
+    ['て', 'ま', 'た'].forEach(function (t) { FURI.push({ k: '来', r: 'き', tail: t }); }); FURI.push({ k: '来', r: 'こ', tail: 'な' }); FURI.push({ k: '来', r: 'こ', tail: 'よ' });
+    FURI.sort(function (a, b) { return b.k.length - a.k.length || b.tail.length - a.tail.length; });
+    return FURI;
+  }
+  M.furi = function (text) {
+    text = String(text == null ? '' : text);
+    if (!HANRE.test(text) || (M.P && M.P.set && M.P.set.furi === false)) return M.esc(text);
+    var L = furiList(), out = '', i = 0;
+    while (i < text.length) {
+      if (!HANRE.test(text.charAt(i))) { out += M.esc(text.charAt(i)); i++; continue; }
+      var hit = null;
+      for (var j = 0; j < L.length; j++) { var e = L[j]; if (text.substr(i, e.k.length) === e.k && (!e.tail || text.charAt(i + e.k.length) === e.tail)) { hit = e; break; } }
+      if (!hit) for (j = 0; j < L.length; j++) { e = L[j]; if (e.tail && /[\u3040-\u309f]/.test(e.tail) && text.substr(i, e.k.length) === e.k && /[\u3040-\u309f]/.test(text.charAt(i + e.k.length) || '')) { hit = e; break; } }
+      if (hit) { out += '<ruby>' + M.esc(hit.k) + '<rt>' + M.esc(hit.r) + '</rt></ruby>'; i += hit.k.length; }
+      else { out += M.esc(text.charAt(i)); i++; }
+    }
+    return out;
+  };
+  M.fz = function (text, lang) { return lang === 'ja' ? M.furi(text) : M.esc(text); };
   M.esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   M.fmt = function (n) { return Number(n || 0).toLocaleString('ko-KR'); };
   M.rand = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };
@@ -46,7 +80,7 @@
       admin: { pin: '', weekBonus: 30, rate: 10 },
       requests: [],
       gifts: [],
-      set: { sound: true, autoAudio: true, speak: true, rate: 0.9, autoFS: true, wake: true, goal: 2 },
+      set: { sound: true, autoAudio: true, speak: true, furi: true, rate: 0.9, autoFS: true, wake: true, goal: 2 },
       ui: { installDismissed: false, seenGarden: false, seenHome: false, seenShop: false },
       stats: { lessons: 0, perfect: 0, merges: 0, harvest: 0, golden: 0, speak: 0, correct: 0 }
     };

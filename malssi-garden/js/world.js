@@ -280,8 +280,13 @@
     var dt = Math.min(60, now - (lastT || now)); lastT = now;
     stepActor(me, dt); npcs.forEach(function (n) { npcThink(n, dt); stepActor(n, dt); });
     var vw = cv.clientWidth, vh = cv.clientHeight, mp = pos(me);
-    cam.x = Math.max(0, Math.min(W * T - vw, (mp.x + 0.5) * T - vw / 2));
-    cam.y = Math.max(0, Math.min(H * T - vh, (mp.y + 0.5) * T - vh / 2));
+    // 시야: 손가락으로 끌어 옮긴 동안은 그 자리, 아니면 토끼를 부드럽게 따라간다
+    var fx = (mp.x + 0.5) * T - vw / 2, fy = (mp.y + 0.5) * T - vh / 2;
+    if (freeCam) { fx = freeCam.x; fy = freeCam.y; }
+    fx = Math.max(0, Math.min(W * T - vw, fx)); fy = Math.max(0, Math.min(H * T - vh, fy));
+    if (freeCam) { freeCam.x = fx; freeCam.y = fy; cam.x = fx; cam.y = fy; }
+    else if (camEase) { var k = Math.min(1, dt / 120); cam.x += (fx - cam.x) * k; cam.y += (fy - cam.y) * k; if (Math.abs(fx - cam.x) + Math.abs(fy - cam.y) < 1) camEase = false; }
+    else { cam.x = fx; cam.y = fy; }
     var sc = cv.width / vw;
     ctx.setTransform(sc, 0, 0, sc, 0, 0);
     ctx.drawImage(ground, cam.x * groundScale, cam.y * groundScale, vw * groundScale, vh * groundScale, 0, 0, vw, vh);
@@ -467,10 +472,26 @@
     return false;
   }
 
+  // ---------- 시야 옮기기: 한 손가락으로 끌거나 두 손가락으로 밀기 ----------
+  var freeCam = null, camEase = false, ptrs = {}, panFrom = null, panned = 0;
+  function onDown(e) { ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; panFrom = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, n: Object.keys(ptrs).length }; }
+  function onMove(e) {
+    if (!ptrs[e.pointerId]) return;
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ks = Object.keys(ptrs), mx = 0, my = 0; ks.forEach(function (k) { mx += ptrs[k].x; my += ptrs[k].y; }); mx /= ks.length; my /= ks.length;
+    if (!panFrom || panFrom.n !== ks.length) { panFrom = { x: mx, y: my, cx: cam.x, cy: cam.y, n: ks.length }; return; }
+    var dx = mx - panFrom.x, dy = my - panFrom.y;
+    if (!freeCam && Math.abs(dx) + Math.abs(dy) < 12) return;   // 조금 움직인 건 누르기로 본다
+    freeCam = { x: panFrom.cx - dx, y: panFrom.cy - dy }; panned = Date.now(); e.preventDefault();
+  }
+  function onUp(e) { delete ptrs[e.pointerId]; panFrom = null; }
+
   // ---------- 누르기 ----------
   var tapMark = null;
   function onTap(e) {
+    if (Date.now() - panned < 250) return;   // 시야를 옮긴 직후의 손 뗌은 누르기가 아니다
     var r = cv.getBoundingClientRect(), wx = e.clientX - r.left + cam.x, wy = e.clientY - r.top + cam.y;
+    if (freeCam) { freeCam = null; camEase = true; }   // 옮긴 시야에서 누르면 토끼 쪽으로 돌아가며 걸어간다
     var tx = Math.floor(wx / T), ty = Math.floor(wy / T);
     // 주민을 눌렀나 (그림이 칸보다 커서 조금 넉넉하게 본다)
     var hit = npcs.filter(function (n) { if (n.asleep) return false; var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
@@ -556,6 +577,9 @@
       var fit = function () { var dpr = Math.min(3, window.devicePixelRatio || 1), r = cv.getBoundingClientRect(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); };
       fit(); window.removeEventListener('resize', M.World._fit); M.World._fit = fit; window.addEventListener('resize', fit);
       cv.addEventListener('click', onTap);
+      cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove, { passive: false });
+      cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', onUp); cv.addEventListener('pointerleave', onUp);
+      freeCam = null;
       mounted = root; lastT = 0;
       if (!raf) raf = requestAnimationFrame(draw);
       if (M.moveInCheck) M.moveInCheck();

@@ -172,6 +172,8 @@
   function sizeCls(t) { var n = String(t).replace(/\s/g, '').length; return n > 9 ? ' xl' : n > 5 ? ' lg' : n > 3 ? ' md' : ''; }
   var HAN = /[\u4e00-\u9fff]/;
   function jaKanji(o) { return o.lang === 'ja' && o.r && HAN.test(o.t); }   // 한자 단어는 읽는 법을 같이 보여 준다
+  // 한자 낱말 하나: 읽기 전체를 위에 단다 (食べる → たべる)
+  function rubyW(it) { var r = String(it.r).split(' · ')[0]; if (M.P.set.furi === false) return esc(it.t) + '<small class="fr2">' + esc(r) + '</small>'; return '<ruby>' + esc(it.t) + '<rt>' + esc(r) + '</rt></ruby>'; }
   function foot(html, cls) { var f = $('lFoot'); f.className = 'lfoot' + (cls ? ' ' + cls : ''); f.innerHTML = html; }
   // 혀 위치 단면도 (오른쪽을 보는 옆얼굴). L: 혀끝이 윗잇몸에 닿음, R: 혀끝을 말아 어디에도 닿지 않음 + 입술 동그랗게
   function mouthSvg(kind) {
@@ -207,8 +209,8 @@
       var tip = it.lang === 'ja' && it.kana && window.TIPS[it.t];
       h = '<div class="qt"><span class="newtag">새로 배워요</span></div><div class="teach lang-' + it.lang + '">' +
         (it.e ? '<div class="bigE">' + it.e + '</div>' : '') +
-        '<button class="tt' + sizeCls(it.t) + '" data-say="' + esc(it.say) + '">' + esc(it.t) + '</button>' +
-        (it.r ? '<div class="tr">' + esc(it.r) + '</div>' : '') +
+        '<button class="tt' + sizeCls(it.t) + '" data-say="' + esc(it.say) + '">' + (jaKanji(it) ? rubyW(it) : esc(it.t)) + '</button>' +
+        (it.r && !jaKanji(it) ? '<div class="tr">' + esc(it.r) + '</div>' : jaKanji(it) && it.r.indexOf(' · ') > 0 ? '<div class="tr">' + esc(it.r) + '</div>' : '') +
         '<div class="tk">' + esc(it.k) + '</div>' +
         '<div class="tsay">' + sayBtn(it.say, true) + '</div>' +
         (tip ? '<div class="tip">💡 ' + esc(tip) + '</div>' : '') + '</div>';
@@ -220,46 +222,46 @@
     } else if (q.type === 'dialog') {
       var dg = q.stage;
       h = '<div class="qt"><span class="newtag">대화를 들어 봐요</span> <button class="say mini" data-sayall="1">▶ 전체 듣기</button></div><div class="dlg lang-' + dg.lang + '"><h3>' + esc(dg.title) + '</h3><p class="dlgme">오른쪽 초록 말풍선이 내 역할이에요. 잘 듣고 내 대사를 익혀 두세요</p>' +
-        dg.dlg.map(function (d, i) { return '<button class="dl ' + (d.who === 'A' ? 'a' : 'b') + '" data-say="' + esc(d.t) + '" data-who="' + d.who + '" data-dl="' + i + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>' +
-          d.alts.map(function (a) { return '<button class="dl b alt" data-say="' + esc(a.t) + '" data-who="' + d.who + '"><em>또는</em><b>' + esc(a.t) + '</b>' + (a.r ? '<span class="dr">' + esc(a.r) + '</span>' : '') + '<small>' + esc(a.k) + '</small></button>'; }).join(''); }).join('') + '</div>';
+        dg.dlg.map(function (d, i) { return '<button class="dl ' + (d.who === 'A' ? 'a' : 'b') + '" data-say="' + esc(d.t) + '" data-who="' + d.who + '" data-dl="' + i + '"><b>' + M.fz(d.t, dg.lang) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>' +
+          d.alts.map(function (a) { return '<button class="dl b alt" data-say="' + esc(a.t) + '" data-who="' + d.who + '"><em>또는</em><b>' + M.fz(a.t, dg.lang) + '</b>' + (a.r ? '<span class="dr">' + esc(a.r) + '</span>' : '') + '<small>' + esc(a.k) + '</small></button>'; }).join(''); }).join('') + '</div>';
     } else if (q.type === 'rule') {
       var g = q.stage;
       h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
-        '<div class="rex">' + g.xf.slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + esc(x.p) + '</span><b>' + esc(x.item.t) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + '</div></div>';
+        '<div class="rex">' + g.xf.slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + M.fz(x.p, g.lang) + '</span><b>' + M.fz(x.item.t, g.lang) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + '</div></div>';
     } else if (q.type === 'xform') {
       if (q.audio) h = '<div class="qt">잘 듣고 알맞은 대답을 골라 보세요</div><div class="qcard listen">' + sayBtn(q.audio, true) + '</div>';
-      else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { d = (S.alt && S.alt[d.i]) || d; return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '" data-who="' + (d.me ? 'B' : 'A') + '"><b>' + esc(d.t) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';
-      else if (q.sub != null) h = '<div class="qt">알맞은 대답을 골라 보세요</div><div class="qcard"><div class="face lang-' + q.item.lang + '"><div class="ft lg">' + esc(q.p) + '</div>' + (q.pr ? '<div class="fr">' + esc(q.pr) + '</div>' : '') + '</div><div class="fk sm">' + esc(q.sub) + '</div>' + sayBtn(q.p) + '</div>';
-      else h += '<div class="qcard ko"><div class="fk lang-' + q.item.lang + '">' + esc(q.p) + '</div><div class="fk sm">' + esc(q.item.k) + '</div></div>';
-      h += '<div class="opts xf">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span></button>'; }).join('') + '</div>';
+      else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { d = (S.alt && S.alt[d.i]) || d; return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '" data-who="' + (d.me ? 'B' : 'A') + '"><b>' + M.fz(d.t, q.item.lang) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';
+      else if (q.sub != null) h = '<div class="qt">알맞은 대답을 골라 보세요</div><div class="qcard"><div class="face lang-' + q.item.lang + '"><div class="ft lg">' + M.fz(q.p, q.item.lang) + '</div>' + (q.pr ? '<div class="fr">' + esc(q.pr) + '</div>' : '') + '</div><div class="fk sm">' + esc(q.sub) + '</div>' + sayBtn(q.p) + '</div>';
+      else h += '<div class="qcard ko"><div class="fk lang-' + q.item.lang + '">' + M.fz(q.p, q.item.lang) + '</div><div class="fk sm">' + esc(q.item.k) + '</div></div>';
+      h += '<div class="opts xf">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + M.fz(o.t, o.lang) + '</span></button>'; }).join('') + '</div>';
     } else if (q.type === 'steach') {
       var sn = q.sent, stg = stageOf(sn);
       h = '<div class="qt"><span class="newtag">문장을 배워요</span></div><div class="teach steach lang-' + sn.lang + '">' +
         '<div class="tk">' + esc(sn.k) + '</div>' +
-        '<button class="tt sm" data-say="' + esc(sn.say) + '">' + esc(sn.t) + '</button>' +
-        '<div class="gls">' + sn.w.map(function (w, wi) { var g = (sn.g && sn.g[wi]) || gloss(w, sn.lang); return '<button class="gl" data-say="' + esc(stg.kana && sn.lang === 'zh' ? '' : w) + '"><b>' + esc(w) + '</b><small>' + esc(g || '·') + '</small></button>'; }).join('') + '</div>' +
+        '<button class="tt sm" data-say="' + esc(sn.say) + '">' + M.fz(sn.t, sn.lang) + '</button>' +
+        '<div class="gls">' + sn.w.map(function (w, wi) { var g = (sn.g && sn.g[wi]) || gloss(w, sn.lang); return '<button class="gl" data-say="' + esc(stg.kana && sn.lang === 'zh' ? '' : w) + '"><b>' + M.fz(w, sn.lang) + '</b><small>' + esc(g || '·') + '</small></button>'; }).join('') + '</div>' +
         '<div class="tsay">' + sayBtn(sn.say, true) + '</div>' +
         (!stg.kana && window.ORDER_TIP ? '<div class="tip">💡 ' + esc(window.ORDER_TIP[sn.lang]) + '</div>' : '') + '</div>';
     } else if (q.type === 'meaning') {
-      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + esc(it.t) + '</div>' + (it.r && !it.kana ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div>' + sayBtn(it.say) + '</div>';
+      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + (jaKanji(it) ? rubyW(it) : esc(it.t)) + '</div>' + (it.r && !it.kana && !jaKanji(it) ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div>' + sayBtn(it.say) + '</div>';
       h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + (o.e ? '<span class="oe">' + o.e + '</span>' : '') + '<span>' + esc(o.k) + '</span></button>'; }).join('') + '</div>';
     } else if (q.type === 'target') {
       h += '<div class="qcard ko">' + (it.e ? '<div class="bigE">' + it.e + '</div>' : '') + '<div class="fk">' + esc(it.k) + '</div></div>';
-      h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(o.t) + '</span>' + (o.lang === 'zh' && !o.kana ? '<small>' + esc(o.r.split(' · ')[0]) + '</small>' : jaKanji(o) ? '<small>' + esc(o.r) + '</small>' : '') + '</button>'; }).join('') + '</div>';
+      h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + (jaKanji(o) ? rubyW(o) : esc(o.t)) + '</span>' + (o.lang === 'zh' && !o.kana ? '<small>' + esc(o.r.split(' · ')[0]) + '</small>' : '') + '</button>'; }).join('') + '</div>';
     } else if (q.type === 'listen') {
       h += '<div class="qcard listen">' + sayBtn(it.say, true) + '</div>';
       h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt tgt lang-' + o.lang + '" data-i="' + i + '"><span class="ot">' + esc(jaKanji(o) ? o.r : o.t) + '</span>' + (jaKanji(o) ? '<small>' + esc(o.t) + '</small>' : '') + '</button>'; }).join('') + '</div>';
     } else if (q.type === 'match') {
       var left = M.shuffle(q.items), right = M.shuffle(q.items);
-      h += '<div class="match"><div class="mcol">' + left.map(function (x) { return '<button class="mt lang-' + x.lang + '" data-side="l" data-k="' + esc(x.t) + '" data-say="' + esc(x.say) + '">' + esc(x.t) + (jaKanji(x) ? '<small class="mr">' + esc(x.r) + '</small>' : '') + '</button>'; }).join('') + '</div>' +
+      h += '<div class="match"><div class="mcol">' + left.map(function (x) { return '<button class="mt lang-' + x.lang + '" data-side="l" data-k="' + esc(x.t) + '" data-say="' + esc(x.say) + '">' + (jaKanji(x) ? rubyW(x) : esc(x.t)) + '</button>'; }).join('') + '</div>' +
         '<div class="mcol">' + right.map(function (x) { return '<button class="mt" data-side="r" data-k="' + esc(x.t) + '">' + (x.e ? x.e + ' ' : '') + esc(x.k) + '</button>'; }).join('') + '</div></div>';
       q.left = q.items.length; q.sel = null;
     } else if (q.type === 'build') {
       h += '<div class="qcard ko small"><div class="fk">' + esc(q.sent.k) + '</div></div>';
-      h += '<div class="slots lang-' + S.lang + '" id="bSlots"></div><div class="tiles lang-' + S.lang + '" id="bTiles">' + q.tiles.map(function (t) { return '<button class="tile" data-id="' + t.id + '">' + esc(t.w) + '</button>'; }).join('') + '</div>';
+      h += '<div class="slots lang-' + S.lang + '" id="bSlots"></div><div class="tiles lang-' + S.lang + '" id="bTiles">' + q.tiles.map(function (t) { return '<button class="tile" data-id="' + t.id + '">' + M.fz(t.w, S.lang) + '</button>'; }).join('') + '</div>';
       q.chosen = [];
     } else if (q.type === 'speak') {
-      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + esc(it.t) + '</div>' + (it.r ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div><div class="fk sm">' + esc(it.k) + '</div>' + sayBtn(it.say) + '</div>';
+      h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + (jaKanji(it) ? rubyW(it) : esc(it.t)) + '</div>' + (it.r && !jaKanji(it) ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div><div class="fk sm">' + esc(it.k) + '</div>' + sayBtn(it.say) + '</div>';
       h += '<div class="speak"><button class="mic" id="mic">🎤</button><div class="heard" id="heard">마이크를 누르고 말해 보세요</div></div>';
       q.fails = q.fails || 0;
     }
@@ -382,7 +384,7 @@
       if (tile.classList.contains('used')) return;
       q.chosen.push(id); tile.classList.add('used');
       var w = tileOf(q, id).w;
-      var c = document.createElement('button'); c.className = 'tile'; c.dataset.id = id; c.textContent = w;
+      var c = document.createElement('button'); c.className = 'tile'; c.dataset.id = id; c.innerHTML = M.fz(w, S.lang);
       $('bSlots').appendChild(c);
       if (q.mute) M.sfx('tap'); else M.say(w, S.lang);
     }
@@ -430,7 +432,7 @@
       heard.innerHTML = '들린 말: <b>' + esc(bm.h) + '</b>' + (score < 0.98 ? '<div class="sdiff lang-' + S.lang + '">' + speakDiff(bm.t, bm.h, S.lang) + '</div>' : '');
       var lr = S.lang === 'en' ? lrTip(bm.t, bm.h) : '';
       if (lr) heard.innerHTML += '<small class="sdtip lrtip">' + lr + '</small>';
-      if (score >= 0.6) { M.P.stats.speak++; judge(true, q, '발음이 좋아요! ' + Math.round(score * 100) + '점'); }
+      if (score >= 0.42) { M.P.stats.speak++; judge(true, q, '발음이 좋아요! ' + Math.round(score * 100) + '점'); }
       else {
         q.fails++;
         heard.innerHTML += '<small class="sdtip">빨간 부분이 다르게 들렸어요. 🔊로 그 부분을 잘 듣고 한 번 더 해 볼까요?' + (S.lang === 'ja' && /[\u4e00-\u9fff]/.test(bm.h) && !/[\u4e00-\u9fff]/.test(bm.t) ? '<br>※ 기계가 한자로 받아 적으면 맞게 말해도 다르게 보일 수 있어요.' : '') + '</small>';
