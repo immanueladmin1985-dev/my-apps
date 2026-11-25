@@ -77,6 +77,7 @@
     solid(17, 16); solid(18, 16); OBJ.push({ kind: 'img', src: 'x-fountain', x: 18, y: 17, h: 1.7 });
     solid(15, 19); OBJ.push({ kind: 'img', src: 'o-well', x: 15.5, y: 20, h: 1.5 });
     OBJ.push({ kind: 'market', x: 21.5, y: 15, tx: 21, ty: 14 });
+    solid(13, 16); OBJ.push({ kind: 'mailbox', x: 13.5, y: 17 });
     solid(20, 12); OBJ.push({ kind: 'img', src: 'x-signpost', x: 20.5, y: 13, h: 1.4 });
     [[24, 18, 'x-barrel', 1], [24, 19, 'x-applecrate', 0.9], [30, 18, 'x-flowercart', 1.1], [3, 17, 'x-tulipbox', 0.9], [9, 18, 'x-topiary', 1.3], [14, 21, 'x-flag', 1.6], [21, 21, 'x-flag', 1.6]].forEach(function (q) { if (G[q[1] * W + q[0]] !== 0 || SOLID[q[1] * W + q[0]]) return; solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: q[3] }); });
     // 주민 집 옆 우체통
@@ -329,7 +330,8 @@
       if (sh < 500 && o.kind === 'rock') sprite('fx-dust', o.x, o.y + 0.1, 0, false, 0.6);
     }
     else if (o.kind === 'label') { label(o.text, o.x * T, o.y * T); }
-    else if (o.kind === 'market') { if (M.marketToday && M.marketToday()) { var rr = sprite('x-stand', o.x, o.y, 0, false, 1.7); emoji('🦝', o.x * T + T * 0.7, o.y * T - T * 0.5, 22); label('떠돌이 장터', o.x * T, (rr ? rr.top : o.y * T - 50) + 2); } }
+    else if (o.kind === 'mailbox') { var mr = sprite('mail-box', o.x, o.y, 0, false, 1.3); if (M.mailUnread && M.mailUnread()) emoji('✉️', o.x * T + T * 0.5, (mr ? mr.top : o.y * T - 40) + 4, 16); }
+    else if (o.kind === 'market') { if (M.marketToday && M.marketToday()) { var rr = sprite('x-stand', o.x, o.y, 0, false, 1.7); sprite('ch-raccoon-front', o.x + 0.9, o.y + 0.25, 0, false, CH_H); label('떠돌이 장터', o.x * T, (rr ? rr.top : o.y * T - 50) + 2); } }
     else if (o.kind === 'shell') { emoji('🐚', o.x * T + T / 2, (o.y - 1) * T + T / 2, 13); }
     else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0, false, 1.1); }
     else if (o.kind === 'build') {
@@ -431,8 +433,10 @@
       goTo(dg.x, dg.y, function () { M.gatherPick(dg); dailyCache = null; if (dg.type === 'd') M.sfx('merge'); });
       return true;
     }
+    // 우체통 (내 집 옆)
+    if (tx === 13 && (ty === 16 || ty === 15)) { goNear(13, 16, function () { M.mailSheet(); }); return true; }
     // 떠돌이 장터
-    if (M.marketToday && M.marketToday() && (tx === 21 || tx === 22) && (ty === 13 || ty === 14)) { goTo(21, 15, function () { me.d = 'up'; M.marketSheet(); }); return true; }
+    if (M.marketToday && M.marketToday() && (tx === 21 || tx === 22) && (ty === 13 || ty === 14)) { goNear(21, 14, function () { M.marketSheet(); }); return true; }
     // 나무·열매 나무·바위
     var o = OBJ.filter(function (o) { return (o.kind === 'tree' || o.kind === 'ftree' || o.kind === 'rock') && o.tx === tx && (ty === o.ty || ty === o.ty - 1 || (o.kind !== 'rock' && ty === o.ty - 2)); })[0];
     if (o) {

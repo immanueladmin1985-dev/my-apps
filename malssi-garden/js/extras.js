@@ -27,16 +27,16 @@
   M.mailUnread = function () { if (!M.P) return 0; makeMail(); return X().mail.filter(function (m) { return !m.read; }).length; };
   M.mailSheet = function () {
     makeMail(); var x = X(), lang = M.P.lang;
-    var d = M.modal('<h3>📮 우체통</h3>' + (x.mail.length ? '<div class="list">' + x.mail.slice().reverse().map(function (m, ri) {
+    var d = M.modal('<div class="center"><img class="mbx" src="img/w/mail-box.png" alt=""></div><h3>📮 우체통</h3>' + (x.mail.length ? '<div class="list">' + x.mail.slice().reverse().map(function (m, ri) {
       var i = x.mail.length - 1 - ri, c = M.custOf(m.from);
-      return '<button class="litem" data-mail="' + i + '"><span class="le"><img src="' + M.custImg(m.from) + '" alt=""></span><span class="ln">' + esc(c.name) + '의 편지<small>' + (m.read ? '읽음' : '✉️ 새 편지!') + '</small></span><span class="lp' + (m.read ? ' own' : '') + '">' + (m.read ? '다시 보기' : '열기') + '</span></button>';
+      return '<button class="litem" data-mail="' + i + '"><span class="le"><img src="img/w/mail-' + (m.read ? 'open' : 'closed') + '.png" alt=""></span><span class="ln">' + esc(c.name) + '의 편지<small>' + (m.read ? '읽음' : '✉️ 새 편지!') + '</small></span><span class="lp' + (m.read ? ' own' : '') + '">' + (m.read ? '다시 보기' : '열기') + '</span></button>';
     }).join('') + '</div>' : '<p class="hint center">아직 편지가 없어요. 내일 아침에 다시 확인해 보세요!</p>') + '<button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) { var b = e.target.closest('[data-mail]'); if (!b) return; d.close(); readMail(+b.dataset.mail); });
   };
   function readMail(i) {
     var x = X(), m = x.mail[i], c = M.custOf(m.from), lang = M.P.lang, o = OPEN[lang] || OPEN.en, cl = CLOSE[lang] || CLOSE.en;
     var opts = M.shuffle([m.k].concat(m.wrong));
-    var d = M.modal('<div class="letter"><div class="lt-from"><img src="' + M.custImg(m.from) + '" alt=""><b>' + esc(c.name) + '</b></div>' +
+    var d = M.modal('<div class="letter"><img class="lt-env" src="img/w/mail-open.png" alt=""><div class="lt-from"><img src="' + M.custImg(m.from) + '" alt=""><b>' + esc(c.name) + '</b></div>' +
       '<p class="lt-body lang-' + lang + '">' + esc(o[0]) + '<br><button class="lt-line" data-say="' + esc(m.say) + '">🔊 ' + esc(m.t) + '</button><br>' + esc(cl[0]) + '</p></div>' +
       (m.read ? '<p class="center"><b>' + esc(m.k) + '</b></p><button class="btn primary wide" data-close>닫기</button>' :
         '<p class="hint center">가운데 문장은 무슨 뜻일까요? 맞히면 선물을 받아요</p><div class="copts">' + opts.map(function (k) { return '<button class="copt" data-k="' + esc(k) + '">' + esc(k) + '</button>'; }).join('') + '</div>'));
@@ -48,7 +48,7 @@
       if (ok) {
         if (m.gift[0] === 'item') M.gatherGot(m.gift[1]); else { var g = {}; g[m.gift[0]] = m.gift[1]; M.give(g); }
         M.gardenFriendUp(m.from); M.sfx('win');
-        M.modal('<div class="center"><img class="mface" src="' + M.custImg(m.from, true) + '" alt=""><h3>정답! 「' + esc(m.k) + '」</h3><p>' + esc(c.name) + '이(가) 선물을 함께 보냈어요 ' + (m.gift[0] === 'item' ? '🎁' : M.rewardHtml((function () { var g = {}; g[m.gift[0]] = m.gift[1]; return g; })())) + '</p><button class="btn primary wide" data-close>좋아요</button></div>');
+        M.modal('<div class="center"><img class="mface" src="' + M.custImg(m.from, true) + '" alt=""><h3>정답! 「' + esc(m.k) + '」</h3><p>' + esc(c.name) + '이(가) 선물을 함께 보냈어요 ' + (m.gift[0] === 'item' ? '<img class="inl" src="img/w/mail-gift.png" alt="" style="width:28px;height:28px">' : M.rewardHtml((function () { var g = {}; g[m.gift[0]] = m.gift[1]; return g; })())) + '</p><button class="btn primary wide" data-close>좋아요</button></div>');
       } else { M.sfx('bad'); M.modal('<div class="center"><h3>아쉬워요</h3><p>뜻은 「<b>' + esc(m.k) + '</b>」이었어요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); }
     });
   }
@@ -74,7 +74,7 @@
     function paint() {
       d.querySelector('#ckList').innerHTML = Object.keys(DISH).map(function (id) {
         var r = DISH[id], ok = Object.keys(r[2]).every(function (k) { return have(k) >= r[2][k]; });
-        return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le dishe">' + r[1] + '</span><div class="ln">' + r[0] + (x.dishes[id] ? ' <small>가진 것 ' + x.dishes[id] + '</small>' : '') + '<div class="needs">' +
+        return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le dishe"><img src="img/w/dish-' + id + '.png" alt=""></span><div class="ln">' + r[0] + (x.dishes[id] ? ' <small>가진 것 ' + x.dishes[id] + '</small>' : '') + '<div class="needs">' +
           Object.keys(r[2]).map(function (k) { return '<span class="ing' + (have(k) >= r[2][k] ? ' got' : '') + '"><img src="' + ingImg(k) + '" alt="" title="' + ingName(k) + '"><i>' + have(k) + '/' + r[2][k] + '</i></span>'; }).join('') +
           '</div></div><button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-cook="' + id + '"' + (ok ? '' : ' disabled') + '>만들기</button></div>';
       }).join('');
@@ -85,13 +85,13 @@
       var id = b.dataset.cook, r = DISH[id]; Object.keys(r[2]).forEach(function (k) { take(k, r[2][k]); });
       x.dishes[id] = (x.dishes[id] || 0) + 1; M.save(); M.sfx('win');
       var L = M.P.lang, nm = L === 'ja' ? r[3] : L === 'zh' ? r[4] : r[5]; M.say(nm, L);
-      M.toast(r[1] + ' ' + r[0] + ' 완성! (' + nm + ')'); paint();
+      M.modal('<div class="center"><img class="gbig" src="img/w/dish-' + id + '.png" alt=""><h3>' + r[0] + ' 완성!</h3><button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><p class="hint">주민에게 선물하면 친밀도가 두 칸 올라요</p><button class="btn primary wide" data-close>좋아요</button></div>'); paint();
     });
   };
   M.dishGiftable = function (id) { var x = X(); return !x.fed[id] && Object.keys(x.dishes).some(function (k) { return x.dishes[k] > 0; }); };
   M.dishGiftSheet = function (id) {
     var x = X(), c = M.custOf(id), ks = Object.keys(x.dishes).filter(function (k) { return x.dishes[k] > 0; });
-    var d = M.modal('<h3>🍲 ' + esc(M.j(c.name, '이', '')) + '에게 어떤 요리를 줄까요?</h3><div class="list">' + ks.map(function (k) { return '<button class="litem" data-dish="' + k + '"><span class="le dishe">' + DISH[k][1] + '</span><span class="ln">' + DISH[k][0] + '</span><span class="lp own">' + x.dishes[k] + '개</span></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
+    var d = M.modal('<h3>🍲 ' + esc(M.j(c.name, '이', '')) + '에게 어떤 요리를 줄까요?</h3><div class="list">' + ks.map(function (k) { return '<button class="litem" data-dish="' + k + '"><span class="le dishe"><img src="img/w/dish-' + k + '.png" alt=""></span><span class="ln">' + DISH[k][0] + '</span><span class="lp own">' + x.dishes[k] + '개</span></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-dish]'); if (!b) return;
       x.dishes[b.dataset.dish]--; x.fed[id] = 1; M.save(); d.close(); M.sfx('win');
@@ -107,14 +107,14 @@
     var seed = parseInt(day.replace(/\D/g, ''), 10), pick = [];
     for (var i = 0; i < pool.length * 4 && pick.length < Math.min(4, pool.length); i++) { var f = pool[(seed * 7 + i * 5 + Math.floor(i / pool.length)) % pool.length]; if (pick.indexOf(f) < 0) pick.push(f); }
     x.marketDisc = x.marketDisc && x.marketDisc.day === day ? x.marketDisc : { day: day, rate: 1 };
-    var d = M.modal('<div class="mintro"><span class="mface em">🦝</span><div class="msay"><b>너구리 상인 너굴</b><p>어서 와요! 오늘만 파는 귀한 물건이에요. 퀴즈를 맞히면 30% 깎아 줄게요!</p></div></div>' +
+    var d = M.modal('<div class="mintro"><img class="mface" src="img/w/cust-raccoon.png" alt=""><div class="msay"><b>너구리 상인 너굴</b><p>어서 와요! 오늘만 파는 귀한 물건이에요. 퀴즈를 맞히면 30% 깎아 줄게요!</p></div></div>' +
       '<div class="fgrid">' + pick.map(function (f) { var pr = Math.round(f.price * x.marketDisc.rate); return '<button class="fcard" data-mk="' + f.id + '"><img src="img/furn-' + f.id + '.png" alt=""><b>' + f.name + '</b><small class="price"><img src="img/coin.png" alt="">' + pr + '</small></button>'; }).join('') + '</div>' +
       (x.marketDisc.rate < 1 ? '<p class="hint center">🎉 오늘은 30% 할인 중!</p>' : '<button class="btn wide" data-mq>🧩 퀴즈 풀고 깎기</button>') + '<button class="btn ghost wide" data-close>나가기</button>');
     d.addEventListener('click', function (e) {
       if (e.target.closest('[data-mq]')) {
         var items = M.learnedItems(lang).filter(function (it) { return it.k && !it.kana; }); if (items.length < 3) { M.toast('낱말을 조금 더 배우고 와요!'); return; }
         var three = M.shuffle(items).slice(0, 3), t = three[0]; d.close();
-        var q = M.modal('<div class="center"><span class="mface em">🦝</span><h3 class="lang-' + lang + '">' + esc(t.t) + '</h3><p>이 말의 뜻은?</p></div><div class="copts">' + M.shuffle(three).map(function (it) { return '<button class="copt" data-k="' + esc(it.k) + '">' + esc(it.k) + '</button>'; }).join('') + '</div>');
+        var q = M.modal('<div class="center"><img class="mface" src="img/w/cust-raccoon.png" alt=""><h3 class="lang-' + lang + '">' + esc(t.t) + '</h3><p>이 말의 뜻은?</p></div><div class="copts">' + M.shuffle(three).map(function (it) { return '<button class="copt" data-k="' + esc(it.k) + '">' + esc(it.k) + '</button>'; }).join('') + '</div>');
         M.say(t.say, lang);
         q.addEventListener('click', function (e2) { var b = e2.target.closest('[data-k]'); if (!b) return; q.close(); if (b.dataset.k === t.k) { x.marketDisc.rate = 0.7; M.sfx('win'); M.toast('정답! 오늘은 30% 할인이에요'); } else { M.sfx('bad'); M.toast('아쉬워요! 뜻은 「' + t.k + '」'); x.marketDisc.tried = true; } M.save(); M.marketSheet(); });
         return;
