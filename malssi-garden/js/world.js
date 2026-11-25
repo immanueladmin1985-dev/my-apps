@@ -395,6 +395,7 @@
       cv.addEventListener('pointerup', onTap);
       mounted = root; lastT = 0;
       if (!raf) raf = requestAnimationFrame(draw);
+      if (M.moveInCheck) M.moveInCheck();
     },
     // 자동 점검용
     state: function () { return { me: me && { x: me.x, y: me.y, moving: me.t < 1 || me.path.length > 0 }, npcs: npcs.map(function (n) { return { id: n.id, x: n.x, y: n.y }; }) }; },

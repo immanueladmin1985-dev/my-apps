@@ -1086,3 +1086,29 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .stallwrap .custfx { position: absolute; top: 0; bottom: 0; left: -25%; width: 150%; z-index: 3; pointer-events: none; }
 .custfx .cust.leaving { bottom: 6%; width: 14%; }
 .fcatch .fbig img { height: 70px; max-width: 160px; object-fit: contain; } .fd .fde img { height: 40px; max-width: 80px; object-fit: contain; }
+/* 이사 장면 */
+.movein { position: fixed; inset: 0; z-index: 40; background: rgba(40,30,20,.55); display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; gap: 10px; animation: fadein .3s; }
+@keyframes fadein { from { opacity: 0; } }
+.mvstage { position: relative; height: 54svh; max-height: 420px; border-radius: 24px; overflow: hidden; background: linear-gradient(#bfe8ff 0 45%, #a7dc8a 45%); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+.mvstage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 14%; height: 16%; background: #ead1a0; z-index: 0; }
+.mvstage img { position: absolute; z-index: 1; }
+.mvhouse { width: 34%; left: 58%; bottom: 28%; opacity: 0; transform: scale(.6); transition: all .6s cubic-bezier(.3,1.6,.5,1); }
+.mvarch { width: 30%; left: 8%; bottom: 26%; }
+.mvtruck { width: 46%; left: -50%; bottom: 13%; z-index: 2; transition: left 1.4s ease-out; }
+.mvboxes { width: 18%; left: 40%; bottom: 15%; opacity: 0; transform: translateY(-30px); transition: all .4s; z-index: 2; }
+.mvch { width: 17%; left: 30%; bottom: 13%; opacity: 0; z-index: 3; transition: left 1.3s linear, opacity .2s; }
+.movein.s1 .mvtruck { left: 2%; }
+.movein.s1 .mvhouse { opacity: 1; transform: none; }
+.movein.s2 .mvboxes { opacity: 1; transform: none; }
+.movein.s3 .mvch { opacity: 1; left: 56%; animation: hop .3s ease-in-out infinite; }
+.movein.s4 .mvch { animation: bob 1.4s ease-in-out infinite; }
+.mvsay { position: absolute; left: 6%; right: 6%; top: 6%; z-index: 4; display: flex; justify-content: center; }
+.mvline { background: #fff; border-radius: 18px; padding: 8px 14px; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: flex; flex-direction: column; align-items: center; animation: popin .4s; }
+.mvline b { font-size: 1.05rem; } .mvline small { color: var(--sub); }
+.mvtext { background: #fff; border-radius: 18px; padding: 10px 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.mvtext small { color: var(--sub); }
+.mvarch { width: 26%; left: auto; right: 2%; bottom: 26%; }
+.mvhouse { width: 36%; left: 40%; }
+.mvboxes { left: 46%; bottom: 10%; z-index: 3; }
+.movein.s3 .mvch { left: 64%; }
+.mvch { left: 40%; bottom: 10%; z-index: 4; }
