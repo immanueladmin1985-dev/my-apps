@@ -170,7 +170,7 @@
   // 도감 카드: 누르면 크게 보이고 일본어·영어·중국어로 들을 수 있다
   M.dexCard = function (img, ko, names, extra) {
     var L = [['ja', '日本語'], ['en', 'English'], ['zh', '中文']];
-    var d = M.modal('<div class="dcard"><img src="' + img + '" alt=""><h3>' + esc(ko) + '</h3>' + (extra ? '<p class="hint">' + extra + '</p>' : '') +
+    var d = M.modal('<div class="dexcard"><img src="' + img + '" alt=""><h3>' + esc(ko) + '</h3>' + (extra ? '<p class="hint">' + extra + '</p>' : '') +
       '<div class="dnames">' + L.map(function (l) { var v = names[l[0]] || ['']; return '<div class="dn"><span class="dlang lang-' + l[0] + '"><b>' + esc(v[0]) + '</b>' + (v[1] ? '<small>' + esc(v[1]) + '</small>' : '') + '</span><button class="dsay" data-dl="' + l[0] + '" data-dt="' + esc(v[0]) + '">🔊 ' + l[1] + '</button></div>'; }).join('') + '</div></div><button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) { var b = e.target.closest('[data-dl]'); if (b) M.say(b.dataset.dt, b.dataset.dl); });
     M.say((names[M.P.lang] || names.en)[0], M.P.lang);
