@@ -1018,3 +1018,11 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .tint-dusk .vtint { background: rgba(255, 150, 90, .22); }
 .tint-night .vtint { background: rgba(40, 50, 120, .38); }
 .vback { display: block; margin: 0 0 6px; padding: 6px 12px; border-radius: 12px; background: #fff; border: 2px solid var(--line); font-weight: 800; color: var(--mint-d); }
+.talkhead { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.talkhead .tface { width: 56px; height: 56px; font-size: 2.4rem; line-height: 56px; text-align: center; flex: none; }
+.talkhead .tface img { width: 100%; height: 100%; object-fit: contain; }
+.talkhead b { display: block; } .talkhead small { color: var(--sub); }
+#tChat { max-height: 40svh; min-height: 120px; }
+#tOpts { margin: 8px 0; }
+.tdone { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; background: #f3fbf7; border-radius: 16px; }
+.tdone small { color: var(--sub); }
