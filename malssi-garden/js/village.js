@@ -17,8 +17,8 @@
     { id: 'pier', name: '낚시터', em: '🎣', x: 64, y: 87, w: 16 }
   ];
   // 주민 집터 (이사 온 순서대로 채운다)
-  var LOTS = [[14, 53], [40, 57], [70, 56], [88, 62], [22, 67], [52, 69], [80, 73], [12, 79], [36, 81], [90, 82], [48, 49], [10, 41]];
-  var HOUSE_EM = { bear: '🍯', squirrel: '🌰', chick: '🥚', hedgehog: '🍄', panda: '🎋', fox: '🍂', koala: '🌳', hamster: '🌻', penguin: '🧊', cat: '🐟', sheep: '🧶', owl: '📚' };
+  var LOTS = [[14, 53], [40, 57], [70, 56], [88, 62], [22, 67], [52, 69], [80, 73], [12, 79], [36, 81], [90, 82], [48, 49], [10, 41], [30, 45], [64, 45], [92, 46], [6, 90], [26, 92], [60, 93], [76, 92], [94, 94]];
+  var HOUSE_EM = { bear: '🍯', squirrel: '🌰', chick: '🥚', hedgehog: '🍄', panda: '🎋', fox: '🍂', koala: '🌳', hamster: '🌻', penguin: '🧊', cat: '🐟', sheep: '🧶', owl: '📚', dog: '🦴', otter: '🐚', deer: '🌸', duck: '☔', lion: '👑', camel: '🔔', elephant: '🌺', monkey: '🍌' };
 
   function V() { var P = M.P; P.village = P.village || { x: 50, y: 46 }; return P.village; }
   function residents() {

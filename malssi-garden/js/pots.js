@@ -13,12 +13,12 @@
     rose: { name: '장미', hours: 12, price: 60, yield: 2, sell: 28, fp: 5, st: ['🌱', '🌿', '🪴', '🥀', '🌹'], fruit: '🌹', lv: 5, img: true },
     lemon: { name: '레몬나무', hours: 24, price: 90, yield: 4, sell: 30, st: ['🌱', '🌿', '🪴', '🌳', '🍋'], fruit: '🍋', lv: 7, img: true },
     // 요리 재료 작물 (그림이 오기 전에는 이모지)
-    rice: { name: '벼', hours: 6, price: 25, yield: 5, sell: 8, st: ['🌱', '🌿', '🌾', '🌾', '🍚'], fruit: '🍚', lv: 1 },
-    potato: { name: '감자', hours: 5, price: 20, yield: 4, sell: 9, st: ['🌱', '🌿', '🪴', '🌼', '🥔'], fruit: '🥔', lv: 1 },
-    carrot: { name: '당근', hours: 4, price: 20, yield: 3, sell: 10, st: ['🌱', '🌿', '🪴', '🌿', '🥕'], fruit: '🥕', lv: 2 },
-    pepper: { name: '고추', hours: 7, price: 30, yield: 4, sell: 11, st: ['🌱', '🌿', '🪴', '🌼', '🌶️'], fruit: '🌶️', lv: 4 },
-    corn: { name: '옥수수', hours: 8, price: 35, yield: 3, sell: 14, st: ['🌱', '🌿', '🌾', '🌽', '🌽'], fruit: '🌽', lv: 6 },
-    pumpkin: { name: '단호박', hours: 12, price: 50, yield: 2, sell: 26, st: ['🌱', '🌿', '🪴', '🌼', '🎃'], fruit: '🎃', lv: 8 }
+    rice: { name: '벼', hours: 6, price: 25, yield: 5, sell: 8, st: ['🌱', '🌿', '🌾', '🌾', '🍚'], fruit: '🍚', lv: 1, img: true },
+    potato: { name: '감자', hours: 5, price: 20, yield: 4, sell: 9, st: ['🌱', '🌿', '🪴', '🌼', '🥔'], fruit: '🥔', lv: 1, img: true },
+    carrot: { name: '당근', hours: 4, price: 20, yield: 3, sell: 10, st: ['🌱', '🌿', '🪴', '🌿', '🥕'], fruit: '🥕', lv: 2, img: true },
+    pepper: { name: '고추', hours: 7, price: 30, yield: 4, sell: 11, st: ['🌱', '🌿', '🪴', '🌼', '🌶️'], fruit: '🌶️', lv: 4, img: true },
+    corn: { name: '옥수수', hours: 8, price: 35, yield: 3, sell: 14, st: ['🌱', '🌿', '🌾', '🌽', '🌽'], fruit: '🌽', lv: 6, img: true },
+    pumpkin: { name: '단호박', hours: 12, price: 50, yield: 2, sell: 26, st: ['🌱', '🌿', '🪴', '🌼', '🎃'], fruit: '🎃', lv: 8, img: true }
   };
   function fruitImg(k) { return SEEDS[k].img ? '<img class="fimg2" src="img/w/fruit-' + k + '.png" alt="' + SEEDS[k].name + '">' : '<span class="fimg2 femo">' + SEEDS[k].fruit + '</span>'; }
   M.potFruitIcon = fruitImg;

@@ -55,9 +55,17 @@
     { id: 'penguin', em: '🐧', name: '펭펭', lv: 11, likes: ['m', 'c'] },
     { id: 'cat', em: '🐱', name: '나비', lv: 12, likes: ['m', 'w', 'p'] },
     { id: 'sheep', em: '🐑', name: '몽실이', lv: 13, likes: ['w', 'f', 'p'] },
-    { id: 'owl', em: '🦉', name: '부엉 박사', lv: 14, likes: ['c', 'p', 'h'] }
+    { id: 'owl', em: '🦉', name: '부엉 박사', lv: 14, likes: ['c', 'p', 'h'] },
+    { id: 'dog', em: '🐶', name: '바둑이', lv: 15, likes: ['m', 'w', 'p'] },
+    { id: 'otter', em: '🦦', name: '수달이', lv: 16, likes: ['b', 'h', 'p'] },
+    { id: 'deer', em: '🦌', name: '꽃사슴', lv: 17, likes: ['f', 'c'] },
+    { id: 'duck', em: '🦆', name: '꽥꽥이', lv: 18, likes: ['w', 'f'] },
+    { id: 'lion', em: '🦁', name: '레오', lv: 19, likes: ['m', 'p'] },
+    { id: 'camel', em: '🐫', name: '사막이', lv: 20, likes: ['c', 'w', 'p'] },
+    { id: 'elephant', em: '🐘', name: '코코', lv: 21, likes: ['t', 'h'] },
+    { id: 'monkey', em: '🐒', name: '끼끼', lv: 22, likes: ['t', 'b', 'p'] }
   ];
-  var CUST_IMG = { bear: 1, squirrel: 1, hedgehog: 1, chick: 1, panda: 1, fox: 1, koala: 1, hamster: 1, penguin: 1, cat: 1, sheep: 1, owl: 1 };   // 손님 그림이 생기면 { bear: 1, ... } 로 켠다 (img/cust-bear.png, img/cust-bear-happy.png)
+  var CUST_IMG = { bear: 1, squirrel: 1, hedgehog: 1, chick: 1, panda: 1, fox: 1, koala: 1, hamster: 1, penguin: 1, cat: 1, sheep: 1, owl: 1, dog: 1, otter: 1, deer: 1, duck: 1, lion: 1, camel: 1, elephant: 1, monkey: 1 };   // 손님 그림이 생기면 { bear: 1, ... } 로 켠다 (img/cust-bear.png, img/cust-bear-happy.png)
   var VAL = { 1: 1, 2: 4, 3: 9, 4: 20, 5: 45 }, FPV = { 2: 1, 3: 3, 4: 6, 5: 15 };
   var SELL = [null, { coins: 1 }, { coins: 3 }, { coins: 8 }, { coins: 30, fp: 3 }];
   var ROW_COST = { 4: 100, 5: 180, 6: 280, 7: 400, 8: 550, 9: 720 };

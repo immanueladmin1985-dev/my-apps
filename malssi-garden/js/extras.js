@@ -178,8 +178,7 @@
     curry: ['카레 가루', '🟡', 20, 'カレーこ', '咖喱粉|gālífěn', 'curry powder']
   };
   function pan() { M.P.pantry = M.P.pantry || {}; return M.P.pantry; }
-  var DIMG = { salad: 1, jam: 1, soup: 1, pie: 1, tart: 1, juice: 1, berrybowl: 1, lemonade: 1 };   // 그림이 있는 요리 (나머지는 이모지)
-  function dishIcon(id) { return DIMG[id] ? '<img src="img/w/dish-' + id + '.png" alt="">' : '<b class="demo">' + DISH[id][1] + '</b>'; }
+  function dishIcon(id) { return '<img src="img/w/dish-' + id + '.png" alt="">'; }
   M.dishIcon = dishIcon;
   function src(k) { return k.indexOf('pot_') === 0 ? 'pot' : k.indexOf('gd_') === 0 ? 'gd' : k.indexOf('fish_') === 0 ? 'fish' : k.indexOf('pan_') === 0 ? 'pan' : 'bag'; }
   function fishOf(id) { return (M.FISH || []).filter(function (f) { return f.id === id; })[0] || { ko: id }; }
@@ -202,7 +201,7 @@
   function ingIcon(k) {
     var t = src(k);
     if (t === 'pot') return M.potFruitIcon(k.slice(4));
-    if (t === 'pan') return '<span class="pemo">' + PANTRY[k.slice(4)][1] + '</span>';
+    if (t === 'pan') return '<img src="img/w/pan-' + k.slice(4) + '.png" alt="" title="' + PANTRY[k.slice(4)][0] + '">';
     return '<img src="' + ingImg(k) + '" alt="" title="' + ingName(k) + '">';
   }
   function ingImg(k) { var t = src(k); if (t === 'pot') return 'img/w/fruit-' + k.slice(4) + '.png'; if (t === 'gd') return M.gardenItemInfo(k.slice(3)).img; if (t === 'fish') return 'img/w/fish-' + k.slice(5) + '.png'; return M.GATHER.ITEMS[k].img; }
@@ -253,7 +252,7 @@
       var L = M.P.lang;
       d.querySelector('#pnList').innerHTML = Object.keys(PANTRY).map(function (k) {
         var r = PANTRY[k], z = r[4].split('|'), nm = L === 'ja' ? r[3] : L === 'zh' ? z[0] : r[5];
-        return '<div class="litem"><span class="le">' + r[1] + '</span><span class="ln">' + r[0] + ' <button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><small>가진 것 ' + (pan()[k] || 0) + '</small></span><button class="btn primary" data-pbuy="' + k + '"><img class="inl" src="img/coin.png" alt="">' + r[2] + '</button></div>';
+        return '<div class="litem"><span class="le dishe"><img src="img/w/pan-' + k + '.png" alt=""></span><span class="ln">' + r[0] + ' <button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><small>가진 것 ' + (pan()[k] || 0) + '</small></span><button class="btn primary" data-pbuy="' + k + '"><img class="inl" src="img/coin.png" alt="">' + r[2] + '</button></div>';
       }).join('');
     }
     paint();
