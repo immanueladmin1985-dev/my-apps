@@ -14,6 +14,7 @@
     lemon: { name: '레몬나무', hours: 24, price: 90, yield: 4, sell: 30, st: ['🌱', '🌿', '🪴', '🌳', '🍋'], fruit: '🍋', lv: 7, img: true }
   };
   function fruitImg(k) { return '<img class="fimg2" src="img/w/fruit-' + k + '.png" alt="' + SEEDS[k].name + '">'; }
+  function potMax() { return Math.max(M.P.pots ? M.P.pots.slots : 2, M.houseInfo ? M.houseInfo().pots : 6); }
   var SLOT_COST = [0, 0, 150, 300, 500, 800];   // 3번째 칸부터
   M.SEEDS = SEEDS;
 
@@ -71,7 +72,7 @@
     return '<div class="card potshelf"><div class="pots-h"><b>🪴 화분 ' + s.list.filter(Boolean).length + '/' + s.slots + '</b><small>방 안의 화분을 눌러 물·비료·수확 · 실제 시간으로 자라요</small></div>' +
       '<div class="basket"><b>🧺 열매 바구니</b>' + (fruits.length ? fruits.map(function (k) { return '<button class="fruit" data-psell="' + k + '">' + fruitImg(k) + '<i>' + s.fruits[k] + '</i></button>'; }).join('') + '<small>누르면 팔 수 있어요 · 주민에게 선물도 돼요</small>' : '<small>아직 비어 있어요</small>') +
       '<span class="binv">씨앗 ' + seeds + ' · 비료 ' + s.fert + '</span></div>' +
-      '<div class="row2"><button class="btn sm" data-pshop>🌱 씨앗·비료 사기</button>' + (s.slots < 6 ? '<button class="btn sm" data-pslot>➕ 화분 늘리기 <img class="inl" src="img/coin.png" alt="">' + SLOT_COST[s.slots] + '</button>' : '<span></span>') + '</div></div>';
+      '<div class="row2"><button class="btn sm" data-pshop>🌱 씨앗·비료 사기</button>' + (s.slots < potMax() ? '<button class="btn sm" data-pslot>➕ 화분 늘리기 <img class="inl" src="img/coin.png" alt="">' + SLOT_COST[s.slots] + '</button>' : '<button class="btn sm" data-house>🔨 집 넓히기</button>') + '</div></div>';
   };
   function repaint() { if (M.render) M.render(); if (M.paintBadges) M.paintBadges(); }
   M.paintPots = repaint;
@@ -154,6 +155,7 @@
     var s = S(), b;
     if ((b = t.closest('[data-pplant]'))) { plantSheet(+b.dataset.pplant); return; }
     if (t.closest('[data-pshop]')) { M.furnShop('seed'); return; }
+    if (t.closest('[data-house]')) { M.houseSheet(); return; }
     if ((b = t.closest('[data-pwater]'))) {
       var p = s.list[+b.dataset.pwater]; update(p);
       if (wet(p) && p.wet - Date.now() > WET - H) { M.toast('방금 물을 줬어요. 조금 뒤에 다시 주세요'); return; }

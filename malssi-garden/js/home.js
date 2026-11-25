@@ -83,7 +83,7 @@
       '<div class="card petcard"><div class="pname"><b>' + esc(P.petName) + '</b> <span class="lv">Lv.' + p.lv + '</span><span class="bonus">💧 +' + M.petBonus() + '%</span></div>' +
       '<div class="meter"><span>친밀도</span><div class="mbar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></div><small>' + p.exp + '/' + needExp(p.lv) + '</small></div>' +
       '<div class="meter"><span>배부름</span><div class="mbar full"><i style="width:' + M.petFullPct() + '%"></i></div><small>' + (full >= 100 ? '아주 배부름' : full < 30 ? '배고파요' : full + '%') + '</small></div>' +
-      '<div class="row3"><button class="btn primary" id="hFeed">🥕 먹이 주기</button><button class="btn" id="hShop">🛋️ 꾸미기 상점</button><button class="btn' + (editing ? ' on' : '') + '" id="hEdit">' + (editing ? '✅ 꾸미기 끝' : '✏️ 꾸미기') + '</button></div>' +
+      '<button class="btn wide hup" id="hHouse">🔨 집 넓히기 · ' + (M.houseInfo ? M.houseInfo().name : '') + '</button><div class="row3"><button class="btn primary" id="hFeed">🥕 먹이 주기</button><button class="btn" id="hShop">🛋️ 꾸미기 상점</button><button class="btn' + (editing ? ' on' : '') + '" id="hEdit">' + (editing ? '✅ 꾸미기 끝' : '✏️ 꾸미기') + '</button></div>' +
       '<p class="hint">레벨 5와 10이 되면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 물방울을 더 받아요.</p></div></div>';
     root.innerHTML = h;
   };
@@ -241,6 +241,7 @@
   document.addEventListener('click', function (e) {
     if (e.target.closest('#hFeed')) feedSheet();
     else if (e.target.closest('#hShop')) furnShop();
+    else if (e.target.closest('#hHouse')) M.houseSheet();
     else if (e.target.closest('#hEdit')) { editing = !editing; fsel = ''; rerender(); }
     else if (e.target.closest('[data-ft]') && fsel) {
       var a = e.target.closest('[data-ft]').dataset.ft, pos = M.P.room.placed[fsel], f = FURN.filter(function (x) { return x.id === fsel; })[0];

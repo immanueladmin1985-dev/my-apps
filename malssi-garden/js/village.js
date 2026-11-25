@@ -102,8 +102,8 @@
     if (id === 'shop') { M.inVillage = true; M.render(); return; }
     if (id === 'home') { M.go('home'); return; }
     if (id === 'store') { M.furnShop(); return; }
-    if (id === 'museum') { var dm = M.modal('<h3>🏛️ 박물관</h3><p class="hint">모은 것들을 구경해요</p><button class="btn wide" data-mg>🌸 정원 도감</button><button class="btn wide" data-mf>🐟 물고기 도감</button><button class="btn ghost wide" data-close>나가기</button>');
-      dm.addEventListener('click', function (e) { if (e.target.closest('[data-mg]')) { dm.close(); M.gardenBook(); } if (e.target.closest('[data-mf]')) { dm.close(); M.fishDexSheet(); } }); return; }
+    if (id === 'museum') { var dm = M.modal('<h3>🏛️ 박물관</h3><p class="hint">모은 것들을 구경해요</p><button class="btn wide" data-mg>🌸 정원 도감</button><button class="btn wide" data-mf>🐟 물고기 도감</button><button class="btn wide" data-mx="bug">🦋 곤충 도감</button><button class="btn wide" data-mx="fossil">🦴 화석 도감</button><button class="btn wide" data-mx="sea">🐚 바다 도감</button><button class="btn wide" data-mx="forest">🌲 숲·열매·광물 도감</button><button class="btn ghost wide" data-close>나가기</button>');
+      dm.addEventListener('click', function (e) { if (e.target.closest('[data-mg]')) { dm.close(); M.gardenBook(); } if (e.target.closest('[data-mf]')) { dm.close(); M.fishDexSheet(); } var mx = e.target.closest('[data-mx]'); if (mx) { dm.close(); M.gatherDex(mx.dataset.mx); } }); return; }
     if (id === 'gift') { M.go('shop'); return; }
     if (id === 'board') { boardSheet(); return; }
     if (id === 'pier') { M.fishStart('sea'); return; }
@@ -141,7 +141,8 @@
     var t = e.target;
     var sb = t.closest && t.closest('#tChat [data-say]'); if (sb) { M.say(sb.dataset.say, M.P.lang, false, false, sb.dataset.who); return; }
     if (t.closest('#vBack')) { M.inVillage = false; M.render(); return; }
-    if (t.closest('#vHelp')) { M.modal('<h3>🏡 마을</h3><ul class="unl"><li>지도를 누르면 ' + esc(M.j(M.P.petName, '이가', '가')) + ' 걸어가요.</li><li>건물을 누르면 걸어가서 들어가요. <b>정원 가게</b>에서 밭을 가꾸고 손님 의뢰를 채워요.</li><li>❗가 뜬 주민 집에 가면 <b>부탁</b>을 들어줄 수 있어요.</li><li>가게 레벨이 오르면 새 주민이 <b>이사</b> 와요.</li></ul><button class="btn primary wide" data-close>닫기</button>'); return; }
+    if (t.closest('#vBag')) { M.gatherBag(); return; }
+    if (t.closest('#vHelp')) { M.modal('<h3>🏡 마을</h3><ul class="unl"><li>지도를 누르면 ' + esc(M.j(M.P.petName, '이가', '가')) + ' 걸어가요.</li><li>건물을 누르면 걸어가서 들어가요. <b>정원 가게</b>에서 밭을 가꾸고 손님 의뢰를 채워요.</li><li>❗가 뜬 주민 집에 가면 <b>부탁</b>을 들어줄 수 있어요.</li><li>가게 레벨이 오르면 새 주민이 <b>이사</b> 와요.</li><li><b>나무</b>를 누르면 흔들어서 열매·나뭇가지·통나무가 떨어져요. 열매 나무는 6시간마다 다시 열려요.</li><li><b>바위</b>는 하루 3번 두드려 돌·점토·광석을 캐요.</li><li>바닥의 버섯·꽃, 모래사장의 조개, 별 모양 <b>파는 곳</b>(화석)은 매일 새로 생겨요.</li><li>날아다니는 <b>곤충</b>을 눌러 잡아요. 시간대마다 달라요.</li><li>모은 것은 <b>🧺 가방</b>에서 팔고, 재료로 <b>집을 넓혀요</b>.</li></ul><button class="btn primary wide" data-close>닫기</button>'); return; }
     var w = t.closest('#vWorld'); if (!w) return;
     var pl = t.closest('[data-place]'), rs = t.closest('[data-res]'), lot = t.closest('[data-lot]');
     var tgt = pl || rs || lot;

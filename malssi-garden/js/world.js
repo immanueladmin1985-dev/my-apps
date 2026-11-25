@@ -79,6 +79,14 @@
     [[24, 18, 'x-barrel', 1], [24, 19, 'x-applecrate', 0.9], [30, 18, 'x-flowercart', 1.1], [3, 17, 'x-tulipbox', 0.9], [9, 18, 'x-topiary', 1.3], [14, 21, 'x-flag', 1.6], [21, 21, 'x-flag', 1.6]].forEach(function (q) { if (G[q[1] * W + q[0]] !== 0 || SOLID[q[1] * W + q[0]]) return; solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: q[3] }); });
     // 주민 집 옆 우체통
     LOTS.forEach(function (l, k) { solid(l[0] + 3, l[1] + 2, 2 + k); OBJ.push({ kind: 'mail', k: k, x: l[0] + 3.5, y: l[1] + 3 }); });
+    // 열매 나무 6그루: 사방이 풀인 곳에 서로 떨어뜨려 심는다
+    var rf = rnd(31), FK = ['apple', 'orange', 'peach', 'pear', 'cherry', 'apple'], fts = [];
+    for (var tries = 0; tries < 3000 && fts.length < FK.length; tries++) {
+      var fx = 3 + Math.floor(rf() * (W - 6)), fy = 4 + Math.floor(rf() * 28), okk = true;
+      for (var a2 = -1; a2 <= 1 && okk; a2++) for (var b2 = -1; b2 <= 1; b2++) { var gi = (fy + b2) * W + fx + a2; if (G[gi] !== 0 || SOLID[gi]) { okk = false; break; } }
+      if (okk && fts.every(function (f) { return Math.abs(f[0] - fx) + Math.abs(f[1] - fy) > 6; })) fts.push([fx, fy]);
+    }
+    fts.forEach(function (f, k) { solid(f[0], f[1]); OBJ.push({ kind: 'ftree', fk: FK[k], key: 'f' + k, tx: f[0], ty: f[1], x: f[0] + 0.5, y: f[1] + 1, h: 2.5 }); });
     // 숲 테두리와 흩어진 나무·덤불·바위·꽃
     var r = rnd(7), TREEAT = [], FOREST = ['t-green', 't-green2', 't-green3', 't-pine', 't-pine2', 't-green', 't-autumn', 't-cherry'];
     for (y = 0; y < 34; y++) for (x = 0; x < W; x++) {
@@ -90,9 +98,9 @@
       if ((edge ? q < 0.55 : (!nearPath && q < 0.05)) && crowd < (edge ? 3 : 1)) {
         solid(x, y); TREEAT[y * W + x] = 1;
         var tn = edge ? FOREST[Math.floor(r() * FOREST.length)] : TREES[Math.floor(r() * TREES.length)];
-        OBJ.push({ kind: 'img', src: tn, x: x + 0.5 + (r() - 0.5) * 0.3, y: y + 1, h: (tn.indexOf('pine') >= 0 ? 2.6 : 2.2) + r() * 0.35 });
+        OBJ.push({ kind: 'tree', src: tn, key: 't' + x + '_' + y, tx: x, ty: y, pine: tn.indexOf('pine') >= 0, x: x + 0.5 + (r() - 0.5) * 0.3, y: y + 1, h: (tn.indexOf('pine') >= 0 ? 2.6 : 2.2) + r() * 0.35 });
       }
-      else if (!nearPath && q < 0.085 && !crowd) { solid(x, y); OBJ.push({ kind: 'img', src: DECO[Math.floor(r() * DECO.length)], x: x + 0.5, y: y + 1, h: 0.8 + r() * 0.2 }); }
+      else if (!nearPath && q < 0.085 && !crowd) { solid(x, y); var dn = DECO[Math.floor(r() * DECO.length)], isRock = dn.indexOf('rock') >= 0; OBJ.push({ kind: isRock ? 'rock' : 'img', src: dn, key: 'r' + x + '_' + y, tx: x, ty: y, x: x + 0.5, y: y + 1, h: isRock ? 1.0 : 0.8 + r() * 0.2 }); }
       else if (q < 0.15) OBJ.push({ kind: 'img', src: FLOWERS[Math.floor(r() * FLOWERS.length)], x: x + 0.5, y: y + 1, h: 0.5, flat: true });
     }
     for (x = 0; x < W; x++) if (r() < 0.25 && G[36 * W + x] === 3 && x !== 17 && x !== 18) OBJ.push({ kind: 'shell', x: x, y: 37 });
@@ -254,8 +262,15 @@
     OBJ.forEach(function (o) { if (o.under) drawObj(o); });
     var list = OBJ.filter(function (o) { var oy = o.y * T; return !o.under && oy > cam.y - 40 && oy < cam.y + vh + 260; }).map(function (o) { return { y: o.z || o.y, o: o }; });
     [me].concat(npcs).forEach(function (a) { var p = pos(a); list.push({ y: p.y + 1, a: a, p: p }); });
+    daily().forEach(function (d) { list.push({ y: d.y + 0.5, g: d }); });
+    bugTick(dt, now); bugs.forEach(function (b) { list.push({ y: b.y + 2, b: b }); });
     list.sort(function (A, B) { return A.y - B.y; });
-    list.forEach(function (it) { if (it.o) drawObj(it.o); else drawActor(it.a, it.p, now); });
+    list.forEach(function (it) {
+      if (it.o) drawObj(it.o);
+      else if (it.g) sprite(it.g.type === 'd' ? 'dig-spot' : (M.GATHER.ITEMS[it.g.id] || {}).img.replace('img/w/', '').replace('.png', ''), it.g.x + 0.5, it.g.y + 0.9, 0, false, it.g.type === 'd' ? 0.7 : 0.62);
+      else if (it.b) { var fl = Math.sin(now / 120 + it.b.ph) * 0.12; sprite(M.GATHER.ITEMS[it.b.id].img.replace('img/w/', '').replace('.png', ''), it.b.x, it.b.y + fl, 0, it.b.vx < 0, 0.62); if (it.b.id === 'firefly' && M.V.tint() !== 'day') { ctx.fillStyle = 'rgba(255,240,120,.35)'; ctx.beginPath(); ctx.arc(it.b.x * T, (it.b.y + fl - 0.3) * T, 12, 0, 7); ctx.fill(); } }
+      else drawActor(it.a, it.p, now);
+    });
     if (tapMark && now - tapMark.t < 600) { ctx.strokeStyle = 'rgba(255,255,255,' + (1 - (now - tapMark.t) / 600) + ')'; ctx.lineWidth = 3; ctx.strokeRect(tapMark.x * T + 3, tapMark.y * T + 3, T - 6, T - 6); }
     // 시간대 빛깔
     ctx.setTransform(sc, 0, 0, sc, 0, 0);
@@ -292,6 +307,14 @@
   function drawObj(o) {
     var X, Y, r;
     if (o.kind === 'img') { sprite(o.src, o.x, o.y + (o.flat ? -0.1 : 0.05), o.w, false, o.h); }
+    else if (o.kind === 'tree' || o.kind === 'ftree' || o.kind === 'rock') {
+      var sh = o.shake ? performance.now() - o.shake : 1e9, dx = sh < 600 ? Math.sin(sh / 35) * (1 - sh / 600) * (o.kind === 'rock' ? 3 : 6) : 0;
+      ctx.save(); ctx.translate(dx, 0);
+      sprite(o.kind === 'ftree' ? (M.fruitReady && M.fruitReady(o.key) ? 'ft-' + o.fk : 'ft-none') : o.src, o.x, o.y + 0.05, 0, false, o.h);
+      ctx.restore();
+      if (sh < 700 && o.kind !== 'rock') sprite('fx-leaves', o.x + 0.2, o.y - o.h * 0.35 + sh / 500, 0, false, 0.8);
+      if (sh < 500 && o.kind === 'rock') sprite('fx-dust', o.x, o.y + 0.1, 0, false, 0.6);
+    }
     else if (o.kind === 'label') { label(o.text, o.x * T, o.y * T); }
     else if (o.kind === 'shell') { emoji('🐚', o.x * T + T / 2, (o.y - 1) * T + T / 2, 13); }
     else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0, false, 1.1); }
@@ -345,6 +368,68 @@
     }
   }
 
+  // ---------- 채집: 오늘 놓인 물건, 곤충 ----------
+  var cands = null, dailyCache = null, dailyDay = '';
+  function daily() {
+    if (!M.gatherDaily) return [];
+    if (!cands) {
+      cands = { grass: [], sand: [] };
+      for (var y = 4; y < 33; y++) for (var x = 3; x < W - 3; x++) if (G[y * W + x] === 0 && !SOLID[y * W + x] && !DOORS[x + ',' + y]) cands.grass.push([x, y]);
+      for (y = 36; y <= 38; y++) for (x = 1; x < W - 1; x++) if (G[y * W + x] === 3 && !SOLID[y * W + x]) cands.sand.push([x, y]);
+    }
+    if (dailyDay !== M.today() || !dailyCache) { dailyDay = M.today(); dailyCache = M.gatherDaily(cands); }
+    return dailyCache;
+  }
+  var bugs = [], bugNext = 0;
+  function bugTick(dt, now) {
+    if (!M.bugNow) return;
+    if (now > bugNext && bugs.length < 3) {
+      bugNext = now + 4000 + Math.random() * 6000;
+      var where = ['flower', 'flower', 'tree', 'water'][Math.floor(Math.random() * 4)], id = M.bugNow(where);
+      if (id) {
+        var pool = where === 'tree' ? OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 2 && o.tx < W - 3 && o.ty > 3; }) : where === 'water' ? [{ x: 4 + Math.random() * 28, y: 34 }] : OBJ.filter(function (o) { return o.kind === 'img' && o.flat; });
+        var at = pool[Math.floor(Math.random() * pool.length)];
+        if (at) bugs.push({ id: id, x: at.x + (Math.random() - 0.5), y: at.y - (where === 'tree' ? 1.6 : 0.8), hx: at.x, hy: at.y - (where === 'tree' ? 1.6 : 0.8), vx: 0.4, vy: 0, ph: Math.random() * 6, life: now + 40000 + Math.random() * 40000 });
+      }
+    }
+    bugs = bugs.filter(function (b) { return b.held || now < b.life; });
+    bugs.forEach(function (b) {
+      if (b.held) return;
+      if (Math.random() < dt / 800) { b.vx = (Math.random() - 0.5) * 1.6; b.vy = (Math.random() - 0.5) * 1.2; }
+      b.x += b.vx * dt / 1000; b.y += b.vy * dt / 1000;
+      if (Math.abs(b.x - b.hx) > 2) b.vx = -Math.sign(b.x - b.hx) * Math.abs(b.vx || 0.5);
+      if (Math.abs(b.y - b.hy) > 1.2) b.vy = -Math.sign(b.y - b.hy) * Math.abs(b.vy || 0.4);
+    });
+  }
+  function gatherTap(tx, ty, wx, wy) {
+    // 곤충
+    var bg = bugs.filter(function (b) { return Math.abs(wx / T - b.x) < 0.7 && Math.abs(wy / T - (b.y - 0.3)) < 0.7; })[0];
+    if (bg) {
+      bg.held = true; var gx = Math.round(bg.x - 0.5), gy = Math.round(bg.y);
+      var near = nearestWalkable(gx, gy) || [gx, gy];
+      goTo(near[0], near[1], function () { bugs = bugs.filter(function (b) { return b !== bg; }); M.gatherGot(bg.id); });
+      return true;
+    }
+    // 오늘 놓인 물건
+    var dg = daily().filter(function (d) { return d.x === tx && (d.y === ty || d.y === ty + 1); })[0];
+    if (dg) {
+      tapMark = { x: dg.x, y: dg.y, t: performance.now() };
+      goTo(dg.x, dg.y, function () { M.gatherPick(dg); dailyCache = null; if (dg.type === 'd') M.sfx('merge'); });
+      return true;
+    }
+    // 나무·열매 나무·바위
+    var o = OBJ.filter(function (o) { return (o.kind === 'tree' || o.kind === 'ftree' || o.kind === 'rock') && o.tx === tx && (ty === o.ty || ty === o.ty - 1 || (o.kind !== 'rock' && ty === o.ty - 2)); })[0];
+    if (o) {
+      goNear(o.tx, o.ty, function () {
+        me.d = o.tx > me.x ? 'right' : o.tx < me.x ? 'left' : o.ty < me.y ? 'up' : 'down';
+        o.shake = performance.now();
+        if (o.kind === 'ftree') M.shakeFruitTree(o.key, o.fk); else if (o.kind === 'tree') M.shakeTree(o.key, o.pine); else M.hitRock(o.key);
+      });
+      return true;
+    }
+    return false;
+  }
+
   // ---------- 누르기 ----------
   var tapMark = null;
   function onTap(e) {
@@ -353,6 +438,7 @@
     // 주민을 눌렀나 (그림이 칸보다 커서 조금 넉넉하게 본다)
     var hit = npcs.filter(function (n) { var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
     if (hit) { talkTo(hit); return; }
+    if (gatherTap(tx, ty, wx, wy)) return;
     if (false) {
       npcs.forEach(function (n) { if (n.talking === 'wait') n.talking = false; });
       hit.talking = 'wait'; hit.path = [];
@@ -427,7 +513,7 @@
       // 캐릭터 그림을 미리 불러 둔다 (걷는 방향이 바뀔 때 깜빡이지 않게)
       ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + 'ch-rabbit' + M.petStage() + '-' + v + k + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
       var rs = M.V.residents(), nm = M.V.nextMover();
-      root.innerHTML = '<div class="village world"><div class="vbar"><b>🏡 ' + M.esc(M.P.petName) + '네 마을</b><small>주민 ' + rs.length + '명' + (nm ? ' · Lv.' + nm.lv + '에 새로운 친구 이사' : '') + '</small><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
+      root.innerHTML = '<div class="village world"><div class="vbar"><b>🏡 ' + M.esc(M.P.petName) + '네 마을</b><small>주민 ' + rs.length + '명</small><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
       cv = $('wCanvas'); ctx = cv.getContext('2d');
       var fit = function () { var dpr = Math.min(3, window.devicePixelRatio || 1), r = cv.getBoundingClientRect(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); };
       fit(); window.removeEventListener('resize', M.World._fit); M.World._fit = fit; window.addEventListener('resize', fit);
@@ -439,6 +525,8 @@
     // 자동 점검용
     state: function () { return { me: me && { x: me.x, y: me.y, moving: me.t < 1 || me.path.length > 0 }, npcs: npcs.map(function (n) { return { id: n.id, x: n.x, y: n.y }; }) }; },
     tapTile: function (x, y) { onTap({ clientX: cv.getBoundingClientRect().left + x * T - cam.x + T / 2, clientY: cv.getBoundingClientRect().top + y * T - cam.y + T / 2 }); },
+    objs: function () { return { ftree: OBJ.filter(function (o) { return o.kind === 'ftree'; }).map(function (o) { return [o.tx, o.ty, o.fk]; }), rock: OBJ.filter(function (o) { return o.kind === 'rock'; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), tree: OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 4 && o.tx < W - 5 && o.ty > 4; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), daily: daily().map(function (d) { return [d.x, d.y, d.type, d.id]; }), bugs: bugs.length }; },
+    teleport: function (x, y) { me.x = me.px = me.tx = x; me.y = me.py = me.ty = y; me.path = []; },
     doorOf: function (id) { var b = BUILD.filter(function (b) { return b.id === id; })[0]; return b && b.door; },
     T: T
   };
