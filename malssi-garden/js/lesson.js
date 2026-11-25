@@ -456,6 +456,7 @@
     var bonus = Math.round(water * M.petBonus() / 100);
     var o = { water: water + bonus, coins: 5 + stars * 2 };
     if (st) P.prog[lang][st.id] = Math.max(prevStars, stars);
+    if (M.digReward) M.digReward();
     P.xp += 10 + stars * 2;
     P.stats.lessons++; P.stats.correct += S.correct; if (stars === 3) P.stats.perfect++;
     var before = (P.log[M.today()] || {}).l || 0;

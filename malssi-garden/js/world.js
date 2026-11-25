@@ -21,6 +21,7 @@
     { id: 'shop', name: '정원 가게', x: 23, y: 5, w: 5, h: 3, color: '#ffe3ea', roof: '#ff8fab', em: '🏪' },
     { id: 'gift', name: '선물 교환소', x: 4, y: 13, w: 5, h: 3, color: '#fff3c9', roof: '#ffb02e', em: '🎁' },
     { id: 'home', name: '내 집', x: 10, y: 14, w: 3, h: 2, color: '#fff', roof: '#e07a5f', em: '🐰' },
+    { id: 'den', name: '두더지 땅굴', x: 30, y: 5, w: 3, h: 2, color: '#c9a06a', roof: '#8a5a2b', em: '⛏️' },
     { id: 'store', name: '잡화점', x: 25, y: 14, w: 5, h: 3, color: '#e9f7e4', roof: '#6cbf7a', em: '🛍️' }
   ];
   var LOTS = [[3, 23], [7, 23], [11, 23], [21, 23], [25, 23], [29, 23], [3, 29], [7, 29], [11, 29], [21, 29], [25, 29], [29, 29]];
@@ -75,6 +76,7 @@
     [[16, 13, 'o-planter'], [19, 13, 'o-flowerbed']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 0.9 }); });
     solid(17, 16); solid(18, 16); OBJ.push({ kind: 'img', src: 'x-fountain', x: 18, y: 17, h: 1.7 });
     solid(15, 19); OBJ.push({ kind: 'img', src: 'o-well', x: 15.5, y: 20, h: 1.5 });
+    OBJ.push({ kind: 'market', x: 21.5, y: 15, tx: 21, ty: 14 });
     solid(20, 12); OBJ.push({ kind: 'img', src: 'x-signpost', x: 20.5, y: 13, h: 1.4 });
     [[24, 18, 'x-barrel', 1], [24, 19, 'x-applecrate', 0.9], [30, 18, 'x-flowercart', 1.1], [3, 17, 'x-tulipbox', 0.9], [9, 18, 'x-topiary', 1.3], [14, 21, 'x-flag', 1.6], [21, 21, 'x-flag', 1.6]].forEach(function (q) { if (G[q[1] * W + q[0]] !== 0 || SOLID[q[1] * W + q[0]]) return; solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: q[3] }); });
     // 주민 집 옆 우체통
@@ -327,11 +329,12 @@
       if (sh < 500 && o.kind === 'rock') sprite('fx-dust', o.x, o.y + 0.1, 0, false, 0.6);
     }
     else if (o.kind === 'label') { label(o.text, o.x * T, o.y * T); }
+    else if (o.kind === 'market') { if (M.marketToday && M.marketToday()) { var rr = sprite('x-stand', o.x, o.y, 0, false, 1.7); emoji('🦝', o.x * T + T * 0.7, o.y * T - T * 0.5, 22); label('떠돌이 장터', o.x * T, (rr ? rr.top : o.y * T - 50) + 2); } }
     else if (o.kind === 'shell') { emoji('🐚', o.x * T + T / 2, (o.y - 1) * T + T / 2, 13); }
     else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0, false, 1.1); }
     else if (o.kind === 'build') {
       var b = o.b, nm = b.id === 'home' ? 'h-pink' : 'b-' + b.id;
-      r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.id === 'home' ? 3.5 : 5.6, false, b.id === 'home' ? 3.4 : 4.6);
+      r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.id === 'home' ? 3.5 : b.id === 'den' ? 4 : 5.6, false, b.id === 'home' ? 3.4 : b.id === 'den' ? 2.6 : 4.6);
       if (!r) { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); r = { top: b.y * T }; }
       label(b.name, (b.x + b.w / 2) * T, r.top + 4);
       if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, r.top + 10, 18);
@@ -428,6 +431,8 @@
       goTo(dg.x, dg.y, function () { M.gatherPick(dg); dailyCache = null; if (dg.type === 'd') M.sfx('merge'); });
       return true;
     }
+    // 떠돌이 장터
+    if (M.marketToday && M.marketToday() && (tx === 21 || tx === 22) && (ty === 13 || ty === 14)) { goTo(21, 15, function () { me.d = 'up'; M.marketSheet(); }); return true; }
     // 나무·열매 나무·바위
     var o = OBJ.filter(function (o) { return (o.kind === 'tree' || o.kind === 'ftree' || o.kind === 'rock') && o.tx === tx && (ty === o.ty || ty === o.ty - 1 || (o.kind !== 'rock' && ty === o.ty - 2)); })[0];
     if (o) {
@@ -536,7 +541,7 @@
     // 자동 점검용
     state: function () { return { me: me && { x: me.x, y: me.y, moving: me.t < 1 || me.path.length > 0 }, npcs: npcs.map(function (n) { return { id: n.id, x: n.x, y: n.y }; }) }; },
     tapTile: function (x, y) { onTap({ clientX: cv.getBoundingClientRect().left + x * T - cam.x + T / 2, clientY: cv.getBoundingClientRect().top + y * T - cam.y + T / 2 }); },
-    objs: function () { return { ftree: OBJ.filter(function (o) { return o.kind === 'ftree'; }).map(function (o) { return [o.tx, o.ty, o.fk]; }), rock: OBJ.filter(function (o) { return o.kind === 'rock'; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), tree: OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 4 && o.tx < W - 5 && o.ty > 4; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), daily: daily().map(function (d) { return [d.x, d.y, d.type, d.id]; }), bugs: bugs.length }; },
+    objs: function () { return { ftree: OBJ.filter(function (o) { return o.kind === 'ftree'; }).map(function (o) { return [o.tx, o.ty, o.fk]; }), rock: OBJ.filter(function (o) { return o.kind === 'rock'; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), tree: OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 2 && o.tx < W - 3 && o.ty > 3; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), daily: daily().map(function (d) { return [d.x, d.y, d.type, d.id]; }), bugs: bugs.length }; },
     teleport: function (x, y) { me.x = me.px = me.tx = x; me.y = me.py = me.ty = y; me.path = []; },
     doorOf: function (id) { var b = BUILD.filter(function (b) { return b.id === id; })[0]; return b && b.door; },
     T: T

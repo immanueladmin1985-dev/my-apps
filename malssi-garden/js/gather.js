@@ -24,11 +24,15 @@
     bone: ['뼈 화석', 'fossil', 80, 'ほねのかせき', '骨头化石|gǔtou huàshí', 'bone fossil'], ammonite: ['암모나이트', 'fossil', 100, 'アンモナイト', '菊石|júshí', 'ammonite'],
     footprint: ['발자국 화석', 'fossil', 90, 'あしあとのかせき', '脚印化石|jiǎoyìn huàshí', 'footprint fossil'], trilobite: ['삼엽충', 'fossil', 110, 'さんようちゅう', '三叶虫|sānyèchóng', 'trilobite'],
     tooth: ['이빨 화석', 'fossil', 120, 'きばのかせき', '牙齿化石|yáchǐ huàshí', 'tooth fossil'], leaffos: ['나뭇잎 화석', 'fossil', 70, 'このはのかせき', '叶子化石|yèzi huàshí', 'leaf fossil'],
+    diamond: ['다이아몬드', 'mineral', 300, 'ダイヤモンド', '钻石|zuànshí', 'diamond'], ruby: ['루비', 'mineral', 220, 'ルビー', '红宝石|hóngbǎoshí', 'ruby'],
+    sapphire: ['사파이어', 'mineral', 220, 'サファイア', '蓝宝石|lánbǎoshí', 'sapphire'], silver: ['은광석', 'mineral', 60, 'ぎん', '银|yín', 'silver'],
+    oldkey: ['낡은 열쇠', 'fossil', 90, 'ふるいかぎ', '旧钥匙|jiù yàoshi', 'old key'], skull: ['공룡 두개골', 'fossil', 400, 'きょうりゅうのずがいこつ', '恐龙头骨|kǒnglóng tóugǔ', 'dinosaur skull'],
+    mammoth: ['매머드 이빨', 'fossil', 250, 'マンモスのきば', '猛犸象牙|měngmǎ xiàngyá', 'mammoth tusk'],
     amber: ['호박', 'fossil', 150, 'こはく', '琥珀|hǔpò', 'amber'], coin: ['옛날 동전', 'fossil', 130, 'ふるいコイン', '古钱币|gǔ qiánbì', 'old coin']
   };
   var IMG = { apple: 'it-apple', orange: 'it-orange', peach: 'it-peach', pear: 'it-pear', cherry: 'it-cherry', branch: 'it-branch', log: 'it-log', acorn: 'it-acorn', pinecone: 'it-pinecone', leaf: 'it-leaf',
     'mush-red': 'it-mush-red', 'mush-brown': 'it-mush-brown', 'mush-white': 'it-mush-white', flowers: 'it-flowers', clover: 'it-clover', stone: 'it-stone', pebble: 'it-pebble', clay: 'it-clay', gold: 'it-gold', gem: 'it-gem',
-    bone: 'fos-bone', ammonite: 'fos-ammonite', footprint: 'fos-footprint', trilobite: 'fos-trilobite', tooth: 'fos-tooth', leaffos: 'fos-leaf', amber: 'fos-amber', coin: 'fos-coin' };
+    bone: 'fos-bone', ammonite: 'fos-ammonite', footprint: 'fos-footprint', trilobite: 'fos-trilobite', tooth: 'fos-tooth', leaffos: 'fos-leaf', amber: 'fos-amber', coin: 'fos-coin', diamond: 'dg-diamond', ruby: 'dg-ruby', sapphire: 'dg-sapphire', silver: 'dg-silver', oldkey: 'dg-key', skull: 'dg-skull', mammoth: 'dg-mammoth' };
   var ITEMS = {};
   Object.keys(RAW).forEach(function (id) {
     var r = RAW[id], z = r[4].split('|');

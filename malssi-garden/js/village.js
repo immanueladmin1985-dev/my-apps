@@ -101,6 +101,7 @@
     if (p && p.soon) { M.modal('<div class="center"><div class="tbig">' + p.em + '</div><h3>' + p.name + '</h3><p>' + p.soon + '</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
     if (id === 'shop') { M.inVillage = true; M.render(); return; }
     if (id === 'home') { M.go('home'); return; }
+    if (id === 'den') { M.digOpen(); return; }
     if (id === 'store') { M.furnShop(); return; }
     if (id === 'museum') { var dm = M.modal('<h3>🏛️ 박물관</h3><p class="hint">모은 것들을 구경해요</p><button class="btn wide" data-mg>🌸 정원 도감</button><button class="btn wide" data-mf>🐟 물고기 도감</button><button class="btn wide" data-mx="bug">🦋 곤충 도감</button><button class="btn wide" data-mx="fossil">🦴 화석 도감</button><button class="btn wide" data-mx="sea">🐚 바다 도감</button><button class="btn wide" data-mx="forest">🌲 숲·열매·광물 도감</button><button class="btn ghost wide" data-close>나가기</button>');
       dm.addEventListener('click', function (e) { if (e.target.closest('[data-mg]')) { dm.close(); M.gardenBook(); } if (e.target.closest('[data-mf]')) { dm.close(); M.fishDexSheet(); } var mx = e.target.closest('[data-mx]'); if (mx) { dm.close(); M.gatherDex(mx.dataset.mx); } }); return; }
@@ -125,11 +126,12 @@
     var c = M.custOf(id), m = M.miniFor(id), h = hearts(id), mq = M.miniAvail(id);
     var d = M.modal('<div class="mintro"><img class="mface" src="' + M.custImg(id, true) + '" alt=""><div class="msay"><b>' + esc(c.name) + ' <span class="hearts">' + '♥'.repeat(h) + '♡'.repeat(5 - h) + '</span></b><p>' + esc(greet(c)) + '</p></div></div>' +
       (m ? '<button class="btn ' + (mq ? 'primary' : '') + ' wide" data-play>' + m.icon + ' ' + esc(m.name) + (m.open ? (mq ? ' · 오늘의 부탁!' : ' · 연습하기') : ' · ♥' + m.heart + '에 열려요') + '</button>' : '') +
-      (M.potGiftable && M.potGiftable(id) ? '<button class="btn wide" data-gift>🎁 열매 선물하기 <small>· 친밀도 ♥</small></button>' : '') + '<button class="btn ' + (talkedToday(id) ? '' : 'primary') + ' wide" data-talk>💬 이야기하기' + (talkedToday(id) ? ' <small>(오늘 이미 이야기했어요)</small>' : ' <small>· 친밀도 ♥</small>') + '</button><button class="btn ghost wide" data-close>나가기</button>');
+      (M.dishGiftable && M.dishGiftable(id) ? '<button class="btn wide" data-dishg>🍲 요리 선물하기 <small>· 친밀도 ♥♥</small></button>' : '') + (M.potGiftable && M.potGiftable(id) ? '<button class="btn wide" data-gift>🎁 열매 선물하기 <small>· 친밀도 ♥</small></button>' : '') + '<button class="btn ' + (talkedToday(id) ? '' : 'primary') + ' wide" data-talk>💬 이야기하기' + (talkedToday(id) ? ' <small>(오늘 이미 이야기했어요)</small>' : ' <small>· 친밀도 ♥</small>') + '</button><button class="btn ghost wide" data-close>나가기</button>');
     d.addEventListener('click', function (e) {
       if (e.target.closest('[data-play]')) { if (!m.open) { M.toast(M.j(c.name, '과', '와') + ' 더 친해지면 부탁해요'); return; } d.close(); M.miniIntro(m.id); }
       if (e.target.closest('[data-talk]')) { d.close(); talk(id); }
       if (e.target.closest('[data-gift]')) { d.close(); M.potGiftSheet(id); }
+      if (e.target.closest('[data-dishg]')) { d.close(); M.dishGiftSheet(id); }
     });
   }
   function greet(c) {
