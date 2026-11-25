@@ -1226,3 +1226,4 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .dbig .demo { font-size: 4.5rem; }
 .needs .ing { background: none; border: 0; padding: 0; font: inherit; color: inherit; }
 .recipe .needs { flex-wrap: wrap; row-gap: 6px; }
+.dkind { font-size: .75rem; letter-spacing: -2px; opacity: .85; }

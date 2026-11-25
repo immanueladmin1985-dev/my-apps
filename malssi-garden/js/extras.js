@@ -110,7 +110,17 @@
     shrimpfry: ['새우튀김', '🍤', { fish_shrimp: 2, gd_w2: 1 }, 'えびフライ', '炸虾', 'fried shrimp'],
     takoyaki: ['타코야키', '🐙', { fish_octopus: 1, gd_w2: 1, 'for-nest': 1 }, 'たこやき', '章鱼烧', 'takoyaki'],
     squidgrill: ['오징어 구이', '🦑', { fish_squid: 1, 'min-salt': 1 }, 'いかやき', '烤鱿鱼', 'grilled squid'],
-    fishsoup: ['매운탕', '🍲', { fish_catfish: 1, 'sea-kelp': 1 }, 'さかなのからいスープ', '鱼汤', 'spicy fish stew']
+    fishsoup: ['매운탕', '🍲', { fish_catfish: 1, 'sea-kelp': 1 }, 'さかなのからいスープ', '鱼汤', 'spicy fish stew'],
+    // 여러 곳의 재료를 섞어 만드는 요리
+    seafoodjeon: ['해물파전', '🥘', { fish_squid: 1, 'sea-clam': 2, gd_w2: 1, 'for-nest': 1 }, 'かいせんチヂミ', '海鲜煎饼', 'seafood pancake'],
+    salmonpasta: ['연어 크림 파스타', '🍝', { fish_salmon: 1, gd_m3: 1, gd_w2: 1, 'mush-white': 1 }, 'サーモンクリームパスタ', '三文鱼奶油意面', 'salmon cream pasta'],
+    mushomelet: ['버섯 치즈 오믈렛', '🍳', { 'for-oyster': 1, gd_m4: 1, 'for-nest': 1 }, 'きのことチーズのオムレツ', '蘑菇芝士蛋卷', 'mushroom cheese omelet'],
+    fruityogurt: ['과일 꿀 요거트', '🍨', { 'for-raspberry': 1, apple: 1, gd_m3: 1, gd_h1: 1 }, 'フルーツヨーグルト', '水果蜂蜜酸奶', 'fruit honey yogurt'],
+    abalonerice: ['전복 송이 솥밥', '🍚', { 'sea-abalone': 1, 'for-matsutake': 1, gd_w2: 1 }, 'あわびとまつたけのかまめし', '鲍鱼松茸饭', 'abalone matsutake rice'],
+    eelginseng: ['장어 인삼탕', '🍲', { fish_eel: 1, 'for-ginseng': 1, 'sea-kelp': 1 }, 'うなぎとにんじんのスープ', '鳗鱼人参汤', 'eel ginseng soup'],
+    shrimprisotto: ['새우 토마토 리조또', '🍤', { fish_shrimp: 1, pot_tomato: 1, gd_m3: 1, gd_w2: 1 }, 'えびとトマトのリゾット', '鲜虾番茄烩饭', 'shrimp tomato risotto'],
+    seapizza: ['해산물 피자', '🍕', { fish_squid: 1, 'sea-mussel': 1, pot_tomato: 1, gd_m4: 1, gd_w3: 1 }, 'シーフードピザ', '海鲜披萨', 'seafood pizza'],
+    picnicbox: ['소풍 도시락', '🍱', { 'sea-nori': 1, 'for-nest': 1, pot_strawberry: 1, fish_mackerel: 1 }, 'ピクニックべんとう', '野餐便当', 'picnic lunch box']
   };
   var DIMG = { salad: 1, jam: 1, soup: 1, pie: 1, tart: 1, juice: 1, berrybowl: 1, lemonade: 1 };   // 그림이 있는 요리 (나머지는 이모지)
   function dishIcon(id) { return DIMG[id] ? '<img src="img/w/dish-' + id + '.png" alt="">' : '<b class="demo">' + DISH[id][1] + '</b>'; }
@@ -136,17 +146,27 @@
   function ingWhere(k) { var t = src(k); if (t === 'pot') return '집 화분에서 키워요'; if (t === 'gd') return '정원 가게 밭에서 합쳐 만들어요'; if (t === 'fish') return '낚시로 잡고 "요리 재료로 담기"를 눌러요'; var c = M.GATHER.ITEMS[k].cat; return { fruit: '마을 열매 나무를 흔들어요', forest: '숲 바닥에서 줍거나 나무를 흔들어요', mineral: '바위를 두드리거나 땅굴에서 캐요', sea: '모래사장에서 주워요', bug: '곤충을 잡아요', fossil: '땅을 파요' }[c] || ''; }
   M.cookSheet = function () {
     var x = X();
-    var tab = 'all', TABS = [['all', '전체'], ['ok', '만들 수 있음'], ['farm', '🌱 밭·화분'], ['forest', '🌲 숲'], ['sea', '🐚 바다'], ['fish', '🐟 물고기']];
+    var tab = 'all', TABS = [['all', '전체'], ['ok', '만들 수 있음'], ['mix', '🍱 섞어 만들기'], ['farm', '🌱 밭·화분·열매'], ['forest', '🌲 숲'], ['sea', '🐚 바다'], ['fish', '🐟 물고기']];
+    var KI = { farm: '🌱', forest: '🌲', sea: '🐚', fish: '🐟' };
     var d = M.modal('<h3>🍳 요리하기 <small>' + Object.keys(DISH).length + '가지</small></h3><p class="hint">재료 그림을 누르면 어디서 구하는지 알려 줘요. 요리를 주민에게 주면 친밀도가 두 칸 올라요.</p><div class="fcats" id="ckTabs"></div><div class="list" id="ckList"></div><button class="btn ghost wide" data-close>닫기</button>');
-    function kind(r) { var ks = Object.keys(r[2]); if (ks.some(function (k) { return src(k) === 'fish'; })) return 'fish'; if (ks.some(function (k) { return src(k) === 'bag' && M.GATHER.ITEMS[k].cat === 'sea'; })) return 'sea'; if (ks.some(function (k) { return src(k) === 'bag' && M.GATHER.ITEMS[k].cat === 'forest'; })) return 'forest'; return 'farm'; }
+    // 요리에 들어가는 재료가 어디서 나는지 모두 모은다 (소금 같은 양념은 뺀다)
+    function kinds(r) {
+      var o = {};
+      Object.keys(r[2]).forEach(function (k) {
+        var t = src(k), c = t === 'bag' ? M.GATHER.ITEMS[k].cat : '';
+        if (t === 'pot' || t === 'gd' || c === 'fruit') o.farm = 1; else if (t === 'fish') o.fish = 1; else if (c === 'sea') o.sea = 1; else if (c === 'forest') o.forest = 1;
+      });
+      return ['farm', 'forest', 'sea', 'fish'].filter(function (k) { return o[k]; });
+    }
+    function inTab(r, ok) { var ks = kinds(r); return tab === 'all' || (tab === 'ok' ? ok : tab === 'mix' ? ks.length >= 2 : ks.indexOf(tab) >= 0); }
     function paint() {
       d.querySelector('#ckTabs').innerHTML = TABS.map(function (t) { return '<button data-ct="' + t[0] + '" class="' + (tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>'; }).join('');
       var ids = Object.keys(DISH).map(function (id) { var r = DISH[id]; return { id: id, ok: Object.keys(r[2]).every(function (k) { return have(k) >= r[2][k]; }) }; })
-        .filter(function (o) { return tab === 'all' || (tab === 'ok' ? o.ok : kind(DISH[o.id]) === tab); });
+        .filter(function (o) { return inTab(DISH[o.id], o.ok); });
       ids.sort(function (a, b) { return (b.ok ? 1 : 0) - (a.ok ? 1 : 0); });
       d.querySelector('#ckList').innerHTML = ids.length ? ids.map(function (o) {
         var id = o.id, r = DISH[id], ok = o.ok;
-        return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le dishe">' + dishIcon(id) + '</span><div class="ln">' + r[0] + (x.dishes[id] ? ' <small>가진 것 ' + x.dishes[id] + '</small>' : '') + '<div class="needs">' +
+        return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le dishe">' + dishIcon(id) + '</span><div class="ln">' + r[0] + ' <span class="dkind">' + kinds(r).map(function (k) { return KI[k]; }).join('') + '</span>' + (x.dishes[id] ? ' <small>가진 것 ' + x.dishes[id] + '</small>' : '') + '<div class="needs">' +
           Object.keys(r[2]).map(function (k) { return '<button class="ing' + (have(k) >= r[2][k] ? ' got' : '') + '" data-ing="' + k + '"><img src="' + ingImg(k) + '" alt="" title="' + ingName(k) + '"><i>' + have(k) + '/' + r[2][k] + '</i></button>'; }).join('') +
           '</div></div><button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-cook="' + id + '"' + (ok ? '' : ' disabled') + '>만들기</button></div>';
       }).join('') : '<p class="hint center">지금 재료로 만들 수 있는 요리가 없어요</p>';
