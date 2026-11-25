@@ -120,7 +120,30 @@
     eelginseng: ['장어 인삼탕', '🍲', { fish_eel: 1, 'for-ginseng': 1, 'sea-kelp': 1 }, 'うなぎとにんじんのスープ', '鳗鱼人参汤', 'eel ginseng soup'],
     shrimprisotto: ['새우 토마토 리조또', '🍤', { fish_shrimp: 1, pot_tomato: 1, gd_m3: 1, gd_w2: 1 }, 'えびとトマトのリゾット', '鲜虾番茄烩饭', 'shrimp tomato risotto'],
     seapizza: ['해산물 피자', '🍕', { fish_squid: 1, 'sea-mussel': 1, pot_tomato: 1, gd_m4: 1, gd_w3: 1 }, 'シーフードピザ', '海鲜披萨', 'seafood pizza'],
-    picnicbox: ['소풍 도시락', '🍱', { 'sea-nori': 1, 'for-nest': 1, pot_strawberry: 1, fish_mackerel: 1 }, 'ピクニックべんとう', '野餐便当', 'picnic lunch box']
+    picnicbox: ['소풍 도시락', '🍱', { 'sea-nori': 1, 'for-nest': 1, pot_strawberry: 1, fish_mackerel: 1 }, 'ピクニックべんとう', '野餐便当', 'picnic lunch box'],
+    // 셋째 묶음
+    strawcake: ['딸기 케이크', '🍰', { pot_strawberry: 2, gd_w3: 1, gd_m3: 1 }, 'いちごケーキ', '草莓蛋糕', 'strawberry cake'],
+    bbcheesecake: ['블루베리 치즈케이크', '🍰', { gd_b2: 1, gd_m4: 1, gd_w2: 1 }, 'ブルーベリーチーズケーキ', '蓝莓芝士蛋糕', 'blueberry cheesecake'],
+    lemontart: ['레몬 타르트', '🍋', { pot_lemon: 1, gd_w3: 1, 'for-nest': 1 }, 'レモンタルト', '柠檬挞', 'lemon tart'],
+    peachtea: ['복숭아 홍차', '🍑', { peach: 1, gd_c2: 1 }, 'ピーチティー', '蜜桃红茶', 'peach tea'],
+    cherryparfait: ['체리 파르페', '🍒', { cherry: 2, gd_m3: 1, gd_b1: 1 }, 'チェリーパフェ', '樱桃芭菲', 'cherry parfait'],
+    applehoney: ['사과 꿀차', '🍎', { apple: 1, gd_h2: 1 }, 'りんごはちみつちゃ', '苹果蜂蜜茶', 'apple honey tea'],
+    baesuk: ['배숙', '🍐', { pear: 1, gd_h2: 1 }, 'なしのはちみつむし', '蜂蜜蒸梨', 'steamed pear with honey'],
+    marmalade: ['오렌지잼 토스트', '🍊', { orange: 2, gd_w4: 1 }, 'マーマレードトースト', '橙子果酱吐司', 'marmalade toast'],
+    montblanc: ['밤 몽블랑', '🌰', { 'for-chestnut': 2, gd_m3: 1, gd_w3: 1 }, 'モンブラン', '栗子蒙布朗', 'Mont Blanc'],
+    creamsoup: ['버섯 크림 수프', '🥣', { 'mush-white': 1, 'mush-brown': 1, gd_m3: 1 }, 'きのこクリームスープ', '奶油蘑菇汤', 'cream of mushroom soup'],
+    mushskewer: ['버섯 꼬치', '🍢', { 'for-enoki': 1, 'for-oyster': 1, 'mush-brown': 1, 'min-salt': 1 }, 'きのこのくしやき', '烤蘑菇串', 'mushroom skewers'],
+    bibimnoodle: ['나물 비빔국수', '🍜', { 'for-fiddlehead': 1, 'for-dandelion': 1, gd_w2: 1, 'for-nest': 1 }, 'ナムルのまぜめん', '野菜拌面', 'bibim noodles'],
+    honeyice: ['벌집 아이스크림', '🍦', { 'for-honeycomb': 1, gd_m3: 1 }, 'はちみつアイス', '蜂巢冰淇淋', 'honeycomb ice cream'],
+    musselstew: ['홍합 토마토 스튜', '🥘', { 'sea-mussel': 2, pot_tomato: 1 }, 'ムールがいのトマトに', '番茄炖青口', 'mussel tomato stew'],
+    creamclam: ['대합 크림찜', '🐚', { 'sea-hardclam': 2, gd_m3: 1 }, 'はまぐりのクリームに', '奶油焖文蛤', 'creamy clams'],
+    seaweedsalad: ['해초 샐러드', '🥗', { 'sea-wakame': 1, 'sea-codium': 1, 'sea-hijiki': 1 }, 'かいそうサラダ', '海藻沙拉', 'seaweed salad'],
+    conchgrill: ['소라 구이', '🐚', { conch: 2, 'min-salt': 1 }, 'さざえのつぼやき', '烤海螺', 'grilled conch'],
+    crabcroquette: ['게살 크림 고로케', '🦀', { crab: 1, gd_m3: 1, gd_w3: 1 }, 'かにクリームコロッケ', '蟹肉奶油可乐饼', 'crab cream croquette'],
+    breamrice: ['도미 솥밥', '🍚', { fish_seabream: 1, 'sea-kelp': 1, gd_w2: 1 }, 'たいめし', '鲷鱼饭', 'sea bream rice'],
+    octosalad: ['문어 샐러드', '🐙', { fish_octopus: 1, pot_tomato: 1, pot_lemon: 1 }, 'たこのマリネ', '章鱼沙拉', 'octopus salad'],
+    taiyaki: ['붕어빵', '🐟', { gd_w2: 1, gd_m2: 1, 'for-chestnut': 1 }, 'たいやき', '鲷鱼烧', 'fish-shaped bun'],
+    onigiri: ['연어 주먹밥', '🍙', { fish_salmon: 1, 'sea-nori': 1, gd_w2: 1 }, 'しゃけおにぎり', '三文鱼饭团', 'salmon rice ball']
   };
   var DIMG = { salad: 1, jam: 1, soup: 1, pie: 1, tart: 1, juice: 1, berrybowl: 1, lemonade: 1 };   // 그림이 있는 요리 (나머지는 이모지)
   function dishIcon(id) { return DIMG[id] ? '<img src="img/w/dish-' + id + '.png" alt="">' : '<b class="demo">' + DISH[id][1] + '</b>'; }
