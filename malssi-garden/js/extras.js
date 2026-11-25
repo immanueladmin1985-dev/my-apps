@@ -160,7 +160,16 @@
     mackerelstew: ['고등어 조림', '🐟', { fish_mackerel: 1, pot_potato: 1, pan_soy: 1 }, 'さばのにつけ', '红烧鲭鱼', 'braised mackerel'],
     friedrice: ['해물 볶음밥', '🍤', { pot_rice: 1, fish_shrimp: 1, 'sea-clam': 1, pan_oil: 1 }, 'シーフードチャーハン', '海鲜炒饭', 'seafood fried rice'],
     potatosalad: ['감자 샐러드', '🥗', { pot_potato: 1, pot_carrot: 1, 'for-nest': 1 }, 'ポテトサラダ', '土豆沙拉', 'potato salad'],
-    hotteok: ['꿀 호떡', '🥞', { gd_w2: 1, pan_sugar: 1, gd_h1: 1, 'for-chestnut': 1 }, 'ホットク', '糖饼', 'sweet pancake']
+    hotteok: ['꿀 호떡', '🥞', { gd_w2: 1, pan_sugar: 1, gd_h1: 1, 'for-chestnut': 1 }, 'ホットク', '糖饼', 'sweet pancake'],
+    spicysquid: ['매운 오징어볶음', '🦑', { fish_squid: 1, pot_pepper: 1, pot_carrot: 1, pan_oil: 1 }, 'いかのからいため', '辣炒鱿鱼', 'spicy stir-fried squid'],
+    jjamppong: ['짬뽕', '🍜', { gd_w2: 1, pot_pepper: 1, 'sea-mussel': 1, fish_shrimp: 1 }, 'チャンポン', '炒码面', 'spicy seafood noodles'],
+    spicypotato: ['매콤 감자조림', '🥔', { pot_potato: 2, pot_pepper: 1, pan_soy: 1 }, 'ピリからじゃがいもの煮物', '辣炖土豆', 'spicy braised potatoes'],
+    milkpudding: ['우유 푸딩', '🍮', { gd_m3: 1, pan_sugar: 1, 'for-nest': 1 }, 'ミルクプリン', '牛奶布丁', 'milk pudding'],
+    gratin: ['치즈 감자 그라탕', '🧀', { pot_potato: 1, gd_m4: 1, pan_butter: 1 }, 'ポテトグラタン', '芝士焗土豆', 'potato gratin'],
+    nutbar: ['견과 강정', '🌰', { acorn: 2, 'for-chestnut': 1, gd_h2: 1 }, 'ナッツバー', '坚果糖', 'nut bar'],
+    spicyclam: ['매운 조개찜', '🐚', { 'sea-clam': 2, 'sea-hardclam': 1, pot_pepper: 1 }, 'かいのピリからむし', '辣蒸蛤蜊', 'spicy steamed clams'],
+    spicymush: ['매운 버섯볶음', '🍄', { 'for-enoki': 1, 'mush-brown': 1, pot_pepper: 1, pan_oil: 1 }, 'きのこのからいため', '辣炒蘑菇', 'spicy stir-fried mushrooms'],
+    salmonbowl: ['연어 덮밥', '🍣', { fish_salmon: 1, pot_rice: 1, pan_soy: 1 }, 'サーモンどん', '三文鱼盖饭', 'salmon rice bowl']
   };
   // 기본 양념: 요리 화면의 '양념 가게'에서 코인으로 산다
   var PANTRY = {
@@ -263,7 +272,12 @@
     panda: { love: ['veg'], like: ['rice', 'tea'], hate: ['fish'] }, fox: { love: ['rice'], like: ['sea', 'fish'], hate: ['sweet'] },
     koala: { love: ['tea'], like: ['veg', 'sweet'], hate: ['dairy'] }, hamster: { love: ['nut'], like: ['bread', 'veg'], hate: ['spicy'] },
     penguin: { love: ['fish'], like: ['sea', 'rice'], hate: ['veg'] }, cat: { love: ['fish'], like: ['dairy', 'sea'], hate: ['veg'] },
-    sheep: { love: ['veg'], like: ['bread', 'dairy'], hate: ['fish'] }, owl: { love: ['tea'], like: ['mush', 'bread'], hate: ['spicy'] }
+    sheep: { love: ['veg'], like: ['bread', 'dairy'], hate: ['fish'] }, owl: { love: ['tea'], like: ['mush', 'bread'], hate: ['spicy'] },
+    // 그림이 오면 이사 올 새 주민
+    dog: { love: ['dairy'], like: ['bread', 'sweet'], hate: ['mush'] }, otter: { love: ['sea'], like: ['fish', 'spicy'], hate: ['nut'] },
+    deer: { love: ['mush'], like: ['veg', 'tea'], hate: ['sea'] }, duck: { love: ['bread'], like: ['veg', 'sea'], hate: ['dairy'] },
+    lion: { love: ['spicy'], like: ['fish', 'dairy'], hate: ['tea'] }, camel: { love: ['spicy'], like: ['rice', 'nut'], hate: ['bread'] },
+    elephant: { love: ['nut'], like: ['sweet', 'veg'], hate: ['fish'] }, monkey: { love: ['sweet'], like: ['nut', 'spicy'], hate: ['rice'] }
   };
   M.TASTE = TASTE; M.TASTE_TAG = TAG;
   var SWEETI = /^(apple|orange|peach|pear|cherry|for-raspberry|for-wildgrape|for-honeycomb|pot_strawberry|pan_sugar|gd_h|gd_b)/;
