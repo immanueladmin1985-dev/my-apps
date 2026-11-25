@@ -312,7 +312,7 @@
     raf = requestAnimationFrame(draw);
   }
   function label(text, x, y, color) {
-    ctx.font = '700 11px system-ui, sans-serif'; var w = ctx.measureText(text).width + 10;
+    ctx.font = '700 11px Jua, "M PLUS Rounded 1c", system-ui, sans-serif'; var w = ctx.measureText(text).width + 10;
     ctx.fillStyle = 'rgba(255,255,255,.92)'; roundRect(x - w / 2, y - 9, w, 17, 8); ctx.fill();
     ctx.fillStyle = color || '#5b4630'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y);
   }
@@ -392,11 +392,11 @@
     }
     if (a.kind === 'npc' && a.say) {   // 말풍선
       var top = (r ? r.top : Y - T) - 6, cx = X + T / 2;
-      ctx.font = '700 12px system-ui, sans-serif'; var tw = Math.max(ctx.measureText(a.say.t).width, ctx.measureText(a.say.k).width * 0.85) + 14;
+      ctx.font = '700 12px Jua, "M PLUS Rounded 1c", system-ui, sans-serif'; var tw = Math.max(ctx.measureText(a.say.t).width, ctx.measureText(a.say.k).width * 0.85) + 14;
       ctx.fillStyle = 'rgba(255,255,255,.96)'; ctx.strokeStyle = '#d9c7ae'; ctx.lineWidth = 1.5; roundRect(cx - tw / 2, top - 34, tw, 32, 10); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx - 5, top - 3); ctx.lineTo(cx + 5, top - 3); ctx.lineTo(cx, top + 4); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#4b3a2a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(a.say.t, cx, top - 24);
-      ctx.font = '600 10px system-ui, sans-serif'; ctx.fillStyle = '#9a8a78'; ctx.fillText(a.say.k, cx, top - 11);
+      ctx.font = '600 10px Jua, "M PLUS Rounded 1c", system-ui, sans-serif'; ctx.fillStyle = '#9a8a78'; ctx.fillText(a.say.k, cx, top - 11);
       return;
     }
     if (a.kind === 'npc') {

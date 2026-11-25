@@ -11,7 +11,8 @@
 html, body { margin: 0; height: 100%; }
 body {
   background: var(--bg); color: var(--fg); overflow: hidden;
-  font-family: "Pretendard", system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", sans-serif;
+  font-family: "Jua", "M PLUS Rounded 1c", "ZCOOL KuaiLe", system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-synthesis-weight: none; letter-spacing: .01em;
   font-size: 15px; line-height: 1.45; user-select: none; -webkit-user-select: none;
 }
 .hidden { display: none !important; }
@@ -24,8 +25,9 @@ body { -webkit-touch-callout: none; }
 .hint { color: var(--sub); font-size: .88rem; margin: 6px 0; }
 small { font-size: .78rem; }
 .inl { width: 1.2em; height: 1.2em; vertical-align: -.25em; }
-.lang-ja, .lang-zh { font-family: "Noto Sans JP", "Hiragino Sans", "Noto Sans SC", "PingFang SC", system-ui, sans-serif; }
-.lang-zh { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+.lang-ja { font-family: "M PLUS Rounded 1c", "Jua", "Hiragino Maru Gothic ProN", system-ui, sans-serif; }
+.lang-zh { font-family: "Malssi Pinyin", "ZCOOL KuaiLe", "Jua", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+.lang-en { font-family: "Jua", system-ui, sans-serif; }
 
 /* 버튼 */
 .btn {
