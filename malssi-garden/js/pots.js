@@ -7,12 +7,13 @@
   var H = 3600 * 1000, WET = 12 * H, WATER_COST = 3, FERT_PRICE = 15;
   // 그림이 오면 img: true 로 켠다 (img/plant-<id>-<1~5>.png, img/fruit-<id>.png)
   var SEEDS = {
-    strawberry: { name: '딸기', hours: 4, price: 20, yield: 3, sell: 12, st: ['🌱', '🌿', '☘️', '🌼', '🍓'], fruit: '🍓', lv: 1 },
-    tomato: { name: '토마토', hours: 6, price: 30, yield: 3, sell: 16, st: ['🌱', '🌿', '🪴', '🌼', '🍅'], fruit: '🍅', lv: 1 },
-    sunflower: { name: '해바라기', hours: 8, price: 40, yield: 2, sell: 18, fp: 3, st: ['🌱', '🌿', '🪴', '🌻', '🌻'], fruit: '🌻', lv: 3 },
-    rose: { name: '장미', hours: 12, price: 60, yield: 2, sell: 28, fp: 5, st: ['🌱', '🌿', '🪴', '🥀', '🌹'], fruit: '🌹', lv: 5 },
-    lemon: { name: '레몬나무', hours: 24, price: 90, yield: 4, sell: 30, st: ['🌱', '🌿', '🪴', '🌳', '🍋'], fruit: '🍋', lv: 7 }
+    strawberry: { name: '딸기', hours: 4, price: 20, yield: 3, sell: 12, st: ['🌱', '🌿', '☘️', '🌼', '🍓'], fruit: '🍓', lv: 1, img: true },
+    tomato: { name: '토마토', hours: 6, price: 30, yield: 3, sell: 16, st: ['🌱', '🌿', '🪴', '🌼', '🍅'], fruit: '🍅', lv: 1, img: true },
+    sunflower: { name: '해바라기', hours: 8, price: 40, yield: 2, sell: 18, fp: 3, st: ['🌱', '🌿', '🪴', '🌻', '🌻'], fruit: '🌻', lv: 3, img: true },
+    rose: { name: '장미', hours: 12, price: 60, yield: 2, sell: 28, fp: 5, st: ['🌱', '🌿', '🪴', '🥀', '🌹'], fruit: '🌹', lv: 5, img: true },
+    lemon: { name: '레몬나무', hours: 24, price: 90, yield: 4, sell: 30, st: ['🌱', '🌿', '🪴', '🌳', '🍋'], fruit: '🍋', lv: 7, img: true }
   };
+  function fruitImg(k) { return '<img class="fimg2" src="img/w/fruit-' + k + '.png" alt="' + SEEDS[k].name + '">'; }
   var SLOT_COST = [0, 0, 150, 300, 500, 800];   // 3번째 칸부터
   M.SEEDS = SEEDS;
 
@@ -41,7 +42,7 @@
 
   function plantFace(p) {
     var sd = SEEDS[p.id], sg = stage(p);
-    return sd.img ? '<img src="img/plant-' + p.id + '-' + sg + '.png" alt="">' : '<span class="pe s' + sg + '">' + sd.st[sg - 1] + '</span>';
+    return sd.img ? '<img class="pimg" src="img/w/' + (sg === 1 ? 'pot-empty' : 'plant-' + p.id + '-' + sg) + '.png" alt="">' : '<span class="pe s' + sg + '">' + sd.st[sg - 1] + '</span>';
   }
   // 방 안의 화분 자리(%) — 꾸미기 모드에서 끌어서 옮길 수 있다
   var SPOTS = [[16, 80], [30, 86], [70, 86], [84, 80], [10, 64], [90, 64]];
@@ -53,13 +54,13 @@
     var s = S(), now = Date.now();
     return s.list.map(function (p, i) {
       var sp = spot(s, i), inner, tag;
-      if (!p) { inner = '<span class="pplus">＋</span>'; tag = '<i class="ptag empty">심기</i>'; }
+      if (!p) { inner = '<img class="pimg" src="img/w/pot-empty.png" alt=""><span class="pplus">＋</span>'; tag = '<i class="ptag empty">심기</i>'; }
       else {
         update(p, now); var r = ripe(p), w = wet(p), sd = SEEDS[p.id];
-        inner = '<span class="pplant">' + plantFace(p) + '</span>';
+        inner = SEEDS[p.id].img ? plantFace(p) : '<span class="pplant">' + plantFace(p) + '</span>' + potSvg();
         tag = r ? '<i class="ptag ripe">수확!</i>' : !w ? '<i class="ptag dry">💧물</i>' : '<i class="ptag">' + fmtShort(total(p) - p.t) + '</i>';
       }
-      return '<button class="potobj' + (p && ripe(p) ? ' ripe' : '') + (p && !ripe(p) && !wet(p) ? ' dry' : '') + '" data-pot="' + i + '" style="left:' + sp.x + '%;top:' + sp.y + '%;z-index:' + Math.round(sp.y + 2) + '">' + inner + potSvg() + tag + '</button>';
+      return '<button class="potobj' + (p && ripe(p) ? ' ripe' : '') + (p && !ripe(p) && !wet(p) ? ' dry' : '') + '" data-pot="' + i + '" style="left:' + sp.x + '%;top:' + sp.y + '%;z-index:' + Math.round(sp.y + 2) + '">' + inner + tag + '</button>';
     }).join('');
   };
   function fmtShort(ms) { var m = Math.max(1, Math.ceil(ms / 60000)), h = Math.floor(m / 60); return h ? h + '시간' + (m % 60 ? ' ' + (m % 60) + '분' : '') : m + '분'; }
@@ -68,7 +69,7 @@
     var s = S(), fruits = Object.keys(s.fruits).filter(function (k) { return s.fruits[k] > 0; });
     var seeds = Object.keys(s.seeds).reduce(function (a, k) { return a + (s.seeds[k] || 0); }, 0);
     return '<div class="card potshelf"><div class="pots-h"><b>🪴 화분 ' + s.list.filter(Boolean).length + '/' + s.slots + '</b><small>방 안의 화분을 눌러 물·비료·수확 · 실제 시간으로 자라요</small></div>' +
-      '<div class="basket"><b>🧺 열매 바구니</b>' + (fruits.length ? fruits.map(function (k) { return '<button class="fruit" data-psell="' + k + '">' + SEEDS[k].fruit + '<i>' + s.fruits[k] + '</i></button>'; }).join('') + '<small>누르면 팔 수 있어요 · 주민에게 선물도 돼요</small>' : '<small>아직 비어 있어요</small>') +
+      '<div class="basket"><b>🧺 열매 바구니</b>' + (fruits.length ? fruits.map(function (k) { return '<button class="fruit" data-psell="' + k + '">' + fruitImg(k) + '<i>' + s.fruits[k] + '</i></button>'; }).join('') + '<small>누르면 팔 수 있어요 · 주민에게 선물도 돼요</small>' : '<small>아직 비어 있어요</small>') +
       '<span class="binv">씨앗 ' + seeds + ' · 비료 ' + s.fert + '</span></div>' +
       '<div class="row2"><button class="btn sm" data-pshop>🌱 씨앗·비료 사기</button>' + (s.slots < 6 ? '<button class="btn sm" data-pslot>➕ 화분 늘리기 <img class="inl" src="img/coin.png" alt="">' + SLOT_COST[s.slots] + '</button>' : '<span></span>') + '</div></div>';
   };
@@ -79,7 +80,7 @@
     var s = S(), p = s.list[i];
     if (!p) { plantSheet(i); return; }
     update(p); var sd = SEEDS[p.id], r = ripe(p), w = wet(p), left = total(p) - p.t;
-    var d = M.modal('<div class="center"><div class="potbig">' + plantFace(p) + potSvg() + '</div><h3>' + sd.name + '</h3><div class="mbar"><i style="width:' + Math.round(p.t / total(p) * 100) + '%"></i></div>' +
+    var d = M.modal('<div class="center"><div class="potbig">' + plantFace(p) + (sd.img ? '' : potSvg()) + '</div><h3>' + sd.name + '</h3><div class="mbar"><i style="width:' + Math.round(p.t / total(p) * 100) + '%"></i></div>' +
       '<p class="hint">' + (r ? '다 자랐어요! 열매 ' + sd.yield + '개를 딸 수 있어요' : (w ? '촉촉해요 · ' + fmt(p.wet - Date.now()) + ' 동안 자라요' : '물이 말라서 자라지 않아요') + '<br>다 자라기까지 ' + fmt(left)) + '</p></div>' +
       (r ? '<button class="btn primary wide" data-pharv="' + i + '">🧺 수확하기</button>' :
         '<div class="row2"><button class="btn' + (w ? '' : ' primary') + '" data-pwater="' + i + '">💧 물 주기 (' + WATER_COST + ')</button><button class="btn" data-pfert="' + i + '"' + ((p.f || 0) >= 2 ? ' disabled' : '') + '>🧪 비료 (' + s.fert + ')</button></div>') +
@@ -114,7 +115,7 @@
   function plantSheet(i) {
     var s = S(), have = Object.keys(SEEDS).filter(function (k) { return s.seeds[k] > 0; });
     if (!have.length) { M.confirm('씨앗이 없어요', '마을의 <b>잡화점</b>이나 꾸미기 상점의 <b>씨앗·비료</b> 탭에서 씨앗을 사 오세요.', '지금 사러 가기', function () { M.furnShop('seed'); }); return; }
-    var d = M.modal('<h3>🌱 어떤 씨앗을 심을까요?</h3><div class="list">' + have.map(function (k) { var sd = SEEDS[k]; return '<button class="litem" data-sk="' + k + '"><span class="le">' + sd.fruit + '</span><span class="ln">' + sd.name + ' <small>' + sd.hours + '시간 · 열매 ' + sd.yield + '개' + (sd.fp ? ' · 꽃 포인트' : '') + '</small></span><span class="lp own">' + s.seeds[k] + '개</span></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
+    var d = M.modal('<h3>🌱 어떤 씨앗을 심을까요?</h3><div class="list">' + have.map(function (k) { var sd = SEEDS[k]; return '<button class="litem" data-sk="' + k + '"><span class="le">' + fruitImg(k) + '</span><span class="ln">' + sd.name + ' <small>' + sd.hours + '시간 · 열매 ' + sd.yield + '개' + (sd.fp ? ' · 꽃 포인트' : '') + '</small></span><span class="lp own">' + s.seeds[k] + '개</span></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-sk]'); if (!b) return;
       var k = b.dataset.sk; s.seeds[k]--; s.list[i] = { id: k, t: 0, at: Date.now(), wet: 0, f: 0 };
@@ -140,7 +141,7 @@
   M.potGiftable = function (id) { var s = S(); return !s.gifted[id] && Object.keys(s.fruits).some(function (k) { return s.fruits[k] > 0; }); };
   M.potGiftSheet = function (id, done) {
     var s = S(), c = M.custOf(id), ks = Object.keys(s.fruits).filter(function (k) { return s.fruits[k] > 0; });
-    var d = M.modal('<h3>🎁 ' + esc(M.j(c.name, '이', '')) + '에게 무엇을 줄까요?</h3><div class="basket big">' + ks.map(function (k) { return '<button class="fruit" data-gk="' + k + '">' + SEEDS[k].fruit + '<i>' + s.fruits[k] + '</i></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
+    var d = M.modal('<h3>🎁 ' + esc(M.j(c.name, '이', '')) + '에게 무엇을 줄까요?</h3><div class="basket big">' + ks.map(function (k) { return '<button class="fruit" data-gk="' + k + '">' + fruitImg(k) + '<i>' + s.fruits[k] + '</i></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-gk]'); if (!b) return;
       s.fruits[b.dataset.gk]--; s.gifted[id] = 1; M.save(); d.close(); M.sfx('win');
@@ -169,7 +170,7 @@
       s.fruits[r.id] = (s.fruits[r.id] || 0) + sd.yield; s.list[i] = null;
       if (sd.fp) M.give({ fp: sd.fp });
       M.save(); M.sfx('win'); M.quest && M.quest('harvest', 1);
-      M.modal('<div class="center"><div class="tbig">' + sd.fruit.repeat(Math.min(4, sd.yield)) + '</div><h3>' + sd.name + ' ' + sd.yield + '개를 땄어요!</h3>' + (sd.fp ? '<p>' + M.rewardHtml({ fp: sd.fp }) + '</p>' : '') + '<p class="hint">열매 바구니에 넣었어요. 팔거나 주민에게 선물해 보세요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
+      M.modal('<div class="center"><div class="tbig fruitrow">' + new Array(Math.min(4, sd.yield) + 1).join(fruitImg(r.id)) + '</div><h3>' + sd.name + ' ' + sd.yield + '개를 땄어요!</h3>' + (sd.fp ? '<p>' + M.rewardHtml({ fp: sd.fp }) + '</p>' : '') + '<p class="hint">열매 바구니에 넣었어요. 팔거나 주민에게 선물해 보세요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
       repaint(); return;
     }
     if ((b = t.closest('[data-pslot]'))) {

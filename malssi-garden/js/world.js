@@ -73,7 +73,10 @@
     [[13, 13, 'o-lamp'], [22, 13, 'o-lamp1'], [13, 19, 'o-lamp2'], [22, 19, 'o-lamp3']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 1.6 }); });
     [[20, 15, 'o-bench'], [20, 18, 'o-bench1'], [14, 17, 'o-bench2']].forEach(function (q) { solid(q[0], q[1]); solid(q[0] + 1, q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 1, y: q[1] + 1, h: 1.1 }); });
     [[16, 13, 'o-planter'], [19, 13, 'o-flowerbed']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 0.9 }); });
+    solid(17, 16); solid(18, 16); OBJ.push({ kind: 'img', src: 'x-fountain', x: 18, y: 17, h: 1.7 });
     solid(15, 19); OBJ.push({ kind: 'img', src: 'o-well', x: 15.5, y: 20, h: 1.5 });
+    solid(20, 12); OBJ.push({ kind: 'img', src: 'x-signpost', x: 20.5, y: 13, h: 1.4 });
+    [[24, 18, 'x-barrel', 1], [24, 19, 'x-applecrate', 0.9], [30, 18, 'x-flowercart', 1.1], [3, 17, 'x-tulipbox', 0.9], [9, 18, 'x-topiary', 1.3], [14, 21, 'x-flag', 1.6], [21, 21, 'x-flag', 1.6]].forEach(function (q) { if (G[q[1] * W + q[0]] !== 0 || SOLID[q[1] * W + q[0]]) return; solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: q[3] }); });
     // 주민 집 옆 우체통
     LOTS.forEach(function (l, k) { solid(l[0] + 3, l[1] + 2, 2 + k); OBJ.push({ kind: 'mail', k: k, x: l[0] + 3.5, y: l[1] + 3 }); });
     // 숲 테두리와 흩어진 나무·덤불·바위·꽃
