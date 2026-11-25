@@ -38,8 +38,83 @@
     var r = RAW[id], z = r[4].split('|');
     ITEMS[id] = { id: id, ko: r[0], cat: r[1], price: r[2], ja: [r[3], ''], zh: [z[0], z[1]], en: [r[5], ''], img: 'img/w/' + (IMG[id] || (r[1] === 'sea' ? 'sea-' + id : r[1] === 'bug' ? 'bug-' + id : 'it-' + id)) + '.png' };
   });
+
+  // 5×5 확장 (그림 파일 이름 = id)
+  var RAW2 = {
+    'bug-monarch': ['제왕나비', 'bug', 40, 'オオカバマダラ', '帝王蝶|dìwángdié', 'monarch butterfly'], 'bug-whitebf': ['흰나비', 'bug', 25, 'モンシロチョウ', '菜粉蝶|càifěndié', 'cabbage white'],
+    'bug-swallowtail': ['호랑나비', 'bug', 45, 'アゲハチョウ', '凤蝶|fèngdié', 'swallowtail'], 'bug-peacock': ['공작나비', 'bug', 60, 'クジャクチョウ', '孔雀蛱蝶|kǒngquè jiádié', 'peacock butterfly'],
+    'bug-moth': ['나방', 'bug', 30, 'が', '蛾子|ézi', 'moth'], 'bug-grasshopper': ['메뚜기', 'bug', 20, 'バッタ', '蚂蚱|màzha', 'grasshopper'],
+    'bug-cricket': ['귀뚜라미', 'bug', 25, 'コオロギ', '蟋蟀|xīshuài', 'cricket'], 'bug-mantis': ['사마귀', 'bug', 50, 'カマキリ', '螳螂|tángláng', 'praying mantis'],
+    'bug-ricegrass': ['방아깨비', 'bug', 35, 'ショウリョウバッタ', '中华剑角蝗|zhōnghuá jiànjiǎohuáng', 'long-headed grasshopper'], 'bug-katydid': ['여치', 'bug', 35, 'キリギリス', '蝈蝈|guōguo', 'katydid'],
+    'bug-longhorn': ['하늘소', 'bug', 70, 'カミキリムシ', '天牛|tiānniú', 'longhorn beetle'], 'bug-chafer': ['풍뎅이', 'bug', 40, 'コガネムシ', '金龟子|jīnguīzǐ', 'chafer'],
+    'bug-jewel': ['비단벌레', 'bug', 150, 'タマムシ', '吉丁虫|jídīngchóng', 'jewel beetle'], 'bug-higurashi': ['쓰르라미', 'bug', 45, 'ヒグラシ', '暮蝉|mùchán', 'evening cicada'],
+    'bug-stick': ['대벌레', 'bug', 60, 'ナナフシ', '竹节虫|zhújiéchóng', 'stick insect'], 'bug-strider': ['소금쟁이', 'bug', 25, 'アメンボ', '水黾|shuǐmǐn', 'water strider'],
+    'bug-divingbeetle': ['물방개', 'bug', 70, 'ゲンゴロウ', '龙虱|lóngshī', 'diving beetle'], 'bug-redfly': ['고추잠자리', 'bug', 40, 'アカトンボ', '红蜻蜓|hóng qīngtíng', 'red dragonfly'],
+    'bug-waterbug': ['물장군', 'bug', 120, 'タガメ', '田鳖|tiánbiē', 'giant water bug'], 'bug-damselfly': ['실잠자리', 'bug', 30, 'イトトンボ', '豆娘|dòuniáng', 'damselfly'],
+    'bug-ant': ['개미', 'bug', 8, 'アリ', '蚂蚁|mǎyǐ', 'ant'], 'bug-spider': ['거미', 'bug', 20, 'クモ', '蜘蛛|zhīzhū', 'spider'],
+    'bug-dung': ['쇠똥구리', 'bug', 60, 'フンコロガシ', '屎壳郎|shǐkelàng', 'dung beetle'], 'bug-goldstag': ['황금 사슴벌레', 'bug', 600, 'おうごんのクワガタ', '黄金锹形虫|huángjīn qiāoxíngchóng', 'golden stag beetle'],
+    'bug-rainbowbf': ['무지개 나비', 'bug', 500, 'にじいろのちょうちょ', '彩虹蝴蝶|cǎihóng húdié', 'rainbow butterfly'],
+    'sea-clam': ['바지락', 'sea', 10, 'アサリ', '花蛤|huāgé', 'clam'], 'sea-mussel': ['홍합', 'sea', 10, 'ムールがい', '青口贝|qīngkǒubèi', 'mussel'],
+    'sea-oyster': ['굴', 'sea', 15, 'カキ', '牡蛎|mǔlì', 'oyster'], 'sea-abalone': ['전복', 'sea', 60, 'アワビ', '鲍鱼|bàoyú', 'abalone'],
+    'sea-hardclam': ['대합', 'sea', 18, 'ハマグリ', '文蛤|wéngé', 'hard clam'], 'sea-urchin': ['성게', 'sea', 40, 'ウニ', '海胆|hǎidǎn', 'sea urchin'],
+    'sea-seacucumber': ['해삼', 'sea', 35, 'ナマコ', '海参|hǎishēn', 'sea cucumber'], 'sea-anemone': ['말미잘', 'sea', 25, 'イソギンチャク', '海葵|hǎikuí', 'sea anemone'],
+    'sea-hermit': ['소라게', 'sea', 30, 'ヤドカリ', '寄居蟹|jìjūxiè', 'hermit crab'], 'sea-barnacle': ['거북손', 'sea', 20, 'カメノテ', '龟足|guīzú', 'gooseneck barnacle'],
+    'sea-wakame': ['미역', 'sea', 6, 'わかめ', '裙带菜|qúndàicài', 'wakame'], 'sea-kelp': ['다시마', 'sea', 8, 'こんぶ', '海带|hǎidài', 'kelp'],
+    'sea-nori': ['김', 'sea', 10, 'のり', '紫菜|zǐcài', 'laver'], 'sea-codium': ['청각', 'sea', 8, 'ミル', '刺松藻|cìsōngzǎo', 'green sea fingers'],
+    'sea-hijiki': ['톳', 'sea', 8, 'ひじき', '羊栖菜|yángqīcài', 'hijiki'], 'sea-buoy': ['부표', 'sea', 12, 'ブイ', '浮标|fúbiāo', 'buoy'],
+    'sea-anchor': ['낡은 닻', 'sea', 40, 'いかり', '锚|máo', 'anchor'], 'sea-oar': ['나무판자 조각', 'sea', 5, 'いた', '木板|mùbǎn', 'driftwood plank'],
+    'sea-pirate': ['해적 동전', 'sea', 150, 'かいぞくのコイン', '海盗金币|hǎidào jīnbì', 'pirate coin'], 'sea-compass': ['낡은 나침반', 'sea', 90, 'らしんばん', '指南针|zhǐnánzhēn', 'compass'],
+    'sea-pinkpearl': ['분홍 진주', 'sea', 300, 'ピンクしんじゅ', '粉珍珠|fěn zhēnzhū', 'pink pearl'], 'sea-blackpearl': ['흑진주', 'sea', 350, 'くろしんじゅ', '黑珍珠|hēi zhēnzhū', 'black pearl'],
+    'sea-goldscallop': ['황금 가리비', 'sea', 400, 'おうごんのホタテ', '金扇贝|jīn shànbèi', 'golden scallop'], 'sea-mermaid': ['인어의 비늘', 'sea', 500, 'にんぎょのうろこ', '美人鱼鳞片|měirényú línpiàn', 'mermaid scale'],
+    'sea-map': ['보물 지도', 'sea', 250, 'たからのちず', '藏宝图|cángbǎotú', 'treasure map'],
+    'fos-trexclaw': ['티라노 발톱', 'fossil', 180, 'ティラノのつめ', '霸王龙爪|bàwánglóng zhuǎ', 'T. rex claw'], 'fos-trihorn': ['트리케라톱스 뿔', 'fossil', 200, 'トリケラトプスのつの', '三角龙角|sānjiǎolóng jiǎo', 'Triceratops horn'],
+    'fos-stegoplate': ['스테고사우루스 등판', 'fossil', 200, 'ステゴサウルスのせなか', '剑龙背板|jiànlóng bèibǎn', 'Stegosaurus plate'], 'fos-pterowing': ['프테라노돈 날개', 'fossil', 220, 'プテラノドンのつばさ', '无齿翼龙翅膀|wúchǐyìlóng chìbǎng', 'Pteranodon wing'],
+    'fos-brachneck': ['브라키오사우루스 목뼈', 'fossil', 230, 'ブラキオサウルスのくび', '腕龙颈骨|wànlóng jǐnggǔ', 'Brachiosaurus neck'], 'fos-egg': ['공룡 알', 'fossil', 160, 'きょうりゅうのたまご', '恐龙蛋|kǒnglóng dàn', 'dinosaur egg'],
+    'fos-dung': ['공룡 똥 화석', 'fossil', 90, 'ふんのかせき', '粪化石|fèn huàshí', 'coprolite'], 'fos-raptor': ['랩터 발톱', 'fossil', 170, 'ラプトルのつめ', '迅猛龙爪|xùnměnglóng zhuǎ', 'raptor claw'],
+    'fos-ankytail': ['안킬로사우루스 꼬리', 'fossil', 210, 'アンキロサウルスのしっぽ', '甲龙尾锤|jiǎlóng wěichuí', 'Ankylosaurus tail club'], 'fos-mosatooth': ['모사사우루스 이빨', 'fossil', 190, 'モササウルスのは', '沧龙牙|cānglóng yá', 'Mosasaurus tooth'],
+    'fos-fern': ['고사리 화석', 'fossil', 60, 'シダのかせき', '蕨类化石|juélèi huàshí', 'fern fossil'], 'fos-fishfos': ['물고기 화석', 'fossil', 80, 'さかなのかせき', '鱼化石|yú huàshí', 'fish fossil'],
+    'fos-shellfos': ['조개 화석', 'fossil', 60, 'かいのかせき', '贝壳化石|bèiké huàshí', 'shell fossil'], 'fos-dragonfos': ['잠자리 화석', 'fossil', 120, 'トンボのかせき', '蜻蜓化石|qīngtíng huàshí', 'dragonfly fossil'],
+    'fos-urchinfos': ['성게 화석', 'fossil', 70, 'ウニのかせき', '海胆化石|hǎidǎn huàshí', 'sea urchin fossil'], 'fos-sabertooth': ['검치호랑이 이빨', 'fossil', 200, 'サーベルタイガーのきば', '剑齿虎牙|jiànchǐhǔ yá', 'saber-tooth fang'],
+    'fos-rhinohorn': ['털코뿔소 뿔', 'fossil', 180, 'ケサイのつの', '披毛犀角|pīmáoxī jiǎo', 'woolly rhino horn'], 'fos-cavebear': ['랩터 머리뼈', 'fossil', 260, 'ラプトルのずがいこつ', '迅猛龙头骨|xùnměnglóng tóugǔ', 'raptor skull'],
+    'fos-feather': ['시조새 깃털', 'fossil', 150, 'しそちょうのはね', '始祖鸟羽毛|shǐzǔniǎo yǔmáo', 'Archaeopteryx feather'], 'fos-petrified': ['규화목', 'fossil', 90, 'けいかぼく', '硅化木|guīhuàmù', 'petrified wood'],
+    'fos-pottery': ['토기 조각', 'fossil', 70, 'どきのかけら', '陶片|táopiàn', 'pottery shard'], 'fos-arrowhead': ['옛날 화살촉', 'fossil', 80, 'やじり', '箭头|jiàntóu', 'arrowhead'],
+    'fos-stoneaxe': ['돌도끼', 'fossil', 85, 'いしのおの', '石斧|shífǔ', 'stone axe'], 'fos-cavepaint': ['동굴 벽화 조각', 'fossil', 240, 'へきがのかけら', '岩画碎片|yánhuà suìpiàn', 'cave painting'],
+    'fos-goldorn': ['금 장신구', 'fossil', 350, 'きんのかざり', '金饰|jīnshì', 'gold ornament'],
+    'min-emerald': ['에메랄드', 'mineral', 220, 'エメラルド', '祖母绿|zǔmǔlǜ', 'emerald'], 'min-amethyst': ['자수정', 'mineral', 150, 'アメジスト', '紫水晶|zǐshuǐjīng', 'amethyst'],
+    'min-topaz': ['토파즈', 'mineral', 180, 'トパーズ', '托帕石|tuōpàshí', 'topaz'], 'min-opal': ['오팔', 'mineral', 200, 'オパール', '欧泊|ōubó', 'opal'],
+    'min-aquamarine': ['아쿠아마린', 'mineral', 180, 'アクアマリン', '海蓝宝|hǎilánbǎo', 'aquamarine'], 'min-garnet': ['가넷', 'mineral', 140, 'ガーネット', '石榴石|shíliushí', 'garnet'],
+    'min-peridot': ['페리도트', 'mineral', 140, 'ペリドット', '橄榄石|gǎnlǎnshí', 'peridot'], 'min-moonstone': ['문스톤', 'mineral', 160, 'ムーンストーン', '月光石|yuèguāngshí', 'moonstone'],
+    'min-turquoise': ['터키석', 'mineral', 130, 'トルコいし', '绿松石|lǜsōngshí', 'turquoise'], 'min-pinkdia': ['분홍 다이아몬드', 'mineral', 500, 'ピンクダイヤ', '粉钻|fěnzuàn', 'pink diamond'],
+    'min-copper': ['구리 광석', 'mineral', 25, 'どう', '铜矿石|tóng kuàngshí', 'copper ore'], 'min-iron': ['철광석', 'mineral', 20, 'てっこうせき', '铁矿石|tiě kuàngshí', 'iron ore'],
+    'min-coal': ['석탄', 'mineral', 12, 'せきたん', '煤炭|méitàn', 'coal'], 'min-quartz': ['수정', 'mineral', 60, 'すいしょう', '水晶|shuǐjīng', 'quartz'],
+    'min-platinum': ['백금 광석', 'mineral', 180, 'プラチナ', '铂金|bójīn', 'platinum'], 'min-marble': ['대리석', 'mineral', 15, 'だいりせき', '大理石|dàlǐshí', 'marble'],
+    'min-granite': ['화강암', 'mineral', 10, 'かこうがん', '花岗岩|huāgāngyán', 'granite'], 'min-lava': ['화산석', 'mineral', 20, 'ようがん', '熔岩|róngyán', 'lava rock'],
+    'min-salt': ['소금 결정', 'mineral', 15, 'しお', '盐|yán', 'salt'], 'min-meteor': ['운석 조각', 'mineral', 300, 'いんせき', '陨石|yǔnshí', 'meteorite'],
+    'min-starpiece': ['별의 조각', 'mineral', 450, 'ほしのかけら', '星星碎片|xīngxing suìpiàn', 'star fragment'], 'min-rainbowq': ['무지개 수정', 'mineral', 400, 'にじいろすいしょう', '彩虹水晶|cǎihóng shuǐjīng', 'rainbow crystal'],
+    'min-dragoneye': ['용의 눈 보석', 'mineral', 550, 'りゅうのめ', '龙之眼|lóng zhī yǎn', "dragon's eye"], 'min-goldnugget': ['황금 덩어리', 'mineral', 350, 'きんかい', '金块|jīnkuài', 'gold nugget'],
+    'min-mana': ['빛나는 마력석', 'mineral', 600, 'まりょくのいし', '魔力石|mólìshí', 'mana stone'],
+    'for-dandelion': ['민들레', 'forest', 8, 'たんぽぽ', '蒲公英|púgōngyīng', 'dandelion'], 'for-cosmos': ['코스모스', 'forest', 10, 'コスモス', '波斯菊|bōsījú', 'cosmos'],
+    'for-violet': ['제비꽃', 'forest', 10, 'すみれ', '紫罗兰|zǐluólán', 'violet'], 'for-azalea': ['진달래', 'forest', 12, 'つつじ', '杜鹃花|dùjuānhuā', 'azalea'],
+    'for-forsythia': ['개나리', 'forest', 10, 'れんぎょう', '连翘|liánqiáo', 'forsythia'], 'for-mugunghwa': ['무궁화', 'forest', 20, 'むくげ', '木槿花|mùjǐnhuā', 'rose of Sharon'],
+    'for-lotus': ['연꽃', 'forest', 30, 'はす', '莲花|liánhuā', 'lotus'], 'for-morningglory': ['나팔꽃', 'forest', 15, 'あさがお', '牵牛花|qiānniúhuā', 'morning glory'],
+    'for-lily': ['은방울꽃', 'forest', 25, 'すずらん', '铃兰|línglán', 'lily of the valley'], 'for-babysbreath': ['안개꽃 다발', 'forest', 25, 'かすみそう', '满天星|mǎntiānxīng', "baby's breath"],
+    'for-matsutake': ['송이버섯', 'forest', 120, 'まつたけ', '松茸|sōngróng', 'matsutake'], 'for-enoki': ['팽이버섯', 'forest', 12, 'えのきだけ', '金针菇|jīnzhēngū', 'enoki'],
+    'for-oyster': ['느타리버섯', 'forest', 12, 'ひらたけ', '平菇|pínggū', 'oyster mushroom'], 'for-bluemush': ['빛나는 파란 버섯', 'forest', 200, 'ひかるあおいきのこ', '发光蓝蘑菇|fāguāng lán mógu', 'glowing blue mushroom'],
+    'for-goldmush': ['황금 버섯', 'forest', 300, 'おうごんのきのこ', '金蘑菇|jīn mógu', 'golden mushroom'], 'for-chestnut': ['밤', 'forest', 15, 'くり', '栗子|lìzi', 'chestnut'],
+    'for-raspberry': ['산딸기', 'forest', 15, 'きいちご', '树莓|shùméi', 'raspberry'], 'for-wildgrape': ['머루', 'forest', 18, 'やまぶどう', '山葡萄|shān pútao', 'wild grape'],
+    'for-fiddlehead': ['고사리', 'forest', 12, 'わらび', '蕨菜|juécài', 'bracken fern'], 'for-ginseng': ['인삼', 'forest', 250, 'こうらいにんじん', '人参|rénshēn', 'ginseng'],
+    'for-nest': ['새 둥지', 'forest', 40, 'とりのす', '鸟巢|niǎocháo', "bird's nest"], 'for-honeycomb': ['벌집 조각', 'forest', 60, 'はちのす', '蜂巢|fēngcháo', 'honeycomb'],
+    'for-mossrock': ['이끼 낀 돌', 'forest', 15, 'こけむしたいし', '青苔石|qīngtái shí', 'mossy rock'], 'for-fireflyjar': ['반딧불이 병', 'forest', 120, 'ほたるのびん', '萤火虫瓶|yínghuǒchóng píng', 'firefly jar'],
+    'for-fairywing': ['요정의 날개 조각', 'forest', 500, 'ようせいのはね', '精灵翅膀|jīnglíng chìbǎng', 'fairy wing']
+  };
+  Object.keys(RAW2).forEach(function (id) { var r = RAW2[id], z = r[4].split('|'); ITEMS[id] = { id: id, ko: r[0], cat: r[1], price: r[2], ja: [r[3], ''], zh: [z[0], z[1]], en: [r[5], ''], img: 'img/w/' + id + '.png' }; });
   // 곤충이 나오는 때와 곳: m 아침, d 낮, e 저녁, n 밤 / flower 꽃·풀, tree 나무, water 물가
-  var BUGS = { yellowbf: ['md', 'flower', 3], bluebf: ['d', 'flower', 2], ladybug: ['md', 'flower', 3], bee: ['md', 'flower', 2], dragonfly: ['de', 'water', 2], beetle: ['en', 'tree', 1], stag: ['n', 'tree', 1], firefly: ['n', 'water', 2], cicada: ['d', 'tree', 2], snail: ['me', 'flower', 2] };
+  var BUGS = { yellowbf: ['md', 'flower', 3], bluebf: ['d', 'flower', 2], ladybug: ['md', 'flower', 3], bee: ['md', 'flower', 2], dragonfly: ['de', 'water', 2], beetle: ['en', 'tree', 1], stag: ['n', 'tree', 1], firefly: ['n', 'water', 2], cicada: ['d', 'tree', 2], snail: ['me', 'flower', 2],
+    'bug-monarch': ['d', 'flower', 2], 'bug-whitebf': ['md', 'flower', 3], 'bug-swallowtail': ['md', 'flower', 2], 'bug-peacock': ['d', 'flower', 1], 'bug-moth': ['en', 'tree', 2],
+    'bug-grasshopper': ['md', 'flower', 3], 'bug-cricket': ['en', 'flower', 3], 'bug-mantis': ['de', 'flower', 2], 'bug-ricegrass': ['d', 'flower', 2], 'bug-katydid': ['den', 'flower', 2],
+    'bug-longhorn': ['de', 'tree', 2], 'bug-chafer': ['md', 'tree', 2], 'bug-jewel': ['d', 'tree', 1], 'bug-higurashi': ['me', 'tree', 2], 'bug-stick': ['dn', 'tree', 1],
+    'bug-strider': ['md', 'water', 3], 'bug-divingbeetle': ['en', 'water', 2], 'bug-redfly': ['de', 'water', 2], 'bug-waterbug': ['n', 'water', 1], 'bug-damselfly': ['md', 'water', 2],
+    'bug-ant': ['mde', 'flower', 3], 'bug-spider': ['en', 'tree', 2], 'bug-dung': ['d', 'flower', 1], 'bug-goldstag': ['n', 'tree', 0.25], 'bug-rainbowbf': ['d', 'flower', 0.25] };
   var CATS = { fruit: '🍎 열매', forest: '🌲 숲', mineral: '🪨 광물', sea: '🐚 바다', bug: '🦋 곤충', fossil: '🦴 화석' };
   M.GATHER = { ITEMS: ITEMS, BUGS: BUGS };
 
@@ -50,6 +125,9 @@
     return g;
   }
   function slot() { var h = new Date().getHours(); return h >= 5 && h < 10 ? 'm' : h >= 10 && h < 17 ? 'd' : h >= 17 && h < 20 ? 'e' : 'n'; }
+  // 행운의 향수가 켜져 있으면 귀한 것(무게가 작은 것)이 세 배 잘 나온다
+  function lucky(list) { if (!M.luckOn || !M.luckOn()) return list; return list.map(function (x) { return [x[0], x[1] < 2 ? x[1] * 3 : x[1]]; }); }
+  M.gatherLucky = lucky;
   function pickW(list) { var s = list.reduce(function (a, x) { return a + x[1]; }, 0), r = Math.random() * s; for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) return list[i][0]; } return list[0][0]; }
   function nm(it) { var L = M.P.lang, v = it[L] || it.en; return v; }
 
@@ -83,7 +161,7 @@
   M.shakeTree = function (key, pine) {
     var g = S(); if (g.wood[key]) { M.toast('오늘은 이 나무에서 다 주웠어요. 내일 또 와요!'); return false; }
     g.wood[key] = 1; M.save();
-    var id = pickW([['branch', 45], ['log', 18], [pine ? 'pinecone' : 'acorn', 20], ['leaf', 12], ['nothing', 15]]);
+    var id = pickW(lucky([['branch', 45], ['log', 18], [pine ? 'pinecone' : 'acorn', 20], ['leaf', 12], ['nothing', 15], ['for-nest', 4], ['for-honeycomb', 3], [pine ? 'for-matsutake' : 'for-chestnut', pine ? 1.5 : 6]]));
     if (id === 'nothing') { M.toast('나뭇잎만 살랑살랑… 아무것도 안 떨어졌어요'); return true; }
     M.gatherGot(id, id === 'branch' ? 2 : 1); return true;
   };
@@ -92,7 +170,8 @@
     var g = S(), n = g.rocks[key] || 0;
     if (n >= 3) { M.toast('이 바위는 오늘 더 캘 게 없어요. 내일 또 와요!'); return false; }
     g.rocks[key] = n + 1; M.save();
-    M.gatherGot(pickW([['stone', 50], ['clay', 22], ['pebble', 18], ['gold', 6], ['gem', 2.5]]));
+    M.gatherGot(pickW(lucky([['stone', 40], ['clay', 18], ['pebble', 14], ['gold', 4], ['gem', 2], ['min-copper', 10], ['min-iron', 10], ['min-coal', 10], ['min-granite', 8], ['min-marble', 6], ['min-salt', 4], ['min-quartz', 4], ['min-lava', 3],
+      ['min-amethyst', 0.8], ['min-garnet', 0.8], ['min-peridot', 0.8], ['min-turquoise', 0.8], ['min-moonstone', 0.6], ['min-platinum', 0.6], ['min-meteor', 0.2]])));
     return true;
   };
   // 오늘 마을에 놓일 물건들 (매일 바뀐다)
@@ -107,7 +186,7 @@
   };
   M.gatherDaily = function (cands, extra) {
     var g = S(), seed = (extra || parseInt(M.today().replace(/\D/g, ''), 10)) % 2147483646 + 1, rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
-    var out = [];
+    var out = [], boost = function (t) { return extra ? t.map(function (x) { return [x[0], x[1] < 2 ? x[1] * 3 : x[1]]; }) : t; };
     function place(list, n, type, table) {
       var used = {};
       for (var i = 0; i < n && list.length; i++) {
@@ -117,20 +196,23 @@
         if (!g.picked[key]) out.push({ key: key, type: type, id: id, x: c[0], y: c[1] });
       }
     }
-    place(cands.grass, 4, 'f', [['mush-red', 12], ['mush-brown', 14], ['mush-white', 14], ['flowers', 18], ['acorn', 12], ['pinecone', 10], ['leaf', 12], ['clover', 3]]);
-    place(cands.sand, 4, 's', [['scallop', 22], ['conch', 16], ['sanddollar', 16], ['seaweed', 14], ['starfish', 10], ['glass', 8], ['coral', 6], ['crab', 5], ['bottle', 2], ['pearl', 1]]);
+    place(cands.grass, 4, 'f', boost([['mush-red', 8], ['mush-brown', 9], ['mush-white', 9], ['flowers', 10], ['acorn', 8], ['pinecone', 6], ['leaf', 7], ['clover', 3], ['for-dandelion', 7], ['for-cosmos', 6], ['for-violet', 6], ['for-azalea', 5], ['for-forsythia', 5], ['for-mugunghwa', 4], ['for-lotus', 2], ['for-morningglory', 4], ['for-lily', 3], ['for-babysbreath', 3], ['for-enoki', 6], ['for-oyster', 6], ['for-matsutake', 1.5], ['for-bluemush', 0.6], ['for-goldmush', 0.4], ['for-raspberry', 5], ['for-wildgrape', 4], ['for-fiddlehead', 5], ['for-ginseng', 0.6], ['for-mossrock', 4], ['for-fireflyjar', 1], ['for-fairywing', 0.3]]));
+    place(cands.sand, 4, 's', boost([['scallop', 14], ['conch', 10], ['sanddollar', 10], ['seaweed', 8], ['starfish', 7], ['glass', 6], ['coral', 4], ['crab', 4], ['bottle', 2], ['pearl', 1], ['sea-clam', 10], ['sea-mussel', 8], ['sea-oyster', 6], ['sea-hardclam', 6], ['sea-abalone', 2], ['sea-urchin', 3], ['sea-seacucumber', 3], ['sea-anemone', 3], ['sea-hermit', 4], ['sea-barnacle', 3], ['sea-wakame', 7], ['sea-kelp', 6], ['sea-nori', 4], ['sea-codium', 4], ['sea-hijiki', 4], ['sea-buoy', 3], ['sea-oar', 4], ['sea-anchor', 1.5], ['sea-compass', 1], ['sea-pirate', 0.7], ['sea-map', 0.5], ['sea-pinkpearl', 0.4], ['sea-blackpearl', 0.3], ['sea-goldscallop', 0.3], ['sea-mermaid', 0.2]]));
     place(cands.grass, 2, 'd', [['dig', 1]]);
     return out;
   };
   M.gatherPick = function (o) {
     var g = S(); g.picked[o.key] = 1; M.save();
-    if (o.type === 'd') M.gatherGot(pickW([['bone', 16], ['ammonite', 14], ['footprint', 13], ['trilobite', 12], ['tooth', 10], ['leaffos', 15], ['amber', 8], ['coin', 8], ['stone', 30], ['clay', 20]]));
+    if (o.type === 'd') M.gatherGot(pickW(lucky([['bone', 10], ['ammonite', 9], ['footprint', 8], ['trilobite', 8], ['tooth', 6], ['leaffos', 9], ['amber', 5], ['coin', 5], ['stone', 22], ['clay', 14],
+      ['fos-fern', 7], ['fos-shellfos', 7], ['fos-urchinfos', 5], ['fos-fishfos', 5], ['fos-dung', 5], ['fos-pottery', 5], ['fos-arrowhead', 4], ['fos-stoneaxe', 4], ['fos-petrified', 4], ['fos-dragonfos', 2],
+      ['fos-egg', 2], ['fos-raptor', 1.5], ['fos-trexclaw', 1.2], ['fos-mosatooth', 1.2], ['fos-rhinohorn', 1.2], ['fos-sabertooth', 1], ['fos-feather', 1], ['fos-trihorn', 0.8], ['fos-stegoplate', 0.8], ['fos-ankytail', 0.8],
+      ['fos-pterowing', 0.6], ['fos-brachneck', 0.6], ['fos-cavebear', 0.5], ['fos-cavepaint', 0.5], ['fos-goldorn', 0.4]])));
     else M.gatherGot(o.id);
   };
   // 곤충: 지금 시간대에 나올 수 있는 것
   M.bugNow = function (where) {
     var t = slot(), list = Object.keys(BUGS).filter(function (k) { return BUGS[k][0].indexOf(t) >= 0 && BUGS[k][1] === where; }).map(function (k) { return [k, BUGS[k][2]]; });
-    return list.length ? pickW(list) : null;
+    return list.length ? pickW(lucky(list)) : null;
   };
 
   // ---------- 가방 ----------
@@ -159,7 +241,7 @@
   };
   // ---------- 박물관 도감 ----------
   M.gatherDex = function (cat) {
-    var cs = cat === 'forest' ? ['fruit', 'forest', 'mineral'] : [cat], title = cat === 'forest' ? '🌲 숲·열매·광물' : CATS[cat];
+    var cs = cat === 'forest' ? ['fruit', 'forest'] : [cat], title = cat === 'forest' ? '🌲 꽃·숲·열매' : cat === 'mineral' ? '💎 광물·보석' : CATS[cat];
     var g = S(), lang = M.P.lang, ks = Object.keys(ITEMS).filter(function (k) { return cs.indexOf(ITEMS[k].cat) >= 0; }), n = ks.filter(function (k) { return g.dex[k]; }).length;
     var tn = { m: '아침', d: '낮', e: '저녁', n: '밤' }, wn = { flower: '꽃·풀밭', tree: '나무', water: '물가' };
     M.modal('<h3>' + title + ' 도감 <small>' + n + ' / ' + ks.length + '</small></h3>' + (cat === 'bug' ? '<p class="hint">시간대마다 나오는 곤충이 달라요</p>' : '') + '<div class="fdex">' + ks.map(function (k) {

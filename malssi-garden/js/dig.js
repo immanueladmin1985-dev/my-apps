@@ -15,14 +15,19 @@
   M.digReward = function () { var d = S(); d.shovel += 3; M.save(); };   // 레슨을 끝낼 때
   function table(f) {   // 층이 깊을수록 귀한 것
     return [['stone', 30], ['clay', 20], ['pebble', 12], ['silver', 10 + f], ['gold', 4 + f * 0.6], ['bone', 6], ['ammonite', 6], ['trilobite', 5], ['tooth', 4], ['amber', 3 + f * 0.3],
-      ['oldkey', 2], ['ruby', 1 + f * 0.4], ['sapphire', 1 + f * 0.4], ['mammoth', f >= 5 ? 2 : 0], ['diamond', f >= 8 ? 1 + f * 0.2 : 0], ['skull', f >= 10 ? 1 : 0], ['chest', 2]];
+      ['oldkey', 2], ['ruby', 1 + f * 0.4], ['sapphire', 1 + f * 0.4], ['mammoth', f >= 5 ? 2 : 0], ['diamond', f >= 8 ? 1 + f * 0.2 : 0], ['skull', f >= 10 ? 1 : 0], ['chest', 2],
+      ['min-coal', 8], ['min-iron', 7], ['min-copper', 7], ['min-quartz', 3 + f * 0.2], ['min-salt', 3], ['min-lava', f >= 3 ? 3 : 0],
+      ['min-amethyst', 0.8 + f * 0.15], ['min-garnet', 0.8 + f * 0.15], ['min-peridot', 0.8 + f * 0.15], ['min-turquoise', 0.8 + f * 0.1], ['min-moonstone', 0.6 + f * 0.1], ['min-topaz', 0.5 + f * 0.12], ['min-aquamarine', 0.5 + f * 0.12],
+      ['min-emerald', f >= 4 ? 0.4 + f * 0.1 : 0], ['min-opal', f >= 4 ? 0.4 + f * 0.1 : 0], ['min-platinum', f >= 3 ? 0.8 : 0], ['min-goldnugget', f >= 6 ? 0.5 : 0], ['min-meteor', f >= 6 ? 0.4 : 0], ['min-pinkdia', f >= 9 ? 0.4 : 0],
+      ['min-rainbowq', f >= 8 ? 0.3 : 0], ['min-starpiece', f >= 10 ? 0.3 : 0], ['min-dragoneye', f >= 12 ? 0.25 : 0], ['min-mana', f >= 14 ? 0.2 : 0],
+      ['fos-fern', 2], ['fos-shellfos', 2], ['fos-egg', f >= 3 ? 1 : 0], ['fos-trexclaw', f >= 5 ? 0.6 : 0], ['fos-trihorn', f >= 6 ? 0.5 : 0], ['fos-brachneck', f >= 7 ? 0.4 : 0], ['fos-goldorn', f >= 8 ? 0.3 : 0]];
   }
   function pickW(list) { var s = list.reduce(function (a, x) { return a + x[1]; }, 0), r = Math.random() * s; for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) return list[i][0]; } return list[0][0]; }
   function newBoard(f) {
     var hard = function () { var r = Math.random(); return f < 3 ? (r < 0.7 ? 1 : 2) : f < 8 ? (r < 0.35 ? 1 : r < 0.8 ? 2 : 3) : (r < 0.2 ? 1 : r < 0.6 ? 2 : 3); };
     var cells = []; for (var i = 0; i < COLS * ROWS; i++) cells.push({ h: hard(), it: null, got: false, glow: false });
     var n = Math.min(8, 4 + Math.floor(f / 3)), idx = M.shuffle(cells.map(function (_, i) { return i; }));
-    for (var k = 0; k < n; k++) cells[idx[k]].it = pickW(table(f));
+    for (var k = 0; k < n; k++) cells[idx[k]].it = pickW(M.gatherLucky ? M.gatherLucky(table(f)) : table(f));
     if (Math.random() < 0.5) cells[idx[n]].it = 'word';   // 단어 바위 (보물 개수에는 넣지 않는다)
     return { cells: cells, total: n };
   }

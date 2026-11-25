@@ -19,6 +19,31 @@
     { id: 'shrimp', ko: '새우', em: '🦐', at: 'sea', t: 'mden', r: 1, size: [5, 15], price: 15, ja: ['エビ', 'えび'], en: ['shrimp'], zh: ['虾', 'xiā'] },
     { id: 'jelly', ko: '해파리', em: '🪼', at: 'sea', t: 'n', r: 1, size: [10, 30], price: 20, ja: ['クラゲ', 'くらげ'], en: ['jellyfish'], zh: ['水母', 'shuǐmǔ'] },
     { id: 'tuna', ko: '참치', em: '🐟', at: 'sea', t: 'md', r: 3, size: [80, 200], price: 150, ja: ['マグロ', 'まぐろ'], en: ['tuna'], zh: ['金枪鱼', 'jīnqiāngyú'] },
+    { id: 'ayu', ko: '은어', em: '🐟', at: 'river', t: 'md', r: 2, size: [15, 30], price: 45, ja: ['アユ', 'あゆ'], en: ['sweetfish'], zh: ['香鱼', 'xiāngyú'] },
+    { id: 'mandarin', ko: '쏘가리', em: '🐟', at: 'river', t: 'en', r: 2, size: [20, 50], price: 60, ja: ['ケツギョ', 'けつぎょ'], en: ['mandarin fish'], zh: ['鳜鱼', 'guìyú'] },
+    { id: 'goldfish', ko: '금붕어', em: '🐠', at: 'river', t: 'md', r: 1, size: [5, 15], price: 25, ja: ['キンギョ', 'きんぎょ'], en: ['goldfish'], zh: ['金鱼', 'jīnyú'] },
+    { id: 'chub', ko: '피라미', em: '🐟', at: 'river', t: 'mde', r: 1, size: [8, 15], price: 12, ja: ['オイカワ', 'おいかわ'], en: ['pale chub'], zh: ['宽鳍鱲', 'kuānqíliè'] },
+    { id: 'eel', ko: '장어', em: '🐍', at: 'river', t: 'n', r: 2, size: [40, 100], price: 80, ja: ['ウナギ', 'うなぎ'], en: ['eel'], zh: ['鳗鱼', 'mányú'] },
+    { id: 'turtle', ko: '거북이', em: '🐢', at: 'river', t: 'd', r: 2, size: [15, 30], price: 70, ja: ['カメ', 'かめ'], en: ['turtle'], zh: ['乌龟', 'wūguī'] },
+    { id: 'frog', ko: '개구리', em: '🐸', at: 'river', t: 'men', r: 1, size: [5, 10], price: 15, ja: ['カエル', 'かえる'], en: ['frog'], zh: ['青蛙', 'qīngwā'] },
+    { id: 'tadpole', ko: '올챙이', em: '🐸', at: 'river', t: 'md', r: 1, size: [1, 3], price: 5, ja: ['オタマジャクシ', 'おたまじゃくし'], en: ['tadpole'], zh: ['蝌蚪', 'kēdǒu'] },
+    { id: 'medaka', ko: '송사리', em: '🐟', at: 'river', t: 'md', r: 1, size: [2, 4], price: 8, ja: ['メダカ', 'めだか'], en: ['killifish'], zh: ['青鳉', 'qīngjiāng'] },
+    { id: 'sturgeon', ko: '철갑상어', em: '🐟', at: 'river', t: 'en', r: 3, size: [100, 250], price: 250, ja: ['チョウザメ', 'ちょうざめ'], en: ['sturgeon'], zh: ['鲟鱼', 'xúnyú'] },
+    { id: 'goldcarp', ko: '황금 잉어', em: '🐟', at: 'river', t: 'me', r: 3, size: [40, 80], price: 300, ja: ['キンゴイ', 'きんごい'], en: ['golden carp'], zh: ['金色鲤鱼', 'jīnsè lǐyú'] },
+    { id: 'rainbow', ko: '무지개송어', em: '🐟', at: 'river', t: 'm', r: 3, size: [30, 70], price: 220, ja: ['ニジマス', 'にじます'], en: ['rainbow trout'], zh: ['虹鳟', 'hóngzūn'] },
+    { id: 'flounder', ko: '광어', em: '🐟', at: 'sea', t: 'dn', r: 2, size: [30, 70], price: 60, ja: ['ヒラメ', 'ひらめ'], en: ['flounder'], zh: ['比目鱼', 'bǐmùyú'] },
+    { id: 'salmon', ko: '연어', em: '🐟', at: 'sea', t: 'me', r: 2, size: [50, 90], price: 70, ja: ['サケ', 'さけ'], en: ['salmon'], zh: ['三文鱼', 'sānwényú'] },
+    { id: 'hairtail', ko: '갈치', em: '🐟', at: 'sea', t: 'n', r: 2, size: [60, 120], price: 55, ja: ['タチウオ', 'たちうお'], en: ['cutlassfish'], zh: ['带鱼', 'dàiyú'] },
+    { id: 'saury', ko: '꽁치', em: '🐟', at: 'sea', t: 'me', r: 1, size: [25, 35], price: 20, ja: ['サンマ', 'さんま'], en: ['Pacific saury'], zh: ['秋刀鱼', 'qiūdāoyú'] },
+    { id: 'horsemack', ko: '전갱이', em: '🐟', at: 'sea', t: 'mde', r: 1, size: [15, 35], price: 18, ja: ['アジ', 'あじ'], en: ['horse mackerel'], zh: ['竹荚鱼', 'zhújiáyú'] },
+    { id: 'clown', ko: '흰동가리', em: '🐠', at: 'sea', t: 'd', r: 2, size: [6, 11], price: 50, ja: ['カクレクマノミ', 'かくれくまのみ'], en: ['clownfish'], zh: ['小丑鱼', 'xiǎochǒuyú'] },
+    { id: 'bluetang', ko: '블루탱', em: '🐠', at: 'sea', t: 'd', r: 2, size: [15, 30], price: 55, ja: ['ナンヨウハギ', 'なんようはぎ'], en: ['blue tang'], zh: ['蓝倒吊', 'lán dàodiào'] },
+    { id: 'seahorse', ko: '해마', em: '🐠', at: 'sea', t: 'md', r: 2, size: [5, 15], price: 65, ja: ['タツノオトシゴ', 'たつのおとしご'], en: ['seahorse'], zh: ['海马', 'hǎimǎ'] },
+    { id: 'ray', ko: '가오리', em: '🐟', at: 'sea', t: 'en', r: 2, size: [60, 150], price: 75, ja: ['エイ', 'えい'], en: ['stingray'], zh: ['魟鱼', 'hóngyú'] },
+    { id: 'moray', ko: '곰치', em: '🐟', at: 'sea', t: 'n', r: 2, size: [60, 150], price: 70, ja: ['ウツボ', 'うつぼ'], en: ['moray eel'], zh: ['海鳗', 'hǎimán'] },
+    { id: 'whaleshark', ko: '고래상어', em: '🦈', at: 'sea', t: 'd', r: 3, size: [400, 1000], price: 500, ja: ['ジンベエザメ', 'じんべえざめ'], en: ['whale shark'], zh: ['鲸鲨', 'jīngshā'] },
+    { id: 'dolphin', ko: '돌고래', em: '🐬', at: 'sea', t: 'md', r: 3, size: [150, 300], price: 400, ja: ['イルカ', 'いるか'], en: ['dolphin'], zh: ['海豚', 'hǎitún'] },
+    { id: 'seaturtle', ko: '바다거북', em: '🐢', at: 'sea', t: 'de', r: 3, size: [70, 150], price: 350, ja: ['ウミガメ', 'うみがめ'], en: ['sea turtle'], zh: ['海龟', 'hǎiguī'] },
     { id: 'shark', ko: '상어', em: '🦈', at: 'sea', t: 'en', r: 3, size: [100, 300], price: 200, ja: ['サメ', 'さめ'], en: ['shark'], zh: ['鲨鱼', 'shāyú'] }
   ];
   function fimg(f) { return '<img src="img/w/fish-' + f.id + '.png" alt="' + f.ko + '">'; }
@@ -29,7 +54,7 @@
   function nameOf(f, lang) { var v = f[lang] || f.en; return { t: v[0], r: lang === 'en' ? '' : v[1] || '' }; }
   function pick(where) {
     var now = slot(), pool = FISH.filter(function (f) { return f.at === where && f.t.indexOf(now) >= 0; });
-    var w = pool.map(function (f) { return f.r === 1 ? 10 : f.r === 2 ? 4 : 1; }), sum = w.reduce(function (a, b) { return a + b; }, 0), x = Math.random() * sum;
+    var luck = M.luckOn && M.luckOn(), w = pool.map(function (f) { return f.r === 1 ? 10 : f.r === 2 ? 4 : luck ? 3 : 0.8; }), sum = w.reduce(function (a, b) { return a + b; }, 0), x = Math.random() * sum;
     for (var i = 0; i < pool.length; i++) { x -= w[i]; if (x <= 0) return pool[i]; }
     return pool[0];
   }
