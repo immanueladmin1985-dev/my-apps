@@ -1197,3 +1197,20 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .dn .dlang { display: flex; flex-direction: column; align-items: flex-start; text-align: left; } .dn .dlang b { font-size: 1.05rem; } .dn .dlang small { color: var(--sub); font-size: .72rem; }
 .dsay { font-size: .72rem; font-weight: 800; padding: 4px 8px; border-radius: 10px; background: #fff; border: 1.5px solid var(--line); white-space: nowrap; }
 .dexcard .dnames { width: 100%; align-items: stretch; } .dexcard .dn { width: 100%; box-sizing: border-box; }
+/* 토끼 집: 방을 크게, 아래는 아이콘 도구 한 줄 */
+.home .room { aspect-ratio: auto; height: calc(100svh - 250px); min-height: 340px; }
+.hstat { display: flex; align-items: center; gap: 10px; padding: 8px 2px 4px; font-size: .9rem; }
+.hstat b small { color: var(--mint-d); font-size: .75rem; }
+.hs { display: flex; align-items: center; gap: 3px; font-size: .78rem; font-weight: 800; color: var(--sub); }
+.hs.low { color: #e5484d; }
+.mini-bar { display: inline-block; width: 52px; height: 7px; background: #eee6f0; border-radius: 6px; overflow: hidden; }
+.mini-bar > i { display: block; height: 100%; background: #ff8fab; }
+.mini-bar.full > i { background: #ffb02e; }
+.htools { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 2px 0 6px; }
+.ht { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 4px; background: #fff; border: 2px solid var(--line); border-radius: 14px; }
+.ht span { font-size: 1.3rem; line-height: 1.1; } .ht small { font-size: .62rem; font-weight: 800; color: var(--sub); }
+.ht.hot { border-color: #ffb02e; background: #fff8e6; }
+.ht .nbadge { position: absolute; top: -4px; right: -2px; font-style: normal; }
+.pet.movable { pointer-events: auto !important; opacity: 1 !important; cursor: grab; outline: 2px dashed var(--mint); outline-offset: 2px; border-radius: 12px; }
+.pet { transform: translate(-50%, 0); } .pet[style*="top"] { transform: translate(-50%, -100%); }
+.potshelf.insheet { box-shadow: none; padding: 0; }

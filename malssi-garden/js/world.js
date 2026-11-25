@@ -186,12 +186,16 @@
     npcs = npcs.filter(function (n) { return rs.some(function (c) { return c.id === n.id; }); });
     rs.forEach(function (c, k) {
       if (npcs.some(function (n) { return n.id === c.id; }) || !LOTS[k]) return;
-      var l = LOTS[k], n = mkActor(l[0] + 1, l[1] + 4, 'npc', c.id); n.home = { x: n.x, y: n.y }; n.wait = 500 + Math.random() * 2000; npcs.push(n);
+      var l = LOTS[k], n = mkActor(l[0] + 1, l[1] + 4, 'npc', c.id); n.home = { x: n.x, y: n.y }; n.k = k; n.door = { x: l[0] + 1, y: l[1] + 3 }; n.asleep = sleepy(n); n.wait = 500 + Math.random() * 2000; npcs.push(n);
     });
   }
+  // 잠: 밤 9시부터 한 명씩 집에 들어가 자고, 자정에는 모두 잔다. 아침 6시부터 차례로 나온다
+  function hourNow() { var d = new Date(); return d.getHours() + d.getMinutes() / 60; }
+  function sleepy(n) { var h = hourNow(), at = 21 + ((n.k * 7) % 12) * 0.25, wake = 6 + ((n.k * 5) % 4) * 0.25; return h >= at || h < wake; }
+  M.residentAsleep = function (id) { var n = npcs.filter(function (x) { return x.id === id; })[0]; return n ? !!n.asleep : (function () { var h = hourNow(); return h < 6 || h >= 23.9; })(); };
   function occupied(x, y, self) {
     if (me && me !== self && ((me.x === x && me.y === y) || (me.tx === x && me.ty === y))) return true;
-    return npcs.some(function (n) { return n !== self && ((n.x === x && n.y === y) || (n.tx === x && n.ty === y)); });
+    return npcs.some(function (n) { return n !== self && !n.asleep && ((n.x === x && n.y === y) || (n.tx === x && n.ty === y)); });
   }
   // 길 찾기 (네 방향 BFS)
   function findPath(sx, sy, gx, gy, self) {
@@ -235,9 +239,19 @@
     zh: [['天气真好！', '날씨 좋다!'], ['我饿了…', '배고파…'], ['你好！', '안녕!'], ['♪ 啦啦啦', '♪ 랄랄라'], ['好困…', '졸려…'], ['一起玩吧！', '같이 놀자!'], ['早上好！', '좋은 아침!'], ['花真漂亮！', '꽃이 예뻐!']],
     en: [['Nice weather!', '날씨 좋다!'], ["I'm hungry…", '배고파…'], ['Hello!', '안녕!'], ['♪ La la la', '♪ 랄랄라'], ['So sleepy…', '졸려…'], ["Let's play!", '놀자!'], ['Good morning!', '좋은 아침!'], ['Pretty flowers!', '예쁜 꽃!']]
   };
+  var SLEEPY = { ja: ['ねむい…', '졸려…'], zh: ['好困…', '졸려…'], en: ['So sleepy…', '졸려…'] };
   function npcThink(n, dt) {
+    if (n.asleep) { if (!sleepy(n)) { n.asleep = false; n.x = n.px = n.tx = n.door.x; n.y = n.py = n.ty = n.door.y + 1; n.path = []; } return; }
+    var late = new Date().getHours() >= 20;
+    if (sleepy(n) && !n.talking) {   // 집으로 가서 잔다
+      if (n.t < 1) return;
+      if (n.x === n.door.x && n.y === n.door.y + 1) { n.asleep = true; n.say = null; n.path = []; return; }
+      if (!n.path.length) { var hp = findPath(n.x, n.y, n.door.x, n.door.y + 1, n); if (hp && hp.length) n.path = hp; else { n.asleep = true; return; } }
+      if (!n.say) n.say = { t: (SLEEPY[M.P.lang] || SLEEPY.en)[0], k: '졸려… 집에 가서 잘래요', until: performance.now() + 2500 };
+      return;
+    }
     if (n.say && performance.now() > n.say.until) n.say = null;
-    if (!n.say && !n.talking && Math.random() < dt / 9000) { var L = CHAT[M.P.lang] || CHAT.en, c = L[Math.floor(Math.random() * L.length)]; n.say = { t: c[0], k: c[1], until: performance.now() + 3200 }; }
+    if (!n.say && !n.talking && Math.random() < dt / 9000) { var L = late ? [SLEEPY[M.P.lang] || SLEEPY.en] : (CHAT[M.P.lang] || CHAT.en), c = L[Math.floor(Math.random() * L.length)]; n.say = { t: c[0], k: c[1], until: performance.now() + 3200 }; }
     if (n.t < 1 || n.path.length || n.talking) return;
     n.wait -= dt; if (n.wait > 0) return;
     n.wait = 1500 + Math.random() * 3500;
@@ -275,7 +289,7 @@
     // 물체와 캐릭터를 아래쪽(y)이 큰 순서로 그려 앞뒤를 맞춘다
     OBJ.forEach(function (o) { if (o.under) drawObj(o); });
     var list = OBJ.filter(function (o) { var oy = o.y * T; return !o.under && oy > cam.y - 40 && oy < cam.y + vh + 260; }).map(function (o) { return { y: o.z || o.y, o: o }; });
-    [me].concat(npcs).forEach(function (a) { var p = pos(a); list.push({ y: p.y + 1, a: a, p: p }); });
+    [me].concat(npcs.filter(function (n) { return !n.asleep; })).forEach(function (a) { var p = pos(a); list.push({ y: p.y + 1, a: a, p: p }); });
     daily().forEach(function (d) { list.push({ y: d.y + 0.5, g: d }); });
     bugTick(dt, now); bugs.forEach(function (b) { list.push({ y: b.y + 2, b: b }); });
     list.sort(function (A, B) { return A.y - B.y; });
@@ -346,6 +360,7 @@
         r = sprite('h-' + c.id, l.x + 1.5, l.y + 3.15, 3.5, false, 3.4);
         if (!r) { house(l.x, l.y, 3, 3, HOUSE_COL[c.id] || '#fff', '#c46b6b'); r = { top: l.y * T }; }
         label(c.name + (M.V.hearts(c.id) ? ' ♥' + M.V.hearts(c.id) : ''), (l.x + 1.5) * T, r.top + 2);
+        if (M.residentAsleep(c.id)) emoji('💤', (l.x + 2.6) * T, r.top + 18 + Math.sin(performance.now() / 500) * 3, 18);
       } else if (l.k === M.V.residents().length && M.V.nextMover()) {
         r = sprite('b-lot', l.x + 1.5, l.y + 3.1, 3.4, false, 2.6);
         sprite('m-boxes', l.x + 0.9, l.y + 2.4, 0, false, 1.1);
@@ -458,7 +473,7 @@
     var r = cv.getBoundingClientRect(), wx = e.clientX - r.left + cam.x, wy = e.clientY - r.top + cam.y;
     var tx = Math.floor(wx / T), ty = Math.floor(wy / T);
     // 주민을 눌렀나 (그림이 칸보다 커서 조금 넉넉하게 본다)
-    var hit = npcs.filter(function (n) { var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
+    var hit = npcs.filter(function (n) { if (n.asleep) return false; var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
     if (hit) { talkTo(hit); return; }
     if (gatherTap(tx, ty, wx, wy)) return;
     if (false) {
@@ -474,6 +489,7 @@
     var l = LOTS.map(function (v, k) { return { x: v[0], y: v[1], k: k }; }).filter(function (v) { return tx >= v.x && tx < v.x + 3 && ty >= v.y - 1 && ty <= v.y + 3; })[0];
     if (l) {
       var c = residentAt(l.k), door = { x: l.x + 1, y: l.y + 3 };
+      if (c && M.residentAsleep(c.id)) { M.toast('💤 ' + M.j(c.name, '은', '는') + ' 쿨쿨 자고 있어요. 아침 6시쯤 일어나요'); return; }
       if (c) { var out = npcs.filter(function (n) { return n.id === c.id; })[0]; if (out) { M.toast(M.j(c.name, '은', '는') + ' 밖에서 산책 중이에요. 찾아가 볼게요!'); talkTo(out); return; } goTo(door.x, door.y, function () { me.d = 'up'; M.V.resident(c.id); }); return; }
       if (l.k === M.V.residents().length && M.V.nextMover()) { var nm = M.V.nextMover(); M.modal('<div class="center"><div class="tbig">🚧</div><h3>이사 예정</h3><p>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>새로운 친구</b>의 집이 여기에 생겨요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
     }

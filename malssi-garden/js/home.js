@@ -76,16 +76,16 @@
       '<div class="room' + (editing ? ' editing' : '') + '" id="room" style="background-image:url(' + wallSrc() + ')">' +
       placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false"></div>'; }).join('') +
       (M.potsRoomHtml ? M.potsRoomHtml() : '') +
-      '<div class="pet" id="pet" style="z-index:70"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
-      (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구를 끌어서 옮기고, 눌러서 골라요') + '</div>' : '') +
+      '<div class="pet' + (editing ? ' movable' : '') + '" id="pet" style="z-index:' + Math.round((P.pet.pos || { y: 92 }).y) + ';' + (P.pet.pos ? 'left:' + P.pet.pos.x + '%;top:' + P.pet.pos.y + '%;bottom:auto' : '') + '"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
+      (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구·화분·' + esc(P.petName) + '를 끌어서 옮겨요') + '</div>' : '') +
       '</div>' + (editing && fsel && P.room.placed[fsel] ? '<div class="ftools"><b>' + esc((FURN.filter(function (x) { return x.id === fsel; })[0] || {}).name || '') + '</b><button data-ft="small">－ 작게</button><button data-ft="big">＋ 크게</button><button data-ft="flip">↔ 뒤집기</button><button data-ft="front">⬆ 앞으로</button><button data-ft="back">⬇ 뒤로</button><button data-ft="store">📦 보관</button></div>' : '') +
-      '<div id="potArea">' + (M.potsHtml ? M.potsHtml() : '') + '</div>' +
-      '<div class="card petcard"><div class="pname"><b>' + esc(P.petName) + '</b> <span class="lv">Lv.' + p.lv + '</span><span class="bonus">💧 +' + M.petBonus() + '%</span></div>' +
-      '<div class="meter"><span>친밀도</span><div class="mbar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></div><small>' + p.exp + '/' + needExp(p.lv) + '</small></div>' +
-      '<div class="meter"><span>배부름</span><div class="mbar full"><i style="width:' + M.petFullPct() + '%"></i></div><small>' + (full >= 100 ? '아주 배부름' : full < 30 ? '배고파요' : full + '%') + '</small></div>' +
-      '<div class="row3 hx"><button class="btn" id="hMail"><img class="inl" src="img/w/mail-' + (M.mailUnread && M.mailUnread() ? 'closed' : 'open') + '.png" alt="" style="width:22px;height:22px"> 우체통' + (M.mailUnread && M.mailUnread() ? ' <b class="nbadge">' + M.mailUnread() + '</b>' : '') + '</button><button class="btn" id="hCook">🍳 요리</button><button class="btn" id="hHouse">🔨 ' + (M.houseInfo ? M.houseInfo().name : '집') + '</button></div>' +
-      '<div style="display:none" class="hup" id="hHouseOld"></div><div class="row3"><button class="btn primary" id="hFeed">🥕 먹이 주기</button><button class="btn" id="hShop">🛋️ 꾸미기 상점</button><button class="btn' + (editing ? ' on' : '') + '" id="hEdit">' + (editing ? '✅ 꾸미기 끝' : '✏️ 꾸미기') + '</button></div>' +
-      '<p class="hint">레벨 5와 10이 되면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 물방울을 더 받아요.</p></div></div>';
+      '<div class="hstat"><b>' + esc(P.petName) + ' <small>Lv.' + p.lv + '</small></b>' +
+      '<span class="hs" title="친밀도">💗<i class="mini-bar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></i></span>' +
+      '<span class="hs' + (full < 30 ? ' low' : '') + '" title="배부름">🥕<i class="mini-bar full"><i style="width:' + M.petFullPct() + '%"></i></i></span>' +
+      '<span class="hs">💧+' + M.petBonus() + '%</span></div>' +
+      '<div class="htools">' + [['hFeed', '🥕', '먹이', full < 30], ['hEdit', editing ? '✅' : '✏️', editing ? '완료' : '꾸미기', editing], ['hShop', '🛋️', '상점'], ['hPots', '🪴', '화분', M.potAlert && M.potAlert()], ['hMail', '📮', '편지', M.mailUnread && M.mailUnread()], ['hCook', '🍳', '요리'], ['hHouse', '🔨', '집']].map(function (b) {
+        return '<button class="ht' + (b[3] ? ' hot' : '') + '" id="' + b[0] + '"><span>' + b[1] + '</span><small>' + b[2] + '</small>' + (b[0] === 'hMail' && b[3] ? '<i class="nbadge">' + b[3] + '</i>' : '') + '</button>';
+      }).join('') + '</div></div>';
     root.innerHTML = h;
   };
   function rerender() { var r = $('homeView'); if (r) M.renderHome(r); }
@@ -212,6 +212,19 @@
 
   // 꾸미기: 가구 끌기
   var fd = null;
+  // 토끼 끌기
+  var pdr = null;
+  document.addEventListener('pointerdown', function (e) {
+    if (!editing) return;
+    var pe = e.target.closest && e.target.closest('#room .pet'); if (!pe) return;
+    pdr = { el: pe, r: $('room').getBoundingClientRect(), pid: e.pointerId };
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!pdr || e.pointerId !== pdr.pid) return;
+    var x = Math.max(12, Math.min(88, (e.clientX - pdr.r.left) / pdr.r.width * 100)), y = Math.max(45, Math.min(99, (e.clientY - pdr.r.top) / pdr.r.height * 100 + 12));
+    pdr.el.style.left = x + '%'; pdr.el.style.top = y + '%'; pdr.el.style.bottom = 'auto'; pdr.pos = { x: x, y: y }; e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('pointerup', function (e) { if (!pdr || e.pointerId !== pdr.pid) return; if (pdr.pos) { M.P.pet.pos = pdr.pos; M.save(); pdr.el.style.zIndex = Math.round(pdr.pos.y); } pdr = null; });
   document.addEventListener('pointerdown', function (e) {
     if (!editing) return;
     var el = e.target.closest && e.target.closest('#room .furn'); if (!el) return;
@@ -246,6 +259,7 @@
     else if (e.target.closest('#hMail')) M.mailSheet();
     else if (e.target.closest('#hCook')) M.cookSheet();
     else if (e.target.closest('#hEdit')) { editing = !editing; fsel = ''; rerender(); }
+    else if (e.target.closest('#hPots')) { var pd = M.modal('<div class="potshelf">' + M.potsHtml() + '</div><button class="btn ghost wide" data-close>닫기</button>'); pd.querySelector('.potshelf').classList.add('insheet'); }
     else if (e.target.closest('[data-ft]') && fsel) {
       var a = e.target.closest('[data-ft]').dataset.ft, pos = M.P.room.placed[fsel], f = FURN.filter(function (x) { return x.id === fsel; })[0];
       if (a === 'small') pos.s = Math.max(0.5, (pos.s || 1) - 0.15);
