@@ -56,6 +56,7 @@
   M.renderVillage = function (root) {
     if (!root) return;
     if (M.inVillage) { M.renderGarden(root); return; }
+    if (M.World) { M.World.mount(root); return; }   // 위에서 내려다보는 칸 마을 (world.js)
     var v = V(), res = residents(), nm = nextMover();
     var lotHtml = LOTS.map(function (l, i) {
       var c = res[i];
@@ -99,6 +100,7 @@
     var p = PLACES.filter(function (x) { return x.id === id; })[0];
     if (p && p.soon) { M.modal('<div class="center"><div class="tbig">' + p.em + '</div><h3>' + p.name + '</h3><p>' + p.soon + '</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
     if (id === 'shop') { M.inVillage = true; M.render(); return; }
+    if (id === 'home') { M.go('home'); return; }
     if (id === 'store') { M.furnShop(); return; }
     if (id === 'museum') { M.gardenBook(); return; }
     if (id === 'gift') { M.go('shop'); return; }
@@ -224,6 +226,8 @@
     step();
   }
 
+  // world.js 에서 쓰는 것들
+  M.V = { enter: enter, resident: residentSheet, residents: residents, nextMover: nextMover, hearts: hearts, tint: timeTint, boardNews: boardNews };
   M.villagePlaces = PLACES;
   M.villageTalk = talk;   // 자동 점검용   // 자동 점검용
 })();

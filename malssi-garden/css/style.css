@@ -1051,3 +1051,5 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .fruit i { position: absolute; right: -4px; bottom: -4px; font-style: normal; font-size: .7rem; font-weight: 800; background: var(--mint); color: #fff; border-radius: 8px; padding: 0 5px; }
 .basket.big { justify-content: center; border: 0; }
 .seedem { font-size: 2.4rem; line-height: 1.2; } .fcard.lock { opacity: .55; } .fcard .own { font-style: normal; font-size: .7rem; color: var(--mint-d); font-weight: 800; }
+/* 칸 마을 */
+.world .wcanvas { display: block; width: 100%; height: calc(100svh - 166px); min-height: 360px; touch-action: none; background: #a7dc8a; }
