@@ -1220,3 +1220,9 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .chat ruby, .dl ruby, .tile ruby, .gl ruby, .opt ruby { line-height: 2.1; }
 
 .rlink { word-break: break-all; font-size: .8rem; background: #f6f3f8; border-radius: 12px; padding: 10px; margin: 8px 0; user-select: all; }
+
+.dishe .demo, .dbig .demo { display: grid; place-items: center; width: 100%; height: 100%; font-size: 1.9rem; line-height: 1; font-weight: 400; }
+.dbig { display: grid; place-items: center; margin: 0 auto; }
+.dbig .demo { font-size: 4.5rem; }
+.needs .ing { background: none; border: 0; padding: 0; font: inherit; color: inherit; }
+.recipe .needs { flex-wrap: wrap; row-gap: 6px; }

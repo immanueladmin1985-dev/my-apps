@@ -62,36 +62,110 @@
     tart: ['배 타르트', '🍰', { pear: 2, peach: 1 }, 'なしのタルト', '梨挞', 'pear tart'],
     juice: ['오렌지 주스', '🧃', { orange: 2 }, 'オレンジジュース', '橙汁', 'orange juice'],
     berrybowl: ['딸기 토마토 볼', '🍓', { pot_strawberry: 2, pot_tomato: 1 }, 'いちごとトマトのボウル', '草莓番茄碗', 'berry bowl'],
-    lemonade: ['레몬에이드', '🍋', { pot_lemon: 2, cherry: 1 }, 'レモネード', '柠檬水', 'lemonade']
+    lemonade: ['레몬에이드', '🍋', { pot_lemon: 2, cherry: 1 }, 'レモネード', '柠檬水', 'lemonade'],
+    // 화분·밭(정원 가게)
+    strawmilk: ['딸기우유', '🥛', { pot_strawberry: 2, gd_m2: 1 }, 'いちごミルク', '草莓牛奶', 'strawberry milk'],
+    tomatopasta: ['토마토 파스타', '🍝', { pot_tomato: 2, gd_w2: 2 }, 'トマトパスタ', '番茄意面', 'tomato pasta'],
+    honeylemon: ['꿀레몬차', '🍋', { pot_lemon: 1, gd_h2: 1 }, 'はちみつレモン', '蜂蜜柠檬茶', 'honey lemon tea'],
+    greentea: ['녹차', '🍵', { gd_c2: 1 }, 'りょくちゃ', '绿茶', 'green tea'],
+    milktea: ['밀크티', '🧋', { gd_c1: 1, gd_m2: 1 }, 'ミルクティー', '奶茶', 'milk tea'],
+    pancake: ['팬케이크', '🥞', { gd_w2: 1, gd_m2: 1, gd_h1: 1, 'for-nest': 1 }, 'パンケーキ', '松饼', 'pancakes'],
+    muffin: ['블루베리 머핀', '🧁', { gd_b2: 1, gd_w2: 1 }, 'ブルーベリーマフィン', '蓝莓玛芬', 'blueberry muffin'],
+    cheesetoast: ['치즈 토스트', '🧀', { gd_w4: 1, gd_m4: 1 }, 'チーズトースト', '芝士吐司', 'cheese toast'],
+    frenchtoast: ['프렌치토스트', '🍞', { gd_w4: 1, gd_m2: 1, 'for-nest': 1 }, 'フレンチトースト', '法式吐司', 'French toast'],
+    omelet: ['토마토 오믈렛', '🍳', { pot_tomato: 1, gd_m2: 1, 'for-nest': 1 }, 'オムレツ', '番茄蛋卷', 'tomato omelet'],
+    rosetea: ['장미차', '🌹', { pot_rose: 1, gd_h1: 1 }, 'ローズティー', '玫瑰花茶', 'rose tea'],
+    seedcookie: ['해바라기씨 쿠키', '🍪', { pot_sunflower: 1, gd_w2: 1, gd_h1: 1 }, 'ひまわりのたねクッキー', '葵花籽饼干', 'sunflower seed cookie'],
+    honeytoast: ['허니 토스트', '🍯', { gd_w4: 1, 'for-honeycomb': 1 }, 'ハニートースト', '蜂蜜吐司', 'honey toast'],
+    peachice: ['복숭아 아이스크림', '🍨', { peach: 2, gd_m3: 1 }, 'ももアイス', '桃子冰淇淋', 'peach ice cream'],
+    // 숲
+    berryyogurt: ['산딸기 요거트', '🍓', { 'for-raspberry': 2, gd_m3: 1 }, 'ラズベリーヨーグルト', '树莓酸奶', 'raspberry yogurt'],
+    grapejuice: ['머루 주스', '🍇', { 'for-wildgrape': 2 }, 'ぶどうジュース', '葡萄汁', 'grape juice'],
+    chestnut: ['군밤', '🌰', { 'for-chestnut': 3 }, 'やきぐり', '烤栗子', 'roasted chestnuts'],
+    acornjelly: ['도토리묵', '🟫', { acorn: 4, 'min-salt': 1 }, 'どんぐりのゼリー', '橡子凉粉', 'acorn jelly'],
+    mushpot: ['버섯전골', '🍲', { 'for-enoki': 1, 'for-oyster': 1, 'mush-brown': 1 }, 'きのこなべ', '蘑菇火锅', 'mushroom hot pot'],
+    matsutake: ['송이 소금구이', '🍄', { 'for-matsutake': 1, 'min-salt': 1 }, 'まつたけのしおやき', '盐烤松茸', 'grilled matsutake'],
+    namul: ['고사리나물', '🥬', { 'for-fiddlehead': 2, 'min-salt': 1 }, 'わらびのナムル', '凉拌蕨菜', 'seasoned bracken'],
+    ginsengtea: ['인삼차', '🍵', { 'for-ginseng': 1, gd_h2: 1 }, 'にんじんちゃ', '人参茶', 'ginseng tea'],
+    lotustea: ['연꽃차', '🪷', { 'for-lotus': 1, gd_c1: 1 }, 'はすのはなちゃ', '莲花茶', 'lotus tea'],
+    dandsalad: ['민들레 샐러드', '🥗', { 'for-dandelion': 2, pot_tomato: 1 }, 'たんぽぽサラダ', '蒲公英沙拉', 'dandelion salad'],
+    goldrisotto: ['황금 버섯 리조또', '✨', { 'for-goldmush': 1, gd_m3: 1, gd_w2: 1 }, 'きんのきのこリゾット', '金蘑菇烩饭', 'golden mushroom risotto'],
+    // 바다
+    clamnoodle: ['바지락 칼국수', '🍜', { 'sea-clam': 3, gd_w2: 1 }, 'あさりうどん', '蛤蜊面', 'clam noodles'],
+    seaweedsoup: ['미역국', '🥣', { 'sea-wakame': 2, 'sea-mussel': 1 }, 'わかめスープ', '海带汤', 'seaweed soup'],
+    gimbap: ['김밥', '🍙', { 'sea-nori': 1, 'for-fiddlehead': 1, 'for-nest': 1 }, 'のりまき', '紫菜包饭', 'gimbap'],
+    scallopgrill: ['가리비 구이', '🐚', { scallop: 2, 'min-salt': 1 }, 'ホタテやき', '烤扇贝', 'grilled scallops'],
+    oysterjeon: ['굴전', '🥘', { 'sea-oyster': 2, gd_w2: 1, 'for-nest': 1 }, 'かきのチヂミ', '牡蛎煎', 'oyster pancake'],
+    abaloneporridge: ['전복죽', '🥣', { 'sea-abalone': 1, gd_w2: 1 }, 'あわびがゆ', '鲍鱼粥', 'abalone porridge'],
+    seafoodstew: ['해물탕', '🦀', { crab: 1, 'sea-hardclam': 1, 'sea-mussel': 1, conch: 1 }, 'かいせんなべ', '海鲜锅', 'seafood stew'],
+    hijiki: ['톳 무침', '🥢', { 'sea-hijiki': 2, 'min-salt': 1 }, 'ひじきのあえもの', '凉拌羊栖菜', 'hijiki salad'],
+    kelpbroth: ['다시마 우동', '🍜', { 'sea-kelp': 1, gd_w2: 2 }, 'こんぶうどん', '海带乌冬面', 'kelp udon'],
+    urchinbowl: ['성게 덮밥', '🍚', { 'sea-urchin': 2, 'sea-nori': 1 }, 'うにどん', '海胆盖饭', 'sea urchin bowl'],
+    // 물고기 (낚시에서 '요리 재료로 담기')
+    mackerelgrill: ['고등어 구이', '🐟', { fish_mackerel: 1, 'min-salt': 1 }, 'さばのしおやき', '烤鲭鱼', 'grilled mackerel'],
+    saurygrill: ['꽁치 구이', '🐟', { fish_saury: 1, 'min-salt': 1 }, 'さんまのしおやき', '烤秋刀鱼', 'grilled saury'],
+    salmonsteak: ['연어 스테이크', '🍣', { fish_salmon: 1, pot_lemon: 1 }, 'サーモンステーキ', '三文鱼排', 'salmon steak'],
+    tunasushi: ['참치 초밥', '🍣', { fish_tuna: 1, 'sea-nori': 1 }, 'マグロずし', '金枪鱼寿司', 'tuna sushi'],
+    eelbowl: ['장어덮밥', '🍱', { fish_eel: 1, gd_h1: 1 }, 'うなどん', '鳗鱼饭', 'eel rice bowl'],
+    shrimpfry: ['새우튀김', '🍤', { fish_shrimp: 2, gd_w2: 1 }, 'えびフライ', '炸虾', 'fried shrimp'],
+    takoyaki: ['타코야키', '🐙', { fish_octopus: 1, gd_w2: 1, 'for-nest': 1 }, 'たこやき', '章鱼烧', 'takoyaki'],
+    squidgrill: ['오징어 구이', '🦑', { fish_squid: 1, 'min-salt': 1 }, 'いかやき', '烤鱿鱼', 'grilled squid'],
+    fishsoup: ['매운탕', '🍲', { fish_catfish: 1, 'sea-kelp': 1 }, 'さかなのからいスープ', '鱼汤', 'spicy fish stew']
   };
-  function have(k) { if (k.indexOf('pot_') === 0) { var p = M.P.pots; return p && p.fruits ? p.fruits[k.slice(4)] || 0 : 0; } var g = M.P.gather; return g && g.bag ? g.bag[k] || 0 : 0; }
-  function take(k, n) { if (k.indexOf('pot_') === 0) M.P.pots.fruits[k.slice(4)] -= n; else M.P.gather.bag[k] -= n; }
-  function ingImg(k) { if (k.indexOf('pot_') === 0) return 'img/w/fruit-' + k.slice(4) + '.png'; return M.GATHER.ITEMS[k].img; }
-  function ingName(k) { if (k.indexOf('pot_') === 0) return (M.SEEDS[k.slice(4)] || {}).name || k; return M.GATHER.ITEMS[k].ko; }
+  var DIMG = { salad: 1, jam: 1, soup: 1, pie: 1, tart: 1, juice: 1, berrybowl: 1, lemonade: 1 };   // 그림이 있는 요리 (나머지는 이모지)
+  function dishIcon(id) { return DIMG[id] ? '<img src="img/w/dish-' + id + '.png" alt="">' : '<b class="demo">' + DISH[id][1] + '</b>'; }
+  M.dishIcon = dishIcon;
+  function src(k) { return k.indexOf('pot_') === 0 ? 'pot' : k.indexOf('gd_') === 0 ? 'gd' : k.indexOf('fish_') === 0 ? 'fish' : 'bag'; }
+  function fishOf(id) { return (M.FISH || []).filter(function (f) { return f.id === id; })[0] || { ko: id }; }
+  function have(k) {
+    var t = src(k);
+    if (t === 'pot') { var p = M.P.pots; return p && p.fruits ? p.fruits[k.slice(4)] || 0 : 0; }
+    if (t === 'gd') return M.gardenHave ? M.gardenHave(k.slice(3)) : 0;
+    if (t === 'fish') return (M.P.fishBag || {})[k.slice(5)] || 0;
+    var g = M.P.gather; return g && g.bag ? g.bag[k] || 0 : 0;
+  }
+  function take(k, n) {
+    var t = src(k);
+    if (t === 'pot') M.P.pots.fruits[k.slice(4)] -= n;
+    else if (t === 'gd') M.gardenTake(k.slice(3), n);
+    else if (t === 'fish') M.P.fishBag[k.slice(5)] -= n;
+    else M.P.gather.bag[k] -= n;
+  }
+  function ingImg(k) { var t = src(k); if (t === 'pot') return 'img/w/fruit-' + k.slice(4) + '.png'; if (t === 'gd') return M.gardenItemInfo(k.slice(3)).img; if (t === 'fish') return 'img/w/fish-' + k.slice(5) + '.png'; return M.GATHER.ITEMS[k].img; }
+  function ingName(k) { var t = src(k); if (t === 'pot') return (M.SEEDS[k.slice(4)] || {}).name || k; if (t === 'gd') return M.gardenItemInfo(k.slice(3)).name; if (t === 'fish') return fishOf(k.slice(5)).ko; return M.GATHER.ITEMS[k].ko; }
+  function ingWhere(k) { var t = src(k); if (t === 'pot') return '집 화분에서 키워요'; if (t === 'gd') return '정원 가게 밭에서 합쳐 만들어요'; if (t === 'fish') return '낚시로 잡고 "요리 재료로 담기"를 눌러요'; var c = M.GATHER.ITEMS[k].cat; return { fruit: '마을 열매 나무를 흔들어요', forest: '숲 바닥에서 줍거나 나무를 흔들어요', mineral: '바위를 두드리거나 땅굴에서 캐요', sea: '모래사장에서 주워요', bug: '곤충을 잡아요', fossil: '땅을 파요' }[c] || ''; }
   M.cookSheet = function () {
     var x = X();
-    var d = M.modal('<h3>🍳 요리하기</h3><p class="hint">채집한 열매·버섯과 화분 열매로 만들어요. 요리를 주민에게 주면 친밀도가 두 칸 올라요.</p><div class="list" id="ckList"></div><button class="btn ghost wide" data-close>닫기</button>');
+    var tab = 'all', TABS = [['all', '전체'], ['ok', '만들 수 있음'], ['farm', '🌱 밭·화분'], ['forest', '🌲 숲'], ['sea', '🐚 바다'], ['fish', '🐟 물고기']];
+    var d = M.modal('<h3>🍳 요리하기 <small>' + Object.keys(DISH).length + '가지</small></h3><p class="hint">재료 그림을 누르면 어디서 구하는지 알려 줘요. 요리를 주민에게 주면 친밀도가 두 칸 올라요.</p><div class="fcats" id="ckTabs"></div><div class="list" id="ckList"></div><button class="btn ghost wide" data-close>닫기</button>');
+    function kind(r) { var ks = Object.keys(r[2]); if (ks.some(function (k) { return src(k) === 'fish'; })) return 'fish'; if (ks.some(function (k) { return src(k) === 'bag' && M.GATHER.ITEMS[k].cat === 'sea'; })) return 'sea'; if (ks.some(function (k) { return src(k) === 'bag' && M.GATHER.ITEMS[k].cat === 'forest'; })) return 'forest'; return 'farm'; }
     function paint() {
-      d.querySelector('#ckList').innerHTML = Object.keys(DISH).map(function (id) {
-        var r = DISH[id], ok = Object.keys(r[2]).every(function (k) { return have(k) >= r[2][k]; });
-        return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le dishe"><img src="img/w/dish-' + id + '.png" alt=""></span><div class="ln">' + r[0] + (x.dishes[id] ? ' <small>가진 것 ' + x.dishes[id] + '</small>' : '') + '<div class="needs">' +
-          Object.keys(r[2]).map(function (k) { return '<span class="ing' + (have(k) >= r[2][k] ? ' got' : '') + '"><img src="' + ingImg(k) + '" alt="" title="' + ingName(k) + '"><i>' + have(k) + '/' + r[2][k] + '</i></span>'; }).join('') +
+      d.querySelector('#ckTabs').innerHTML = TABS.map(function (t) { return '<button data-ct="' + t[0] + '" class="' + (tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>'; }).join('');
+      var ids = Object.keys(DISH).map(function (id) { var r = DISH[id]; return { id: id, ok: Object.keys(r[2]).every(function (k) { return have(k) >= r[2][k]; }) }; })
+        .filter(function (o) { return tab === 'all' || (tab === 'ok' ? o.ok : kind(DISH[o.id]) === tab); });
+      ids.sort(function (a, b) { return (b.ok ? 1 : 0) - (a.ok ? 1 : 0); });
+      d.querySelector('#ckList').innerHTML = ids.length ? ids.map(function (o) {
+        var id = o.id, r = DISH[id], ok = o.ok;
+        return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le dishe">' + dishIcon(id) + '</span><div class="ln">' + r[0] + (x.dishes[id] ? ' <small>가진 것 ' + x.dishes[id] + '</small>' : '') + '<div class="needs">' +
+          Object.keys(r[2]).map(function (k) { return '<button class="ing' + (have(k) >= r[2][k] ? ' got' : '') + '" data-ing="' + k + '"><img src="' + ingImg(k) + '" alt="" title="' + ingName(k) + '"><i>' + have(k) + '/' + r[2][k] + '</i></button>'; }).join('') +
           '</div></div><button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-cook="' + id + '"' + (ok ? '' : ' disabled') + '>만들기</button></div>';
-      }).join('');
+      }).join('') : '<p class="hint center">지금 재료로 만들 수 있는 요리가 없어요</p>';
     }
     paint();
     d.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-ct]'); if (t) { tab = t.dataset.ct; paint(); return; }
+      var g = e.target.closest('[data-ing]'); if (g) { var k = g.dataset.ing; M.toast(ingName(k) + ' · ' + ingWhere(k)); return; }
       var b = e.target.closest('[data-cook]'); if (!b || b.disabled) return;
       var id = b.dataset.cook, r = DISH[id]; Object.keys(r[2]).forEach(function (k) { take(k, r[2][k]); });
       x.dishes[id] = (x.dishes[id] || 0) + 1; M.save(); M.sfx('win');
       var L = M.P.lang, nm = L === 'ja' ? r[3] : L === 'zh' ? r[4] : r[5]; M.say(nm, L);
-      M.modal('<div class="center"><img class="gbig" src="img/w/dish-' + id + '.png" alt=""><h3>' + r[0] + ' 완성!</h3><button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><p class="hint">주민에게 선물하면 친밀도가 두 칸 올라요</p><button class="btn primary wide" data-close>좋아요</button></div>'); paint();
+      M.modal('<div class="center"><span class="gbig dbig">' + dishIcon(id) + '</span><h3>' + r[0] + ' 완성!</h3><button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><p class="hint">주민에게 선물하면 친밀도가 두 칸 올라요</p><button class="btn primary wide" data-close>좋아요</button></div>'); paint();
     });
   };
   M.dishGiftable = function (id) { var x = X(); return !x.fed[id] && Object.keys(x.dishes).some(function (k) { return x.dishes[k] > 0; }); };
   M.dishGiftSheet = function (id) {
     var x = X(), c = M.custOf(id), ks = Object.keys(x.dishes).filter(function (k) { return x.dishes[k] > 0; });
-    var d = M.modal('<h3>🍲 ' + esc(M.j(c.name, '이', '')) + '에게 어떤 요리를 줄까요?</h3><div class="list">' + ks.map(function (k) { return '<button class="litem" data-dish="' + k + '"><span class="le dishe"><img src="img/w/dish-' + k + '.png" alt=""></span><span class="ln">' + DISH[k][0] + '</span><span class="lp own">' + x.dishes[k] + '개</span></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
+    var d = M.modal('<h3>🍲 ' + esc(M.j(c.name, '이', '')) + '에게 어떤 요리를 줄까요?</h3><div class="list">' + ks.map(function (k) { return '<button class="litem" data-dish="' + k + '"><span class="le dishe">' + dishIcon(k) + '</span><span class="ln">' + DISH[k][0] + '</span><span class="lp own">' + x.dishes[k] + '개</span></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-dish]'); if (!b) return;
       x.dishes[b.dataset.dish]--; x.fed[id] = 1; M.save(); d.close(); M.sfx('win');

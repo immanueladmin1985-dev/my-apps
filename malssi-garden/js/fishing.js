@@ -113,11 +113,12 @@
         '<button class="fname lang-' + lang + '" data-fsay="' + esc(nm.t) + '">🔊 <b>' + esc(nm.t) + '</b>' + (nm.r ? '<small>' + esc(nm.r) + '</small>' : '') + '</button>' +
         '<p>' + size + 'cm' + (best && !first ? ' · 최고 기록!' : '') + (bonus ? ' · 이름 맞힘 보너스 +20%' : '') + '</p>' +
         '<div class="row2"><button class="btn" id="fRel">놓아주기</button><button class="btn primary" id="fSell">팔기 <img class="inl" src="img/coin.png" alt="">' + price + '</button></div>' +
-        '<button class="btn wide" id="fAgain">한 번 더 (💧' + BAIT + ')</button><p class="hint">박물관 물고기 도감에 기록했어요</p></div>';
+        '<button class="btn wide" id="fKeep">🧺 요리 재료로 담기</button><button class="btn wide" id="fAgain">한 번 더 (💧' + BAIT + ')</button><p class="hint">박물관 물고기 도감에 기록했어요</p></div>';
       M.say(nm.t, lang);
       el.querySelector('[data-fsay]').onclick = function () { M.say(nm.t, lang); };
       $('fRel').onclick = function () { M.toast(f.em + ' 잘 가!'); M.give({ water: 1 }); end(); };
       $('fSell').onclick = function () { M.give({ coins: price }); M.sfx('coin'); end(); };
+      $('fKeep').onclick = function () { var fb = M.P.fishBag = M.P.fishBag || {}; fb[f.id] = (fb[f.id] || 0) + 1; M.save(); M.toast('🧺 ' + f.ko + '을(를) 담았어요. 집의 🍳 요리에서 써요'); end(); };
       $('fAgain').onclick = function () { var w = cur ? cur.where : f.at; M.give({ coins: price }); end(); M.fishStart(w); };
       M.sfx('win');
     }

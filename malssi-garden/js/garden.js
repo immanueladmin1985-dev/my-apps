@@ -748,6 +748,13 @@
       if (M.miniUnlockedNow) M.miniUnlockedNow(c.id, lvl);
     }, delay);
   }
+  // 요리 재료로 쓰기: key 는 'h2'(꿀병)처럼 사슬 글자 + 단계
+  M.gardenHave = function (key) { return M.P.garden && M.P.garden.cells ? count(key) : 0; };
+  M.gardenTake = function (key, n) {
+    var g = G(); sel = -1;
+    for (var i = 0; i < N() && n > 0; i++) if (keyOf(g.cells[i]) === key) { g.cells[i] = null; n--; }
+  };
+  M.gardenItemInfo = function (key) { var k = key.charAt(0), l = +key.slice(1), C = CHAINS[k]; return C ? { name: C.names[l - 1], img: 'img/' + C.img + '-' + l + '.png' } : { name: key, img: '' }; };
   M.gardenFriendUp = function (id) { return friendUp(id, false); };
   M.custImg = function (id, happy) { return CUST_IMG[id] ? 'img/cust-' + id + (happy ? '-happy' : '') + '.png' : ''; };
   M.custOf = custOf;
