@@ -135,9 +135,8 @@
     });
     var P = function (n, fb) { return pat[n] || fb; };
     var r = rnd(11), x, y;
-    // 풀밭 전체, 군데군데 꽃밭
+    // 풀밭 전체
     g.fillStyle = P('grass1', '#a7dc8a'); g.fillRect(0, 0, W * T, H * T);
-    for (y = 0; y < H; y++) for (x = 0; x < W; x++) if (G[y * W + x] === 0 && r() < 0.025) { g.fillStyle = P('flowers', '#b6e49b'); g.globalAlpha = 0.9; g.beginPath(); g.ellipse(x * T + T / 2, y * T + T / 2, T * 0.9, T * 0.6, 0, 0, 7); g.fill(); g.globalAlpha = 1; }
     // 물·모래: 이웃이 같으면 이어서, 가장자리는 둥글게
     function rect(x0, y0, w, h, l, rr, u, d) {
       var rad = 9; g.beginPath();
@@ -213,7 +212,7 @@
   }
   function stepActor(a, dt) {
     if (a.t < 1) {
-      a.t = Math.min(1, a.t + dt / STEP);
+      a.t = Math.min(1, a.t + dt / (a.kind === 'npc' ? STEP * 1.8 : STEP));
       if (a.t >= 1) { a.x = a.tx; a.y = a.ty; if (a === me) { var w = Wst(); w.x = a.x; w.y = a.y; w.d = a.d; } }
       return;
     }
@@ -238,7 +237,19 @@
     if (!n.say && !n.talking && Math.random() < dt / 9000) { var L = CHAT[M.P.lang] || CHAT.en, c = L[Math.floor(Math.random() * L.length)]; n.say = { t: c[0], k: c[1], until: performance.now() + 3200 }; }
     if (n.t < 1 || n.path.length || n.talking) return;
     n.wait -= dt; if (n.wait > 0) return;
-    n.wait = 1200 + Math.random() * 2800;
+    n.wait = 1500 + Math.random() * 3500;
+    // 가끔은 먼 곳(광장·다른 집·바닷가)까지 산책하고, 집에서 너무 멀면 돌아온다
+    var far = Math.abs(n.x - n.home.x) + Math.abs(n.y - n.home.y);
+    if (Math.random() < 0.45 || far > 18) {
+      var tx, ty, k;
+      for (k = 0; k < 12; k++) {
+        if (far > 18) { tx = n.home.x + Math.round((Math.random() - 0.5) * 4); ty = n.home.y + Math.round((Math.random() - 0.5) * 2); }
+        else if (Math.random() < 0.3) { tx = 14 + Math.floor(Math.random() * 8); ty = 14 + Math.floor(Math.random() * 6); }   // 광장
+        else { tx = n.x + Math.round((Math.random() - 0.5) * 16); ty = n.y + Math.round((Math.random() - 0.5) * 12); }
+        if (walkable(tx, ty) && !DOORS[tx + ',' + ty] && !occupied(tx, ty, n)) break;
+      }
+      if (k < 12) { var pth = findPath(n.x, n.y, tx, ty, n); if (pth && pth.length && pth.length <= 30) { n.path = pth; return; } }
+    }
     var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]], d = dirs[Math.floor(Math.random() * 4)], nx = n.x + d[0], ny = n.y + d[1];
     if (Math.abs(nx - n.home.x) > 4 || Math.abs(ny - n.home.y) > 3) { nx = n.x + Math.sign(n.home.x - n.x); ny = n.y + (nx === n.x ? Math.sign(n.home.y - n.y) : 0); }
     if (walkable(nx, ny) && !occupied(nx, ny, n) && !DOORS[nx + ',' + ny]) n.path = [[nx, ny]];

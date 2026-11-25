@@ -1152,3 +1152,10 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .hn img { width: 40px; height: 40px; object-fit: contain; } .hn b { font-size: .78rem; } .hn small { font-size: .72rem; color: var(--sub); }
 .hn.ok { border-color: var(--mint); background: #f3fbf7; }
 .hup { margin-bottom: 8px; }
+/* 대화 말풍선이 눌려 잘리지 않게: 줄어들지 않고 스크롤된다 */
+.chat > * { flex-shrink: 0; }
+#tChat { max-height: 46svh; }
+/* 이사 장면: 집과 꽃 아치가 겹치지 않게 */
+.mvhouse { width: 30%; left: 38%; bottom: 30%; }
+.mvarch { width: 23%; left: auto; right: 3%; bottom: 27%; z-index: 0; }
+.movein.s3 .mvch { left: 74%; }
