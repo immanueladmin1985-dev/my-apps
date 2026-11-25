@@ -326,9 +326,9 @@
     var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
     var name = a.kind === 'me' ? 'ch-rabbit' + M.petStage() + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
     var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
-    if (!r) {
-      var src = a.kind === 'me' ? M.petImg('normal') : M.custImg(a.id), im = img(src), size = T * 1.45;
-      if (im) ctx.drawImage(im, X + T / 2 - size / 2, Y + T - size, size, size);
+    if (!r) {   // 그 방향 그림을 아직 불러오는 중이면, 이미 불러온 다른 모습으로 그린다 (예전 상반신 그림은 쓰지 않는다)
+      var alts = a.kind === 'me' ? ['ch-rabbit' + M.petStage() + '-' + view + '1', 'ch-rabbit' + M.petStage() + '-front1'] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
+      for (var k = 0; k < alts.length && !r; k++) r = sprite(alts[k], p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
     }
     if (a.kind === 'npc' && a.say) {   // 말풍선
       var top = (r ? r.top : Y - T) - 6, cx = X + T / 2;
@@ -424,6 +424,8 @@
       var w = Wst();
       if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 17; me.y = me.py = me.ty = 22; } }
       syncNpcs();
+      // 캐릭터 그림을 미리 불러 둔다 (걷는 방향이 바뀔 때 깜빡이지 않게)
+      ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + 'ch-rabbit' + M.petStage() + '-' + v + k + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
       var rs = M.V.residents(), nm = M.V.nextMover();
       root.innerHTML = '<div class="village world"><div class="vbar"><b>🏡 ' + M.esc(M.P.petName) + '네 마을</b><small>주민 ' + rs.length + '명' + (nm ? ' · Lv.' + nm.lv + '에 새로운 친구 이사' : '') + '</small><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
       cv = $('wCanvas'); ctx = cv.getContext('2d');
