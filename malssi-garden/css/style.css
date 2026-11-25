@@ -1112,3 +1112,18 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .mvboxes { left: 46%; bottom: 10%; z-index: 3; }
 .movein.s3 .mvch { left: 64%; }
 .mvch { left: 40%; bottom: 10%; z-index: 4; }
+/* 방 안의 화분 */
+.potobj { position: absolute; transform: translate(-50%, -100%); width: 15%; max-width: 92px; display: flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 0; }
+.potobj .potsvg { width: 70%; display: block; filter: drop-shadow(0 3px 2px rgba(0,0,0,.2)); }
+.potobj .pplant { display: flex; align-items: flex-end; justify-content: center; height: 2.2em; margin-bottom: -6px; }
+.potobj .pplant .pe { font-size: 1.9rem; line-height: 1; } .potobj .pplant .pe.s1 { font-size: 1.1rem; } .potobj .pplant .pe.s2 { font-size: 1.5rem; }
+.potobj .pplant img { height: 100%; }
+.potobj.dry .pplant { filter: saturate(.35); transform: rotate(-10deg); }
+.potobj.ripe .pplant { animation: bob 1.2s ease-in-out infinite; }
+.potobj .pplus { font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); margin-bottom: -4px; }
+.ptag { font-style: normal; margin-top: 2px; font-size: .62rem; font-weight: 800; background: rgba(255,255,255,.92); color: #5b4630; border-radius: 8px; padding: 1px 6px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.ptag.ripe { background: #ffb02e; color: #fff; } .ptag.dry { background: #7cc6ec; color: #fff; } .ptag.empty { opacity: .85; }
+.room.editing .potobj { cursor: grab; }
+.potbig { position: relative; width: 110px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+.potbig .pe { font-size: 3rem; line-height: 1; margin-bottom: -8px; } .potbig .potsvg { width: 80px; }
+.potshelf .row2 { margin-top: 8px; }

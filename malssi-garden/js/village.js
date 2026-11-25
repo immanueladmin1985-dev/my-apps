@@ -73,7 +73,7 @@
       return '<button class="vplace' + (p.soon ? ' soon' : '') + '" data-place="' + p.id + '" style="left:' + p.x + '%;top:' + p.y + '%;width:' + p.w + '%">' +
         (p.img ? '<img src="' + p.img + '" alt="">' : '<span class="pem">' + p.em + '</span>') + '<span class="vlabel">' + p.name + '</span>' + badge + '</button>';
     }).join('');
-    root.innerHTML = '<div class="village tint-' + timeTint() + '"><div class="vbar"><b>🏡 ' + esc(M.P.petName) + '네 마을</b><small>주민 ' + res.length + '명' + (nm ? ' · Lv.' + nm.lv + '에 ' + esc(nm.name) + ' 이사' : '') + '</small><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div>' +
+    root.innerHTML = '<div class="village tint-' + timeTint() + '"><div class="vbar"><b>🏡 ' + esc(M.P.petName) + '네 마을</b><small>주민 ' + res.length + '명' + (nm ? ' · Lv.' + nm.lv + '에 새로운 친구 이사' : '') + '</small><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div>' +
       '<div class="vworld" id="vWorld" style="aspect-ratio:' + MAP_W + '/' + MAP_H + '">' + (MAP_IMG ? '<img class="vmap" src="' + MAP_IMG + '" alt="">' : mapSvg()) +
       placeHtml + lotHtml +
       '<div class="vme" id="vMe" style="left:' + v.x + '%;top:' + v.y + '%"><img src="' + M.petImg('normal') + '" alt=""></div>' +
@@ -112,7 +112,7 @@
     var res = residents(), asks = res.filter(function (c) { return M.miniAvail && M.miniAvail(c.id); }), nm = nextMover();
     var d = M.modal('<h3>📋 광장 게시판</h3>' +
       '<h4>오늘의 부탁</h4>' + (asks.length ? '<div class="list">' + asks.map(function (c) { var m = M.miniFor(c.id); return '<button class="litem" data-ask="' + m.id + '"><span class="le">' + resImg(c) + '</span><span class="ln">' + esc(c.name) + '<small>' + m.icon + ' ' + esc(m.name) + '</small></span><span class="lp own">가기</span></button>'; }).join('') + '</div>' : '<p class="hint">오늘 부탁은 다 들어줬어요! 주민과 더 친해지면 새 부탁이 생겨요.</p>') +
-      '<h4>마을 소식</h4><ul class="unl">' + (nm ? '<li>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>' + esc(M.j(nm.name, '이', '가')).replace(/(이|가)$/, '</b>$1') + ' 이사 와요.</li>' : '<li>모든 주민이 이사 왔어요!</li>') +
+      '<h4>마을 소식</h4><ul class="unl">' + (nm ? '<li>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>새로운 친구</b>가 이사 와요.</li>' : '<li>모든 주민이 이사 왔어요!</li>') +
       '<li>지금 주민 ' + res.length + '명이 살고 있어요.</li></ul>' +
       '<button class="btn wide" data-quests>⭐ 오늘의 퀘스트 보기</button><button class="btn primary wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
@@ -150,7 +150,7 @@
       walkTo(x, y, function () {
         if (pl) enter(pl.dataset.place);
         else if (rs) residentSheet(rs.dataset.res);
-        else { var nm = nextMover(); if (nm) M.modal('<div class="center"><div class="tbig">🚧</div><h3>이사 예정</h3><p>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>' + esc(M.j(nm.name, '이', '가')).replace(/(이|가)$/, '</b>$1') + ' 이 집터로 이사 와요.<br>정원 가게에서 손님 의뢰를 채우면 가게 레벨이 올라요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); }
+        else { var nm = nextMover(); if (nm) M.modal('<div class="center"><div class="tbig">🚧</div><h3>이사 예정</h3><p>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>' + '새로운 친구</b>가 이 집터로 이사 와요.<br>정원 가게에서 손님 의뢰를 채우면 가게 레벨이 올라요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); }
       });
       return;
     }

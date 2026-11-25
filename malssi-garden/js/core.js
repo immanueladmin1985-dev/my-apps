@@ -411,9 +411,12 @@
     var dim = document.createElement('div'); dim.className = 'dim' + (opt.cls ? ' ' + opt.cls : '');
     dim.innerHTML = '<div class="sheet" role="dialog">' + html + '</div>';
     document.body.appendChild(dim);
-    var box = dim.firstChild;
+    var box = dim.firstChild, t0 = Date.now();
+    // 창을 띄운 손가락이 떨어지며 생기는 클릭이 창 안의 버튼을 누르지 않게 잠깐 막는다
+    box.addEventListener('click', function (e) { if (Date.now() - t0 < 350) { e.stopPropagation(); e.preventDefault(); } }, true);
     box.close = function () { if (!dim.parentNode) return; dim.remove(); if (opt.onClose) opt.onClose(); };
     dim.addEventListener('click', function (e) {
+      if (Date.now() - t0 < 350) return;
       if (e.target === dim && !opt.sticky) box.close();
       if (e.target.closest('[data-close]')) box.close();
     });

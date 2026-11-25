@@ -7,7 +7,7 @@
   var STEP = 170;               // 한 칸 걷는 시간(ms)
   // 그림이 오면 켠다. 예: tree: 'img/w-tree.png', house_bear: 'img/w-house-bear.png', ch_rabbit: 'img/ch-rabbit.png'(앞·뒤·옆 세 칸)
   var IMG = {};
-  var WI = 'img/w/';
+  var WI = 'img/w/', CH_H = 1.6;   // 캐릭터 키(칸)
   var TILES = ['grass1', 'grass3', 'path', 'water', 'sand', 'plaza', 'plankh', 'flowers'];
   var TREES = ['t-green', 't-autumn', 't-cherry', 't-pine', 't-green2', 't-cherry2', 't-pine2', 't-green3', 't-cherry3'];
   var FLOWERS = ['d-flower1', 'd-flower2', 'd-tulip', 'd-grass1', 'd-grass2'];
@@ -17,11 +17,11 @@
   // 바닥: 0 풀, 1 길, 2 물, 3 모래, 4 다리, 5 돌바닥(광장)
   var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false;
   var BUILD = [
-    { id: 'museum', name: '박물관', x: 4, y: 4, w: 5, h: 4, color: '#c9d6e8', roof: '#7d8fb3', em: '🏛️' },
-    { id: 'shop', name: '정원 가게', x: 23, y: 4, w: 6, h: 4, color: '#ffe3ea', roof: '#ff8fab', em: '🏪' },
-    { id: 'gift', name: '선물 교환소', x: 5, y: 13, w: 4, h: 3, color: '#fff3c9', roof: '#ffb02e', em: '🎁' },
-    { id: 'home', name: '내 집', x: 10, y: 13, w: 4, h: 3, color: '#fff', roof: '#e07a5f', em: '🐰' },
-    { id: 'store', name: '잡화점', x: 26, y: 13, w: 5, h: 4, color: '#e9f7e4', roof: '#6cbf7a', em: '🛍️' }
+    { id: 'museum', name: '박물관', x: 4, y: 5, w: 5, h: 3, color: '#c9d6e8', roof: '#7d8fb3', em: '🏛️' },
+    { id: 'shop', name: '정원 가게', x: 23, y: 5, w: 5, h: 3, color: '#ffe3ea', roof: '#ff8fab', em: '🏪' },
+    { id: 'gift', name: '선물 교환소', x: 4, y: 13, w: 5, h: 3, color: '#fff3c9', roof: '#ffb02e', em: '🎁' },
+    { id: 'home', name: '내 집', x: 10, y: 14, w: 3, h: 2, color: '#fff', roof: '#e07a5f', em: '🐰' },
+    { id: 'store', name: '잡화점', x: 25, y: 14, w: 5, h: 3, color: '#e9f7e4', roof: '#6cbf7a', em: '🛍️' }
   ];
   var LOTS = [[3, 23], [7, 23], [11, 23], [21, 23], [25, 23], [29, 23], [3, 29], [7, 29], [11, 29], [21, 29], [25, 29], [29, 29]];
   var HOUSE_COL = { bear: '#d9a066', squirrel: '#c98b5a', chick: '#ffe08a', hedgehog: '#e8b4a0', panda: '#e8e8e8', fox: '#f4a261', koala: '#b8c4d6', hamster: '#f6d6a8', penguin: '#cfe9f7', cat: '#f3d9b1', sheep: '#fbf7ef', owl: '#b5926a' };
@@ -66,25 +66,31 @@
     // 게시판·선착장·다리
     solid(BOARD.x, BOARD.y); solid(BOARD.x + 1, BOARD.y); OBJ.push({ kind: 'board', x: BOARD.x, y: BOARD.y + 1 }); DOORS[BOARD.x + ',' + (BOARD.y + 1)] = { type: 'place', id: 'board' };
     DOORS[PIER.x + ',' + PIER.y] = { type: 'place', id: 'pier' };
-    OBJ.push({ kind: 'img', src: 'b-pier', x: PIER.x + 0.5, y: 40.3, w: 3.2 }); OBJ.push({ kind: 'label', text: '낚시터', x: PIER.x + 0.5, y: 39.2, z: 40.3 });
-    OBJ.push({ kind: 'img', src: 'm-arch', x: 18, y: 12.6, w: 3.2 });
+    solid(PIER.x + 1, 38); OBJ.push({ kind: 'img', src: 'o-sign', x: PIER.x + 1.5, y: 39, h: 1.1 }); OBJ.push({ kind: 'label', text: '🎣 낚시터', x: PIER.x + 1.5, y: 37.6, z: 39 });
+    OBJ.push({ kind: 'img', src: 'o-pier', x: PIER.x + 0.5, y: PIER.y + 1.4, h: 1.6, under: true });
+    OBJ.push({ kind: 'img', src: 'm-arch', x: 18, y: 12.6, h: 2.4 });
     // 광장 꾸미기: 가로등·벤치·꽃밭
-    [[13, 13, 'o-lamp'], [22, 13, 'o-lamp1'], [13, 19, 'o-lamp2'], [22, 19, 'o-lamp3']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, w: 0.9 }); });
-    [[20, 15, 'o-bench'], [20, 18, 'o-bench1'], [14, 17, 'o-bench2']].forEach(function (q) { solid(q[0], q[1]); solid(q[0] + 1, q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 1, y: q[1] + 1, w: 1.8 }); });
-    [[16, 13, 'o-planter'], [19, 13, 'o-flowerbed']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, w: 1.4 }); });
-    solid(15, 19); OBJ.push({ kind: 'img', src: 'o-well', x: 15.5, y: 20, w: 1.6 });
+    [[13, 13, 'o-lamp'], [22, 13, 'o-lamp1'], [13, 19, 'o-lamp2'], [22, 19, 'o-lamp3']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 1.6 }); });
+    [[20, 15, 'o-bench'], [20, 18, 'o-bench1'], [14, 17, 'o-bench2']].forEach(function (q) { solid(q[0], q[1]); solid(q[0] + 1, q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 1, y: q[1] + 1, h: 1.1 }); });
+    [[16, 13, 'o-planter'], [19, 13, 'o-flowerbed']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 0.9 }); });
+    solid(15, 19); OBJ.push({ kind: 'img', src: 'o-well', x: 15.5, y: 20, h: 1.5 });
     // 주민 집 옆 우체통
     LOTS.forEach(function (l, k) { solid(l[0] + 3, l[1] + 2, 2 + k); OBJ.push({ kind: 'mail', k: k, x: l[0] + 3.5, y: l[1] + 3 }); });
     // 숲 테두리와 흩어진 나무·덤불·바위·꽃
-    var r = rnd(7);
+    var r = rnd(7), TREEAT = [], FOREST = ['t-green', 't-green2', 't-green3', 't-pine', 't-pine2', 't-green', 't-autumn', 't-cherry'];
     for (y = 0; y < 34; y++) for (x = 0; x < W; x++) {
       var edge = y < 3 || x < 2 || x > W - 3;
       if (G[y * W + x] !== 0 || SOLID[y * W + x]) continue;
       var nearPath = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1]].some(function (d) { var v = G[(y + d[1]) * W + x + d[0]]; return v === 1 || v === 5 || SOLID[(y + d[1]) * W + x + d[0]]; });
       var q = r();
-      if (edge ? q < 0.7 : (!nearPath && q < 0.06)) { solid(x, y); OBJ.push({ kind: 'img', src: TREES[Math.floor(r() * TREES.length)], x: x + 0.5, y: y + 1, w: 1.9 + r() * 0.4 }); }
-      else if (!nearPath && q < 0.11) { solid(x, y); OBJ.push({ kind: 'img', src: DECO[Math.floor(r() * DECO.length)], x: x + 0.5, y: y + 1, w: 1.05 }); }
-      else if (q < 0.2) OBJ.push({ kind: 'img', src: FLOWERS[Math.floor(r() * FLOWERS.length)], x: x + 0.5, y: y + 1, w: 0.65, flat: true });
+      var crowd = 0; for (var dy2 = -1; dy2 <= 1; dy2++) for (var dx2 = -1; dx2 <= 1; dx2++) if (TREEAT[(y + dy2) * W + x + dx2]) crowd++;
+      if ((edge ? q < 0.55 : (!nearPath && q < 0.05)) && crowd < (edge ? 3 : 1)) {
+        solid(x, y); TREEAT[y * W + x] = 1;
+        var tn = edge ? FOREST[Math.floor(r() * FOREST.length)] : TREES[Math.floor(r() * TREES.length)];
+        OBJ.push({ kind: 'img', src: tn, x: x + 0.5 + (r() - 0.5) * 0.3, y: y + 1, h: (tn.indexOf('pine') >= 0 ? 2.6 : 2.2) + r() * 0.35 });
+      }
+      else if (!nearPath && q < 0.085 && !crowd) { solid(x, y); OBJ.push({ kind: 'img', src: DECO[Math.floor(r() * DECO.length)], x: x + 0.5, y: y + 1, h: 0.8 + r() * 0.2 }); }
+      else if (q < 0.15) OBJ.push({ kind: 'img', src: FLOWERS[Math.floor(r() * FLOWERS.length)], x: x + 0.5, y: y + 1, h: 0.5, flat: true });
     }
     for (x = 0; x < W; x++) if (r() < 0.25 && G[36 * W + x] === 3 && x !== 17 && x !== 18) OBJ.push({ kind: 'shell', x: x, y: 37 });
   }
@@ -210,7 +216,15 @@
     }
     if (a === me && a.onArrive) { var f = a.onArrive; a.onArrive = null; f(); }
   }
+  // 주민이 혼잣말을 한다 (배우는 말 + 뜻). 누르면 다가가서 이야기한다
+  var CHAT = {
+    ja: [['いい天気！', '날씨 좋다!'], ['おなかすいた…', '배고파…'], ['こんにちは！', '안녕!'], ['♪ ラララ', '♪ 랄랄라'], ['ねむい…', '졸려…'], ['あそぼう！', '놀자!'], ['おはよう！', '좋은 아침!'], ['きれいな花！', '예쁜 꽃!']],
+    zh: [['天气真好！', '날씨 좋다!'], ['我饿了…', '배고파…'], ['你好！', '안녕!'], ['♪ 啦啦啦', '♪ 랄랄라'], ['好困…', '졸려…'], ['一起玩吧！', '같이 놀자!'], ['早上好！', '좋은 아침!'], ['花真漂亮！', '꽃이 예뻐!']],
+    en: [['Nice weather!', '날씨 좋다!'], ["I'm hungry…", '배고파…'], ['Hello!', '안녕!'], ['♪ La la la', '♪ 랄랄라'], ['So sleepy…', '졸려…'], ["Let's play!", '놀자!'], ['Good morning!', '좋은 아침!'], ['Pretty flowers!', '예쁜 꽃!']]
+  };
   function npcThink(n, dt) {
+    if (n.say && performance.now() > n.say.until) n.say = null;
+    if (!n.say && !n.talking && Math.random() < dt / 9000) { var L = CHAT[M.P.lang] || CHAT.en, c = L[Math.floor(Math.random() * L.length)]; n.say = { t: c[0], k: c[1], until: performance.now() + 3200 }; }
     if (n.t < 1 || n.path.length || n.talking) return;
     n.wait -= dt; if (n.wait > 0) return;
     n.wait = 1200 + Math.random() * 2800;
@@ -261,38 +275,42 @@
     var dw = T * 0.7; ctx.fillStyle = '#8a5a2b'; roundRect(X + WW / 2 - dw / 2, Y + HH - T * 0.95, dw, T * 0.95 - 2, 6); ctx.fill(); ctx.stroke();
   }
   // 그림을 가로 w칸 너비로, 아래쪽 가운데가 (x, y) 칸 좌표에 오게 그린다
-  function sprite(name, x, y, w, flip) {
+  function sprite(name, x, y, w, flip, h) {
     var im = img(WI + name + '.png'); if (!im) return false;
-    var dw = w * T, dh = dw * im.naturalHeight / im.naturalWidth, X = x * T - dw / 2, Y = y * T - dh;
+    var ar = im.naturalHeight / im.naturalWidth, dw, dh;
+    if (w && h) { dw = Math.min(w * T, h * T / ar); dh = dw * ar; }   // 상자 안에 맞춘다
+    else if (h) { dh = h * T; dw = dh / ar; }
+    else { dw = w * T; dh = dw * ar; }
+    var X = x * T - dw / 2, Y = y * T - dh;
     if (flip) { ctx.save(); ctx.translate(X + dw, Y); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, dw, dh); ctx.restore(); }
     else ctx.drawImage(im, X, Y, dw, dh);
     return { top: Y, h: dh };
   }
   function drawObj(o) {
     var X, Y, r;
-    if (o.kind === 'img') { sprite(o.src, o.x, o.y + (o.flat ? -0.1 : 0.05), o.w); }
+    if (o.kind === 'img') { sprite(o.src, o.x, o.y + (o.flat ? -0.1 : 0.05), o.w, false, o.h); }
     else if (o.kind === 'label') { label(o.text, o.x * T, o.y * T); }
     else if (o.kind === 'shell') { emoji('🐚', o.x * T + T / 2, (o.y - 1) * T + T / 2, 13); }
-    else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0.8); }
+    else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0, false, 1.1); }
     else if (o.kind === 'build') {
       var b = o.b, nm = b.id === 'home' ? 'h-pink' : 'b-' + b.id;
-      r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.w + (b.id === 'home' ? 0.6 : 1));
+      r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.id === 'home' ? 3.5 : 5.6, false, b.id === 'home' ? 3.4 : 4.6);
       if (!r) { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); r = { top: b.y * T }; }
       label(b.name, (b.x + b.w / 2) * T, r.top + 4);
       if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, r.top + 10, 18);
     } else if (o.kind === 'lot') {
       var l = o.lot, c = residentAt(l.k);
       if (c) {
-        r = sprite('h-' + c.id, l.x + 1.5, l.y + 3.15, 3.5);
+        r = sprite('h-' + c.id, l.x + 1.5, l.y + 3.15, 3.5, false, 3.4);
         if (!r) { house(l.x, l.y, 3, 3, HOUSE_COL[c.id] || '#fff', '#c46b6b'); r = { top: l.y * T }; }
         label(c.name + (M.V.hearts(c.id) ? ' ♥' + M.V.hearts(c.id) : ''), (l.x + 1.5) * T, r.top + 2);
       } else if (l.k === M.V.residents().length && M.V.nextMover()) {
-        r = sprite('b-lot', l.x + 1.5, l.y + 3.1, 3.6);
-        sprite('m-boxes', l.x + 0.9, l.y + 2.4, 1.3);
+        r = sprite('b-lot', l.x + 1.5, l.y + 3.1, 3.4, false, 2.6);
+        sprite('m-boxes', l.x + 0.9, l.y + 2.4, 0, false, 1.1);
         label('이사 예정', (l.x + 1.5) * T, (r ? r.top : l.y * T) + 4);
       }
     } else if (o.kind === 'board') {
-      r = sprite('b-board', o.x + 1, o.y + 0.05, 2.2);
+      r = sprite('b-board', o.x + 1, o.y + 0.05, 0, false, 1.9);
       label('게시판', (o.x + 1) * T, (r ? r.top : (o.y - 2) * T) + 2);
       if (M.V.boardNews()) emoji('❗', (o.x + 2.1) * T, (r ? r.top : (o.y - 2) * T) + 8, 16);
     }
@@ -304,10 +322,19 @@
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T - 3, T * 0.34, T * 0.13, 0, 0, 7); ctx.fill();
     var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
     var name = a.kind === 'me' ? 'ch-rabbit' + M.petStage() + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
-    var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, a.kind === 'me' ? 1.25 : 1.3, flip);
+    var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
     if (!r) {
       var src = a.kind === 'me' ? M.petImg('normal') : M.custImg(a.id), im = img(src), size = T * 1.45;
       if (im) ctx.drawImage(im, X + T / 2 - size / 2, Y + T - size, size, size);
+    }
+    if (a.kind === 'npc' && a.say) {   // 말풍선
+      var top = (r ? r.top : Y - T) - 6, cx = X + T / 2;
+      ctx.font = '700 12px system-ui, sans-serif'; var tw = Math.max(ctx.measureText(a.say.t).width, ctx.measureText(a.say.k).width * 0.85) + 14;
+      ctx.fillStyle = 'rgba(255,255,255,.96)'; ctx.strokeStyle = '#d9c7ae'; ctx.lineWidth = 1.5; roundRect(cx - tw / 2, top - 34, tw, 32, 10); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - 5, top - 3); ctx.lineTo(cx + 5, top - 3); ctx.lineTo(cx, top + 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#4b3a2a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(a.say.t, cx, top - 24);
+      ctx.font = '600 10px system-ui, sans-serif'; ctx.fillStyle = '#9a8a78'; ctx.fillText(a.say.k, cx, top - 11);
+      return;
     }
     if (a.kind === 'npc') {
       var mq = M.miniAvail && M.miniAvail(a.id);
@@ -321,8 +348,9 @@
     var r = cv.getBoundingClientRect(), wx = e.clientX - r.left + cam.x, wy = e.clientY - r.top + cam.y;
     var tx = Math.floor(wx / T), ty = Math.floor(wy / T);
     // 주민을 눌렀나 (그림이 칸보다 커서 조금 넉넉하게 본다)
-    var hit = npcs.filter(function (n) { var p = pos(n); return wx > p.x * T - 4 && wx < p.x * T + T + 4 && wy > p.y * T - T * 0.6 && wy < p.y * T + T; })[0];
-    if (hit) {   // 누른 주민은 멈춰서 기다린다
+    var hit = npcs.filter(function (n) { var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
+    if (hit) { talkTo(hit); return; }
+    if (false) {
       npcs.forEach(function (n) { if (n.talking === 'wait') n.talking = false; });
       hit.talking = 'wait'; hit.path = [];
       var tgt = hit.t < 1 ? [hit.tx, hit.ty] : [hit.x, hit.y];
@@ -335,8 +363,8 @@
     var l = LOTS.map(function (v, k) { return { x: v[0], y: v[1], k: k }; }).filter(function (v) { return tx >= v.x && tx < v.x + 3 && ty >= v.y - 1 && ty <= v.y + 3; })[0];
     if (l) {
       var c = residentAt(l.k), door = { x: l.x + 1, y: l.y + 3 };
-      if (c) { goTo(door.x, door.y, function () { me.d = 'up'; M.V.resident(c.id); }); return; }
-      if (l.k === M.V.residents().length && M.V.nextMover()) { var nm = M.V.nextMover(); M.modal('<div class="center"><div class="tbig">🚧</div><h3>이사 예정</h3><p>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>' + M.esc(nm.name) + '</b>의 집이 여기에 생겨요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
+      if (c) { var out = npcs.filter(function (n) { return n.id === c.id; })[0]; if (out) { M.toast(M.j(c.name, '은', '는') + ' 밖에서 산책 중이에요. 찾아가 볼게요!'); talkTo(out); return; } goTo(door.x, door.y, function () { me.d = 'up'; M.V.resident(c.id); }); return; }
+      if (l.k === M.V.residents().length && M.V.nextMover()) { var nm = M.V.nextMover(); M.modal('<div class="center"><div class="tbig">🚧</div><h3>이사 예정</h3><p>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>새로운 친구</b>의 집이 여기에 생겨요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
     }
     if (Math.abs(tx - BOARD.x) <= 0 && (ty === BOARD.y || ty === BOARD.y - 1)) { goTo(BOARD.x, BOARD.y + 1, function () { me.d = 'up'; M.V.enter('board'); }); return; }
     if ((tx === PIER.x + 1 && ty === PIER.y) || (tx === PIER.x && ty === PIER.y)) { goTo(PIER.x, PIER.y, function () { me.d = 'down'; M.fishStart('sea'); }); return; }
@@ -356,6 +384,12 @@
     if (!walkable(tx, ty)) { var near = nearestWalkable(tx, ty); if (!near) return; tx = near[0]; ty = near[1]; }
     tapMark = { x: tx, y: ty, t: performance.now() };
     goTo(tx, ty);
+  }
+  function talkTo(hit) {   // 누른 주민은 멈춰서 기다리고, 토끼가 옆으로 가서 말을 건다
+    npcs.forEach(function (n) { if (n.talking === 'wait') n.talking = false; });
+    hit.talking = 'wait'; hit.path = [];
+    var tgt = hit.t < 1 ? [hit.tx, hit.ty] : [hit.x, hit.y];
+    goNear(tgt[0], tgt[1], function () { face(hit); hit.say = null; M.V.resident(hit.id); setTimeout(function () { hit.talking = false; }, 1500); });
   }
   function nearestWalkable(x, y) {
     for (var r = 1; r < 4; r++) for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) if (walkable(x + dx, y + dy)) return [x + dx, y + dy];
@@ -388,11 +422,11 @@
       if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 17; me.y = me.py = me.ty = 22; } }
       syncNpcs();
       var rs = M.V.residents(), nm = M.V.nextMover();
-      root.innerHTML = '<div class="village world"><div class="vbar"><b>🏡 ' + M.esc(M.P.petName) + '네 마을</b><small>주민 ' + rs.length + '명' + (nm ? ' · Lv.' + nm.lv + '에 ' + M.esc(nm.name) + ' 이사' : '') + '</small><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
+      root.innerHTML = '<div class="village world"><div class="vbar"><b>🏡 ' + M.esc(M.P.petName) + '네 마을</b><small>주민 ' + rs.length + '명' + (nm ? ' · Lv.' + nm.lv + '에 새로운 친구 이사' : '') + '</small><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
       cv = $('wCanvas'); ctx = cv.getContext('2d');
       var fit = function () { var dpr = Math.min(3, window.devicePixelRatio || 1), r = cv.getBoundingClientRect(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); };
       fit(); window.removeEventListener('resize', M.World._fit); M.World._fit = fit; window.addEventListener('resize', fit);
-      cv.addEventListener('pointerup', onTap);
+      cv.addEventListener('click', onTap);
       mounted = root; lastT = 0;
       if (!raf) raf = requestAnimationFrame(draw);
       if (M.moveInCheck) M.moveInCheck();

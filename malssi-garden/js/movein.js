@@ -26,7 +26,7 @@
     el.innerHTML = '<div class="mvstage"><img class="mvarch" src="' + W + 'm-arch.png" alt=""><img class="mvhouse" src="' + W + 'h-' + c.id + '.png" alt="">' +
       '<img class="mvtruck" src="' + W + 'm-truck.png" alt=""><img class="mvboxes" src="' + W + 'm-boxes.png" alt="">' +
       '<img class="mvch" src="' + W + 'ch-' + c.id + '-side.png" alt=""><div class="mvsay"></div></div>' +
-      '<div class="mvtext"><b>🚚 새 이웃이 이사 왔어요!</b><small>' + esc(M.j(c.name, '이', '가')) + ' 마을에 집을 지었어요</small></div>' +
+      '<div class="mvtext"><b>🚚 새로운 친구가 이사 왔어요!</b><small>누구일까요?</small></div>' +
       '<button class="btn primary wide mvbtn" disabled>🎉 환영해요!</button>';
     document.body.appendChild(el);
     var q = function (s) { return el.querySelector(s); }, ch = q('.mvch'), say = q('.mvsay'), btn = q('.mvbtn');
@@ -38,7 +38,7 @@
     T(function () {
       el.classList.add('s4'); ch.src = W + 'ch-' + c.id + '-happy.png';
       say.innerHTML = '<button class="mvline lang-' + lang + '" data-say="' + esc(h[0]) + '"><b>' + esc(h[0]) + '</b><small>' + esc(h[1]) + '</small></button>';
-      M.say(h[0], lang, false, false, 'A'); M.sfx('win'); btn.disabled = false;
+      M.say(h[0], lang, false, false, 'A'); M.sfx('win'); btn.disabled = false; q('.mvtext').innerHTML = '<b>🚚 새로운 친구가 이사 왔어요!</b><small>' + esc(M.j(c.name, '이에요', '예요')) + '</small>';
     }, 3500);
     el.addEventListener('click', function (e) { var s = e.target.closest('[data-say]'); if (s) M.say(s.dataset.say, lang, false, false, 'A'); });
     btn.onclick = function () {

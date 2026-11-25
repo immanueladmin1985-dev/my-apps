@@ -43,26 +43,73 @@
     var sd = SEEDS[p.id], sg = stage(p);
     return sd.img ? '<img src="img/plant-' + p.id + '-' + sg + '.png" alt="">' : '<span class="pe s' + sg + '">' + sd.st[sg - 1] + '</span>';
   }
-  M.potsHtml = function () {
+  // 방 안의 화분 자리(%) — 꾸미기 모드에서 끌어서 옮길 수 있다
+  var SPOTS = [[16, 80], [30, 86], [70, 86], [84, 80], [10, 64], [90, 64]];
+  function spot(s, i) { s.pos = s.pos || []; return s.pos[i] || { x: SPOTS[i][0], y: SPOTS[i][1] }; }
+  function potSvg() {
+    return '<svg class="potsvg" viewBox="0 0 60 40"><path d="M6 4 H54 L49 38 H11 Z" fill="#d9774a" stroke="#7a3e22" stroke-width="3" stroke-linejoin="round"/><rect x="3" y="2" width="54" height="9" rx="3" fill="#e88a5a" stroke="#7a3e22" stroke-width="3"/><path d="M14 18 H46" stroke="#f3a77c" stroke-width="3" stroke-linecap="round"/></svg>';
+  }
+  M.potsRoomHtml = function () {
     var s = S(), now = Date.now();
-    s.list.forEach(function (p) { if (p) update(p, now); });
-    var fruits = Object.keys(s.fruits).filter(function (k) { return s.fruits[k] > 0; });
-    return '<div class="card potshelf"><div class="pots-h"><b>🪴 화분 선반</b><small>실제 시간으로 자라요 · 물 주기 💧' + WATER_COST + '</small></div><div class="potrow">' +
-      s.list.map(function (p, i) {
-        if (!p) return '<button class="pot0" data-pplant="' + i + '"><span class="pe">🪴</span><b>씨앗 심기</b></button>';
-        var sd = SEEDS[p.id], r = ripe(p), w = wet(p), left = total(p) - p.t;
-        return '<div class="potc' + (r ? ' ripe' : '') + (!w && !r ? ' dry' : '') + '"><div class="pfig">' + plantFace(p) + '<span class="pbase">🟫</span></div>' +
-          '<b>' + sd.name + '</b><div class="mbar"><i style="width:' + Math.round(p.t / total(p) * 100) + '%"></i></div>' +
-          '<small>' + (r ? '다 자랐어요!' : w ? '촉촉 ' + fmt(p.wet - now) + ' · 남은 ' + fmt(left) : '물이 말랐어요 · 성장 멈춤') + '</small>' +
-          (r ? '<button class="btn primary sm" data-pharv="' + i + '">수확하기</button>' :
-            '<div class="pbtns"><button class="btn sm' + (w ? '' : ' primary') + '" data-pwater="' + i + '">💧 물</button><button class="btn sm" data-pfert="' + i + '"' + ((p.f || 0) >= 2 ? ' disabled' : '') + '>🧪 비료</button></div>') + '</div>';
-      }).join('') +
-      (s.slots < 6 ? '<button class="pot0 add" data-pslot><span class="pe">➕</span><b>화분 자리 늘리기</b><small><img class="inl" src="img/coin.png" alt="">' + SLOT_COST[s.slots] + '</small></button>' : '') +
-      '</div><div class="basket"><b>🧺 열매 바구니</b>' + (fruits.length ? fruits.map(function (k) { return '<button class="fruit" data-psell="' + k + '">' + SEEDS[k].fruit + '<i>' + s.fruits[k] + '</i></button>'; }).join('') + '<small>누르면 팔 수 있어요 · 주민에게 선물도 돼요</small>' : '<small>아직 비어 있어요</small>') +
-      '<span class="binv">씨앗 ' + Object.keys(s.seeds).reduce(function (a, k) { return a + (s.seeds[k] || 0); }, 0) + ' · 비료 ' + s.fert + '</span></div></div>';
+    return s.list.map(function (p, i) {
+      var sp = spot(s, i), inner, tag;
+      if (!p) { inner = '<span class="pplus">＋</span>'; tag = '<i class="ptag empty">심기</i>'; }
+      else {
+        update(p, now); var r = ripe(p), w = wet(p), sd = SEEDS[p.id];
+        inner = '<span class="pplant">' + plantFace(p) + '</span>';
+        tag = r ? '<i class="ptag ripe">수확!</i>' : !w ? '<i class="ptag dry">💧물</i>' : '<i class="ptag">' + fmtShort(total(p) - p.t) + '</i>';
+      }
+      return '<button class="potobj' + (p && ripe(p) ? ' ripe' : '') + (p && !ripe(p) && !wet(p) ? ' dry' : '') + '" data-pot="' + i + '" style="left:' + sp.x + '%;top:' + sp.y + '%;z-index:' + Math.round(sp.y + 2) + '">' + inner + potSvg() + tag + '</button>';
+    }).join('');
   };
-  function repaint() { var a = $('potArea'); if (a) a.innerHTML = M.potsHtml(); if (M.paintBadges) M.paintBadges(); }
+  function fmtShort(ms) { var m = Math.max(1, Math.ceil(ms / 60000)), h = Math.floor(m / 60); return h ? h + '시간' + (m % 60 ? ' ' + (m % 60) + '분' : '') : m + '분'; }
+  // 방 아래 작은 막대: 바구니·씨앗·화분 자리
+  M.potsHtml = function () {
+    var s = S(), fruits = Object.keys(s.fruits).filter(function (k) { return s.fruits[k] > 0; });
+    var seeds = Object.keys(s.seeds).reduce(function (a, k) { return a + (s.seeds[k] || 0); }, 0);
+    return '<div class="card potshelf"><div class="pots-h"><b>🪴 화분 ' + s.list.filter(Boolean).length + '/' + s.slots + '</b><small>방 안의 화분을 눌러 물·비료·수확 · 실제 시간으로 자라요</small></div>' +
+      '<div class="basket"><b>🧺 열매 바구니</b>' + (fruits.length ? fruits.map(function (k) { return '<button class="fruit" data-psell="' + k + '">' + SEEDS[k].fruit + '<i>' + s.fruits[k] + '</i></button>'; }).join('') + '<small>누르면 팔 수 있어요 · 주민에게 선물도 돼요</small>' : '<small>아직 비어 있어요</small>') +
+      '<span class="binv">씨앗 ' + seeds + ' · 비료 ' + s.fert + '</span></div>' +
+      '<div class="row2"><button class="btn sm" data-pshop>🌱 씨앗·비료 사기</button>' + (s.slots < 6 ? '<button class="btn sm" data-pslot>➕ 화분 늘리기 <img class="inl" src="img/coin.png" alt="">' + SLOT_COST[s.slots] + '</button>' : '<span></span>') + '</div></div>';
+  };
+  function repaint() { if (M.render) M.render(); if (M.paintBadges) M.paintBadges(); }
   M.paintPots = repaint;
+  // 화분을 누르면 할 일 고르기
+  function potSheet(i) {
+    var s = S(), p = s.list[i];
+    if (!p) { plantSheet(i); return; }
+    update(p); var sd = SEEDS[p.id], r = ripe(p), w = wet(p), left = total(p) - p.t;
+    var d = M.modal('<div class="center"><div class="potbig">' + plantFace(p) + potSvg() + '</div><h3>' + sd.name + '</h3><div class="mbar"><i style="width:' + Math.round(p.t / total(p) * 100) + '%"></i></div>' +
+      '<p class="hint">' + (r ? '다 자랐어요! 열매 ' + sd.yield + '개를 딸 수 있어요' : (w ? '촉촉해요 · ' + fmt(p.wet - Date.now()) + ' 동안 자라요' : '물이 말라서 자라지 않아요') + '<br>다 자라기까지 ' + fmt(left)) + '</p></div>' +
+      (r ? '<button class="btn primary wide" data-pharv="' + i + '">🧺 수확하기</button>' :
+        '<div class="row2"><button class="btn' + (w ? '' : ' primary') + '" data-pwater="' + i + '">💧 물 주기 (' + WATER_COST + ')</button><button class="btn" data-pfert="' + i + '"' + ((p.f || 0) >= 2 ? ' disabled' : '') + '>🧪 비료 (' + s.fert + ')</button></div>') +
+      '<button class="btn ghost wide" data-close>닫기</button>');
+    d.classList.add('potshelf');   // 아래 버튼 처리를 같이 쓴다
+    d.addEventListener('click', function (e) { if (e.target.closest('[data-pwater],[data-pfert],[data-pharv]')) setTimeout(function () { d.close(); }, 0); });
+  }
+  // 꾸미기 모드에서 화분 끌기
+  var pd = null;
+  document.addEventListener('pointerdown', function (e) {
+    var el = e.target.closest && e.target.closest('.room.editing .potobj'); if (!el) return;
+    pd = { el: el, i: +el.dataset.pot, r: el.parentNode.getBoundingClientRect(), x0: e.clientX, y0: e.clientY, moved: false, pid: e.pointerId };
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!pd || e.pointerId !== pd.pid) return;
+    if (Math.abs(e.clientX - pd.x0) + Math.abs(e.clientY - pd.y0) > 6) pd.moved = true;
+    if (!pd.moved) return;
+    var x = Math.max(6, Math.min(94, (e.clientX - pd.r.left) / pd.r.width * 100)), y = Math.max(40, Math.min(94, (e.clientY - pd.r.top) / pd.r.height * 100));
+    pd.el.style.left = x + '%'; pd.el.style.top = y + '%'; pd.pos = { x: x, y: y }; e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('pointerup', function (e) {
+    if (!pd || e.pointerId !== pd.pid) return;
+    var d = pd; pd = null;
+    if (d.moved && d.pos) { var s = S(); s.pos = s.pos || []; s.pos[d.i] = d.pos; M.save(); d.el.style.zIndex = Math.round(d.pos.y + 2); d.el.dataset.dragged = '1'; setTimeout(function () { delete d.el.dataset.dragged; }, 50); }
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.potobj'); if (!b || b.dataset.dragged) return;
+    if (b.closest('.room.editing')) { M.toast('꾸미기를 끝내면 화분을 돌볼 수 있어요'); return; }
+    potSheet(+b.dataset.pot);
+  });
 
   function plantSheet(i) {
     var s = S(), have = Object.keys(SEEDS).filter(function (k) { return s.seeds[k] > 0; });
@@ -105,6 +152,7 @@
     var t = e.target; if (!t.closest || !t.closest('.potshelf')) return;
     var s = S(), b;
     if ((b = t.closest('[data-pplant]'))) { plantSheet(+b.dataset.pplant); return; }
+    if (t.closest('[data-pshop]')) { M.furnShop('seed'); return; }
     if ((b = t.closest('[data-pwater]'))) {
       var p = s.list[+b.dataset.pwater]; update(p);
       if (wet(p) && p.wet - Date.now() > WET - H) { M.toast('방금 물을 줬어요. 조금 뒤에 다시 주세요'); return; }
