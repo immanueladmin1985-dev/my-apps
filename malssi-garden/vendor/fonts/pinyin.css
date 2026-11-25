@@ -1,0 +1,449 @@
+/* 중국어 병음용: M PLUS Rounded 1c 의 라틴 글자만 */
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/5137f889185f.woff2) format('woff2');
+  unicode-range: U+a1-a4, U+a6-a7, U+aa, U+ac-ad, U+b5-b6, U+b8-ba, U+bc-c8, U+ca-cc, U+ce-d5, U+d9-db, U+dd-df, U+e6, U+ee, U+f0, U+f5, U+f7, U+f9, U+fb, U+fe-102, U+110-113, U+11a-11b, U+128-12b, U+143-144, U+147-148, U+14c, U+14e-14f, U+152-153, U+168-16d, U+192, U+1a0-1a1, U+1af, U+1cd-1dc, U+1f8-1f9, U+251, U+261, U+2bb, U+2c7, U+2c9, U+2ea-2eb, U+304, U+307, U+30c;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/83a19eff44d0.woff2) format('woff2');
+  unicode-range: U+a8;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/31c85bfeb75f.woff2) format('woff2');
+  unicode-range: U+2d9;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/886975e08922.woff2) format('woff2');
+  unicode-range: U+2ca-2cb;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/8dbddd585d1d.woff2) format('woff2');
+  unicode-range: U+b1;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/20879d83c2da.woff2) format('woff2');
+  unicode-range: U+af;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/a8db092ca465.woff2) format('woff2');
+  unicode-range: U+24;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/c74bf1e27a4e.woff2) format('woff2');
+  unicode-range: U+b0;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/9ddf1b4f7003.woff2) format('woff2');
+  unicode-range: U+a5;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/c9739f2fcf8a.woff2) format('woff2');
+  unicode-range: U+60;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/4577d193c562.woff2) format('woff2');
+  unicode-range: U+7e, U+b4;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/823b4bcc4f2e.woff2) format('woff2');
+  unicode-range: U+3d, U+5e;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/d098daae007a.woff2) format('woff2');
+  unicode-range: U+25;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/51f5833560ec.woff2) format('woff2');
+  unicode-range: U+23, U+3c;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/e3109976edc5.woff2) format('woff2');
+  unicode-range: U+40;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/fedbe6dcf337.woff2) format('woff2');
+  unicode-range: U+2b, U+d7;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/6430fa7a3d2a.woff2) format('woff2');
+  unicode-range: U+26, U+5f;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/c62fe5d808dc.woff2) format('woff2');
+  unicode-range: U+3e;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/765da1de7b71.woff2) format('woff2');
+  unicode-range: U+7c;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/af426a77763d.woff2) format('woff2');
+  unicode-range: U+a9;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/3b6e6df33897.woff2) format('woff2');
+  unicode-range: U+4e, U+a0;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/169aed688d96.woff2) format('woff2');
+  unicode-range: U+21-22, U+27-2a, U+2c-3b, U+3f, U+41-4d, U+4f-5d, U+61-7b, U+7d, U+ab, U+ae, U+b2-b3, U+b7, U+bb, U+c9, U+cd, U+d6, U+d8, U+dc, U+e0-e5, U+e7-ed, U+ef, U+f1-f4, U+f6, U+f8, U+fa, U+fc-fd, U+103, U+14d, U+1b0, U+300-301;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/75dbcb60ea2b.woff2) format('woff2');
+  unicode-range: U+20;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/d4a3a1653449.woff2) format('woff2');
+  unicode-range: U+0301;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/b27d09e042d5.woff2) format('woff2');
+  unicode-range: U+0307-0308;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/6b602facabd4.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/acdb0d56be66.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(mplus/af14264a53a1.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/32c470bc8a88.woff2) format('woff2');
+  unicode-range: U+a1-a4, U+a6-a7, U+aa, U+ac-ad, U+b5-b6, U+b8-ba, U+bc-c8, U+ca-cc, U+ce-d5, U+d9-db, U+dd-df, U+e6, U+ee, U+f0, U+f5, U+f7, U+f9, U+fb, U+fe-102, U+110-113, U+11a-11b, U+128-12b, U+143-144, U+147-148, U+14c, U+14e-14f, U+152-153, U+168-16d, U+192, U+1a0-1a1, U+1af, U+1cd-1dc, U+1f8-1f9, U+251, U+261, U+2bb, U+2c7, U+2c9, U+2ea-2eb, U+304, U+307, U+30c;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/df3885971fa3.woff2) format('woff2');
+  unicode-range: U+a8;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/6d162c9b24d7.woff2) format('woff2');
+  unicode-range: U+2d9;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/f35fbd2c6672.woff2) format('woff2');
+  unicode-range: U+2ca-2cb;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/89e1f7e92112.woff2) format('woff2');
+  unicode-range: U+b1;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/2c7208478dfa.woff2) format('woff2');
+  unicode-range: U+af;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/4c3b97d72445.woff2) format('woff2');
+  unicode-range: U+24;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/69e8ce5a577d.woff2) format('woff2');
+  unicode-range: U+b0;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/3b3829c459b2.woff2) format('woff2');
+  unicode-range: U+a5;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/852a0faeef5a.woff2) format('woff2');
+  unicode-range: U+60;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/e68b1bb051f1.woff2) format('woff2');
+  unicode-range: U+7e, U+b4;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/b933f5275b21.woff2) format('woff2');
+  unicode-range: U+3d, U+5e;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/c26fc86bfb29.woff2) format('woff2');
+  unicode-range: U+25;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/207fbc53e97f.woff2) format('woff2');
+  unicode-range: U+23, U+3c;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/042f4f17d0fe.woff2) format('woff2');
+  unicode-range: U+40;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/cd307b9f1d7b.woff2) format('woff2');
+  unicode-range: U+2b, U+d7;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/8d7146d471c4.woff2) format('woff2');
+  unicode-range: U+26, U+5f;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/ee5bbe4a5bd4.woff2) format('woff2');
+  unicode-range: U+3e;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/b886cd0b6e92.woff2) format('woff2');
+  unicode-range: U+7c;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/214ce616ab82.woff2) format('woff2');
+  unicode-range: U+a9;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/e2a3c9bc1220.woff2) format('woff2');
+  unicode-range: U+4e, U+a0;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/f5df293b3105.woff2) format('woff2');
+  unicode-range: U+21-22, U+27-2a, U+2c-3b, U+3f, U+41-4d, U+4f-5d, U+61-7b, U+7d, U+ab, U+ae, U+b2-b3, U+b7, U+bb, U+c9, U+cd, U+d6, U+d8, U+dc, U+e0-e5, U+e7-ed, U+ef, U+f1-f4, U+f6, U+f8, U+fa, U+fc-fd, U+103, U+14d, U+1b0, U+300-301;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/ba4576c5c5f7.woff2) format('woff2');
+  unicode-range: U+20;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/c16623c4236c.woff2) format('woff2');
+  unicode-range: U+0301;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/458ab54d6636.woff2) format('woff2');
+  unicode-range: U+0307-0308;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/dd2252c9e824.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/7725117a4b4a.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329;
+}
+@font-face {
+  font-family: 'Malssi Pinyin';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(mplus/1b32b483bb83.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329;
+}

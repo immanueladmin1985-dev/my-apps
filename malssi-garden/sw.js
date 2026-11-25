@@ -1,9 +1,12 @@
-const CACHE = 'malssi-garden-v64';
+const CACHE = 'malssi-garden-v65';
 const CORE = [
   './',
   './index.html',
   './css/style.css',
-  './vendor/fonts/fonts.css',
+  './vendor/fonts/pinyin.css',
+  './vendor/fonts/jua.css',
+  './vendor/fonts/mplus.css',
+  './vendor/fonts/kuaile.css',
   './js/data.js',
   './js/data-sents.js',
   './js/data-n5.js',

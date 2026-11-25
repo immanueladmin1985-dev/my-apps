@@ -37,6 +37,29 @@
     }
     return out;
   };
+  // ---------- 글꼴 ----------
+  M.FONTS = {
+    ui: [['jua', 'Jua', '주아 (통통)'], ['gaegu', 'Gaegu', '개구 (손글씨)'], ['gowun', 'Gowun Dodum', '고운돋움 (단정)'], ['himelody', 'Hi Melody', '하이멜로디 (발랄)'], ['poorstory', 'Poor Story', '푸어스토리 (아기자기)'], ['sys', '', '기본 글꼴']],
+    ja: [['mplus', 'M PLUS Rounded 1c', 'M PLUS 둥근 고딕 (또렷)'], ['zenmaru', 'Zen Maru Gothic', '젠 마루 고딕 (부드러움)'], ['kosugi', 'Kosugi Maru', '코스기 마루 (깔끔)'], ['kiwimaru', 'Kiwi Maru', '키위 마루 (동글)'], ['hachimaru', 'Hachi Maru Pop', '하치마루 팝 (아주 귀여움)'], ['yusei', 'Yusei Magic', '유세이 매직 (매직펜)'], ['sys', '', '기본 글꼴']],
+    zh: [['kuaile', 'ZCOOL KuaiLe', '快乐体 (귀여움)'], ['qingke', 'ZCOOL QingKe HuangYou', '黄油体 (굵고 귀여움)'], ['notosc', 'Noto Sans SC', '思源黑体 (또렷)'], ['sys', '', '기본 글꼴']]
+  };
+  M.FONT_SIZES = [['s', 0.92, '작게'], ['m', 1, '보통'], ['l', 1.1, '크게'], ['xl', 1.2, '아주 크게']];
+  function fontOf(kind, key) { return M.FONTS[kind].filter(function (f) { return f[0] === key; })[0] || M.FONTS[kind][0]; }
+  function fontLink(key) {
+    if (key === 'sys' || document.getElementById('font-' + key)) return;
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.id = 'font-' + key; l.href = 'vendor/fonts/' + key + '.css'; document.head.appendChild(l);
+  }
+  M.applyFonts = function () {
+    var s = (M.P && M.P.set) || {}, ui = fontOf('ui', s.fontUI), ja = fontOf('ja', s.fontJa), zh = fontOf('zh', s.fontZh);
+    [ui, ja, zh].forEach(function (f) { fontLink(f[0]); });
+    var q = function (f) { return f[1] ? '"' + f[1] + '", ' : ''; }, root = document.documentElement.style;
+    root.setProperty('--f-ui', q(ui) + q(ja) + 'system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif');
+    root.setProperty('--f-ja', q(ja) + q(ui) + '"Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif');
+    root.setProperty('--f-zh', '"Malssi Pinyin", ' + q(zh) + '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif');
+    var sz = M.FONT_SIZES.filter(function (x) { return x[0] === s.fontSize; })[0] || M.FONT_SIZES[1];
+    root.setProperty('--fs', sz[1]);
+    M.uiFont = q(ui) + q(ja) + 'system-ui, sans-serif';
+  };
   M.fz = function (text, lang) { return lang === 'ja' ? M.furi(text) : M.esc(text); };
   M.esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   M.fmt = function (n) { return Number(n || 0).toLocaleString('ko-KR'); };
@@ -80,7 +103,7 @@
       admin: { pin: '', weekBonus: 30, rate: 10 },
       requests: [],
       gifts: [],
-      set: { sound: true, autoAudio: true, speak: true, furi: true, rate: 0.9, autoFS: true, wake: true, goal: 2 },
+      set: { sound: true, autoAudio: true, speak: true, furi: true, fontUI: 'jua', fontJa: 'mplus', fontZh: 'kuaile', fontSize: 'm', rate: 0.9, autoFS: true, wake: true, goal: 2 },
       ui: { installDismissed: false, seenGarden: false, seenHome: false, seenShop: false },
       stats: { lessons: 0, perfect: 0, merges: 0, harvest: 0, golden: 0, speak: 0, correct: 0 }
     };
@@ -100,6 +123,7 @@
     var g = M.P.garden;
     if (!Array.isArray(g.cells)) g.cells = [];   // 밭 줄 수 맞추기는 garden.js 가 한다
     migrate(M.P); migrate3(M.P);
+    if (M.applyFonts) M.applyFonts();
   };
   // 단계 번호가 바뀐 판(v1 → v2)의 진행 기록을 옮긴다
   function migrate(P) {
@@ -141,7 +165,7 @@
   M.importData = function (text) {
     var o = JSON.parse(text);
     if (!o || o.app !== 'malssi-garden' || !o.data) throw new Error('bad');
-    M.P = merge(M.defaults(), o.data); M.save();
+    M.P = merge(M.defaults(), o.data); M.save(); if (M.applyFonts) M.applyFonts();
   };
   M.reset = function () { try { localStorage.removeItem(KEY); } catch (e) {} };
 

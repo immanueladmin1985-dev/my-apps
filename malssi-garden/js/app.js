@@ -158,10 +158,11 @@
     var h = '<h3>📒 ' + L.flag + ' ' + L.name + ' 단어장</h3><p class="hint">누르면 발음을 들려줘요. 점은 얼마나 잘 외웠는지 보여 줘요.</p><div class="wbook">';
     if (!ss.length) h += '<p class="hint center">첫 단계를 끝내면 단어가 여기에 모여요.</p>';
     ss.forEach(function (s) {
-      h += '<h4>' + esc(s.title) + '</h4>' + s.items.map(function (it) {
+      h += '<h4>' + esc(s.title) + '</h4><div class="wbsec">' + s.items.map(function (it) {
         var r = P.srs[M.itemKey(it)] || [0, 0], lv = Math.min(5, r[0]);
-        return '<button class="wrow lang-' + it.lang + '" data-say="' + esc(it.t) + '"><span class="wt">' + esc(it.t) + '</span><span class="wr">' + esc(it.r) + '</span><span class="wk">' + (it.e ? it.e + ' ' : '') + esc(it.k) + '</span><span class="wl">' + '●●●●●'.slice(0, lv) + '<i>' + '●●●●●'.slice(lv) + '</i></span></button>';
-      }).join('');
+        var long = String(it.t).length > (it.lang === 'en' ? 14 : 6) || String(it.k).length > 12;
+        return '<button class="wrow' + (long ? ' long' : '') + ' lang-' + it.lang + '" data-say="' + esc(it.t) + '"><span class="wt">' + esc(it.t) + '</span><span class="wr">' + esc(it.r) + '</span><span class="wk">' + (it.e ? it.e + ' ' : '') + esc(it.k) + '</span><span class="wl">' + '●●●●●'.slice(0, lv) + '<i>' + '●●●●●'.slice(lv) + '</i></span></button>';
+      }).join('') + '</div>';
     });
     var d = M.modal(h + '</div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'full' });
     d.addEventListener('click', function (e) { var c = e.target.closest('[data-say]'); if (c) M.say(c.dataset.say, P.lang); });
@@ -247,6 +248,11 @@
   });
 
   // ---------- 설정 ----------
+  function fontSel(kind, key, label, sample, lang) {
+    var cur = P.set[key] || M.FONTS[kind][0][0];
+    return '<label class="sel"><span>' + label + '</span><select data-font="' + key + '" data-kind="' + kind + '">' + M.FONTS[kind].map(function (f) { return '<option value="' + f[0] + '"' + (f[0] === cur ? ' selected' : '') + '>' + f[2] + '</option>'; }).join('') + '</select></label>' +
+      '<p class="fprev' + (lang ? ' lang-' + lang : '') + '" data-prev="' + key + '">' + sample + '</p>';
+  }
   function settings() {
     var tg = function (k, label, sub) { return '<label class="tg"><span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="checkbox" data-s="' + k + '"' + (P.set[k] ? ' checked' : '') + '><i></i></label>'; };
     var h = '<h3>⚙️ 설정</h3>' +
@@ -258,6 +264,8 @@
       '<label class="sel"><span>발음 빠르기</span><select data-v="rate"><option value="0.7">느리게</option><option value="0.9">보통</option><option value="1.05">빠르게</option></select></label>' +
       '<label class="sel"><span>하루 목표</span><select data-v="goal"><option value="1">1판</option><option value="2">2판</option><option value="3">3판</option><option value="5">5판</option></select></label>' +
       '<label class="sel"><span>토끼 이름</span><input data-name maxlength="8" value="' + esc(P.petName) + '"></label>' +
+      '<h4>글꼴</h4>' + fontSel('ui', 'fontUI', '화면 글꼴', '안녕하세요! 말씨정원 123') + fontSel('ja', 'fontJa', '일본어 글꼴', 'こんにちは 日本語 カタカナ', 'ja') + fontSel('zh', 'fontZh', '중국어 글꼴', '你好 学习 nǐ hǎo', 'zh') +
+      '<label class="sel"><span>글자 크기</span><select data-fs>' + M.FONT_SIZES.map(function (x) { return '<option value="' + x[0] + '"' + (P.set.fontSize === x[0] ? ' selected' : '') + '>' + x[2] + '</option>'; }).join('') + '</select></label>' +
       '<h4>화면</h4>' + tg('autoFS', '자동 전체화면', '화면을 처음 누르면 전체화면으로 바꿔요') + tg('wake', '레슨 중 화면 켜 두기') +
       (isStandalone() ? '' : '<button class="btn wide" data-a="fs">' + (FS.on() ? '전체화면 끄기' : '전체화면 켜기') + '</button><button class="btn wide" data-a="inst">📲 홈 화면에 설치하기</button>') +
       '<h4>기록</h4><button class="btn wide" data-a="export">💾 백업 파일 저장하기</button><button class="btn wide" data-a="import">📂 백업 파일 불러오기 (관리자)</button>' +
@@ -275,6 +283,8 @@
       if (s) { P.set[s] = e.target.checked; if (s === 'autoFS' && P.set.autoFS) FS.userExit = false; }
       if (v) P.set[v] = parseFloat(e.target.value);
       if (e.target.dataset.name !== undefined) P.petName = e.target.value.trim() || '말랑이';
+      if (e.target.dataset.font) { P.set[e.target.dataset.font] = e.target.value; M.applyFonts(); }
+      if (e.target.dataset.fs !== undefined) { P.set.fontSize = e.target.value; M.applyFonts(); }
       if (e.target.dataset.sfx !== undefined) { P.set.sfx = e.target.value; M.save(); M.sfx('win'); setTimeout(function () { M.sfx('win'); }, 400); }   // 처음엔 불러오는 중이라 한 번 더 들려준다
       M.save();
     });

@@ -157,6 +157,7 @@
     show();
   };
   M.lessonState = function () { return S; };
+  M.lessonShow = function () { show(); };   // 자동 점검용
 
   function bar() {
     $('lBar').style.width = Math.round(S.done / S.total * 100) + '%';
@@ -266,6 +267,10 @@
       q.fails = q.fails || 0;
     }
     body.innerHTML = h; body.scrollTop = 0;
+    Array.prototype.forEach.call(body.querySelectorAll('.opts:not(.xf)'), function (o) {   // 긴 보기는 한 줄에 하나씩
+      var long = Array.prototype.some.call(o.querySelectorAll('.opt'), function (b) { var t = (b.querySelector('.ot') || b).textContent.trim(), cjk = /[\u3040-\u30ff\u4e00-\u9fff]/.test(t); return t.length > (cjk ? 7 : 16); });
+      if (long) o.classList.add('one');
+    });
     var cbx = $('chatBox'); if (cbx) cbx.scrollTop = cbx.scrollHeight;
     if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog' || q.type === 'pairteach') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
     else if (q.opts) foot('<button class="btn primary wide" id="oCheck" disabled>확인</button>');
