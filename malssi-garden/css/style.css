@@ -1230,3 +1230,36 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .femo { display: inline-grid; place-items: center; font-size: 1.6em; line-height: 1; }
 .ing .femo, .ing .pemo { width: 100%; height: 100%; font-size: 1.5rem; display: grid; place-items: center; }
 .taste { font-size: .8rem; color: var(--sub); background: #faf6fb; border-radius: 12px; padding: 6px 10px; margin: 6px 0 8px; line-height: 1.6; }
+
+/* 새 주민 놀이 */
+.nq { display: flex; align-items: center; gap: 10px; text-align: left; }
+.nqface { width: 64px; height: 64px; object-fit: contain; flex: none; }
+.nqin { flex: 1; } .nqin .btn { margin-top: 6px; padding: 6px 12px; min-height: 36px; }
+.nqin .rword { margin-top: 4px; }
+.fgrass { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-content: center; margin-top: 12px; }
+.fspot { min-height: 110px; border-radius: 20px; background: linear-gradient(#c8f0b4, #9bd88a); border: 2px solid #7cbf6a; box-shadow: 0 3px 0 #6aa858; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: .95rem; }
+.fspot .fball { font-size: 1.6rem; } .fspot.ok { background: #fff6c2; border-color: var(--gold, #f2b705); } .fspot.miss { opacity: .35; }
+.fdog { font-size: 2.6rem; text-align: center; transition: transform .5s ease-out; }
+.fword { margin: 4px 0 0; }
+.oshell { margin: 14px auto 6px; background: #fff; border: 3px solid #f2c6a0; border-radius: 50% 50% 40% 40%; padding: 22px 14px 18px; text-align: center; width: min(320px, 90%); box-shadow: var(--sh); }
+.oshell .ow b { font-size: 1.7rem; } .oeq { color: var(--sub); font-weight: 800; } .ok2 { font-size: 1.25rem; font-weight: 800; }
+.oxbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; padding-top: 10px; }
+.oxb { min-height: 96px; border-radius: 20px; font-size: 2.2rem; background: #fff; border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.oxb small { font-size: .8rem; font-weight: 700; color: var(--sub); } .oxb.ok { background: #effbf5; border-color: var(--mint); } .oxb.miss { background: #fff0f0; border-color: #f08a8a; }
+.csent { background: #fff; border-radius: 16px; padding: 14px; margin-top: 12px; font-size: 1.35rem; font-weight: 700; text-align: center; line-height: 1.7; box-shadow: var(--sh); }
+.cblank { display: inline-block; min-width: 2.5em; border-bottom: 3px dashed #c89; color: #c89; } .cblank.fill { color: var(--mint); border-color: var(--mint); }
+.ropts.c3 { grid-template-columns: 1fr; } .cmush .cm { font-size: 1.4rem; }
+.eword { text-align: center; background: #fff; border-radius: 18px; padding: 18px 10px; margin-top: 14px; box-shadow: var(--sh); }
+.eword b { font-size: 2rem; } .eword small { display: block; color: var(--sub); margin-top: 4px; }
+.ebtns { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 14px; } .emic.on { background: #ff8fab; }
+.sbar { height: 10px; border-radius: 6px; background: #f2e6e6; overflow: hidden; margin: 10px 0 0; } .sbar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #ff5a3c, #ffb02e); }
+.coin b { font-size: 1.6rem; } .coin span { font-size: 1.3rem; }
+.pshow { min-height: 120px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+.pel { font-size: 3rem; } .pw { background: #fff; border-radius: 16px; padding: 10px 16px; text-align: center; box-shadow: var(--sh); animation: popin .3s; } .pw b { font-size: 1.6rem; } .pw small { display: block; color: var(--sub); }
+.ropts.p3 { grid-template-columns: repeat(3, 1fr); flex: none; } .ropts.p3 .ropt { min-height: 64px; }
+.pgot { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; font-size: .85rem; color: var(--sub); }
+.ntarget { font-size: 1.2rem; margin-top: 2px; }
+.ngrid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; align-content: center; }
+.nhole { aspect-ratio: 1 / 0.85; border-radius: 50%; background: radial-gradient(#6b4a2b 55%, #8a6a3e 56%); border: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+.nhole .nleaf { font-size: 2rem; } .nhole.up { background: radial-gradient(#fff6c2 55%, #8a6a3e 56%); animation: popin .2s; }
+.nhole .nban { font-size: 1.5rem; line-height: 1; } .nhole .nw b { font-size: 1rem; }

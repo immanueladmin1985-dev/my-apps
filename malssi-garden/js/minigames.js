@@ -26,7 +26,23 @@
     { id: 'cafe', cust: 'cat', heart: 1, icon: '☕', name: '나비의 카페 주문 받기',
       ask: '냐아… 오늘 하루만 우리 카페 점원을 해 줄래요? 외국 손님이 말을 걸면 알맞게 대답해 주면 돼요. 팁은 반반!', how: '손님의 말을 듣고 알맞은 대답을 골라요. 회화 단원에 나온 말이에요.', thanks: '훌륭한 점원이었어요. 팁 여기요, 냐.' },
     { id: 'yarn', cust: 'sheep', heart: 1, icon: '🧶', name: '몽실이의 털실 잇기',
-      ask: '목도리를 뜨려는데 털실 끝마다 낱말과 뜻이 붙어 있어요. 같은 뜻끼리 털실을 이어 줄래요?', how: '왼쪽 낱말을 누르고 오른쪽 뜻을 눌러 털실로 이어요. 세 판을 이으면 목도리 완성!', thanks: '포근한 목도리가 완성됐어요! 하나는 선물이에요.' }
+      ask: '목도리를 뜨려는데 털실 끝마다 낱말과 뜻이 붙어 있어요. 같은 뜻끼리 털실을 이어 줄래요?', how: '왼쪽 낱말을 누르고 오른쪽 뜻을 눌러 털실로 이어요. 세 판을 이으면 목도리 완성!', thanks: '포근한 목도리가 완성됐어요! 하나는 선물이에요.' },
+    { id: 'fetch', cust: 'dog', heart: 1, icon: '🎾', name: '바둑이와 공 물어오기',
+      ask: '멍멍! 공놀이 해요! 제가 외국 말로 외치면 그 뜻이 적힌 곳으로 공을 던져 주세요. 제가 쌩 달려가서 물어 올게요!', how: '소리를 듣고 뜻이 맞는 풀밭을 눌러 공을 던져요. 🔊로 다시 들을 수 있어요.', thanks: '헥헥, 너무 재밌었어요! 꼬리가 멈추질 않아요!' },
+    { id: 'shell', cust: 'otter', heart: 1, icon: '🐚', name: '수달이의 조개 깨기 OX',
+      ask: '조개마다 낱말과 뜻이 짝지어 적혀 있는데, 틀린 짝도 섞여 있어요! 맞는 짝이면 ⭕, 틀린 짝이면 ❌를 눌러 줄래요?', how: '낱말과 뜻이 맞으면 ⭕, 틀리면 ❌. 빠르게 많이 맞힐수록 좋아요.', thanks: '조개 껍데기가 탁탁 잘 깨졌어요! 오늘 저녁은 조개 파티예요!' },
+    { id: 'cloze', cust: 'deer', heart: 1, icon: '🍄', name: '꽃사슴의 빈칸 버섯',
+      ask: '숲에서 주운 쪽지에 구멍이 뽕뽕 났어요. 빈칸에 들어갈 낱말이 적힌 버섯을 골라 문장을 채워 줄래요?', how: '뜻을 보고 문장의 빈칸에 맞는 낱말 버섯을 골라요. 한 번에 맞히면 점수가 커요.', thanks: '쪽지가 다 채워졌어요! 숲 친구들에게 읽어 줄게요.' },
+    { id: 'echo', cust: 'duck', heart: 1, icon: '🦆', name: '꽥꽥이 따라 말하기',
+      ask: '꽥! 연못 친구들에게 외국 말 인사를 해 보고 싶어요. 제가 먼저 말하면 똑같이 따라 말해 줄래요?', how: '꽥꽥이가 말하면 🎤를 누르고 따라 말해요. 마이크가 없으면 소리를 듣고 맞는 낱말을 골라요.', thanks: '꽥꽥! 연못 친구들이 다 알아들었대요!' },
+    { id: 'spicy', cust: 'lion', heart: 1, icon: '🌶️', name: '레오의 매운맛 도전',
+      ask: '어흥! 왕의 매운맛 퀴즈다! 맞힐 때마다 고추가 늘어나고 시간이 짧아진다. 하트 세 개가 다 없어지기 전에 버텨 봐라!', how: '낱말의 뜻을 빨리 골라요. 맞힐수록 빨라지고 점수가 커져요. 틀리거나 시간이 지나면 하트가 줄어요.', thanks: '크하하, 대단한 매운맛 실력이다! 왕관을 잠깐 빌려줄게!' },
+    { id: 'bazaar', cust: 'camel', heart: 1, icon: '🪙', name: '사막이의 시장 놀이',
+      ask: '딸랑딸랑~ 사막 시장에 오신 걸 환영해요. 손님이 외국 말로 값을 말하면 맞는 동전을 내 주세요!', how: '값을 듣고 같은 숫자의 동전을 골라요. 숫자는 점점 커져요. 🔊로 다시 들을 수 있어요.', thanks: '장사가 아주 잘 됐어요! 사막에서도 이렇게 계산 잘하는 친구는 처음이에요.' },
+    { id: 'parade', cust: 'elephant', heart: 1, icon: '🐘', name: '코코의 기억력 행진',
+      ask: '코끼리 행진을 해요! 제가 낱말을 하나씩 순서대로 보여 줄게요. 다 보여 준 다음 같은 순서로 눌러 줄래요?', how: '낱말이 나오는 순서를 기억했다가 같은 순서로 눌러요. 갈수록 길어져요. 하트 세 개가 있어요.', thanks: '뿌우~! 완벽한 행진이었어요. 저보다 기억력이 좋은 것 같아요!' },
+    { id: 'banana', cust: 'monkey', heart: 1, icon: '🍌', name: '끼끼의 바나나 팡팡',
+      ask: '끼끼! 나뭇잎 사이로 바나나가 쏙쏙 나와요. 위에 나온 뜻과 같은 낱말이 적힌 바나나만 잽싸게 따 줘요!', how: '뜻에 맞는 바나나가 나오면 얼른 눌러요. 다른 바나나를 누르면 점수가 줄어요.', thanks: '바나나가 산더미예요! 반은 나눠 줄게요, 끼끼!' }
   ];
   function gs() { return M.gardenState(); }
   function state() { var g = gs(); g.mini = g.mini || { day: '', done: {}, best: {}, seen: {} }; if (g.mini.day !== M.today()) { g.mini.day = M.today(); g.mini.done = {}; } return g.mini; }
@@ -416,6 +432,238 @@
       };
     }
     round(); timeBar(g, 100, function () { finish(g, 3 * 5 * 6); });
+  };
+
+  // ===================== 새 주민 놀이 =====================
+  function need(pool, n, msg) { if (pool.length >= n) return true; $('mBody').innerHTML = '<p class="center">' + (msg || '낱말을 조금 더 배우고 와 주세요!') + '</p>'; return false; }
+  function headHtml(g, inner) { var src = M.custImg(g.m.cust, false); return '<div class="rq nq">' + (src ? '<img class="nqface" src="' + src + '" alt="">' : '') + '<div class="nqin">' + inner + '</div></div>'; }
+  function bindOpts(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (b) { b.onclick = function () { if (b.disabled) return; fn(b); }; }); }
+
+  // 공 물어오기: 소리를 듣고 뜻이 맞는 풀밭에 공을 던진다 (10번)
+  GAMES.fetch = function (g) {
+    var pool = words(14); if (!need(pool, 3)) return;
+    var n = 0, combo = 0, target = null;
+    function round() {
+      if (!g.alive) return;
+      if (n >= 10) { finish(g, 150); return; }
+      n++; var three = M.shuffle(pool).slice(0, 3); target = three[0]; three = M.shuffle(three);
+      $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small><p>바둑이가 뭐라고 외쳤을까요?</p><button class="btn" id="fPlay">🔊 다시 듣기</button>') +
+        '<div class="fgrass">' + three.map(function (it, i) { return '<button class="fspot" data-i="' + i + '"><span class="fball">🎾</span><b>' + esc(it.k) + '</b></button>'; }).join('') + '</div><div class="fdog" id="fDog">🐶</div>';
+      $('fPlay').onclick = function () { M.say(target.say, target.lang); };
+      setTimeout(function () { if (g.alive) M.say(target.say, target.lang); }, 300);
+      bindOpts('.fspot', function (b) {
+        if (!g.alive) return;
+        var it = three[+b.dataset.i];
+        if (it === target) {
+          combo++; setScore(g, g.score + 10 + Math.min(5, combo)); M.sfx('ok'); b.classList.add('ok');
+          var dog = $('fDog'); if (dog) { var r = b.getBoundingClientRect(), r0 = dog.getBoundingClientRect(); dog.style.transform = 'translate(' + (r.left + r.width / 2 - r0.left - r0.width / 2) + 'px,' + (r.top - r0.top) + 'px)'; }
+          setTimeout(function () { if (g.alive) { var w = document.createElement('p'); w.className = 'center fword'; w.innerHTML = wordHtml(target); $('mBody').appendChild(w); } }, 250);
+          setTimeout(round, 1100);
+        } else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
+      });
+    }
+    round(); timeBar(g, 80, function () { finish(g, 150); });
+  };
+
+  // 조개 깨기 OX: 낱말과 뜻이 맞는 짝인지 빠르게 고른다
+  GAMES.shell = function (g) {
+    var pool = words(16); if (!need(pool, 4)) return;
+    var cnt = 0, combo = 0;
+    function round() {
+      if (!g.alive) return;
+      var it = M.pick(pool), right = Math.random() < 0.5, other = M.pick(pool.filter(function (x) { return x !== it && x.k !== it.k; })), shown = right ? it : other;
+      cnt++;
+      $('mBody').innerHTML = headHtml(g, '<small>' + cnt + '번째 조개' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>') +
+        '<div class="oshell"><div class="ow">' + wordHtml(it) + '</div><div class="oeq">=</div><div class="ok2">' + esc(shown.k) + '</div></div>' +
+        '<div class="oxbtns"><button class="oxb o" data-a="1">⭕<small>맞아요</small></button><button class="oxb x" data-a="0">❌<small>아니에요</small></button></div><p class="hint center" id="oMsg"></p>';
+      bindOpts('.oxb', function (b) {
+        if (!g.alive) return;
+        var ok = (b.dataset.a === '1') === right;
+        Array.prototype.forEach.call(document.querySelectorAll('.oxb'), function (x) { x.disabled = true; });
+        if (ok) { combo++; setScore(g, g.score + 5 + Math.min(3, Math.floor(combo / 3))); M.sfx('ok'); b.classList.add('ok'); M.say(it.say, it.lang); setTimeout(round, 650); }
+        else { combo = 0; setScore(g, g.score - 3); M.sfx('bad'); b.classList.add('miss'); $('oMsg').innerHTML = esc(it.t) + ' = <b>' + esc(it.k) + '</b>'; setTimeout(round, 1500); }
+      });
+    }
+    round(); timeBar(g, 60, function () { finish(g, 110); });
+  };
+
+  // 빈칸 버섯: 문장의 빈칸에 들어갈 낱말을 고른다 (6문장)
+  GAMES.cloze = function (g) {
+    var list = sentences(6); if (list.length < 2) { $('mBody').innerHTML = '<p class="center">문장을 조금 더 배우고 와 주세요!</p>'; return; }
+    var allW = []; list.concat(sentences(12)).forEach(function (x) { x.w.forEach(function (w) { if (allW.indexOf(w) < 0) allW.push(w); }); });
+    var n = 0;
+    function round() {
+      if (!g.alive) return;
+      if (n >= list.length) { finish(g, list.length * 20); return; }
+      var sn = list[n++], lang = sn.lang, sp = lang === 'en' ? ' ' : '';
+      var idxs = sn.w.map(function (w, i) { return i; }).filter(function (i) { return !/^[\s.,!?。、？！]+$/.test(sn.w[i]); });
+      var bi = M.pick(idxs.length ? idxs : [0]), ans = sn.w[bi], tries = 0;
+      var opts = [ans].concat(M.shuffle(allW.filter(function (w) { return w !== ans && !/^[\s.,!?。、？！]+$/.test(w); })).slice(0, 2));
+      opts = M.shuffle(opts);
+      $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / ' + list.length + '</small><p>' + esc(sn.k) + '</p>') +
+        '<div class="csent lang-' + lang + '">' + sn.w.map(function (w, i) { return i === bi ? '<span class="cblank" id="cB">？</span>' : esc(w); }).join(sp) + '</div>' +
+        '<div class="ropts c3">' + opts.map(function (w, i) { return '<button class="ropt cmush" data-i="' + i + '"><span class="cm">🍄</span><b class="lang-' + lang + '">' + esc(w) + '</b></button>'; }).join('') + '</div>';
+      bindOpts('.cmush', function (b) {
+        if (!g.alive) return;
+        if (opts[+b.dataset.i] === ans) { setScore(g, g.score + (tries ? 8 : 20)); b.classList.add('ok'); $('cB').textContent = ans; $('cB').classList.add('fill'); M.sfx('ok'); M.say(sn.say, lang); setTimeout(round, 1500); }
+        else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
+      });
+    }
+    round(); timeBar(g, 100, function () { finish(g, list.length * 20); });
+  };
+
+  // 따라 말하기: 꽥꽥이가 말한 낱말을 마이크로 따라 한다. 마이크가 없으면 듣고 고르기
+  GAMES.echo = function (g) {
+    var pool = words(10, function (it) { return it.t.length <= 10; }); if (!need(pool, 3)) return;
+    var mic = M.speechOK() && M.P.set.speak !== false, n = 0, list = pool.slice(0, 8);
+    function round() {
+      if (!g.alive) return;
+      if (n >= list.length) { finish(g, list.length * 15); return; }
+      var it = list[n++], fails = 0;
+      var say = function () { M.say(it.say, it.lang); };
+      if (mic) {
+        $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / ' + list.length + '</small><p>꽥꽥이를 따라 말해 보세요</p>') +
+          '<div class="eword">' + wordHtml(it) + '<small>' + esc(it.k) + '</small></div><div class="ebtns"><button class="btn" id="eHear">🔊 듣기</button><button class="btn primary emic" id="eMic">🎤 말하기</button></div><p class="hint center" id="eMsg"></p><button class="btn ghost wide hidden" id="eSkip">넘어가기</button>';
+        setTimeout(function () { if (g.alive) say(); }, 300);
+        $('eHear').onclick = say;
+        $('eSkip').onclick = function () { round(); };
+        $('eMic').onclick = function () {
+          var b = $('eMic'); if (b.classList.contains('on')) { try { M._rec.stop(); } catch (e) {} return; }
+          b.classList.add('on'); $('eMsg').textContent = '듣고 있어요… 말해 보세요';
+          var targets = [it.t, it.say].concat(it.alt || []); if (it.r && it.lang === 'ja') targets.push(it.r.split(' · ')[0]);
+          M.listen(it.lang).then(function (res) {
+            if (!g.alive || !$('eMic')) return; $('eMic').classList.remove('on');
+            if (!res.length) { $('eMsg').textContent = '소리가 들리지 않았어요. 다시 눌러 보세요'; return; }
+            var bm = M.bestMatch(res, targets, it.lang);
+            if (bm.s >= 0.42) { setScore(g, g.score + Math.round(8 + bm.s * 7)); M.sfx('ok'); $('eMsg').innerHTML = '꽥! 잘했어요 · 들린 말: <b>' + esc(bm.h) + '</b>'; setTimeout(round, 1200); }
+            else { fails++; M.sfx('bad'); $('eMsg').innerHTML = '들린 말: <b>' + esc(bm.h) + '</b> · 한 번 더!'; if (fails >= 2) $('eSkip').classList.remove('hidden'); }
+          }).catch(function () { if (!g.alive) return; mic = false; M.toast('마이크를 쓸 수 없어서 듣고 고르기로 바꿨어요'); n--; round(); });
+        };
+      } else {
+        var three = M.shuffle([it].concat(M.shuffle(pool.filter(function (x) { return x !== it; })).slice(0, 2)));
+        $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / ' + list.length + '</small><p>꽥꽥이가 한 말을 골라요</p><button class="btn" id="eHear">🔊 다시 듣기</button>') +
+          '<div class="ropts c3">' + three.map(function (x, i) { return '<button class="ropt eopt" data-i="' + i + '">' + wordHtml(x) + '</button>'; }).join('') + '</div>';
+        setTimeout(function () { if (g.alive) say(); }, 300);
+        $('eHear').onclick = say;
+        bindOpts('.eopt', function (b) {
+          if (!g.alive) return;
+          if (three[+b.dataset.i] === it) { setScore(g, g.score + (fails ? 6 : 15)); b.classList.add('ok'); M.sfx('ok'); setTimeout(round, 700); }
+          else { fails++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
+        });
+      }
+    }
+    round(); timeBar(g, 150, function () { finish(g, list.length * 15); });
+  };
+
+  // 매운맛 도전: 문제마다 시간이 정해져 있고, 맞힐수록 짧아진다. 하트 3개
+  GAMES.spicy = function (g) {
+    var pool = words(16); if (!need(pool, 4)) return;
+    var lives = 3, lvl = 1, n = 0, qt = null;
+    function round() {
+      if (!g.alive) return;
+      if (lives <= 0 || n >= 20) { finish(g, 220); return; }
+      n++; var four = M.shuffle(pool).slice(0, 4), target = four[0], limit = Math.max(2.4, 6 - (lvl - 1) * 0.4); four = M.shuffle(four);
+      $('mBody').innerHTML = headHtml(g, '<small>' + '❤️'.repeat(lives) + '🤍'.repeat(3 - lives) + ' · 매운맛 ' + '🌶️'.repeat(Math.min(5, lvl)) + (lvl > 5 ? '+' + (lvl - 5) : '') + '</small><div class="rword">' + wordHtml(target) + '</div>') +
+        '<div class="sbar"><i id="sBar"></i></div><div class="ropts">' + four.map(function (it, i) { return '<button class="ropt sopt" data-i="' + i + '"><b>' + esc(it.k) + '</b></button>'; }).join('') + '</div>';
+      M.say(target.say, target.lang);
+      var t0 = Date.now(), bar = $('sBar'), done = false;
+      clearInterval(qt); qt = setInterval(function () {
+        if (!g.alive || done) { clearInterval(qt); return; }
+        var left = limit - (Date.now() - t0) / 1000; if (bar) bar.style.width = Math.max(0, left / limit * 100) + '%';
+        if (left <= 0) { done = true; clearInterval(qt); lives--; lvl = Math.max(1, lvl - 1); M.sfx('bad'); M.toast('⏰ 앗, 늦었어요! 「' + target.k + '」'); setTimeout(round, 900); }
+      }, 50); g.timers.push(qt);
+      bindOpts('.sopt', function (b) {
+        if (!g.alive || done) return; done = true; clearInterval(qt);
+        if (four[+b.dataset.i] === target) { setScore(g, g.score + 5 + lvl * 3); lvl++; b.classList.add('ok'); M.sfx('ok'); setTimeout(round, 450); }
+        else { lives--; lvl = Math.max(1, lvl - 1); b.classList.add('miss'); M.sfx('bad'); M.toast('「' + target.t + '」 = ' + target.k); setTimeout(round, 1100); }
+      });
+    }
+    round(); timeBar(g, 120, function () { finish(g, 220); });
+  };
+
+  // 시장 놀이: 값을 듣고 같은 숫자 동전을 고른다 (10번, 숫자가 점점 커진다)
+  GAMES.bazaar = function (g) {
+    var lang = M.P.lang, n = 0, combo = 0;
+    var unit = function (v) { return lang === 'ja' ? v + '円' : lang === 'zh' ? v + '块钱' : v + ' dollars'; };
+    function round() {
+      if (!g.alive) return;
+      if (n >= 10) { finish(g, 140); return; }
+      n++;
+      var max = n <= 3 ? 10 : n <= 6 ? 99 : 999, v = 1 + Math.floor(Math.random() * max);
+      var cand = [v + 1, v - 1, v + 10, v - 10, v * 10 % 1000, parseInt(String(v).split('').reverse().join(''), 10), v + 100].filter(function (x) { return x > 0 && x !== v && x <= max; });
+      var opts = [v]; M.shuffle(cand).forEach(function (x) { if (opts.length < 4 && opts.indexOf(x) < 0) opts.push(x); });
+      while (opts.length < 4) { var r = 1 + Math.floor(Math.random() * max); if (opts.indexOf(r) < 0) opts.push(r); }
+      opts = M.shuffle(opts);
+      var say = function () { M.say(unit(v), lang); };
+      $('mBody').innerHTML = headHtml(g, '<small>손님 ' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small><p>손님이 말한 값은 얼마일까요?</p><button class="btn" id="bPlay">🔊 다시 듣기</button>') +
+        '<div class="ropts">' + opts.map(function (x, i) { return '<button class="ropt coin" data-i="' + i + '"><span>🪙</span><b>' + x + '</b></button>'; }).join('') + '</div><p class="center hint" id="bMsg"></p>';
+      $('bPlay').onclick = say; setTimeout(function () { if (g.alive) say(); }, 300);
+      bindOpts('.coin', function (b) {
+        if (!g.alive) return;
+        if (opts[+b.dataset.i] === v) { combo++; setScore(g, g.score + 10 + Math.min(4, combo)); b.classList.add('ok'); M.sfx('coin'); $('bMsg').innerHTML = '딸랑! <b class="lang-' + lang + '">' + esc(unit(v)) + '</b>'; setTimeout(round, 1000); }
+        else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); say(); }
+      });
+    }
+    round(); timeBar(g, 100, function () { finish(g, 140); });
+  };
+
+  // 기억력 행진: 낱말이 순서대로 지나가고, 같은 순서로 누른다. 하트 3개
+  GAMES.parade = function (g) {
+    var pool = words(16); if (!need(pool, 6)) return;
+    var len = 2, lives = 3, rounds = 0;
+    function round() {
+      if (!g.alive) return;
+      if (lives <= 0 || rounds >= 7) { finish(g, 150); return; }
+      rounds++;
+      var seq = M.shuffle(pool).slice(0, len), extra = M.shuffle(pool.filter(function (x) { return seq.indexOf(x) < 0; })).slice(0, 2), k = 0;
+      $('mBody').innerHTML = headHtml(g, '<small>' + '❤️'.repeat(lives) + '🤍'.repeat(3 - lives) + ' · ' + len + '개 행진</small><p id="pTip">잘 보고 순서를 기억해요</p>') + '<div class="pshow" id="pShow"></div><div class="ropts p3" id="pOpts"></div><div class="pgot" id="pGot"></div>';
+      var show = $('pShow');
+      (function next() {
+        if (!g.alive) return;
+        if (k >= seq.length) { show.innerHTML = '<span class="pel">🐘❓</span>'; ask(); return; }
+        var it = seq[k++]; show.innerHTML = '<span class="pel">🐘</span><div class="pw">' + wordHtml(it) + '<small>' + esc(it.k) + '</small></div>'; M.say(it.say, it.lang);
+        g.timers.push(setTimeout(next, 1500));
+      })();
+      function ask() {
+        $('pTip').textContent = '같은 순서로 눌러요';
+        var opts = M.shuffle(seq.concat(extra)), got = 0;
+        $('pOpts').innerHTML = opts.map(function (it, i) { return '<button class="ropt popt" data-i="' + i + '">' + wordHtml(it) + '</button>'; }).join('');
+        bindOpts('.popt', function (b) {
+          if (!g.alive) return;
+          var it = opts[+b.dataset.i];
+          if (it === seq[got]) { got++; b.disabled = true; b.classList.add('ok'); M.sfx('pop'); $('pGot').innerHTML += '<span>' + got + '. ' + esc(it.t) + '</span>';
+            if (got === seq.length) { setScore(g, g.score + len * 6); M.sfx('ok'); len = Math.min(6, len + 1); setTimeout(round, 900); } }
+          else { lives--; M.sfx('bad'); b.classList.add('miss'); Array.prototype.forEach.call(document.querySelectorAll('.popt'), function (x) { x.disabled = true; }); $('pTip').innerHTML = '순서: ' + seq.map(function (x) { return esc(x.t); }).join(' → '); setTimeout(round, 1800); }
+        });
+      }
+    }
+    round(); timeBar(g, 150, function () { finish(g, 150); });
+  };
+
+  // 바나나 팡팡: 나뭇잎 사이로 튀어나오는 바나나 중 뜻이 맞는 것만 딴다
+  GAMES.banana = function (g) {
+    var pool = words(14); if (!need(pool, 4)) return;
+    var target = null, hits = 0, up = {}, speed = 1700;
+    function newTarget() { target = M.pick(pool); hits = 0; $('nT').innerHTML = (target.e ? target.e + ' ' : '') + '<b>' + esc(target.k) + '</b>'; }
+    $('mBody').innerHTML = headHtml(g, '<p>이 뜻의 바나나를 따요!</p><div class="ntarget" id="nT"></div>') + '<div class="ngrid" id="nG">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return '<button class="nhole" data-h="' + i + '"><span class="nleaf">🌿</span></button>'; }).join('') + '</div>';
+    newTarget();
+    function pop() {
+      if (!g.alive) return;
+      var free = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(function (i) { return !up[i]; }); if (!free.length) return;
+      var h = M.pick(free), it = Math.random() < 0.4 ? target : M.pick(pool), b = document.querySelector('[data-h="' + h + '"]');
+      up[h] = it; b.innerHTML = '<span class="nban">🍌</span><span class="nw">' + wordHtml(it) + '</span>'; b.classList.add('up');
+      g.timers.push(setTimeout(function () { if (up[h] === it) { delete up[h]; b.classList.remove('up'); b.innerHTML = '<span class="nleaf">🌿</span>'; } }, speed));
+    }
+    $('nG').onclick = function (e) {
+      if (!g.alive) return;
+      var b = e.target.closest('.nhole'); if (!b) return; var h = +b.dataset.h, it = up[h]; if (!it) return;
+      delete up[h]; b.classList.remove('up');
+      if (it === target || it.k === target.k) { setScore(g, g.score + 5); M.sfx('ok'); M.say(it.say, it.lang); b.innerHTML = '<span class="nleaf">✨</span>'; hits++; speed = Math.max(1000, speed - 40); if (hits >= 3) newTarget(); }
+      else { setScore(g, g.score - 3); M.sfx('bad'); b.innerHTML = '<span class="nleaf">💦</span>'; }
+      setTimeout(function () { if (!up[h]) b.innerHTML = '<span class="nleaf">🌿</span>'; }, 400);
+    };
+    var iv = setInterval(function () { pop(); if (Math.random() < 0.35) pop(); }, 750); g.timers.push(iv); pop();
+    timeBar(g, 60, function () { finish(g, 110); });
   };
 
   M.MINIS = MINIS;
