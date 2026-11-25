@@ -125,9 +125,9 @@
   function residentSheet(id) {
     if (M.residentAsleep && M.residentAsleep(id)) { var cz = M.custOf(id); M.toast('💤 ' + M.j(cz.name, '은', '는') + ' 쿨쿨 자고 있어요. 아침 6시쯤 일어나요'); return; }
     var c = M.custOf(id), m = M.miniFor(id), h = hearts(id), mq = M.miniAvail(id);
-    var d = M.modal('<div class="mintro"><img class="mface" src="' + M.custImg(id, true) + '" alt=""><div class="msay"><b>' + esc(c.name) + ' <span class="hearts">' + '♥'.repeat(h) + '♡'.repeat(5 - h) + '</span></b><p>' + esc(greet(c)) + '</p></div></div>' +
+    var d = M.modal('<div class="mintro"><img class="mface" src="' + M.custImg(id, true) + '" alt=""><div class="msay"><b>' + esc(c.name) + ' <span class="hearts">' + '♥'.repeat(h) + '♡'.repeat(5 - h) + '</span></b><p>' + esc(greet(c)) + '</p></div></div>' + (M.tasteLine ? M.tasteLine(id) : '') +
       (m ? '<button class="btn ' + (mq ? 'primary' : '') + ' wide" data-play>' + m.icon + ' ' + esc(m.name) + (m.open ? (mq ? ' · 오늘의 부탁!' : ' · 연습하기') : ' · ♥' + m.heart + '에 열려요') + '</button>' : '') +
-      (M.dishGiftable && M.dishGiftable(id) ? '<button class="btn wide" data-dishg>🍲 요리 선물하기 <small>· 친밀도 ♥♥</small></button>' : '') + (M.potGiftable && M.potGiftable(id) ? '<button class="btn wide" data-gift>🎁 열매 선물하기 <small>· 친밀도 ♥</small></button>' : '') + '<button class="btn ' + (talkedToday(id) ? '' : 'primary') + ' wide" data-talk>💬 이야기하기' + (talkedToday(id) ? ' <small>(오늘 이미 이야기했어요)</small>' : ' <small>· 친밀도 ♥</small>') + '</button><button class="btn ghost wide" data-close>나가기</button>');
+      (M.dishGiftable && M.dishGiftable(id) ? '<button class="btn wide" data-dishg>🍲 요리 선물하기 <small>· 좋아하는 맛이면 ♥♥♥</small></button>' : '') + (M.potGiftable && M.potGiftable(id) ? '<button class="btn wide" data-gift>🎁 열매 선물하기 <small>· 친밀도 ♥</small></button>' : '') + '<button class="btn ' + (talkedToday(id) ? '' : 'primary') + ' wide" data-talk>💬 이야기하기' + (talkedToday(id) ? ' <small>(오늘 이미 이야기했어요)</small>' : ' <small>· 친밀도 ♥</small>') + '</button><button class="btn ghost wide" data-close>나가기</button>');
     d.addEventListener('click', function (e) {
       if (e.target.closest('[data-play]')) { if (!m.open) { M.toast(M.j(c.name, '과', '와') + ' 더 친해지면 부탁해요'); return; } d.close(); M.miniIntro(m.id); }
       if (e.target.closest('[data-talk]')) { d.close(); talk(id); }

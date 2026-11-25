@@ -11,9 +11,17 @@
     tomato: { name: '토마토', hours: 6, price: 30, yield: 3, sell: 16, st: ['🌱', '🌿', '🪴', '🌼', '🍅'], fruit: '🍅', lv: 1, img: true },
     sunflower: { name: '해바라기', hours: 8, price: 40, yield: 2, sell: 18, fp: 3, st: ['🌱', '🌿', '🪴', '🌻', '🌻'], fruit: '🌻', lv: 3, img: true },
     rose: { name: '장미', hours: 12, price: 60, yield: 2, sell: 28, fp: 5, st: ['🌱', '🌿', '🪴', '🥀', '🌹'], fruit: '🌹', lv: 5, img: true },
-    lemon: { name: '레몬나무', hours: 24, price: 90, yield: 4, sell: 30, st: ['🌱', '🌿', '🪴', '🌳', '🍋'], fruit: '🍋', lv: 7, img: true }
+    lemon: { name: '레몬나무', hours: 24, price: 90, yield: 4, sell: 30, st: ['🌱', '🌿', '🪴', '🌳', '🍋'], fruit: '🍋', lv: 7, img: true },
+    // 요리 재료 작물 (그림이 오기 전에는 이모지)
+    rice: { name: '벼', hours: 6, price: 25, yield: 5, sell: 8, st: ['🌱', '🌿', '🌾', '🌾', '🍚'], fruit: '🍚', lv: 1 },
+    potato: { name: '감자', hours: 5, price: 20, yield: 4, sell: 9, st: ['🌱', '🌿', '🪴', '🌼', '🥔'], fruit: '🥔', lv: 1 },
+    carrot: { name: '당근', hours: 4, price: 20, yield: 3, sell: 10, st: ['🌱', '🌿', '🪴', '🌿', '🥕'], fruit: '🥕', lv: 2 },
+    pepper: { name: '고추', hours: 7, price: 30, yield: 4, sell: 11, st: ['🌱', '🌿', '🪴', '🌼', '🌶️'], fruit: '🌶️', lv: 4 },
+    corn: { name: '옥수수', hours: 8, price: 35, yield: 3, sell: 14, st: ['🌱', '🌿', '🌾', '🌽', '🌽'], fruit: '🌽', lv: 6 },
+    pumpkin: { name: '단호박', hours: 12, price: 50, yield: 2, sell: 26, st: ['🌱', '🌿', '🪴', '🌼', '🎃'], fruit: '🎃', lv: 8 }
   };
-  function fruitImg(k) { return '<img class="fimg2" src="img/w/fruit-' + k + '.png" alt="' + SEEDS[k].name + '">'; }
+  function fruitImg(k) { return SEEDS[k].img ? '<img class="fimg2" src="img/w/fruit-' + k + '.png" alt="' + SEEDS[k].name + '">' : '<span class="fimg2 femo">' + SEEDS[k].fruit + '</span>'; }
+  M.potFruitIcon = fruitImg;
   function potMax() { return Math.max(M.P.pots ? M.P.pots.slots : 2, M.houseInfo ? M.houseInfo().pots : 6); }
   var SLOT_COST = [0, 0, 150, 300, 500, 800];   // 3번째 칸부터
   M.SEEDS = SEEDS;
