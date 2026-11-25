@@ -58,7 +58,7 @@
     for (var i = 0; i < g.open; i++) { var it = g.cells[i]; if (it && it.l === 5) golden = true; if (!it) free++; }
     set('learn', M.questReady() || '');
     set('garden', M.gardenOrderReady && M.gardenOrderReady() ? '📦' : (P.water >= 25 && free ? '💧' : ''));
-    set('home', M.petFull() < 30 ? '!' : '');
+    set('home', M.petFull() < 30 ? '!' : (M.potAlert && M.potAlert()) || '');
     set('shop', P.rewards.some(function (r) { return P.fp >= r.price; }) ? '🎁' : '');
   };
 

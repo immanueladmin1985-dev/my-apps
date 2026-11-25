@@ -77,6 +77,7 @@
       '<div class="pet" id="pet" style="z-index:70"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
       (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구를 끌어서 옮기고, 눌러서 골라요') + '</div>' : '') +
       '</div>' + (editing && fsel && P.room.placed[fsel] ? '<div class="ftools"><b>' + esc((FURN.filter(function (x) { return x.id === fsel; })[0] || {}).name || '') + '</b><button data-ft="small">－ 작게</button><button data-ft="big">＋ 크게</button><button data-ft="flip">↔ 뒤집기</button><button data-ft="front">⬆ 앞으로</button><button data-ft="back">⬇ 뒤로</button><button data-ft="store">📦 보관</button></div>' : '') +
+      '<div id="potArea">' + (M.potsHtml ? M.potsHtml() : '') + '</div>' +
       '<div class="card petcard"><div class="pname"><b>' + esc(P.petName) + '</b> <span class="lv">Lv.' + p.lv + '</span><span class="bonus">💧 +' + M.petBonus() + '%</span></div>' +
       '<div class="meter"><span>친밀도</span><div class="mbar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></div><small>' + p.exp + '/' + needExp(p.lv) + '</small></div>' +
       '<div class="meter"><span>배부름</span><div class="mbar full"><i style="width:' + M.petFullPct() + '%"></i></div><small>' + (full >= 100 ? '아주 배부름' : full < 30 ? '배고파요' : full + '%') + '</small></div>' +
@@ -135,14 +136,16 @@
     var a = ACCS.filter(function (x) { return x.id === M.P.pet.acc; })[0], el = $('petAcc');
     if (a && el) el.setAttribute('style', accStyle(a, face || (M.petFull() < 30 ? 'sad' : 'normal')));
   }
-  M.furnShop = function () { furnShop(); };
-  function furnShop() {
+  M.furnShop = function (t) { furnShop(t); };
+  function furnShop(startTab) {
     var P = M.P;
-    var tab = 'furn';
-    var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">' + esc(P.petName) + ' 소품</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
+    var tab = startTab || 'furn';
+    var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">' + esc(P.petName) + ' 소품</button><button data-st="seed">씨앗·비료</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
     var tabs = function () { Array.prototype.forEach.call(d.querySelectorAll('[data-st]'), function (b) { b.classList.toggle('on', b.dataset.st === tab); }); };
     var paintOther = function () {
       var R = P.room, ow = R.walls || {}, oa = P.pet.accs || {};
+      if (tab === 'seed') { M.seedTab(d.querySelector('#fList'), d.querySelector('#fHint')); return; }
+      d.querySelector('#fList').onclick = null;
       if (tab === 'wall') {
         d.querySelector('#fHint').textContent = '방 전체의 벽지와 바닥을 바꿔요';
         d.querySelector('#fList').innerHTML = '<div class="walls">' + WALLS.map(function (w) {

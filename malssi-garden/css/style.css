@@ -1026,3 +1026,28 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 #tOpts { margin: 8px 0; }
 .tdone { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; background: #f3fbf7; border-radius: 16px; }
 .tdone small { color: var(--sub); }
+/* 화분 선반 */
+.potshelf .pots-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.potshelf .pots-h small { color: var(--sub); font-size: .75rem; }
+.potrow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 520px) { .potrow { grid-template-columns: repeat(3, 1fr); } }
+.potc, .pot0 { border-radius: 16px; border: 2px solid var(--line); background: #fffdf8; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.pot0 { border-style: dashed; justify-content: center; min-height: 150px; color: var(--sub); }
+.pot0 .pe { font-size: 2.2rem; } .pot0.add small { display: flex; align-items: center; gap: 2px; }
+.potc.ripe { border-color: #ffb02e; background: #fffbea; }
+.potc.dry .pfig { filter: saturate(.4) brightness(.95); } .potc.dry .pe { transform: rotate(-12deg); }
+.pfig { position: relative; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.pfig .pe { font-size: 2.4rem; line-height: 1; transition: transform .3s; } .pfig .pe.s1 { font-size: 1.4rem; } .pfig .pe.s2 { font-size: 1.9rem; }
+.pfig img { height: 60px; object-fit: contain; }
+.pfig .pbase { font-size: 1.2rem; line-height: .8; margin-top: -4px; }
+.potc b { font-size: .9rem; } .potc small { font-size: .68rem; color: var(--sub); line-height: 1.25; }
+.potc .mbar { width: 100%; margin: 0; }
+.pbtns { display: flex; gap: 4px; width: 100%; } .pbtns .btn { flex: 1; }
+.btn.sm { min-height: 34px; padding: 4px 8px; font-size: .82rem; }
+.basket { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.basket b { width: 100%; font-size: .9rem; } .basket small { color: var(--sub); font-size: .72rem; }
+.basket .binv { margin-left: auto; font-size: .72rem; color: var(--sub); }
+.fruit { position: relative; font-size: 1.8rem; background: #fff; border: 2px solid var(--line); border-radius: 14px; width: 52px; height: 52px; }
+.fruit i { position: absolute; right: -4px; bottom: -4px; font-style: normal; font-size: .7rem; font-weight: 800; background: var(--mint); color: #fff; border-radius: 8px; padding: 0 5px; }
+.basket.big { justify-content: center; border: 0; }
+.seedem { font-size: 2.4rem; line-height: 1.2; } .fcard.lock { opacity: .55; } .fcard .own { font-style: normal; font-size: .7rem; color: var(--mint-d); font-weight: 800; }
