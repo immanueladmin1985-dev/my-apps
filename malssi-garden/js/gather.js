@@ -96,21 +96,30 @@
     return true;
   };
   // 오늘 마을에 놓일 물건들 (매일 바뀐다)
-  M.gatherDaily = function (cands) {
-    var g = S(), seed = parseInt(M.today().replace(/\D/g, ''), 10) % 2147483646 + 1, rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  // 행운의 향수: 30분 동안 곤충이 두 배로 자주 나오고, 바닥 물건이 한 번 더 생긴다
+  var LUCK_MS = 30 * 60000, LUCK_PRICE = 80;
+  M.luckLeft = function () { var g = S(); return Math.max(0, (g.luckAt || 0) + LUCK_MS - Date.now()); };
+  M.luckOn = function () { return M.luckLeft() > 0; };
+  M.luckBuy = function () {
+    if (!M.spend('coins', LUCK_PRICE)) { M.toast('코인이 모자라요'); return false; }
+    var g = S(); g.luckAt = Date.now(); g.luckSeed = Date.now() % 100000 + 1; M.save(); M.sfx('win');
+    M.toast('✨ 행운의 향수! 30분 동안 곤충과 물건이 두 배로 나와요'); return true;
+  };
+  M.gatherDaily = function (cands, extra) {
+    var g = S(), seed = (extra || parseInt(M.today().replace(/\D/g, ''), 10)) % 2147483646 + 1, rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
     var out = [];
     function place(list, n, type, table) {
       var used = {};
       for (var i = 0; i < n && list.length; i++) {
-        var k = Math.floor(rnd() * list.length), c = list[k], key = type + c[0] + ',' + c[1]; if (used[key]) continue; used[key] = 1;
+        var k = Math.floor(rnd() * list.length), c = list[k], key = (extra ? 'L' + extra : '') + type + c[0] + ',' + c[1]; if (used[key]) continue; used[key] = 1;
         var s = table.reduce(function (a, x) { return a + x[1]; }, 0), r = rnd() * s, id = table[0][0];
         for (var j = 0; j < table.length; j++) { r -= table[j][1]; if (r <= 0) { id = table[j][0]; break; } }
         if (!g.picked[key]) out.push({ key: key, type: type, id: id, x: c[0], y: c[1] });
       }
     }
-    place(cands.grass, 6, 'f', [['mush-red', 12], ['mush-brown', 14], ['mush-white', 14], ['flowers', 18], ['acorn', 12], ['pinecone', 10], ['leaf', 12], ['clover', 3]]);
-    place(cands.sand, 7, 's', [['scallop', 22], ['conch', 16], ['sanddollar', 16], ['seaweed', 14], ['starfish', 10], ['glass', 8], ['coral', 6], ['crab', 5], ['bottle', 2], ['pearl', 1]]);
-    place(cands.grass, 3, 'd', [['dig', 1]]);
+    place(cands.grass, 4, 'f', [['mush-red', 12], ['mush-brown', 14], ['mush-white', 14], ['flowers', 18], ['acorn', 12], ['pinecone', 10], ['leaf', 12], ['clover', 3]]);
+    place(cands.sand, 4, 's', [['scallop', 22], ['conch', 16], ['sanddollar', 16], ['seaweed', 14], ['starfish', 10], ['glass', 8], ['coral', 6], ['crab', 5], ['bottle', 2], ['pearl', 1]]);
+    place(cands.grass, 2, 'd', [['dig', 1]]);
     return out;
   };
   M.gatherPick = function (o) {
@@ -127,14 +136,17 @@
   // ---------- 가방 ----------
   M.gatherBag = function () {
     var g = S(), tab = 'all';
-    var d = M.modal('<h3>🧺 채집 가방</h3><div class="fcats" id="gbCats"></div><div class="gbag" id="gbList"></div><p class="hint">누르면 팔 수 있어요. 나뭇가지·통나무·돌·점토·금광석은 집 넓히기 재료예요.</p><button class="btn ghost wide" data-close>닫기</button>');
+    var d = M.modal('<h3>🧺 채집 가방</h3><div id="gbLuck"></div><div class="fcats" id="gbCats"></div><div class="gbag" id="gbList"></div><p class="hint">누르면 팔 수 있어요. 나뭇가지·통나무·돌·점토·금광석은 집 넓히기 재료예요.</p><button class="btn ghost wide" data-close>닫기</button>');
     function paint() {
+      var ll = M.luckLeft();
+      d.querySelector('#gbLuck').innerHTML = ll ? '<p class="luckon">✨ 행운의 향수 남은 시간 ' + Math.ceil(ll / 60000) + '분</p>' : '<button class="btn wide" data-luck>✨ 행운의 향수 <small>30분 동안 곤충·물건 두 배</small> <img class="inl" src="img/coin.png" alt="">' + LUCK_PRICE + '</button>';
       d.querySelector('#gbCats').innerHTML = '<button data-gc="all" class="' + (tab === 'all' ? 'on' : '') + '">전체</button>' + Object.keys(CATS).map(function (c) { return '<button data-gc="' + c + '" class="' + (tab === c ? 'on' : '') + '">' + CATS[c] + '</button>'; }).join('');
       var ks = Object.keys(g.bag).filter(function (k) { return g.bag[k] > 0 && ITEMS[k] && (tab === 'all' || ITEMS[k].cat === tab); });
       d.querySelector('#gbList').innerHTML = ks.length ? ks.map(function (k) { var it = ITEMS[k]; return '<button class="gbi" data-gi="' + k + '"><img src="' + it.img + '" alt=""><b>' + it.ko + '</b><i>' + g.bag[k] + '</i></button>'; }).join('') : '<p class="hint center">아직 비어 있어요. 마을에서 나무를 흔들거나 바닥을 살펴보세요!</p>';
     }
     paint();
     d.addEventListener('click', function (e) {
+      if (e.target.closest('[data-luck]')) { if (M.luckBuy()) paint(); return; }
       var c = e.target.closest('[data-gc]'); if (c) { tab = c.dataset.gc; paint(); return; }
       var b = e.target.closest('[data-gi]'); if (!b) return;
       var it = ITEMS[b.dataset.gi], v = nm(it), n = g.bag[it.id];
@@ -152,9 +164,21 @@
     var tn = { m: '아침', d: '낮', e: '저녁', n: '밤' }, wn = { flower: '꽃·풀밭', tree: '나무', water: '물가' };
     M.modal('<h3>' + title + ' 도감 <small>' + n + ' / ' + ks.length + '</small></h3>' + (cat === 'bug' ? '<p class="hint">시간대마다 나오는 곤충이 달라요</p>' : '') + '<div class="fdex">' + ks.map(function (k) {
       var it = ITEMS[k], got = g.dex[k], v = nm(it), b = BUGS[k];
-      return '<div class="fd' + (got ? '' : ' unk') + '"><span class="fde"><img src="' + it.img + '" alt=""></span><b>' + (got ? it.ko : '???') + '</b>' + (got ? '<small class="lang-' + lang + '">' + esc(v[0]) + '</small>' : '') + (b ? '<small>' + wn[b[1]] + ' · ' + b[0].split('').map(function (x) { return tn[x]; }).join('·') + '</small>' : '') + '</div>';
-    }).join('') + '</div><button class="btn primary wide" data-close>닫기</button>');
+      return '<div class="fd' + (got ? '' : ' unk') + '"' + (got ? ' data-card="' + k + '"' : '') + '><span class="fde"><img src="' + it.img + '" alt=""></span><b>' + (got ? it.ko : '???') + '</b>' + (got ? '<small class="lang-' + lang + '">' + esc(v[0]) + '</small>' : '') + (b ? '<small>' + wn[b[1]] + ' · ' + b[0].split('').map(function (x) { return tn[x]; }).join('·') + '</small>' : '') + '</div>';
+    }).join('') + '</div><p class="hint center">찾은 것을 누르면 세 나라 말로 들을 수 있어요</p><button class="btn primary wide" data-close>닫기</button>');
   };
+  // 도감 카드: 누르면 크게 보이고 일본어·영어·중국어로 들을 수 있다
+  M.dexCard = function (img, ko, names, extra) {
+    var L = [['ja', '日本語'], ['en', 'English'], ['zh', '中文']];
+    var d = M.modal('<div class="dcard"><img src="' + img + '" alt=""><h3>' + esc(ko) + '</h3>' + (extra ? '<p class="hint">' + extra + '</p>' : '') +
+      '<div class="dnames">' + L.map(function (l) { var v = names[l[0]] || ['']; return '<div class="dn"><span class="dlang lang-' + l[0] + '"><b>' + esc(v[0]) + '</b>' + (v[1] ? '<small>' + esc(v[1]) + '</small>' : '') + '</span><button class="dsay" data-dl="' + l[0] + '" data-dt="' + esc(v[0]) + '">🔊 ' + l[1] + '</button></div>'; }).join('') + '</div></div><button class="btn ghost wide" data-close>닫기</button>');
+    d.addEventListener('click', function (e) { var b = e.target.closest('[data-dl]'); if (b) M.say(b.dataset.dt, b.dataset.dl); });
+    M.say((names[M.P.lang] || names.en)[0], M.P.lang);
+  };
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest && e.target.closest('[data-card]'); if (!c) return;
+    var it = ITEMS[c.dataset.card]; if (it) M.dexCard(it.img, it.ko, { ja: it.ja, en: it.en, zh: it.zh });
+  });
 
   // ---------- 집 넓히기 ----------
   var HOUSE = [null,

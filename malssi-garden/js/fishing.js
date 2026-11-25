@@ -112,9 +112,14 @@
     var d = dex(), lang = M.P.lang, n = FISH.filter(function (f) { return d[f.id]; }).length;
     M.modal('<h3>🐟 물고기 도감 <small>' + n + ' / ' + FISH.length + '</small></h3><p class="hint">지금은 <b>' + TNAME[slot()] + '</b>이에요. 시간대마다 나오는 물고기가 달라요.</p><div class="fdex">' + FISH.map(function (f) {
       var r = d[f.id], nm = nameOf(f, lang);
-      return '<div class="fd' + (r ? '' : ' unk') + '"><span class="fde">' + fimg(f) + '</span><b>' + (r ? f.ko : '???') + '</b>' + (r ? '<small class="lang-' + lang + '">' + esc(nm.t) + '</small><small>최고 ' + r.max + 'cm · ' + r.n + '마리</small>' : '') +
+      return '<div class="fd' + (r ? '' : ' unk') + '"' + (r ? ' data-fcard="' + f.id + '"' : '') + '><span class="fde">' + fimg(f) + '</span><b>' + (r ? f.ko : '???') + '</b>' + (r ? '<small class="lang-' + lang + '">' + esc(nm.t) + '</small><small>최고 ' + r.max + 'cm · ' + r.n + '마리</small>' : '') +
         '<small>' + (f.at === 'river' ? '강' : '바다') + ' · ' + f.t.split('').map(function (k) { return TNAME[k]; }).join('·') + '</small></div>';
-    }).join('') + '</div><button class="btn primary wide" data-close>닫기</button>');
+    }).join('') + '</div><p class="hint center">잡은 물고기를 누르면 세 나라 말로 들을 수 있어요</p><button class="btn primary wide" data-close>닫기</button>');
   };
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest && e.target.closest('[data-fcard]'); if (!c) return;
+    var f = FISH.filter(function (x) { return x.id === c.dataset.fcard; })[0], r = dex()[f.id];
+    M.dexCard('img/w/fish-' + f.id + '.png', f.ko, { ja: [f.ja[0], f.ja[1]], en: [f.en[0], ''], zh: [f.zh[0], f.zh[1]] }, '최고 ' + r.max + 'cm · ' + r.n + '마리 · ' + (f.at === 'river' ? '강' : '바다'));
+  });
   M.fishTest = { pick: pick, caught: function (id) { cur = cur || { where: 'river', timers: [] }; caught(FISH.filter(function (f) { return f.id === id; })[0]); }, bite: function () { if (cur) { cur.timers.forEach(clearTimeout); bite(); } }, slot: slot };
 })();

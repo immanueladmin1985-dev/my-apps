@@ -393,14 +393,16 @@
       for (var y = 4; y < 33; y++) for (var x = 3; x < W - 3; x++) if (G[y * W + x] === 0 && !SOLID[y * W + x] && !DOORS[x + ',' + y]) cands.grass.push([x, y]);
       for (y = 36; y <= 38; y++) for (x = 1; x < W - 1; x++) if (G[y * W + x] === 3 && !SOLID[y * W + x]) cands.sand.push([x, y]);
     }
-    if (dailyDay !== M.today() || !dailyCache) { dailyDay = M.today(); dailyCache = M.gatherDaily(cands); }
+    var lk = M.luckOn && M.luckOn() ? (M.P.gather.luckSeed || 1) : 0;
+    if (dailyDay !== M.today() + lk || !dailyCache) { dailyDay = M.today() + lk; dailyCache = M.gatherDaily(cands).concat(lk ? M.gatherDaily(cands, lk) : []); }
     return dailyCache;
   }
   var bugs = [], bugNext = 0;
   function bugTick(dt, now) {
     if (!M.bugNow) return;
-    if (now > bugNext && bugs.length < 3) {
-      bugNext = now + 4000 + Math.random() * 6000;
+    var luck = M.luckOn && M.luckOn();
+    if (now > bugNext && bugs.length < (luck ? 3 : 2)) {
+      bugNext = now + (luck ? 0.5 : 1) * (25000 + Math.random() * 35000);   // 평소 25~60초에 한 마리, 향수를 쓰면 두 배
       var where = ['flower', 'flower', 'tree', 'water'][Math.floor(Math.random() * 4)], id = M.bugNow(where);
       if (id) {
         var pool = where === 'tree' ? OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 2 && o.tx < W - 3 && o.ty > 3; }) : where === 'water' ? [{ x: 4 + Math.random() * 28, y: 34 }] : OBJ.filter(function (o) { return o.kind === 'img' && o.flat; });
