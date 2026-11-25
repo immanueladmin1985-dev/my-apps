@@ -87,7 +87,7 @@
     if (cur) { cur.alive = false; cur.timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); if (cur.raf) cancelAnimationFrame(cur.raf); }
     cur = null; var el = $('mini'); if (el) { el.classList.add('hidden'); el.innerHTML = ''; } document.body.classList.remove('in-mini');
     if (pendingExp && M.petExp) { var e = pendingExp; pendingExp = 0; setTimeout(function () { M.petExp(e); }, 300); }
-    if ($('gardenView') && M.renderGarden && !$('gardenView').hidden) M.renderGarden($('gardenView'));
+    if ($('gardenView') && !$('gardenView').hidden) M.render();
   }
   function setScore(g, n) { g.score = Math.max(0, n); var s = $('mScore'); if (s) s.textContent = g.score + '점'; }
   function timeBar(g, total, onEnd) {

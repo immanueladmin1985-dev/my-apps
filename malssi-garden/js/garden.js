@@ -215,7 +215,7 @@
     if (!root) return;
     ensureOrders();
     var g = G(), R = g.rows, H = 296 + 191 * R;   // 그림 기준(가로 1496) 높이
-    var h = '<div class="garden"><div class="stallwrap"><div class="shophead"><b>' + esc(M.P.petName) + '네 가게</b><span class="slv">Lv.' + g.lv + '</span><div class="mbar"><i style="width:' + Math.round(g.xp / xpNeed(g.lv) * 100) + '%"></i></div><small>' + g.xp + '/' + xpNeed(g.lv) + '</small><button class="helpbtn" id="gDeco" aria-label="가게 꾸미기">🎨</button><button class="helpbtn" id="gHelp" aria-label="도움말">?</button></div>' +
+    var h = '<div class="garden">' + (M.inVillage ? '<button class="vback" id="vBack">← 마을로 나가기</button>' : '') + '<div class="stallwrap"><div class="shophead"><b>' + esc(M.P.petName) + '네 가게</b><span class="slv">Lv.' + g.lv + '</span><div class="mbar"><i style="width:' + Math.round(g.xp / xpNeed(g.lv) * 100) + '%"></i></div><small>' + g.xp + '/' + xpNeed(g.lv) + '</small><button class="helpbtn" id="gDeco" aria-label="가게 꾸미기">🎨</button><button class="helpbtn" id="gHelp" aria-label="도움말">?</button></div>' +
       '<div class="counter" id="gCounter"></div></div><div class="orders" id="gOrders"></div>' +
       '<div class="board" id="board" style="--bh:' + (H / 1496).toFixed(4) + ';aspect-ratio:1496/' + H + '"><img class="btop" src="img/garden-top.png" alt=""><img class="bbot" src="img/garden-bot.png" alt="">';
     h += '<div class="bcells" id="grid" style="top:' + (180 / H * 100) + '%;bottom:' + (116 / H * 100) + '%;grid-template-rows:repeat(' + R + ',minmax(0,1fr))">';
@@ -281,6 +281,7 @@
       g.awn = a[0]; M.save(); paint(); paintOrders(); M.paintTop && M.paintTop();
     });
   }
+  M.gardenBook = function () { bookSheet(); };
   function bookSheet() {
     var g = G();
     M.modal('<h3>📖 도감</h3><p class="hint">합쳐서 처음 만든 것은 도감에 그림이 채워져요</p><div class="gbook">' + bookHtml() + '</div><button class="btn primary wide" data-close>닫기</button>');

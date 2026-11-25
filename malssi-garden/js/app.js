@@ -27,7 +27,7 @@
       var b = document.querySelector('#nav [data-tab="' + t + '"]'); if (b) b.classList.toggle('on', t === tab);
     });
     if (tab === 'learn') renderMap($('learnView'));
-    else if (tab === 'garden') M.renderGarden($('gardenView'));
+    else if (tab === 'garden') (M.renderVillage || M.renderGarden)($('gardenView'));
     else if (tab === 'home') M.renderHome($('homeView'));
     else if (tab === 'shop') M.renderShop($('shopView'));
     if (tab !== 'garden') { var sec = $(tab + 'View'), hb = document.createElement('button'); hb.className = 'helpbtn float'; hb.dataset.help = tab; hb.textContent = '?'; hb.setAttribute('aria-label', '도움말'); sec.insertBefore(hb, sec.firstChild); }
@@ -168,6 +168,7 @@
   }
 
   // ---------- 퀘스트 ----------
+  M.openQuests = function () { quests(); };
   function quests() {
     var d = M.modal('<div id="qBody"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: M.render });
     var paint = function () {

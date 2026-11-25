@@ -135,6 +135,7 @@
     var a = ACCS.filter(function (x) { return x.id === M.P.pet.acc; })[0], el = $('petAcc');
     if (a && el) el.setAttribute('style', accStyle(a, face || (M.petFull() < 30 ? 'sad' : 'normal')));
   }
+  M.furnShop = function () { furnShop(); };
   function furnShop() {
     var P = M.P;
     var tab = 'furn';
