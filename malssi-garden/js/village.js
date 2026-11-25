@@ -14,7 +14,7 @@
     { id: 'store', name: '잡화점', em: '🛍️', x: 76, y: 23, w: 20 },
     { id: 'museum', name: '박물관', em: '🏛️', x: 24, y: 13, w: 22 },
     { id: 'gift', name: '선물 교환소', em: '🎁', x: 82, y: 40, w: 16 },
-    { id: 'pier', name: '낚시터', em: '🎣', x: 64, y: 87, w: 16, soon: '낚시는 다음 단계에서 열려요. 강가에서 물고기를 낚아 박물관을 채우게 돼요!' }
+    { id: 'pier', name: '낚시터', em: '🎣', x: 64, y: 87, w: 16 }
   ];
   // 주민 집터 (이사 온 순서대로 채운다)
   var LOTS = [[14, 53], [40, 57], [70, 56], [88, 62], [22, 67], [52, 69], [80, 73], [12, 79], [36, 81], [90, 82], [48, 49], [10, 41]];
@@ -102,9 +102,11 @@
     if (id === 'shop') { M.inVillage = true; M.render(); return; }
     if (id === 'home') { M.go('home'); return; }
     if (id === 'store') { M.furnShop(); return; }
-    if (id === 'museum') { M.gardenBook(); return; }
+    if (id === 'museum') { var dm = M.modal('<h3>🏛️ 박물관</h3><p class="hint">모은 것들을 구경해요</p><button class="btn wide" data-mg>🌸 정원 도감</button><button class="btn wide" data-mf>🐟 물고기 도감</button><button class="btn ghost wide" data-close>나가기</button>');
+      dm.addEventListener('click', function (e) { if (e.target.closest('[data-mg]')) { dm.close(); M.gardenBook(); } if (e.target.closest('[data-mf]')) { dm.close(); M.fishDexSheet(); } }); return; }
     if (id === 'gift') { M.go('shop'); return; }
     if (id === 'board') { boardSheet(); return; }
+    if (id === 'pier') { M.fishStart('sea'); return; }
   }
   function boardSheet() {
     var res = residents(), asks = res.filter(function (c) { return M.miniAvail && M.miniAvail(c.id); }), nm = nextMover();

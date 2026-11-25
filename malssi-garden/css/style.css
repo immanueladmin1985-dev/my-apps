@@ -1053,3 +1053,25 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .seedem { font-size: 2.4rem; line-height: 1.2; } .fcard.lock { opacity: .55; } .fcard .own { font-style: normal; font-size: .7rem; color: var(--mint-d); font-weight: 800; }
 /* 칸 마을 */
 .world .wcanvas { display: block; width: 100%; height: calc(100svh - 166px); min-height: 360px; touch-action: none; background: #a7dc8a; }
+/* 낚시 */
+.world { position: relative; }
+.fishing { position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 6; background: rgba(255,255,255,.96); border-radius: 22px; padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); animation: popin .3s; }
+.fwater { position: relative; height: 130px; border-radius: 16px; background: linear-gradient(#8fd0f0, #4aa8d8); overflow: hidden; cursor: pointer; }
+.fishing.river .fwater { background: linear-gradient(#a6dcf2, #6fbfe4); }
+.fring { position: absolute; left: 50%; top: 58%; width: 60px; height: 18px; margin: -9px 0 0 -30px; border: 2px solid rgba(255,255,255,.7); border-radius: 50%; animation: ring 2s ease-out infinite; }
+@keyframes ring { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
+.fbob { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.6rem; transition: transform .12s; animation: float2 1.6s ease-in-out infinite; }
+@keyframes float2 { 50% { margin-top: -4px; } }
+.fbob.nib { animation: nib .35s; } @keyframes nib { 30% { transform: translate(-50%, -30%); } 60% { transform: translate(-50%, -55%); } }
+.fbob.down { animation: none; transform: translate(-50%, 0%) scale(.8); opacity: .6; }
+.fexcl { position: absolute; left: 50%; top: 12%; transform: translateX(-50%) scale(0); font-size: 2.2rem; font-weight: 900; color: #ff4d4d; text-shadow: 0 2px 0 #fff; transition: transform .1s; }
+.fexcl.on { transform: translateX(-50%) scale(1); }
+.fmsg { text-align: center; font-weight: 700; margin: 8px 0; }
+.fpull { font-size: 1.1rem; }
+.fcatch { text-align: center; } .fcatch .fbig { font-size: 3.4rem; line-height: 1.1; } .fcatch h3 { margin: 4px 0; }
+.fname { display: inline-flex; flex-direction: column; align-items: center; background: #f3fbf7; border: 2px solid var(--mint); border-radius: 14px; padding: 6px 16px; }
+.fname b { font-size: 1.4rem; } .fname small { color: var(--sub); }
+.fdex { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fd { display: flex; flex-direction: column; align-items: center; border: 2px solid var(--line); border-radius: 14px; padding: 6px 4px; text-align: center; background: #fff; }
+.fd .fde { font-size: 2rem; } .fd b { font-size: .85rem; } .fd small { font-size: .66rem; color: var(--sub); line-height: 1.25; }
+.fd.unk .fde { filter: brightness(0) opacity(.25); }

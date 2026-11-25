@@ -329,7 +329,20 @@
       if (l.k === M.V.residents().length && M.V.nextMover()) { var nm = M.V.nextMover(); M.modal('<div class="center"><div class="tbig">🚧</div><h3>이사 예정</h3><p>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>' + M.esc(nm.name) + '</b>의 집이 여기에 생겨요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
     }
     if (Math.abs(tx - BOARD.x) <= 0 && (ty === BOARD.y || ty === BOARD.y - 1)) { goTo(BOARD.x, BOARD.y + 1, function () { me.d = 'up'; M.V.enter('board'); }); return; }
-    if ((tx === PIER.x + 1 && ty === PIER.y) || (tx === PIER.x && ty === PIER.y)) { goTo(PIER.x, PIER.y, function () { M.V.enter('pier'); }); return; }
+    if ((tx === PIER.x + 1 && ty === PIER.y) || (tx === PIER.x && ty === PIER.y)) { goTo(PIER.x, PIER.y, function () { me.d = 'down'; M.fishStart('sea'); }); return; }
+    // 물을 누르면 그 물가로 가서 낚시
+    if (tx >= 0 && ty >= 0 && tx < W && ty < H && G[ty * W + tx] === 2) {
+      var where = ty >= 39 ? 'sea' : 'river', best = null;
+      [[0, -1], [0, 1], [-1, 0], [1, 0], [0, -2], [0, 2]].forEach(function (d2) {
+        var sx = tx + d2[0], sy = ty + d2[1]; if (!walkable(sx, sy)) return;
+        var pth = (sx === me.x && sy === me.y) ? [] : findPath(me.x, me.y, sx, sy, me); if (!pth) return;
+        if (!best || pth.length < best.p.length) best = { p: pth, x: sx, y: sy };
+      });
+      if (!best) { M.toast('물가까지 걸어가서 눌러 주세요'); return; }
+      tapMark = { x: tx, y: ty, t: performance.now() };
+      goTo(best.x, best.y, function () { me.d = ty < me.y ? 'up' : ty > me.y ? 'down' : tx < me.x ? 'left' : 'right'; M.fishStart(where); });
+      return;
+    }
     if (!walkable(tx, ty)) { var near = nearestWalkable(tx, ty); if (!near) return; tx = near[0]; ty = near[1]; }
     tapMark = { x: tx, y: ty, t: performance.now() };
     goTo(tx, ty);
