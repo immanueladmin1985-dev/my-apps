@@ -39,6 +39,17 @@
   var ACCS = [{ id: 'ribbon', name: '빨간 리본', price: 120, x: 66, y: 10, w: 32 }, { id: 'crown', name: '꽃 화관', price: 200, x: 50, y: 18, w: 56 }, { id: 'strawhat', name: '밀짚모자', price: 250, x: 50, y: 12, w: 64 },
     { id: 'chefhat', name: '요리사 모자', price: 250, x: 50, y: 12, w: 60 }, { id: 'glasses', name: '동그란 안경', price: 150, eyes: true }, { id: 'starpin', name: '별 머리핀', price: 100, x: 66, y: 26, w: 22 }];
   M.ACCS = ACCS;
+  // 옷장: 옷·가방·장식은 그 옷을 입은 토끼 그림(img/dress-<id>.png)으로 바꿔 보여 준다. 모자와는 함께 쓰지 않는다
+  var WEARS = [
+    { id: 'apron', cat: 'cloth', name: '분홍 앞치마', price: 300 }, { id: 'raincoat', cat: 'cloth', name: '노란 우비', price: 350 }, { id: 'overalls', cat: 'cloth', name: '하늘색 멜빵바지', price: 300 },
+    { id: 'scarf', cat: 'cloth', name: '빨간 목도리', price: 250 }, { id: 'cape', cat: 'cloth', name: '초록 망토', price: 350 },
+    { id: 'carrotbag', cat: 'bag', name: '당근 가방', price: 280 }, { id: 'backpack', cat: 'bag', name: '작은 배낭', price: 300 }, { id: 'basket', cat: 'bag', name: '꽃바구니', price: 260 },
+    { id: 'net', cat: 'bag', name: '곤충채', price: 240 }, { id: 'rod', cat: 'bag', name: '낚싯대', price: 240 },
+    { id: 'heartglasses', cat: 'deco', name: '하트 선글라스', price: 220 }, { id: 'bowtie', cat: 'deco', name: '나비넥타이', price: 180 }, { id: 'flowercrown', cat: 'deco', name: '꽃 화관', price: 260 },
+    { id: 'stars', cat: 'deco', name: '별 귀걸이', price: 200 }, { id: 'wings', cat: 'deco', name: '반짝이 날개', price: 500 }];
+  var WCAT = { hat: '🎩 모자', cloth: '👗 옷', bag: '🎒 가방·도구', deco: '✨ 장식' }, wcat = 'hat';
+  M.WEARS = WEARS;
+  function wearOf(id) { return WEARS.filter(function (w) { return w.id === id; })[0]; }
   M.FURN = FURN; M.FOODS = FOODS;
 
   var LINES = ['오늘도 같이 공부해요!', '레슨 한 판 할까요?', '정원에 꽃이 피면 좋겠어요 🌸', '말을 배우면 씨앗이 자라요!', '쓰다듬어 줘서 고마워요 💕', '오늘 목표까지 조금만 더!'];
@@ -52,7 +63,9 @@
   };
   M.petStage = function () { var l = M.P.pet.lv; return l >= 10 ? 3 : l >= 5 ? 2 : 1; };
   function needExp(lv) { return 15 + lv * 10; }
-  M.petImg = function (face) {
+  // bare: 옷을 입지 않은 모습 (자랐을 때 보여 주는 그림 등)
+  M.petImg = function (face, bare) {
+    if (!bare && M.P.pet.wear && wearOf(M.P.pet.wear)) return 'img/dress-' + M.P.pet.wear + '.png';
     face = face || (M.petFull() < 30 ? 'sad' : 'normal');
     return 'img/pet-' + M.petStage() + '-' + face + '.png';
   };
@@ -65,7 +78,7 @@
     if (up) {
       M.sfx('win');
       var grown = M.petStage() !== before;
-      M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy') + '" alt=""><h3>' + (grown ? esc(M.j(M.P.petName, '이가', '가')) + ' 자랐어요!' : '레벨 업! Lv.' + p.lv) + '</h3><p>이제 레슨에서 물방울을 <b>' + M.petBonus() + '%</b> 더 받아요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
+      M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy', true) + '" alt=""><h3>' + (grown ? esc(M.j(M.P.petName, '이가', '가')) + ' 자랐어요!' : '레벨 업! Lv.' + p.lv) + '</h3><p>이제 레슨에서 물방울을 <b>' + M.petBonus() + '%</b> 더 받아요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
     }
   }
 
@@ -164,6 +177,7 @@
     return 'left:' + a.x + '%;top:' + (a.y + dy) + '%;width:' + a.w + '%';
   }
   function accHtml(face) {
+    if (M.P.pet.wear) return '';
     var a = ACCS.filter(function (x) { return x.id === M.P.pet.acc; })[0]; if (!a) return '';
     return '<img class="acc" id="petAcc" src="img/acc-' + a.id + '.png" alt="" style="' + accStyle(a, face) + '">';
   }
@@ -176,7 +190,7 @@
   function furnShop(startTab) {
     var P = M.P;
     var tab = startTab || 'furn';
-    var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">' + esc(P.petName) + ' 소품</button><button data-st="seed">씨앗·비료</button><button data-st="ride">🚲 탈것</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
+    var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">👗 옷장</button><button data-st="seed">씨앗·비료</button><button data-st="ride">🚲 탈것</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
     var tabs = function () { Array.prototype.forEach.call(d.querySelectorAll('[data-st]'), function (b) { b.classList.toggle('on', b.dataset.st === tab); }); };
     var paintOther = function () {
       var R = P.room, ow = R.walls || {}, oa = P.pet.accs || {};
@@ -205,12 +219,19 @@
           '<h4>🎨 벽 색</h4><div class="tints">' + TINTS.map(function (t, i) { return '<button class="tint' + ((R.wallTint || 0) === i ? ' on' : '') + '" data-wt="' + i + '"><i style="background:' + t[2] + '"></i><small>' + t[1] + '</small></button>'; }).join('') + '</div>' +
           '<h4>🎨 바닥 색</h4><div class="tints">' + TINTS.map(function (t, i) { return '<button class="tint' + ((R.floorTint || 0) === i ? ' on' : '') + '" data-ft2="' + i + '"><i style="background:' + t[2] + '"></i><small>' + t[1] + '</small></button>'; }).join('') + '</div><p class="hint">색은 공짜로 몇 번이든 바꿀 수 있어요. 무늬는 위에서 골라요.</p>';
       } else {
-        d.querySelector('#fHint').textContent = M.j(P.petName, '이', '') + '에게 하나씩 씌울 수 있어요';
-        d.querySelector('#fList').innerHTML = ACCS.map(function (a) {
+        var ow2 = P.pet.wears || {};
+        d.querySelector('#fHint').innerHTML = '<span class="fcats">' + Object.keys(WCAT).map(function (k) { return '<button data-wc="' + k + '" class="' + (k === wcat ? 'on' : '') + '">' + WCAT[k] + '</button>'; }).join('') + '</span>';
+        var cur = P.pet.wear ? wearOf(P.pet.wear) : null, curA = ACCS.filter(function (x) { return x.id === P.pet.acc; })[0];
+        var now = '<div class="wearnow"><span class="wnfig"><img src="' + M.petImg('happy') + '" alt="">' + (curA ? '<img class="acc" src="img/acc-' + curA.id + '.png" alt="" style="' + accStyle(curA, 'happy') + '">' : '') + '</span><p>' + (cur ? '<b>' + esc(M.j(cur.name, '을', '를')) + '</b> 입고 있어요' : curA ? '<b>' + esc(M.j(curA.name, '을', '를')) + '</b> 쓰고 있어요' : '아무것도 입지 않았어요') + '<small>옷·가방·장식은 하나씩 입고, 모자와는 같이 쓰지 않아요</small></p></div>';
+        d.querySelector('#fList').innerHTML = now + (wcat === 'hat' ? ACCS.map(function (a) {
           var own = oa[a.id], on = P.pet.acc === a.id;
           return '<button class="litem" data-aid="' + a.id + '"><span class="le"><img src="img/acc-' + a.id + '.png" alt=""></span><span class="ln">' + a.name + (own ? '<small>' + (on ? '쓰고 있어요 · 눌러서 벗기' : '눌러서 씌우기') + '</small>' : '') + '</span>' +
             (own ? '<span class="lp own">' + (on ? '벗기' : '쓰기') + '</span>' : '<span class="lp"><img src="img/coin.png" alt="">' + a.price + '</span>') + '</button>';
-        }).join('');
+        }) : WEARS.filter(function (w) { return w.cat === wcat; }).map(function (w) {
+          var own = ow2[w.id], on = P.pet.wear === w.id;
+          return '<button class="litem" data-wid2="' + w.id + '"><span class="le"><img src="img/wear-' + w.id + '.png" alt=""></span><span class="ln">' + w.name + (own ? '<small>' + (on ? '입고 있어요 · 눌러서 벗기' : '눌러서 입히기') + '</small>' : '<small>입은 모습 미리 보기는 눌러서</small>') + '</span>' +
+            (own ? '<span class="lp own">' + (on ? '벗기' : '입기') + '</span>' : '<span class="lp"><img src="img/coin.png" alt="">' + w.price + '</span>') + '</button>';
+        })).join('');
       }
     };
     var paint = function () {
@@ -236,11 +257,26 @@
         if (w.price && !P.room.walls[w.id]) { if (!M.spend('coins', w.price)) { M.toast('코인이 ' + (w.price - P.coins) + '개 더 필요해요'); return; } P.room.walls[w.id] = true; M.sfx('coin'); }
         P.room.wall = w.id; M.save(); M.toast('🏠 벽지를 ' + M.j(w.name, '으로', '로') + ' 바꿨어요'); paint(); rerender(); return;
       }
+      var wc = e.target.closest('[data-wc]'); if (wc) { wcat = wc.dataset.wc; paint(); return; }
+      var wb2 = e.target.closest('[data-wid2]');
+      if (wb2) {
+        var wr = wearOf(wb2.dataset.wid2); P.pet.wears = P.pet.wears || {};
+        if (!P.pet.wears[wr.id]) {   // 사기 전에 입은 모습을 보여 준다
+          var pv = M.modal('<div class="center"><img class="bigpet" src="img/dress-' + wr.id + '.png" alt=""><h3>' + wr.name + '</h3><p class="hint">' + esc(M.j(P.petName, '이가', '가')) + ' 입으면 이렇게 보여요</p></div><div class="row2"><button class="btn ghost" data-close>그만두기</button><button class="btn primary" data-wbuy><img class="inl" src="img/coin.png" alt="">' + wr.price + ' 사서 입히기</button></div>');
+          pv.querySelector('[data-wbuy]').onclick = function () {
+            if (!M.spend('coins', wr.price)) { M.toast('코인이 ' + (wr.price - P.coins) + '개 더 필요해요'); return; }
+            P.pet.wears[wr.id] = true; P.pet.wear = wr.id; if (P.pet.acc) P.pet.acc = ''; M.save(); M.sfx('coin'); pv.close(); paint(); rerender();
+            M.toast('👗 ' + M.j(wr.name, '을', '를') + ' 입었어요');
+          };
+          return;
+        }
+        P.pet.wear = P.pet.wear === wr.id ? '' : wr.id; if (P.pet.wear && P.pet.acc) { P.pet.acc = ''; M.toast('🎩 모자는 벗었어요'); } M.save(); paint(); rerender(); return;
+      }
       var ab = e.target.closest('[data-aid]');
       if (ab) {
         var a = ACCS.filter(function (x) { return x.id === ab.dataset.aid; })[0]; P.pet.accs = P.pet.accs || {};
         if (!P.pet.accs[a.id]) { if (!M.spend('coins', a.price)) { M.toast('코인이 ' + (a.price - P.coins) + '개 더 필요해요'); return; } P.pet.accs[a.id] = true; M.sfx('coin'); }
-        P.pet.acc = P.pet.acc === a.id ? '' : a.id; M.save(); paint(); rerender(); return;
+        P.pet.acc = P.pet.acc === a.id ? '' : a.id; if (P.pet.acc && P.pet.wear) { P.pet.wear = ''; M.toast('👗 옷은 벗었어요'); } M.save(); paint(); rerender(); return;
       }
       var b = e.target.closest('[data-fid]'); if (!b) return;
       var f = FURN.filter(function (x) { return x.id === b.dataset.fid; })[0];
