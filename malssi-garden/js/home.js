@@ -83,7 +83,7 @@
       '<span class="hs" title="친밀도">💗<i class="mini-bar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></i></span>' +
       '<span class="hs' + (full < 30 ? ' low' : '') + '" title="배부름">🥕<i class="mini-bar full"><i style="width:' + M.petFullPct() + '%"></i></i></span>' +
       '<span class="hs">💧+' + M.petBonus() + '%</span></div>' +
-      '<div class="htools">' + [['hFeed', '🥕', '먹이', full < 30], ['hEdit', editing ? '✅' : '✏️', editing ? '완료' : '꾸미기', editing], ['hShop', '🛋️', '상점'], ['hPots', '🪴', '화분', M.potAlert && M.potAlert()], ['hMail', '📮', '편지', M.mailUnread && M.mailUnread()], ['hCook', '🍳', '요리'], ['hHouse', '🔨', '집']].map(function (b) {
+      '<div class="htools">' + [['hYard', '🌷', '정원', M.gardenOrderReady && M.gardenOrderReady()], ['hFeed', '🥕', '먹이', full < 30], ['hEdit', editing ? '✅' : '✏️', editing ? '완료' : '꾸미기', editing], ['hShop', '🛋️', '상점'], ['hPots', '🪴', '화분', M.potAlert && M.potAlert()], ['hMail', '📮', '편지', M.mailUnread && M.mailUnread()], ['hCook', '🍳', '요리'], ['hHouse', '🔨', '집']].map(function (b) {
         return '<button class="ht' + (b[3] ? ' hot' : '') + '" id="' + b[0] + '"><span>' + b[1] + '</span><small>' + b[2] + '</small>' + (b[0] === 'hMail' && b[3] ? '<i class="nbadge">' + b[3] + '</i>' : '') + '</button>';
       }).join('') + '</div></div>';
     root.innerHTML = h;
@@ -256,6 +256,7 @@
     if (e.target.closest('#hFeed')) feedSheet();
     else if (e.target.closest('#hShop')) furnShop();
     else if (e.target.closest('#hHouse')) M.houseSheet();
+    else if (e.target.closest('#hYard')) { M.inVillage = true; M.go('garden'); if (M.render) M.render(); }
     else if (e.target.closest('#hMail')) M.mailSheet();
     else if (e.target.closest('#hCook')) M.cookSheet();
     else if (e.target.closest('#hEdit')) { editing = !editing; fsel = ''; rerender(); }

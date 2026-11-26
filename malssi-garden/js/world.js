@@ -3,12 +3,12 @@
 // 바닥(풀·길·물·모래·돌바닥)은 이음매가 없도록 코드로 그린다. 나무·건물·캐릭터는 그림이 오면 IMG 에 넣는다.
 (function () {
   var M = window.M, $ = M.$;
-  var T = 32, W = 36, H = 48;   // 칸 크기(화면 px), 지도 가로·세로 칸 수
+  var T = 32, W = 44, H = 58;   // 칸 크기(화면 px), 지도 가로·세로 칸 수
   var STEP = 170;               // 한 칸 걷는 시간(ms)
   // 그림이 오면 켠다. 예: tree: 'img/w-tree.png', house_bear: 'img/w-house-bear.png', ch_rabbit: 'img/ch-rabbit.png'(앞·뒤·옆 세 칸)
   var IMG = {};
   var WI = 'img/w/', CH_H = 1.6;   // 캐릭터 키(칸)
-  var TILES = ['grass1', 'grass3', 'path', 'water', 'sand', 'plaza', 'plankh', 'flowers'];
+  var TILES = ['lawn', 'grass1', 'grass3', 'path', 'water', 'sand', 'plaza', 'plankh', 'flowers'];
   var TREES = ['t-green', 't-autumn', 't-cherry', 't-pine', 't-green2', 't-cherry2', 't-pine2', 't-green3', 't-cherry3'];
   var FLOWERS = ['d-flower1', 'd-flower2', 'd-tulip', 'd-grass1', 'd-grass2'];
   var DECO = ['d-bush1', 'd-bush2', 'd-bush3', 'd-bush4', 'd-bush5', 'd-bush6', 'd-bush7', 'd-flowerbush', 'd-rock', 'd-rock2', 'd-rock3', 'd-rock4', 'd-rocks', 'd-stump'];
@@ -16,18 +16,20 @@
   // ---------- 지도 만들기 ----------
   // 바닥: 0 풀, 1 길, 2 물, 3 모래, 4 다리, 5 돌바닥(광장)
   var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false;
+  // 정원 가게(id 'shop')는 집 옆 뒷마당 텃밭으로 그린다 (yard)
   var BUILD = [
     { id: 'museum', name: '박물관', x: 4, y: 5, w: 5, h: 3, color: '#c9d6e8', roof: '#7d8fb3', em: '🏛️' },
-    { id: 'shop', name: '정원 가게', x: 23, y: 5, w: 5, h: 3, color: '#ffe3ea', roof: '#ff8fab', em: '🏪' },
-    { id: 'gift', name: '선물 교환소', x: 4, y: 13, w: 5, h: 3, color: '#fff3c9', roof: '#ffb02e', em: '🎁' },
-    { id: 'home', name: '내 집', x: 10, y: 14, w: 3, h: 2, color: '#fff', roof: '#e07a5f', em: '🐰' },
-    { id: 'den', name: '두더지 땅굴', x: 30, y: 5, w: 3, h: 2, color: '#c9a06a', roof: '#8a5a2b', em: '⛏️' },
-    { id: 'store', name: '잡화점', x: 25, y: 14, w: 5, h: 3, color: '#e9f7e4', roof: '#6cbf7a', em: '🛍️' }
+    { id: 'shop', name: '뒷마당 정원', x: 4, y: 14, w: 4, h: 3, yard: true, color: '#ffe3ea', roof: '#ff8fab', em: '🌷' },
+    { id: 'home', name: '내 집', x: 9, y: 15, w: 3, h: 2, color: '#fff', roof: '#e07a5f', em: '🐰' },
+    { id: 'gift', name: '선물 교환소', x: 30, y: 15, w: 3, h: 2, color: '#fff3c9', roof: '#ffb02e', em: '🎁' },
+    { id: 'den', name: '두더지 땅굴', x: 36, y: 5, w: 3, h: 2, color: '#c9a06a', roof: '#8a5a2b', em: '⛏️' },
+    { id: 'store', name: '잡화점', x: 35, y: 15, w: 3, h: 2, color: '#e9f7e4', roof: '#6cbf7a', em: '🛍️' }
   ];
-  var LOTS = [[3, 23], [7, 23], [11, 23], [21, 23], [25, 23], [29, 23], [3, 29], [7, 29], [11, 29], [21, 29], [25, 29], [29, 29],
-    [9, 6], [13, 6], [19, 6], [27, 8], [2, 8], [30, 13], [7, 17], [2, 17]];   // 13번째부터는 새 주민 자리
+  var LOTS = [[3, 26], [8, 26], [13, 26], [25, 26], [30, 26], [35, 26], [3, 33], [8, 33], [13, 33], [25, 33], [30, 33], [35, 33],
+    [12, 5], [16, 5], [25, 5], [30, 5], [3, 40], [8, 40], [13, 40], [25, 40], [30, 40], [35, 40]];   // 13번째부터는 새 주민 자리
   var HOUSE_COL = { bear: '#d9a066', squirrel: '#c98b5a', chick: '#ffe08a', hedgehog: '#e8b4a0', panda: '#e8e8e8', fox: '#f4a261', koala: '#b8c4d6', hamster: '#f6d6a8', penguin: '#cfe9f7', cat: '#f3d9b1', sheep: '#fbf7ef', owl: '#b5926a', dog: '#fff1dc', otter: '#e6c48a', deer: '#d9eccc', duck: '#ffe680', lion: '#f6a54b', camel: '#e8c99a', elephant: '#c9ccd6', monkey: '#c79a6a' };
-  var BOARD = { x: 15, y: 15 }, PIER = { x: 26, y: 42 };
+  var BOARD = { x: 18, y: 15 }, PIER = { x: 30, y: 55 };
+  var SEA_Y = 52, RIVER_Y = 47, SAND_Y = 49;
 
   function rnd(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
   function set(x, y, v) { if (x >= 0 && y >= 0 && x < W && y < H) G[y * W + x] = v; }
@@ -39,17 +41,17 @@
     var i, x, y;
     for (i = 0; i < W * H; i++) { G[i] = 0; SOLID[i] = 0; }
     // 길
-    vpath(17, 3, 33); vpath(18, 3, 33);
-    hpath(11, 3, 32); hpath(21, 3, 32); hpath(28, 3, 32); hpath(32, 3, 32);
-    for (y = 13; y <= 19; y++) for (x = 13; x <= 22; x++) set(x, y, 5);   // 광장
+    vpath(21, 3, 46); vpath(22, 3, 46);
+    hpath(12, 3, 40); hpath(24, 3, 40); hpath(31, 3, 40); hpath(38, 3, 40); hpath(45, 3, 40);
+    for (y = 14; y <= 21; y++) for (x = 16; x <= 27; x++) set(x, y, 5);   // 광장
     // 강과 다리
-    for (x = 0; x < W; x++) { set(x, 34, 2); set(x, 35, 2); }
-    set(17, 34, 4); set(18, 34, 4); set(17, 35, 4); set(18, 35, 4);
+    for (x = 0; x < W; x++) { set(x, RIVER_Y, 2); set(x, RIVER_Y + 1, 2); }
+    [21, 22].forEach(function (bx) { set(bx, RIVER_Y, 4); set(bx, RIVER_Y + 1, 4); });
     // 모래사장과 바다, 선착장
-    for (y = 36; y <= 38; y++) for (x = 0; x < W; x++) set(x, y, 3);
-    for (y = 39; y < H; y++) for (x = 0; x < W; x++) set(x, y, 2);
-    for (y = 39; y <= 42; y++) set(26, y, 4);
-    vpath(17, 36, 38); vpath(18, 36, 38); hpath(37, 18, 26);
+    for (y = SAND_Y; y < SEA_Y; y++) for (x = 0; x < W; x++) set(x, y, 3);
+    for (y = SEA_Y; y < H; y++) for (x = 0; x < W; x++) set(x, y, 2);
+    for (y = SEA_Y; y <= PIER.y; y++) set(PIER.x, y, 4);
+    vpath(21, SAND_Y, SEA_Y - 1); vpath(22, SAND_Y, SEA_Y - 1); hpath(SAND_Y + 1, 22, PIER.x);
     // 건물: 몸통은 막히고, 문 앞 칸까지 길을 낸다
     BUILD.forEach(function (b) {
       for (y = b.y; y < b.y + b.h; y++) for (x = b.x; x < b.x + b.w; x++) solid(x, y);
@@ -68,32 +70,32 @@
     // 게시판·선착장·다리
     solid(BOARD.x, BOARD.y); solid(BOARD.x + 1, BOARD.y); OBJ.push({ kind: 'board', x: BOARD.x, y: BOARD.y + 1 }); DOORS[BOARD.x + ',' + (BOARD.y + 1)] = { type: 'place', id: 'board' };
     DOORS[PIER.x + ',' + PIER.y] = { type: 'place', id: 'pier' };
-    solid(PIER.x + 1, 38); OBJ.push({ kind: 'img', src: 'o-sign', x: PIER.x + 1.5, y: 39, h: 1.1 }); OBJ.push({ kind: 'label', text: '🎣 낚시터', x: PIER.x + 1.5, y: 37.6, z: 39 });
+    solid(PIER.x + 1, SAND_Y + 2); OBJ.push({ kind: 'img', src: 'o-sign', x: PIER.x + 1.5, y: SAND_Y + 3, h: 1.1 }); OBJ.push({ kind: 'label', text: '🎣 낚시터', x: PIER.x + 1.5, y: SAND_Y + 1.6, z: SAND_Y + 3 });
     OBJ.push({ kind: 'img', src: 'o-pier', x: PIER.x + 0.5, y: PIER.y + 1.4, h: 1.6, under: true });
-    OBJ.push({ kind: 'img', src: 'm-arch', x: 18, y: 12.6, h: 2.4 });
+    OBJ.push({ kind: 'img', src: 'm-arch', x: 22, y: 13.6, h: 2.4 });
     // 광장 꾸미기: 가로등·벤치·꽃밭
-    [[13, 13, 'o-lamp'], [22, 13, 'o-lamp1'], [13, 19, 'o-lamp2'], [22, 19, 'o-lamp3']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 1.6 }); });
-    [[20, 15, 'o-bench'], [20, 18, 'o-bench1'], [14, 17, 'o-bench2']].forEach(function (q) { solid(q[0], q[1]); solid(q[0] + 1, q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 1, y: q[1] + 1, h: 1.1 }); });
-    [[16, 13, 'o-planter'], [19, 13, 'o-flowerbed']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 0.9 }); });
-    solid(17, 16); solid(18, 16); OBJ.push({ kind: 'img', src: 'x-fountain', x: 18, y: 17, h: 1.7 });
-    solid(15, 19); OBJ.push({ kind: 'img', src: 'o-well', x: 15.5, y: 20, h: 1.5 });
-    OBJ.push({ kind: 'market', x: 21.5, y: 15, tx: 21, ty: 14 });
-    solid(13, 16); OBJ.push({ kind: 'mailbox', x: 13.5, y: 17 });
-    solid(20, 12); OBJ.push({ kind: 'img', src: 'x-signpost', x: 20.5, y: 13, h: 1.4 });
-    [[24, 18, 'x-barrel', 1], [24, 19, 'x-applecrate', 0.9], [30, 18, 'x-flowercart', 1.1], [3, 17, 'x-tulipbox', 0.9], [9, 18, 'x-topiary', 1.3], [14, 21, 'x-flag', 1.6], [21, 21, 'x-flag', 1.6]].forEach(function (q) { if (G[q[1] * W + q[0]] !== 0 || SOLID[q[1] * W + q[0]]) return; solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: q[3] }); });
+    [[16, 14, 'o-lamp'], [27, 14, 'o-lamp1'], [16, 21, 'o-lamp2'], [27, 21, 'o-lamp3']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 1.6 }); });
+    [[24, 18, 'o-bench'], [24, 20, 'o-bench1'], [17, 19, 'o-bench2']].forEach(function (q) { solid(q[0], q[1]); solid(q[0] + 1, q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 1, y: q[1] + 1, h: 1.1 }); });
+    [[19, 14, 'o-planter'], [24, 14, 'o-flowerbed']].forEach(function (q) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: 0.9 }); });
+    solid(21, 17); solid(22, 17); OBJ.push({ kind: 'img', src: 'x-fountain', x: 22, y: 18, h: 1.7 });
+    solid(19, 20); OBJ.push({ kind: 'img', src: 'o-well', x: 19.5, y: 21, h: 1.5 });
+    OBJ.push({ kind: 'market', x: 25.5, y: 16, tx: 25, ty: 15 });
+    solid(16, 17); OBJ.push({ kind: 'mailbox', x: 16.5, y: 18 });
+    solid(23, 13); OBJ.push({ kind: 'img', src: 'x-signpost', x: 23.5, y: 14, h: 1.4 });
+    [[33, 18, 'x-barrel', 1], [34, 18, 'x-applecrate', 0.9], [29, 19, 'x-flowercart', 1.1], [3, 19, 'x-tulipbox', 0.9], [13, 18, 'x-topiary', 1.3], [15, 23, 'x-flag', 1.6], [28, 23, 'x-flag', 1.6]].forEach(function (q) { if (G[q[1] * W + q[0]] === 0 && !SOLID[q[1] * W + q[0]]) { solid(q[0], q[1]); OBJ.push({ kind: 'img', src: q[2], x: q[0] + 0.5, y: q[1] + 1, h: q[3] }); } });
     // 주민 집 옆 우체통
     LOTS.forEach(function (l, k) { solid(l[0] + 3, l[1] + 2, 2 + k); OBJ.push({ kind: 'mail', k: k, x: l[0] + 3.5, y: l[1] + 3 }); });
     // 열매 나무 6그루: 사방이 풀인 곳에 서로 떨어뜨려 심는다
     var rf = rnd(31), FK = ['apple', 'orange', 'peach', 'pear', 'cherry', 'apple'], fts = [];
     for (var tries = 0; tries < 3000 && fts.length < FK.length; tries++) {
-      var fx = 3 + Math.floor(rf() * (W - 6)), fy = 4 + Math.floor(rf() * 28), okk = true;
+      var fx = 3 + Math.floor(rf() * (W - 6)), fy = 4 + Math.floor(rf() * 40), okk = true;
       for (var a2 = -1; a2 <= 1 && okk; a2++) for (var b2 = -1; b2 <= 1; b2++) { var gi = (fy + b2) * W + fx + a2; if (G[gi] !== 0 || SOLID[gi]) { okk = false; break; } }
       if (okk && fts.every(function (f) { return Math.abs(f[0] - fx) + Math.abs(f[1] - fy) > 6; })) fts.push([fx, fy]);
     }
     fts.forEach(function (f, k) { solid(f[0], f[1]); OBJ.push({ kind: 'ftree', fk: FK[k], key: 'f' + k, tx: f[0], ty: f[1], x: f[0] + 0.5, y: f[1] + 1, h: 2.5 }); });
     // 숲 테두리와 흩어진 나무·덤불·바위·꽃
     var r = rnd(7), TREEAT = [], FOREST = ['t-green', 't-green2', 't-green3', 't-pine', 't-pine2', 't-green', 't-autumn', 't-cherry'];
-    for (y = 0; y < 34; y++) for (x = 0; x < W; x++) {
+    for (y = 0; y < RIVER_Y; y++) for (x = 0; x < W; x++) {
       var edge = y < 3 || x < 2 || x > W - 3;
       if (G[y * W + x] !== 0 || SOLID[y * W + x]) continue;
       var nearPath = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1]].some(function (d) { var v = G[(y + d[1]) * W + x + d[0]]; return v === 1 || v === 5 || SOLID[(y + d[1]) * W + x + d[0]]; });
@@ -105,9 +107,22 @@
         OBJ.push({ kind: 'tree', src: tn, key: 't' + x + '_' + y, tx: x, ty: y, pine: tn.indexOf('pine') >= 0, x: x + 0.5 + (r() - 0.5) * 0.3, y: y + 1, h: (tn.indexOf('pine') >= 0 ? 2.6 : 2.2) + r() * 0.35 });
       }
       else if (!nearPath && q < 0.085 && !crowd) { solid(x, y); var dn = DECO[Math.floor(r() * DECO.length)], isRock = dn.indexOf('rock') >= 0; OBJ.push({ kind: isRock ? 'rock' : 'img', src: dn, key: 'r' + x + '_' + y, tx: x, ty: y, x: x + 0.5, y: y + 1, h: isRock ? 1.0 : 0.8 + r() * 0.2 }); }
-      else if (q < 0.15) OBJ.push({ kind: 'img', src: FLOWERS[Math.floor(r() * FLOWERS.length)], x: x + 0.5, y: y + 1, h: 0.5, flat: true });
     }
-    for (x = 0; x < W; x++) if (r() < 0.25 && G[36 * W + x] === 3 && x !== 17 && x !== 18) OBJ.push({ kind: 'shell', x: x, y: 37 });
+    // 꽃은 군락으로: 풀밭 몇 군데에 같은 꽃을 모아 심는다
+    var rfl = rnd(23), patches = [];
+    for (var pt = 0; pt < 4000 && patches.length < 16; pt++) {
+      var cx = 3 + Math.floor(rfl() * (W - 6)), cy = 4 + Math.floor(rfl() * (RIVER_Y - 6));
+      if (G[cy * W + cx] !== 0 || SOLID[cy * W + cx]) continue;
+      if (patches.some(function (p) { return Math.abs(p[0] - cx) + Math.abs(p[1] - cy) < 7; })) continue;
+      patches.push([cx, cy]);
+      var kind = FLOWERS[patches.length % FLOWERS.length], n2 = 5 + Math.floor(rfl() * 5);
+      for (var f2 = 0; f2 < n2; f2++) {
+        var fx2 = cx + Math.round((rfl() - 0.5) * 3), fy2 = cy + Math.round((rfl() - 0.5) * 2.4);
+        if (G[fy2 * W + fx2] !== 0 || SOLID[fy2 * W + fx2] || DOORS[fx2 + ',' + fy2]) continue;
+        OBJ.push({ kind: 'img', src: f2 % 3 === 2 ? FLOWERS[(patches.length + 1) % FLOWERS.length] : kind, x: fx2 + 0.5 + (rfl() - 0.5) * 0.3, y: fy2 + 1, h: 0.55, flat: true });
+      }
+    }
+    for (x = 0; x < W; x++) if (r() < 0.2 && G[(SAND_Y + 1) * W + x] === 3 && x !== 21 && x !== 22) OBJ.push({ kind: 'shell', x: x, y: SAND_Y + 1 });
   }
   function walkable(x, y) {
     if (x < 0 || y < 0 || x >= W || y >= H) return false;
@@ -140,7 +155,7 @@
     var P = function (n, fb) { return pat[n] || fb; };
     var r = rnd(11), x, y;
     // 풀밭 전체
-    g.fillStyle = P('grass1', '#a7dc8a'); g.fillRect(0, 0, W * T, H * T);
+    g.fillStyle = P('lawn', '#96d06e'); g.fillRect(0, 0, W * T, H * T);
     // 물·모래: 이웃이 같으면 이어서, 가장자리는 둥글게
     function rect(x0, y0, w, h, l, rr, u, d) {
       var rad = 9; g.beginPath();
@@ -180,7 +195,7 @@
   // ---------- 캐릭터 ----------
   var me = null, npcs = [], cam = { x: 0, y: 0 }, cv = null, ctx = null, raf = 0, imgs = {}, lastT = 0, mounted = null;
   function img(src) { if (!src) return null; if (!imgs[src]) { var i = new Image(); i.src = src; imgs[src] = i; } return imgs[src].complete && imgs[src].naturalWidth ? imgs[src] : null; }
-  function Wst() { var P = M.P; P.world = P.world || { x: 17, y: 22, d: 'down' }; return P.world; }
+  function Wst() { var P = M.P; P.world = P.world || { x: 22, y: 24, d: 'down' }; return P.world; }
   function mkActor(x, y, kind, id) { return { x: x, y: y, px: x, py: y, tx: x, ty: y, t: 1, d: 'down', path: [], kind: kind, id: id, wait: 0 }; }
   function syncNpcs() {
     var rs = M.V.residents();
@@ -338,6 +353,17 @@
     else ctx.drawImage(im, X, Y, dw, dh);
     return { top: Y, h: dh };
   }
+  // 뒷마당 정원: 갈아 둔 흙에 작물이 자라고 나무 울타리로 둘렀다
+  function drawYard(b) {
+    var X = b.x * T, Y = b.y * T, WW = b.w * T, HH = b.h * T;
+    ctx.fillStyle = '#b07b4a'; roundRect(X + 2, Y + 4, WW - 4, HH - 6, 10); ctx.fill();
+    ctx.fillStyle = '#9a6a3c'; for (var rr = 0; rr < 3; rr++) { roundRect(X + 8, Y + 10 + rr * (HH - 14) / 3, WW - 16, 6, 3); ctx.fill(); }
+    ['plant-strawberry-5', 'plant-tomato-5', 'plant-corn-5', 'plant-pumpkin-5', 'plant-carrot-5', 'plant-sunflower-5'].forEach(function (n, k) {
+      sprite(n, b.x + 0.7 + (k % 3) * (b.w - 1.4) / 2, b.y + 1.15 + Math.floor(k / 3) * 1.25, 0, false, 1.1);
+    });
+    for (var fx = 0; fx < b.w; fx++) { sprite('o-fencew', b.x + fx + 0.5, b.y + 0.55, 0, false, 0.7); if (fx !== Math.floor(b.w / 2)) sprite('o-fencew', b.x + fx + 0.5, b.y + b.h + 0.15, 0, false, 0.7); }
+    return { top: Y - 8 };
+  }
   function drawObj(o) {
     var X, Y, r;
     if (o.kind === 'img') { sprite(o.src, o.x, o.y + (o.flat ? -0.1 : 0.05), o.w, false, o.h); }
@@ -356,7 +382,8 @@
     else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0, false, 1.1); }
     else if (o.kind === 'build') {
       var b = o.b, nm = b.id === 'home' ? 'h-pink' : 'b-' + b.id;
-      r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.id === 'home' ? 3.5 : b.id === 'den' ? 4 : 5.6, false, b.id === 'home' ? 3.4 : b.id === 'den' ? 2.6 : 4.6);
+      if (b.yard) { r = drawYard(b); }
+      else r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.id === 'museum' ? 5.6 : b.id === 'den' ? 4 : 3.5, false, b.id === 'museum' ? 4.6 : b.id === 'den' ? 2.6 : 3.4);
       if (!r) { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); r = { top: b.y * T }; }
       label(b.name, (b.x + b.w / 2) * T, r.top + 4);
       if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, r.top + 10, 18);
@@ -411,8 +438,8 @@
     if (!M.gatherDaily) return [];
     if (!cands) {
       cands = { grass: [], sand: [] };
-      for (var y = 4; y < 33; y++) for (var x = 3; x < W - 3; x++) if (G[y * W + x] === 0 && !SOLID[y * W + x] && !DOORS[x + ',' + y]) cands.grass.push([x, y]);
-      for (y = 36; y <= 38; y++) for (x = 1; x < W - 1; x++) if (G[y * W + x] === 3 && !SOLID[y * W + x]) cands.sand.push([x, y]);
+      for (var y = 4; y < RIVER_Y - 1; y++) for (var x = 3; x < W - 3; x++) if (G[y * W + x] === 0 && !SOLID[y * W + x] && !DOORS[x + ',' + y]) cands.grass.push([x, y]);
+      for (y = SAND_Y; y < SEA_Y; y++) for (x = 1; x < W - 1; x++) if (G[y * W + x] === 3 && !SOLID[y * W + x]) cands.sand.push([x, y]);
     }
     var lk = M.luckOn && M.luckOn() ? (M.P.gather.luckSeed || 1) : 0;
     if (dailyDay !== M.today() + lk || !dailyCache) { dailyDay = M.today() + lk; dailyCache = M.gatherDaily(cands).concat(lk ? M.gatherDaily(cands, lk) : []); }
@@ -427,7 +454,7 @@
       bugNext = now + (luck ? 0.5 : 1) * (90000 + Math.random() * 90000);   // 평소 1분 30초~3분에 한 마리(한 번에 한 마리만), 향수를 쓰면 두 배
       var where = ['flower', 'flower', 'tree', 'water'][Math.floor(Math.random() * 4)], id = M.bugNow(where);
       if (id) {
-        var pool = where === 'tree' ? OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 2 && o.tx < W - 3 && o.ty > 3; }) : where === 'water' ? [{ x: 4 + Math.random() * 28, y: 34 }] : OBJ.filter(function (o) { return o.kind === 'img' && o.flat; });
+        var pool = where === 'tree' ? OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 2 && o.tx < W - 3 && o.ty > 3; }) : where === 'water' ? [{ x: 4 + Math.random() * (W - 8), y: RIVER_Y + 0.5 }] : OBJ.filter(function (o) { return o.kind === 'img' && o.flat; });
         var at = pool[Math.floor(Math.random() * pool.length)];
         if (at) bugs.push({ id: id, x: at.x + (Math.random() - 0.5), y: at.y - (where === 'tree' ? 1.6 : 0.8), hx: at.x, hy: at.y - (where === 'tree' ? 1.6 : 0.8), vx: 0.4, vy: 0, ph: Math.random() * 6, life: now + 40000 + Math.random() * 40000 });
       }
@@ -458,9 +485,9 @@
       return true;
     }
     // 우체통 (내 집 옆)
-    if (tx === 13 && (ty === 16 || ty === 15)) { goNear(13, 16, function () { M.mailSheet(); }); return true; }
+    if (tx === 16 && (ty === 17 || ty === 16)) { goNear(16, 17, function () { M.mailSheet(); }); return true; }
     // 떠돌이 장터
-    if (M.marketToday && M.marketToday() && (tx === 21 || tx === 22) && (ty === 13 || ty === 14)) { goNear(21, 14, function () { M.marketSheet(); }); return true; }
+    if (M.marketToday && M.marketToday() && (tx === 25 || tx === 26) && (ty === 14 || ty === 15)) { goNear(25, 16, function () { M.marketSheet(); }); return true; }
     // 나무·열매 나무·바위
     var o = OBJ.filter(function (o) { return (o.kind === 'tree' || o.kind === 'ftree' || o.kind === 'rock') && o.tx === tx && (ty === o.ty || ty === o.ty - 1 || (o.kind !== 'rock' && ty === o.ty - 2)); })[0];
     if (o) {
@@ -520,7 +547,7 @@
     if ((tx === PIER.x + 1 && ty === PIER.y) || (tx === PIER.x && ty === PIER.y)) { goTo(PIER.x, PIER.y, function () { me.d = 'down'; M.fishStart('sea'); }); return; }
     // 물을 누르면 그 물가로 가서 낚시
     if (tx >= 0 && ty >= 0 && tx < W && ty < H && G[ty * W + tx] === 2) {
-      var where = ty >= 39 ? 'sea' : 'river', best = null;
+      var where = ty >= SEA_Y ? 'sea' : 'river', best = null;
       [[0, -1], [0, 1], [-1, 0], [1, 0], [0, -2], [0, 2]].forEach(function (d2) {
         var sx = tx + d2[0], sy = ty + d2[1]; if (!walkable(sx, sy)) return;
         var pth = (sx === me.x && sy === me.y) ? [] : findPath(me.x, me.y, sx, sy, me); if (!pth) return;
@@ -569,7 +596,7 @@
     mount: function (root) {
       build(); if (!ground) { if (!tilesReady) { loadTiles(function () { tilesReady = true; ground = null; drawGround(); }); } drawGround(); }
       var w = Wst();
-      if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 17; me.y = me.py = me.ty = 22; } }
+      if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 22; me.y = me.py = me.ty = 24; } }
       syncNpcs();
       // 캐릭터 그림을 미리 불러 둔다 (걷는 방향이 바뀔 때 깜빡이지 않게)
       ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + 'ch-rabbit' + M.petStage() + '-' + v + k + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
