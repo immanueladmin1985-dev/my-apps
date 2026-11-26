@@ -1,23 +1,19 @@
 {
   "rules": {
-    "rooms": {
-      "$room": {
-        ".read": "auth != null && (data.child('meta/player').val() === auth.uid || data.child('meta/admin').val() === auth.uid)",
-        "meta": {
-          "player": {
-            ".write": "auth != null && !data.exists() && newData.val() === auth.uid"
-          },
-          "admin": {
-            ".write": "auth != null && !data.exists() && newData.val() === auth.uid && data.parent().child('player').exists()"
-          }
-        },
-        "state": {
-          ".write": "auth != null && data.parent().child('meta/player').val() === auth.uid"
-        },
-        "cmds": {
-          "$id": {
-            ".write": "auth != null && ((!data.exists() && newData.exists() && data.parent().parent().child('meta/admin').val() === auth.uid) || (data.exists() && !newData.exists() && data.parent().parent().child('meta/player').val() === auth.uid))",
-            ".validate": "!newData.exists() || newData.child('t').isString()"
+    "pins": {
+      "$pin": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('by').val() === auth.uid)",
+        ".validate": "!newData.exists() || (newData.child('fid').isString() && newData.child('by').val() === auth.uid)"
+      }
+    },
+    "families": {
+      "$fid": {
+        ".read": "auth != null && data.child('members/' + auth.uid).exists()",
+        ".write": "auth != null && data.child('members/' + auth.uid).exists()",
+        "members": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && (data.exists() || !data.parent().exists() || (root.child('pins/' + newData.child('pin').val() + '/fid').val() === $fid && root.child('pins/' + newData.child('pin').val() + '/at').val() > now - 900000))"
           }
         }
       }

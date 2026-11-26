@@ -193,6 +193,7 @@
   }
 
   // ---------- 캐릭터 ----------
+  var mate = null;   // 가족 연결: 상대 토끼
   var me = null, npcs = [], cam = { x: 0, y: 0 }, cv = null, ctx = null, raf = 0, imgs = {}, lastT = 0, mounted = null;
   function img(src) { if (!src) return null; if (!imgs[src]) { var i = new Image(); i.src = src; imgs[src] = i; } return imgs[src].complete && imgs[src].naturalWidth ? imgs[src] : null; }
   function Wst() { var P = M.P; P.world = P.world || { x: 22, y: 24, d: 'down' }; return P.world; }
@@ -210,6 +211,7 @@
   function sleepy(n) { var h = hourNow(), at = 21 + ((n.k * 7) % 12) * 0.25, wake = 6 + ((n.k * 5) % 4) * 0.25; return h >= at || h < wake; }
   M.residentAsleep = function (id) { var n = npcs.filter(function (x) { return x.id === id; })[0]; return n ? !!n.asleep : (function () { var h = hourNow(); return h < 6 || h >= 23.9; })(); };
   function occupied(x, y, self) {
+    if (self && self.kind === 'mate') return false;   // 상대 토끼는 겹쳐도 지나간다
     if (me && me !== self && ((me.x === x && me.y === y) || (me.tx === x && me.ty === y))) return true;
     return npcs.some(function (n) { return n !== self && !n.asleep && ((n.x === x && n.y === y) || (n.tx === x && n.ty === y)); });
   }
@@ -236,7 +238,7 @@
   function stepActor(a, dt) {
     if (a.t < 1) {
       a.t = Math.min(1, a.t + dt / (a.kind === 'npc' ? STEP * 1.8 : STEP));
-      if (a.t >= 1) { a.x = a.tx; a.y = a.ty; if (a === me) { var w = Wst(); w.x = a.x; w.y = a.y; w.d = a.d; } }
+      if (a.t >= 1) { a.x = a.tx; a.y = a.ty; if (a === me) { var w = Wst(); w.x = a.x; w.y = a.y; w.d = a.d; if (M.Family && M.Family.myPos) M.Family.myPos(a.x, a.y, a.d); } }
       return;
     }
     if (a.path.length) {
@@ -292,9 +294,10 @@
 
   // ---------- 그리기 ----------
   function draw(now) {
-    if (!mounted || !cv.isConnected) { raf = 0; return; }
+    if (!mounted || !cv.isConnected) { raf = 0; if (M.Family && M.Family.leaveVillage) M.Family.leaveVillage(); return; }
     var dt = Math.min(60, now - (lastT || now)); lastT = now;
-    stepActor(me, dt); npcs.forEach(function (n) { npcThink(n, dt); stepActor(n, dt); });
+    stepActor(me, dt); npcs.forEach(function (n) { npcThink(n, dt); stepActor(n, dt); }); if (mate) stepActor(mate, dt);
+    [me, mate].forEach(function (a) { if (a && a.say && a.sayUntil && now > a.sayUntil) a.say = null; });
     var vw = cv.clientWidth, vh = cv.clientHeight, mp = pos(me);
     // 시야: 손가락으로 끌어 옮긴 동안은 그 자리, 아니면 토끼를 부드럽게 따라간다
     var fx = (mp.x + 0.5) * T - vw / 2, fy = (mp.y + 0.5) * T - vh / 2;
@@ -310,7 +313,7 @@
     // 물체와 캐릭터를 아래쪽(y)이 큰 순서로 그려 앞뒤를 맞춘다
     OBJ.forEach(function (o) { if (o.under) drawObj(o); });
     var list = OBJ.filter(function (o) { var oy = o.y * T; return !o.under && oy > cam.y - 40 && oy < cam.y + vh + 260; }).map(function (o) { return { y: o.z || o.y, o: o }; });
-    [me].concat(npcs.filter(function (n) { return !n.asleep; })).forEach(function (a) { var p = pos(a); list.push({ y: p.y + 1, a: a, p: p }); });
+    [me].concat(mate ? [mate] : [], npcs.filter(function (n) { return !n.asleep; })).forEach(function (a) { var p = pos(a); list.push({ y: p.y + 1, a: a, p: p }); });
     daily().forEach(function (d) { list.push({ y: d.y + 0.5, g: d }); });
     bugTick(dt, now); bugs.forEach(function (b) { list.push({ y: b.y + 2, b: b }); });
     list.sort(function (A, B) { return A.y - B.y; });
@@ -377,7 +380,7 @@
     }
     else if (o.kind === 'label') { label(o.text, o.x * T, o.y * T); }
     else if (o.kind === 'mailbox') { var mr = sprite('mail-box', o.x, o.y, 0, false, 1.3); if (M.mailUnread && M.mailUnread()) emoji('✉️', o.x * T + T * 0.5, (mr ? mr.top : o.y * T - 40) + 4, 16); }
-    else if (o.kind === 'market') { if (M.marketToday && M.marketToday()) { var rr = sprite('x-stand', o.x, o.y, 0, false, 1.7); sprite('ch-raccoon-front', o.x + 0.9, o.y + 0.25, 0, false, CH_H); label('떠돌이 장터', o.x * T, (rr ? rr.top : o.y * T - 50) + 2); } }
+    else if (o.kind === 'market') { if (M.marketToday && M.marketToday()) { var rr = sprite('x-stand', o.x, o.y, 0, false, 1.7); sprite('ch-raccoon-front', o.x + 0.9, o.y + 0.25, 0, false, CH_H); label(M.hmarket && M.hmarket() ? '🦝 특별 장터' : '떠돌이 장터', o.x * T, (rr ? rr.top : o.y * T - 50) + 2); } }
     else if (o.kind === 'shell') { emoji('🐚', o.x * T + T / 2, (o.y - 1) * T + T / 2, 13); }
     else if (o.kind === 'mail') { if (residentAt(o.k)) sprite(['o-mail', 'o-mail1', 'o-mail2'][o.k % 3], o.x, o.y + 0.05, 0, false, 1.1); }
     else if (o.kind === 'build') {
@@ -411,13 +414,15 @@
     var bob = walking ? Math.abs(Math.sin(now / 80)) * 2.5 : 0;
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T - 3, T * 0.34, T * 0.13, 0, 0, 7); ctx.fill();
     var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
-    var name = a.kind === 'me' ? 'ch-rabbit' + M.petStage() + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
+    var stg = a.kind === 'mate' ? (a.stage || 1) : M.petStage();
+    var name = a.kind === 'me' || a.kind === 'mate' ? 'ch-rabbit' + stg + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
     var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
     if (!r) {   // 그 방향 그림을 아직 불러오는 중이면, 이미 불러온 다른 모습으로 그린다 (예전 상반신 그림은 쓰지 않는다)
-      var alts = a.kind === 'me' ? ['ch-rabbit' + M.petStage() + '-' + view + '1', 'ch-rabbit' + M.petStage() + '-front1'] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
+      var alts = a.kind === 'me' || a.kind === 'mate' ? ['ch-rabbit' + stg + '-' + view + '1', 'ch-rabbit' + stg + '-front1'] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
       for (var k = 0; k < alts.length && !r; k++) r = sprite(alts[k], p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
     }
-    if (a.kind === 'npc' && a.say) {   // 말풍선
+    if (a.kind === 'mate') label('💕 ' + (a.name || ''), X + T / 2, (r ? r.top : Y - T) - 2);
+    if (a.say) {   // 말풍선
       var top = (r ? r.top : Y - T) - 6, cx = X + T / 2;
       ctx.font = '700 12px ' + (M.uiFont || 'system-ui, sans-serif'); var tw = Math.max(ctx.measureText(a.say.t).width, ctx.measureText(a.say.k).width * 0.85) + 14;
       ctx.fillStyle = 'rgba(255,255,255,.96)'; ctx.strokeStyle = '#d9c7ae'; ctx.lineWidth = 1.5; roundRect(cx - tw / 2, top - 34, tw, 32, 10); ctx.fill(); ctx.stroke();
@@ -525,6 +530,7 @@
     // 주민을 눌렀나 (그림이 칸보다 커서 조금 넉넉하게 본다)
     var hit = npcs.filter(function (n) { if (n.asleep) return false; var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
     if (hit) { talkTo(hit); return; }
+    if (mate) { var mp2 = pos(mate); if (wx > mp2.x * T - 8 && wx < mp2.x * T + T + 8 && wy > (mp2.y + 1 - CH_H) * T - 4 && wy < mp2.y * T + T + 4) { goNear(mate.x, mate.y, function () { if (M.Family) M.Family.mateSheet(); }); return; } }
     if (gatherTap(tx, ty, wx, wy)) return;
     if (false) {
       npcs.forEach(function (n) { if (n.talking === 'wait') n.talking = false; });
@@ -612,12 +618,23 @@
       mounted = root; lastT = 0;
       if (!raf) raf = requestAnimationFrame(draw);
       if (M.moveInCheck) M.moveInCheck();
+      if (M.Family && M.Family.myPos) M.Family.myPos(me.x, me.y, me.d);
     },
+    announce: function () { if (me && mounted && cv && cv.isConnected && M.Family && M.Family.myPos) M.Family.myPos(me.x, me.y, me.d); },
     // 자동 점검용
     state: function () { return { me: me && { x: me.x, y: me.y, moving: me.t < 1 || me.path.length > 0 }, npcs: npcs.map(function (n) { return { id: n.id, x: n.x, y: n.y }; }) }; },
     tapTile: function (x, y) { onTap({ clientX: cv.getBoundingClientRect().left + x * T - cam.x + T / 2, clientY: cv.getBoundingClientRect().top + y * T - cam.y + T / 2 }); },
     objs: function () { return { ftree: OBJ.filter(function (o) { return o.kind === 'ftree'; }).map(function (o) { return [o.tx, o.ty, o.fk]; }), rock: OBJ.filter(function (o) { return o.kind === 'rock'; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), tree: OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 2 && o.tx < W - 3 && o.ty > 3; }).slice(0, 3).map(function (o) { return [o.tx, o.ty]; }), daily: daily().map(function (d) { return [d.x, d.y, d.type, d.id]; }), bugs: bugs.length }; },
     teleport: function (x, y) { me.x = me.px = me.tx = x; me.y = me.py = me.ty = y; me.path = []; },
+    setMate: function (m) {
+      if (!m) { mate = null; return; }
+      if (!built) build();
+      if (!mate || Math.abs(mate.x - m.x) + Math.abs(mate.y - m.y) > 30) { mate = mkActor(m.x, m.y, 'mate', 'mate'); }
+      else { var p = findPath(mate.t < 1 ? mate.tx : mate.x, mate.t < 1 ? mate.ty : mate.y, m.x, m.y, mate); if (p) mate.path = p; else { mate.x = mate.px = mate.tx = m.x; mate.y = mate.py = mate.ty = m.y; mate.path = []; } }
+      mate.stage = m.stage; mate.name = m.name; if (!mate.path.length) mate.d = m.d || mate.d;
+    },
+    emote: function (who, t, k) { var a = who === 'me' ? me : mate; if (!a) return; a.say = { t: t, k: k || '' }; a.sayUntil = performance.now() + 4000; },
+    mate: function () { return mate && { x: mate.x, y: mate.y, tx: mate.tx, ty: mate.ty, name: mate.name, say: mate.say }; },
     reach: function (gx, gy) { var p = findPath(me.x, me.y, gx, gy); return p ? p.length : -1; },
     lots: function () { return LOTS; },
     doorOf: function (id) { var b = BUILD.filter(function (b) { return b.id === id; })[0]; return b && b.door; },

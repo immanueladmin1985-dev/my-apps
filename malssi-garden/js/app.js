@@ -271,7 +271,8 @@
       '<h4>기록</h4><button class="btn wide" data-a="export">💾 백업 파일 저장하기</button><button class="btn wide" data-a="import">📂 백업 파일 불러오기 (관리자)</button>' +
       '<p class="hint">기록은 이 폰에만 저장돼요. 폰을 바꾸거나 브라우저 데이터를 지우기 전에 백업 파일을 저장해 두세요.</p>' +
       '<button class="btn wide" data-a="admin">🔒 관리자 메뉴</button>' +
-      (M.Remote && M.Remote.state().admin ? '<button class="btn wide" data-a="remote">💌 원격 관리 (아내 폰)' + (M.Remote.waiting ? ' 🔴' : '') + '</button>' : '<button class="btn ghost wide" data-a="remote">💌 다른 폰 원격 관리 연결</button>') +
+      '<button class="btn wide" data-a="family">👨‍👩 가족 연결' + (M.Family && M.Family.state().ready ? ' ✔' : '') + '</button>' +
+      (M.Family && M.Family.isHusband() ? '<button class="btn wide" data-a="remote">💌 원격 관리 (' + esc(M.Family.mateName() || '아내') + ' 폰)' + (M.Family.waiting ? ' 🔴' : '') + '</button>' : '') +
       '<button class="btn danger wide" data-a="reset">모든 기록 지우기</button>' +
       '<button class="btn primary wide" data-close>닫기</button>';
     var d = M.modal(h, { onClose: M.render });
@@ -296,7 +297,8 @@
       else if (a === 'export') exportBackup();
       else if (a === 'import') { d.close(); M.askPin('백업 불러오기', M.pickBackup); }
       else if (a === 'admin') { d.close(); M.openAdmin(); }
-      else if (a === 'remote') { d.close(); M.Remote.adminPanel(); }
+      else if (a === 'remote') { d.close(); M.Family.adminPanel(); }
+      else if (a === 'family') { d.close(); M.Family.sheet(); }
       else if (a === 'reset') {
         d.close();
         var doReset = function () { M.confirm('모든 기록을 지울까요?', '배운 단계, 정원, 토끼, 꽃 포인트, 쿠폰이 모두 사라지고 되돌릴 수 없어요.', '모두 지우기', function () { M.reset(); location.reload(); }, true); };
@@ -479,7 +481,7 @@
 
   M.render();
   dayCheck();
-  if (M.Remote) { M.Remote.start(); var RS = M.Remote.state(); if (RS.admin && !P.started) setTimeout(M.Remote.adminPanel, 500); }
+  if (M.Family && M.Family.start) M.Family.start();
   // 자동 점검용
   window.__malssi = M;
 })();
