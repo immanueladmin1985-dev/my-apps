@@ -1431,3 +1431,53 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .bbstage .bbimg.rf.me { transform: none; } .bbstage .bbimg.rf.op { transform: scaleX(-1); }
 .coop .bbside.me .bbimg { transform: scaleX(-1); } .coop .bbside.op .bbimg { transform: none; }
 .coop .bbside.me .bbimg.rf { transform: none; } .coop .bbside.op .bbimg.rf { transform: scaleX(-1); }
+
+/* ===== 전체 배치 점검 (휴대폰 세로·가로, 태블릿 가로) ===== */
+/* 뒷마당 가로 화면: 간판 칸이 0 너비로 줄던 문제 */
+@media (orientation: landscape) and (min-width: 700px) {
+  .garden .stallwrap { width: 100%; margin: 0; max-width: none; }
+  .garden .orders { margin-top: -6px; }
+}
+/* 가방·목록 창: 낮은 가로 화면에서는 거의 화면 높이로, 목록이 눌리지 않게 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .dim.bagsheet .sheet { height: 92vh; max-height: 92vh; }
+  .dim.bagsheet #gbList, .dim.bagsheet .stgrid, .dim.bagsheet #hmBody { min-height: 120px; }
+  .gbag { grid-template-columns: repeat(6, 1fr); }
+  .stgrid { grid-template-columns: repeat(8, 1fr); }
+  .sheet { max-height: 94vh; }
+}
+@media (min-width: 700px) { .gbag { grid-template-columns: repeat(5, 1fr); } }
+/* 곤충 배틀: 낮은 가로 화면에서는 기술을 오른쪽에 세로로 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .bbattle { display: grid; grid-template-columns: 1fr 210px; grid-template-rows: auto 1fr auto auto; }
+  .bbattle .bbtop { grid-column: 1 / 3; padding: 4px 8px; }
+  .bbattle .bbstage { grid-column: 1; grid-row: 2 / 5; min-height: 0; }
+  .bbattle .bbmsg { grid-column: 2; grid-row: 2; margin: 4px 8px; font-size: .8rem; min-height: 0; align-self: start; }
+  .bbattle .bbpow { grid-column: 2; grid-row: 3; margin: 6px 10px 10px; }
+  .bbattle .bbmoves { grid-column: 2; grid-row: 4; grid-template-columns: 1fr; gap: 4px; padding: 0 8px 8px; }
+  .bbattle .bbmove { min-height: 0; flex-direction: row; gap: 6px; padding: 4px 8px; justify-content: flex-start; }
+  .bbattle .bbic { width: 30px; height: 30px; }
+  .bbstage .bbimg { width: 26vh; height: 26vh; bottom: 22%; }
+  .bbstage .bbcoach { width: 44px; height: 58px; }
+  .bbhpp { padding: 3px 8px; } .bbwho { display: none; }
+}
+/* 공 물어오기: 빈 공간 줄이고 강아지를 풀밭 바로 아래로 */
+.fgrass { flex: 0 0 auto; margin-top: 18px; }
+.fspot { min-height: 140px; }
+.fdog { margin-top: 10px; }
+#mBody:has(.fgrass) { justify-content: flex-start; }
+/* 매운맛·시장 등 4지선다: 문제 바로 아래 붙이기 */
+.ropts { align-content: start; margin-top: 16px; }
+/* 도감: 칸을 작게 해서 한 화면에 더 많이 */
+.fdex { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)) !important; gap: 6px !important; }
+.fdex .fd { padding: 6px 4px !important; }
+.fdex .fde img { max-height: 48px; }
+/* 미니게임 문제 칸: 긴 낱말은 작게 */
+.nqin .rword b.w1 { font-size: 2rem; } .nqin .rword b.w2 { font-size: 1.55rem; } .nqin .rword b.w3 { font-size: 1.2rem; }
+.nqin .rword b { line-height: 1.25; display: inline-block; }
+/* 뒷마당 가로 화면: 가게 이름 줄은 간판 위에 따로 */
+@media (orientation: landscape) and (min-width: 700px) {
+  .garden .stallwrap .shophead { position: static; transform: none; width: 100%; margin: 0 0 4px; }
+  .garden .stallwrap .shophead b { white-space: nowrap; }
+}
+@media (orientation: landscape) and (max-height: 560px) { .bbattle .bbmove b { font-size: .85rem; white-space: nowrap; } }
