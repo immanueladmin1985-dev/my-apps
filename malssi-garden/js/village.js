@@ -113,7 +113,7 @@
   function boardSheet() {
     var res = residents(), asks = res.filter(function (c) { return M.miniAvail && M.miniAvail(c.id); }), nm = nextMover();
     var d = M.modal('<h3>📋 광장 게시판</h3>' +
-      '<h4>오늘의 부탁</h4>' + (asks.length ? '<div class="list">' + asks.map(function (c) { var m = M.miniFor(c.id); return '<button class="litem" data-ask="' + m.id + '"><span class="le">' + resImg(c) + '</span><span class="ln">' + esc(c.name) + '<small>' + m.icon + ' ' + esc(m.name) + '</small></span><span class="lp own">가기</span></button>'; }).join('') + '</div>' : '<p class="hint">오늘 부탁은 다 들어줬어요! 주민과 더 친해지면 새 부탁이 생겨요.</p>') +
+      '<h4>오늘의 부탁</h4>' + (asks.length ? '<div class="list">' + asks.map(function (c) { var m = M.miniFor(c.id); return '<button class="reqc" data-ask="' + m.id + '"><span class="rqwho">' + resImg(c) + '<small>' + esc(c.name) + '</small></span><span class="rqtxt"><b>' + m.icon + ' ' + esc(m.name.replace(c.name + '의 ', '').replace(c.name + '와 ', '')) + '</b><small>도와주면 코인 · 친밀도 ♥</small></span><span class="rqgo">가기</span></button>'; }).join('') + '</div>' : '<p class="hint">오늘 부탁은 다 들어줬어요! 주민과 더 친해지면 새 부탁이 생겨요.</p>') +
       (M.dishOrderHtml ? M.dishOrderHtml() : '') +
       '<h4>마을 소식</h4><ul class="unl">' + (nm ? '<li>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>새로운 친구</b>가 이사 와요.</li>' : '<li>모든 주민이 이사 왔어요!</li>') +
       '<li>지금 주민 ' + res.length + '명이 살고 있어요.</li></ul>' +

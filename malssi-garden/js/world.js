@@ -323,7 +323,7 @@
     list.forEach(function (it) {
       if (it.o) drawObj(it.o);
       else if (it.g) sprite(it.g.type === 'd' ? 'dig-spot' : (M.GATHER.ITEMS[it.g.id] || {}).img.replace('img/w/', '').replace('.png', ''), it.g.x + 0.5, it.g.y + 0.9, 0, false, it.g.type === 'd' ? 0.7 : 0.62);
-      else if (it.b) { var fl = Math.sin(now / 120 + it.b.ph) * 0.12; sprite(M.GATHER.ITEMS[it.b.id].img.replace('img/w/', '').replace('.png', ''), it.b.x, it.b.y + fl, 0, it.b.vx < 0, 0.62); if (it.b.id === 'firefly' && M.V.tint() !== 'day') { ctx.fillStyle = 'rgba(255,240,120,.35)'; ctx.beginPath(); ctx.arc(it.b.x * T, (it.b.y + fl - 0.3) * T, 12, 0, 7); ctx.fill(); } }
+      else if (it.b) { var fl = Math.sin(now / 120 + it.b.ph) * 0.12; sprite(M.GATHER.ITEMS[it.b.id].img.replace('img/w/', '').replace('.png', ''), it.b.x, it.b.y + fl, 0, (it.b.vx > 0) !== !!(M.bugFacesRight && M.bugFacesRight(it.b.id)), 0.62); if (it.b.id === 'firefly' && M.V.tint() !== 'day') { ctx.fillStyle = 'rgba(255,240,120,.35)'; ctx.beginPath(); ctx.arc(it.b.x * T, (it.b.y + fl - 0.3) * T, 12, 0, 7); ctx.fill(); } }
       else drawActor(it.a, it.p, now);
     });
     if (tapMark && now - tapMark.t < 600) { ctx.strokeStyle = 'rgba(255,255,255,' + (1 - (now - tapMark.t) / 600) + ')'; ctx.lineWidth = 3; ctx.strokeRect(tapMark.x * T + 3, tapMark.y * T + 3, T - 6, T - 6); }

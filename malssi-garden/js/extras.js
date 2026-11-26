@@ -427,7 +427,7 @@
     var x = X(), list = M.dishOrders(); if (!list.length) return '';
     return '<h4>🍲 요리 주문</h4><div class="list">' + list.map(function (o, i) {
       var c = M.custOf(o.cid) || { name: o.cid }, have = (x.dishes[o.dish] || 0) > 0;
-      return '<div class="litem' + (o.done ? ' done' : '') + '"><span class="le dishe"><img src="' + (M.custImg(o.cid) || '') + '" alt=""></span><span class="ln">' + esc(c.name) + ': "' + esc(DISH[o.dish][0]) + ' 먹고 싶어요!"<small>' + (o.done ? '전달했어요 ✔' : '보상 ' + o.coins + '코인 · 친밀도 ♥♥ · ' + (have ? '가지고 있어요' : '아직 없어요 (요리해서 가져와요)')) + '</small></span><img class="ordimg" src="img/w/dish-' + o.dish + '.png" alt="">' + (o.done ? '' : '<button class="btn primary" data-order="' + i + '"' + (have ? '' : ' disabled') + '>전달</button>') + '</div>';
+      return '<div class="reqc' + (o.done ? ' done' : '') + '"><span class="rqwho"><img src="' + (M.custImg(o.cid) || '') + '" alt=""><small>' + esc(c.name) + '</small></span><span class="rqtxt"><span class="rqdish"><img src="img/w/dish-' + o.dish + '.png" alt=""><b>' + esc(DISH[o.dish][0]) + '</b></span><small>' + (o.done ? '전달했어요 ✔' : o.coins + '코인 · ♥♥ · ' + (have ? '<span class="ok">가지고 있어요</span>' : '아직 없어요')) + '</small></span>' + (o.done ? '' : '<button class="btn primary rqgo" data-order="' + i + '"' + (have ? '' : ' disabled') + '>전달</button>') + '</div>';
     }).join('') + '</div>';
   };
   M.dishOrderDeliver = function (i) {

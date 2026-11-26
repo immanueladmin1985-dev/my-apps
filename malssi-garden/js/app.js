@@ -30,7 +30,7 @@
     else if (tab === 'garden') (M.renderVillage || M.renderGarden)($('gardenView'));
     else if (tab === 'home') M.renderHome($('homeView'));
     else if (tab === 'shop') M.renderShop($('shopView'));
-    if (tab !== 'garden') { var sec = $(tab + 'View'), hb = document.createElement('button'); hb.className = 'helpbtn float'; hb.dataset.help = tab; hb.textContent = '?'; hb.setAttribute('aria-label', '도움말'); sec.insertBefore(hb, sec.firstChild); }
+    if (tab !== 'garden') { var sec = $(tab + 'View'), hb = document.createElement('button'); hb.className = 'helpbtn float'; hb.dataset.help = tab; hb.textContent = '?'; hb.setAttribute('aria-label', '도움말'); var room = tab === 'home' && $('room'); if (room) { hb.className = 'helpbtn inroom'; room.appendChild(hb); } else sec.insertBefore(hb, sec.firstChild); }
     paintInstall();
     M.paintBadges();
   };

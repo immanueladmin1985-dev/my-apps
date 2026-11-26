@@ -665,7 +665,7 @@ img.bem { width: 48px; height: 48px; object-fit: contain; }
 .helpbtn.float { position: absolute; right: 0; top: 4px; z-index: 6; box-shadow: var(--sh); background: #fff; }
 .view > section { position: relative; }
 #learnView .langbar { margin-right: 32px; }
-#homeView .home, #shopView .shop { padding-top: 34px; }
+#shopView .shop { padding-top: 34px; } #homeView .home { padding-top: 6px; }
 /* 정원 아래 버튼 줄 */
 .gbar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; max-width: 520px; margin: 8px auto 0; }
 .gb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; background: #fff; border-radius: 14px; padding: 6px 2px 4px; box-shadow: var(--sh); font-weight: 700; }
@@ -1404,3 +1404,30 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .bbstage .bbfx { position: absolute; width: 130px; height: 130px; bottom: 34%; top: auto; z-index: 3; } .bbstage .bbfx.op { right: 8%; left: auto; } .bbstage .bbfx.me { left: 8%; right: auto; }
 .bbstage .bbcoach { position: absolute; bottom: 0; width: 64px; height: 84px; object-fit: contain; z-index: 4; opacity: 1; top: auto; } .bbstage .bbcoach.me { left: 6px; } .bbstage .bbcoach.op { right: 6px; left: auto; }
 .bbattle .bbmsg { margin: 6px 10px; }
+
+/* 집: 도움말은 방 오른쪽 위 구석 */
+.helpbtn.inroom { position: absolute; right: 8px; top: 8px; z-index: 50; background: rgba(255,255,255,.9); box-shadow: var(--sh); }
+/* 마을 윗줄: 한 줄로, 줄바꿈 없이 */
+.vbar { flex-wrap: nowrap; gap: 6px; padding: 6px 10px; min-width: 0; }
+.vbar > b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; font-size: .95rem; }
+.vbar .vwx { flex: none; margin: 0; } .vbar .vbuffs { flex: none; }
+.vbar small { flex: 1 1 auto; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.vbar .vbag { flex: none; white-space: nowrap; padding: 4px 8px; }
+@media (max-width: 420px) { .vbar small { display: none; } .vbar > b { flex: 1 1 auto; } }
+/* 부탁·주문 카드: 얼굴 아래 이름, 오른쪽은 내용만 */
+.reqc { display: grid; grid-template-columns: 58px 1fr auto; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; margin-bottom: 8px; background: #fff; border: 2px solid var(--line); border-radius: 16px; box-shadow: 0 3px 0 var(--line); text-align: left; }
+.reqc.done { opacity: .55; }
+.rqwho { display: flex; flex-direction: column; align-items: center; gap: 2px; } .rqwho img { width: 48px; height: 48px; object-fit: contain; } .rqwho small { font-size: .7rem; font-weight: 800; color: var(--sub); white-space: nowrap; }
+.rqtxt { min-width: 0; display: flex; flex-direction: column; gap: 3px; } .rqtxt b { font-size: .95rem; line-height: 1.25; } .rqtxt small { color: var(--sub); font-size: .75rem; } .rqtxt .ok { color: var(--mint-d, #2b9c72); font-weight: 800; }
+.rqdish { display: flex; align-items: center; gap: 6px; } .rqdish img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.rqgo { font-weight: 800; color: var(--mint-d, #2b9c72); white-space: nowrap; } .reqc .btn.rqgo { color: #fff; padding: 6px 12px; min-height: 38px; }
+/* 곤충 방향: 그림은 머리가 왼쪽. 내 곤충(왼쪽)은 뒤집어 오른쪽을 보게, 상대(오른쪽)는 그대로 왼쪽을 보게 */
+.bbstage .bbimg.me { transform: scaleX(-1); } .bbstage .bbimg.op { transform: none; }
+.bbstage .bbimg.me.atk { animation: bbatkMe .45s; } .bbstage .bbimg.op.atk { animation: bbatkOp .45s; }
+.bbstage .bbimg.me.hit { animation: bbhitMe .45s; } .bbstage .bbimg.op.hit { animation: bbhitOp .45s; }
+@keyframes bbatkMe { 50% { transform: scaleX(-1) translateX(-30px) scale(1.08); } } @keyframes bbatkOp { 50% { transform: translateX(-30px) scale(1.08); } }
+@keyframes bbhitMe { 20%, 60% { transform: scaleX(-1) translateX(-8px); filter: brightness(2); } 40%, 80% { transform: scaleX(-1) translateX(8px); } }
+@keyframes bbhitOp { 20%, 60% { transform: translateX(8px); filter: brightness(2); } 40%, 80% { transform: translateX(-8px); } }
+.bbstage .bbimg.rf.me { transform: none; } .bbstage .bbimg.rf.op { transform: scaleX(-1); }
+.coop .bbside.me .bbimg { transform: scaleX(-1); } .coop .bbside.op .bbimg { transform: none; }
+.coop .bbside.me .bbimg.rf { transform: none; } .coop .bbside.op .bbimg.rf { transform: scaleX(-1); }

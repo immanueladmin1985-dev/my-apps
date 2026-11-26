@@ -13,6 +13,10 @@
   function style(id) { return POWER.test(id) ? 'ram' : FLYER.test(id) ? 'fly' : 'grab'; }
   function B() { var b = M.P.bugBattle = M.P.bugBattle || { rank: 0, lv: {}, day: '', won: {} }; if (b.day !== M.today()) { b.day = M.today(); b.won = {}; } return b; }
   function item(id) { return M.GATHER.ITEMS[id]; }
+  // 그림이 오른쪽을 보는 곤충 (나머지는 머리가 왼쪽)
+  var RIGHT = { 'bug-cricket': 1 };
+  function rf(id) { return RIGHT[id] ? ' rf' : ''; }
+  M.bugFacesRight = function (id) { return !!RIGHT[id]; };
   function stats(id, lv) {
     var it = item(id), n = M.rarity(it.price).n; lv = lv || 1;
     return { hp: 40 + n * 14 + lv * 5, atk: 7 + n * 3 + lv * 1.5, style: style(id), n: n, lv: lv };
@@ -64,7 +68,7 @@
     var hpPanel = function (side, id, st, who) { return '<div class="bbhpp ' + side + '"><div class="bbnm"><b>' + esc(item(id).ko) + '</b> <small class="lang-' + M.P.lang + '">' + esc(bugName(id)) + '</small></div><div class="bbhp"><i id="bbHp' + (side === 'me' ? 'M' : 'O') + '"></i></div><small class="bbhpt" id="bbHt' + (side === 'me' ? 'M' : 'O') + '"></small><small class="bbwho">' + who + ' · Lv.' + st.lv + '</small></div>'; };
     el.innerHTML = '<div class="bbtop"><button class="ib" id="bbQuit" aria-label="그만하기">✕</button>' + hpPanel('me', myId, me, '나') + '<img class="bbvsmini" src="img/w/bb-vs.png" alt="VS">' + hpPanel('op', o.bug, op, esc(c.name)) + '</div>' +
       '<div class="bbstage"><img class="bbarena" src="img/w/bb-arena.png" alt=""><span class="bbturn" id="bbTurn"></span>' +
-      '<img class="bbimg me" id="bbM" src="' + item(myId).img + '" alt=""><img class="bbimg op" id="bbO" src="' + item(o.bug).img + '" alt="">' +
+      '<img class="bbimg me' + rf(myId) + '" id="bbM" src="' + item(myId).img + '" alt=""><img class="bbimg op' + rf(o.bug) + '" id="bbO" src="' + item(o.bug).img + '" alt="">' +
       '<img class="bbfx me" id="bbFxM" alt=""><img class="bbfx op" id="bbFxO" alt="">' +
       '<img class="bbcoach me" src="img/w/ch-rabbit' + (M.petStage ? M.petStage() : 1) + '-front1.png" alt=""><img class="bbcoach op" src="img/w/ch-' + o.cust + '-front.png" alt=""></div>' +
       '<div class="bbmsg" id="bbMsg">기술을 골라요! 막대가 ★일 때 누르면 세게 들어가요</div>' +
