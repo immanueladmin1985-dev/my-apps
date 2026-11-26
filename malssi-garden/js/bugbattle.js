@@ -61,10 +61,13 @@
     var me = stats(myId, b.lv[myId]), op = stats(o.bug, o.lv);
     G = { oi: oi, my: { id: myId, s: me, hp: me.hp }, op: { id: o.bug, s: op, hp: op.hp }, turn: 0, busy: false, alive: true, t0: performance.now() };
     var el = document.createElement('div'); el.id = 'bbattle'; el.className = 'bbattle';
-    el.innerHTML = '<div class="bbtop"><button class="ib" id="bbQuit" aria-label="그만하기">✕</button><span>🪲 ' + esc(c.name) + '와(과) 대결</span><span id="bbTurn"></span></div>' +
-      '<div class="bbfield"><img class="bbarena" src="img/w/bb-arena.png" alt=""><img class="bbfx" id="bbFxO" alt=""><img class="bbfx me" id="bbFxM" alt=""><div class="bbside op"><div class="bbinfo"><b>' + esc(item(o.bug).ko) + ' <small class="lang-' + M.P.lang + '">' + esc(bugName(o.bug)) + '</small></b><small>Lv.' + op.lv + '</small><div class="bbhp"><i id="bbHpO"></i></div></div><img class="bbimg" id="bbO" src="' + item(o.bug).img + '" alt=""><img class="bbcoach" src="' + (M.custImg(o.cust) || '') + '" alt=""></div>' +
+    var hpPanel = function (side, id, st, who) { return '<div class="bbhpp ' + side + '"><div class="bbnm"><b>' + esc(item(id).ko) + '</b> <small class="lang-' + M.P.lang + '">' + esc(bugName(id)) + '</small></div><div class="bbhp"><i id="bbHp' + (side === 'me' ? 'M' : 'O') + '"></i></div><small class="bbhpt" id="bbHt' + (side === 'me' ? 'M' : 'O') + '"></small><small class="bbwho">' + who + ' · Lv.' + st.lv + '</small></div>'; };
+    el.innerHTML = '<div class="bbtop"><button class="ib" id="bbQuit" aria-label="그만하기">✕</button>' + hpPanel('me', myId, me, '나') + '<img class="bbvsmini" src="img/w/bb-vs.png" alt="VS">' + hpPanel('op', o.bug, op, esc(c.name)) + '</div>' +
+      '<div class="bbstage"><img class="bbarena" src="img/w/bb-arena.png" alt=""><span class="bbturn" id="bbTurn"></span>' +
+      '<img class="bbimg me" id="bbM" src="' + item(myId).img + '" alt=""><img class="bbimg op" id="bbO" src="' + item(o.bug).img + '" alt="">' +
+      '<img class="bbfx me" id="bbFxM" alt=""><img class="bbfx op" id="bbFxO" alt="">' +
+      '<img class="bbcoach me" src="img/w/ch-rabbit' + (M.petStage ? M.petStage() : 1) + '-front1.png" alt=""><img class="bbcoach op" src="img/w/ch-' + o.cust + '-front.png" alt=""></div>' +
       '<div class="bbmsg" id="bbMsg">기술을 골라요! 막대가 ★일 때 누르면 세게 들어가요</div>' +
-      '<div class="bbside me"><img class="bbimg" id="bbM" src="' + item(myId).img + '" alt=""><div class="bbinfo"><b>' + esc(item(myId).ko) + ' <small class="lang-' + M.P.lang + '">' + esc(bugName(myId)) + '</small></b><small>Lv.' + me.lv + '</small><div class="bbhp"><i id="bbHpM"></i></div></div></div></div>' +
       '<div class="bbpow"><i id="bbPow"></i><span class="bbstar">★</span></div>' +
       '<div class="bbmoves">' + MOVES.map(function (m) { var n = mvName(m); return '<button class="bbmove' + (m.id === me.style ? ' fav' : '') + '" data-mv="' + m.id + '"><img class="bbic" src="img/w/bb-' + m.id + '.png" alt=""><b class="lang-' + M.P.lang + '">' + esc(n.t) + '</b>' + (n.r && n.r !== n.t ? '<small>' + esc(n.r) + '</small>' : '') + '<small>' + m.ko + (m.id === me.style ? ' · 특기' : '') + '</small></button>'; }).join('') + '</div>';
     document.body.appendChild(el); document.body.classList.add('in-mini');
@@ -77,7 +80,7 @@
   function hp() {
     var a = $('bbHpM'), o = $('bbHpO'); if (!a) return;
     a.style.width = Math.max(0, G.my.hp / G.my.s.hp * 100) + '%'; o.style.width = Math.max(0, G.op.hp / G.op.s.hp * 100) + '%';
-    $('bbTurn').textContent = (G.turn + 1) + '턴';
+    $('bbTurn').textContent = (G.turn + 1) + '턴'; $('bbHtM').textContent = Math.max(0, G.my.hp) + ' / ' + G.my.s.hp; $('bbHtO').textContent = Math.max(0, G.op.hp) + ' / ' + G.op.s.hp;
   }
   function fx(id, src) { var e = $(id); if (!e) return; e.src = 'img/w/' + src + '.png'; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function aiMove() {

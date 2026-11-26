@@ -19,15 +19,16 @@
     ['tv', '📺', 'TV 장', 260, 'f', 26], ['teatable', '🍪', '낮은 차 탁자', 140, 'f', 26], ['hangplant', '🌿', '걸이 화분', 80, 'w', 14], ['tulips', '🌷', '튤립 꽃병', 90, 'f', 13],
     ['kitchen', '🍳', '부엌 조리대', 380, 'f', 32], ['fridge', '🧊', '당근 냉장고', 300, 'f', 18], ['dining', '🍽️', '2인 식탁', 320, 'f', 32], ['coffee', '☕', '커피 머신', 160, 'f', 14],
     ['cakestand', '🧁', '컵케이크 진열대', 150, 'f', 14], ['cattower', '🐾', '캣타워', 200, 'f', 18], ['hutch', '🏠', '토끼 집', 300, 'f', 24], ['guitar', '🎸', '기타', 150, 'f', 13],
-    ['plush', '🧸', '인형 더미', 180, 'f', 20], ['stars', '⭐', '별 가랜드', 80, 'w', 30], ['painting', '🖼️', '집 그림 액자', 120, 'w', 16],
+    ['plush', '🧸', '인형 더미', 180, 'f', 20], ['fishbowl', '🐟', '작은 어항', 120, 'f', 15], ['aquarium', '🐠', '큰 수족관', 450, 'f', 30], ['bugcase', '🪲', '곤충 채집 상자', 300, 'f', 23], ['bugframe', '🦋', '곤충 표본 액자', 200, 'w', 17], ['stars', '⭐', '별 가랜드', 80, 'w', 30], ['painting', '🖼️', '집 그림 액자', 120, 'w', 16],
     ['pl-monstera', '🪴', '몬스테라', 90, 'f', 14], ['pl-cactus', '🪴', '선인장', 40, 'f', 14], ['pl-succulent', '🪴', '다육이', 40, 'f', 14], ['pl-lavender', '🪴', '라벤더', 60, 'f', 14], ['pl-hydrangea', '🪴', '수국', 80, 'f', 14], ['pl-lily', '🪴', '백합', 70, 'f', 14], ['pl-tulip', '🪴', '튤립 화분', 50, 'f', 14], ['pl-pearls', '🪴', '구슬 덩굴', 70, 'f', 14], ['pl-fern', '🪴', '고사리', 50, 'f', 14], ['pl-ivy', '🪴', '아이비', 60, 'f', 14], ['pl-calla', '🪴', '칼라', 70, 'f', 14], ['pl-poinsettia', '🪴', '포인세티아', 80, 'f', 14], ['pl-morningglory', '🪴', '나팔꽃', 60, 'f', 14], ['pl-carnation', '🪴', '카네이션', 60, 'f', 14], ['pl-clover', '🪴', '클로버', 40, 'f', 14], ['pl-aloe', '🪴', '알로에', 40, 'f', 14], ['dx-topiary', '🪴', '동글 나무', 90, 'f', 16], ['dx-barrel', '🪴', '나무통', 50, 'f', 16], ['dx-applecrate', '🪴', '사과 상자', 60, 'f', 16], ['dx-flowercart', '🪴', '꽃 수레', 150, 'f', 16], ['dx-tulipbox', '🪴', '튤립 상자', 80, 'f', 16]
   ].map(function (a) { return { id: a[0], e: a[1], name: a[2], price: a[3], wall: a[4] === 'w', rug: a[4] === 'r', size: a[5] }; });
   var FCAT = { plants: ['🪴 화분', 'pl-monstera,pl-cactus,pl-succulent,pl-lavender,pl-hydrangea,pl-lily,pl-tulip,pl-pearls,pl-fern,pl-ivy,pl-calla,pl-poinsettia,pl-morningglory,pl-carnation,pl-clover,pl-aloe'], living: ['🛋️ 거실', 'sofa,armchair,table,sidetable,teatable,tv,fireplace,books,lamp,piano'], bed: ['🛏️ 침실', 'bed,wardrobe,dresser,mirror,desk,chair,cushion'],
-    kitchen: ['🍳 부엌', 'kitchen,fridge,dining,coffee,cakestand,tea'], deco: ['🌷 장식', 'plant,sakura,tulips,hangplant,fish,toys,plush,guitar,petbed,cattower,hutch,dx-topiary,dx-barrel,dx-applecrate,dx-flowercart,dx-tulipbox'],
+    kitchen: ['🍳 부엌', 'kitchen,fridge,dining,coffee,cakestand,tea'], deco: ['🌷 장식', 'fishbowl,aquarium,bugcase,bugframe,plant,sakura,tulips,hangplant,fish,toys,plush,guitar,petbed,cattower,hutch,dx-topiary,dx-barrel,dx-applecrate,dx-flowercart,dx-tulipbox'],
     wall: ['🖼️ 벽', 'window,clock,frame,shelf,lights,stars,painting'], rug: ['🧶 깔개', 'rug,rug2,floorcush'] };
   var fcat = 'living';
   var WALLS = [{ id: 0, name: '기본 (아이보리)', price: 0, src: 'img/bg-room.jpg' }, { id: 1, name: '분홍 줄무늬', price: 300, src: 'img/wall-1.jpg' }, { id: 2, name: '민트 물방울', price: 300, src: 'img/wall-2.jpg' },
-    { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' }];
+    { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' },
+    { id: 5, name: '별빛 침실 (2층)', price: 0, src: 'img/room-f2.jpg' }, { id: 6, name: '햇살 다락방 (3층)', price: 0, src: 'img/room-f3.jpg' }, { id: 7, name: '옥상 정원', price: 0, src: 'img/room-f4.jpg' }];
   // 소품: 토끼 그림 위에 겹쳐 그린다. x·y 는 토끼 그림 안의 위치(%), w 는 너비(%)
   var ACCS = [{ id: 'ribbon', name: '빨간 리본', price: 120, x: 66, y: 10, w: 32 }, { id: 'crown', name: '꽃 화관', price: 200, x: 50, y: 18, w: 56 }, { id: 'strawhat', name: '밀짚모자', price: 250, x: 50, y: 12, w: 64 },
     { id: 'chefhat', name: '요리사 모자', price: 250, x: 50, y: 12, w: 60 }, { id: 'glasses', name: '동그란 안경', price: 150, eyes: true }, { id: 'starpin', name: '별 머리핀', price: 100, x: 66, y: 26, w: 22 }];
@@ -76,7 +77,7 @@
     placed.sort(function (a, b) { return P.room.placed[a.id].y - P.room.placed[b.id].y; });
     var h = '<div class="home">' + (fl > 1 ? '<div class="floors">' + FLOORS.slice(1, fl + 1).map(function (n, i) { return '<button data-fl="' + (i + 1) + '" class="' + (cur === i + 1 ? 'on' : '') + '">' + n + '</button>'; }).join('') + '</div>' : '') +
       '<div class="room' + (editing ? ' editing' : '') + '" id="room" style="background-image:url(' + wallSrc() + ')">' +
-      placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false"></div>'; }).join('') +
+      placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false">' + showcase(f.id) + '</div>'; }).join('') +
       (M.potsRoomHtml && cur === 1 ? M.potsRoomHtml() : '') +
       '<div class="pet' + (editing ? ' movable' : '') + '" id="pet" style="z-index:' + Math.round((P.pet.pos || { y: 92 }).y) + ';' + (P.pet.pos ? 'left:' + P.pet.pos.x + '%;top:' + P.pet.pos.y + '%;bottom:auto' : '') + '"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
       (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구·화분·' + esc(P.petName) + '를 끌어서 옮겨요') + '</div>' : '') +
@@ -91,13 +92,21 @@
     root.innerHTML = h;
   };
   function rerender() { var r = $('homeView'); if (r) M.renderHome(r); }
+  // 수족관·곤충 상자: 잡은 것 중 귀한 순서로 넣어 보여 준다
+  var SHOW = { fishbowl: { k: 'fish', at: [[50, 50, 46]] }, aquarium: { k: 'fish', at: [[30, 45, 26], [55, 34, 28], [74, 50, 24]] }, bugcase: { k: 'bug', at: [[35, 60, 30], [65, 58, 32]] }, bugframe: { k: 'bug', at: [[27, 50, 26], [50, 50, 28], [73, 50, 26]] } };
+  function showcase(id) {
+    var s = SHOW[id]; if (!s) return '';
+    var list = s.k === 'fish' ? (M.FISH || []).filter(function (f) { return (M.P.fishDex || {})[f.id]; }).sort(function (a, b) { return b.price - a.price; }).map(function (f) { return 'img/w/fish-' + f.id + '.png'; })
+      : Object.keys(((M.P.gather || {}).dex) || {}).filter(function (k) { var it = M.GATHER.ITEMS[k]; return it && it.cat === 'bug'; }).sort(function (a, b) { return M.GATHER.ITEMS[b].price - M.GATHER.ITEMS[a].price; }).map(function (k) { return M.GATHER.ITEMS[k].img; });
+    return s.at.map(function (p, i) { return list[i] ? '<img class="shw ' + s.k + (i % 2 ? ' alt' : '') + '" src="' + list[i] + '" style="left:' + p[0] + '%;top:' + p[1] + '%;width:' + p[2] + '%" alt="">' : ''; }).join('');
+  }
   // 층: 지금 층의 배치는 room.placed·room.wall 에, 다른 층은 room.floors[층] 에 둔다
   var FLOORS = ['', '1층 거실', '2층 침실', '3층 다락방', '옥상 정원'];
   M.homeFloor = function (n) {
     var R = M.P.room, cur = R.cur || 1; if (n === cur) return;
     R.floors = R.floors || {};
     R.floors[cur] = { placed: R.placed, wall: R.wall || 0 };
-    var nx = R.floors[n] || { placed: {}, wall: (n - 1) % WALLS.length };
+    var nx = R.floors[n] || { placed: {}, wall: n + 3 };   // 2층 별빛 침실, 3층 다락방, 옥상 정원
     R.placed = nx.placed || {}; R.wall = nx.wall || 0; R.cur = n; M.save();
   };
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-fl]'); if (!b) return; if (M.stopEditing) M.stopEditing(); M.homeFloor(+b.dataset.fl); rerender(); M.sfx && M.sfx('pop'); });

@@ -122,6 +122,8 @@
         OBJ.push({ kind: 'img', src: f2 % 3 === 2 ? FLOWERS[(patches.length + 1) % FLOWERS.length] : kind, x: fx2 + 0.5 + (rfl() - 0.5) * 0.3, y: fy2 + 1, h: 0.55, flat: true });
       }
     }
+    // 계절 장식
+    if (M.seasonObjs) M.seasonObjs(function (x2, y2) { return G[y2 * W + x2] === 0 && !SOLID[y2 * W + x2] && !DOORS[x2 + ',' + y2]; }).forEach(function (o) { solid(o.x, o.y); OBJ.push({ kind: 'img', src: o.src, x: o.x + 0.5, y: o.y + 1, h: o.h, season: true, tx: o.x, ty: o.y }); });
     for (x = 0; x < W; x++) if (r() < 0.2 && G[(SAND_Y + 1) * W + x] === 3 && x !== 21 && x !== 22) OBJ.push({ kind: 'shell', x: x, y: SAND_Y + 1 });
   }
   function walkable(x, y) {
@@ -327,6 +329,8 @@
     if (tapMark && now - tapMark.t < 600) { ctx.strokeStyle = 'rgba(255,255,255,' + (1 - (now - tapMark.t) / 600) + ')'; ctx.lineWidth = 3; ctx.strokeRect(tapMark.x * T + 3, tapMark.y * T + 3, T - 6, T - 6); }
     // 시간대 빛깔
     ctx.setTransform(sc, 0, 0, sc, 0, 0);
+    if (M.weatherDraw) M.weatherDraw(ctx, vw, vh, dt);
+    if (M.starTick && Math.random() < 0.01) M.starTick(cv.parentNode);
     var tint = M.V.tint(); if (tint !== 'day') { ctx.fillStyle = tint === 'night' ? 'rgba(40,50,120,.32)' : tint === 'dusk' ? 'rgba(255,140,80,.16)' : 'rgba(255,200,170,.12)'; ctx.fillRect(0, 0, vw, vh); }
     raf = requestAnimationFrame(draw);
   }
@@ -389,7 +393,7 @@
       if (b.yard) { r = drawYard(b); }
       else { var hl = b.id === 'home' && M.houseLv ? M.houseLv() : 1, hs = 1 + (hl - 1) * 0.14; r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, (b.id === 'museum' ? 5.6 : b.id === 'den' ? 4 : 3.5) * hs, false, (b.id === 'museum' ? 4.6 : b.id === 'den' ? 2.6 : 3.4) * hs); if (hl > 1 && r) emoji(['', '', '2️⃣', '3️⃣', '🌻'][hl], (b.x + b.w + 0.2) * T, r.top + 18, 14); }
       if (!r) { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); r = { top: b.y * T }; }
-      label(b.name, (b.x + b.w / 2) * T, r.top + 4);
+      label(b.id === 'home' && M.visiting && M.visitData ? M.visitData.pet + '네 집' : b.id === 'shop' && M.visiting && M.visitData ? M.visitData.pet + '네 뒷마당' : b.name, (b.x + b.w / 2) * T, r.top + 4);
       if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, r.top + 10, 18);
     } else if (o.kind === 'lot') {
       var l = o.lot, c = residentAt(l.k);
@@ -555,6 +559,8 @@
     // 주민을 눌렀나 (그림이 칸보다 커서 조금 넉넉하게 본다)
     var hit = npcs.filter(function (n) { if (n.asleep) return false; var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
     if (hit) { talkTo(hit); return; }
+    var so = OBJ.filter(function (o) { return o.season && Math.abs(o.tx - tx) <= 0 && ty >= o.ty - 1 && ty <= o.ty; })[0];
+    if (so) { goNear(so.tx, so.ty, function () { M.seasonTap(); }); return; }
     if (mate) { var mp2 = pos(mate); if (wx > mp2.x * T - 8 && wx < mp2.x * T + T + 8 && wy > (mp2.y + 1 - CH_H) * T - 4 && wy < mp2.y * T + T + 4) { goNear(mate.x, mate.y, function () { if (M.Family) M.Family.mateSheet(); }); return; } }
     if (gatherTap(tx, ty, wx, wy)) return;
     if (false) {
@@ -632,7 +638,7 @@
       // 캐릭터 그림을 미리 불러 둔다 (걷는 방향이 바뀔 때 깜빡이지 않게)
       ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + 'ch-rabbit' + M.petStage() + '-' + v + k + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
       var rs = M.V.residents(), nm = M.V.nextMover();
-      root.innerHTML = '<div class="village world"><div class="vbar">' + (M.visiting ? '<b>🦝 ' + M.esc(M.Family.mateName()) + '의 마을 방문 중</b><button class="vbag" id="vHome">🏠 돌아가기</button>' : '<b>🏡 ' + M.esc(M.P.petName) + '네 마을</b>') + (function () { var bl = (M.buffList ? M.buffList() : []).map(function (b) { return '<i title="' + b.name + '">' + b.em + b.min + '</i>'; }); if (M.luckLeft && M.luckLeft()) bl.unshift('<i>✨' + Math.ceil(M.luckLeft() / 60000) + '</i>'); return bl.length ? '<span class="vbuffs">' + bl.join('') + '</span>' : ''; })() + '<small>주민 ' + rs.length + '명</small><button class="vbag" id="vMap">🗺️ 지도</button><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
+      root.innerHTML = '<div class="village world"><div class="vbar">' + (M.visiting ? '<b>🦝 ' + M.esc(M.Family.mateName()) + '의 마을 방문 중</b><button class="vbag" id="vHome">🏠 돌아가기</button>' : '<b>🏡 ' + M.esc(M.P.petName) + '네 마을</b>') + (M.weatherInfo ? '<span class="vwx" title="' + M.weatherInfo().name + '">' + M.weatherInfo().em + '</span>' : '') + (function () { var bl = (M.buffList ? M.buffList() : []).map(function (b) { return '<i title="' + b.name + '">' + b.em + b.min + '</i>'; }); if (M.luckLeft && M.luckLeft()) bl.unshift('<i>✨' + Math.ceil(M.luckLeft() / 60000) + '</i>'); return bl.length ? '<span class="vbuffs">' + bl.join('') + '</span>' : ''; })() + '<small>주민 ' + rs.length + '명</small><button class="vbag" id="vMap">🗺️ 지도</button><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
       cv = $('wCanvas'); ctx = cv.getContext('2d');
       var fit = function () { var dpr = Math.min(3, window.devicePixelRatio || 1), r = cv.getBoundingClientRect(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); };
       fit(); window.removeEventListener('resize', M.World._fit); M.World._fit = fit; window.addEventListener('resize', fit);

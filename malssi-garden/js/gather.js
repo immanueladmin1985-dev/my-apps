@@ -182,7 +182,7 @@
   // 행운의 향수: 30분 동안 곤충이 두 배로 자주 나오고, 바닥 물건이 한 번 더 생긴다
   var LUCK_MS = 30 * 60000, LUCK_PRICE = 80;
   M.luckLeft = function () { var g = S(); return Math.max(0, (g.luckAt || 0) + LUCK_MS - Date.now()); };
-  M.luckOn = function () { return M.luckLeft() > 0 || (M.buffOn && M.buffOn('luck')); };
+  M.luckOn = function () { return M.luckLeft() > 0 || (M.buffOn && M.buffOn('luck')) || (M.weather && M.weather() === 'rainbow'); };
   M.luckBuy = function () {
     if (!M.spend('coins', LUCK_PRICE)) { M.toast('코인이 모자라요'); return false; }
     var g = S(); g.luckAt = Date.now(); g.luckSeed = Date.now() % 100000 + 1; M.save(); M.sfx('win');
@@ -290,7 +290,7 @@
     { name: '2층 집', pots: 4, floors: 2, coins: 300, need: { branch: 10, stone: 5 } },
     { name: '3층 집', pots: 5, floors: 3, coins: 800, need: { log: 6, stone: 10, clay: 6 } },
     { name: '옥상 정원이 있는 큰 집', pots: 6, floors: 4, coins: 2000, need: { log: 12, clay: 10, gold: 2, branch: 15 } }];
-  M.houseLv = function () { return (M.P.house && M.P.house.lv) || 1; };
+  M.houseLv = function () { if (M.visiting && M.visitData && M.visitData.house) return M.visitData.house; return (M.P.house && M.P.house.lv) || 1; };
   M.houseInfo = function () { return HOUSE[M.houseLv()]; };
   M.houseSheet = function () {
     var lv = M.houseLv(), nx = HOUSE[lv + 1], g = S();

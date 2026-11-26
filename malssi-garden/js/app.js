@@ -268,9 +268,10 @@
       '<label class="sel"><span>글자 크기</span><select data-fs>' + M.FONT_SIZES.map(function (x) { return '<option value="' + x[0] + '"' + (P.set.fontSize === x[0] ? ' selected' : '') + '>' + x[2] + '</option>'; }).join('') + '</select></label>' +
       '<h4>화면</h4>' + tg('autoFS', '자동 전체화면', '화면을 처음 누르면 전체화면으로 바꿔요') + tg('wake', '레슨 중 화면 켜 두기') +
       (isStandalone() ? '' : '<button class="btn wide" data-a="fs">' + (FS.on() ? '전체화면 끄기' : '전체화면 켜기') + '</button><button class="btn wide" data-a="inst">📲 홈 화면에 설치하기</button>') +
-      '<h4>기록</h4><button class="btn wide" data-a="export">💾 백업 파일 저장하기</button><button class="btn wide" data-a="import">📂 백업 파일 불러오기 (관리자)</button>' +
+      '<h4>기록</h4><button class="btn wide" data-a="move">📱 다른 기기에서 이어하기 (핀)</button><button class="btn wide" data-a="export">💾 백업 파일 저장하기</button><button class="btn wide" data-a="import">📂 백업 파일 불러오기 (관리자)</button>' +
       '<p class="hint">기록은 이 폰에만 저장돼요. 폰을 바꾸거나 브라우저 데이터를 지우기 전에 백업 파일을 저장해 두세요.</p>' +
       '<button class="btn wide" data-a="admin">🔒 관리자 메뉴</button>' +
+      '<button class="btn wide" data-a="stk">🏅 스티커 앨범</button>' +
       '<button class="btn wide" data-a="family">👨‍👩 가족 연결' + (M.Family && M.Family.state().ready ? ' ✔' : '') + '</button>' +
       (M.Family && M.Family.isHusband() ? '<button class="btn wide" data-a="remote">💌 원격 관리 (' + esc(M.Family.mateName() || '아내') + ' 폰)' + (M.Family.waiting ? ' 🔴' : '') + '</button>' : '') +
       '<button class="btn danger wide" data-a="reset">모든 기록 지우기</button>' +
@@ -299,6 +300,8 @@
       else if (a === 'admin') { d.close(); M.openAdmin(); }
       else if (a === 'remote') { d.close(); M.Family.adminPanel(); }
       else if (a === 'family') { d.close(); M.Family.sheet(); }
+      else if (a === 'stk') { d.close(); M.stickerAlbum(); }
+      else if (a === 'move') { d.close(); M.Family.transferSheet(); }
       else if (a === 'reset') {
         d.close();
         var doReset = function () { M.confirm('모든 기록을 지울까요?', '배운 단계, 정원, 토끼, 꽃 포인트, 쿠폰이 모두 사라지고 되돌릴 수 없어요.', '모두 지우기', function () { M.reset(); location.reload(); }, true); };

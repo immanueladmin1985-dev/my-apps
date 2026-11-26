@@ -1375,3 +1375,32 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .coop .cbb { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 0; background: url(../img/w/bb-arena.png) center 55% / 130% auto no-repeat; }
 .coop .bbpow { margin: 10px 4px 8px; } .coop .bbmoves { padding: 0; }
 .toast { pointer-events: none; }
+.furn .shw { position: absolute; transform: translate(-50%, -50%); pointer-events: none; height: auto; }
+.furn .shw.fish { animation: swim 4s ease-in-out infinite; } .furn .shw.fish.alt { animation-duration: 5.2s; animation-direction: reverse; }
+@keyframes swim { 0%, 100% { transform: translate(-60%, -50%); } 50% { transform: translate(-40%, -56%) scaleX(-1); } }
+.vwx { margin-left: 4px; font-size: 1rem; cursor: help; }
+.wstar { position: absolute; left: 105%; z-index: 4; background: none; border: 0; padding: 6px; animation: wstar 3.8s linear forwards; } .wstar img { width: 64px; height: 64px; }
+@keyframes wstar { to { left: -20%; transform: translateY(60px); } }
+.world { position: relative; }
+.stgrid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; align-content: start; }
+.stk { display: flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 2px; } .stk img { width: 100%; aspect-ratio: 1; object-fit: contain; filter: grayscale(1) opacity(.35); } .stk.got img { filter: none; } .stk small { font-size: .6rem; color: var(--sub); text-align: center; line-height: 1.2; }
+
+/* 배틀: 좌우 대전 구도 */
+.bbattle { background: linear-gradient(#a9dcff 0%, #cdeeff 35%, #d8f1c4 60%, #9fd27a 100%); }
+.bbtop { display: grid; grid-template-columns: auto 1fr auto 1fr; align-items: center; gap: 6px; padding: 8px 8px 4px; }
+.bbhpp { background: rgba(255,255,255,.9); border-radius: 12px; padding: 5px 8px; min-width: 0; box-shadow: var(--sh); }
+.bbhpp.op { text-align: right; } .bbnm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .85rem; } .bbnm small { color: var(--sub); }
+.bbhpp .bbhp { height: 12px; margin-top: 3px; } .bbhpp.op .bbhp { transform: scaleX(-1); }
+.bbhpt { display: block; font-weight: 800; font-size: .72rem; } .bbwho { display: block; color: var(--sub); font-size: .65rem; }
+.bbvsmini { width: 46px; height: 46px; object-fit: contain; }
+.bbstage { flex: 1; position: relative; min-height: 0; overflow: hidden; }
+.bbstage .bbarena { position: absolute; left: 50%; bottom: 14%; top: auto; width: 150%; max-width: none; transform: translateX(-50%); opacity: 1; }
+.bbturn { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); background: rgba(255,255,255,.85); border-radius: 10px; padding: 2px 10px; font-weight: 800; font-size: .8rem; z-index: 2; }
+.bbstage .bbimg { position: absolute; bottom: 30%; width: min(38vw, 170px); height: min(38vw, 170px); z-index: 2; }
+.bbstage .bbimg.me { left: 6%; } .bbstage .bbimg.op { right: 6%; transform: scaleX(-1); }
+.bbstage .bbimg.me.atk { animation: bbatkR .45s; } .bbstage .bbimg.op.atk { animation: bbatkL .45s; }
+@keyframes bbatkR { 50% { transform: translateX(30px) scale(1.08); } } @keyframes bbatkL { 50% { transform: scaleX(-1) translateX(30px) scale(1.08); } }
+.bbstage .bbimg.op.hit { animation: bbhitL .45s; } @keyframes bbhitL { 20%, 60% { transform: scaleX(-1) translateX(-8px); filter: brightness(2); } 40%, 80% { transform: scaleX(-1) translateX(8px); } }
+.bbstage .bbfx { position: absolute; width: 130px; height: 130px; bottom: 34%; top: auto; z-index: 3; } .bbstage .bbfx.op { right: 8%; left: auto; } .bbstage .bbfx.me { left: 8%; right: auto; }
+.bbstage .bbcoach { position: absolute; bottom: 0; width: 64px; height: 84px; object-fit: contain; z-index: 4; opacity: 1; top: auto; } .bbstage .bbcoach.me { left: 6px; } .bbstage .bbcoach.op { right: 6px; left: auto; }
+.bbattle .bbmsg { margin: 6px 10px; }

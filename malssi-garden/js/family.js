@@ -101,7 +101,7 @@
     FX.set('family/online/' + F.uid, FX.now()); FX.onDisconnectRemove('family/online/' + F.uid);
     FX.onDisconnectRemove('family/presence/' + F.uid);
     offs.push(FX.on('family/members', function (v) {
-      v = v || {}; var other = Object.keys(v).filter(function (k) { return k !== F.uid; })[0];
+      v = v || {}; var other = Object.keys(v).filter(function (k) { return k !== F.uid && v[k] && v[k].role !== F.role; })[0];
       F.mateUid = other || ''; F.mate = other ? v[other] : null;
       watchMate();
     }));
@@ -176,8 +176,8 @@
   M.Family.visit = function (on) {
     if (!F.ready || F.role !== 'husband') return;
     M.visiting = !!on;
-    if (on) FX.get('family/state/' + F.mateUid).then(function (s) { M.visitLv = (s && s.glv) || 1; M.inVillage = false; if (M.World && M.World.resetNpcs) M.World.resetNpcs(); M.go('garden'); M.render(); if (lastMateP) { var v = lastMateP; if (v.place === 'village' && FX.now() - v.at < 120000 && M.World.setMate) M.World.setMate({ x: v.x, y: v.y, d: v.d, stage: v.stage || 1, name: M.Family.mateName() }); } M.toast('🦝 너구리가 되어 ' + M.Family.mateName() + '의 마을에 왔어요'); });
-    else { M.visitLv = 0; if (M.World) { M.World.setMate(null); if (M.World.resetNpcs) M.World.resetNpcs(); } M.render(); M.toast('내 마을로 돌아왔어요'); }
+    if (on) FX.get('family/state/' + F.mateUid).then(function (s) { M.visitLv = (s && s.glv) || 1; M.visitData = (s && s.vis) || null; M.inVillage = false; if (M.World && M.World.resetNpcs) M.World.resetNpcs(); M.go('garden'); M.render(); if (lastMateP) { var v = lastMateP; if (v.place === 'village' && FX.now() - v.at < 120000 && M.World.setMate) M.World.setMate({ x: v.x, y: v.y, d: v.d, stage: v.stage || 1, name: M.Family.mateName() }); } M.toast('🦝 너구리가 되어 ' + M.Family.mateName() + '의 마을에 왔어요'); });
+    else { M.visitLv = 0; M.visitData = null; if (M.World) { M.World.setMate(null); if (M.World.resetNpcs) M.World.resetNpcs(); } M.render(); M.toast('내 마을로 돌아왔어요'); }
     lastPos = ''; if (M.World && M.World.announce) setTimeout(M.World.announce, 400);
   };
 
@@ -247,6 +247,7 @@
         (F.role === 'husband' && F.mateUid ? '<button class="btn primary wide" data-f="admin">💌 ' + esc(nm) + ' 원격 관리' + (M.Family.waiting ? ' 🔴' : '') + '</button><button class="btn primary wide" data-f="visit">' + (M.visiting ? '🏠 내 마을로 돌아가기' : '🦝 너구리로 ' + esc(nm) + ' 마을 가기') + '</button>' : '') +
         (F.mateUid ? '<button class="btn wide" data-f="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn wide" data-f="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button><button class="btn wide" data-f="bugs">🪲 같이 놀기: 곤충 배틀</button>' : '') +
         '<button class="btn ghost wide" data-f="leave">이 폰의 가족 연결 끊기</button>';
+    body += '<button class="btn wide" data-f="move">📱 다른 기기에서 이어하기</button>';
     var d = M.modal('<h3>👨‍👩 가족 연결</h3>' + body + '<p class="fmsg hint"></p><button class="btn ghost wide" data-close>닫기</button>');
     var msg = d.querySelector('.fmsg');
     d.addEventListener('click', function (e) {
@@ -256,6 +257,7 @@
       else if (a === 'join') { msg.textContent = '준비하는 중…'; ensureUser().then(function () { d.close(); pinPad(); }).catch(function (err) { msg.innerHTML = explain(err); }); }
       else if (a === 'leave') M.confirm('가족 연결 끊기', '이 폰은 가족 방에서 나가요. 다시 이으려면 핀 번호가 필요해요.', '끊기', function () { M.Family.leaveVillage(); FX.remove('family/members/' + F.uid); stopAll(); L.fid = ''; store(); F.fid = ''; F.ready = false; F.mateUid = ''; F.mate = null; if (M.World && M.World.setMate) M.World.setMate(null); d.close(); }, true);
       else if (a === 'admin') { d.close(); M.Family.adminPanel(); }
+      else if (a === 'move') { d.close(); M.Family.transferSheet(); }
       else if (a === 'visit') { d.close(); M.Family.visit(!M.visiting); }
       else { d.close(); invite(a); }
     });
@@ -269,9 +271,39 @@
       setTimeout(function () { if (!done) { done = true; clearInterval(t); rej(new Error('network')); } }, 15000);
     });
   }
-  function pinPad() {
+  // ---------- 다른 기기에서 이어하기: 이 기기의 기록을 핀 번호로 보낸다 ----------
+  M.Family.transferSheet = function () {
+    if (!FX) { M.toast('연결 도구를 불러오지 못했어요'); return; }
+    var d = M.modal('<h3>📱 다른 기기에서 이어하기</h3><p>기록은 기기마다 따로 저장돼요. 다른 기기(컴퓨터·새 폰)에서 이어서 하려면 <b>지금 기기</b>에서 핀을 만들고, <b>새 기기</b>에서 그 핀을 넣어 주세요.</p>' +
+      '<button class="btn primary wide" data-t="make">이 기기 기록 보내기 (핀 만들기)</button><button class="btn wide" data-t="use">🔢 핀으로 기록 받기 (새 기기에서)</button>' +
+      '<p class="hint">기록을 받으면 새 기기의 기록이 바뀌고, 가족 연결도 새 기기로 옮겨 가요. 예전 기기는 가족 연결이 끊겨요.</p><p class="fmsg hint"></p><button class="btn ghost wide" data-close>닫기</button>');
+    var msg = d.querySelector('.fmsg');
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-t]'); if (!b) return;
+      if (b.dataset.t === 'make') {
+        msg.textContent = '준비하는 중…';
+        ensureUser().then(function () {
+          var pin = newId(6, true);
+          return FX.set('pins/' + pin, { fid: F.ready ? F.fid : '', by: F.uid, role: F.ready ? F.role : '', same: 1, old: F.uid, save: M.exportData(), at: FX.now() }).then(function () {
+            msg.innerHTML = '새 기기에서 <b>핀으로 기록 받기</b>를 누르고 이 번호를 넣어 주세요<div class="fpin">' + pin.slice(0, 3) + ' ' + pin.slice(3) + '</div>15분 동안 쓸 수 있어요';
+          });
+        }).catch(function (err) { msg.innerHTML = explain(err); });
+      } else { d.close(); pinPad(true); }
+    });
+  };
+  function useTransfer(pin) {
+    return FX.get('pins/' + pin).then(function (p) {
+      if (!p || !p.same || !p.save || FX.now() - (p.at || 0) > 15 * 60000) { var e = new Error('nopin'); e.code = 'nopin'; throw e; }
+      M.importData(p.save);
+      if (!p.fid) return;
+      F.fid = p.fid;
+      var me = { role: p.role, name: p.role === 'wife' ? '아내' : '남편', pin: pin, at: FX.now() };
+      return FX.set(P('members/' + F.uid), me).then(function () { L.fid = p.fid; store(); if (p.old && p.old !== F.uid) return FX.remove(P('members/' + p.old)); });
+    }).then(function () { M.toast('📱 기록을 받았어요! 다시 시작할게요'); setTimeout(function () { location.reload(); }, 1200); });
+  }
+  function pinPad(transfer) {
     var v = '';
-    var d = M.modal('<h3>🔢 핀 번호로 들어가기</h3><p class="hint">상대 폰에 나온 6자리 번호를 넣어 주세요</p><div class="fpin" id="fpIn">___ ___</div><p class="fmsg hint center"></p><div class="pad">' +
+    var d = M.modal('<h3>🔢 ' + (transfer ? '핀으로 기록 받기' : '핀 번호로 들어가기') + '</h3><p class="hint">' + (transfer ? '예전 기기에 나온' : '상대 폰에 나온') + ' 6자리 번호를 넣어 주세요</p><div class="fpin" id="fpIn">___ ___</div><p class="fmsg hint center"></p><div class="pad">' +
       [1, 2, 3, 4, 5, 6, 7, 8, 9, '취소', 0, '⌫'].map(function (k) { return '<button data-k="' + k + '">' + k + '</button>'; }).join('') + '</div>');
     var paint = function () { d.querySelector('#fpIn').textContent = (v + '______').slice(0, 6).replace(/(...)(...)/, '$1 $2'); };
     d.addEventListener('click', function (e) {
@@ -279,7 +311,7 @@
       if (k === '취소') { d.close(); return; }
       if (k === '⌫') v = v.slice(0, -1); else if (v.length < 6) v += k;
       paint();
-      if (v.length === 6) { d.querySelector('.fmsg').textContent = '들어가는 중…'; joinFamily(v).then(function () { d.close(); }).catch(function (err) { v = ''; paint(); d.querySelector('.fmsg').innerHTML = explain(err); }); }
+      if (v.length === 6) { d.querySelector('.fmsg').textContent = '들어가는 중…'; (transfer ? ensureUser().then(function () { return useTransfer(v); }) : joinFamily(v)).then(function () { d.close(); }).catch(function (err) { v = ''; paint(); d.querySelector('.fmsg').innerHTML = explain(err); }); }
     });
   }
   function snapshot() {
@@ -294,7 +326,7 @@
       coupons: P.coupons.filter(function (c) { return c.status === 'wait'; }).map(cp).concat(P.coupons.filter(function (c) { return c.status !== 'wait'; }).slice(-10).map(cp)),
       requests: (P.requests || []).filter(function (q) { return q.status === 'wait'; }).map(function (q) { return { id: q.id, e: q.e, name: q.name, won: q.won || 0, link: q.link || '', at: q.at }; }),
       rewards: P.rewards.map(function (r) { return { id: r.id, e: r.e, name: r.name, price: r.price }; }),
-      rate: P.admin.rate || 10, weekBonus: P.admin.weekBonus || 0, glv: (P.garden && P.garden.lv) || 1,
+      rate: P.admin.rate || 10, weekBonus: P.admin.weekBonus || 0, glv: (P.garden && P.garden.lv) || 1, vis: { pet: P.petName, friends: (P.garden && P.garden.friends) || {}, house: M.houseLv ? M.houseLv() : 1, stage: M.petStage ? M.petStage() : 1 },
       bag: (function () { var b = (P.gather && P.gather.bag) || {}, o = {}; Object.keys(b).filter(function (k) { return b[k] > 0 && k !== 'recipe'; }).sort(function (a, c) { return b[c] - b[a]; }).slice(0, 40).forEach(function (k) { o[k] = b[k]; }); return o; })(),
       owned: Object.keys((P.room && P.room.owned) || {}),
       inv: { item: (P.gather && P.gather.bag) || {}, seed: (P.pots && P.pots.seeds) || {}, pan: P.pantry || {}, bait: P.bait || {} },

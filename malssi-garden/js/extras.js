@@ -308,7 +308,7 @@
       var ds = e.target.closest('[data-dsend]'); if (ds) { if (M.Family.sendGift({ k: 'dish', id: ds.dataset.dsend })) paint(); return; }
       var b = e.target.closest('[data-cook]'); if (!b || b.disabled) return;
       var id = b.dataset.cook, r = DISH[id]; Object.keys(r[2]).forEach(function (k) { take(k, r[2][k]); });
-      x.dishes[id] = (x.dishes[id] || 0) + 1; M.save(); M.sfx('win');
+      x.dishes[id] = (x.dishes[id] || 0) + 1; x.cooked = (x.cooked || 0) + 1; M.save(); M.sfx('win');
       var L = M.P.lang, nm = L === 'ja' ? r[3] : L === 'zh' ? r[4] : r[5]; M.say(nm, L);
       M.modal('<div class="center"><span class="gbig dbig">' + dishIcon(id) + '</span><h3>' + r[0] + ' 완성!</h3><button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><p class="hint">주민에게 선물하면 친밀도가 올라요. 좋아하는 맛이면 더 많이 올라요</p><button class="btn primary wide" data-close>좋아요</button></div>'); paint();
     });

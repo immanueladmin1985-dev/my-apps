@@ -26,7 +26,7 @@
     return M.SHOP.CUSTOMERS.filter(function (c) { return c.lv <= lv; });
   }
   function nextMover() { var lv = M.gardenState().lv; return M.SHOP.CUSTOMERS.filter(function (c) { return c.lv > lv; })[0]; }
-  function hearts(id) { return Math.min(5, Math.floor((M.gardenState().friends[id] || 0) / 4)); }
+  function hearts(id) { var fr = M.visiting && M.visitData ? M.visitData.friends || {} : M.gardenState().friends; return Math.min(5, Math.floor((fr[id] || 0) / 4)); }
 
   // 시간에 따라 마을 빛깔을 바꾼다 (휴대폰 시계)
   function timeTint() {
@@ -99,12 +99,13 @@
   function enter(id) {
     var p = PLACES.filter(function (x) { return x.id === id; })[0];
     if (p && p.soon) { M.modal('<div class="center"><div class="tbig">' + p.em + '</div><h3>' + p.name + '</h3><p>' + p.soon + '</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
+    if ((id === 'shop' || id === 'home') && M.visiting) { M.toast('🦝 방문 중에는 ' + M.Family.mateName() + '의 집에 들어갈 수 없어요'); return; }
     if (id === 'shop') { M.inVillage = true; M.render(); return; }
     if (id === 'home') { M.go('home'); return; }
     if (id === 'den') { M.digOpen(); return; }
     if (id === 'store') { M.furnShop(); return; }
-    if (id === 'museum') { var dm = M.modal('<h3>🏛️ 박물관</h3><p class="hint">모은 것들을 구경해요</p><button class="btn wide" data-mg>🌸 정원 도감</button><button class="btn wide" data-mf>🐟 물고기 도감</button><button class="btn wide" data-mx="bug">🦋 곤충 도감</button><button class="btn wide" data-mx="fossil">🦴 화석 도감</button><button class="btn wide" data-mx="sea">🐚 바다 도감</button><button class="btn wide" data-mx="forest">🌲 꽃·숲·열매 도감</button><button class="btn wide" data-mx="mineral">💎 광물·보석 도감</button><button class="btn primary wide" data-bb>🪲 곤충 배틀장</button><button class="btn ghost wide" data-close>나가기</button>');
-      dm.addEventListener('click', function (e) { if (e.target.closest('[data-mg]')) { dm.close(); M.gardenBook(); } if (e.target.closest('[data-mf]')) { dm.close(); M.fishDexSheet(); } var mx = e.target.closest('[data-mx]'); if (mx) { dm.close(); M.gatherDex(mx.dataset.mx); } if (e.target.closest('[data-bb]')) { dm.close(); M.bugArena(); } }); return; }
+    if (id === 'museum') { var dm = M.modal('<h3>🏛️ 박물관</h3><p class="hint">모은 것들을 구경해요</p><button class="btn wide" data-mg>🌸 정원 도감</button><button class="btn wide" data-mf>🐟 물고기 도감</button><button class="btn wide" data-mx="bug">🦋 곤충 도감</button><button class="btn wide" data-mx="fossil">🦴 화석 도감</button><button class="btn wide" data-mx="sea">🐚 바다 도감</button><button class="btn wide" data-mx="forest">🌲 꽃·숲·열매 도감</button><button class="btn wide" data-mx="mineral">💎 광물·보석 도감</button><button class="btn primary wide" data-bb>🪲 곤충 배틀장</button><button class="btn wide" data-stk>🏅 스티커 앨범</button><button class="btn ghost wide" data-close>나가기</button>');
+      dm.addEventListener('click', function (e) { if (e.target.closest('[data-mg]')) { dm.close(); M.gardenBook(); } if (e.target.closest('[data-mf]')) { dm.close(); M.fishDexSheet(); } var mx = e.target.closest('[data-mx]'); if (mx) { dm.close(); M.gatherDex(mx.dataset.mx); } if (e.target.closest('[data-bb]')) { dm.close(); M.bugArena(); } if (e.target.closest('[data-stk]')) { dm.close(); M.stickerAlbum(); } }); return; }
     if (id === 'gift') { M.go('shop'); return; }
     if (id === 'board') { boardSheet(); return; }
     if (id === 'pier') { M.fishStart('sea'); return; }
