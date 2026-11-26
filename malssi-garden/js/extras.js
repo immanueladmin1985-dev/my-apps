@@ -240,7 +240,7 @@
   function learn(id, why) {
     var x = R(); if (!id || x.recipes[id]) return null;
     x.recipes[id] = 1; M.save();
-    M.toast('📜 새 레시피: ' + DISH[id][0] + (why ? ' · ' + why : ''));
+    M.fxPop({ bg: 'fx-scroll', img: 'img/w/dish-' + id + '.png', title: '📜 새 레시피: ' + DISH[id][0], sub: why || '' }); M.sfx && M.sfx('win');
     return id;
   }
   M.recipeKnown = function (id) { return !!R().recipes[id]; };

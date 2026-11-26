@@ -108,7 +108,7 @@
     'for-fairywing': ['요정의 날개 조각', 'forest', 500, 'ようせいのはね', '精灵翅膀|jīnglíng chìbǎng', 'fairy wing']
   };
   Object.keys(RAW2).forEach(function (id) { var r = RAW2[id], z = r[4].split('|'); ITEMS[id] = { id: id, ko: r[0], cat: r[1], price: r[2], ja: [r[3], ''], zh: [z[0], z[1]], en: [r[5], ''], img: 'img/w/' + id + '.png' }; });
-  ITEMS.recipe = { id: 'recipe', ko: '레시피 쪽지', cat: 'note', price: 0, ja: ['レシピ', ''], zh: ['食谱', 'shípǔ'], en: ['recipe', ''], img: 'img/w/mail-open.png' };
+  ITEMS.recipe = { id: 'recipe', ko: '레시피 쪽지', cat: 'note', price: 0, ja: ['レシピ', ''], zh: ['食谱', 'shípǔ'], en: ['recipe', ''], img: 'img/w/it-recipe.png' };
   // 곤충이 나오는 때와 곳: m 아침, d 낮, e 저녁, n 밤 / flower 꽃·풀, tree 나무, water 물가
   var BUGS = { yellowbf: ['md', 'flower', 3], bluebf: ['d', 'flower', 2], ladybug: ['md', 'flower', 3], bee: ['md', 'flower', 2], dragonfly: ['de', 'water', 2], beetle: ['en', 'tree', 1], stag: ['n', 'tree', 1], firefly: ['n', 'water', 2], cicada: ['d', 'tree', 2], snail: ['me', 'flower', 2],
     'bug-monarch': ['d', 'flower', 2], 'bug-whitebf': ['md', 'flower', 3], 'bug-swallowtail': ['md', 'flower', 2], 'bug-peacock': ['d', 'flower', 1], 'bug-moth': ['en', 'tree', 2],
@@ -141,9 +141,11 @@
     var host = document.querySelector('.world') || document.body, el = document.getElementById('gPop');
     if (!el) { el = document.createElement('div'); el.id = 'gPop'; el.className = 'gpop'; host.appendChild(el); }
     var v = nm(it), lang = M.P.lang;
-    el.innerHTML = '<img src="' + it.img + '" alt=""><div><b>' + it.ko + (n > 1 ? ' ×' + n : '') + (first ? ' <span class="newtag">처음!</span>' : '') + ' <small class="rs">' + M.rarity(it.price).stars + '</small></b><button class="gname lang-' + lang + '" data-gsay="' + esc(v[0]) + '">🔊 ' + esc(v[0]) + (v[1] ? ' <small>' + esc(v[1]) + '</small>' : '') + '</button></div>';
+    var ra0 = M.rarity(it.price).n;
+    el.innerHTML = '<span class="gpimg' + (ra0 >= 3 ? ' rare' : '') + (it.cat === 'bug' ? ' bug' : '') + '">' + (ra0 >= 3 ? '<img class="gring" src="img/w/fx-ring.png" alt="">' : '') + (it.cat === 'bug' ? '<img class="gnet" src="img/w/fx-net.png" alt="">' : '') + '<img class="gmain" src="' + it.img + '" alt=""></span><div><b>' + it.ko + (n > 1 ? ' ×' + n : '') + (first ? ' <span class="newtag">처음!</span>' : '') + ' <small class="rs">' + M.rarity(it.price).stars + '</small></b><button class="gname lang-' + lang + '" data-gsay="' + esc(v[0]) + '">🔊 ' + esc(v[0]) + (v[1] ? ' <small>' + esc(v[1]) + '</small>' : '') + '</button></div>';
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     M.say(v[0], lang); M.sfx(first ? 'win' : 'pop');
+    if (ra0 >= 3 && first) M.fxPop({ bg: 'fx-burst', img: it.img, title: M.rarity(it.price).stars + ' ' + it.ko + '!', sub: '귀한 것을 처음 찾았어요', ms: 2000 });
     clearTimeout(popT); popT = setTimeout(function () { el.classList.remove('show'); }, 2600);
     if (M.quest) M.quest('gather', 1);
   };
@@ -226,12 +228,12 @@
     var d = M.modal('<h3>🧺 가방</h3><div id="gbLuck"></div><div class="fcats" id="gbCats"></div><div class="gbag" id="gbList"></div><p class="hint">누르면 팔 수 있어요. 나뭇가지·통나무·돌·점토·금광석은 집 넓히기 재료예요.</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' });
     function paint() {
       var ll = M.luckLeft();
-      d.querySelector('#gbLuck').innerHTML = ll ? '<p class="luckon">✨ 행운의 향수 남은 시간 ' + Math.ceil(ll / 60000) + '분</p>' : '<button class="btn wide" data-luck>✨ 행운의 향수 <small>30분 동안 곤충·물건 두 배</small> <img class="inl" src="img/coin.png" alt="">' + LUCK_PRICE + '</button>';
+      d.querySelector('#gbLuck').innerHTML = ll ? '<p class="luckon">✨ 행운의 향수 남은 시간 ' + Math.ceil(ll / 60000) + '분</p>' : '<button class="btn wide" data-luck><img class="inl" src="img/w/it-perfume.png" alt=""> 행운의 향수 <small>30분 동안 곤충·물건 두 배</small> <img class="inl" src="img/coin.png" alt="">' + LUCK_PRICE + '</button>';
       d.querySelector('#gbCats').innerHTML = '<button data-gc="all" class="' + (tab === 'all' ? 'on' : '') + '">전체</button>' + Object.keys(CATS).concat(['fish', 'bait']).map(function (c) { return '<button data-gc="' + c + '" class="' + (tab === c ? 'on' : '') + '">' + (CATS[c] || (c === 'fish' ? '🐟 물고기' : '🪱 미끼')) + '</button>'; }).join('');
       if (tab === 'fish' || tab === 'bait') {
         var fb = M.P.fishBag || {}, bt = M.P.bait || {};
         d.querySelector('#gbList').innerHTML = tab === 'fish' ? ((M.FISH || []).filter(function (f) { return fb[f.id] > 0; }).map(function (f) { var ra = M.rarity(f.price, f.r); return '<button class="gbi r' + ra.n + '" data-gf="' + f.id + '"><img src="img/w/fish-' + f.id + '.png" alt=""><b>' + f.ko + '</b><small class="rs">' + ra.stars + '</small><i>' + fb[f.id] + '</i></button>'; }).join('') || '<p class="hint center">낚시로 잡고 "가방에 넣기"를 누르면 여기 모여요</p>')
-          : Object.keys(M.BAITS || {}).filter(function (k) { return k !== 'fish'; }).map(function (k) { var B = M.BAITS[k]; return '<div class="gbi"><span class="gbe">' + B.em + '</span><b>' + B.name + '</b><i>' + (bt[k] || 0) + '</i></div>'; }).join('') + '<button class="btn wide" data-gbait style="grid-column:1/-1">🪱 미끼 사기</button>';
+          : Object.keys(M.BAITS || {}).filter(function (k) { return k !== 'fish'; }).map(function (k) { var B = M.BAITS[k]; return '<div class="gbi">' + M.baitIcon(k, '') + '<b>' + B.name + '</b><i>' + (bt[k] || 0) + '</i></div>'; }).join('') + '<button class="btn wide" data-gbait style="grid-column:1/-1"><img class="inl" src="img/w/it-wormbox.png" alt=""> 미끼 사기</button>';
         return;
       }
       var ks = Object.keys(g.bag).filter(function (k) { return g.bag[k] > 0 && ITEMS[k] && (tab === 'all' || ITEMS[k].cat === tab); });

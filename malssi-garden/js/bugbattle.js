@@ -31,10 +31,10 @@
   // ---------- 배틀장 ----------
   M.bugArena = function () {
     var b = B(), mine = myBugs();
-    var d = M.modal('<div class="bbhead"><h3>🪲 곤충 배틀장</h3><p class="hint">들이받기 💥 &gt; 붙잡기 🦀 &gt; 날아오르기 🌪️ &gt; 들이받기. 막대가 ★에 있을 때 누르면 세게 들어가요.</p></div>' +
+    var d = M.modal('<div class="bbhead"><img class="bbhimg" src="img/w/bb-arena.png" alt=""><h3>🪲 곤충 배틀장' + (b.champ ? ' <img class="inl" src="img/w/bb-crown.png" alt="">' : '') + '</h3><p class="hint">들이받기 💥 &gt; 붙잡기 🦀 &gt; 날아오르기 🌪️ &gt; 들이받기. 막대가 ★에 있을 때 누르면 세게 들어가요.</p></div>' +
       '<h4>도전 상대</h4><div class="list">' + LEAGUE.map(function (o, i) {
         var c = M.custOf(o.cust) || { name: o.cust }, lock = i > b.rank, it = item(o.bug);
-        return '<button class="litem bbopp' + (lock ? ' lock' : '') + '" data-opp="' + i + '"' + (lock ? ' disabled' : '') + '><span class="le dishe"><img src="' + (M.custImg(o.cust) || it.img) + '" alt=""></span><span class="ln">' + (i + 1) + '단계 · ' + esc(c.name) + '<small>' + (lock ? '앞 단계를 이기면 열려요' : '🪲 ' + esc(it.ko) + ' Lv.' + o.lv + (b.won[i] ? ' · 오늘 이겼어요 ✔' : '')) + '</small></span><img class="bbbug" src="' + it.img + '" alt=""></button>';
+        return '<button class="litem bbopp' + (lock ? ' lock' : '') + '" data-opp="' + i + '"' + (lock ? ' disabled' : '') + '>' + (b.rank > i || (b.champ && i === LEAGUE.length - 1) ? '<img class="bbmedal" src="img/w/' + (i >= 6 ? 'bb-trophy' : i >= 3 ? 'bb-silver' : 'bb-bronze') + '.png" alt="">' : '') + '<span class="le dishe"><img src="' + (M.custImg(o.cust) || it.img) + '" alt=""></span><span class="ln">' + (i + 1) + '단계 · ' + esc(c.name) + '<small>' + (lock ? '앞 단계를 이기면 열려요' : '🪲 ' + esc(it.ko) + ' Lv.' + o.lv + (b.won[i] ? ' · 오늘 이겼어요 ✔' : '')) + '</small></span><img class="bbbug" src="' + it.img + '" alt=""></button>';
       }).join('') + '</div>' + (mine.length ? '' : '<p class="hint center">가방에 곤충이 없어요. 마을에서 곤충을 잡아 와요!</p>') +
       '<button class="btn ghost wide" data-close>나가기</button>', { cls: 'bagsheet' });
     d.addEventListener('click', function (e) {
@@ -60,15 +60,16 @@
     G = { oi: oi, my: { id: myId, s: me, hp: me.hp }, op: { id: o.bug, s: op, hp: op.hp }, turn: 0, busy: false, alive: true, t0: performance.now() };
     var el = document.createElement('div'); el.id = 'bbattle'; el.className = 'bbattle';
     el.innerHTML = '<div class="bbtop"><button class="ib" id="bbQuit" aria-label="그만하기">✕</button><span>🪲 ' + esc(c.name) + '와(과) 대결</span><span id="bbTurn"></span></div>' +
-      '<div class="bbfield"><div class="bbside op"><div class="bbinfo"><b>' + esc(item(o.bug).ko) + ' <small class="lang-' + M.P.lang + '">' + esc(bugName(o.bug)) + '</small></b><small>Lv.' + op.lv + '</small><div class="bbhp"><i id="bbHpO"></i></div></div><img class="bbimg" id="bbO" src="' + item(o.bug).img + '" alt=""><img class="bbcoach" src="' + (M.custImg(o.cust) || '') + '" alt=""></div>' +
+      '<div class="bbfield"><img class="bbarena" src="img/w/bb-arena.png" alt=""><img class="bbfx" id="bbFxO" alt=""><img class="bbfx me" id="bbFxM" alt=""><div class="bbside op"><div class="bbinfo"><b>' + esc(item(o.bug).ko) + ' <small class="lang-' + M.P.lang + '">' + esc(bugName(o.bug)) + '</small></b><small>Lv.' + op.lv + '</small><div class="bbhp"><i id="bbHpO"></i></div></div><img class="bbimg" id="bbO" src="' + item(o.bug).img + '" alt=""><img class="bbcoach" src="' + (M.custImg(o.cust) || '') + '" alt=""></div>' +
       '<div class="bbmsg" id="bbMsg">기술을 골라요! 막대가 ★일 때 누르면 세게 들어가요</div>' +
       '<div class="bbside me"><img class="bbimg" id="bbM" src="' + item(myId).img + '" alt=""><div class="bbinfo"><b>' + esc(item(myId).ko) + ' <small class="lang-' + M.P.lang + '">' + esc(bugName(myId)) + '</small></b><small>Lv.' + me.lv + '</small><div class="bbhp"><i id="bbHpM"></i></div></div></div></div>' +
       '<div class="bbpow"><i id="bbPow"></i><span class="bbstar">★</span></div>' +
-      '<div class="bbmoves">' + MOVES.map(function (m) { var n = mvName(m); return '<button class="bbmove' + (m.id === me.style ? ' fav' : '') + '" data-mv="' + m.id + '"><span class="bbem">' + m.em + '</span><b class="lang-' + M.P.lang + '">' + esc(n.t) + '</b>' + (n.r && n.r !== n.t ? '<small>' + esc(n.r) + '</small>' : '') + '<small>' + m.ko + (m.id === me.style ? ' · 특기' : '') + '</small></button>'; }).join('') + '</div>';
+      '<div class="bbmoves">' + MOVES.map(function (m) { var n = mvName(m); return '<button class="bbmove' + (m.id === me.style ? ' fav' : '') + '" data-mv="' + m.id + '"><img class="bbic" src="img/w/bb-' + m.id + '.png" alt=""><b class="lang-' + M.P.lang + '">' + esc(n.t) + '</b>' + (n.r && n.r !== n.t ? '<small>' + esc(n.r) + '</small>' : '') + '<small>' + m.ko + (m.id === me.style ? ' · 특기' : '') + '</small></button>'; }).join('') + '</div>';
     document.body.appendChild(el); document.body.classList.add('in-mini');
     $('bbQuit').onclick = function () { M.confirm('그만할까요?', '이 대결은 진 것으로 쳐요.', '그만하기', function () { end(false); }); };
     Array.prototype.forEach.call(el.querySelectorAll('.bbmove'), function (bt) { bt.onclick = function () { choose(bt.dataset.mv); }; });
     hp(); M.say(bugName(o.bug), M.P.lang);
+    var vs = document.createElement('img'); vs.className = 'bbvs'; vs.src = 'img/w/bb-vs.png'; el.appendChild(vs); setTimeout(function () { vs.remove(); }, 1300);
     (function loop() { if (!G || !G.alive) return; var p = (Math.sin((performance.now() - G.t0) / 380) + 1) / 2, bar = $('bbPow'); if (bar) bar.style.left = (p * 100) + '%'; G.pow = p; G.raf = requestAnimationFrame(loop); })();
   }
   function hp() {
@@ -76,6 +77,7 @@
     a.style.width = Math.max(0, G.my.hp / G.my.s.hp * 100) + '%'; o.style.width = Math.max(0, G.op.hp / G.op.s.hp * 100) + '%';
     $('bbTurn').textContent = (G.turn + 1) + '턴';
   }
+  function fx(id, src) { var e = $(id); if (!e) return; e.src = 'img/w/' + src + '.png'; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function aiMove() {
     // 상대는 자기 특기를 조금 더 자주 쓴다
     var w = MOVES.map(function (m) { return m.id === G.op.s.style ? 2 : 1; }), s = w[0] + w[1] + w[2], r = Math.random() * s;
@@ -92,8 +94,8 @@
     $('bbMsg').innerHTML = '나: ' + m.em + ' <b class="lang-' + M.P.lang + '">' + esc(n.t) + '</b> ' + (mult >= 1.5 ? '<span class="crit">완벽!</span>' : '') + ' vs 상대: ' + om.em + ' <b class="lang-' + M.P.lang + '">' + esc(on.t) + '</b><br>' + (win === 1 ? '이겼어요! ' + dmgM + ' 피해' : win === -1 ? '막혔어요… ' + dmgO + ' 피해를 입었어요' : '맞부딪혔어요! 서로 ' + dmgM + ' / ' + dmgO);
     var mi = $('bbM'), oi = $('bbO');
     mi.classList.remove('hit', 'atk'); oi.classList.remove('hit', 'atk'); void mi.offsetWidth;
-    if (dmgM) { mi.classList.add('atk'); oi.classList.add('hit'); }
-    if (dmgO) { oi.classList.add('atk'); mi.classList.add('hit'); }
+    if (dmgM) { mi.classList.add('atk'); oi.classList.add('hit'); fx('bbFxO', mult >= 1.5 && win === 1 ? 'bb-crit' : 'bb-hit'); }
+    if (dmgO) { oi.classList.add('atk'); mi.classList.add('hit'); fx('bbFxM', 'bb-hit'); }
     M.sfx(win === 1 ? 'ok' : win === -1 ? 'bad' : 'pop'); M.buzz && M.buzz(win === -1 ? [30, 30, 30] : 20);
     G.op.hp -= dmgM; G.my.hp -= dmgO; G.turn++;
     setTimeout(function () {
@@ -116,7 +118,7 @@
     var el = $('bbattle'); if (!el) return;
     var c = M.custOf(o.cust) || { name: '상대' };
     el.querySelector('.bbmoves').innerHTML = ''; el.querySelector('.bbpow').style.display = 'none';
-    $('bbMsg').innerHTML = '<div class="bbend"><div class="tbig">' + (won ? '🎉' : '😢') + '</div><h3>' + (won ? '이겼어요!' : '졌어요…') + '</h3>' + (won ? '<p>' + esc(item(myId).ko) + '가 Lv.' + b.lv[myId] + '이 됐어요</p>' + up + M.rewardHtml({ coins: coins }) : '<p>' + esc(c.name) + ': "다음에 또 붙어요!"</p>') +
+    $('bbMsg').innerHTML = '<div class="bbend">' + (won ? '<img class="bbprize" src="img/w/' + (b.champ && G.oi === LEAGUE.length - 1 ? 'bb-crown' : G.oi >= 6 ? 'bb-trophy' : G.oi >= 3 ? 'bb-silver' : 'bb-bronze') + '.png" alt="">' : '<div class="tbig">😢</div>') + '<h3>' + (won ? '이겼어요!' : '졌어요…') + '</h3>' + (won ? '<p>' + esc(item(myId).ko) + '가 Lv.' + b.lv[myId] + '이 됐어요</p>' + up + M.rewardHtml({ coins: coins }) : '<p>' + esc(c.name) + ': "다음에 또 붙어요!"</p>') +
       '<button class="btn primary wide" id="bbAgain">다시 도전</button><button class="btn ghost wide" id="bbOut">배틀장으로</button></div>';
     var keep = G.oi;
     $('bbAgain').onclick = function () { close(); pickBug(keep); };

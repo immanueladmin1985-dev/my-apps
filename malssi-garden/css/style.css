@@ -1149,6 +1149,9 @@ img.knot { width: 30px; height: 30px; margin-top: -15px; border: 0; background: 
 .gpop { position: absolute; left: 50%; top: 52px; transform: translate(-50%, -20px); z-index: 7; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.97); border-radius: 18px; padding: 6px 12px 6px 6px; box-shadow: 0 6px 18px rgba(0,0,0,.2); opacity: 0; pointer-events: none; transition: all .25s; max-width: 90%; }
 .gpop.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 .gpop img { width: 48px; height: 48px; object-fit: contain; }
+.gpimg { position: relative; flex: none; width: 52px; height: 52px; display: grid; place-items: center; } .gpimg .gmain { position: relative; z-index: 1; }
+.gpimg .gring { position: absolute; width: 74px; height: 74px; left: -11px; top: -6px; animation: spin 3s linear infinite; } .gpimg .gnet { position: absolute; width: 30px; height: 30px; right: -12px; bottom: -6px; z-index: 2; transform: rotate(-20deg); }
+@keyframes spin { to { transform: rotate(360deg); } }
 .gpop b { display: block; font-size: .9rem; }
 .gname { display: inline-flex; align-items: baseline; gap: 4px; font-weight: 800; color: var(--mint-d); background: none; border: 0; padding: 0; font-size: 1rem; }
 .gname small { color: var(--sub); font-weight: 600; font-size: .75rem; }
@@ -1345,3 +1348,21 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 @keyframes bbhit { 20%, 60% { transform: translateX(-8px); filter: brightness(2); } 40%, 80% { transform: translateX(8px); } }
 .bbside.op .bbimg.atk { animation: bbatko .45s; } @keyframes bbatko { 50% { transform: scaleX(-1) translateY(14px) scale(1.08); } }
 .bbend .tbig { font-size: 2.6rem; } .bbbug { width: 40px; height: 40px; object-fit: contain; } .bbopp.lock { opacity: .5; }
+
+.fxpop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(40,30,60,.25); animation: fxin .25s; }
+.fxin { background: #fff; border-radius: 22px; padding: 16px 22px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.25); max-width: 86vw; animation: fxpop .5s cubic-bezier(.2,1.4,.4,1); }
+.fxart { position: relative; width: 150px; height: 130px; margin: 0 auto 6px; } .fxbg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: .95; }
+.fxmain { position: absolute; left: 50%; top: 52%; width: 74px; height: 74px; object-fit: contain; transform: translate(-50%, -50%); filter: drop-shadow(0 4px 4px rgba(0,0,0,.2)); }
+.fxin b { display: block; font-size: 1.1rem; } .fxin small { color: var(--sub); }
+@keyframes fxin { from { opacity: 0; } } @keyframes fxpop { from { transform: scale(.4); opacity: 0; } }
+.fbob img { width: 40px; height: 40px; object-fit: contain; } .fexcl img { width: 54px; height: 54px; object-fit: contain; }
+.fbig { position: relative; } .fsplash { position: absolute; left: 50%; bottom: -10px; width: 70%; transform: translateX(-50%); opacity: .85; z-index: 0; } .fbig > img:not(.fsplash) { position: relative; z-index: 1; }
+.bbfield { position: relative; } .bbarena { position: absolute; left: 50%; top: 50%; width: 140%; max-width: 760px; transform: translate(-50%, -50%); opacity: .95; pointer-events: none; z-index: 0; }
+.bbside, .bbmsg { position: relative; z-index: 1; }
+.bbfx { position: absolute; width: 120px; height: 120px; object-fit: contain; z-index: 3; opacity: 0; pointer-events: none; right: 18%; top: 4%; } .bbfx.me { right: auto; left: 12%; top: auto; bottom: 4%; }
+.bbfx.on { animation: bbfx .6s ease-out; } @keyframes bbfx { 0% { opacity: 0; transform: scale(.3); } 30% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.3); } }
+.bbic { width: 46px; height: 46px; object-fit: contain; }
+.bbvs { position: absolute; left: 50%; top: 40%; width: 220px; transform: translate(-50%, -50%); z-index: 5; animation: bbvs 1.3s ease-out forwards; pointer-events: none; }
+@keyframes bbvs { 0% { transform: translate(-50%, -50%) scale(.2); opacity: 0; } 25% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
+.bbprize { width: 110px; height: 110px; object-fit: contain; animation: fxpop .6s cubic-bezier(.2,1.4,.4,1); }
+.bbmedal { width: 30px; height: 30px; object-fit: contain; margin-right: -4px; } .bbhimg { width: 100%; max-height: 110px; object-fit: contain; }

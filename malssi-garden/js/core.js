@@ -66,6 +66,14 @@
     var n = r ? (r >= 3 ? (price >= 300 ? 4 : 3) : r) : price >= 400 ? 4 : price >= 150 ? 3 : price >= 40 ? 2 : 1;
     return { n: n, stars: '★★★★'.slice(0, n), name: ['', '흔함', '조금 귀함', '귀함', '전설'][n] };
   };
+  // 화면 가운데에 잠깐 뜨는 효과 (레시피 배움, 귀한 물건 등). 누르면 바로 사라진다
+  M.fxPop = function (o) {
+    var el = document.createElement('div'); el.className = 'fxpop';
+    el.innerHTML = '<div class="fxin"><div class="fxart">' + (o.bg ? '<img class="fxbg" src="img/w/' + o.bg + '.png" alt="">' : '') + (o.img ? '<img class="fxmain" src="' + o.img + '" alt="">' : '') + '</div>' + (o.title ? '<b>' + o.title + '</b>' : '') + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</div>';
+    document.body.appendChild(el); var t = setTimeout(function () { el.remove(); }, o.ms || 2400);
+    el.onclick = function () { clearTimeout(t); el.remove(); };
+    return el;
+  };
   M.esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   M.fmt = function (n) { return Number(n || 0).toLocaleString('ko-KR'); };
   M.rand = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };

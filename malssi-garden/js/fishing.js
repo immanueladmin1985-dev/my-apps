@@ -4,12 +4,14 @@
   var M = window.M, $ = M.$, esc = M.esc;
   // 미끼: 지렁이를 사서 쓰거나 잡은 작은 물고기를 쓴다. 좋은 미끼일수록 귀한 물고기가 잘 문다
   var BAITS = {
-    worm: { name: '지렁이', em: '🪱', price: 5, mult: 1, desc: '보통 미끼' },
-    fat: { name: '통통 지렁이', em: '🪱✨', price: 20, mult: 2.2, desc: '귀한 물고기 2배' },
-    gold: { name: '황금 지렁이', em: '🌟🪱', price: 60, mult: 4.5, desc: '귀한 물고기 4배 넘게' },
-    fish: { name: '작은 물고기 미끼', em: '🐟', price: 0, mult: 3.2, desc: '가방의 흔한 물고기 한 마리 · 큰 물고기가 잘 물어요' }
+    worm: { name: '지렁이', em: '🪱', img: 'it-worm', price: 5, mult: 1, desc: '보통 미끼' },
+    fat: { name: '통통 지렁이', em: '🪱', img: 'it-worm-fat', price: 20, mult: 2.2, desc: '귀한 물고기 2배' },
+    gold: { name: '황금 지렁이', em: '🪱', img: 'it-worm-gold', price: 60, mult: 4.5, desc: '귀한 물고기 4배 넘게' },
+    fish: { name: '작은 물고기 미끼', em: '🐟', img: 'it-bait-fish', price: 0, mult: 3.2, desc: '가방의 흔한 물고기 한 마리 · 큰 물고기가 잘 물어요' }
   };
   M.BAITS = BAITS;
+  function bIcon(k, cls) { return '<img class="' + (cls || 'inl') + '" src="img/w/' + BAITS[k].img + '.png" alt="">'; }
+  M.baitIcon = bIcon;
   function bait() { var b = M.P.bait = M.P.bait || { worm: 3, fat: 0, gold: 0, use: 'worm' }; return b; }
   function smallFish() { var fb = M.P.fishBag || {}; return FISH.filter(function (f) { return f.r === 1 && fb[f.id] > 0; }); }
   function baitLeft(k) { return k === 'fish' ? smallFish().reduce(function (a, f) { return a + M.P.fishBag[f.id]; }, 0) : bait()[k] || 0; }
@@ -18,11 +20,11 @@
     var b = bait(); if (!b[k]) return false; b[k]--; return true;
   }
   M.baitSheet = function (where, then) {
-    var b = bait(), d = M.modal('<h3>🪱 미끼 고르기</h3><p class="hint">좋은 미끼일수록 귀한(★★★) 물고기가 잘 물어요</p><div class="list" id="bList"></div><button class="btn ghost wide" data-close>닫기</button>');
+    var b = bait(), d = M.modal('<h3><img class="inl" src="img/w/it-rod.png" alt=""> 미끼 고르기</h3><p class="hint">좋은 미끼일수록 귀한(★★★) 물고기가 잘 물어요</p><div class="list" id="bList"></div><button class="btn ghost wide" data-close>닫기</button>');
     function paint() {
       d.querySelector('#bList').innerHTML = Object.keys(BAITS).map(function (k) {
         var B = BAITS[k], n = baitLeft(k);
-        return '<div class="litem' + (b.use === k ? ' on' : '') + '"><span class="le">' + B.em + '</span><span class="ln">' + B.name + ' <small>' + B.desc + ' · 가진 것 ' + n + '</small></span>' +
+        return '<div class="litem' + (b.use === k ? ' on' : '') + '"><span class="le dishe">' + bIcon(k, '') + '</span><span class="ln">' + B.name + ' <small>' + B.desc + ' · 가진 것 ' + n + '</small></span>' +
           (k === 'fish' ? '' : '<button class="btn" data-bb="' + k + '"><img class="inl" src="img/coin.png" alt="">' + B.price + '×3</button>') +
           '<button class="btn primary" data-bu="' + k + '"' + (n ? '' : ' disabled') + '>쓰기</button></div>';
       }).join('');
@@ -98,8 +100,8 @@
     bait().use = bk; M.save();
     var host = document.querySelector('.world'); if (!host) return;
     var el = document.createElement('div'); el.className = 'fishing ' + where; el.id = 'fishing';
-    el.innerHTML = '<div class="fwater"><div class="fring"></div><div class="fbob" id="fBob">🔴</div><div class="fexcl" id="fEx">!</div></div>' +
-      '<p class="fmsg" id="fMsg">' + BAITS[bk].em + ' ' + BAITS[bk].name + '(남은 것 ' + baitLeft(bk) + ')로 던졌어요… 찌가 쑥 들어가면 눌러요!</p><button class="btn primary wide fpull" id="fPull">낚아채기!</button><button class="btn ghost wide" id="fStop">그만하기</button><button class="btn ghost wide" id="fBait">🪱 미끼 바꾸기</button>';
+    el.innerHTML = '<div class="fwater"><div class="fring"></div><div class="fbob" id="fBob"><img src="img/w/it-bobber.png" alt=""></div><div class="fexcl" id="fEx"><img src="img/w/fx-alert.png" alt="!"></div></div>' +
+      '<p class="fmsg" id="fMsg">' + bIcon(bk) + ' ' + BAITS[bk].name + '(남은 것 ' + baitLeft(bk) + ')로 던졌어요… 찌가 쑥 들어가면 눌러요!</p><button class="btn primary wide fpull" id="fPull">낚아채기!</button><button class="btn ghost wide" id="fStop">그만하기</button><button class="btn ghost wide" id="fBait">🪱 미끼 바꾸기</button>';
     host.appendChild(el);
     cur = { where: where, state: 'wait', fish: pick(where, BAITS[bk].mult * (bk === 'fish' && where === 'river' ? 0.6 : 1)), timers: [], bait: bk };
     var wait = 1800 + Math.random() * 4500;
@@ -126,7 +128,7 @@
   }
   function retry() {
     var b = $('fPull'); if (!b) return;
-    b.textContent = '다시 던지기 (' + BAITS[cur.bait].em + ')';
+    b.innerHTML = '다시 던지기 ' + bIcon(cur.bait);
     b.onclick = function () { var w = cur.where; end(true); M.fishStart(w); };
     var fw = document.querySelector('#fishing .fwater'); if (fw) fw.onclick = null;
   }
@@ -142,11 +144,11 @@
       var rec = d[f.id] || { n: 0, max: 0 }; rec.n++; var best = size > rec.max; rec.max = Math.max(rec.max, size); d[f.id] = rec;
       var price = Math.round(f.price * (0.7 + 0.6 * (size - f.size[0]) / (f.size[1] - f.size[0] || 1)));
       M.save(); M.quest && M.quest('fish', 1);
-      el.innerHTML = '<div class="fcatch"><div class="fbig">' + fimg(f) + '</div><h3>' + f.ko + (first ? ' <span class="newtag">처음!</span>' : '') + '</h3><p class="rar r' + M.rarity(f.price, f.r).n + '">' + M.rarity(f.price, f.r).stars + ' ' + M.rarity(f.price, f.r).name + '</p>' +
+      el.innerHTML = '<div class="fcatch"><div class="fbig"><img class="fsplash" src="img/w/fx-splash.png" alt="">' + fimg(f) + '</div><h3>' + f.ko + (first ? ' <span class="newtag">처음!</span>' : '') + '</h3><p class="rar r' + M.rarity(f.price, f.r).n + '">' + M.rarity(f.price, f.r).stars + ' ' + M.rarity(f.price, f.r).name + '</p>' +
         '<button class="fname lang-' + lang + '" data-fsay="' + esc(nm.t) + '">🔊 <b>' + esc(nm.t) + '</b>' + (nm.r ? '<small>' + esc(nm.r) + '</small>' : '') + '</button>' +
         '<p>' + size + 'cm' + (best && !first ? ' · 최고 기록!' : '') + (bonus ? ' · 이름 맞힘 보너스 +20%' : '') + '</p>' +
         '<div class="row2"><button class="btn" id="fRel">놓아주기</button><button class="btn primary" id="fSell">팔기 <img class="inl" src="img/coin.png" alt="">' + price + '</button></div>' +
-        '<button class="btn wide" id="fKeep">🧺 가방에 넣기</button><button class="btn wide" id="fAgain">한 번 더 (' + BAITS[cur ? cur.bait : 'worm'].em + ')</button><button class="btn ghost wide" id="fQuit">그만하기</button><p class="hint">박물관 물고기 도감에 기록했어요</p></div>';
+        '<button class="btn wide" id="fKeep">🧺 가방에 넣기</button><button class="btn wide" id="fAgain">한 번 더 ' + bIcon(cur ? cur.bait : 'worm') + '</button><button class="btn ghost wide" id="fQuit">그만하기</button><p class="hint">박물관 물고기 도감에 기록했어요</p></div>';
       M.say(nm.t, lang);
       el.querySelector('[data-fsay]').onclick = function () { M.say(nm.t, lang); };
       $('fRel').onclick = function () { M.toast(f.em + ' 잘 가!'); M.give({ water: 1 }); end(); };
@@ -159,7 +161,7 @@
     // 세 종류 이상 잡았으면 이름 맞히기 (맞히면 크기 보너스)
     if (known.length >= 3 && !first) {
       var opts = M.shuffle([f].concat(M.shuffle(known.filter(function (x) { return x !== f; })).slice(0, 2)));
-      el.innerHTML = '<div class="fcatch"><div class="fbig">' + fimg(f) + '</div><h3>' + M.j(f.ko, '을', '를') + ' 낚았어요!</h3><p>이 물고기를 배우는 말로 뭐라고 할까요?</p><div class="copts">' +
+      el.innerHTML = '<div class="fcatch"><div class="fbig"><img class="fsplash" src="img/w/fx-splash.png" alt="">' + fimg(f) + '</div><h3>' + M.j(f.ko, '을', '를') + ' 낚았어요!</h3><p>이 물고기를 배우는 말로 뭐라고 할까요?</p><div class="copts">' +
         opts.map(function (x, i) { var n2 = nameOf(x, lang); return '<div class="coptrow"><button class="csay" data-s="' + i + '" aria-label="듣기">🔊</button><button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(n2.t) + (n2.r && n2.r !== n2.t ? ' <small>' + esc(n2.r) + '</small>' : '') + '</button></div>'; }).join('') + '</div><p class="hint">🔊를 누르면 소리를 들을 수 있어요</p></div>';
       Array.prototype.forEach.call(el.querySelectorAll('.csay'), function (b) { b.onclick = function () { M.say(nameOf(opts[+b.dataset.s], lang).t, lang); }; });
       Array.prototype.forEach.call(el.querySelectorAll('.copt'), function (b) {
