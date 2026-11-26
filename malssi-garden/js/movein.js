@@ -15,7 +15,7 @@
     return v.welcomed;
   }
   M.moveInCheck = function () {
-    if (!M.V || document.querySelector('.dim') || document.getElementById('movein')) return;
+    if (!M.V || M.visiting || document.querySelector('.dim') || document.getElementById('movein')) return;   // 남편이 방문 중일 때는 이사 장면을 띄우지 않는다
     var w = welcomed(), c = M.V.residents().filter(function (x) { return !w[x.id]; })[0];
     if (c) setTimeout(function () { play(c); }, M.fast ? 0 : 600);
   };
