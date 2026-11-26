@@ -327,14 +327,29 @@
   M.itemKey = function (it) { return it.lang + ':' + it.t; };
   M.srsHit = function (it, ok) {
     var k = M.itemKey(it), s = M.P.srs[k] || [0, 0];
+    if (!s[3]) s[3] = Date.now();
     if (ok) { s[0] = Math.min(6, s[0] + 1); s[1] = Date.now() + GAP[s[0]] * 86400000; }
-    else { s[0] = 0; s[1] = Date.now(); }
+    else { s[0] = 0; s[1] = Date.now(); s[2] = (s[2] || 0) + 1; s[4] = Date.now(); }
     M.P.srs[k] = s;
   };
   M.learnedItems = function (lang) {
     var L = window.LANGS[lang], out = [];
     L.stages.forEach(function (s) { if (M.P.prog[lang][s.id]) out = out.concat(s.items); });
     return out;
+  };
+  // 자주 틀린 낱말 (틀린 횟수가 많고 아직 덜 외운 순)
+  M.missedItems = function (lang, n) {
+    return M.learnedItems(lang).filter(function (it) { var s = M.P.srs[M.itemKey(it)]; return s && (s[2] || 0) > 0 && s[0] < 4; })
+      .sort(function (a, b) { var x = M.P.srs[M.itemKey(a)], y = M.P.srs[M.itemKey(b)]; return (y[2] - x[2]) || (x[0] - y[0]); }).slice(0, n || 20);
+  };
+  // 이번 주(월~일) 공부 요약
+  M.weekReport = function (lang) {
+    lang = lang || M.P.lang; var P = M.P, ws = M.weekStart(M.today()), t0 = new Date(ws.replace(/-/g, '/')).getTime(), days = [], lessons = 0;
+    for (var i = 0; i < 7; i++) { var d = M.addDays(ws, i), l = (P.log[d] || {}).l || 0; days.push(l); lessons += l; }
+    var learned = M.learnedItems(lang), fresh = learned.filter(function (it) { var s = P.srs[M.itemKey(it)]; return s && s[3] >= t0; });
+    var missed = M.missedItems(lang, 8).map(function (it) { var s = P.srs[M.itemKey(it)]; return { t: it.t, k: it.k, r: it.r || '', n: s[2] }; });
+    var strong = learned.filter(function (it) { var s = P.srs[M.itemKey(it)]; return s && s[0] >= 4; }).length;
+    return { week: ws, lang: lang, days: days, lessons: lessons, studyDays: days.filter(function (x) { return x > 0; }).length, fresh: fresh.length, freshList: fresh.slice(-12).map(function (it) { return it.t + ' = ' + it.k; }), missed: missed, total: learned.length, strong: strong, streak: P.streak || 0 };
   };
   M.learnedCount = function (lang) {
     if (lang) return M.learnedItems(lang).length;

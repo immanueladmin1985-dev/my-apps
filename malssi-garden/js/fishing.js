@@ -94,6 +94,7 @@
 
   var cur = null;
   M.fishStart = function (where) {
+    if (M.visiting) { M.toast('🦝 방문 중에는 낚시할 수 없어요'); return; }
     if (cur) return;
     var bk = bait().use || 'worm';
     if (!baitLeft(bk) || !useBait(bk)) { M.toast(M.j(BAITS[bk].name, '이', '가') + ' 떨어졌어요. 미끼를 골라 주세요'); M.baitSheet(where); return; }

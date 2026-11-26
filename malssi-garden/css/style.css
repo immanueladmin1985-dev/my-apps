@@ -1574,3 +1574,7 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .fdog { display: block; width: max-content; margin: 10px auto 0; }
 .dboard { width: min(92%, 340px); margin: 6px auto; aspect-ratio: 1.45; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; align-content: center; gap: 6px; padding: 8% 12% 18%; background-size: 100% 100%; }
 .dboard .dslot { color: #fff; background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.6); }
+.dash { grid-template-columns: repeat(7, 1fr); gap: 4px; } .dash .dcard small { font-size: .62rem; white-space: nowrap; }
+.wrep .chart { margin: 8px 0; } .wlist { font-size: .9rem; line-height: 1.7; }
+.wmiss { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; } .wmiss span { display: flex; flex-direction: column; background: #fff4f4; border: 2px solid #f6caca; border-radius: 12px; padding: 6px 8px; } .wmiss b { font-size: 1.05rem; } .wmiss small { color: var(--sub); font-size: .7rem; } .wmiss em { font-style: normal; font-size: .75rem; color: #c55; }
+.dim.bagsheet .wrep { flex: 1; overflow-y: auto; }

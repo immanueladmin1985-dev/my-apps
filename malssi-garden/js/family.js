@@ -137,6 +137,12 @@
       var n = (s.coupons || []).filter(function (c) { return c.status === 'wait'; }).length + (s.requests || []).length;
       if (n > (L.seen || 0) && !(view && view.isConnected)) M.toast('💌 ' + M.j(M.Family.mateName(), '이', '가') + ' 새 쿠폰이나 선물 신청을 보냈어요 (설정 › 원격 관리)');
       M.Family.waiting = n; L.seen = Math.min(L.seen || 0, n); store();
+      // 일요일(또는 그 뒤 처음)에 한 번 주간 리포트를 보여 준다
+      var dow = M.now().getDay(), wk = s.report && s.report.week;
+      if (s.report && wk && L.repWeek !== wk && (dow === 0 || dow === 6) && !document.querySelector('.dim')) {
+        L.repWeek = wk; store();
+        setTimeout(function () { M.modal('<h3>📊 ' + esc(M.Family.mateName()) + '의 이번 주 공부</h3>' + M.reportHtml(s.report, M.Family.mateName()) + '<p class="hint">칭찬 선물은 설정 › 원격 관리 › 칭찬 선물에서 보낼 수 있어요</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' }); }, 1500);
+      }
     }));
   }
   M.Family.mateOnline = function () { return F.mateOnline; };
@@ -330,7 +336,8 @@
       bag: (function () { var b = (P.gather && P.gather.bag) || {}, o = {}; Object.keys(b).filter(function (k) { return b[k] > 0 && k !== 'recipe'; }).sort(function (a, c) { return b[c] - b[a]; }).slice(0, 40).forEach(function (k) { o[k] = b[k]; }); return o; })(),
       owned: Object.keys((P.room && P.room.owned) || {}),
       inv: { item: (P.gather && P.gather.bag) || {}, seed: (P.pots && P.pots.seeds) || {}, pan: P.pantry || {}, bait: P.bait || {} },
-      hmarket: M.hmarket ? M.hmarket() : null
+      hmarket: M.hmarket ? M.hmarket() : null,
+      report: M.weekReport ? M.weekReport() : null
     };
   }
   var giftWait = [];
@@ -428,7 +435,7 @@
         return '<div class="astats"><div><b>' + S.streak + '일</b><small>연속 공부</small></div><div><b>' + S.best + '일</b><small>최고 기록</small></div><div><b>' + S.week + '/7</b><small>이번 주</small></div><div><b>' + S.lessons + '판</b><small>전체 레슨</small></div></div>' +
           '<h4>최근 2주 레슨 수</h4><div class="chart">' + S.days.map(function (x) { return '<div class="cb"><i style="height:' + Math.round(x.l / mx * 100) + '%"></i><span>' + (x.l || '') + '</span><small>' + (+String(x.d).slice(8)) + '</small></div>'; }).join('') + '</div>' +
           '<h4>익힌 단어</h4><div class="astats">' + ['ja', 'en', 'zh'].map(function (c) { var L = window.LANGS[c]; return '<div><b>' + ((S.learned || {})[c] || 0) + '개</b><small>' + L.flag + ' ' + L.name + '</small></div>'; }).join('') + '</div>' +
-          '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>';
+          '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>' + (S.report && M.reportHtml ? '<h4>📊 이번 주 리포트</h4>' + M.reportHtml(S.report, M.Family.mateName()) : '');
       },
       market: function () {
         var hm = S.hmarket, inv = S.inv || {}, I = (M.GATHER && M.GATHER.ITEMS) || {}, mk = mkState;

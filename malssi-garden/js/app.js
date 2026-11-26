@@ -89,6 +89,8 @@
       '<button class="dcard" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="de">🔁</span><small>복습' + (due ? ' ' + due : '') + '</small></button>' +
       '<button class="dcard" id="dWrong"' + (wrongN ? '' : ' disabled') + '>' + (wrongN ? '<i class="dot">' + wrongN + '</i>' : '') + '<span class="de">✏️</span><small>틀린 것</small></button>' +
       '<button class="dcard" id="dWords"><span class="de">📒</span><small>단어장</small></button>' +
+      '<button class="dcard" id="dGame"' + (M.missedItems(P.lang).length >= 3 ? '' : ' disabled') + '><span class="de">🎯</span><small>복습 놀이</small></button>' +
+      '<button class="dcard" id="dReport"><span class="de">📊</span><small>리포트</small></button>' +
       '</div>' + contBtn(L, prog, cur) +
       '<div class="lvtabs">' + levels.map(function (lv) {
         var us = L.stages.filter(function (s) { return lvOf(s) === lv; }), dn = us.filter(function (s) { return prog[s.id]; }).length;
@@ -168,6 +170,19 @@
     d.addEventListener('click', function (e) { var c = e.target.closest('[data-say]'); if (c) M.say(c.dataset.say, P.lang); });
   }
 
+  // ---------- 주간 리포트 ----------
+  M.reportHtml = function (r, who) {
+    var W = ['월', '화', '수', '목', '금', '토', '일'], mx = Math.max(1, Math.max.apply(null, r.days)), L = window.LANGS[r.lang];
+    return '<div class="wrep"><p class="hint">' + esc(r.week) + ' 주 · ' + L.flag + ' ' + L.name + (who ? ' · ' + esc(who) : '') + '</p>' +
+      '<div class="astats"><div><b>' + r.studyDays + '/7</b><small>공부한 날</small></div><div><b>' + r.lessons + '판</b><small>레슨</small></div><div><b>+' + r.fresh + '</b><small>새 낱말</small></div><div><b>' + r.strong + '</b><small>잘 외운 낱말</small></div></div>' +
+      '<div class="chart">' + r.days.map(function (x, i) { return '<div class="cb"><i style="height:' + Math.round(x / mx * 100) + '%"></i><span>' + (x || '') + '</span><small>' + W[i] + '</small></div>'; }).join('') + '</div>' +
+      (r.freshList.length ? '<h4>🌱 이번 주 새로 배운 낱말</h4><p class="wlist lang-' + r.lang + '">' + r.freshList.map(esc).join(' · ') + '</p>' : '') +
+      (r.missed.length ? '<h4>✏️ 자주 틀리는 낱말</h4><div class="wmiss">' + r.missed.map(function (m) { return '<span class="lang-' + r.lang + '"><b>' + esc(m.t) + '</b>' + (m.r && m.r !== m.t ? '<small>' + esc(m.r) + '</small>' : '') + '<em>' + esc(m.k) + ' · ' + m.n + '번</em></span>'; }).join('') + '</div>' : '<p class="hint">자주 틀리는 낱말이 없어요. 아주 잘하고 있어요! 👏</p>') + '</div>';
+  };
+  M.openReport = function () {
+    var d = M.modal('<h3>📊 이번 주 공부 리포트</h3>' + M.reportHtml(M.weekReport()) + (M.missedItems(P.lang).length >= 3 ? '<button class="btn primary wide" data-rv>🎯 틀린 낱말 복습 놀이</button>' : '') + '<button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' });
+    d.addEventListener('click', function (e) { if (e.target.closest('[data-rv]')) { d.close(); M.reviewGame(); } });
+  };
   // ---------- 퀘스트 ----------
   M.openQuests = function () { quests(); };
   function quests() {
@@ -431,6 +446,8 @@
     if (t.closest('#dCont')) { var L0 = window.LANGS[P.lang], pr0 = P.prog[P.lang], c0 = firstOpen(L0, pr0, false); var tg = contTarget(L0, pr0, c0); if (tg) M.startLesson(P.lang, tg); return; }
     if (t.closest('#dQuest') || t.closest('#dGoal')) { quests(); return; }
     if (t.closest('#dReview')) { if (M.learnedCount(P.lang) >= 4) M.startLesson(P.lang, null); return; }
+    if (t.closest('#dGame')) { M.reviewGame(); return; }
+    if (t.closest('#dReport')) { M.openReport(); return; }
     if (t.closest('#dWrong')) { if (M.wrongItems(P.lang).length) M.startLesson(P.lang, null, true); return; }
     var lvb = t.closest('[data-lv]'); if (lvb) { P.ui.lv = P.ui.lv || {}; P.ui.lv[P.lang] = lvb.dataset.lv; M.save(); mapScrolled = false; M.render(); return; }
     if (t.closest('#dWords')) { wordBook(); return; }

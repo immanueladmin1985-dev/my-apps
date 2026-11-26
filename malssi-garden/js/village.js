@@ -126,6 +126,7 @@
   }
   function resImg(c) { var s = M.custImg(c.id); return s ? '<img src="' + s + '" alt="">' : c.em; }
   function residentSheet(id) {
+    if (M.visiting) { M.toast('🦝 방문 중에는 주민과 놀 수 없어요. 장터를 열거나 ' + M.Family.mateName() + '에게 인사해 보세요'); return; }
     if (M.residentAsleep && M.residentAsleep(id)) { var cz = M.custOf(id); M.toast('💤 ' + M.j(cz.name, '은', '는') + ' 쿨쿨 자고 있어요. 아침 6시쯤 일어나요'); return; }
     var c = M.custOf(id), m = M.miniFor(id), h = hearts(id), mq = M.miniAvail(id);
     var d = M.modal('<div class="mintro"><img class="mface" src="' + M.custImg(id, true) + '" alt=""><div class="msay"><b>' + esc(c.name) + ' <span class="hearts">' + '♥'.repeat(h) + '♡'.repeat(5 - h) + '</span></b><p>' + esc(greet(c)) + '</p></div></div>' + (M.tasteLine ? M.tasteLine(id) : '') +

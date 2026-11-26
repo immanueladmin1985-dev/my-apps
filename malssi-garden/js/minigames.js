@@ -133,8 +133,8 @@
       (first && stars ? '<p class="hint center">' + esc(c.name) + '의 친밀도가 올랐어요 ♥</p>' : first ? '<p class="hint center">별을 하나 이상 받으면 오늘 부탁을 들어준 거예요</p>' : '') +
       '<button class="btn primary wide" id="mAgain">한 번 더</button><button class="btn ghost wide" id="mClose">가게로 돌아가기</button>';
     $('mAgain').onclick = function () { start(m); };
-    $('mClose').onclick = function () { stop(); if (first && stars) M.gardenFriendUp(m.cust); };
-    if (first && stars) $('mAgain').onclick = function () { M.gardenFriendUp(m.cust); start(m); };
+    $('mClose').onclick = function () { stop(); if (first && stars && !m.solo) M.gardenFriendUp(m.cust); };
+    if (first && stars && !m.solo) $('mAgain').onclick = function () { M.gardenFriendUp(m.cust); start(m); };
   }
 
   // 누른 자리에 효과 그림을 잠깐 띄운다
@@ -668,6 +668,43 @@
     timeBar(g, 60, function () { finish(g, 110); });
   };
 
+  // ---------- 틀린 낱말 복습 놀이 ----------
+  // 자주 틀린 낱말만 모아 다시 푼다. 맞히면 복습 단계가 오르고, 틀리면 뒤에 한 번 더 나온다
+  var REVIEW = { id: 'review', cust: 'owl', solo: true, icon: '🎯', name: '틀린 낱말 복습 놀이', thanks: '부엉! 헷갈리던 낱말이 이제 머리에 쏙 들어갔네요.' };
+  M.reviewGame = function () {
+    var lang = M.P.lang, miss = M.missedItems(lang, 10);
+    if (miss.length < 3) { M.toast('자주 틀린 낱말이 3개 이상 모이면 열려요'); return; }
+    start(REVIEW);
+  };
+  GAMES.review = function (g) {
+    var lang = M.P.lang, queue = M.missedItems(lang, 10).slice(), all = M.learnedItems(lang).filter(function (it) { return it.k; }), retry = {}, n = 0, total = queue.length, okN = 0;
+    function round() {
+      if (!g.alive) return;
+      if (!queue.length) { finish(g, total * 12); return; }
+      var it = queue.shift(); n++;
+      var opts = M.shuffle([it].concat(M.shuffle(all.filter(function (x) { return x.k !== it.k; })).slice(0, 3)));
+      var s = M.P.srs[M.itemKey(it)] || [];
+      $('mBody').innerHTML = headHtml(g, '<small>' + okN + ' / ' + total + ' 맞힘 · 틀린 횟수 ' + (s[2] || 0) + '번</small><div class="rword">' + wordHtml(it) + '</div><button class="btn" id="rvSay">🔊 듣기</button>') +
+        '<div class="ropts">' + opts.map(function (o, i) { return '<button class="ropt rvo" data-i="' + i + '"><b>' + esc(o.k) + '</b></button>'; }).join('') + '</div><p class="hint center" id="rvMsg"></p>';
+      var say = function () { M.say(it.say || it.t, it.lang || lang); }; $('rvSay').onclick = say; setTimeout(function () { if (g.alive) say(); }, 250);
+      bindOpts('.rvo', function (b) {
+        if (!g.alive) return; var o = opts[+b.dataset.i];
+        Array.prototype.forEach.call(document.querySelectorAll('.rvo'), function (x) { x.disabled = true; });
+        if (o === it) {
+          okN++; setScore(g, g.score + (retry[it.t] ? 6 : 12)); b.classList.add('ok'); fxAt(b, 'sparkle'); M.sfx('ok');
+          M.srsHit(it, true); var ss = M.P.srs[M.itemKey(it)]; if (ss && ss[2]) ss[2] = Math.max(0, ss[2] - 1); M.save();
+          setTimeout(round, 700);
+        } else {
+          b.classList.add('miss'); M.sfx('bad'); M.srsHit(it, false); M.save();
+          var right = document.querySelectorAll('.rvo')[opts.indexOf(it)]; if (right) right.classList.add('ok');
+          $('rvMsg').innerHTML = '<b class="lang-' + lang + '">' + esc(it.t) + '</b> = ' + esc(it.k);
+          if (!retry[it.t]) { retry[it.t] = 1; queue.push(it); total++; }
+          setTimeout(round, 1600);
+        }
+      });
+    }
+    round();
+  };
   M.MINIS = MINIS;
   M.miniTest = function (id) { var m = byId(id); start(m); return cur; };   // 자동 점검용
 })();

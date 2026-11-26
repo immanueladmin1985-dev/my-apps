@@ -19,7 +19,7 @@
 
   // ---------- 지도 만들기 ----------
   // 바닥: 0 풀, 1 길, 2 물, 3 모래, 4 다리, 5 돌바닥(광장)
-  var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false, PATCH = [];
+  var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false, PATCH = [], LOTOBJ = [], groundRes = -1;
   // 정원 가게(id 'shop')는 집 옆 뒷마당 텃밭으로 그린다 (yard)
   var BUILD = [
     { id: 'museum', name: '박물관', x: 4, y: 5, w: 5, h: 3, color: '#c9d6e8', roof: '#7d8fb3', em: '🏛️' },
@@ -68,7 +68,8 @@
       var lot = { x: l[0], y: l[1], w: 3, h: 3, k: k };
       lot.door = { x: l[0] + 1, y: l[1] + 3 };
       for (y = lot.y; y < lot.y + 3; y++) for (x = lot.x; x < lot.x + 3; x++) solid(x, y, 2 + k);   // 집터 (집이 없으면 나중에 풀어 준다)
-      var py = lot.door.y; while (py < H && G[py * W + lot.door.x] !== 1) { set(lot.door.x, py, 1); py++; }
+      var py = lot.door.y; lot.stub = []; while (py < H && G[py * W + lot.door.x] !== 1) { set(lot.door.x, py, 1); lot.stub.push(py * W + lot.door.x); py++; }
+      LOTOBJ[k] = lot;
       OBJ.push({ kind: 'lot', lot: lot, y: lot.y + 3 });
     });
     // 게시판·선착장·다리
@@ -215,7 +216,11 @@
       if (!lw) { g.fillRect(x * T - 3, y * T - 4, 6, T + 8); g.beginPath(); g.arc(x * T, y * T + 2, 5, 0, 7); g.fill(); }
       if (!rw) { g.fillRect(x * T + T - 3, y * T - 4, 6, T + 8); g.beginPath(); g.arc(x * T + T, y * T + 2, 5, 0, 7); g.fill(); }
     }
+    // 아직 집이 없는 집터로 가는 짧은 길은 그리지 않는다 (막다른 길 정리)
+    var nres = M.V ? M.V.residents().length : 0, hidden = []; groundRes = nres;
+    LOTOBJ.forEach(function (lot, k) { if (k > nres && lot.stub) lot.stub.forEach(function (i) { if (G[i] === 1) { hidden.push(i); G[i] = 0; } }); });
     blob([1], P('pa-gravel', P('path', '#ead1a0')), '#d2b07a', 3);
+    hidden.forEach(function (i) { G[i] = 1; });
     blob([5], P('plaza', '#e4dccd'), '#c9b99c', 2);
     ground = c;
   }
@@ -400,7 +405,22 @@
     ctx.setTransform(sc, 0, 0, sc, 0, 0);
     if (M.weatherDraw) M.weatherDraw(ctx, vw, vh, dt);
     if (M.starTick && Math.random() < 0.01) M.starTick(cv.parentNode);
-    var tint = M.V.tint(); if (tint !== 'day') { ctx.fillStyle = tint === 'night' ? 'rgba(40,50,120,.32)' : tint === 'dusk' ? 'rgba(255,140,80,.16)' : 'rgba(255,200,170,.12)'; ctx.fillRect(0, 0, vw, vh); }
+    var tint = M.V.tint();
+    if (tint !== 'day') {
+      // 저녁은 노을빛을 살짝, 밤은 푸른빛. 탁해지지 않게 곱하기 대신 부드러운 덧칠
+      ctx.save();
+      if (tint === 'night') { ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(150,160,215)'; ctx.fillRect(0, 0, vw, vh); }
+      else { ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = tint === 'dusk' ? 'rgba(255,150,90,.55)' : 'rgba(255,190,170,.4)'; ctx.fillRect(0, 0, vw, vh); }
+      ctx.restore();
+      if (tint === 'night' || tint === 'dusk') {   // 가로등과 집 창문 불빛
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; var a0 = tint === 'night' ? 0.55 : 0.28, fl = 0.92 + Math.sin(now / 300) * 0.08;
+        var glow = function (x, y, r, a) { var X = x * T - cam.x, Y = y * T - cam.y; if (X < -r || Y < -r || X > vw + r || Y > vh + r) return; var gr = ctx.createRadialGradient(X, Y, 0, X, Y, r); gr.addColorStop(0, 'rgba(255,214,120,' + a + ')'); gr.addColorStop(1, 'rgba(255,200,100,0)'); ctx.fillStyle = gr; ctx.fillRect(X - r, Y - r, r * 2, r * 2); };
+        OBJ.forEach(function (o) { if (o.kind === 'img' && /o-lamp/.test(o.src)) glow(o.x, o.y - 1.35, T * 2.2, a0 * fl); });
+        LOTS.forEach(function (l, k) { if (residentAt(k) && !(npcs.filter(function (n) { return n.k === k; })[0] || {}).asleep) glow(l[0] + 1.5, l[1] + 1.6, T * 1.6, a0 * 0.8); });
+        BUILD.forEach(function (b) { if (b.id === 'home' || b.id === 'store' || b.id === 'gift') glow(b.x + b.w / 2, b.y + b.h * 0.6, T * 1.8, a0 * 0.8); });
+        ctx.restore();
+      }
+    }
     raf = requestAnimationFrame(draw);
   }
   function label(text, x, y, color) {
@@ -550,6 +570,7 @@
     });
   }
   function gatherTap(tx, ty, wx, wy) {
+    if (M.visiting) return false;   // 방문 중에는 채집하지 않는다
     // 곤충
     var bg = bugs.filter(function (b) { return Math.abs(wx / T - b.x) < 0.7 && Math.abs(wy / T - (b.y - 0.3)) < 0.7; })[0];
     if (bg) {
@@ -703,7 +724,8 @@
   // ---------- 붙이기 ----------
   M.World = {
     mount: function (root) {
-      build(); if (!ground) { if (!tilesReady) { loadTiles(function () { tilesReady = true; ground = null; drawGround(); }); } drawGround(); }
+      build(); if (ground && M.V && groundRes !== M.V.residents().length) ground = null;
+      if (!ground) { if (!tilesReady) { loadTiles(function () { tilesReady = true; ground = null; drawGround(); }); } drawGround(); }
       var w = Wst();
       if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 22; me.y = me.py = me.ty = 24; } }
       syncNpcs();
