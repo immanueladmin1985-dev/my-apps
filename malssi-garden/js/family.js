@@ -326,7 +326,7 @@
       coupons: P.coupons.filter(function (c) { return c.status === 'wait'; }).map(cp).concat(P.coupons.filter(function (c) { return c.status !== 'wait'; }).slice(-10).map(cp)),
       requests: (P.requests || []).filter(function (q) { return q.status === 'wait'; }).map(function (q) { return { id: q.id, e: q.e, name: q.name, won: q.won || 0, link: q.link || '', at: q.at }; }),
       rewards: P.rewards.map(function (r) { return { id: r.id, e: r.e, name: r.name, price: r.price }; }),
-      rate: P.admin.rate || 10, weekBonus: P.admin.weekBonus || 0, glv: (P.garden && P.garden.lv) || 1, vis: { pet: P.petName, friends: (P.garden && P.garden.friends) || {}, house: M.houseLv ? M.houseLv() : 1, stage: M.petStage ? M.petStage() : 1 },
+      rate: P.admin.rate || 10, weekBonus: P.admin.weekBonus || 0, glv: (P.garden && P.garden.lv) || 1, vis: { pet: P.petName, friends: (P.garden && P.garden.friends) || {}, house: M.houseLv ? M.houseLv() : 1, hstyle: (P.house && P.house.style) || 'bunny', stage: M.petStage ? M.petStage() : 1 },
       bag: (function () { var b = (P.gather && P.gather.bag) || {}, o = {}; Object.keys(b).filter(function (k) { return b[k] > 0 && k !== 'recipe'; }).sort(function (a, c) { return b[c] - b[a]; }).slice(0, 40).forEach(function (k) { o[k] = b[k]; }); return o; })(),
       owned: Object.keys((P.room && P.room.owned) || {}),
       inv: { item: (P.gather && P.gather.bag) || {}, seed: (P.pots && P.pots.seeds) || {}, pan: P.pantry || {}, bait: P.bait || {} },

@@ -292,17 +292,24 @@
     { name: '작은 집', pots: 3, floors: 1, need: {} },
     { name: '2층 집', pots: 4, floors: 2, coins: 300, need: { branch: 10, stone: 5 } },
     { name: '3층 집', pots: 5, floors: 3, coins: 800, need: { log: 6, stone: 10, clay: 6 } },
-    { name: '옥상 정원이 있는 큰 집', pots: 6, floors: 4, coins: 2000, need: { log: 12, clay: 10, gold: 2, branch: 15 } }];
+    { name: '옥상 정원이 있는 집', pots: 6, floors: 4, coins: 2000, need: { log: 12, clay: 10, gold: 2, branch: 15 } },
+    { name: '마을에서 제일 큰 집', pots: 7, floors: 4, coins: 4000, need: { log: 20, clay: 15, gold: 4, stone: 20, 'min-marble': 3 } }];
+  M.HOUSE_MAX = HOUSE.length - 1;
   M.houseLv = function () { if (M.visiting && M.visitData && M.visitData.house) return M.visitData.house; return (M.P.house && M.P.house.lv) || 1; };
   M.houseInfo = function () { return HOUSE[M.houseLv()]; };
+  // 집 겉모습: 토끼 집(분홍 지붕) 또는 당근 집, 단계마다 그림이 다르다
+  M.homeImg = function (lv) { var st = (M.visiting && M.visitData && M.visitData.hstyle) || (M.P.house && M.P.house.style) || 'bunny'; return 'home-' + st + '-' + Math.max(1, Math.min(5, lv || M.houseLv())); };
+  function styleRow() { var cur = (M.P.house && M.P.house.style) || 'bunny', lv = M.houseLv(); return '<h4>🏠 집 모양</h4><div class="row2">' + [['bunny', '토끼 집'], ['carrot', '당근 집']].map(function (x) { return '<button class="hstyle' + (cur === x[0] ? ' on' : '') + '" data-hst="' + x[0] + '"><img src="img/w/home-' + x[0] + '-' + lv + '.png" alt=""><small>' + x[1] + '</small></button>'; }).join('') + '</div>'; }
+  function styleClick(d) { return function (e) { var b = e.target.closest('[data-hst]'); if (!b) return; M.P.house = M.P.house || { lv: 1 }; M.P.house.style = b.dataset.hst; M.save(); d.close(); M.houseSheet(); }; }
   M.houseSheet = function () {
     var lv = M.houseLv(), nx = HOUSE[lv + 1], g = S();
-    if (!nx) { M.modal('<div class="center"><div class="tbig">🏡</div><h3>' + HOUSE[lv].name + '</h3><p>집을 끝까지 넓혔어요!</p><button class="btn primary wide" data-close>좋아요</button></div>'); return; }
+    if (!nx) { var dm = M.modal('<div class="center"><img class="hsimg" src="img/w/' + M.homeImg(lv) + '.png" alt=""><h3>' + HOUSE[lv].name + '</h3><p>집을 끝까지 넓혔어요!</p></div>' + styleRow() + '<button class="btn primary wide" data-close>좋아요</button>'); dm.addEventListener('click', styleClick(dm)); return; }
     var ok = Object.keys(nx.need).every(function (k) { return (g.bag[k] || 0) >= nx.need[k]; }) && M.P.coins >= nx.coins;
-    var d = M.modal('<h3>🔨 집 넓히기</h3><p>' + HOUSE[lv].name + ' → <b>' + nx.name + '</b> · 화분 자리 ' + nx.pots + '칸까지</p><div class="hneed">' +
+    var d = M.modal('<h3>🔨 집 넓히기</h3><div class="hsrow"><img src="img/w/' + M.homeImg(lv) + '.png" alt=""><span>→</span><img src="img/w/' + M.homeImg(lv + 1) + '.png" alt=""></div><p>' + HOUSE[lv].name + ' → <b>' + nx.name + '</b> · 화분 자리 ' + nx.pots + '칸까지</p><div class="hneed">' +
       Object.keys(nx.need).map(function (k) { var have = g.bag[k] || 0, it = ITEMS[k]; return '<div class="hn' + (have >= nx.need[k] ? ' ok' : '') + '"><img src="' + it.img + '" alt=""><b>' + it.ko + '</b><small>' + have + ' / ' + nx.need[k] + '</small></div>'; }).join('') +
       '<div class="hn' + (M.P.coins >= nx.coins ? ' ok' : '') + '"><img src="img/coin.png" alt=""><b>코인</b><small>' + M.P.coins + ' / ' + nx.coins + '</small></div></div>' +
-      '<p class="hint">재료는 마을에서 나무를 흔들고 바위를 두드려 모아요</p><button class="btn primary wide" data-hup' + (ok ? '' : ' disabled') + '>넓히기</button><button class="btn ghost wide" data-close>닫기</button>');
+      '<p class="hint">재료는 마을에서 나무를 흔들고 바위를 두드려 모아요</p><button class="btn primary wide" data-hup' + (ok ? '' : ' disabled') + '>넓히기</button>' + styleRow() + '<button class="btn ghost wide" data-close>닫기</button>');
+    d.addEventListener('click', styleClick(d));
     d.querySelector('[data-hup]').onclick = function () {
       if (!M.spend('coins', nx.coins)) return;
       Object.keys(nx.need).forEach(function (k) { g.bag[k] -= nx.need[k]; });

@@ -29,6 +29,7 @@
   var WALLS = [{ id: 0, name: '기본 (아이보리)', price: 0, src: 'img/bg-room.jpg' }, { id: 1, name: '분홍 줄무늬', price: 300, src: 'img/wall-1.jpg' }, { id: 2, name: '민트 물방울', price: 300, src: 'img/wall-2.jpg' },
     { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' }];
   WALLS.forEach(function (w) { var b = w.src.replace('.jpg', ''); w.wl = b + '-w.webp'; w.fl = b + '-f.webp'; });
+  WALLS.push({ id: 5, name: '옥상 정원 (하늘)', price: 0, src: 'img/room-roof.jpg', roof: true });
   // 벽·바닥 색: 무늬는 그대로 두고 색만 바꾼다 (CSS 필터)
   // [바닥 필터, 이름, 견본 색, 벽에 곱할 색]
   var TINTS = [['', '원래 색', '#e9dcc6', ''], ['sepia(1) saturate(1.7) hue-rotate(300deg) brightness(1.02)', '분홍', '#f6b7c8', '#ffc4dc'], ['sepia(1) saturate(1.6) hue-rotate(168deg) brightness(1.04)', '하늘', '#a9d4f2', '#c8ecff'],
@@ -111,7 +112,7 @@
     var R = M.P.room, cur = R.cur || 1; if (n === cur) return;
     R.floors = R.floors || {};
     R.floors[cur] = { placed: R.placed, wall: R.wall || 0, wallTint: R.wallTint || 0, floorTint: R.floorTint || 0 };
-    var nx = R.floors[n] || { placed: {}, wall: 0 };   // 새 층도 1층과 같은 빈 방에서 시작한다
+    var nx = R.floors[n] || { placed: {}, wall: n === 4 ? 5 : 0 };   // 새 층은 1층과 같은 빈 방, 옥상은 하늘 배경
     R.placed = nx.placed || {}; R.wall = WALLS[nx.wall] ? nx.wall : 0; R.wallTint = nx.wallTint || 0; R.floorTint = nx.floorTint || 0; R.cur = n; M.save();
   };
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-fl]'); if (!b) return; if (M.stopEditing) M.stopEditing(); M.homeFloor(+b.dataset.fl); rerender(); M.sfx && M.sfx('pop'); });
@@ -149,6 +150,7 @@
   function wallSrc() { var w = WALLS[M.P.room.wall || 0] || WALLS[0]; return w.src; }
   function roomLayers() {
     var R = M.P.room, w = WALLS[R.wall || 0] || WALLS[0], ft = function (i) { var t = TINTS[i || 0] || TINTS[0]; return t[0] ? 'filter:' + t[0] + ';' : ''; };
+    if (w.roof) return '<div class="rlayer" style="background-image:url(' + w.src + ');' + ft(R.floorTint) + '"></div>';
     var wt = TINTS[R.wallTint || 0] || TINTS[0], wf = !wt[3] && wt[0] ? 'filter:' + wt[0] + ';' : '';
     return '<div class="rlayer" style="background-image:url(' + w.wl + ');' + wf + '"></div>' + (wt[3] ? '<div class="rlayer rmul" style="background-color:' + wt[3] + ';-webkit-mask-image:url(' + w.wl + ');mask-image:url(' + w.wl + ')"></div>' : '') + '<div class="rlayer" style="background-image:url(' + w.fl + ');' + ft(R.floorTint) + '"></div>';
   }

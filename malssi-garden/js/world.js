@@ -12,7 +12,7 @@
   var SIZE = { bear: 1, panda: 1, lion: 1.05, elephant: 1.25, camel: 1.15, deer: 0.9, dog: 0.8, fox: 0.8, sheep: 0.85, koala: 0.75, monkey: 0.8, otter: 0.72, penguin: 0.75, owl: 0.62, cat: 0.68, squirrel: 0.58, hedgehog: 0.55, hamster: 0.5, duck: 0.6, chick: 0.5, rabbit: 0.72, raccoon: 0.8 };
   function sizeOf(a) { return a.kind === 'npc' ? SIZE[a.id] || 0.8 : (a.kind === 'mate' && a.av === 'raccoon') || (a.kind === 'me' && M.visiting) ? SIZE.raccoon : a.riding ? 0.85 : SIZE.rabbit; }
   M.charSize = function (id) { return SIZE[id] || 0.8; };
-  var TILES = ['lawn', 'grass1', 'grass3', 'path', 'water', 'sand', 'plaza', 'plankh', 'flowers'];
+  var TILES = ['lawn', 'grass1', 'grass3', 'path', 'water', 'sand', 'plaza', 'plankh', 'flowers', 'fl-daisy', 'fl-dandelion', 'fl-lavender', 'fl-tulip', 'gr-clover', 'gr-tall', 'gr-moss', 'gr-leaves', 'pa-stone', 'pa-gravel', 'pa-wood', 'pa-brick', 'se-snow', 'se-petal', 'se-sand', 'se-puddle'];
   var TREES = ['t-green', 't-autumn', 't-cherry', 't-pine', 't-green2', 't-cherry2', 't-pine2', 't-green3', 't-cherry3'];
   var FLOWERS = ['d-flower1', 'd-flower2', 'd-tulip', 'd-grass1', 'd-grass2'];
   var DECO = ['d-bush1', 'd-bush2', 'd-bush3', 'd-bush4', 'd-bush5', 'd-bush6', 'd-bush7', 'd-flowerbush', 'd-rock', 'd-rock2', 'd-rock3', 'd-rock4', 'd-rocks', 'd-stump'];
@@ -189,11 +189,21 @@
       var gx = (pc[0] + 0.5) * T, gy = (pc[1] + 0.6) * T;
       g.save(); g.beginPath(); g.ellipse(gx, gy, T * 2.1, T * 1.45, 0, 0, 7); g.clip();
       var gr = g.createRadialGradient(gx, gy, T * 0.4, gx, gy, T * 2.1); gr.addColorStop(0, 'rgba(255,255,255,0)');
-      g.globalAlpha = 0.9; g.fillStyle = P('flowers', '#b8e39a'); g.fillRect(gx - T * 2.2, gy - T * 1.6, T * 4.4, T * 3.2);
+      g.globalAlpha = 1; g.fillStyle = P(['fl-daisy', 'fl-dandelion', 'fl-lavender', 'fl-tulip'][(pc[0] + pc[1]) % 4], P('flowers', '#b8e39a')); g.fillRect(gx - T * 2.2, gy - T * 1.6, T * 4.4, T * 3.2);
       g.globalAlpha = 1; gr.addColorStop(0.75, 'rgba(150,208,110,0)'); gr.addColorStop(1, 'rgba(150,208,110,.95)'); g.fillStyle = gr; g.fillRect(gx - T * 2.2, gy - T * 1.6, T * 4.4, T * 3.2);
       g.restore();
     });
-    blob([3], P('sand', '#f4e3b5'), '#e6cf95', 0);
+    // 풀밭 무늬 얼룩 (클로버·이끼·키 큰 풀) + 계절 얼룩 (봄 꽃잎·가을 낙엽·겨울 눈)
+    var se = season(), rp = rnd(41), spots = { sp: 'se-petal', au: 'gr-leaves', wi: 'se-snow' }[se];
+    for (var sp = 0; sp < 70; sp++) {
+      var sx = 2 + Math.floor(rp() * (W - 4)), sy = 3 + Math.floor(rp() * (RIVER_Y - 5)); if (G[sy * W + sx] !== 0) continue;
+      var kind = sp % 3 === 0 && spots ? spots : ['gr-clover', 'gr-moss', 'gr-tall'][sp % 3], rx = T * (1 + rp() * 1.4), ry = T * (0.8 + rp() * 0.9), cx2 = (sx + 0.5) * T, cy2 = (sy + 0.5) * T;
+      if (!pat[kind]) continue;
+      g.save(); g.beginPath(); g.ellipse(cx2, cy2, rx, ry, rp() * 3, 0, 7); g.clip(); g.globalAlpha = kind === 'gr-tall' ? 0.7 : 0.85; g.fillStyle = pat[kind]; g.fillRect(cx2 - rx - 2, cy2 - rx - 2, rx * 2 + 4, rx * 2 + 4);
+      var fe = g.createRadialGradient(cx2, cy2, Math.min(rx, ry) * 0.5, cx2, cy2, Math.max(rx, ry)); fe.addColorStop(0, 'rgba(150,208,110,0)'); fe.addColorStop(1, 'rgba(150,208,110,1)'); g.globalAlpha = 1; g.fillStyle = fe; g.fillRect(cx2 - rx - 2, cy2 - rx - 2, rx * 2 + 4, rx * 2 + 4); g.restore();
+    }
+    if (se === 'wi' && pat['se-snow']) { g.save(); g.globalAlpha = 0.35; g.fillStyle = pat['se-snow']; g.fillRect(0, 0, W * T, RIVER_Y * T); g.restore(); }
+    blob([3], P('se-sand', P('sand', '#f4e3b5')), '#e6cf95', 0);
     blob([2, 4], P('water', '#79c4ea'), '#eaf7ff', 2);
     // 다리와 선착장: 가로 판자, 양옆 난간
     for (y = 0; y < H; y++) for (x = 0; x < W; x++) if (G[y * W + x] === 4) {
@@ -203,7 +213,7 @@
       if (!lw) { g.fillRect(x * T - 3, y * T - 4, 6, T + 8); g.beginPath(); g.arc(x * T, y * T + 2, 5, 0, 7); g.fill(); }
       if (!rw) { g.fillRect(x * T + T - 3, y * T - 4, 6, T + 8); g.beginPath(); g.arc(x * T + T, y * T + 2, 5, 0, 7); g.fill(); }
     }
-    blob([1], P('path', '#ead1a0'), '#d2b07a', 3);
+    blob([1], P('pa-gravel', P('path', '#ead1a0')), '#d2b07a', 3);
     blob([5], P('plaza', '#e4dccd'), '#c9b99c', 2);
     ground = c;
   }
@@ -419,6 +429,8 @@
     return { top: Y, h: dh };
   }
   // 뒷마당 정원: 갈아 둔 흙에 작물이 자라고 나무 울타리로 둘렀다
+  // 내 집 그림: 단계 그림(home-1~4)이 오면 그것을, 없으면 지금 그림을 크게 쓴다
+  function homeSprite(hl) { var n = M.homeImg ? M.homeImg(hl) : 'h-pink'; return img(WI + n + '.png') ? n : 'h-pink'; }
   function drawYard(b) {
     var X = b.x * T, Y = b.y * T, WW = b.w * T, HH = b.h * T;
     ctx.fillStyle = '#b07b4a'; roundRect(X + 2, Y + 4, WW - 4, HH - 6, 10); ctx.fill();
@@ -448,7 +460,7 @@
     else if (o.kind === 'build') {
       var b = o.b, nm = b.id === 'home' ? 'h-pink' : 'b-' + b.id;
       if (b.yard) { r = drawYard(b); }
-      else { var hl = b.id === 'home' && M.houseLv ? M.houseLv() : 1, hs = 1 + (hl - 1) * 0.14; r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, (b.id === 'museum' ? 5.6 : b.id === 'den' ? 4 : 3.5) * hs, false, (b.id === 'museum' ? 4.6 : b.id === 'den' ? 2.6 : 3.4) * hs); if (hl > 1 && r) emoji(['', '', '2️⃣', '3️⃣', '🌻'][hl], (b.x + b.w + 0.2) * T, r.top + 18, 14); }
+      else { var hl = b.id === 'home' && M.houseLv ? M.houseLv() : 1, hs = b.id === 'home' ? 0.95 + (hl - 1) * 0.16 : 1; nm = b.id === 'home' ? homeSprite(hl) : nm; r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, (b.id === 'museum' ? 5.6 : b.id === 'den' ? 4 : 3.5) * hs, false, (b.id === 'museum' ? 4.6 : b.id === 'den' ? 2.6 : 3.4) * hs); }
       if (!r) { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); r = { top: b.y * T }; }
       label(b.id === 'home' && M.visiting && M.visitData ? M.visitData.pet + '네 집' : b.id === 'shop' && M.visiting && M.visitData ? M.visitData.pet + '네 뒷마당' : b.name, (b.x + b.w / 2) * T, r.top + 4);
       if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, r.top + 10, 18);

@@ -1527,3 +1527,15 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .mgame .dtiles { gap: 10px; margin-top: 18px; } .mgame .dtile { min-width: 62px; height: 62px; font-size: 1.7rem; }
 .mgame .yl, .mgame .yr { min-height: 54px; font-size: 1.05rem; }
 .mgame .bseg { min-height: 52px; font-size: 1.15rem; padding: 0 14px; }
+/* 배틀 세로 화면: 경기장 높이를 곤충에 맞춰 줄여 체력바를 곤충 바로 위로, 남는 공간은 버튼이 쓴다 */
+@media (orientation: portrait) {
+  .bbattle .bbstage { flex: 0 0 auto; height: calc(62vw + 40px); max-height: 52vh; }
+  .bbstage .bbring { bottom: 6%; }
+  .bbattle .bbmsg { flex: 0 0 auto; }
+  .bbattle .bbmoves { flex: 1 1 auto; align-content: stretch; grid-auto-rows: 1fr; max-height: 34vh; }
+  .bbattle .bbmove { min-height: 0; } .bbattle .bbmove .bbic { width: 54px; height: 54px; } .bbattle .bbmove b { font-size: 1.15rem; }
+  .bbstage .bbcoach { width: 72px; height: 92px; }
+}
+.hsrow { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin: 6px 0; } .hsrow img { height: 96px; object-fit: contain; } .hsrow img:last-child { height: 120px; } .hsrow span { font-size: 1.4rem; color: var(--sub); align-self: center; }
+.hsimg { height: 140px; object-fit: contain; }
+.hstyle { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; border: 2px solid var(--line); border-radius: 14px; background: #fff; } .hstyle.on { border-color: var(--mint); background: #effbf5; } .hstyle img { height: 70px; object-fit: contain; }
