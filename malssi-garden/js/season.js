@@ -73,6 +73,7 @@
     return SPOTS.map(function (p, i) { return free(p[0], p[1]) ? { x: p[0], y: p[1], h: p[2], src: s.items[i % s.items.length] } : null; }).filter(Boolean);
   };
   // 장식을 누르면 하루 한 번 계절 인사를 배우고 작은 선물을 받는다
+  M.seasonFresh = function () { var st = M.P.season || {}; return !!setFor(month()) && st.day !== M.today(); };
   M.seasonTap = function () {
     var s = setFor(month()); if (!s) return;
     var L = M.P.lang, g = s.greet[L] || s.greet.en, st = M.P.season = M.P.season || {};

@@ -1,4 +1,4 @@
-const CACHE = 'malssi-garden-v77';
+const CACHE = 'malssi-garden-v79';
 const CORE = [
   './',
   './index.html',
@@ -633,9 +633,6 @@ const CORE = [
   './img/furn-bugcase.png',
   './img/furn-bugframe.png',
   './img/furn-fishbowl.png',
-  './img/room-f2.jpg',
-  './img/room-f3.jpg',
-  './img/room-f4.jpg',
   './img/w/b-board.png',
   './img/w/b-den.png',
   './img/w/b-gift.png',
@@ -1056,6 +1053,16 @@ const CORE = [
   './img/wall-2.jpg',
   './img/wall-3.jpg',
   './img/wall-4.jpg',
+  './img/bg-room-w.webp',
+  './img/bg-room-f.webp',
+  './img/wall-1-w.webp',
+  './img/wall-1-f.webp',
+  './img/wall-2-w.webp',
+  './img/wall-2-f.webp',
+  './img/wall-3-w.webp',
+  './img/wall-3-f.webp',
+  './img/wall-4-w.webp',
+  './img/wall-4-f.webp',
   './img/water.png',
   './img/waterbag.png',
   './img/waterbarrel.png',

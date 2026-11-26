@@ -7,7 +7,11 @@
   var STEP = 170;               // 한 칸 걷는 시간(ms)
   // 그림이 오면 켠다. 예: tree: 'img/w-tree.png', house_bear: 'img/w-house-bear.png', ch_rabbit: 'img/ch-rabbit.png'(앞·뒤·옆 세 칸)
   var IMG = {};
-  var WI = 'img/w/', CH_H = 1.6;   // 캐릭터 키(칸)
+  var WI = 'img/w/', CH_H = 1.6;   // 캐릭터 키(칸): 곰 기준
+  // 실제 덩치를 생각한 크기 (곰 = 1)
+  var SIZE = { bear: 1, panda: 1, lion: 1.05, elephant: 1.25, camel: 1.15, deer: 0.9, dog: 0.8, fox: 0.8, sheep: 0.85, koala: 0.75, monkey: 0.8, otter: 0.72, penguin: 0.75, owl: 0.62, cat: 0.68, squirrel: 0.58, hedgehog: 0.55, hamster: 0.5, duck: 0.6, chick: 0.5, rabbit: 0.72, raccoon: 0.8 };
+  function sizeOf(a) { return a.kind === 'npc' ? SIZE[a.id] || 0.8 : (a.kind === 'mate' && a.av === 'raccoon') || (a.kind === 'me' && M.visiting) ? SIZE.raccoon : a.riding ? 0.85 : SIZE.rabbit; }
+  M.charSize = function (id) { return SIZE[id] || 0.8; };
   var TILES = ['lawn', 'grass1', 'grass3', 'path', 'water', 'sand', 'plaza', 'plankh', 'flowers'];
   var TREES = ['t-green', 't-autumn', 't-cherry', 't-pine', 't-green2', 't-cherry2', 't-pine2', 't-green3', 't-cherry3'];
   var FLOWERS = ['d-flower1', 'd-flower2', 'd-tulip', 'd-grass1', 'd-grass2'];
@@ -15,7 +19,7 @@
 
   // ---------- 지도 만들기 ----------
   // 바닥: 0 풀, 1 길, 2 물, 3 모래, 4 다리, 5 돌바닥(광장)
-  var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false;
+  var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false, PATCH = [];
   // 정원 가게(id 'shop')는 집 옆 뒷마당 텃밭으로 그린다 (yard)
   var BUILD = [
     { id: 'museum', name: '박물관', x: 4, y: 5, w: 5, h: 3, color: '#c9d6e8', roof: '#7d8fb3', em: '🏛️' },
@@ -114,12 +118,13 @@
       var cx = 3 + Math.floor(rfl() * (W - 6)), cy = 4 + Math.floor(rfl() * (RIVER_Y - 6));
       if (G[cy * W + cx] !== 0 || SOLID[cy * W + cx]) continue;
       if (patches.some(function (p) { return Math.abs(p[0] - cx) + Math.abs(p[1] - cy) < 7; })) continue;
-      patches.push([cx, cy]);
-      var kind = FLOWERS[patches.length % FLOWERS.length], n2 = 5 + Math.floor(rfl() * 5);
-      for (var f2 = 0; f2 < n2; f2++) {
-        var fx2 = cx + Math.round((rfl() - 0.5) * 3), fy2 = cy + Math.round((rfl() - 0.5) * 2.4);
+      patches.push([cx, cy]); PATCH.push([cx, cy]);
+      var kind = FLOWERS[patches.length % FLOWERS.length], n2 = 14 + Math.floor(rfl() * 8);
+      for (var f2 = 0; f2 < n2; f2++) {   // 한 칸에 여러 송이씩, 가운데일수록 촘촘하게
+        var ang = rfl() * 6.283, rad = Math.sqrt(rfl()) * 1.7, fxf = cx + 0.5 + Math.cos(ang) * rad * 1.15, fyf = cy + 0.6 + Math.sin(ang) * rad * 0.8;
+        var fx2 = Math.floor(fxf), fy2 = Math.floor(fyf);
         if (G[fy2 * W + fx2] !== 0 || SOLID[fy2 * W + fx2] || DOORS[fx2 + ',' + fy2]) continue;
-        OBJ.push({ kind: 'img', src: f2 % 3 === 2 ? FLOWERS[(patches.length + 1) % FLOWERS.length] : kind, x: fx2 + 0.5 + (rfl() - 0.5) * 0.3, y: fy2 + 1, h: 0.55, flat: true });
+        OBJ.push({ kind: 'img', src: f2 % 4 === 3 ? FLOWERS[(patches.length + 1) % FLOWERS.length] : kind, x: fxf, y: fyf + 0.35, h: 0.38 + rfl() * 0.16, flat: true });
       }
     }
     // 계절 장식
@@ -179,6 +184,15 @@
         }
       });
     }
+    // 꽃 군락 아래에 둥근 꽃밭 바닥 (가장자리는 부드럽게)
+    PATCH.forEach(function (pc) {
+      var gx = (pc[0] + 0.5) * T, gy = (pc[1] + 0.6) * T;
+      g.save(); g.beginPath(); g.ellipse(gx, gy, T * 2.1, T * 1.45, 0, 0, 7); g.clip();
+      var gr = g.createRadialGradient(gx, gy, T * 0.4, gx, gy, T * 2.1); gr.addColorStop(0, 'rgba(255,255,255,0)');
+      g.globalAlpha = 0.9; g.fillStyle = P('flowers', '#b8e39a'); g.fillRect(gx - T * 2.2, gy - T * 1.6, T * 4.4, T * 3.2);
+      g.globalAlpha = 1; gr.addColorStop(0.75, 'rgba(150,208,110,0)'); gr.addColorStop(1, 'rgba(150,208,110,.95)'); g.fillStyle = gr; g.fillRect(gx - T * 2.2, gy - T * 1.6, T * 4.4, T * 3.2);
+      g.restore();
+    });
     blob([3], P('sand', '#f4e3b5'), '#e6cf95', 0);
     blob([2, 4], P('water', '#79c4ea'), '#eaf7ff', 2);
     // 다리와 선착장: 가로 판자, 양옆 난간
@@ -197,7 +211,50 @@
   // ---------- 캐릭터 ----------
   var mate = null;   // 가족 연결: 상대 토끼
   var me = null, npcs = [], cam = { x: 0, y: 0 }, cv = null, ctx = null, raf = 0, imgs = {}, lastT = 0, mounted = null;
-  function img(src) { if (!src) return null; if (!imgs[src]) { var i = new Image(); i.src = src; imgs[src] = i; } return imgs[src].complete && imgs[src].naturalWidth ? imgs[src] : null; }
+  function img(src) {
+    if (!src) return null;
+    var at = src.indexOf('@'); if (at > 0) return tinted(src.slice(0, at) + '.png', src.slice(at + 1, -4));
+    if (!imgs[src]) { var i = new Image(); i.src = src; imgs[src] = i; } return imgs[src].complete && imgs[src].naturalWidth ? imgs[src] : null;
+  }
+  // 계절 색: 잎(초록·분홍)만 골라 색을 바꾼다. 줄기(갈색)와 외곽선은 그대로 둔다
+  var tints = {};
+  function tinted(base, mode) {
+    var key = base + '@' + mode; if (tints[key]) return tints[key];
+    var im = img(base); if (!im) return null;
+    var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    var g = c.getContext('2d'); g.drawImage(im, 0, 0);
+    try {
+      var d = g.getImageData(0, 0, c.width, c.height), a = d.data, target = { or: 30, yl: 44, rd: 14, gr: 105 }[mode];
+      for (var i = 0; i < a.length; i += 4) {
+        if (a[i + 3] < 10) continue;
+        var r = a[i] / 255, gg = a[i + 1] / 255, b = a[i + 2] / 255, mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, s = mx === mn ? 0 : (l > 0.5 ? (mx - mn) / (2 - mx - mn) : (mx - mn) / (mx + mn)), h = 0;
+        if (mx !== mn) { h = mx === r ? (gg - b) / (mx - mn) + (gg < b ? 6 : 0) : mx === gg ? (b - r) / (mx - mn) + 2 : (r - gg) / (mx - mn) + 4; h *= 60; }
+        var leaf = s > 0.18 && l > 0.18 && ((h > 65 && h < 175) || h > 290 || (h < 12 && l > 0.6));   // 초록 잎 또는 분홍 꽃잎
+        if (!leaf) continue;
+        var nh, ns = s, nl = l;
+        if (mode === 'wn') { nh = 30; ns = s * 0.25; nl = Math.min(0.92, l * 1.05 + 0.08); }   // 겨울: 빛바랜 가지 색
+        else { nh = target + (h > 290 || h < 12 ? 0 : (h - 110) * 0.15); if (mode !== 'gr') { ns = Math.min(1, s * 1.05); nl = l * (mode === 'rd' ? 0.9 : 1); } }
+        var q = nl < 0.5 ? nl * (1 + ns) : nl + ns - nl * ns, p = 2 * nl - q, hk = ((nh % 360) + 360) % 360 / 360;
+        var f = function (t) { t = t < 0 ? t + 1 : t > 1 ? t - 1 : t; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+        a[i] = f(hk + 1 / 3) * 255; a[i + 1] = f(hk) * 255; a[i + 2] = f(hk - 1 / 3) * 255;
+      }
+      g.putImageData(d, 0, 0);
+    } catch (e) {}
+    c.naturalWidth = c.width; c.naturalHeight = c.height; tints[key] = c; return c;
+  }
+  function season() { var m = M.now().getMonth() + 1; return m >= 3 && m <= 5 ? 'sp' : m <= 8 && m >= 6 ? 'su' : m >= 9 && m <= 11 ? 'au' : 'wi'; }
+  M.seasonNow = season;
+  // 계절에 맞는 나무 그림 이름 (분홍 벚꽃은 봄에만)
+  function treeSrc(src, key) {
+    var se = season(); if (src.indexOf('pine') >= 0) return src;
+    var hs = 0; for (var i = 0; i < key.length; i++) hs = (hs * 31 + key.charCodeAt(i)) % 997;
+    var cherry = src.indexOf('cherry') >= 0;
+    if (cherry && se !== 'sp') src = src.replace('cherry', 'green');   // 벚꽃은 봄에만. 다른 철에는 같은 모양의 초록 나무로
+    if (se === 'sp') return src.indexOf('autumn') >= 0 ? 't-green' : src;
+    if (se === 'su') return src.indexOf('autumn') >= 0 ? 't-green' : src;
+    if (se === 'au') { if (src.indexOf('autumn') >= 0) return src; return src + '@' + ['or', 'yl', 'rd', 'or', 'yl'][hs % 5]; }
+    return src.indexOf('autumn') >= 0 ? 't-green@wn' : src + '@wn';
+  }
   function Wst() { var P = M.P; P.world = P.world || { x: 22, y: 24, d: 'down' }; return P.world; }
   function mkActor(x, y, kind, id) { return { x: x, y: y, px: x, py: y, tx: x, ty: y, t: 1, d: 'down', path: [], kind: kind, id: id, wait: 0 }; }
   function syncNpcs() {
@@ -378,7 +435,7 @@
     else if (o.kind === 'tree' || o.kind === 'ftree' || o.kind === 'rock') {
       var sh = o.shake ? performance.now() - o.shake : 1e9, dx = sh < 600 ? Math.sin(sh / 35) * (1 - sh / 600) * (o.kind === 'rock' ? 3 : 6) : 0;
       ctx.save(); ctx.translate(dx, 0);
-      sprite(o.kind === 'ftree' ? (M.fruitReady && M.fruitReady(o.key) ? 'ft-' + o.fk : 'ft-none') : o.src, o.x, o.y + 0.05, 0, false, o.h);
+      sprite(o.kind === 'ftree' ? (M.fruitReady && M.fruitReady(o.key) ? 'ft-' + o.fk : 'ft-none') : o.kind === 'tree' ? treeSrc(o.src, o.key || '') : o.src, o.x, o.y + 0.05, 0, false, o.h);
       ctx.restore();
       if (sh < 700 && o.kind !== 'rock') sprite('fx-leaves', o.x + 0.2, o.y - o.h * 0.35 + sh / 500, 0, false, 0.8);
       if (sh < 500 && o.kind === 'rock') sprite('fx-dust', o.x, o.y + 0.1, 0, false, 0.6);
@@ -421,10 +478,10 @@
     var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
     var stg = a.kind === 'mate' ? (a.stage || 1) : M.petStage(), coon = (a.kind === 'mate' && a.av === 'raccoon') || (a.kind === 'me' && M.visiting);
     var name = a.riding ? 'ch-rabbit3-bike-' + view + (walking ? step + 1 : 1) : coon ? 'ch-raccoon-' + view : a.kind === 'me' || a.kind === 'mate' ? 'ch-rabbit' + stg + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
-    var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
+    var hh = CH_H * sizeOf(a), r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, hh);
     if (!r) {   // 그 방향 그림을 아직 불러오는 중이면, 이미 불러온 다른 모습으로 그린다 (예전 상반신 그림은 쓰지 않는다)
       var alts = a.kind === 'me' || a.kind === 'mate' ? ['ch-rabbit' + stg + '-' + view + '1', 'ch-rabbit' + stg + '-front1'] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
-      for (var k = 0; k < alts.length && !r; k++) r = sprite(alts[k], p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
+      for (var k = 0; k < alts.length && !r; k++) r = sprite(alts[k], p.x + 0.5, p.y + 1 - bob / T, 0, flip, hh);
     }
     if (a.kind === 'mate') label('💕 ' + (a.name || ''), X + T / 2, (r ? r.top : Y - T) - 2);
     if (a.say) {   // 말풍선
@@ -557,12 +614,13 @@
     if (freeCam) { freeCam = null; camEase = true; }   // 옮긴 시야에서 누르면 토끼 쪽으로 돌아가며 걸어간다
     var tx = Math.floor(wx / T), ty = Math.floor(wy / T);
     // 주민을 눌렀나 (그림이 칸보다 커서 조금 넉넉하게 본다)
-    var hit = npcs.filter(function (n) { if (n.asleep) return false; var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - CH_H) * T - 4 && wy < p.y * T + T + 4; })[0];
+    var hit = npcs.filter(function (n) { if (n.asleep) return false; var p = pos(n); return wx > p.x * T - 8 && wx < p.x * T + T + 8 && wy > (p.y + 1 - Math.max(1, CH_H * sizeOf(n))) * T - 4 && wy < p.y * T + T + 4; })[0];
     if (hit) { talkTo(hit); return; }
-    var so = OBJ.filter(function (o) { return o.season && Math.abs(o.tx - tx) <= 0 && ty >= o.ty - 1 && ty <= o.ty; })[0];
-    if (so) { goNear(so.tx, so.ty, function () { M.seasonTap(); }); return; }
     if (mate) { var mp2 = pos(mate); if (wx > mp2.x * T - 8 && wx < mp2.x * T + T + 8 && wy > (mp2.y + 1 - CH_H) * T - 4 && wy < mp2.y * T + T + 4) { goNear(mate.x, mate.y, function () { if (M.Family) M.Family.mateSheet(); }); return; } }
     if (gatherTap(tx, ty, wx, wy)) return;
+    // 계절 장식: 하루 처음 한 번만 인사를 보여 준다 (그다음부터는 눌러도 그냥 걸어간다)
+    var so = M.seasonFresh && M.seasonFresh() && OBJ.filter(function (o) { return o.season && o.tx === tx && ty >= o.ty - 1 && ty <= o.ty; })[0];
+    if (so) { goNear(so.tx, so.ty, function () { M.seasonTap(); }); return; }
     if (false) {
       npcs.forEach(function (n) { if (n.talking === 'wait') n.talking = false; });
       hit.talking = 'wait'; hit.path = [];

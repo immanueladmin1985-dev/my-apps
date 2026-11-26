@@ -152,11 +152,14 @@
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-gsay]'); if (b) M.say(b.dataset.gsay, M.P.lang); });
 
   // 열매 나무: 열매는 6시간마다 다시 열린다
-  M.fruitReady = function (key) { var t = S().trees[key]; return !t || Date.now() - t >= 6 * H; };
-  M.fruitLeft = function (key) { var t = S().trees[key]; return t ? Math.max(0, 6 * H - (Date.now() - t)) : 0; };
+  // 가을에는 열매가 빨리(3시간) 많이(4개), 겨울에는 천천히(10시간) 조금(2개) 열린다
+  function fruitH() { var se = M.seasonNow ? M.seasonNow() : 'sp'; return se === 'au' ? 3 : se === 'wi' ? 10 : 6; }
+  function fruitN() { var se = M.seasonNow ? M.seasonNow() : 'sp'; return se === 'au' ? 4 : se === 'wi' ? 2 : 3; }
+  M.fruitReady = function (key) { var t = S().trees[key]; return !t || Date.now() - t >= fruitH() * H; };
+  M.fruitLeft = function (key) { var t = S().trees[key]; return t ? Math.max(0, fruitH() * H - (Date.now() - t)) : 0; };
   M.shakeFruitTree = function (key, kind) {
     var g = S();
-    if (M.fruitReady(key)) { g.trees[key] = Date.now(); M.save(); M.gatherGot(kind, 3); return true; }
+    if (M.fruitReady(key)) { g.trees[key] = Date.now(); M.save(); M.gatherGot(kind, fruitN()); return true; }
     if (!g.wood[key]) { g.wood[key] = 1; M.save(); if (Math.random() < 0.5) { M.gatherGot(Math.random() < 0.7 ? 'branch' : 'leaf'); return true; } }
     var m = Math.ceil(M.fruitLeft(key) / 60000); M.toast('열매가 다시 열리려면 ' + (m >= 60 ? Math.floor(m / 60) + '시간 ' : '') + (m % 60) + '분 남았어요');
     return false;

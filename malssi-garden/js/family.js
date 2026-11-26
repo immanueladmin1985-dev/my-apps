@@ -575,6 +575,10 @@
     G = g;
     if (!g || (g.host !== F.uid && g.guest !== F.uid)) { closeDlg(askDlg); closeDlg(waitDlg); closeCoop(); return; }
     var fresh = FX.now() - (g.at || 0) < 90000;
+    L.gdone = L.gdone || {};
+    if (L.gdone[g.id]) { if ($('coop')) closeCoop(); return; }   // 이미 닫은 놀이는 다시 띄우지 않는다
+    if (g.status === 'end' && !$('coop')) { L.gdone[g.id] = 1; store(); return; }   // 앱을 다시 열었을 때 지난 결과는 띄우지 않는다
+    if (g.status === 'play' && !$('coop') && FX.now() - (g.at || 0) > 30 * 60000) return;
     if (g.status === 'invite') {
       if (!fresh) return;
       if (g.guest === F.uid && !(askDlg && askDlg.isConnected)) {
@@ -607,7 +611,7 @@
     };
     lastR = -1; seenFlip = ''; resolved = {}; lastLog = -1;
   }
-  function closeCoop() { var el = $('coop'); if (el) el.remove(); document.body.classList.remove('in-mini'); clearTimeout(roundT); }
+  function closeCoop() { if (G && G.id && (G.status === 'end' || G.status === 'cancel')) { L.gdone = L.gdone || {}; L.gdone[G.id] = 1; var ks = Object.keys(L.gdone); if (ks.length > 40) delete L.gdone[ks[0]]; store(); } var el = $('coop'); if (el) el.remove(); document.body.classList.remove('in-mini'); clearTimeout(roundT); }
   function names(uid) { return uid === F.uid ? '나' : M.Family.mateName(); }
   function scoreLine(g) { var s = g.scores || {}; return '나 ' + (s[F.uid] || 0) + ' : ' + (s[F.mateUid] || 0) + ' ' + esc(M.Family.mateName()); }
   function reward(g, coins, water) {

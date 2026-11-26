@@ -1481,3 +1481,49 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
   .garden .stallwrap .shophead b { white-space: nowrap; }
 }
 @media (orientation: landscape) and (max-height: 560px) { .bbattle .bbmove b { font-size: .85rem; white-space: nowrap; } }
+/* 토끼 집: 스크롤 없이 한 화면에 (방이 남는 높이를 모두 차지) */
+.view:has(> #homeView:not(.hidden)) { overflow: hidden; padding-bottom: 0; display: flex; flex-direction: column; }
+#homeView:not(.hidden) { flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+#homeView .home { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-top: 6px; }
+#homeView .home .room { flex: 1 1 auto; height: auto; min-height: 0; max-height: none; aspect-ratio: auto; }
+#homeView .floors, #homeView .hstat, #homeView .htools, #homeView .ftools, #homeView .edithint { flex: none; }
+#homeView .htools { padding-bottom: 8px; }
+/* 가판대 손님: 덩치대로 줄이되 위쪽(지붕 아래)을 기준으로 해서 얼굴은 늘 보이게 */
+.custs .cust { transform: translateX(-50%) scale(var(--s, 1)); transform-origin: 50% 22%; }
+.room > .rlayer { position: absolute; inset: 0; background: center bottom / cover no-repeat; pointer-events: none; z-index: 0; }
+.room { background-image: none !important; }
+.tints { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 6px; } .tint { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 2px; } .tint i { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--line); } .tint.on i { box-shadow: 0 0 0 3px var(--mint); } .tint small { font-size: .68rem; color: var(--sub); }
+.room > .rlayer.rmul { mix-blend-mode: multiply; -webkit-mask-size: cover; mask-size: cover; -webkit-mask-position: center bottom; mask-position: center bottom; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+
+/* 배틀: 곤충은 그루터기 윗면 위에 선다 (경기장 그림과 함께 움직이는 틀) */
+.bbstage .bbring { position: absolute; left: 50%; bottom: 13%; width: 150%; aspect-ratio: 900 / 232; transform: translateX(-50%); z-index: 1; }
+.bbstage .bbring .bbarena { position: absolute; inset: 0; left: 0; bottom: 0; width: 100%; height: 100%; max-width: none; transform: none; }
+.bbstage .bbring .bbimg { position: absolute; bottom: 30%; width: 21%; height: auto; aspect-ratio: 1; object-fit: contain; }
+.bbstage .bbring .bbimg.me { left: 27%; right: auto; } .bbstage .bbring .bbimg.op { right: 27%; left: auto; }
+.bbstage .bbring .bbfx { position: absolute; width: 20%; height: auto; aspect-ratio: 1; bottom: 42%; }
+.bbstage .bbring .bbfx.op { right: 28%; left: auto; } .bbstage .bbring .bbfx.me { left: 28%; right: auto; }
+@media (orientation: landscape) and (max-height: 560px) { .bbstage .bbring { width: 125%; bottom: 8%; } .bbstage .bbring .bbimg { width: 20%; height: auto; } }
+@media (orientation: portrait) { .bbstage .bbring { width: 200%; bottom: 18%; } }
+@media (orientation: landscape) and (min-height: 561px) { .bbstage .bbring { width: 105%; bottom: 10%; } }
+/* 미니게임: 남는 세로 공간을 버튼과 캐릭터가 채운다 */
+.mgame .mbody { display: flex; flex-direction: column; }
+.mgame .nqface { width: 92px; height: 92px; }
+.mgame .nq { padding: 12px; }
+.mgame .ropts { flex: 1 1 auto; margin-top: 14px; align-content: stretch; grid-auto-rows: minmax(86px, 1fr); max-height: 58vh; }
+.mgame .ropts.c3 { grid-auto-rows: minmax(70px, 1fr); }
+.mgame .ropts.p3 { flex: 0 0 auto; grid-auto-rows: 72px; }
+.mgame .ropt b { font-size: 1.35rem; } .mgame .ropt .remoji.sm { font-size: 3rem; }
+.mgame .fgrass { flex: 1 1 auto; max-height: 50vh; margin-top: 14px; } .mgame .fspot { min-height: 0; height: 100%; } .mgame .fspot .fball { font-size: 2.2rem; } .mgame .fspot b { font-size: 1.05rem; }
+.mgame .fdog { font-size: 3.6rem; }
+.mgame .oshell { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; max-height: 38vh; } .mgame .oshell .ow b { font-size: 2.2rem; } .mgame .ok2 { font-size: 1.5rem; }
+.mgame .oxbtns { flex: 0 0 auto; } .mgame .oxb { min-height: 130px; font-size: 3rem; }
+.mgame .eword { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; max-height: 40vh; } .mgame .eword b { font-size: 2.6rem; }
+.mgame .ebtns .btn { min-height: 64px; font-size: 1.1rem; }
+.mgame .pshow { flex: 1 1 auto; max-height: 34vh; } .mgame .pw b { font-size: 2rem; } .mgame .pel { font-size: 4rem; }
+.mgame .ngrid { flex: 1 1 auto; max-height: 60vh; }
+.mgame .csent { font-size: 1.6rem; padding: 20px 14px; }
+@media (orientation: landscape) and (max-height: 560px) { .mgame .nqface { width: 60px; height: 60px; } .mgame .ropts { grid-auto-rows: minmax(56px, 1fr); max-height: none; } .mgame .oxb { min-height: 70px; } }
+.mgame .fgrass { align-content: stretch; grid-auto-rows: 1fr; min-height: 34vh; }
+.mgame .dtiles { gap: 10px; margin-top: 18px; } .mgame .dtile { min-width: 62px; height: 62px; font-size: 1.7rem; }
+.mgame .yl, .mgame .yr { min-height: 54px; font-size: 1.05rem; }
+.mgame .bseg { min-height: 52px; font-size: 1.15rem; padding: 0 14px; }

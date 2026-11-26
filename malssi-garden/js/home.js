@@ -27,8 +27,13 @@
     wall: ['🖼️ 벽', 'window,clock,frame,shelf,lights,stars,painting'], rug: ['🧶 깔개', 'rug,rug2,floorcush'] };
   var fcat = 'living';
   var WALLS = [{ id: 0, name: '기본 (아이보리)', price: 0, src: 'img/bg-room.jpg' }, { id: 1, name: '분홍 줄무늬', price: 300, src: 'img/wall-1.jpg' }, { id: 2, name: '민트 물방울', price: 300, src: 'img/wall-2.jpg' },
-    { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' },
-    { id: 5, name: '별빛 침실 (2층)', price: 0, src: 'img/room-f2.jpg' }, { id: 6, name: '햇살 다락방 (3층)', price: 0, src: 'img/room-f3.jpg' }, { id: 7, name: '옥상 정원', price: 0, src: 'img/room-f4.jpg' }];
+    { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' }];
+  WALLS.forEach(function (w) { var b = w.src.replace('.jpg', ''); w.wl = b + '-w.webp'; w.fl = b + '-f.webp'; });
+  // 벽·바닥 색: 무늬는 그대로 두고 색만 바꾼다 (CSS 필터)
+  // [바닥 필터, 이름, 견본 색, 벽에 곱할 색]
+  var TINTS = [['', '원래 색', '#e9dcc6', ''], ['sepia(1) saturate(1.7) hue-rotate(300deg) brightness(1.02)', '분홍', '#f6b7c8', '#ffc4dc'], ['sepia(1) saturate(1.6) hue-rotate(168deg) brightness(1.04)', '하늘', '#a9d4f2', '#c8ecff'],
+    ['sepia(1) saturate(1.3) hue-rotate(80deg) brightness(1.04)', '민트', '#b4e3b8', '#bdeccb'], ['sepia(1) saturate(1.5) hue-rotate(228deg) brightness(1.03)', '보라', '#c9b4ef', '#d6c2ff'], ['sepia(.9) saturate(2.2) hue-rotate(8deg) brightness(1.05)', '노랑', '#f4dc8a', '#fff0a0'],
+    ['sepia(.9) saturate(2) hue-rotate(345deg) brightness(1)', '주황', '#f3b483', '#ffcf9f'], ['grayscale(1) brightness(1.05)', '회색', '#cfcfcf', '#d4d4d4'], ['brightness(.72) saturate(1.2)', '짙게', '#9a7656', '#b0927a'], ['brightness(1.18) saturate(.7)', '밝게', '#f4ead9', '']];
   // 소품: 토끼 그림 위에 겹쳐 그린다. x·y 는 토끼 그림 안의 위치(%), w 는 너비(%)
   var ACCS = [{ id: 'ribbon', name: '빨간 리본', price: 120, x: 66, y: 10, w: 32 }, { id: 'crown', name: '꽃 화관', price: 200, x: 50, y: 18, w: 56 }, { id: 'strawhat', name: '밀짚모자', price: 250, x: 50, y: 12, w: 64 },
     { id: 'chefhat', name: '요리사 모자', price: 250, x: 50, y: 12, w: 60 }, { id: 'glasses', name: '동그란 안경', price: 150, eyes: true }, { id: 'starpin', name: '별 머리핀', price: 100, x: 66, y: 26, w: 22 }];
@@ -76,7 +81,7 @@
     var placed = Object.keys(P.room.placed).map(function (id) { return FURN.filter(function (f) { return f.id === id; })[0]; }).filter(Boolean);
     placed.sort(function (a, b) { return P.room.placed[a.id].y - P.room.placed[b.id].y; });
     var h = '<div class="home">' + (fl > 1 ? '<div class="floors">' + FLOORS.slice(1, fl + 1).map(function (n, i) { return '<button data-fl="' + (i + 1) + '" class="' + (cur === i + 1 ? 'on' : '') + '">' + n + '</button>'; }).join('') + '</div>' : '') +
-      '<div class="room' + (editing ? ' editing' : '') + '" id="room" style="background-image:url(' + wallSrc() + ')">' +
+      '<div class="room' + (editing ? ' editing' : '') + '" id="room">' + roomLayers() +
       placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false">' + showcase(f.id) + '</div>'; }).join('') +
       (M.potsRoomHtml && cur === 1 ? M.potsRoomHtml() : '') +
       '<div class="pet' + (editing ? ' movable' : '') + '" id="pet" style="z-index:' + Math.round((P.pet.pos || { y: 92 }).y) + ';' + (P.pet.pos ? 'left:' + P.pet.pos.x + '%;top:' + P.pet.pos.y + '%;bottom:auto' : '') + '"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
@@ -105,9 +110,9 @@
   M.homeFloor = function (n) {
     var R = M.P.room, cur = R.cur || 1; if (n === cur) return;
     R.floors = R.floors || {};
-    R.floors[cur] = { placed: R.placed, wall: R.wall || 0 };
-    var nx = R.floors[n] || { placed: {}, wall: n + 3 };   // 2층 별빛 침실, 3층 다락방, 옥상 정원
-    R.placed = nx.placed || {}; R.wall = nx.wall || 0; R.cur = n; M.save();
+    R.floors[cur] = { placed: R.placed, wall: R.wall || 0, wallTint: R.wallTint || 0, floorTint: R.floorTint || 0 };
+    var nx = R.floors[n] || { placed: {}, wall: 0 };   // 새 층도 1층과 같은 빈 방에서 시작한다
+    R.placed = nx.placed || {}; R.wall = WALLS[nx.wall] ? nx.wall : 0; R.wallTint = nx.wallTint || 0; R.floorTint = nx.floorTint || 0; R.cur = n; M.save();
   };
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-fl]'); if (!b) return; if (M.stopEditing) M.stopEditing(); M.homeFloor(+b.dataset.fl); rerender(); M.sfx && M.sfx('pop'); });
 
@@ -142,6 +147,11 @@
     }
   }
   function wallSrc() { var w = WALLS[M.P.room.wall || 0] || WALLS[0]; return w.src; }
+  function roomLayers() {
+    var R = M.P.room, w = WALLS[R.wall || 0] || WALLS[0], ft = function (i) { var t = TINTS[i || 0] || TINTS[0]; return t[0] ? 'filter:' + t[0] + ';' : ''; };
+    var wt = TINTS[R.wallTint || 0] || TINTS[0], wf = !wt[3] && wt[0] ? 'filter:' + wt[0] + ';' : '';
+    return '<div class="rlayer" style="background-image:url(' + w.wl + ');' + wf + '"></div>' + (wt[3] ? '<div class="rlayer rmul" style="background-color:' + wt[3] + ';-webkit-mask-image:url(' + w.wl + ');mask-image:url(' + w.wl + ')"></div>' : '') + '<div class="rlayer" style="background-image:url(' + w.fl + ');' + ft(R.floorTint) + '"></div>';
+  }
   // 토끼 그림마다 두 눈 가운데(x·y)와 눈 사이 거리(d), 그림 크기에 대한 % (그림에서 눈을 찾아 잰 값). 안경은 여기에 맞춘다
   var EYES = { '1-normal': [39.5, 51.8, 23.8], '1-happy': [44, 40.5, 20.2], '1-sad': [39.6, 56, 23.7], '2-normal': [46.3, 48.5, 23.1], '2-happy': [44.8, 43.9, 21.9],
     '2-sad': [49.1, 49.3, 23.2], '3-normal': [44.1, 44.5, 21.1], '3-happy': [41.1, 39.4, 20.3], '3-sad': [51.6, 50.7, 18.6] };
@@ -189,7 +199,9 @@
         d.querySelector('#fList').innerHTML = '<div class="walls">' + WALLS.map(function (w) {
           var own = !w.price || ow[w.id], on = (R.wall || 0) === w.id;
           return '<button class="wallc' + (on ? ' on' : '') + '" data-wid="' + w.id + '"><img src="' + w.src + '" alt=""><b>' + w.name + '</b><small>' + (on ? '사용 중' : own ? '바꾸기' : '<img src="img/coin.png" alt="">' + w.price) + '</small></button>';
-        }).join('') + '</div>';
+        }).join('') + '</div>' +
+          '<h4>🎨 벽 색</h4><div class="tints">' + TINTS.map(function (t, i) { return '<button class="tint' + ((R.wallTint || 0) === i ? ' on' : '') + '" data-wt="' + i + '"><i style="background:' + t[2] + '"></i><small>' + t[1] + '</small></button>'; }).join('') + '</div>' +
+          '<h4>🎨 바닥 색</h4><div class="tints">' + TINTS.map(function (t, i) { return '<button class="tint' + ((R.floorTint || 0) === i ? ' on' : '') + '" data-ft2="' + i + '"><i style="background:' + t[2] + '"></i><small>' + t[1] + '</small></button>'; }).join('') + '</div><p class="hint">색은 공짜로 몇 번이든 바꿀 수 있어요. 무늬는 위에서 골라요.</p>';
       } else {
         d.querySelector('#fHint').textContent = M.j(P.petName, '이', '') + '에게 하나씩 씌울 수 있어요';
         d.querySelector('#fList').innerHTML = ACCS.map(function (a) {
@@ -214,6 +226,8 @@
     d.addEventListener('click', function (e) {
       var tb = e.target.closest('[data-st]'); if (tb) { tab = tb.dataset.st; paint(); return; }
       var fc = e.target.closest('[data-fc]'); if (fc) { fcat = fc.dataset.fc; paint(); return; }
+      var wt = e.target.closest('[data-wt]'), ftt = e.target.closest('[data-ft2]');
+      if (wt || ftt) { if (wt) P.room.wallTint = +wt.dataset.wt; else P.room.floorTint = +ftt.dataset.ft2; M.save(); paint(); rerender(); M.sfx && M.sfx('pop'); return; }
       var wb = e.target.closest('[data-wid]');
       if (wb) {
         var w = WALLS[+wb.dataset.wid]; P.room.walls = P.room.walls || {};

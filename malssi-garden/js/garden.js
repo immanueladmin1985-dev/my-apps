@@ -253,7 +253,7 @@
     if (ct) ct.innerHTML = '<div class="custs">' + g.orders.map(function (o, i) {
       var c = custOf(o.cust), ok = ready(o);
       var mq = M.miniAvail ? M.miniAvail(c.id) : null;
-      return '<div class="cust full' + (ok ? ' happy' : '') + (mq ? ' hasq' : '') + '"' + (mq ? ' data-mq="' + mq + '"' : '') + ' style="left:' + (g.orders.length === 1 ? 50 : g.orders.length === 2 ? 41 + i * 18 : 34 + i * 16) + '%">' + '<img src="img/w/ch-' + c.id + (ok ? '-happy' : '-front') + '.png" alt="' + esc(c.name) + '">' + (o.rare ? '<i class="rmark">✨</i>' : '') + (mq ? '<i class="qmark">❗</i>' : '') + '</div>';
+      return '<div class="cust full' + (ok ? ' happy' : '') + (mq ? ' hasq' : '') + '"' + (mq ? ' data-mq="' + mq + '"' : '') + ' style="left:' + (g.orders.length === 1 ? 50 : g.orders.length === 2 ? 41 + i * 18 : 34 + i * 16) + '%;--s:' + Math.max(0.55, Math.min(1, M.charSize ? M.charSize(c.id) : 1)) + '">' + '<img src="img/w/ch-' + c.id + (ok ? '-happy' : '-front') + '.png" alt="' + esc(c.name) + '">' + (o.rare ? '<i class="rmark">✨</i>' : '') + (mq ? '<i class="qmark">❗</i>' : '') + '</div>';
     }).join('') + '</div><img class="stallimg" src="img/stall' + (g.awn ? '-' + g.awn : '') + '.png" alt="">';
     el.innerHTML = g.orders.map(function (o) {
       var c = custOf(o.cust), ok = ready(o), fr = g.friends[o.cust] || 0, hearts = Math.min(5, Math.floor(fr / 4));
