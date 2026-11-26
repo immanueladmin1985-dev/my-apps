@@ -118,7 +118,7 @@
       el.querySelector('[data-fsay]').onclick = function () { M.say(nm.t, lang); };
       $('fRel').onclick = function () { M.toast(f.em + ' 잘 가!'); M.give({ water: 1 }); end(); };
       $('fSell').onclick = function () { M.give({ coins: price }); M.sfx('coin'); end(); };
-      $('fKeep').onclick = function () { var fb = M.P.fishBag = M.P.fishBag || {}; fb[f.id] = (fb[f.id] || 0) + 1; M.save(); M.toast('🧺 ' + f.ko + '을(를) 담았어요. 집의 🍳 요리에서 써요'); end(); };
+      $('fKeep').onclick = function () { var fb = M.P.fishBag = M.P.fishBag || {}; fb[f.id] = (fb[f.id] || 0) + 1; M.save(); if (M.recipeCheck) setTimeout(M.recipeCheck, 600); M.toast('🧺 ' + f.ko + '을(를) 담았어요. 집의 🍳 요리에서 써요'); end(); };
       $('fAgain').onclick = function () { var w = cur ? cur.where : f.at; M.give({ coins: price }); end(); M.fishStart(w); };
       M.sfx('win');
     }
@@ -126,7 +126,8 @@
     if (known.length >= 3 && !first) {
       var opts = M.shuffle([f].concat(M.shuffle(known.filter(function (x) { return x !== f; })).slice(0, 2)));
       el.innerHTML = '<div class="fcatch"><div class="fbig">' + fimg(f) + '</div><h3>' + M.j(f.ko, '을', '를') + ' 낚았어요!</h3><p>이 물고기를 배우는 말로 뭐라고 할까요?</p><div class="copts">' +
-        opts.map(function (x, i) { var n2 = nameOf(x, lang); return '<button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(n2.t) + (n2.r && n2.r !== n2.t ? ' <small>' + esc(n2.r) + '</small>' : '') + '</button>'; }).join('') + '</div></div>';
+        opts.map(function (x, i) { var n2 = nameOf(x, lang); return '<div class="coptrow"><button class="csay" data-s="' + i + '" aria-label="듣기">🔊</button><button class="copt lang-' + lang + '" data-i="' + i + '">' + esc(n2.t) + (n2.r && n2.r !== n2.t ? ' <small>' + esc(n2.r) + '</small>' : '') + '</button></div>'; }).join('') + '</div><p class="hint">🔊를 누르면 소리를 들을 수 있어요</p></div>';
+      Array.prototype.forEach.call(el.querySelectorAll('.csay'), function (b) { b.onclick = function () { M.say(nameOf(opts[+b.dataset.s], lang).t, lang); }; });
       Array.prototype.forEach.call(el.querySelectorAll('.copt'), function (b) {
         b.onclick = function () { var ok = opts[+b.dataset.i] === f; M.sfx(ok ? 'ok' : 'bad'); show(ok); };
       });

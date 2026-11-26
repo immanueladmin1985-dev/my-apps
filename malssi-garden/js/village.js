@@ -223,9 +223,11 @@
     }
     function done() {
       var first = !talkedToday(id), coins = first ? 10 + ok * 5 : 0;
-      if (first) { talks()[id] = 1; M.give({ coins: coins }); }
+      var taught = null;
+      if (first) { talks()[id] = 1; M.give({ coins: coins }); if (Math.random() < 0.5 && M.recipeLearnRandom) taught = M.recipeLearnRandom(M.custOf(id).name + '에게 배웠어요', id); }
       M.save();
       opts.innerHTML = '<div class="tdone"><b>' + (ok === total ? '대화가 즐거웠어요! 🎵' : '재미있었어요! 또 이야기해요.') + '</b><small>한 번에 맞힌 대답 ' + ok + ' / ' + total + '</small>' + (first ? M.rewardHtml({ coins: coins }) + '<small>' + esc(c.name) + '의 친밀도가 올랐어요 ♥</small>' : '<small>오늘 보상은 이미 받았어요. 연습은 언제든 좋아요!</small>') + '</div>';
+      if (taught) opts.querySelector('.tdone').insertAdjacentHTML('beforeend', '<p class="tteach">📜 ' + esc(M.custOf(id).name) + ': "제가 좋아하는 <b>' + esc(M.recipeName(taught)) + '</b> 만드는 법 알려 줄게요!"</p>');
       if (first) { var closeBtn = d.querySelector('[data-close]'); closeBtn.textContent = '인사하고 나가기'; closeBtn.addEventListener('click', function () { M.gardenFriendUp(id); }, { once: true }); }
       M.sfx('win');
     }

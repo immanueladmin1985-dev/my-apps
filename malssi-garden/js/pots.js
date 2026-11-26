@@ -179,7 +179,7 @@
       var i = +b.dataset.pharv, r = s.list[i], sd = SEEDS[r.id];
       s.fruits[r.id] = (s.fruits[r.id] || 0) + sd.yield; s.list[i] = null;
       if (sd.fp) M.give({ fp: sd.fp });
-      M.save(); M.sfx('win'); M.quest && M.quest('harvest', 1);
+      M.save(); M.sfx('win'); M.quest && M.quest('harvest', 1); if (M.recipeCheck) setTimeout(M.recipeCheck, 900);
       M.modal('<div class="center"><div class="tbig fruitrow">' + new Array(Math.min(4, sd.yield) + 1).join(fruitImg(r.id)) + '</div><h3>' + sd.name + ' ' + sd.yield + '개를 땄어요!</h3>' + (sd.fp ? '<p>' + M.rewardHtml({ fp: sd.fp }) + '</p>' : '') + '<p class="hint">열매 바구니에 넣었어요. 팔거나 주민에게 선물해 보세요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
       repaint(); return;
     }

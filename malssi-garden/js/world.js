@@ -422,8 +422,9 @@
   function bugTick(dt, now) {
     if (!M.bugNow) return;
     var luck = M.luckOn && M.luckOn();
-    if (now > bugNext && bugs.length < (luck ? 3 : 2)) {
-      bugNext = now + (luck ? 0.5 : 1) * (25000 + Math.random() * 35000);   // 평소 25~60초에 한 마리, 향수를 쓰면 두 배
+    if (!bugNext) bugNext = now + 30000 + Math.random() * 30000;   // 마을에 들어오고 30~60초 뒤에 첫 곤충
+    if (now > bugNext && bugs.length < (luck ? 2 : 1)) {
+      bugNext = now + (luck ? 0.5 : 1) * (90000 + Math.random() * 90000);   // 평소 1분 30초~3분에 한 마리(한 번에 한 마리만), 향수를 쓰면 두 배
       var where = ['flower', 'flower', 'tree', 'water'][Math.floor(Math.random() * 4)], id = M.bugNow(where);
       if (id) {
         var pool = where === 'tree' ? OBJ.filter(function (o) { return o.kind === 'tree' && o.tx > 2 && o.tx < W - 3 && o.ty > 3; }) : where === 'water' ? [{ x: 4 + Math.random() * 28, y: 34 }] : OBJ.filter(function (o) { return o.kind === 'img' && o.flat; });

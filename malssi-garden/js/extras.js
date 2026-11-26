@@ -207,11 +207,72 @@
   function ingImg(k) { var t = src(k); if (t === 'pot') return 'img/w/fruit-' + k.slice(4) + '.png'; if (t === 'gd') return M.gardenItemInfo(k.slice(3)).img; if (t === 'fish') return 'img/w/fish-' + k.slice(5) + '.png'; return M.GATHER.ITEMS[k].img; }
   function ingName(k) { var t = src(k); if (t === 'pot') return (M.SEEDS[k.slice(4)] || {}).name || k; if (t === 'gd') return M.gardenItemInfo(k.slice(3)).name; if (t === 'fish') return fishOf(k.slice(5)).ko; if (t === 'pan') return PANTRY[k.slice(4)][0]; return M.GATHER.ITEMS[k].ko; }
   function ingWhere(k) { var t = src(k); if (t === 'pot') return '집 화분에서 키워요'; if (t === 'gd') return '정원 가게 밭에서 합쳐 만들어요'; if (t === 'fish') return '낚시로 잡고 "요리 재료로 담기"를 눌러요'; if (t === 'pan') return '요리 화면 위의 🛒 양념 가게에서 사요'; var c = M.GATHER.ITEMS[k].cat; return { fruit: '마을 열매 나무를 흔들어요', forest: '숲 바닥에서 줍거나 나무를 흔들어요', mineral: '바위를 두드리거나 땅굴에서 캐요', sea: '모래사장에서 주워요', bug: '곤충을 잡아요', fossil: '땅을 파요' }[c] || ''; }
-  M.cookSheet = function () {
+  // ---------- 레시피 얻기 ----------
+  // 처음에는 기본 8가지만 안다. 새 재료를 처음 얻으면 그 재료로 만드는 요리 하나를 알게 되고,
+  // 주민과 이야기하거나 마을에서 레시피 쪽지를 주워도 알게 된다.
+  var STARTER = ['salad', 'jam', 'soup', 'pie', 'tart', 'juice', 'berrybowl', 'lemonade'];
+  function R() {
     var x = X();
+    if (!x.recipes) {   // 처음: 기본 요리 + 이미 만든 요리 + 지금까지 얻은 재료로 다 만들 수 있는 요리
+      x.recipes = {}; STARTER.forEach(function (id) { x.recipes[id] = 1; });
+      Object.keys(x.dishes || {}).forEach(function (id) { if (DISH[id]) x.recipes[id] = 1; });
+      var seen = everIngs(); x.seenIng = seen;
+      Object.keys(DISH).forEach(function (id) { if (Object.keys(DISH[id][2]).every(function (k) { return seen[k]; })) x.recipes[id] = 1; });
+      M.save();
+    }
+    x.seenIng = x.seenIng || {};
+    return x;
+  }
+  // 지금까지 한 번이라도 얻은 재료
+  function everIngs() {
+    var o = {}, P = M.P, g = P.gather || {}, gd = P.garden || {};
+    Object.keys(g.dex || {}).forEach(function (k) { o[k] = 1; });
+    Object.keys((P.pots && P.pots.fruits) || {}).forEach(function (k) { o['pot_' + k] = 1; });
+    Object.keys(P.fishDex || {}).forEach(function (k) { o['fish_' + k] = 1; });
+    Object.keys(P.fishBag || {}).forEach(function (k) { o['fish_' + k] = 1; });
+    Object.keys(P.pantry || {}).forEach(function (k) { o['pan_' + k] = 1; });
+    Object.keys(gd.found || {}).forEach(function (k) { for (var l = 1; l <= (gd.found[k] || 0); l++) o['gd_' + k + l] = 1; });
+    ['f', 't', 'h', 'b', 'c', 'm', 'w'].forEach(function (k) { if (M.gardenHave) for (var l = 1; l <= 5; l++) if (M.gardenHave(k + l) > 0) o['gd_' + k + l] = 1; });
+    return o;
+  }
+  function locked() { var x = R(); return Object.keys(DISH).filter(function (id) { return !x.recipes[id]; }); }
+  function learn(id, why) {
+    var x = R(); if (!id || x.recipes[id]) return null;
+    x.recipes[id] = 1; M.save();
+    M.toast('📜 새 레시피: ' + DISH[id][0] + (why ? ' · ' + why : ''));
+    return id;
+  }
+  M.recipeKnown = function (id) { return !!R().recipes[id]; };
+  M.recipeCount = function () { return [Object.keys(R().recipes).filter(function (id) { return DISH[id]; }).length, Object.keys(DISH).length]; };
+  // 새 재료를 처음 얻었는지 살펴서 레시피를 하나씩 알려 준다
+  M.recipeCheck = function () {
+    var x = R(), seen = everIngs(), got = [];
+    Object.keys(seen).forEach(function (k) {
+      if (x.seenIng[k]) return; x.seenIng[k] = 1;
+      var c = locked().filter(function (id) { return DISH[id][2][k]; });
+      if (!c.length) return;
+      var easy = c.filter(function (id) { return Object.keys(DISH[id][2]).every(function (q) { return seen[q]; }); });
+      var id = M.pick(easy.length ? easy : c);
+      if (learn(id, M.j(ingName(k), '을', '를') + ' 처음 얻었어요')) got.push(id);
+    });
+    M.save();
+    return got;
+  };
+  // 레시피 쪽지·땅 파기·주민에게서 하나 배운다 (pref: 이 주민이 좋아하는 맛 우선)
+  M.recipeLearnRandom = function (why, cid) {
+    var L = locked(); if (!L.length) return null;
+    var seen = everIngs(), pool = L;
+    if (cid && M.dishReaction) { var fav = L.filter(function (id) { return M.dishReaction(cid, id) >= 2; }); if (fav.length) pool = fav; }
+    var easy = pool.filter(function (id) { return Object.keys(DISH[id][2]).every(function (q) { return seen[q]; }); });
+    return learn(M.pick(easy.length ? easy : pool), why);
+  };
+  M.recipeName = function (id) { return DISH[id] ? DISH[id][0] : ''; };
+
+  M.cookSheet = function () {
+    var x = R(); M.recipeCheck();
     var tab = 'all', TABS = [['all', '전체'], ['ok', '만들 수 있음'], ['mix', '🍱 섞어 만들기'], ['farm', '🌱 밭·화분·열매'], ['forest', '🌲 숲'], ['sea', '🐚 바다'], ['fish', '🐟 물고기']];
     var KI = { farm: '🌱', forest: '🌲', sea: '🐚', fish: '🐟' };
-    var d = M.modal('<h3>🍳 요리하기 <small>' + Object.keys(DISH).length + '가지</small></h3><p class="hint">재료 그림을 누르면 어디서 구하는지 알려 줘요. 요리를 주민에게 주면 친밀도가 두 칸 올라요.</p><button class="btn wide" data-pantry>🛒 양념 가게 <small>설탕·버터·간장·참기름·카레 가루</small></button><div class="fcats" id="ckTabs"></div><div class="list" id="ckList"></div><button class="btn ghost wide" data-close>닫기</button>');
+    var d = M.modal('<h3>🍳 요리하기 <small id="ckCount"></small></h3><p class="hint">재료 그림을 누르면 어디서 구하는지 알려 줘요. 요리를 주민에게 주면 친밀도가 올라요.</p><button class="btn wide" data-pantry>🛒 양념 가게 <small>설탕·버터·간장·참기름·카레 가루</small></button><div class="fcats" id="ckTabs"></div><div class="list" id="ckList"></div><button class="btn ghost wide" data-close>닫기</button>');
     // 요리에 들어가는 재료가 어디서 나는지 모두 모은다 (소금 같은 양념은 뺀다)
     function kinds(r) {
       var o = {};
@@ -224,7 +285,7 @@
     function inTab(r, ok) { var ks = kinds(r); return tab === 'all' || (tab === 'ok' ? ok : tab === 'mix' ? ks.length >= 2 : ks.indexOf(tab) >= 0); }
     function paint() {
       d.querySelector('#ckTabs').innerHTML = TABS.map(function (t) { return '<button data-ct="' + t[0] + '" class="' + (tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>'; }).join('');
-      var ids = Object.keys(DISH).map(function (id) { var r = DISH[id]; return { id: id, ok: Object.keys(r[2]).every(function (k) { return have(k) >= r[2][k]; }) }; })
+      var ids = Object.keys(DISH).filter(function (id) { return x.recipes[id]; }).map(function (id) { var r = DISH[id]; return { id: id, ok: Object.keys(r[2]).every(function (k) { return have(k) >= r[2][k]; }) }; })
         .filter(function (o) { return inTab(DISH[o.id], o.ok); });
       ids.sort(function (a, b) { return (b.ok ? 1 : 0) - (a.ok ? 1 : 0); });
       d.querySelector('#ckList').innerHTML = ids.length ? ids.map(function (o) {
@@ -233,6 +294,9 @@
           Object.keys(r[2]).map(function (k) { return '<button class="ing' + (have(k) >= r[2][k] ? ' got' : '') + '" data-ing="' + k + '">' + ingIcon(k) + '<i>' + have(k) + '/' + r[2][k] + '</i></button>'; }).join('') +
           '</div></div><button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-cook="' + id + '"' + (ok ? '' : ' disabled') + '>만들기</button></div>';
       }).join('') : '<p class="hint center">지금 재료로 만들 수 있는 요리가 없어요</p>';
+      var lk = locked().length;
+      if (lk) d.querySelector('#ckList').innerHTML += '<div class="rlock">🔒 아직 모르는 레시피 <b>' + lk + '가지</b><small>새 재료를 처음 얻거나, 주민과 이야기하거나, 마을 풀밭의 📜 레시피 쪽지를 주우면 하나씩 알게 돼요.</small></div>';
+      var hc = d.querySelector('#ckCount'); if (hc) hc.textContent = '알아낸 레시피 ' + M.recipeCount().join(' / ');
     }
     paint();
     d.addEventListener('click', function (e) {
@@ -243,7 +307,7 @@
       var id = b.dataset.cook, r = DISH[id]; Object.keys(r[2]).forEach(function (k) { take(k, r[2][k]); });
       x.dishes[id] = (x.dishes[id] || 0) + 1; M.save(); M.sfx('win');
       var L = M.P.lang, nm = L === 'ja' ? r[3] : L === 'zh' ? r[4] : r[5]; M.say(nm, L);
-      M.modal('<div class="center"><span class="gbig dbig">' + dishIcon(id) + '</span><h3>' + r[0] + ' 완성!</h3><button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><p class="hint">주민에게 선물하면 친밀도가 두 칸 올라요</p><button class="btn primary wide" data-close>좋아요</button></div>'); paint();
+      M.modal('<div class="center"><span class="gbig dbig">' + dishIcon(id) + '</span><h3>' + r[0] + ' 완성!</h3><button class="gname lang-' + L + '" data-gsay="' + esc(nm) + '">🔊 ' + esc(nm) + '</button><p class="hint">주민에게 선물하면 친밀도가 올라요. 좋아하는 맛이면 더 많이 올라요</p><button class="btn primary wide" data-close>좋아요</button></div>'); paint();
     });
   };
   function pantrySheet(after) {
@@ -259,7 +323,7 @@
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-pbuy]'); if (!b) return;
       var k = b.dataset.pbuy; if (!M.spend('coins', PANTRY[k][2])) { M.toast('코인이 모자라요'); return; }
-      pan()[k] = (pan()[k] || 0) + 1; M.save(); M.sfx('coin'); if (M.paintTop) M.paintTop(); paint();
+      pan()[k] = (pan()[k] || 0) + 1; M.save(); M.recipeCheck(); M.sfx('coin'); if (M.paintTop) M.paintTop(); paint();
     });
   }
 
@@ -342,8 +406,8 @@
       if (e.target.closest('[data-mq]')) {
         var items = M.learnedItems(lang).filter(function (it) { return it.k && !it.kana; }); if (items.length < 3) { M.toast('낱말을 조금 더 배우고 와요!'); return; }
         var three = M.shuffle(items).slice(0, 3), t = three[0]; d.close();
-        var q = M.modal('<div class="center"><img class="mface" src="img/w/cust-raccoon.png" alt=""><h3 class="lang-' + lang + '">' + esc(t.t) + '</h3><p>이 말의 뜻은?</p></div><div class="copts">' + M.shuffle(three).map(function (it) { return '<button class="copt" data-k="' + esc(it.k) + '">' + esc(it.k) + '</button>'; }).join('') + '</div>');
-        M.say(t.say, lang);
+        var q = M.modal('<div class="center"><img class="mface" src="img/w/cust-raccoon.png" alt=""><h3 class="lang-' + lang + '">' + esc(t.t) + ' <button class="csay mqsay" aria-label="듣기">🔊</button></h3><p>이 말의 뜻은?</p></div><div class="copts">' + M.shuffle(three).map(function (it) { return '<button class="copt" data-k="' + esc(it.k) + '">' + esc(it.k) + '</button>'; }).join('') + '</div>');
+        M.say(t.say, lang); q.querySelector('.mqsay').onclick = function () { M.say(t.say, lang); };
         q.addEventListener('click', function (e2) { var b = e2.target.closest('[data-k]'); if (!b) return; q.close(); if (b.dataset.k === t.k) { x.marketDisc.rate = 0.7; M.sfx('win'); M.toast('정답! 오늘은 30% 할인이에요'); } else { M.sfx('bad'); M.toast('아쉬워요! 뜻은 「' + t.k + '」'); x.marketDisc.tried = true; } M.save(); M.marketSheet(); });
         return;
       }

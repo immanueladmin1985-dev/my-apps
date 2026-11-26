@@ -108,6 +108,7 @@
     'for-fairywing': ['요정의 날개 조각', 'forest', 500, 'ようせいのはね', '精灵翅膀|jīnglíng chìbǎng', 'fairy wing']
   };
   Object.keys(RAW2).forEach(function (id) { var r = RAW2[id], z = r[4].split('|'); ITEMS[id] = { id: id, ko: r[0], cat: r[1], price: r[2], ja: [r[3], ''], zh: [z[0], z[1]], en: [r[5], ''], img: 'img/w/' + id + '.png' }; });
+  ITEMS.recipe = { id: 'recipe', ko: '레시피 쪽지', cat: 'note', price: 0, ja: ['レシピ', ''], zh: ['食谱', 'shípǔ'], en: ['recipe', ''], img: 'img/w/mail-open.png' };
   // 곤충이 나오는 때와 곳: m 아침, d 낮, e 저녁, n 밤 / flower 꽃·풀, tree 나무, water 물가
   var BUGS = { yellowbf: ['md', 'flower', 3], bluebf: ['d', 'flower', 2], ladybug: ['md', 'flower', 3], bee: ['md', 'flower', 2], dragonfly: ['de', 'water', 2], beetle: ['en', 'tree', 1], stag: ['n', 'tree', 1], firefly: ['n', 'water', 2], cicada: ['d', 'tree', 2], snail: ['me', 'flower', 2],
     'bug-monarch': ['d', 'flower', 2], 'bug-whitebf': ['md', 'flower', 3], 'bug-swallowtail': ['md', 'flower', 2], 'bug-peacock': ['d', 'flower', 1], 'bug-moth': ['en', 'tree', 2],
@@ -136,6 +137,7 @@
   M.gatherGot = function (id, n) {
     n = n || 1; var it = ITEMS[id], g = S(); if (!it) return;
     var first = !g.dex[id]; g.bag[id] = (g.bag[id] || 0) + n; g.dex[id] = (g.dex[id] || 0) + n; M.save();
+    if (first && M.recipeCheck) setTimeout(M.recipeCheck, 1200);
     var host = document.querySelector('.world') || document.body, el = document.getElementById('gPop');
     if (!el) { el = document.createElement('div'); el.id = 'gPop'; el.className = 'gpop'; host.appendChild(el); }
     var v = nm(it), lang = M.P.lang;
@@ -199,10 +201,13 @@
     place(cands.grass, 4, 'f', boost([['mush-red', 8], ['mush-brown', 9], ['mush-white', 9], ['flowers', 10], ['acorn', 8], ['pinecone', 6], ['leaf', 7], ['clover', 3], ['for-dandelion', 7], ['for-cosmos', 6], ['for-violet', 6], ['for-azalea', 5], ['for-forsythia', 5], ['for-mugunghwa', 4], ['for-lotus', 2], ['for-morningglory', 4], ['for-lily', 3], ['for-babysbreath', 3], ['for-enoki', 6], ['for-oyster', 6], ['for-matsutake', 1.5], ['for-bluemush', 0.6], ['for-goldmush', 0.4], ['for-raspberry', 5], ['for-wildgrape', 4], ['for-fiddlehead', 5], ['for-ginseng', 0.6], ['for-mossrock', 4], ['for-fireflyjar', 1], ['for-fairywing', 0.3]]));
     place(cands.sand, 4, 's', boost([['scallop', 14], ['conch', 10], ['sanddollar', 10], ['seaweed', 8], ['starfish', 7], ['glass', 6], ['coral', 4], ['crab', 4], ['bottle', 2], ['pearl', 1], ['sea-clam', 10], ['sea-mussel', 8], ['sea-oyster', 6], ['sea-hardclam', 6], ['sea-abalone', 2], ['sea-urchin', 3], ['sea-seacucumber', 3], ['sea-anemone', 3], ['sea-hermit', 4], ['sea-barnacle', 3], ['sea-wakame', 7], ['sea-kelp', 6], ['sea-nori', 4], ['sea-codium', 4], ['sea-hijiki', 4], ['sea-buoy', 3], ['sea-oar', 4], ['sea-anchor', 1.5], ['sea-compass', 1], ['sea-pirate', 0.7], ['sea-map', 0.5], ['sea-pinkpearl', 0.4], ['sea-blackpearl', 0.3], ['sea-goldscallop', 0.3], ['sea-mermaid', 0.2]]));
     place(cands.grass, 2, 'd', [['dig', 1]]);
+    if (rnd() < 0.6) place(cands.grass, 1, 'r', [['recipe', 1]]);   // 레시피 쪽지 (이틀에 한 번 남짓)
     return out;
   };
   M.gatherPick = function (o) {
     var g = S(); g.picked[o.key] = 1; M.save();
+    if (o.type === 'r') { var rid = M.recipeLearnRandom && M.recipeLearnRandom('풀밭에서 쪽지를 주웠어요'); if (!rid) M.toast('📜 쪽지에는 이미 아는 레시피가 적혀 있었어요'); M.sfx('win'); return; }
+    if (o.type === 'd' && Math.random() < 0.08 && M.recipeLearnRandom && M.recipeLearnRandom('땅속에서 낡은 요리책 쪽지가 나왔어요')) return;
     if (o.type === 'd') M.gatherGot(pickW(lucky([['bone', 10], ['ammonite', 9], ['footprint', 8], ['trilobite', 8], ['tooth', 6], ['leaffos', 9], ['amber', 5], ['coin', 5], ['stone', 22], ['clay', 14],
       ['fos-fern', 7], ['fos-shellfos', 7], ['fos-urchinfos', 5], ['fos-fishfos', 5], ['fos-dung', 5], ['fos-pottery', 5], ['fos-arrowhead', 4], ['fos-stoneaxe', 4], ['fos-petrified', 4], ['fos-dragonfos', 2],
       ['fos-egg', 2], ['fos-raptor', 1.5], ['fos-trexclaw', 1.2], ['fos-mosatooth', 1.2], ['fos-rhinohorn', 1.2], ['fos-sabertooth', 1], ['fos-feather', 1], ['fos-trihorn', 0.8], ['fos-stegoplate', 0.8], ['fos-ankytail', 0.8],
