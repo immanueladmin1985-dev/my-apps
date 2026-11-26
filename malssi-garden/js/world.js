@@ -184,23 +184,25 @@
         }
       });
     }
-    // 꽃 군락 아래에 둥근 꽃밭 바닥 (가장자리는 부드럽게)
-    PATCH.forEach(function (pc) {
-      var gx = (pc[0] + 0.5) * T, gy = (pc[1] + 0.6) * T;
-      g.save(); g.beginPath(); g.ellipse(gx, gy, T * 2.1, T * 1.45, 0, 0, 7); g.clip();
-      var gr = g.createRadialGradient(gx, gy, T * 0.4, gx, gy, T * 2.1); gr.addColorStop(0, 'rgba(255,255,255,0)');
-      g.globalAlpha = 1; g.fillStyle = P(['fl-daisy', 'fl-dandelion', 'fl-lavender', 'fl-tulip'][(pc[0] + pc[1]) % 4], P('flowers', '#b8e39a')); g.fillRect(gx - T * 2.2, gy - T * 1.6, T * 4.4, T * 3.2);
-      g.globalAlpha = 1; gr.addColorStop(0.75, 'rgba(150,208,110,0)'); gr.addColorStop(1, 'rgba(150,208,110,.95)'); g.fillStyle = gr; g.fillRect(gx - T * 2.2, gy - T * 1.6, T * 4.4, T * 3.2);
-      g.restore();
-    });
-    // 풀밭 무늬 얼룩 (클로버·이끼·키 큰 풀) + 계절 얼룩 (봄 꽃잎·가을 낙엽·겨울 눈)
+    // 무늬 얼룩: 따로 그린 뒤 가장자리를 투명하게 녹여서(알파 마스크) 잔디와 이음매 없이 섞는다
+    function soft(name, cx, cy, rx, ry, rot, alpha) {
+      var im = tileImg[name]; if (!im || !im.naturalWidth) return;
+      var R = Math.ceil(Math.max(rx, ry)) + 2, c2 = document.createElement('canvas'); c2.width = c2.height = R * 2;
+      var q = c2.getContext('2d'), pt = q.createPattern(im, 'repeat');
+      if (pt.setTransform && window.DOMMatrix) pt.setTransform(new DOMMatrix().translate(-(cx - R), -(cy - R)).scale(T / im.naturalWidth));
+      q.fillStyle = pt; q.fillRect(0, 0, R * 2, R * 2);
+      q.globalCompositeOperation = 'destination-in';
+      q.translate(R, R); q.rotate(rot); q.scale(rx / R, ry / R);
+      var mg = q.createRadialGradient(0, 0, 0, 0, 0, R); mg.addColorStop(0, 'rgba(0,0,0,1)'); mg.addColorStop(0.55, 'rgba(0,0,0,.95)'); mg.addColorStop(1, 'rgba(0,0,0,0)');
+      q.fillStyle = mg; q.fillRect(-R * 2, -R * 2, R * 4, R * 4);
+      g.save(); g.globalAlpha = alpha; g.drawImage(c2, cx - R, cy - R); g.restore();
+    }
+    PATCH.forEach(function (pc) { soft(['fl-daisy', 'fl-dandelion', 'fl-lavender', 'fl-tulip'][(pc[0] + pc[1]) % 4], (pc[0] + 0.5) * T, (pc[1] + 0.6) * T, T * 2.3, T * 1.6, 0, 1); });
+    // 풀밭 얼룩 (클로버·이끼) + 계절 얼룩 (봄 꽃잎·가을 낙엽·겨울 눈)
     var se = season(), rp = rnd(41), spots = { sp: 'se-petal', au: 'gr-leaves', wi: 'se-snow' }[se];
-    for (var sp = 0; sp < 70; sp++) {
-      var sx = 2 + Math.floor(rp() * (W - 4)), sy = 3 + Math.floor(rp() * (RIVER_Y - 5)); if (G[sy * W + sx] !== 0) continue;
-      var kind = sp % 3 === 0 && spots ? spots : ['gr-clover', 'gr-moss', 'gr-tall'][sp % 3], rx = T * (1 + rp() * 1.4), ry = T * (0.8 + rp() * 0.9), cx2 = (sx + 0.5) * T, cy2 = (sy + 0.5) * T;
-      if (!pat[kind]) continue;
-      g.save(); g.beginPath(); g.ellipse(cx2, cy2, rx, ry, rp() * 3, 0, 7); g.clip(); g.globalAlpha = kind === 'gr-tall' ? 0.7 : 0.85; g.fillStyle = pat[kind]; g.fillRect(cx2 - rx - 2, cy2 - rx - 2, rx * 2 + 4, rx * 2 + 4);
-      var fe = g.createRadialGradient(cx2, cy2, Math.min(rx, ry) * 0.5, cx2, cy2, Math.max(rx, ry)); fe.addColorStop(0, 'rgba(150,208,110,0)'); fe.addColorStop(1, 'rgba(150,208,110,1)'); g.globalAlpha = 1; g.fillStyle = fe; g.fillRect(cx2 - rx - 2, cy2 - rx - 2, rx * 2 + 4, rx * 2 + 4); g.restore();
+    for (var sp = 0; sp < 50; sp++) {
+      var sx = 2 + Math.floor(rp() * (W - 4)), sy = 3 + Math.floor(rp() * (RIVER_Y - 5)), r1 = rp(), r2 = rp(), r3 = rp(); if (G[sy * W + sx] !== 0) continue;
+      soft(sp % 3 === 0 && spots ? spots : sp % 2 ? 'gr-clover' : 'gr-moss', (sx + 0.5) * T, (sy + 0.5) * T, T * (1.3 + r1 * 1.3), T * (0.9 + r2 * 0.8), r3 * 3, 0.75);
     }
     if (se === 'wi' && pat['se-snow']) { g.save(); g.globalAlpha = 0.35; g.fillStyle = pat['se-snow']; g.fillRect(0, 0, W * T, RIVER_Y * T); g.restore(); }
     blob([3], P('se-sand', P('sand', '#f4e3b5')), '#e6cf95', 0);
