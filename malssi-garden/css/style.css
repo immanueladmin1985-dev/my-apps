@@ -1550,3 +1550,27 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .nhole { background: radial-gradient(#7a5530 50%, #8a6a3e 52%); }
 .mstars .mst { width: 48px; height: 48px; object-fit: contain; margin: 0 2px; } .mstars .mst.off { filter: grayscale(1) opacity(.3); }
 .mconf { position: absolute; left: 50%; top: 4px; width: 220px; transform: translateX(-50%); pointer-events: none; animation: fxpop .6s; z-index: 0; opacity: .9; } .mres { position: relative; z-index: 1; }
+
+/* 미니게임 그림 2 */
+.mgfx { position: fixed; width: 80px; height: 80px; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; z-index: 60; animation: mgfx .7s ease-out forwards; }
+@keyframes mgfx { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 30% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, -110%) scale(1); } }
+.mhi { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; }
+.mrface { position: relative; display: inline-block; flex: none; } .mrstage { position: absolute; left: 50%; bottom: -12px; width: 120%; transform: translateX(-50%); z-index: 0; } .mrface .mface { position: relative; z-index: 1; }
+.mrtrophy { display: block; width: 120px; margin: 4px auto -10px; }
+.afield { position: relative; } .abasket { display: block; width: 90px; margin: -10px auto 0; position: relative; z-index: 2; }
+.rqc { position: absolute; right: 10px; top: 10px; width: 44px; transform: rotate(10deg); } .rq { position: relative; }
+.dboard { background: url(../img/w/mg2-board.png) center / 100% 100% no-repeat; padding: 22px 26px 30px; min-height: 90px; } .dboard .dslot { background: rgba(255,255,255,.85); }
+.icehole .ihimg { position: absolute; left: 50%; bottom: -18px; width: 130px; transform: translateX(-50%); }
+.scarfdone .scconf { position: absolute; left: 50%; top: 0; width: 220px; transform: translateX(-50%); } .scarfdone { position: relative; }
+.fdog { position: relative; display: inline-block; } .fdog .fdball { position: absolute; right: -18px; bottom: 4px; width: 30px; height: 30px; }
+.fspot .fball { width: 60px; height: 60px; }
+.oshell { position: relative; } .oshimg { position: absolute; left: 50%; top: -34px; width: 70px; transform: translateX(-50%); }
+.mgame .oshell { margin-top: 40px; }
+.eword { position: relative; } .elily { position: absolute; left: 50%; bottom: 6px; width: 70%; max-width: 260px; transform: translateX(-50%); opacity: .5; z-index: 0; } .eword b, .eword small { position: relative; z-index: 1; }
+.mfire { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; }
+.rsign { background-image: url(../img/w/mg2-sign.png) !important; aspect-ratio: 260 / 260 !important; }
+.rsign .sw { margin-top: 14% !important; margin-left: 6% !important; width: 78% !important; }
+.fishb .fw { background: url(../img/w/mg2-fishtag.png) center / 100% 100% no-repeat !important; border: 0 !important; padding: 6px 16px 6px 22px !important; }
+.fdog { display: block; width: max-content; margin: 10px auto 0; }
+.dboard { width: min(92%, 340px); margin: 6px auto; aspect-ratio: 1.45; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; align-content: center; gap: 6px; padding: 8% 12% 18%; background-size: 100% 100%; }
+.dboard .dslot { color: #fff; background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.6); }
