@@ -126,9 +126,9 @@
     M.save(); M.sfx(stars ? 'win' : 'bad');
     var lines = (window.STORY_LINES || {})[M.P.lang] || [], ln = lines[0];
     var el = $('mBody'); if (!el) return;
-    el.innerHTML = '<div class="mres">' + custFace(m, stars > 0) + '<div class="msay"><b>' + esc(c.name) + '</b><p>' + esc(stars ? m.thanks : '괜찮아요, 다음에 또 부탁할게요!') + '</p>' +
+    el.innerHTML = (stars ? '<img class="mconf" src="img/w/mg2-confetti.png" alt="">' : '') + '<div class="mres">' + custFace(m, stars > 0) + '<div class="msay"><b>' + esc(c.name) + '</b><p>' + esc(stars ? m.thanks : '괜찮아요, 다음에 또 부탁할게요!') + '</p>' +
       (stars && ln ? '<button class="sline" data-say="' + esc(ln[0]) + '" data-lang="' + M.P.lang + '">🔊 <b class="lang-' + M.P.lang + '">' + esc(ln[0]) + '</b> = ' + esc(ln[1]) + '</button>' : '') + '</div></div>' +
-      '<div class="mstars">' + '⭐'.repeat(stars) + '☆'.repeat(3 - stars) + '</div><p class="center"><b>' + g.score + '점</b>' + (g.score > best ? ' · 최고 기록!' : '') + '</p>' +
+      '<div class="mstars">' + '<img class="mst" src="img/w/mg2-sparkle.png" alt="">'.repeat(stars) + '<img class="mst off" src="img/w/mg2-sparkle.png" alt="">'.repeat(3 - stars) + '</div><p class="center"><b>' + g.score + '점</b>' + (g.score > best ? ' · 최고 기록!' : '') + '</p>' +
       '<div class="center">' + M.rewardHtml({ coins: coins, water: water }) + '</div>' +
       (first && stars ? '<p class="hint center">' + esc(c.name) + '의 친밀도가 올랐어요 ♥</p>' : first ? '<p class="hint center">별을 하나 이상 받으면 오늘 부탁을 들어준 거예요</p>' : '') +
       '<button class="btn primary wide" id="mAgain">한 번 더</button><button class="btn ghost wide" id="mClose">가게로 돌아가기</button>';
@@ -448,7 +448,7 @@
       if (n >= 10) { finish(g, 150); return; }
       n++; var three = M.shuffle(pool).slice(0, 3); target = three[0]; three = M.shuffle(three);
       $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small><p>바둑이가 뭐라고 외쳤을까요?</p><button class="btn" id="fPlay">🔊 다시 듣기</button>') +
-        '<div class="fgrass">' + three.map(function (it, i) { return '<button class="fspot" data-i="' + i + '"><span class="fball">🎾</span><b>' + esc(it.k) + '</b></button>'; }).join('') + '</div><div class="fdog" id="fDog">🐶</div>';
+        '<div class="fgrass">' + three.map(function (it, i) { return '<button class="fspot" data-i="' + i + '"><img class="fball" src="img/w/mg2-ball.png" alt=""><b>' + esc(it.k) + '</b></button>'; }).join('') + '</div><div class="fdog" id="fDog"><img src="img/w/ch-dog-front.png" alt=""></div>';
       $('fPlay').onclick = function () { M.say(target.say, target.lang); };
       setTimeout(function () { if (g.alive) M.say(target.say, target.lang); }, 300);
       bindOpts('.fspot', function (b) {
@@ -475,7 +475,7 @@
       cnt++;
       $('mBody').innerHTML = headHtml(g, '<small>' + cnt + '번째 조개' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>') +
         '<div class="oshell"><div class="ow">' + wordHtml(it) + '</div><div class="oeq">=</div><div class="ok2">' + esc(shown.k) + '</div></div>' +
-        '<div class="oxbtns"><button class="oxb o" data-a="1">⭕<small>맞아요</small></button><button class="oxb x" data-a="0">❌<small>아니에요</small></button></div><p class="hint center" id="oMsg"></p>';
+        '<div class="oxbtns"><button class="oxb o" data-a="1"><img class="oxi" src="img/w/mg2-o.png" alt=""><small>맞아요</small></button><button class="oxb x" data-a="0"><img class="oxi" src="img/w/mg2-x.png" alt=""><small>아니에요</small></button></div><p class="hint center" id="oMsg"></p>';
       bindOpts('.oxb', function (b) {
         if (!g.alive) return;
         var ok = (b.dataset.a === '1') === right;
@@ -502,7 +502,7 @@
       opts = M.shuffle(opts);
       $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / ' + list.length + '</small><p>' + esc(sn.k) + '</p>') +
         '<div class="csent lang-' + lang + '">' + sn.w.map(function (w, i) { return i === bi ? '<span class="cblank" id="cB">？</span>' : esc(w); }).join(sp) + '</div>' +
-        '<div class="ropts c3">' + opts.map(function (w, i) { return '<button class="ropt cmush" data-i="' + i + '"><span class="cm">🍄</span><b class="lang-' + lang + '">' + esc(w) + '</b></button>'; }).join('') + '</div>';
+        '<div class="ropts c3">' + opts.map(function (w, i) { return '<button class="ropt cmush" data-i="' + i + '"><img class="cm" src="img/w/mg2-mush.png" alt=""><b class="lang-' + lang + '">' + esc(w) + '</b></button>'; }).join('') + '</div>';
       bindOpts('.cmush', function (b) {
         if (!g.alive) return;
         if (opts[+b.dataset.i] === ans) { setScore(g, g.score + (tries ? 8 : 20)); b.classList.add('ok'); $('cB').textContent = ans; $('cB').classList.add('fill'); M.sfx('ok'); M.say(sn.say, lang); setTimeout(round, 1500); }
@@ -523,7 +523,7 @@
       var say = function () { M.say(it.say, it.lang); };
       if (mic) {
         $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / ' + list.length + '</small><p>꽥꽥이를 따라 말해 보세요</p>') +
-          '<div class="eword">' + wordHtml(it) + '<small>' + esc(it.k) + '</small></div><div class="ebtns"><button class="btn" id="eHear">🔊 듣기</button><button class="btn primary emic" id="eMic">🎤 말하기</button></div><p class="hint center" id="eMsg"></p><button class="btn ghost wide hidden" id="eSkip">넘어가기</button>';
+          '<div class="eword">' + wordHtml(it) + '<small>' + esc(it.k) + '</small></div><div class="ebtns"><button class="btn" id="eHear">🔊 듣기</button><button class="btn primary emic" id="eMic"><img class="mi" src="img/w/mg2-mic.png" alt=""> 말하기</button></div><p class="hint center" id="eMsg"></p><button class="btn ghost wide hidden" id="eSkip">넘어가기</button>';
         setTimeout(function () { if (g.alive) say(); }, 300);
         $('eHear').onclick = say;
         $('eSkip').onclick = function () { round(); };
@@ -563,7 +563,7 @@
       if (!g.alive) return;
       if (lives <= 0 || n >= 20) { finish(g, 220); return; }
       n++; var four = M.shuffle(pool).slice(0, 4), target = four[0], limit = Math.max(2.4, 6 - (lvl - 1) * 0.4); four = M.shuffle(four);
-      $('mBody').innerHTML = headHtml(g, '<small>' + '❤️'.repeat(lives) + '🤍'.repeat(3 - lives) + ' · 매운맛 ' + '🌶️'.repeat(Math.min(5, lvl)) + (lvl > 5 ? '+' + (lvl - 5) : '') + '</small><div class="rword">' + wordHtml(target) + '</div>') +
+      $('mBody').innerHTML = headHtml(g, '<small>' + '<img class="mh" src="img/w/mg2-heart.png" alt="">'.repeat(lives) + '<img class="mh off" src="img/w/mg2-heart.png" alt="">'.repeat(3 - lives) + ' · 매운맛 ' + '<img class="mh" src="img/w/mg2-pepper.png" alt="">'.repeat(Math.min(5, lvl)) + (lvl > 5 ? '+' + (lvl - 5) : '') + '</small><div class="rword">' + wordHtml(target) + '</div>') +
         '<div class="sbar"><i id="sBar"></i></div><div class="ropts">' + four.map(function (it, i) { return '<button class="ropt sopt" data-i="' + i + '"><b>' + esc(it.k) + '</b></button>'; }).join('') + '</div>';
       M.say(target.say, target.lang);
       var t0 = Date.now(), bar = $('sBar'), done = false;
@@ -596,7 +596,7 @@
       opts = M.shuffle(opts);
       var say = function () { M.say(unit(v), lang); };
       $('mBody').innerHTML = headHtml(g, '<small>손님 ' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small><p>손님이 말한 값은 얼마일까요?</p><button class="btn" id="bPlay">🔊 다시 듣기</button>') +
-        '<div class="ropts">' + opts.map(function (x, i) { return '<button class="ropt coin" data-i="' + i + '"><span>🪙</span><b>' + x + '</b></button>'; }).join('') + '</div><p class="center hint" id="bMsg"></p>';
+        '<div class="ropts">' + opts.map(function (x, i) { return '<button class="ropt coin" data-i="' + i + '"><img class="mcoin" src="img/w/mg2-coin.png" alt=""><b>' + x + '</b></button>'; }).join('') + '</div><p class="center hint" id="bMsg"></p>';
       $('bPlay').onclick = say; setTimeout(function () { if (g.alive) say(); }, 300);
       bindOpts('.coin', function (b) {
         if (!g.alive) return;
@@ -616,12 +616,12 @@
       if (lives <= 0 || rounds >= 7) { finish(g, 150); return; }
       rounds++;
       var seq = M.shuffle(pool).slice(0, len), extra = M.shuffle(pool.filter(function (x) { return seq.indexOf(x) < 0; })).slice(0, 2), k = 0;
-      $('mBody').innerHTML = headHtml(g, '<small>' + '❤️'.repeat(lives) + '🤍'.repeat(3 - lives) + ' · ' + len + '개 행진</small><p id="pTip">잘 보고 순서를 기억해요</p>') + '<div class="pshow" id="pShow"></div><div class="ropts p3" id="pOpts"></div><div class="pgot" id="pGot"></div>';
+      $('mBody').innerHTML = headHtml(g, '<small>' + '<img class="mh" src="img/w/mg2-heart.png" alt="">'.repeat(lives) + '<img class="mh off" src="img/w/mg2-heart.png" alt="">'.repeat(3 - lives) + ' · ' + len + '개 행진</small><p id="pTip">잘 보고 순서를 기억해요</p>') + '<div class="pshow" id="pShow"></div><div class="ropts p3" id="pOpts"></div><div class="pgot" id="pGot"></div>';
       var show = $('pShow');
       (function next() {
         if (!g.alive) return;
-        if (k >= seq.length) { show.innerHTML = '<span class="pel">🐘❓</span>'; ask(); return; }
-        var it = seq[k++]; show.innerHTML = '<span class="pel">🐘</span><div class="pw">' + wordHtml(it) + '<small>' + esc(it.k) + '</small></div>'; M.say(it.say, it.lang);
+        if (k >= seq.length) { show.innerHTML = '<span class="pel"><img src="img/w/ch-elephant-front.png" alt=""><img class="pq" src="img/w/mg2-qcard.png" alt=""></span>'; ask(); return; }
+        var it = seq[k++]; show.innerHTML = '<span class="pel"><img src="img/w/ch-elephant-happy.png" alt=""></span><div class="pw">' + wordHtml(it) + '<small>' + esc(it.k) + '</small></div>'; M.say(it.say, it.lang);
         g.timers.push(setTimeout(next, 1500));
       })();
       function ask() {
@@ -645,22 +645,22 @@
     var pool = words(14); if (!need(pool, 4)) return;
     var target = null, hits = 0, up = {}, speed = 1700;
     function newTarget() { target = M.pick(pool); hits = 0; $('nT').innerHTML = (target.e ? target.e + ' ' : '') + '<b>' + esc(target.k) + '</b>'; }
-    $('mBody').innerHTML = headHtml(g, '<p>이 뜻의 바나나를 따요!</p><div class="ntarget" id="nT"></div>') + '<div class="ngrid" id="nG">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return '<button class="nhole" data-h="' + i + '"><span class="nleaf">🌿</span></button>'; }).join('') + '</div>';
+    $('mBody').innerHTML = headHtml(g, '<p>이 뜻의 바나나를 따요!</p><div class="ntarget" id="nT"></div>') + '<div class="ngrid" id="nG">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return '<button class="nhole" data-h="' + i + '"><span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span></button>'; }).join('') + '</div>';
     newTarget();
     function pop() {
       if (!g.alive) return;
       var free = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(function (i) { return !up[i]; }); if (!free.length) return;
       var h = M.pick(free), it = Math.random() < 0.4 ? target : M.pick(pool), b = document.querySelector('[data-h="' + h + '"]');
-      up[h] = it; b.innerHTML = '<span class="nban">🍌</span><span class="nw">' + wordHtml(it) + '</span>'; b.classList.add('up');
-      g.timers.push(setTimeout(function () { if (up[h] === it) { delete up[h]; b.classList.remove('up'); b.innerHTML = '<span class="nleaf">🌿</span>'; } }, speed));
+      up[h] = it; b.innerHTML = '<span class="nban"><img class="nbi" src="img/w/mg2-banana.png" alt=""></span><span class="nw">' + wordHtml(it) + '</span>'; b.classList.add('up');
+      g.timers.push(setTimeout(function () { if (up[h] === it) { delete up[h]; b.classList.remove('up'); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span>'; } }, speed));
     }
     $('nG').onclick = function (e) {
       if (!g.alive) return;
       var b = e.target.closest('.nhole'); if (!b) return; var h = +b.dataset.h, it = up[h]; if (!it) return;
       delete up[h]; b.classList.remove('up');
-      if (it === target || it.k === target.k) { setScore(g, g.score + 5); M.sfx('ok'); M.say(it.say, it.lang); b.innerHTML = '<span class="nleaf">✨</span>'; hits++; speed = Math.max(1000, speed - 40); if (hits >= 3) newTarget(); }
-      else { setScore(g, g.score - 3); M.sfx('bad'); b.innerHTML = '<span class="nleaf">💦</span>'; }
-      setTimeout(function () { if (!up[h]) b.innerHTML = '<span class="nleaf">🌿</span>'; }, 400);
+      if (it === target || it.k === target.k) { setScore(g, g.score + 5); M.sfx('ok'); M.say(it.say, it.lang); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-sparkle.png" alt=""></span>'; hits++; speed = Math.max(1000, speed - 40); if (hits >= 3) newTarget(); }
+      else { setScore(g, g.score - 3); M.sfx('bad'); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-pop.png" alt=""></span>'; }
+      setTimeout(function () { if (!up[h]) b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span>'; }, 400);
     };
     var iv = setInterval(function () { pop(); if (Math.random() < 0.35) pop(); }, 750); g.timers.push(iv); pop();
     timeBar(g, 60, function () { finish(g, 110); });

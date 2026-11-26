@@ -1539,3 +1539,14 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .hsrow { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin: 6px 0; } .hsrow img { height: 96px; object-fit: contain; } .hsrow img:last-child { height: 120px; } .hsrow span { font-size: 1.4rem; color: var(--sub); align-self: center; }
 .hsimg { height: 140px; object-fit: contain; }
 .hstyle { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; border: 2px solid var(--line); border-radius: 14px; background: #fff; } .hstyle.on { border-color: var(--mint); background: #effbf5; } .hstyle img { height: 70px; object-fit: contain; }
+
+/* 미니게임 전용 그림 */
+.fspot .fball { width: 46px; height: 46px; object-fit: contain; } .fdog img { width: 84px; height: 84px; object-fit: contain; }
+.oxb .oxi { width: 72px; height: 72px; object-fit: contain; } .cmush .cm { width: 34px; height: 34px; object-fit: contain; }
+.mi { width: 1.4em; height: 1.4em; object-fit: contain; vertical-align: middle; } .mh { width: 20px; height: 20px; object-fit: contain; vertical-align: middle; } .mh.off { filter: grayscale(1) opacity(.35); }
+.coin .mcoin { width: 34px; height: 34px; object-fit: contain; }
+.pel img { width: 90px; height: 90px; object-fit: contain; vertical-align: middle; } .pel .pq { width: 46px; height: 46px; }
+.nhole .nb { width: 70%; height: 70%; object-fit: contain; } .nhole .nbi { width: 52px; height: 40px; object-fit: contain; }
+.nhole { background: radial-gradient(#7a5530 50%, #8a6a3e 52%); }
+.mstars .mst { width: 48px; height: 48px; object-fit: contain; margin: 0 2px; } .mstars .mst.off { filter: grayscale(1) opacity(.3); }
+.mconf { position: absolute; left: 50%; top: 4px; width: 220px; transform: translateX(-50%); pointer-events: none; animation: fxpop .6s; z-index: 0; opacity: .9; } .mres { position: relative; z-index: 1; }
