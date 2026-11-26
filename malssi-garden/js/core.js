@@ -74,6 +74,12 @@
     el.onclick = function () { clearTimeout(t); el.remove(); };
     return el;
   };
+  // 작은 그림이 화면 위로 떠올랐다 사라진다 (하트, 잠자리채 등)
+  M.fxFloat = function (name, size) {
+    var el = document.createElement('img'); el.className = 'fxfloat'; el.src = 'img/w/' + name + '.png'; el.alt = '';
+    if (size) { el.style.width = size + 'px'; el.style.height = size + 'px'; }
+    document.body.appendChild(el); setTimeout(function () { el.remove(); }, 1500);
+  };
   M.esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   M.fmt = function (n) { return Number(n || 0).toLocaleString('ko-KR'); };
   M.rand = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };

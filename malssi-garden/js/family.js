@@ -106,6 +106,7 @@
       watchMate();
     }));
     offs.push(FX.on('family/game', onGame));
+    offs.push(FX.on('family/inbox/' + F.uid, onInbox));
     if (F.role === 'wife') {
       offs.push(FX.on('family/cmds/' + F.uid, onCmds));
       setTimeout(pushState, 800);
@@ -129,7 +130,7 @@
       if (!v || v.at <= lastEmote) return; lastEmote = v.at;
       if (FX.now() - v.at > 15000) return;
       if (M.World && M.World.emote) M.World.emote('mate', v.t, v.k);
-      if (v.t === '💕') M.sfx && M.sfx('pop');
+      if (v.t === '💕') { M.sfx && M.sfx('pop'); M.fxFloat('fx-hearts', 120); }
     }));
     if (F.role === 'husband') mateOffs.push(FX.on('family/state/' + F.mateUid, function (s) {
       if (!s) return;
@@ -139,6 +140,37 @@
     }));
   }
   M.Family.mateOnline = function () { return F.mateOnline; };
+  // ---------- 선물 주고받기 (채집물·물고기·요리) ----------
+  M.Family.canGift = function () { return F.ready && !!F.mateUid; };
+  function giftInfo(g) {
+    if (g.k === 'item') { var it = M.GATHER.ITEMS[g.id]; return it && { name: it.ko, img: it.img }; }
+    if (g.k === 'fish') { var f = (M.FISH || []).filter(function (x) { return x.id === g.id; })[0]; return f && { name: f.ko, img: 'img/w/fish-' + f.id + '.png' }; }
+    if (g.k === 'dish') { var nm = M.recipeName && M.recipeName(g.id); return nm && { name: nm, img: 'img/w/dish-' + g.id + '.png' }; }
+  }
+  M.Family.sendGift = function (g) {
+    if (!M.Family.canGift()) return false;
+    var P = M.P, info = giftInfo(g); if (!info) return false;
+    if (g.k === 'item') { if (!(P.gather.bag[g.id] > 0)) return false; P.gather.bag[g.id]--; }
+    else if (g.k === 'fish') { if (!((P.fishBag || {})[g.id] > 0)) return false; P.fishBag[g.id]--; }
+    else if (g.k === 'dish') { var x = P.extra; if (!(x.dishes[g.id] > 0)) return false; x.dishes[g.id]--; }
+    M.save();
+    FX.push('family/inbox/' + F.mateUid, { k: g.k, id: g.id, from: F.name || '', at: FX.now() });
+    M.toast('💌 ' + M.j(info.name, '을', '를') + ' ' + M.Family.mateName() + '에게 보냈어요'); M.fxFloat('fx-hearts', 110); M.sfx && M.sfx('pop');
+    return true;
+  };
+  function onInbox(v) {
+    if (!v) return;
+    Object.keys(v).forEach(function (id) {
+      var g = v[id], info = g && giftInfo(g); FX.remove('family/inbox/' + F.uid + '/' + id); if (!info) return;
+      var P = M.P;
+      if (g.k === 'item') { P.gather = P.gather || { bag: {}, dex: {} }; P.gather.bag[g.id] = (P.gather.bag[g.id] || 0) + 1; P.gather.dex[g.id] = (P.gather.dex[g.id] || 0) + 1; }
+      else if (g.k === 'fish') { P.fishBag = P.fishBag || {}; P.fishBag[g.id] = (P.fishBag[g.id] || 0) + 1; }
+      else if (g.k === 'dish') { P.extra = P.extra || { mailDay: '', mail: [], dishes: {}, fed: {}, fedDay: '', marketBought: {} }; P.extra.dishes = P.extra.dishes || {}; P.extra.dishes[g.id] = (P.extra.dishes[g.id] || 0) + 1; }
+      M.save();
+      M.fxPop({ bg: 'fx-hearts', img: info.img, title: '💌 ' + M.Family.mateName() + '의 선물: ' + info.name, sub: g.k === 'dish' ? '요리 화면에서 먹거나 주민에게 줄 수 있어요' : '가방에 넣었어요', ms: 3000 });
+      if (M.recipeCheck) setTimeout(M.recipeCheck, 3200);
+    });
+  }
   var lastMateP = null;
   // 남편: 너구리 모습으로 아내 마을에 들어간다 (주민 수도 아내 마을과 같게 보인다)
   M.Family.visit = function (on) {
@@ -191,12 +223,12 @@
     var d = M.modal('<h3>💕 ' + esc(nm) + '</h3><p class="hint">' + esc(nm) + '도 지금 마을에 있어요.</p>' +
       '<div class="row2"><button class="btn" data-m="hi">👋 ' + esc(h[0]) + '</button><button class="btn" data-m="heart">💕 하트</button></div>' +
       (M.hmarket && M.hmarket() && F.role === 'wife' ? '<button class="btn primary wide" data-m="shop">🦝 특별 장터 보기</button>' : '') +
-      '<button class="btn primary wide" data-m="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn primary wide" data-m="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button>' +
+      '<button class="btn primary wide" data-m="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn primary wide" data-m="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button><button class="btn primary wide" data-m="bugs">🪲 같이 놀기: 곤충 배틀</button>' +
       '<button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-m]'); if (!b) return; var m = b.dataset.m;
       if (m === 'hi') { M.Family.emote(h[0], h[1]); M.say(h[0], lang); d.close(); }
-      else if (m === 'heart') { M.Family.emote('💕', ''); d.close(); }
+      else if (m === 'heart') { M.Family.emote('💕', ''); M.fxFloat('fx-hearts', 120); d.close(); }
       else if (m === 'shop') { d.close(); M.marketSheet(); }
       else { d.close(); invite(m); }
     });
@@ -213,7 +245,7 @@
       : '<p>' + (F.role === 'wife' ? '👩 아내' : '👨 남편') + ' 폰으로 연결됐어요</p>' +
         (F.mateUid ? '<p>' + (F.role === 'wife' ? '👨 ' : '👩 ') + esc(nm) + ' · ' + (F.mateOnline ? '🟢 접속 중' : '⚪ 쉬는 중') + '</p>' : '<p class="hint">상대 폰이 아직 들어오지 않았어요.</p><button class="btn wide" data-f="repin">🔢 새 핀 번호 받기</button>') +
         (F.role === 'husband' && F.mateUid ? '<button class="btn primary wide" data-f="admin">💌 ' + esc(nm) + ' 원격 관리' + (M.Family.waiting ? ' 🔴' : '') + '</button><button class="btn primary wide" data-f="visit">' + (M.visiting ? '🏠 내 마을로 돌아가기' : '🦝 너구리로 ' + esc(nm) + ' 마을 가기') + '</button>' : '') +
-        (F.mateUid ? '<button class="btn wide" data-f="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn wide" data-f="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button>' : '') +
+        (F.mateUid ? '<button class="btn wide" data-f="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn wide" data-f="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button><button class="btn wide" data-f="bugs">🪲 같이 놀기: 곤충 배틀</button>' : '') +
         '<button class="btn ghost wide" data-f="leave">이 폰의 가족 연결 끊기</button>';
     var d = M.modal('<h3>👨‍👩 가족 연결</h3>' + body + '<p class="fmsg hint"></p><button class="btn ghost wide" data-close>닫기</button>');
     var msg = d.querySelector('.fmsg');
@@ -475,7 +507,7 @@
   // 남편 폰: 링크나 코드로 연결
   // ---------- 같이 하는 놀이 ----------
   // family/game 하나에 놀이 상태를 두고 두 폰이 함께 본다. 초대한 쪽(host)이 문제를 만들고 판정한다.
-  var GNAME = { quiz: '⚡ 단어 빨리 맞히기', pairs: '🃏 둘이서 짝 맞추기' };
+  var GNAME = { quiz: '⚡ 단어 빨리 맞히기', pairs: '🃏 둘이서 짝 맞추기', bugs: '🪲 곤충 배틀' };
   function pool(n) {
     var lang = M.P.lang, ok = function (it) { return it.k && it.t && it.t.length <= 12 && !it.kana; };
     var src = (M.learnedItems ? M.learnedItems(lang) : []).filter(ok);
@@ -495,6 +527,8 @@
         return { t: w.t, r: w.r, say: w.say, lang: w.lang, opts: opts, a: opts.indexOf(w.k) };
       });
       g.r = 0;
+    } else if (type === 'bugs') {
+      g.phase = 'pick'; g.bugs = {}; g.r = 0;
     } else {
       var six = pool(6), cards = [];
       six.forEach(function (w, i) { cards.push({ p: i, side: 'w', t: w.t, say: w.say, lang: w.lang }); cards.push({ p: i, side: 'k', t: w.k }); });
@@ -527,7 +561,7 @@
     }
     closeDlg(askDlg); closeDlg(waitDlg);
     if (g.status === 'cancel') { if (fresh && g.host === F.uid && !g.quit) M.toast(M.j(M.Family.mateName(), '이', '가') + ' 다음에 하재요'); if (g.quit && g.quit !== F.uid && $('coop')) M.toast(M.j(M.Family.mateName(), '이', '가') + ' 놀이를 그만뒀어요'); closeCoop(); return; }
-    if (g.status === 'play' || g.status === 'end') { openCoop(g); if (g.type === 'quiz') quiz(g); else pairs(g); }
+    if (g.status === 'play' || g.status === 'end') { openCoop(g); if (g.type === 'quiz') quiz(g); else if (g.type === 'bugs') bugs(g); else pairs(g); }
   }
   function $(id) { return document.getElementById(id); }
   function openCoop(g) {
@@ -539,7 +573,7 @@
       if (G && G.status === 'end') { closeCoop(); return; }
       M.confirm('그만할까요?', '둘 다 놀이가 끝나요.', '그만하기', function () { FX.update('family/game', { status: 'cancel', quit: F.uid, at: FX.now() }); closeCoop(); });
     };
-    lastR = -1; seenFlip = ''; resolved = {};
+    lastR = -1; seenFlip = ''; resolved = {}; lastLog = -1;
   }
   function closeCoop() { var el = $('coop'); if (el) el.remove(); document.body.classList.remove('in-mini'); clearTimeout(roundT); }
   function names(uid) { return uid === F.uid ? '나' : M.Family.mateName(); }
@@ -625,6 +659,57 @@
         }, 1100);
       };
     });
+  }
+
+  // 부부 곤충 배틀: 각자 가방의 곤충을 골라 기술을 동시에 고른다. 초대한 쪽이 판정한다
+  var BMV = { ram: { em: '💥', ko: '들이받기', beats: 'grab', ja: 'たいあたり', en: 'Tackle', zh: '冲撞' }, grab: { em: '🦀', ko: '붙잡기', beats: 'fly', ja: 'つかむ', en: 'Grab', zh: '抓住' }, fly: { em: '🌪️', ko: '날아오르기', beats: 'ram', ja: 'とびあがる', en: 'Fly up', zh: '飞起' } };
+  var bbT0 = performance.now(), bbPow = 0.5, bbRaf = 0, lastLog = -1;
+  function bugs(g) {
+    var body = $('cBody'); if (!body) return;
+    var B = g.bugs || {}, mine = B[F.uid], other = B[F.mateUid], I = M.GATHER.ITEMS, lang = M.P.lang;
+    $('cScore').textContent = g.phase === 'fight' ? (g.r + 1) + '턴' : '';
+    if (g.status === 'end') {
+      var win = g.winner === F.uid;
+      if (win && mine) { var bb = M.P.bugBattle = M.P.bugBattle || { rank: 0, lv: {}, day: '', won: {} }; L.bwin = L.bwin || {}; if (!L.bwin[g.id]) { L.bwin[g.id] = 1; bb.lv[mine.id] = Math.min(20, (bb.lv[mine.id] || 1) + 1); M.save(); } }
+      endView(g, win ? '내 곤충이 이겼어요! 🏆' : esc(M.j(M.Family.mateName(), '이', '가')) + ' 이겼어요!', (mine ? esc(I[mine.id].ko) : '') + ' vs ' + (other ? esc(I[other.id].ko) : ''), win ? 40 : 15, 10);
+      return;
+    }
+    if (g.phase === 'pick') {
+      if (mine) { body.innerHTML = '<p class="center">' + esc(I[mine.id].ko) + '로 정했어요! ' + esc(M.Family.mateName()) + '를 기다려요…</p><img class="bbimg" style="display:block;margin:20px auto" src="' + I[mine.id].img + '" alt="">'; }
+      else {
+        var bag = (M.P.gather && M.P.gather.bag) || {}, list = Object.keys(bag).filter(function (k) { return bag[k] > 0 && I[k] && I[k].cat === 'bug'; });
+        if (!list.length) list = ['ladybug'];
+        var lv = ((M.P.bugBattle || {}).lv) || {};
+        body.innerHTML = '<p class="center">어떤 곤충으로 싸울까요?' + (Object.keys(bag).some(function (k) { return bag[k] > 0 && I[k] && I[k].cat === 'bug'; }) ? '' : ' <small>(곤충이 없어서 무당벌레를 빌려줘요)</small>') + '</p><div class="list">' + list.map(function (k) { var s = M.bugStats(k, lv[k]); return '<button class="litem" data-pb="' + k + '"><span class="le dishe"><img src="' + I[k].img + '" alt=""></span><span class="ln">' + esc(I[k].ko) + '<small>Lv.' + s.lv + ' · 체력 ' + s.hp + ' · 힘 ' + Math.round(s.atk) + ' · 특기 ' + BMV[s.style].em + BMV[s.style].ko + '</small></span></button>'; }).join('') + '</div>';
+        Array.prototype.forEach.call(body.querySelectorAll('[data-pb]'), function (b) { b.onclick = function () { var k = b.dataset.pb, s = M.bugStats(k, lv[k]); FX.update('family/game/bugs/' + F.uid, { id: k, lv: s.lv, hp: s.hp, max: s.hp, atk: s.atk * (M.buffOn && M.buffOn('power') ? 1.25 : 1), style: s.style }); }; });
+      }
+      if (g.host === F.uid && mine && other) FX.update('family/game', { phase: 'fight', r: 0 });
+      return;
+    }
+    // 대결
+    var r = g.r || 0, mv = (g.moves && g.moves[r]) || {}, my = mv[F.uid], log = g.log;
+    if (log && log.r !== lastLog) { lastLog = log.r; var a1 = log.a[F.uid], a2 = log.a[F.mateUid]; if (a1) M.say(BMV[a1][lang] || BMV[a1].en, lang); if (a2) setTimeout(function () { M.say(BMV[a2][lang] || BMV[a2].en, lang); }, 900); }
+    var hpb = function (b) { return '<div class="bbhp"><i style="width:' + Math.max(0, b.hp / b.max * 100) + '%"></i></div>'; };
+    var nm = function (k) { return '<b class="lang-' + lang + '">' + esc(BMV[k][lang] || BMV[k].en) + '</b>'; };
+    body.innerHTML = '<div class="cbb"><div class="bbside op"><div class="bbinfo"><b>' + esc(I[other.id].ko) + '</b><small>' + esc(M.Family.mateName()) + ' · Lv.' + other.lv + '</small>' + hpb(other) + '</div><img class="bbimg" src="' + I[other.id].img + '" alt=""></div>' +
+      '<div class="bbmsg">' + (log ? '나: ' + BMV[log.a[F.uid]].em + ' ' + nm(log.a[F.uid]) + ' vs ' + BMV[log.a[F.mateUid]].em + ' ' + nm(log.a[F.mateUid]) + '<br>' + (log.d[F.mateUid] ? '내가 ' + log.d[F.mateUid] + ' 피해를 줬어요 ' : '') + (log.d[F.uid] ? log.d[F.uid] + ' 피해를 받았어요' : '') : '기술을 골라요! 막대가 ★일 때 세게 들어가요') + (my ? '<br><small>' + esc(M.Family.mateName()) + '의 선택을 기다려요…</small>' : '') + '</div>' +
+      '<div class="bbside me"><img class="bbimg" src="' + I[mine.id].img + '" alt=""><div class="bbinfo"><b>' + esc(I[mine.id].ko) + '</b><small>나 · Lv.' + mine.lv + '</small>' + hpb(mine) + '</div></div></div>' +
+      '<div class="bbpow"><i id="cbPow"></i><span class="bbstar">★</span></div><div class="bbmoves">' + ['ram', 'grab', 'fly'].map(function (k) { return '<button class="bbmove' + (k === mine.style ? ' fav' : '') + '" data-cm="' + k + '"' + (my ? ' disabled' : '') + '><img class="bbic" src="img/w/bb-' + k + '.png" alt=""><b class="lang-' + lang + '">' + esc(BMV[k][lang] || BMV[k].en) + '</b><small>' + BMV[k].ko + '</small></button>'; }).join('') + '</div>';
+    cancelAnimationFrame(bbRaf);
+    (function loop() { var e = $('cbPow'); if (!e) return; bbPow = (Math.sin((performance.now() - bbT0) / 380) + 1) / 2; e.style.left = (bbPow * 100) + '%'; bbRaf = requestAnimationFrame(loop); })();
+    Array.prototype.forEach.call(body.querySelectorAll('[data-cm]'), function (b) { b.onclick = function () { if (b.disabled) return; FX.set('family/game/moves/' + r + '/' + F.uid, { m: b.dataset.cm, pow: bbPow }); M.sfx && M.sfx('pop'); }; });
+    if (g.host === F.uid && mv[F.uid] && mv[F.mateUid] && !resolved['b' + r]) {
+      resolved['b' + r] = 1;
+      var A = mv[F.uid], Bm = mv[F.mateUid], me2 = B[F.uid], ot = B[F.mateUid];
+      var res = BMV[A.m].beats === Bm.m ? 1 : BMV[Bm.m].beats === A.m ? -1 : 0;
+      var dmg = function (atk, st, m, pw, side) { var acc = 1 - Math.abs(pw - 0.5) * 2, mult = acc > 0.8 ? 1.5 : acc > 0.5 ? 1.15 : 0.9; return Math.round(atk * mult * (m === st ? 1.3 : 1) * (side === 1 ? 1.6 : side === 0 ? 0.5 : 0)); };
+      var dToOther = dmg(me2.atk, me2.style, A.m, A.pow, res), dToMe = dmg(ot.atk, ot.style, Bm.m, Bm.pow, -res);
+      var up = { r: r + 1, log: { r: r, a: {}, d: {} } }; up.log.a[F.uid] = A.m; up.log.a[F.mateUid] = Bm.m; up.log.d[F.mateUid] = dToOther; up.log.d[F.uid] = dToMe;
+      var hpMe = me2.hp - dToMe, hpOt = ot.hp - dToOther;
+      up['bugs/' + F.uid + '/hp'] = hpMe; up['bugs/' + F.mateUid + '/hp'] = hpOt;
+      if (hpMe <= 0 || hpOt <= 0) { up.status = 'end'; up.winner = hpOt <= 0 && hpMe > 0 ? F.uid : hpMe <= 0 && hpOt > 0 ? F.mateUid : (hpMe >= hpOt ? F.uid : F.mateUid); }
+      setTimeout(function () { FX.update('family/game', up); }, 400);
+    }
   }
 
   // ---------- 시작 ----------

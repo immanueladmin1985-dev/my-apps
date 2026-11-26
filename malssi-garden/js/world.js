@@ -454,7 +454,7 @@
   var bugs = [], bugNext = 0;
   function bugTick(dt, now) {
     if (!M.bugNow) return;
-    var luck = M.luckOn && M.luckOn();
+    var luck = (M.luckOn && M.luckOn()) || (M.buffOn && M.buffOn('bug'));
     if (!bugNext) bugNext = now + 30000 + Math.random() * 30000;   // 마을에 들어오고 30~60초 뒤에 첫 곤충
     if (now > bugNext && bugs.length < (luck ? 2 : 1)) {
       bugNext = now + (luck ? 0.5 : 1) * (90000 + Math.random() * 90000);   // 평소 1분 30초~3분에 한 마리(한 번에 한 마리만), 향수를 쓰면 두 배
@@ -480,7 +480,7 @@
     if (bg) {
       bg.held = true; var gx = Math.round(bg.x - 0.5), gy = Math.round(bg.y);
       var near = nearestWalkable(gx, gy) || [gx, gy];
-      goTo(near[0], near[1], function () { bugs = bugs.filter(function (b) { return b !== bg; }); M.gatherGot(bg.id); });
+      goTo(near[0], near[1], function () { bugs = bugs.filter(function (b) { return b !== bg; }); M.fxFloat('fx-netbug', 110); M.gatherGot(bg.id); });
       return true;
     }
     // 오늘 놓인 물건
@@ -632,7 +632,7 @@
       // 캐릭터 그림을 미리 불러 둔다 (걷는 방향이 바뀔 때 깜빡이지 않게)
       ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + 'ch-rabbit' + M.petStage() + '-' + v + k + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
       var rs = M.V.residents(), nm = M.V.nextMover();
-      root.innerHTML = '<div class="village world"><div class="vbar">' + (M.visiting ? '<b>🦝 ' + M.esc(M.Family.mateName()) + '의 마을 방문 중</b><button class="vbag" id="vHome">🏠 돌아가기</button>' : '<b>🏡 ' + M.esc(M.P.petName) + '네 마을</b>') + '<small>주민 ' + rs.length + '명</small><button class="vbag" id="vMap">🗺️ 지도</button><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
+      root.innerHTML = '<div class="village world"><div class="vbar">' + (M.visiting ? '<b>🦝 ' + M.esc(M.Family.mateName()) + '의 마을 방문 중</b><button class="vbag" id="vHome">🏠 돌아가기</button>' : '<b>🏡 ' + M.esc(M.P.petName) + '네 마을</b>') + (function () { var bl = (M.buffList ? M.buffList() : []).map(function (b) { return '<i title="' + b.name + '">' + b.em + b.min + '</i>'; }); if (M.luckLeft && M.luckLeft()) bl.unshift('<i>✨' + Math.ceil(M.luckLeft() / 60000) + '</i>'); return bl.length ? '<span class="vbuffs">' + bl.join('') + '</span>' : ''; })() + '<small>주민 ' + rs.length + '명</small><button class="vbag" id="vMap">🗺️ 지도</button><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
       cv = $('wCanvas'); ctx = cv.getContext('2d');
       var fit = function () { var dpr = Math.min(3, window.devicePixelRatio || 1), r = cv.getBoundingClientRect(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); };
       fit(); window.removeEventListener('resize', M.World._fit); M.World._fit = fit; window.addEventListener('resize', fit);

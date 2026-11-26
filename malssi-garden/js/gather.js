@@ -182,7 +182,7 @@
   // 행운의 향수: 30분 동안 곤충이 두 배로 자주 나오고, 바닥 물건이 한 번 더 생긴다
   var LUCK_MS = 30 * 60000, LUCK_PRICE = 80;
   M.luckLeft = function () { var g = S(); return Math.max(0, (g.luckAt || 0) + LUCK_MS - Date.now()); };
-  M.luckOn = function () { return M.luckLeft() > 0; };
+  M.luckOn = function () { return M.luckLeft() > 0 || (M.buffOn && M.buffOn('luck')); };
   M.luckBuy = function () {
     if (!M.spend('coins', LUCK_PRICE)) { M.toast('코인이 모자라요'); return false; }
     var g = S(); g.luckAt = Date.now(); g.luckSeed = Date.now() % 100000 + 1; M.save(); M.sfx('win');
@@ -248,13 +248,14 @@
       if (e.target.closest('[data-arena]')) { d.close(); M.bugArena(); return; }
       var fbn = e.target.closest('[data-gf]');
       if (fbn) { var f = (M.FISH || []).filter(function (x) { return x.id === fbn.dataset.gf; })[0], cnt = M.P.fishBag[f.id];
-        var fs = M.modal('<div class="center"><img class="gbig" src="img/w/fish-' + f.id + '.png" alt=""><h3>' + f.ko + '</h3><p>' + cnt + '마리 · 하나에 <img class="inl" src="img/coin.png" alt="">' + f.price + '</p><p class="hint">요리 재료나 낚시 미끼로도 써요</p></div><div class="row2"><button class="btn" data-s1>1마리 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div><button class="btn ghost wide" data-close>닫기</button>');
-        fs.addEventListener('click', function (e2) { var m = e2.target.closest('[data-s1]') ? 1 : e2.target.closest('[data-sa]') ? M.P.fishBag[f.id] : 0; if (!m) return; M.P.fishBag[f.id] -= m; M.give({ coins: f.price * m }); M.sfx('coin'); M.save(); fs.close(); paint(); });
+        var fs = M.modal('<div class="center"><img class="gbig" src="img/w/fish-' + f.id + '.png" alt=""><h3>' + f.ko + '</h3><p>' + cnt + '마리 · 하나에 <img class="inl" src="img/coin.png" alt="">' + f.price + '</p><p class="hint">요리 재료나 낚시 미끼로도 써요</p></div><div class="row2"><button class="btn" data-s1>1마리 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div>' + (M.Family && M.Family.canGift && M.Family.canGift() ? '<button class="btn wide" data-gsend>💌 ' + esc(M.Family.mateName()) + '에게 한 마리 보내기</button>' : '') + '' + (M.Family && M.Family.canGift && M.Family.canGift() ? '<button class="btn wide" data-gsend>💌 ' + esc(M.Family.mateName()) + '에게 하나 보내기</button>' : '') + '<button class="btn ghost wide" data-close>닫기</button>');
+        fs.addEventListener('click', function (e2) { if (e2.target.closest('[data-gsend]')) { if (M.Family.sendGift({ k: 'fish', id: f.id })) { fs.close(); paint(); } return; } var m = e2.target.closest('[data-s1]') ? 1 : e2.target.closest('[data-sa]') ? M.P.fishBag[f.id] : 0; if (!m) return; M.P.fishBag[f.id] -= m; M.give({ coins: f.price * m }); M.sfx('coin'); M.save(); fs.close(); paint(); });
         return; }
       var b = e.target.closest('[data-gi]'); if (!b) return;
       var it = ITEMS[b.dataset.gi], v = nm(it), n = g.bag[it.id];
       var s = M.modal('<div class="center"><img class="gbig" src="' + it.img + '" alt=""><h3>' + it.ko + '</h3><button class="gname lang-' + M.P.lang + '" data-gsay="' + esc(v[0]) + '">🔊 ' + esc(v[0]) + (v[1] ? ' <small>' + esc(v[1]) + '</small>' : '') + '</button><p>' + n + '개 · 하나에 <img class="inl" src="img/coin.png" alt="">' + it.price + '</p></div><div class="row2"><button class="btn" data-s1>1개 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div><button class="btn ghost wide" data-close>닫기</button>');
       s.addEventListener('click', function (e2) {
+        if (e2.target.closest('[data-gsend]')) { if (M.Family.sendGift({ k: 'item', id: it.id })) { s.close(); paint(); } return; }
         var m = e2.target.closest('[data-s1]') ? 1 : e2.target.closest('[data-sa]') ? g.bag[it.id] : 0; if (!m) return;
         g.bag[it.id] -= m; M.give({ coins: it.price * m }); M.sfx('coin'); M.save(); s.close(); paint();
       });
@@ -280,7 +281,7 @@
   };
   document.addEventListener('click', function (e) {
     var c = e.target.closest && e.target.closest('[data-card]'); if (!c) return;
-    var it = ITEMS[c.dataset.card]; if (it) { var ra = M.rarity(it.price); M.dexCard(it.img, it.ko, { ja: it.ja, en: it.en, zh: it.zh }, ra.stars + ' ' + ra.name); }
+    var it = ITEMS[c.dataset.card]; if (it) { var ra = M.rarity(it.price), ex = ra.stars + ' ' + ra.name; if (it.cat === 'bug' && M.bugStats) { var bb = (M.P.bugBattle || {}).lv || {}, st = M.bugStats(it.id, bb[it.id]); ex += '<br>🪲 배틀 Lv.' + st.lv + ' · 체력 ' + st.hp + ' · 힘 ' + Math.round(st.atk) + ' · 특기 ' + ({ ram: '💥 들이받기', grab: '🦀 붙잡기', fly: '🌪️ 날아오르기' })[st.style]; } M.dexCard(it.img, it.ko, { ja: it.ja, en: it.en, zh: it.zh }, ex); }
   });
 
   // ---------- 집 넓히기 ----------

@@ -293,7 +293,7 @@
         var id = o.id, r = DISH[id], ok = o.ok;
         return '<div class="recipe' + (ok ? ' ok' : '') + '"><span class="le dishe">' + dishIcon(id) + '</span><div class="ln">' + r[0] + ' <span class="dkind">' + kinds(r).map(function (k) { return KI[k]; }).join('') + '</span>' + (x.dishes[id] ? ' <small>가진 것 ' + x.dishes[id] + '</small>' : '') + '<div class="needs">' +
           Object.keys(r[2]).map(function (k) { return '<button class="ing' + (have(k) >= r[2][k] ? ' got' : '') + '" data-ing="' + k + '">' + ingIcon(k) + '<i>' + have(k) + '/' + r[2][k] + '</i></button>'; }).join('') +
-          '</div></div><button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-cook="' + id + '"' + (ok ? '' : ' disabled') + '>만들기</button></div>';
+          '</div></div><div class="rbtns"><button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-cook="' + id + '"' + (ok ? '' : ' disabled') + '>만들기</button>' + (x.dishes[id] ? '<button class="btn" data-eat="' + id + '">먹기</button>' + (M.Family && M.Family.canGift && M.Family.canGift() ? '<button class="btn" data-dsend="' + id + '">💌 보내기</button>' : '') : '') + '</div></div>';
       }).join('') : '<p class="hint center">지금 재료로 만들 수 있는 요리가 없어요</p>';
       var lk = locked().length;
       if (lk) d.querySelector('#ckList').innerHTML += '<div class="rlock">🔒 아직 모르는 레시피 <b>' + lk + '가지</b><small>새 재료를 처음 얻거나, 주민과 이야기하거나, 마을 풀밭의 📜 레시피 쪽지를 주우면 하나씩 알게 돼요.</small></div>';
@@ -304,6 +304,8 @@
       if (e.target.closest('[data-pantry]')) { pantrySheet(paint); return; }
       var t = e.target.closest('[data-ct]'); if (t) { tab = t.dataset.ct; paint(); return; }
       var g = e.target.closest('[data-ing]'); if (g) { var k = g.dataset.ing; M.toast(ingName(k) + ' · ' + ingWhere(k)); return; }
+      var et = e.target.closest('[data-eat]'); if (et) { M.eatDish(et.dataset.eat, paint); return; }
+      var ds = e.target.closest('[data-dsend]'); if (ds) { if (M.Family.sendGift({ k: 'dish', id: ds.dataset.dsend })) paint(); return; }
       var b = e.target.closest('[data-cook]'); if (!b || b.disabled) return;
       var id = b.dataset.cook, r = DISH[id]; Object.keys(r[2]).forEach(function (k) { take(k, r[2][k]); });
       x.dishes[id] = (x.dishes[id] || 0) + 1; M.save(); M.sfx('win');
@@ -378,6 +380,64 @@
   M.tasteLine = function (cid) { var T = TASTE[cid]; if (!T) return ''; return '<p class="taste">❤️ ' + T.love.concat(T.like).map(function (t) { return TAG[t]; }).join(' · ') + '<br>💔 ' + T.hate.map(function (t) { return TAG[t]; }).join(' · ') + '</p>'; };
   var YUM = { ja: 'おいしい！', en: 'Delicious!', zh: '好吃！' }, MEH = { ja: 'うーん…', en: 'Hmm…', zh: '嗯……' };
 
+  // ---------- 요리 먹기: 맛에 따라 30분 동안 도움이 되는 효과 ----------
+  var BUFF = {
+    power: { em: '🌶️', name: '매운 힘', desc: '곤충 배틀 힘 +25%' },
+    fish: { em: '🐟', name: '바다 내음', desc: '귀한 물고기 잘 물어요' },
+    bug: { em: '🍵', name: '차분함', desc: '곤충이 두 배로 자주 나와요' },
+    luck: { em: '🍄', name: '숲의 행운', desc: '행운의 향수 효과' }
+  };
+  M.BUFF = BUFF;
+  function buffs() { M.P.buffs = M.P.buffs || {}; return M.P.buffs; }
+  M.buffLeft = function (k) { return Math.max(0, (buffs()[k] || 0) - Date.now()); };
+  M.buffOn = function (k) { return M.buffLeft(k) > 0; };
+  M.buffList = function () { return Object.keys(BUFF).filter(M.buffOn).map(function (k) { return { k: k, em: BUFF[k].em, name: BUFF[k].name, desc: BUFF[k].desc, min: Math.ceil(M.buffLeft(k) / 60000) }; }); };
+  M.eatDish = function (id, after) {
+    var x = X(); if (!x.dishes[id]) return;
+    var tg = dishTags(id), got = [], b = buffs(), now = Date.now(), add = function (k) { b[k] = Math.max(b[k] || 0, now) + 30 * 60000; got.push(BUFF[k].em + ' ' + BUFF[k].name + ' 30분 (' + BUFF[k].desc + ')'); };
+    if (tg.indexOf('spicy') >= 0) add('power');
+    if (tg.indexOf('fish') >= 0 || tg.indexOf('sea') >= 0) add('fish');
+    if (tg.indexOf('tea') >= 0) add('bug');
+    if (tg.indexOf('mush') >= 0 || tg.indexOf('veg') >= 0) add('luck');
+    var water = 0;
+    if (tg.indexOf('rice') >= 0 || tg.indexOf('bread') >= 0 || tg.indexOf('dairy') >= 0) { water = 8; M.give({ water: water }); got.push('💧 물방울 +' + water); }
+    if (tg.indexOf('sweet') >= 0) { if (M.petExp) M.petExp(6); got.push('💗 ' + M.P.petName + ' 친밀도 +6'); }
+    if (!got.length) { M.give({ water: 5 }); got.push('💧 물방울 +5'); }
+    x.dishes[id]--; M.save(); M.sfx('win'); if (M.paintTop) M.paintTop();
+    var L = M.P.lang; M.say(L === 'ja' ? 'いただきます！' : L === 'zh' ? '我开动了！' : "Let's eat!", L);
+    M.fxPop({ bg: 'fx-hearts', img: 'img/w/dish-' + id + '.png', title: DISH[id][0] + ' 냠냠!', sub: got.join('<br>'), ms: 2800 });
+    if (after) after();
+  };
+
+  // ---------- 주민 요리 주문 (게시판에 하루 2개) ----------
+  M.dishOrders = function () {
+    var x = X(), day = M.today();
+    if (!x.orders || x.orders.day !== day) {
+      var res = (M.V && M.V.residents ? M.V.residents() : []).slice(), known = Object.keys(DISH).filter(function (id) { return M.recipeKnown(id); }), list = [];
+      M.shuffle(res).slice(0, 2).forEach(function (c) {
+        var fav = known.filter(function (id) { return reaction(c.id, id) >= 2; });
+        var pool = fav.length ? fav : known; if (!pool.length) return;
+        var dish = M.pick(pool); list.push({ cid: c.id, dish: dish, coins: 60 + Object.keys(DISH[dish][2]).length * 25, done: false });
+      });
+      x.orders = { day: day, list: list }; M.save();
+    }
+    return x.orders.list;
+  };
+  M.dishOrderHtml = function () {
+    var x = X(), list = M.dishOrders(); if (!list.length) return '';
+    return '<h4>🍲 요리 주문</h4><div class="list">' + list.map(function (o, i) {
+      var c = M.custOf(o.cid) || { name: o.cid }, have = (x.dishes[o.dish] || 0) > 0;
+      return '<div class="litem' + (o.done ? ' done' : '') + '"><span class="le dishe"><img src="' + (M.custImg(o.cid) || '') + '" alt=""></span><span class="ln">' + esc(c.name) + ': "' + esc(DISH[o.dish][0]) + ' 먹고 싶어요!"<small>' + (o.done ? '전달했어요 ✔' : '보상 ' + o.coins + '코인 · 친밀도 ♥♥ · ' + (have ? '가지고 있어요' : '아직 없어요 (요리해서 가져와요)')) + '</small></span><img class="ordimg" src="img/w/dish-' + o.dish + '.png" alt="">' + (o.done ? '' : '<button class="btn primary" data-order="' + i + '"' + (have ? '' : ' disabled') + '>전달</button>') + '</div>';
+    }).join('') + '</div>';
+  };
+  M.dishOrderDeliver = function (i) {
+    var x = X(), o = M.dishOrders()[i]; if (!o || o.done || !(x.dishes[o.dish] > 0)) return false;
+    x.dishes[o.dish]--; o.done = true; M.give({ coins: o.coins }); M.save(); M.sfx('win');
+    M.fxPop({ bg: 'fx-hearts', img: M.custImg(o.cid, true) || 'img/w/dish-' + o.dish + '.png', title: (M.custOf(o.cid) || {}).name + ': "고마워요! 정말 맛있어요!"', sub: '+' + o.coins + '코인 · 친밀도 ♥♥' });
+    M.gardenFriendUp(o.cid); M.gardenFriendUp(o.cid);
+    return true;
+  };
+
   M.dishGiftable = function (id) { var x = X(); return !x.fed[id] && Object.keys(x.dishes).some(function (k) { return x.dishes[k] > 0; }); };
   M.dishGiftSheet = function (id) {
     var x = X(), c = M.custOf(id), ks = Object.keys(x.dishes).filter(function (k) { return x.dishes[k] > 0; });
@@ -386,7 +446,7 @@
       var b = e.target.closest('[data-dish]'); if (!b) return;
       var dk = b.dataset.dish, rv = reaction(id, dk), L = M.P.lang; d.close();
       if (rv === 0) { M.sfx('bad'); M.say(MEH[L] || MEH.en, L); M.modal('<div class="center"><img class="mface" src="' + M.custImg(id, false) + '" alt=""><h3>' + esc(c.name) + ': "' + DISH[dk][0] + '… 미안해요, 이건 잘 못 먹어요."</h3><p class="hint">요리는 돌려받았어요. 다른 요리를 줘 보세요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
-      x.dishes[dk]--; x.fed[id] = 1; M.save(); M.sfx('win'); M.say(YUM[L] || YUM.en, L);
+      x.dishes[dk]--; x.fed[id] = 1; M.save(); M.sfx('win'); M.say(YUM[L] || YUM.en, L); if (rv >= 2) M.fxFloat('fx-hearts', 130);
       var line = rv === 3 ? '! 제일 좋아하는 맛이에요!' : rv === 2 ? '! 정말 맛있어요!' : ', 고마워요. 잘 먹을게요.';
       M.modal('<div class="center"><img class="mface" src="' + M.custImg(id, true) + '" alt=""><h3>' + esc(c.name) + ': "' + DISH[dk][0] + line + '"</h3><p class="hint">친밀도가 ' + ['', '조금', '크게', '아주 크게'][rv] + ' 올랐어요 ' + new Array(rv + 1).join('♥') + '</p><button class="btn primary wide" data-close>좋아요</button></div>', { onClose: function () { for (var q = 0; q < rv; q++) M.gardenFriendUp(id); } });
     });

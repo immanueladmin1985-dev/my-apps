@@ -17,6 +17,8 @@
     var it = item(id), n = M.rarity(it.price).n; lv = lv || 1;
     return { hp: 40 + n * 14 + lv * 5, atk: 7 + n * 3 + lv * 1.5, style: style(id), n: n, lv: lv };
   }
+  function myAtk(s) { return s.atk * (M.buffOn && M.buffOn('power') ? 1.25 : 1);
+  }
   M.bugStats = stats;
   // 리그: 아래부터 차례로 이기면 다음 상대가 열린다
   var LEAGUE = [
@@ -89,8 +91,9 @@
     var acc = 1 - Math.abs(G.pow - 0.5) * 2, mult = acc > 0.8 ? 1.5 : acc > 0.5 ? 1.15 : 0.9;   // 가운데일수록 세다
     M.say(n.t, M.P.lang);
     var win = m.beats === om.id ? 1 : om.beats === m.id ? -1 : 0;
-    var dmgM = Math.round(G.my.s.atk * mult * (m.id === G.my.s.style ? 1.3 : 1) * (win === 1 ? 1.6 : win === 0 ? 0.5 : 0)), dmgO = Math.round(G.op.s.atk * (om.id === G.op.s.style ? 1.3 : 1) * (win === -1 ? 1.6 : win === 0 ? 0.5 : 0) * (0.9 + Math.random() * 0.2));
-    var on = mvName(om);
+    var dmgM = Math.round(myAtk(G.my.s) * mult * (m.id === G.my.s.style ? 1.3 : 1) * (win === 1 ? 1.6 : win === 0 ? 0.5 : 0)), dmgO = Math.round(G.op.s.atk * (om.id === G.op.s.style ? 1.3 : 1) * (win === -1 ? 1.6 : win === 0 ? 0.5 : 0) * (0.9 + Math.random() * 0.2));
+    var on = mvName(om); G.seen = G.seen || {}; G.seen[om.id] = 1;
+    setTimeout(function () { if (G && G.alive) M.say(on.t, M.P.lang); }, 900);   // 상대도 배우는 말로 외친다
     $('bbMsg').innerHTML = '나: ' + m.em + ' <b class="lang-' + M.P.lang + '">' + esc(n.t) + '</b> ' + (mult >= 1.5 ? '<span class="crit">완벽!</span>' : '') + ' vs 상대: ' + om.em + ' <b class="lang-' + M.P.lang + '">' + esc(on.t) + '</b><br>' + (win === 1 ? '이겼어요! ' + dmgM + ' 피해' : win === -1 ? '막혔어요… ' + dmgO + ' 피해를 입었어요' : '맞부딪혔어요! 서로 ' + dmgM + ' / ' + dmgO);
     var mi = $('bbM'), oi = $('bbO');
     mi.classList.remove('hit', 'atk'); oi.classList.remove('hit', 'atk'); void mi.offsetWidth;
@@ -119,8 +122,18 @@
     var c = M.custOf(o.cust) || { name: '상대' };
     el.querySelector('.bbmoves').innerHTML = ''; el.querySelector('.bbpow').style.display = 'none';
     $('bbMsg').innerHTML = '<div class="bbend">' + (won ? '<img class="bbprize" src="img/w/' + (b.champ && G.oi === LEAGUE.length - 1 ? 'bb-crown' : G.oi >= 6 ? 'bb-trophy' : G.oi >= 3 ? 'bb-silver' : 'bb-bronze') + '.png" alt="">' : '<div class="tbig">😢</div>') + '<h3>' + (won ? '이겼어요!' : '졌어요…') + '</h3>' + (won ? '<p>' + esc(item(myId).ko) + '가 Lv.' + b.lv[myId] + '이 됐어요</p>' + up + M.rewardHtml({ coins: coins }) : '<p>' + esc(c.name) + ': "다음에 또 붙어요!"</p>') +
-      '<button class="btn primary wide" id="bbAgain">다시 도전</button><button class="btn ghost wide" id="bbOut">배틀장으로</button></div>';
+      (won ? '<div id="bbQuiz"></div>' : '') + '<button class="btn primary wide" id="bbAgain">다시 도전</button><button class="btn ghost wide" id="bbOut">배틀장으로</button></div>';
     var keep = G.oi;
+    if (won) {   // 보너스 문제: 상대가 외친 기술 이름의 뜻
+      var ids = Object.keys(G.seen || {}), qm = MOVES.filter(function (m) { return m.id === (ids.length ? M.pick(ids) : 'ram'); })[0], qn = mvName(qm);
+      $('bbQuiz').innerHTML = '<p class="bbq">🎓 보너스 문제: 상대가 외친 <button class="gname lang-' + M.P.lang + '" id="bbQs">🔊 ' + esc(qn.t) + '</button>은(는) 무슨 뜻일까요?</p><div class="row3">' + M.shuffle(MOVES).map(function (m) { return '<button class="btn" data-qa="' + m.id + '">' + m.ko + '</button>'; }).join('') + '</div>';
+      $('bbQs').onclick = function () { M.say(qn.t, M.P.lang); };
+      $('bbQuiz').onclick = function (e) {
+        var a = e.target.closest('[data-qa]'); if (!a) return;
+        if (a.dataset.qa === qm.id) { M.give({ coins: 10 }); M.sfx('win'); $('bbQuiz').innerHTML = '<p class="bbq">정답! 「' + esc(qn.t) + '」 = ' + qm.ko + ' · +10코인</p>'; }
+        else { M.sfx('bad'); $('bbQuiz').innerHTML = '<p class="bbq">아쉬워요! 「' + esc(qn.t) + '」는 ' + qm.ko + '이에요</p>'; }
+      };
+    }
     $('bbAgain').onclick = function () { close(); pickBug(keep); };
     $('bbOut').onclick = function () { close(); M.bugArena(); };
   }

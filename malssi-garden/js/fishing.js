@@ -103,7 +103,7 @@
     el.innerHTML = '<div class="fwater"><div class="fring"></div><div class="fbob" id="fBob"><img src="img/w/it-bobber.png" alt=""></div><div class="fexcl" id="fEx"><img src="img/w/fx-alert.png" alt="!"></div></div>' +
       '<p class="fmsg" id="fMsg">' + bIcon(bk) + ' ' + BAITS[bk].name + '(남은 것 ' + baitLeft(bk) + ')로 던졌어요… 찌가 쑥 들어가면 눌러요!</p><button class="btn primary wide fpull" id="fPull">낚아채기!</button><button class="btn ghost wide" id="fStop">그만하기</button><button class="btn ghost wide" id="fBait">🪱 미끼 바꾸기</button>';
     host.appendChild(el);
-    cur = { where: where, state: 'wait', fish: pick(where, BAITS[bk].mult * (bk === 'fish' && where === 'river' ? 0.6 : 1)), timers: [], bait: bk };
+    cur = { where: where, state: 'wait', fish: pick(where, BAITS[bk].mult * (bk === 'fish' && where === 'river' ? 0.6 : 1) * (M.buffOn && M.buffOn('fish') ? 1.8 : 1)), timers: [], bait: bk };
     var wait = 1800 + Math.random() * 4500;
     // 입질 몇 번 (살짝 흔들림) 뒤에 진짜로 문다
     cur.timers.push(setTimeout(function () { nibble(); }, wait * 0.45));
