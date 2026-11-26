@@ -141,7 +141,7 @@
     var host = document.querySelector('.world') || document.body, el = document.getElementById('gPop');
     if (!el) { el = document.createElement('div'); el.id = 'gPop'; el.className = 'gpop'; host.appendChild(el); }
     var v = nm(it), lang = M.P.lang;
-    el.innerHTML = '<img src="' + it.img + '" alt=""><div><b>' + it.ko + (n > 1 ? ' ×' + n : '') + (first ? ' <span class="newtag">처음!</span>' : '') + '</b><button class="gname lang-' + lang + '" data-gsay="' + esc(v[0]) + '">🔊 ' + esc(v[0]) + (v[1] ? ' <small>' + esc(v[1]) + '</small>' : '') + '</button></div>';
+    el.innerHTML = '<img src="' + it.img + '" alt=""><div><b>' + it.ko + (n > 1 ? ' ×' + n : '') + (first ? ' <span class="newtag">처음!</span>' : '') + ' <small class="rs">' + M.rarity(it.price).stars + '</small></b><button class="gname lang-' + lang + '" data-gsay="' + esc(v[0]) + '">🔊 ' + esc(v[0]) + (v[1] ? ' <small>' + esc(v[1]) + '</small>' : '') + '</button></div>';
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     M.say(v[0], lang); M.sfx(first ? 'win' : 'pop');
     clearTimeout(popT); popT = setTimeout(function () { el.classList.remove('show'); }, 2600);
@@ -223,18 +223,30 @@
   // ---------- 가방 ----------
   M.gatherBag = function () {
     var g = S(), tab = 'all';
-    var d = M.modal('<h3>🧺 채집 가방</h3><div id="gbLuck"></div><div class="fcats" id="gbCats"></div><div class="gbag" id="gbList"></div><p class="hint">누르면 팔 수 있어요. 나뭇가지·통나무·돌·점토·금광석은 집 넓히기 재료예요.</p><button class="btn ghost wide" data-close>닫기</button>');
+    var d = M.modal('<h3>🧺 가방</h3><div id="gbLuck"></div><div class="fcats" id="gbCats"></div><div class="gbag" id="gbList"></div><p class="hint">누르면 팔 수 있어요. 나뭇가지·통나무·돌·점토·금광석은 집 넓히기 재료예요.</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' });
     function paint() {
       var ll = M.luckLeft();
       d.querySelector('#gbLuck').innerHTML = ll ? '<p class="luckon">✨ 행운의 향수 남은 시간 ' + Math.ceil(ll / 60000) + '분</p>' : '<button class="btn wide" data-luck>✨ 행운의 향수 <small>30분 동안 곤충·물건 두 배</small> <img class="inl" src="img/coin.png" alt="">' + LUCK_PRICE + '</button>';
-      d.querySelector('#gbCats').innerHTML = '<button data-gc="all" class="' + (tab === 'all' ? 'on' : '') + '">전체</button>' + Object.keys(CATS).map(function (c) { return '<button data-gc="' + c + '" class="' + (tab === c ? 'on' : '') + '">' + CATS[c] + '</button>'; }).join('');
+      d.querySelector('#gbCats').innerHTML = '<button data-gc="all" class="' + (tab === 'all' ? 'on' : '') + '">전체</button>' + Object.keys(CATS).concat(['fish', 'bait']).map(function (c) { return '<button data-gc="' + c + '" class="' + (tab === c ? 'on' : '') + '">' + (CATS[c] || (c === 'fish' ? '🐟 물고기' : '🪱 미끼')) + '</button>'; }).join('');
+      if (tab === 'fish' || tab === 'bait') {
+        var fb = M.P.fishBag || {}, bt = M.P.bait || {};
+        d.querySelector('#gbList').innerHTML = tab === 'fish' ? ((M.FISH || []).filter(function (f) { return fb[f.id] > 0; }).map(function (f) { var ra = M.rarity(f.price, f.r); return '<button class="gbi r' + ra.n + '" data-gf="' + f.id + '"><img src="img/w/fish-' + f.id + '.png" alt=""><b>' + f.ko + '</b><small class="rs">' + ra.stars + '</small><i>' + fb[f.id] + '</i></button>'; }).join('') || '<p class="hint center">낚시로 잡고 "가방에 넣기"를 누르면 여기 모여요</p>')
+          : Object.keys(M.BAITS || {}).filter(function (k) { return k !== 'fish'; }).map(function (k) { var B = M.BAITS[k]; return '<div class="gbi"><span class="gbe">' + B.em + '</span><b>' + B.name + '</b><i>' + (bt[k] || 0) + '</i></div>'; }).join('') + '<button class="btn wide" data-gbait style="grid-column:1/-1">🪱 미끼 사기</button>';
+        return;
+      }
       var ks = Object.keys(g.bag).filter(function (k) { return g.bag[k] > 0 && ITEMS[k] && (tab === 'all' || ITEMS[k].cat === tab); });
-      d.querySelector('#gbList').innerHTML = ks.length ? ks.map(function (k) { var it = ITEMS[k]; return '<button class="gbi" data-gi="' + k + '"><img src="' + it.img + '" alt=""><b>' + it.ko + '</b><i>' + g.bag[k] + '</i></button>'; }).join('') : '<p class="hint center">아직 비어 있어요. 마을에서 나무를 흔들거나 바닥을 살펴보세요!</p>';
+      d.querySelector('#gbList').innerHTML = ks.length ? ks.map(function (k) { var it = ITEMS[k]; var ra = M.rarity(it.price); return '<button class="gbi r' + ra.n + '" data-gi="' + k + '"><img src="' + it.img + '" alt=""><b>' + it.ko + '</b><small class="rs">' + ra.stars + '</small><i>' + g.bag[k] + '</i></button>'; }).join('') : '<p class="hint center">아직 비어 있어요. 마을에서 나무를 흔들거나 바닥을 살펴보세요!</p>';
     }
     paint();
     d.addEventListener('click', function (e) {
       if (e.target.closest('[data-luck]')) { if (M.luckBuy()) paint(); return; }
       var c = e.target.closest('[data-gc]'); if (c) { tab = c.dataset.gc; paint(); return; }
+      if (e.target.closest('[data-gbait]')) { M.baitSheet(null, paint); return; }
+      var fbn = e.target.closest('[data-gf]');
+      if (fbn) { var f = (M.FISH || []).filter(function (x) { return x.id === fbn.dataset.gf; })[0], cnt = M.P.fishBag[f.id];
+        var fs = M.modal('<div class="center"><img class="gbig" src="img/w/fish-' + f.id + '.png" alt=""><h3>' + f.ko + '</h3><p>' + cnt + '마리 · 하나에 <img class="inl" src="img/coin.png" alt="">' + f.price + '</p><p class="hint">요리 재료나 낚시 미끼로도 써요</p></div><div class="row2"><button class="btn" data-s1>1마리 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div><button class="btn ghost wide" data-close>닫기</button>');
+        fs.addEventListener('click', function (e2) { var m = e2.target.closest('[data-s1]') ? 1 : e2.target.closest('[data-sa]') ? M.P.fishBag[f.id] : 0; if (!m) return; M.P.fishBag[f.id] -= m; M.give({ coins: f.price * m }); M.sfx('coin'); M.save(); fs.close(); paint(); });
+        return; }
       var b = e.target.closest('[data-gi]'); if (!b) return;
       var it = ITEMS[b.dataset.gi], v = nm(it), n = g.bag[it.id];
       var s = M.modal('<div class="center"><img class="gbig" src="' + it.img + '" alt=""><h3>' + it.ko + '</h3><button class="gname lang-' + M.P.lang + '" data-gsay="' + esc(v[0]) + '">🔊 ' + esc(v[0]) + (v[1] ? ' <small>' + esc(v[1]) + '</small>' : '') + '</button><p>' + n + '개 · 하나에 <img class="inl" src="img/coin.png" alt="">' + it.price + '</p></div><div class="row2"><button class="btn" data-s1>1개 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div><button class="btn ghost wide" data-close>닫기</button>');
@@ -264,15 +276,15 @@
   };
   document.addEventListener('click', function (e) {
     var c = e.target.closest && e.target.closest('[data-card]'); if (!c) return;
-    var it = ITEMS[c.dataset.card]; if (it) M.dexCard(it.img, it.ko, { ja: it.ja, en: it.en, zh: it.zh });
+    var it = ITEMS[c.dataset.card]; if (it) { var ra = M.rarity(it.price); M.dexCard(it.img, it.ko, { ja: it.ja, en: it.en, zh: it.zh }, ra.stars + ' ' + ra.name); }
   });
 
   // ---------- 집 넓히기 ----------
   var HOUSE = [null,
-    { name: '작은 집', pots: 3, need: {} },
-    { name: '오두막', pots: 4, coins: 300, need: { branch: 10, stone: 5 } },
-    { name: '아늑한 집', pots: 5, coins: 800, need: { log: 6, stone: 10, clay: 6 } },
-    { name: '큰 집', pots: 6, coins: 2000, need: { log: 12, clay: 10, gold: 2, branch: 15 } }];
+    { name: '작은 집', pots: 3, floors: 1, need: {} },
+    { name: '2층 집', pots: 4, floors: 2, coins: 300, need: { branch: 10, stone: 5 } },
+    { name: '3층 집', pots: 5, floors: 3, coins: 800, need: { log: 6, stone: 10, clay: 6 } },
+    { name: '옥상 정원이 있는 큰 집', pots: 6, floors: 4, coins: 2000, need: { log: 12, clay: 10, gold: 2, branch: 15 } }];
   M.houseLv = function () { return (M.P.house && M.P.house.lv) || 1; };
   M.houseInfo = function () { return HOUSE[M.houseLv()]; };
   M.houseSheet = function () {
@@ -287,7 +299,7 @@
       if (!M.spend('coins', nx.coins)) return;
       Object.keys(nx.need).forEach(function (k) { g.bag[k] -= nx.need[k]; });
       M.P.house = M.P.house || {}; M.P.house.lv = lv + 1; M.save(); d.close(); M.sfx('win');
-      M.modal('<div class="center"><div class="tbig">🏡✨</div><h3>' + nx.name + '이 됐어요!</h3><p>화분을 ' + nx.pots + '개까지 놓을 수 있어요.</p><button class="btn primary wide" data-close>좋아요</button></div>', { onClose: function () { if (M.render) M.render(); } });
+      M.modal('<div class="center"><div class="tbig">🏡✨</div><h3>' + nx.name + '이 됐어요!</h3><p>' + (nx.floors > 1 ? '토끼 집 위쪽의 층 단추로 <b>' + nx.floors + '층</b>까지 오가며 꾸밀 수 있어요. ' : '') + '화분을 ' + nx.pots + '개까지 놓을 수 있어요.</p><button class="btn primary wide" data-close>좋아요</button></div>', { onClose: function () { if (M.render) M.render(); } });
     };
   };
 })();

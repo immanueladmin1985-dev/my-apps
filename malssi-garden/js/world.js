@@ -386,7 +386,7 @@
     else if (o.kind === 'build') {
       var b = o.b, nm = b.id === 'home' ? 'h-pink' : 'b-' + b.id;
       if (b.yard) { r = drawYard(b); }
-      else r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, b.id === 'museum' ? 5.6 : b.id === 'den' ? 4 : 3.5, false, b.id === 'museum' ? 4.6 : b.id === 'den' ? 2.6 : 3.4);
+      else { var hl = b.id === 'home' && M.houseLv ? M.houseLv() : 1, hs = 1 + (hl - 1) * 0.14; r = sprite(nm, b.x + b.w / 2, b.y + b.h + 0.15, (b.id === 'museum' ? 5.6 : b.id === 'den' ? 4 : 3.5) * hs, false, (b.id === 'museum' ? 4.6 : b.id === 'den' ? 2.6 : 3.4) * hs); if (hl > 1 && r) emoji(['', '', '2️⃣', '3️⃣', '🌻'][hl], (b.x + b.w + 0.2) * T, r.top + 18, 14); }
       if (!r) { house(b.x, b.y, b.w, b.h, b.color, b.roof); emoji(b.em, (b.x + b.w / 2) * T, (b.y + b.h * 0.62) * T, 22); r = { top: b.y * T }; }
       label(b.name, (b.x + b.w / 2) * T, r.top + 4);
       if ((b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady())) emoji('📦', (b.x + b.w) * T, r.top + 10, 18);
@@ -414,8 +414,8 @@
     var bob = walking ? Math.abs(Math.sin(now / 80)) * 2.5 : 0;
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T - 3, T * 0.34, T * 0.13, 0, 0, 7); ctx.fill();
     var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
-    var stg = a.kind === 'mate' ? (a.stage || 1) : M.petStage();
-    var name = a.kind === 'me' || a.kind === 'mate' ? 'ch-rabbit' + stg + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
+    var stg = a.kind === 'mate' ? (a.stage || 1) : M.petStage(), coon = (a.kind === 'mate' && a.av === 'raccoon') || (a.kind === 'me' && M.visiting);
+    var name = coon ? 'ch-raccoon-' + view : a.kind === 'me' || a.kind === 'mate' ? 'ch-rabbit' + stg + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
     var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
     if (!r) {   // 그 방향 그림을 아직 불러오는 중이면, 이미 불러온 다른 모습으로 그린다 (예전 상반신 그림은 쓰지 않는다)
       var alts = a.kind === 'me' || a.kind === 'mate' ? ['ch-rabbit' + stg + '-' + view + '1', 'ch-rabbit' + stg + '-front1'] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
@@ -522,6 +522,29 @@
 
   // ---------- 누르기 ----------
   var tapMark = null;
+  // 지도 축소판: 누른 곳으로 바로 간다
+  function minimap() {
+    var vw = Math.min(window.innerWidth - 40, 420), sc = vw / (W * T), vh = H * T * sc;
+    var d = M.modal('<h3>🗺️ 마을 지도</h3><p class="hint">가고 싶은 곳을 누르면 바로 가요</p><div class="mmwrap" style="height:' + Math.round(vh) + 'px"><canvas id="mmC"></canvas><div id="mmL"></div></div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'mapsheet' });
+    var c = d.querySelector('#mmC'), dpr = Math.min(2, window.devicePixelRatio || 1); c.width = vw * dpr; c.height = vh * dpr; c.style.width = vw + 'px'; c.style.height = vh + 'px';
+    var g = c.getContext('2d'); g.scale(dpr, dpr); g.drawImage(ground, 0, 0, ground.width, ground.height, 0, 0, vw, vh);
+    OBJ.forEach(function (o) { if (o.kind === 'tree' || o.kind === 'ftree') { g.fillStyle = o.kind === 'ftree' ? '#e8774a' : '#3f8f4a'; g.beginPath(); g.arc(o.x * T * sc, (o.y - 0.6) * T * sc, Math.max(2, T * sc * 0.6), 0, 7); g.fill(); } });
+    var L = d.querySelector('#mmL'), pin = function (x, y, html, cls) { return '<div class="mmp ' + (cls || '') + '" style="left:' + (x * T * sc) + 'px;top:' + (y * T * sc) + 'px">' + html + '</div>'; }, h = '';
+    BUILD.forEach(function (b) { h += pin(b.x + b.w / 2, b.y + b.h / 2, '<span class="mmb">' + b.em + '<small>' + b.name + '</small></span>'); });
+    h += pin(PIER.x + 0.5, PIER.y, '<span class="mmb">🎣<small>낚시터</small></span>') + pin(BOARD.x + 1, BOARD.y, '<span class="mmb">📋<small>게시판</small></span>');
+    var rs = M.V.residents(); LOTS.forEach(function (l, k) { var c2 = rs[k]; if (c2) h += pin(l[0] + 1.5, l[1] + 1.5, '<img src="' + M.custImg(c2.id) + '" alt=""><small>' + c2.name + '</small>', 'face'); });
+    h += pin(me.x + 0.5, me.y + 0.5, '<span class="mmme">' + (M.visiting ? '🦝' : '🐰') + '</span>', 'me');
+    if (mate) h += pin(mate.x + 0.5, mate.y + 0.5, '<span class="mmme">' + (mate.av === 'raccoon' ? '🦝' : '💕') + '</span>', 'me');
+    L.innerHTML = h;
+    d.querySelector('.mmwrap').addEventListener('click', function (e) {
+      var r = c.getBoundingClientRect(), tx = Math.floor((e.clientX - r.left) / sc / T), ty = Math.floor((e.clientY - r.top) / sc / T), best = null;
+      for (var rad = 0; rad < 8 && !best; rad++) for (var yy = ty - rad; yy <= ty + rad; yy++) for (var xx = tx - rad; xx <= tx + rad; xx++) { if (!best && walkable(xx, yy) && G[yy * W + xx] !== 2 && !occupied(xx, yy, me)) best = [xx, yy]; }
+      if (!best) return;
+      d.close(); me.x = me.px = me.tx = best[0]; me.y = me.py = me.ty = best[1]; me.path = []; me.t = 1; freeCam = null; camEase = false;
+      var w = Wst(); w.x = me.x; w.y = me.y; if (M.Family && M.Family.myPos) M.Family.myPos(me.x, me.y, me.d);
+      M.sfx && M.sfx('pop'); tapMark = { x: best[0], y: best[1], t: performance.now() };
+    });
+  }
   function onTap(e) {
     if (Date.now() - panned < 250) return;   // 시야를 옮긴 직후의 손 뗌은 누르기가 아니다
     var r = cv.getBoundingClientRect(), wx = e.clientX - r.left + cam.x, wy = e.clientY - r.top + cam.y;
@@ -549,7 +572,7 @@
       if (c) { var out = npcs.filter(function (n) { return n.id === c.id; })[0]; if (out) { M.toast(M.j(c.name, '은', '는') + ' 밖에서 산책 중이에요. 찾아가 볼게요!'); talkTo(out); return; } goTo(door.x, door.y, function () { me.d = 'up'; M.V.resident(c.id); }); return; }
       if (l.k === M.V.residents().length && M.V.nextMover()) { var nm = M.V.nextMover(); M.modal('<div class="center"><div class="tbig">🚧</div><h3>이사 예정</h3><p>가게 레벨 <b>' + nm.lv + '</b>이 되면 <b>새로운 친구</b>의 집이 여기에 생겨요.</p><button class="btn primary wide" data-close>알겠어요</button></div>'); return; }
     }
-    if (Math.abs(tx - BOARD.x) <= 0 && (ty === BOARD.y || ty === BOARD.y - 1)) { goTo(BOARD.x, BOARD.y + 1, function () { me.d = 'up'; M.V.enter('board'); }); return; }
+    if (tx >= BOARD.x && tx <= BOARD.x + 1 && ty >= BOARD.y - 2 && ty <= BOARD.y + 1) { goTo(BOARD.x, BOARD.y + 1, function () { me.d = 'up'; M.V.enter('board'); }); return; }
     if ((tx === PIER.x + 1 && ty === PIER.y) || (tx === PIER.x && ty === PIER.y)) { goTo(PIER.x, PIER.y, function () { me.d = 'down'; M.fishStart('sea'); }); return; }
     // 물을 누르면 그 물가로 가서 낚시
     if (tx >= 0 && ty >= 0 && tx < W && ty < H && G[ty * W + tx] === 2) {
@@ -607,11 +630,12 @@
       // 캐릭터 그림을 미리 불러 둔다 (걷는 방향이 바뀔 때 깜빡이지 않게)
       ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + 'ch-rabbit' + M.petStage() + '-' + v + k + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
       var rs = M.V.residents(), nm = M.V.nextMover();
-      root.innerHTML = '<div class="village world"><div class="vbar"><b>🏡 ' + M.esc(M.P.petName) + '네 마을</b><small>주민 ' + rs.length + '명</small><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
+      root.innerHTML = '<div class="village world"><div class="vbar">' + (M.visiting ? '<b>🦝 ' + M.esc(M.Family.mateName()) + '의 마을 방문 중</b><button class="vbag" id="vHome">🏠 돌아가기</button>' : '<b>🏡 ' + M.esc(M.P.petName) + '네 마을</b>') + '<small>주민 ' + rs.length + '명</small><button class="vbag" id="vMap">🗺️ 지도</button><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
       cv = $('wCanvas'); ctx = cv.getContext('2d');
       var fit = function () { var dpr = Math.min(3, window.devicePixelRatio || 1), r = cv.getBoundingClientRect(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); };
       fit(); window.removeEventListener('resize', M.World._fit); M.World._fit = fit; window.addEventListener('resize', fit);
       cv.addEventListener('click', onTap);
+      $('vMap').onclick = minimap;
       cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove, { passive: false });
       cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', onUp); cv.addEventListener('pointerleave', onUp);
       freeCam = null;
@@ -631,10 +655,11 @@
       if (!built) build();
       if (!mate || Math.abs(mate.x - m.x) + Math.abs(mate.y - m.y) > 30) { mate = mkActor(m.x, m.y, 'mate', 'mate'); }
       else { var p = findPath(mate.t < 1 ? mate.tx : mate.x, mate.t < 1 ? mate.ty : mate.y, m.x, m.y, mate); if (p) mate.path = p; else { mate.x = mate.px = mate.tx = m.x; mate.y = mate.py = mate.ty = m.y; mate.path = []; } }
-      mate.stage = m.stage; mate.name = m.name; if (!mate.path.length) mate.d = m.d || mate.d;
+      mate.stage = m.stage; mate.name = m.name; mate.av = m.av || ''; if (!mate.path.length) mate.d = m.d || mate.d;
     },
     emote: function (who, t, k) { var a = who === 'me' ? me : mate; if (!a) return; a.say = { t: t, k: k || '' }; a.sayUntil = performance.now() + 4000; },
     mate: function () { return mate && { x: mate.x, y: mate.y, tx: mate.tx, ty: mate.ty, name: mate.name, say: mate.say }; },
+    resetNpcs: function () { npcs = []; if (built && mounted) syncNpcs(); },
     reach: function (gx, gy) { var p = findPath(me.x, me.y, gx, gy); return p ? p.length : -1; },
     lots: function () { return LOTS; },
     doorOf: function (id) { var b = BUILD.filter(function (b) { return b.id === id; })[0]; return b && b.door; },

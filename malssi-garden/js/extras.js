@@ -178,6 +178,7 @@
     curry: ['카레 가루', '🟡', 20, 'カレーこ', '咖喱粉|gālífěn', 'curry powder']
   };
   function pan() { M.P.pantry = M.P.pantry || {}; return M.P.pantry; }
+  M.PANTRY = PANTRY;
   function dishIcon(id) { return '<img src="img/w/dish-' + id + '.png" alt="">'; }
   M.dishIcon = dishIcon;
   function src(k) { return k.indexOf('pot_') === 0 ? 'pot' : k.indexOf('gd_') === 0 ? 'gd' : k.indexOf('fish_') === 0 ? 'fish' : k.indexOf('pan_') === 0 ? 'pan' : 'bag'; }
@@ -394,34 +395,48 @@
   // ---------- 떠돌이 장터 ----------
   // 남편이 연 특별 장터 (가족 연결의 원격 관리에서 연다)
   M.hmarket = function () { var h = X().hmarket; return h && h.until > Date.now() ? h : null; };
+  var HK = { furn: '가구', item: '재료', seed: '씨앗', pan: '양념', bait: '미끼' };
+  function hInfo(k, id) {
+    if (k === 'furn') { var f = (M.FURN || []).filter(function (z) { return z.id === id; })[0]; return f && { name: f.name, img: 'img/furn-' + id + '.png', base: f.price }; }
+    if (k === 'item') { var it = M.GATHER.ITEMS[id]; return it && { name: it.ko, img: it.img, base: it.price }; }
+    if (k === 'seed') { var sd = (M.SEEDS || {})[id]; return sd && { name: sd.name + ' 씨앗', img: sd.img ? 'img/w/fruit-' + id + '.png' : '', em: sd.fruit, base: sd.price }; }
+    if (k === 'pan') { var r = PANTRY[id]; return r && { name: r[0], img: 'img/w/pan-' + id + '.png', base: r[2] }; }
+    if (k === 'bait') { var B = (M.BAITS || {})[id]; return B && { name: B.name, em: B.em, base: B.price }; }
+  }
+  function hGive(k, id) {
+    var P = M.P;
+    if (k === 'furn') { P.room.owned[id] = true; P.room.placed[id] = { x: 50, y: 70 }; }
+    else if (k === 'item') { P.gather = P.gather || { bag: {}, dex: {} }; P.gather.bag[id] = (P.gather.bag[id] || 0) + 1; P.gather.dex[id] = (P.gather.dex[id] || 0) + 1; }
+    else if (k === 'seed') { P.pots = P.pots || { slots: 2, list: [], seeds: {}, fert: 0, fruits: {}, gifted: {}, giftDay: '' }; P.pots.seeds[id] = (P.pots.seeds[id] || 0) + 1; }
+    else if (k === 'pan') pan()[id] = (pan()[id] || 0) + 1;
+    else if (k === 'bait') { P.bait = P.bait || { worm: 0, fat: 0, gold: 0, use: 'worm' }; P.bait[id] = (P.bait[id] || 0) + 1; }
+  }
   M.hmarketOpen = function (c) {
     var x = X();
     if (!c) { x.hmarket = null; M.save(); return; }
     var num = function (v, lo, hi) { v = parseInt(v, 10); return isNaN(v) ? lo : Math.max(lo, Math.min(hi, v)); };
     x.hmarket = { until: num(c.until, 0, Date.now() + 8 * 86400000), msg: String(c.msg || '').slice(0, 50), sold: 0, bought: 0,
-      sell: (c.sell || []).slice(0, 40).filter(function (s) { return (M.FURN || []).some(function (f) { return f.id === s.id; }); }).map(function (s) { return { id: String(s.id), price: num(s.price, 1, 100000) }; }),
-      buy: (c.buy || []).slice(0, 40).filter(function (b) { return M.GATHER.ITEMS[b.id]; }).map(function (b) { return { id: String(b.id), price: num(b.price, 1, 100000), n: num(b.n, 1, 999) }; }) };
+      sell: (c.sell || []).slice(0, 120).map(function (s) { var k = HK[s.k] ? s.k : 'furn'; return { k: k, id: String(s.id), price: num(s.price, 1, 100000), n: k === 'furn' ? 1 : num(s.n, 1, 999) }; }).filter(function (s) { return hInfo(s.k, s.id); }),
+      buy: (c.buy || []).slice(0, 60).filter(function (b) { return M.GATHER.ITEMS[b.id]; }).map(function (b) { return { id: String(b.id), price: num(b.price, 1, 100000), n: num(b.n, 1, 999) }; }) };
     M.save(); M.toast('🦝 ' + ((M.Family && M.Family.mateName()) || '남편') + ' 너구리가 마을 광장에 특별 장터를 열었어요!');
   };
   M.marketToday = function () { var n = Math.floor(Date.now() / 86400000); return n % 3 === 0 || !!M.hmarket(); };
   function hmarketSheet() {
-    var x = X(), h = M.hmarket(); if (!h) return;
+    var h = M.hmarket(); if (!h) return;
     var who = (M.Family && M.Family.mateName()) || '남편', bag = (M.P.gather && M.P.gather.bag) || {}, I = M.GATHER.ITEMS;
-    var d = M.modal('<div class="mintro"><img class="mface" src="img/w/cust-raccoon.png" alt=""><div class="msay"><b>🦝 ' + esc(who) + ' 너구리의 특별 장터</b><p>' + esc(h.msg || '어서 와요! 특별가예요~') + '</p></div></div><div id="hmBody"></div><button class="btn ghost wide" data-close>나가기</button>');
+    var d = M.modal('<div class="mintro"><img class="mface" src="img/w/cust-raccoon.png" alt=""><div class="msay"><b>🦝 ' + esc(who) + ' 너구리의 특별 장터</b><p>' + esc(h.msg || '어서 와요! 특별가예요~') + '</p></div></div><div id="hmBody"></div><button class="btn ghost wide" data-close>나가기</button>', { cls: 'bagsheet' });
     function paint() {
-      var sell = h.sell.filter(function (s) { return !(M.P.room.owned || {})[s.id]; }), buy = h.buy.filter(function (b) { return b.n > 0; });
-      d.querySelector('#hmBody').innerHTML = (sell.length ? '<h4>💸 특가로 팔아요</h4><div class="fgrid">' + sell.map(function (s) { var f = M.FURN.filter(function (z) { return z.id === s.id; })[0]; return '<button class="fcard" data-hs="' + s.id + '"><img src="img/furn-' + s.id + '.png" alt=""><b>' + esc(f.name) + '</b><small class="price"><s>' + f.price + '</s> <img src="img/coin.png" alt="">' + s.price + '</small></button>'; }).join('') + '</div>' : '') +
+      var sell = h.sell.filter(function (s) { return s.n > 0 && !(s.k === 'furn' && (M.P.room.owned || {})[s.id]); }), buy = h.buy.filter(function (b) { return b.n > 0; });
+      d.querySelector('#hmBody').innerHTML = (sell.length ? '<h4>💸 특가로 팔아요</h4><div class="list">' + sell.map(function (s, i) { var f = hInfo(s.k, s.id); return '<div class="litem"><span class="le dishe">' + (f.img ? '<img src="' + f.img + '" alt="">' : f.em) + '</span><span class="ln">' + esc(f.name) + '<small>' + HK[s.k] + ' · <s>' + f.base + '</s> → <b>' + s.price + '</b>코인' + (s.k === 'furn' ? '' : ' · ' + s.n + '개 남음') + '</small></span><button class="btn primary" data-hs="' + h.sell.indexOf(s) + '">사기</button></div>'; }).join('') + '</div>' : '') +
         (buy.length ? '<h4>💰 비싸게 사 줄게요</h4><div class="list">' + buy.map(function (b) { var it = I[b.id], have = bag[b.id] || 0; return '<div class="litem"><span class="le dishe"><img src="' + it.img + '" alt=""></span><span class="ln">' + esc(it.ko) + '<small>하나에 ' + b.price + '코인 (원래 ' + it.price + ') · ' + b.n + '개까지 · 가진 것 ' + have + '</small></span><button class="btn primary" data-hb="' + b.id + '"' + (have ? '' : ' disabled') + '>팔기</button></div>'; }).join('') + '</div>' : '') +
         (!sell.length && !buy.length ? '<p class="hint center">오늘 물건은 다 팔렸어요!</p>' : '');
     }
     paint();
     d.addEventListener('click', function (e) {
       var a = e.target.closest('[data-hs]'), b = e.target.closest('[data-hb]');
-      if (a) { var s = h.sell.filter(function (z) { return z.id === a.dataset.hs; })[0], f = M.FURN.filter(function (z) { return z.id === s.id; })[0];
-        M.confirm(f.name, '<img class="inl" src="img/coin.png" alt="">' + s.price + '코인에 살까요? 토끼 집 방에 놓여요.', '사기', function () {
-          if (!M.spend('coins', s.price)) { M.toast('코인이 모자라요'); return; }
-          M.P.room.owned[f.id] = true; M.P.room.placed[f.id] = { x: 50, y: f.wall ? 30 : 70 }; h.sold++; M.save(); M.sfx('coin'); M.toast(f.name + '을(를) 샀어요! 방에 놓았어요'); paint();
-        }); return; }
+      if (a) { var s = h.sell[+a.dataset.hs], f = hInfo(s.k, s.id); if (!s || s.n <= 0) return;
+        if (!M.spend('coins', s.price)) { M.toast('코인이 모자라요'); return; }
+        hGive(s.k, s.id); s.n--; h.sold++; M.save(); M.sfx('coin'); if (M.paintTop) M.paintTop(); M.toast(f.name + '을(를) 샀어요!' + (s.k === 'furn' ? ' 방에 놓았어요' : '')); paint(); if (M.recipeCheck) setTimeout(M.recipeCheck, 600); return; }
       if (b && !b.disabled) { var o = h.buy.filter(function (z) { return z.id === b.dataset.hb; })[0], have = bag[o.id] || 0; if (!have || o.n <= 0) return;
         bag[o.id]--; o.n--; h.bought++; M.give({ coins: o.price }); M.sfx('coin'); M.save(); if (M.paintTop) M.paintTop(); paint(); }
     });

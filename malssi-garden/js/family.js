@@ -120,7 +120,9 @@
     mateOffs.push(FX.on('family/online/' + F.mateUid, function (v) { F.mateOnline = !!v && FX.now() - v < 36 * 3600 * 1000; }));
     mateOffs.push(FX.on('family/presence/' + F.mateUid, function (v) {
       var fresh = v && v.place === 'village' && FX.now() - (v.at || 0) < 120000;
-      if (M.World && M.World.setMate) M.World.setMate(fresh ? { x: v.x, y: v.y, d: v.d, stage: v.stage || 1, name: M.Family.mateName() } : null);
+      if (fresh && F.role === 'husband' && !M.visiting) fresh = false;   // 남편 폰은 아내 마을에 들어갔을 때만 아내가 보인다
+      if (M.World && M.World.setMate) M.World.setMate(fresh ? { x: v.x, y: v.y, d: v.d, stage: v.stage || 1, av: v.av || '', name: v.av === 'raccoon' ? M.Family.mateName() + ' 너구리' : M.Family.mateName() } : null);
+      lastMateP = v;
     }));
     var lastEmote = 0;
     mateOffs.push(FX.on('family/emote/' + F.mateUid, function (v) {
@@ -137,6 +139,15 @@
     }));
   }
   M.Family.mateOnline = function () { return F.mateOnline; };
+  var lastMateP = null;
+  // 남편: 너구리 모습으로 아내 마을에 들어간다 (주민 수도 아내 마을과 같게 보인다)
+  M.Family.visit = function (on) {
+    if (!F.ready || F.role !== 'husband') return;
+    M.visiting = !!on;
+    if (on) FX.get('family/state/' + F.mateUid).then(function (s) { M.visitLv = (s && s.glv) || 1; M.inVillage = false; if (M.World && M.World.resetNpcs) M.World.resetNpcs(); M.go('garden'); M.render(); if (lastMateP) { var v = lastMateP; if (v.place === 'village' && FX.now() - v.at < 120000 && M.World.setMate) M.World.setMate({ x: v.x, y: v.y, d: v.d, stage: v.stage || 1, name: M.Family.mateName() }); } M.toast('🦝 너구리가 되어 ' + M.Family.mateName() + '의 마을에 왔어요'); });
+    else { M.visitLv = 0; if (M.World) { M.World.setMate(null); if (M.World.resetNpcs) M.World.resetNpcs(); } M.render(); M.toast('내 마을로 돌아왔어요'); }
+    lastPos = ''; if (M.World && M.World.announce) setTimeout(M.World.announce, 400);
+  };
 
   // ---------- 아내 폰: 기록 올리기, 명령 반영 ----------
   var lastSent = '', pushT = 0;
@@ -161,7 +172,7 @@
     inVillage = true;
     var k = x + ',' + y + ',' + d, now = FX.now(); if (k === lastPos && now - posT < 25000) return;
     lastPos = k; posT = now;
-    FX.set('family/presence/' + F.uid, { x: x, y: y, d: d || 'down', stage: M.petStage ? M.petStage() : 1, place: 'village', at: now });
+    FX.set('family/presence/' + F.uid, { x: x, y: y, d: d || 'down', stage: M.petStage ? M.petStage() : 1, place: M.visiting ? 'village' : (F.role === 'husband' ? 'own' : 'village'), av: M.visiting ? 'raccoon' : '', at: now });
     clearTimeout(beatT); beatT = setTimeout(function () { if (inVillage) { lastPos = ''; M.Family.myPos(x, y, d); } }, 30000);
   };
   M.Family.leaveVillage = function () {
@@ -178,12 +189,14 @@
     var nm = M.Family.mateName(), lang = M.P.lang, h = HELLO[lang] || HELLO.en;
     var d = M.modal('<h3>💕 ' + esc(nm) + '</h3><p class="hint">' + esc(nm) + '도 지금 마을에 있어요.</p>' +
       '<div class="row2"><button class="btn" data-m="hi">👋 ' + esc(h[0]) + '</button><button class="btn" data-m="heart">💕 하트</button></div>' +
+      (M.hmarket && M.hmarket() && F.role === 'wife' ? '<button class="btn primary wide" data-m="shop">🦝 특별 장터 보기</button>' : '') +
       '<button class="btn primary wide" data-m="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn primary wide" data-m="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button>' +
       '<button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) {
       var b = e.target.closest('[data-m]'); if (!b) return; var m = b.dataset.m;
       if (m === 'hi') { M.Family.emote(h[0], h[1]); M.say(h[0], lang); d.close(); }
       else if (m === 'heart') { M.Family.emote('💕', ''); d.close(); }
+      else if (m === 'shop') { d.close(); M.marketSheet(); }
       else { d.close(); invite(m); }
     });
   };
@@ -198,7 +211,7 @@
         '<button class="btn wide" data-f="join">🔢 핀 번호로 들어가기</button>'
       : '<p>' + (F.role === 'wife' ? '👩 아내' : '👨 남편') + ' 폰으로 연결됐어요</p>' +
         (F.mateUid ? '<p>' + (F.role === 'wife' ? '👨 ' : '👩 ') + esc(nm) + ' · ' + (F.mateOnline ? '🟢 접속 중' : '⚪ 쉬는 중') + '</p>' : '<p class="hint">상대 폰이 아직 들어오지 않았어요.</p><button class="btn wide" data-f="repin">🔢 새 핀 번호 받기</button>') +
-        (F.role === 'husband' && F.mateUid ? '<button class="btn primary wide" data-f="admin">💌 ' + esc(nm) + ' 원격 관리' + (M.Family.waiting ? ' 🔴' : '') + '</button>' : '') +
+        (F.role === 'husband' && F.mateUid ? '<button class="btn primary wide" data-f="admin">💌 ' + esc(nm) + ' 원격 관리' + (M.Family.waiting ? ' 🔴' : '') + '</button><button class="btn primary wide" data-f="visit">' + (M.visiting ? '🏠 내 마을로 돌아가기' : '🦝 너구리로 ' + esc(nm) + ' 마을 가기') + '</button>' : '') +
         (F.mateUid ? '<button class="btn wide" data-f="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn wide" data-f="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button>' : '') +
         '<button class="btn ghost wide" data-f="leave">이 폰의 가족 연결 끊기</button>';
     var d = M.modal('<h3>👨‍👩 가족 연결</h3>' + body + '<p class="fmsg hint"></p><button class="btn ghost wide" data-close>닫기</button>');
@@ -210,6 +223,7 @@
       else if (a === 'join') { msg.textContent = '준비하는 중…'; ensureUser().then(function () { d.close(); pinPad(); }).catch(function (err) { msg.innerHTML = explain(err); }); }
       else if (a === 'leave') M.confirm('가족 연결 끊기', '이 폰은 가족 방에서 나가요. 다시 이으려면 핀 번호가 필요해요.', '끊기', function () { M.Family.leaveVillage(); FX.remove('family/members/' + F.uid); stopAll(); L.fid = ''; store(); F.fid = ''; F.ready = false; F.mateUid = ''; F.mate = null; if (M.World && M.World.setMate) M.World.setMate(null); d.close(); }, true);
       else if (a === 'admin') { d.close(); M.Family.adminPanel(); }
+      else if (a === 'visit') { d.close(); M.Family.visit(!M.visiting); }
       else { d.close(); invite(a); }
     });
   };
@@ -247,9 +261,10 @@
       coupons: P.coupons.filter(function (c) { return c.status === 'wait'; }).map(cp).concat(P.coupons.filter(function (c) { return c.status !== 'wait'; }).slice(-10).map(cp)),
       requests: (P.requests || []).filter(function (q) { return q.status === 'wait'; }).map(function (q) { return { id: q.id, e: q.e, name: q.name, won: q.won || 0, link: q.link || '', at: q.at }; }),
       rewards: P.rewards.map(function (r) { return { id: r.id, e: r.e, name: r.name, price: r.price }; }),
-      rate: P.admin.rate || 10, weekBonus: P.admin.weekBonus || 0,
+      rate: P.admin.rate || 10, weekBonus: P.admin.weekBonus || 0, glv: (P.garden && P.garden.lv) || 1,
       bag: (function () { var b = (P.gather && P.gather.bag) || {}, o = {}; Object.keys(b).filter(function (k) { return b[k] > 0 && k !== 'recipe'; }).sort(function (a, c) { return b[c] - b[a]; }).slice(0, 40).forEach(function (k) { o[k] = b[k]; }); return o; })(),
       owned: Object.keys((P.room && P.room.owned) || {}),
+      inv: { item: (P.gather && P.gather.bag) || {}, seed: (P.pots && P.pots.seeds) || {}, pan: P.pantry || {}, bait: P.bait || {} },
       hmarket: M.hmarket ? M.hmarket() : null
     };
   }
@@ -303,7 +318,7 @@
   M.Family.adminPanel = function () {
     if (!F.mateUid || F.role !== 'husband') return M.Family.sheet();
     if (view && view.isConnected) return;
-    var tab = 'coupon', S = null, pend = {}, edits = null, base = [];
+    var tab = 'coupon', S = null, pend = {}, edits = null, base = [], mkState = { cat: 'item', lack: true, q: '', pick: {}, msg: '오늘만 특별가! 너굴너굴~' };
     var d = view = M.modal('<div class="admin"><h3>💌 원격 관리</h3><p class="rsub hint center">불러오는 중…</p><div class="tabs">' +
       [['coupon', '쿠폰 승인'], ['req', '신청 선물'], ['market', '🦝 장터'], ['reward', '선물 관리'], ['praise', '칭찬 선물'], ['stats', '공부 현황'], ['etc', '설정']].map(function (t) { return '<button data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
       '</div><div class="abody"></div><button class="btn ghost wide" data-close>닫기</button></div>', { cls: 'full', onClose: function () { offs.forEach(function (f) { f(); }); view = null; } });
@@ -351,20 +366,31 @@
           '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>';
       },
       market: function () {
-        var hm = S.hmarket, owned = S.owned || [], bag = S.bag || {}, I = (M.GATHER && M.GATHER.ITEMS) || {};
+        var hm = S.hmarket, inv = S.inv || {}, I = (M.GATHER && M.GATHER.ITEMS) || {}, mk = mkState;
         var cur = hm ? '<div class="hmcur"><b>🦝 지금 장터가 열려 있어요</b><small>' + fmtDate(hm.until) + '까지 · 팔린 것 ' + (hm.sold || 0) + '개 · 사 준 것 ' + (hm.bought || 0) + '개</small><button class="btn ghost" data-x="mclose">장터 닫기</button></div>' : '';
-        var furn = (M.FURN || []).filter(function (f) { return owned.indexOf(f.id) < 0; });
-        var bk = Object.keys(bag).filter(function (k) { return I[k]; });
-        return cur + '<p class="hint">너구리 상인이 되어 ' + esc(M.Family.mateName()) + '의 마을에 특별 장터를 열어요. 마을 광장에 🦝 너구리가 나타나요.</p>' +
-          '<h4>💸 싸게 팔기 <small>(가구, 고른 것만)</small></h4><div class="hmlist">' + furn.map(function (f) {
-            return '<label class="hmrow"><input type="checkbox" class="hms" data-id="' + f.id + '"><img src="img/furn-' + f.id + '.png" alt=""><span>' + esc(f.name) + '<small>원래 ' + f.price + '</small></span><input type="number" inputmode="numeric" class="hmp" data-id="' + f.id + '" value="' + Math.max(1, Math.round(f.price / 2)) + '"></label>';
-          }).join('') + '</div>' +
-          '<h4>💰 비싸게 사 주기 <small>(' + esc(M.Family.mateName()) + '가 가진 채집물)</small></h4><div class="hmlist">' + (bk.length ? bk.map(function (k) {
-            var it = I[k]; return '<label class="hmrow"><input type="checkbox" class="hmb" data-id="' + k + '"><img src="' + it.img + '" alt=""><span>' + esc(it.ko) + '<small>가진 것 ' + bag[k] + ' · 원래 ' + it.price + '</small></span><input type="number" inputmode="numeric" class="hmbp" data-id="' + k + '" value="' + it.price * 3 + '" title="하나 값"><input type="number" inputmode="numeric" class="hmbn" data-id="' + k + '" value="' + Math.min(5, bag[k]) + '" title="몇 개까지"></label>';
-          }).join('') : '<p class="hint">아직 채집물이 없어요</p>') + '</div>' +
-          '<label class="fld">너구리 한마디<input id="hmMsg" maxlength="50" value="오늘만 특별가! 너굴너굴~"></label>' +
+        var cats = [['furn', '🛋️ 가구'], ['item', '🧺 재료'], ['seed', '🌱 씨앗'], ['pan', '🧂 양념'], ['bait', '🪱 미끼'], ['buy', '💰 사 주기']];
+        var rows = [], have = function (k, id) { return ((inv[k] || {})[id]) || 0; };
+        if (mk.cat === 'furn') (M.FURN || []).forEach(function (f) { if ((S.owned || []).indexOf(f.id) < 0) rows.push({ k: 'furn', id: f.id, img: 'img/furn-' + f.id + '.png', name: f.name, base: f.price, have: 0, n: 1 }); });
+        if (mk.cat === 'item' || mk.cat === 'buy') Object.keys(I).forEach(function (id) { var it = I[id]; if (id === 'recipe') return; var h = have('item', id); if (mk.cat === 'buy' && !h) return; rows.push({ k: 'item', id: id, img: it.img, name: it.ko, base: it.price, have: h, cat: it.cat }); });
+        if (mk.cat === 'seed') Object.keys(M.SEEDS || {}).forEach(function (id) { var sd = M.SEEDS[id]; rows.push({ k: 'seed', id: id, img: sd.img ? 'img/w/fruit-' + id + '.png' : '', em: sd.fruit, name: sd.name + ' 씨앗', base: sd.price, have: have('seed', id) }); });
+        if (mk.cat === 'pan') Object.keys(M.PANTRY || {}).forEach(function (id) { var r = M.PANTRY[id]; rows.push({ k: 'pan', id: id, img: 'img/w/pan-' + id + '.png', name: r[0], base: r[2], have: have('pan', id) }); });
+        if (mk.cat === 'bait') Object.keys(M.BAITS || {}).forEach(function (id) { if (id === 'fish') return; var B = M.BAITS[id]; rows.push({ k: 'bait', id: id, em: B.em, name: B.name, base: B.price, have: have('bait', id) }); });
+        if (mk.lack && mk.cat !== 'buy') rows = rows.filter(function (r) { return !r.have; });
+        if (mk.q) rows = rows.filter(function (r) { return r.name.indexOf(mk.q) >= 0; });
+        var buy = mk.cat === 'buy';
+        return cur + '<p class="hint">너구리 상인이 되어 ' + esc(M.Family.mateName()) + '의 마을 광장에 특별 장터를 열어요. 고른 물건은 아래 "장터 열기"를 누를 때 함께 올라가요 (지금 ' + Object.keys(mk.pick).length + '개 고름).</p>' +
+          '<div class="fcats">' + cats.map(function (c) { return '<button data-mc="' + c[0] + '" class="' + (mk.cat === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>' +
+          '<div class="hmtools"><input id="hmQ" placeholder="이름 찾기" value="' + esc(mk.q || '') + '">' + (buy ? '' : '<label><input type="checkbox" id="hmLack"' + (mk.lack ? ' checked' : '') + '> 없는 것만</label>') + '</div>' +
+          '<div class="hmlist">' + (rows.length ? rows.slice(0, 120).map(function (r) {
+            var key = (buy ? 'buy:' : r.k + ':') + r.id, p = mk.pick[key];
+            return '<div class="hmrow" data-key="' + key + '"><input type="checkbox" class="hmc"' + (p ? ' checked' : '') + '>' + (r.img ? '<img src="' + r.img + '" alt="">' : '<span class="hme">' + r.em + '</span>') +
+              '<span>' + esc(r.name) + '<small>원래 ' + r.base + (r.k === 'furn' ? '' : ' · 가진 것 ' + r.have) + '</small></span>' +
+              '<input type="number" inputmode="numeric" class="hmp" value="' + (p ? p.price : buy ? r.base * 3 : Math.max(1, Math.round(r.base / 2))) + '" title="값">' +
+              (r.k === 'furn' ? '<span></span>' : '<input type="number" inputmode="numeric" class="hmn" value="' + (p ? p.n : buy ? Math.min(5, r.have) : 5) + '" title="개수">') + '</div>';
+          }).join('') : '<p class="hint center">해당하는 물건이 없어요</p>') + '</div>' +
+          '<label class="fld">너구리 한마디<input id="hmMsg" maxlength="50" value="' + esc(mk.msg) + '"></label>' +
           '<label class="sel"><span>여는 기간</span><select id="hmDays"><option value="1">오늘 하루</option><option value="3">3일</option><option value="7">일주일</option></select></label>' +
-          '<button class="btn primary wide" data-x="mopen">🦝 장터 열기</button>';
+          '<button class="btn primary wide" data-x="mopen">🦝 장터 열기 (' + Object.keys(mk.pick).length + '개)</button>';
       },
       etc: function () {
         return '<label class="fld">꽃 포인트 1점 = 몇 원?<input id="wRate" type="number" inputmode="numeric" min="1" max="1000" value="' + (S.rate || 10) + '"></label>' +
@@ -373,6 +399,17 @@
           ''; 
       }
     };
+    function mkCollect() {
+      if (tab !== 'market') return;
+      var m = body.querySelector('#hmMsg'); if (m) mkState.msg = m.value.trim();
+      var q = body.querySelector('#hmQ'); if (q) mkState.q = q.value.trim();
+      Array.prototype.forEach.call(body.querySelectorAll('.hmrow'), function (r) {
+        var key = r.dataset.key, on = r.querySelector('.hmc').checked;
+        if (!on) { delete mkState.pick[key]; return; }
+        var pv = Math.max(1, parseInt(r.querySelector('.hmp').value, 10) || 1), nv = r.querySelector('.hmn') ? Math.max(1, parseInt(r.querySelector('.hmn').value, 10) || 1) : 1;
+        mkState.pick[key] = { price: pv, n: nv };
+      });
+    }
     function collect() {
       if (tab !== 'reward' || !edits) return;
       Array.prototype.forEach.call(body.querySelectorAll('.aedit'), function (row) {
@@ -388,7 +425,8 @@
       if (!S) return;
       var pl = pendList().length;
       sub.innerHTML = esc(S.pet || '') + ' · 마지막 소식 ' + fmtDate(S.at) + (pl ? '<br>아내 폰에 반영을 기다리는 요청 ' + pl + '개 (앱이 열려 있으면 곧 반영돼요)' : '');
-      if (tab === 'reward' && document.activeElement && body.contains(document.activeElement)) return;   // 고치는 중에는 다시 그리지 않는다
+      if ((tab === 'reward' || tab === 'market') && document.activeElement && body.contains(document.activeElement)) return;   // 고치는 중에는 다시 그리지 않는다
+      if (tab === 'market') mkCollect();
       body.innerHTML = T[tab]();
     }
     var offs = [
@@ -400,8 +438,11 @@
       }),
       FX.on('family/cmds/' + F.mateUid, function (v) { pend = v || {}; if (S) paint(); })
     ];
+    d.addEventListener('change', function (e) { if (e.target.id === 'hmQ') { mkCollect(); body.innerHTML = T.market(); } });
     d.addEventListener('click', function (e) {
-      var t = e.target.closest('[data-tab]'); if (t) { collect(); tab = t.dataset.tab; if (tab === 'reward' && S) { edits = JSON.parse(JSON.stringify(S.rewards)); base = S.rewards.map(function (r) { return r.id; }); } paint(); return; }
+      var t = e.target.closest('[data-tab]'); if (t) { collect(); mkCollect(); tab = t.dataset.tab; if (tab === 'reward' && S) { edits = JSON.parse(JSON.stringify(S.rewards)); base = S.rewards.map(function (r) { return r.id; }); } paint(); return; }
+      var mc = e.target.closest('[data-mc]'); if (mc) { mkCollect(); mkState.cat = mc.dataset.mc; body.innerHTML = T.market(); return; }
+      if (e.target.id === 'hmLack') { mkCollect(); mkState.lack = e.target.checked; body.innerHTML = T.market(); return; }
       var b = e.target.closest('[data-x]'); if (!b || !S) return;
       var x = b.dataset.x, id = b.dataset.id, cmd = null, ok = '';
       if (x === 'give') { cmd = { t: 'give', id: id }; ok = '지급 완료를 보냈어요'; }
@@ -413,12 +454,12 @@
       else if (x === 'rsave') { collect(); cmd = { t: 'rewards', list: edits, base: base }; ok = '선물 목록을 보냈어요'; S.rewards = JSON.parse(JSON.stringify(edits)); }
       else if (x === 'gift') { cmd = { t: 'gift', fp: Math.max(1, Math.min(5000, parseInt(body.querySelector('#gAmt').value, 10) || 0)), msg: body.querySelector('#gMsg').value.trim() || '수고했어요!' }; ok = '💝 칭찬 선물을 보냈어요'; }
       else if (x === 'mopen') {
+        mkCollect();
         var sell = [], buy = [];
-        Array.prototype.forEach.call(body.querySelectorAll('.hms:checked'), function (c) { var pi = body.querySelector('.hmp[data-id="' + c.dataset.id + '"]'); sell.push({ id: c.dataset.id, price: Math.max(1, parseInt(pi.value, 10) || 1) }); });
-        Array.prototype.forEach.call(body.querySelectorAll('.hmb:checked'), function (c) { var id = c.dataset.id; buy.push({ id: id, price: Math.max(1, parseInt(body.querySelector('.hmbp[data-id="' + id + '"]').value, 10) || 1), n: Math.max(1, parseInt(body.querySelector('.hmbn[data-id="' + id + '"]').value, 10) || 1) }); });
+        Object.keys(mkState.pick).forEach(function (key) { var p = mkState.pick[key], kk = key.split(':'); if (kk[0] === 'buy') buy.push({ id: kk[1], price: p.price, n: p.n }); else sell.push({ k: kk[0], id: kk[1], price: p.price, n: p.n }); });
         if (!sell.length && !buy.length) { M.toast('팔 물건이나 사 줄 물건을 하나 이상 골라 주세요'); return; }
         var days = parseInt(body.querySelector('#hmDays').value, 10) || 1, end = new Date(); end.setHours(23, 59, 0, 0); end.setDate(end.getDate() + days - 1);
-        cmd = { t: 'market', sell: sell, buy: buy, until: end.getTime(), msg: body.querySelector('#hmMsg').value.trim().slice(0, 50) }; ok = '🦝 장터를 열었어요';
+        cmd = { t: 'market', sell: sell, buy: buy, until: end.getTime(), msg: mkState.msg.slice(0, 50) }; ok = '🦝 장터를 열었어요'; mkState.pick = {};
       }
       else if (x === 'mclose') { cmd = { t: 'marketClose' }; ok = '장터를 닫았어요'; }
       else if (x === 'saveW') { cmd = { t: 'settings', rate: parseInt(body.querySelector('#wRate').value, 10) || 10, weekBonus: parseInt(body.querySelector('#wBonus').value, 10) || 0 }; S.rate = cmd.rate; S.weekBonus = cmd.weekBonus; ok = '설정을 보냈어요'; }
@@ -565,7 +606,8 @@
     var myTurn = g.turn === F.uid;
     body.innerHTML = '<p class="center ' + (myTurn ? 'cturn' : 'hint') + '">' + (myTurn ? '내 차례예요! 카드 두 장을 뒤집어요' : esc(M.Family.mateName()) + '의 차례예요…') + '</p><div class="cgrid">' + cards.map(function (c, i) {
       var up = open[i] || flip.indexOf(i) >= 0;
-      return '<button class="ccard' + (up ? ' up' : '') + (open[i] ? ' done' : '') + (c.side === 'w' ? ' w' : '') + '" data-i="' + i + '">' + (up ? (c.side === 'w' ? '<b class="lang-' + c.lang + '">' + esc(c.t) + '</b>' : '<span>' + esc(c.t) + '</span>') : '🌸') + '</button>';
+      var len = String(c.t).length, cjk = /[\u3040-\u30ff\u4e00-\u9fff]/.test(c.t), sz = len <= (cjk ? 3 : 6) ? 'l' : len <= (cjk ? 6 : 12) ? 'm' : 's';
+      return '<button class="ccard' + (up ? ' up' : '') + (open[i] ? ' done' : '') + (c.side === 'w' ? ' w' : '') + '" data-i="' + i + '"><span class="cin sz-' + sz + (c.side === 'w' ? ' lang-' + c.lang : '') + '">' + (up ? esc(c.t) : '🌸') + '</span></button>';
     }).join('') + '</div>';
     Array.prototype.forEach.call(body.querySelectorAll('.ccard'), function (b) {
       b.onclick = function () {

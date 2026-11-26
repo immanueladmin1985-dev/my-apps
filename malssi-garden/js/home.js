@@ -70,12 +70,14 @@
     var P = M.P, p = P.pet, full = M.petFull();
     var face = mood || (full < 30 ? 'sad' : 'normal');
     var line = full < 30 ? '배고파요… 🥕 먹이를 주세요' : M.pick(LINES);
+    var fl = (M.houseInfo && M.houseInfo().floors) || 1, cur = P.room.cur || 1;
+    if (cur > fl) { M.homeFloor(1); cur = 1; }
     var placed = Object.keys(P.room.placed).map(function (id) { return FURN.filter(function (f) { return f.id === id; })[0]; }).filter(Boolean);
     placed.sort(function (a, b) { return P.room.placed[a.id].y - P.room.placed[b.id].y; });
-    var h = '<div class="home">' +
+    var h = '<div class="home">' + (fl > 1 ? '<div class="floors">' + FLOORS.slice(1, fl + 1).map(function (n, i) { return '<button data-fl="' + (i + 1) + '" class="' + (cur === i + 1 ? 'on' : '') + '">' + n + '</button>'; }).join('') + '</div>' : '') +
       '<div class="room' + (editing ? ' editing' : '') + '" id="room" style="background-image:url(' + wallSrc() + ')">' +
       placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false"></div>'; }).join('') +
-      (M.potsRoomHtml ? M.potsRoomHtml() : '') +
+      (M.potsRoomHtml && cur === 1 ? M.potsRoomHtml() : '') +
       '<div class="pet' + (editing ? ' movable' : '') + '" id="pet" style="z-index:' + Math.round((P.pet.pos || { y: 92 }).y) + ';' + (P.pet.pos ? 'left:' + P.pet.pos.x + '%;top:' + P.pet.pos.y + '%;bottom:auto' : '') + '"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
       (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구·화분·' + esc(P.petName) + '를 끌어서 옮겨요') + '</div>' : '') +
       '</div>' + (editing && fsel && P.room.placed[fsel] ? '<div class="ftools"><b>' + esc((FURN.filter(function (x) { return x.id === fsel; })[0] || {}).name || '') + '</b><button data-ft="small">－ 작게</button><button data-ft="big">＋ 크게</button><button data-ft="flip">↔ 뒤집기</button><button data-ft="front">⬆ 앞으로</button><button data-ft="back">⬇ 뒤로</button><button data-ft="store">📦 보관</button></div>' : '') +
@@ -89,6 +91,16 @@
     root.innerHTML = h;
   };
   function rerender() { var r = $('homeView'); if (r) M.renderHome(r); }
+  // 층: 지금 층의 배치는 room.placed·room.wall 에, 다른 층은 room.floors[층] 에 둔다
+  var FLOORS = ['', '1층 거실', '2층 침실', '3층 다락방', '옥상 정원'];
+  M.homeFloor = function (n) {
+    var R = M.P.room, cur = R.cur || 1; if (n === cur) return;
+    R.floors = R.floors || {};
+    R.floors[cur] = { placed: R.placed, wall: R.wall || 0 };
+    var nx = R.floors[n] || { placed: {}, wall: (n - 1) % WALLS.length };
+    R.placed = nx.placed || {}; R.wall = nx.wall || 0; R.cur = n; M.save();
+  };
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-fl]'); if (!b) return; if (M.stopEditing) M.stopEditing(); M.homeFloor(+b.dataset.fl); rerender(); M.sfx && M.sfx('pop'); });
 
   function feedSheet() {
     var full = M.petFull();

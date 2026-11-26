@@ -61,6 +61,11 @@
     M.uiFont = q(ui) + q(ja) + 'system-ui, sans-serif';
   };
   M.fz = function (text, lang) { return lang === 'ja' ? M.furi(text) : M.esc(text); };
+  // 희귀도: 값(또는 물고기 등급)으로 ★1~4
+  M.rarity = function (price, r) {
+    var n = r ? (r >= 3 ? (price >= 300 ? 4 : 3) : r) : price >= 400 ? 4 : price >= 150 ? 3 : price >= 40 ? 2 : 1;
+    return { n: n, stars: '★★★★'.slice(0, n), name: ['', '흔함', '조금 귀함', '귀함', '전설'][n] };
+  };
   M.esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   M.fmt = function (n) { return Number(n || 0).toLocaleString('ko-KR'); };
   M.rand = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };

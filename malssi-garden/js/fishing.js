@@ -2,7 +2,38 @@
 // 물고기는 실제 시간대(아침·낮·저녁·밤)에 따라 다르고, 잡을 때마다 배우는 언어로 이름을 알려 준다.
 (function () {
   var M = window.M, $ = M.$, esc = M.esc;
-  var BAIT = 2;   // 미끼: 물방울
+  // 미끼: 지렁이를 사서 쓰거나 잡은 작은 물고기를 쓴다. 좋은 미끼일수록 귀한 물고기가 잘 문다
+  var BAITS = {
+    worm: { name: '지렁이', em: '🪱', price: 5, mult: 1, desc: '보통 미끼' },
+    fat: { name: '통통 지렁이', em: '🪱✨', price: 20, mult: 2.2, desc: '귀한 물고기 2배' },
+    gold: { name: '황금 지렁이', em: '🌟🪱', price: 60, mult: 4.5, desc: '귀한 물고기 4배 넘게' },
+    fish: { name: '작은 물고기 미끼', em: '🐟', price: 0, mult: 3.2, desc: '가방의 흔한 물고기 한 마리 · 큰 물고기가 잘 물어요' }
+  };
+  M.BAITS = BAITS;
+  function bait() { var b = M.P.bait = M.P.bait || { worm: 3, fat: 0, gold: 0, use: 'worm' }; return b; }
+  function smallFish() { var fb = M.P.fishBag || {}; return FISH.filter(function (f) { return f.r === 1 && fb[f.id] > 0; }); }
+  function baitLeft(k) { return k === 'fish' ? smallFish().reduce(function (a, f) { return a + M.P.fishBag[f.id]; }, 0) : bait()[k] || 0; }
+  function useBait(k) {
+    if (k === 'fish') { var f = smallFish()[0]; if (!f) return false; M.P.fishBag[f.id]--; return true; }
+    var b = bait(); if (!b[k]) return false; b[k]--; return true;
+  }
+  M.baitSheet = function (where, then) {
+    var b = bait(), d = M.modal('<h3>🪱 미끼 고르기</h3><p class="hint">좋은 미끼일수록 귀한(★★★) 물고기가 잘 물어요</p><div class="list" id="bList"></div><button class="btn ghost wide" data-close>닫기</button>');
+    function paint() {
+      d.querySelector('#bList').innerHTML = Object.keys(BAITS).map(function (k) {
+        var B = BAITS[k], n = baitLeft(k);
+        return '<div class="litem' + (b.use === k ? ' on' : '') + '"><span class="le">' + B.em + '</span><span class="ln">' + B.name + ' <small>' + B.desc + ' · 가진 것 ' + n + '</small></span>' +
+          (k === 'fish' ? '' : '<button class="btn" data-bb="' + k + '"><img class="inl" src="img/coin.png" alt="">' + B.price + '×3</button>') +
+          '<button class="btn primary" data-bu="' + k + '"' + (n ? '' : ' disabled') + '>쓰기</button></div>';
+      }).join('');
+    }
+    paint();
+    d.addEventListener('click', function (e) {
+      var bb = e.target.closest('[data-bb]'), bu = e.target.closest('[data-bu]');
+      if (bb) { var k = bb.dataset.bb; if (!M.spend('coins', BAITS[k].price * 3)) { M.toast('코인이 모자라요'); return; } b[k] = (b[k] || 0) + 3; M.save(); M.sfx('coin'); paint(); return; }
+      if (bu && !bu.disabled) { b.use = bu.dataset.bu; M.save(); d.close(); if (then) then(); else if (where) M.fishStart(where); }
+    });
+  };
   // t: 나오는 시간대 (m 아침 5~10시, d 낮 10~17시, e 저녁 17~20시, n 밤 20~5시)
   var FISH = [
     { id: 'crucian', ko: '붕어', em: '🐟', at: 'river', t: 'mden', r: 1, size: [8, 25], price: 15, ja: ['フナ', 'ふな'], en: ['crucian carp'], zh: ['鲫鱼', 'jìyú'] },
@@ -52,9 +83,9 @@
   function slot() { var h = new Date().getHours(); return h >= 5 && h < 10 ? 'm' : h < 17 && h >= 10 ? 'd' : h >= 17 && h < 20 ? 'e' : 'n'; }
   function dex() { M.P.fishDex = M.P.fishDex || {}; return M.P.fishDex; }
   function nameOf(f, lang) { var v = f[lang] || f.en; return { t: v[0], r: lang === 'en' ? '' : v[1] || '' }; }
-  function pick(where) {
+  function pick(where, mult) {
     var now = slot(), pool = FISH.filter(function (f) { return f.at === where && f.t.indexOf(now) >= 0; });
-    var luck = M.luckOn && M.luckOn(), w = pool.map(function (f) { return f.r === 1 ? 10 : f.r === 2 ? 4 : luck ? 3 : 0.8; }), sum = w.reduce(function (a, b) { return a + b; }, 0), x = Math.random() * sum;
+    var luck = M.luckOn && M.luckOn(), mu = mult || 1, w = pool.map(function (f) { return f.r === 1 ? 10 : f.r === 2 ? 4 * Math.sqrt(mu) : (luck ? 3 : 0.8) * mu; }), sum = w.reduce(function (a, b) { return a + b; }, 0), x = Math.random() * sum;
     for (var i = 0; i < pool.length; i++) { x -= w[i]; if (x <= 0) return pool[i]; }
     return pool[0];
   }
@@ -62,18 +93,20 @@
   var cur = null;
   M.fishStart = function (where) {
     if (cur) return;
-    if (!M.spend('water', BAIT)) { M.toast('미끼(💧' + BAIT + ')가 모자라요. 레슨을 하면 물방울을 받아요'); return; }
+    var bk = bait().use || 'worm';
+    if (!baitLeft(bk) || !useBait(bk)) { M.toast(M.j(BAITS[bk].name, '이', '가') + ' 떨어졌어요. 미끼를 골라 주세요'); M.baitSheet(where); return; }
+    bait().use = bk; M.save();
     var host = document.querySelector('.world'); if (!host) return;
     var el = document.createElement('div'); el.className = 'fishing ' + where; el.id = 'fishing';
     el.innerHTML = '<div class="fwater"><div class="fring"></div><div class="fbob" id="fBob">🔴</div><div class="fexcl" id="fEx">!</div></div>' +
-      '<p class="fmsg" id="fMsg">찌를 던졌어요… 찌가 쑥 들어가면 눌러요!</p><button class="btn primary wide fpull" id="fPull">낚아채기!</button><button class="btn ghost wide" id="fStop">그만하기</button>';
+      '<p class="fmsg" id="fMsg">' + BAITS[bk].em + ' ' + BAITS[bk].name + '(남은 것 ' + baitLeft(bk) + ')로 던졌어요… 찌가 쑥 들어가면 눌러요!</p><button class="btn primary wide fpull" id="fPull">낚아채기!</button><button class="btn ghost wide" id="fStop">그만하기</button><button class="btn ghost wide" id="fBait">🪱 미끼 바꾸기</button>';
     host.appendChild(el);
-    cur = { where: where, state: 'wait', fish: pick(where), timers: [] };
+    cur = { where: where, state: 'wait', fish: pick(where, BAITS[bk].mult * (bk === 'fish' && where === 'river' ? 0.6 : 1)), timers: [], bait: bk };
     var wait = 1800 + Math.random() * 4500;
     // 입질 몇 번 (살짝 흔들림) 뒤에 진짜로 문다
     cur.timers.push(setTimeout(function () { nibble(); }, wait * 0.45));
     cur.timers.push(setTimeout(function () { bite(); }, wait));
-    $('fPull').onclick = pull; $('fStop').onclick = function () { end(); };
+    $('fPull').onclick = pull; $('fStop').onclick = function () { end(); }; $('fBait').onclick = function () { var w = cur.where; end(); M.baitSheet(w); };
     el.querySelector('.fwater').onclick = pull;
   };
   function nibble() { if (!cur || cur.state !== 'wait') return; var b = $('fBob'); if (b) { b.classList.remove('nib'); void b.offsetWidth; b.classList.add('nib'); } M.buzz(10); }
@@ -93,7 +126,7 @@
   }
   function retry() {
     var b = $('fPull'); if (!b) return;
-    b.textContent = '다시 던지기 (💧' + BAIT + ')';
+    b.textContent = '다시 던지기 (' + BAITS[cur.bait].em + ')';
     b.onclick = function () { var w = cur.where; end(true); M.fishStart(w); };
     var fw = document.querySelector('#fishing .fwater'); if (fw) fw.onclick = null;
   }
@@ -109,16 +142,17 @@
       var rec = d[f.id] || { n: 0, max: 0 }; rec.n++; var best = size > rec.max; rec.max = Math.max(rec.max, size); d[f.id] = rec;
       var price = Math.round(f.price * (0.7 + 0.6 * (size - f.size[0]) / (f.size[1] - f.size[0] || 1)));
       M.save(); M.quest && M.quest('fish', 1);
-      el.innerHTML = '<div class="fcatch"><div class="fbig">' + fimg(f) + '</div><h3>' + f.ko + (first ? ' <span class="newtag">처음!</span>' : '') + '</h3>' +
+      el.innerHTML = '<div class="fcatch"><div class="fbig">' + fimg(f) + '</div><h3>' + f.ko + (first ? ' <span class="newtag">처음!</span>' : '') + '</h3><p class="rar r' + M.rarity(f.price, f.r).n + '">' + M.rarity(f.price, f.r).stars + ' ' + M.rarity(f.price, f.r).name + '</p>' +
         '<button class="fname lang-' + lang + '" data-fsay="' + esc(nm.t) + '">🔊 <b>' + esc(nm.t) + '</b>' + (nm.r ? '<small>' + esc(nm.r) + '</small>' : '') + '</button>' +
         '<p>' + size + 'cm' + (best && !first ? ' · 최고 기록!' : '') + (bonus ? ' · 이름 맞힘 보너스 +20%' : '') + '</p>' +
         '<div class="row2"><button class="btn" id="fRel">놓아주기</button><button class="btn primary" id="fSell">팔기 <img class="inl" src="img/coin.png" alt="">' + price + '</button></div>' +
-        '<button class="btn wide" id="fKeep">🧺 요리 재료로 담기</button><button class="btn wide" id="fAgain">한 번 더 (💧' + BAIT + ')</button><p class="hint">박물관 물고기 도감에 기록했어요</p></div>';
+        '<button class="btn wide" id="fKeep">🧺 가방에 넣기</button><button class="btn wide" id="fAgain">한 번 더 (' + BAITS[cur ? cur.bait : 'worm'].em + ')</button><button class="btn ghost wide" id="fQuit">그만하기</button><p class="hint">박물관 물고기 도감에 기록했어요</p></div>';
       M.say(nm.t, lang);
       el.querySelector('[data-fsay]').onclick = function () { M.say(nm.t, lang); };
       $('fRel').onclick = function () { M.toast(f.em + ' 잘 가!'); M.give({ water: 1 }); end(); };
       $('fSell').onclick = function () { M.give({ coins: price }); M.sfx('coin'); end(); };
-      $('fKeep').onclick = function () { var fb = M.P.fishBag = M.P.fishBag || {}; fb[f.id] = (fb[f.id] || 0) + 1; M.save(); if (M.recipeCheck) setTimeout(M.recipeCheck, 600); M.toast('🧺 ' + f.ko + '을(를) 담았어요. 집의 🍳 요리에서 써요'); end(); };
+      $('fKeep').onclick = function () { var fb = M.P.fishBag = M.P.fishBag || {}; fb[f.id] = (fb[f.id] || 0) + 1; M.save(); if (M.recipeCheck) setTimeout(M.recipeCheck, 600); M.toast('🧺 ' + M.j(f.ko, '을', '를') + ' 가방에 넣었어요'); end(); };
+      $('fQuit').onclick = function () { M.toast(f.em + ' 놓아줬어요'); end(); };
       $('fAgain').onclick = function () { var w = cur ? cur.where : f.at; M.give({ coins: price }); end(); M.fishStart(w); };
       M.sfx('win');
     }
@@ -146,7 +180,7 @@
   document.addEventListener('click', function (e) {
     var c = e.target.closest && e.target.closest('[data-fcard]'); if (!c) return;
     var f = FISH.filter(function (x) { return x.id === c.dataset.fcard; })[0], r = dex()[f.id];
-    M.dexCard('img/w/fish-' + f.id + '.png', f.ko, { ja: [f.ja[0], f.ja[1]], en: [f.en[0], ''], zh: [f.zh[0], f.zh[1]] }, '최고 ' + r.max + 'cm · ' + r.n + '마리 · ' + (f.at === 'river' ? '강' : '바다'));
+    M.dexCard('img/w/fish-' + f.id + '.png', f.ko, { ja: [f.ja[0], f.ja[1]], en: [f.en[0], ''], zh: [f.zh[0], f.zh[1]] }, M.rarity(f.price, f.r).stars + ' ' + M.rarity(f.price, f.r).name + ' · 최고 ' + r.max + 'cm · ' + r.n + '마리 · ' + (f.at === 'river' ? '강' : '바다'));
   });
   M.fishTest = { pick: pick, caught: function (id) { cur = cur || { where: 'river', timers: [] }; caught(FISH.filter(function (f) { return f.id === id; })[0]); }, bite: function () { if (cur) { cur.timers.forEach(clearTimeout); bite(); } }, slot: slot };
 })();
