@@ -1,4 +1,4 @@
-const CACHE = 'malssi-garden-v70';
+const CACHE = 'malssi-garden-v72';
 const CORE = [
   './',
   './index.html',
@@ -31,6 +31,7 @@ const CORE = [
   './js/pots.js',
   './js/gather.js',
   './js/dig.js',
+  './js/bugbattle.js',
   './js/extras.js',
   './vendor/firebase/firebase-app-compat.js',
   './vendor/firebase/firebase-auth-compat.js',
@@ -550,6 +551,13 @@ const CORE = [
   './img/cust-monkey.png',
   './img/cust-otter-happy.png',
   './img/cust-otter.png',
+  './img/w/ch-rabbit3-bike-back1.png',
+  './img/w/ch-rabbit3-bike-back2.png',
+  './img/w/ch-rabbit3-bike-front1.png',
+  './img/w/ch-rabbit3-bike-front2.png',
+  './img/w/ch-rabbit3-bike-side1.png',
+  './img/w/ch-rabbit3-bike-side2.png',
+  './img/w/it-bike.png',
   './img/w/b-board.png',
   './img/w/b-den.png',
   './img/w/b-gift.png',

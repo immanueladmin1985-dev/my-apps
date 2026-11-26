@@ -155,11 +155,25 @@
   function furnShop(startTab) {
     var P = M.P;
     var tab = startTab || 'furn';
-    var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">' + esc(P.petName) + ' 소품</button><button data-st="seed">씨앗·비료</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
+    var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">' + esc(P.petName) + ' 소품</button><button data-st="seed">씨앗·비료</button><button data-st="ride">🚲 탈것</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
     var tabs = function () { Array.prototype.forEach.call(d.querySelectorAll('[data-st]'), function (b) { b.classList.toggle('on', b.dataset.st === tab); }); };
     var paintOther = function () {
       var R = P.room, ow = R.walls || {}, oa = P.pet.accs || {};
       if (tab === 'seed') { M.seedTab(d.querySelector('#fList'), d.querySelector('#fHint')); return; }
+      if (tab === 'ride') {
+        var grown = M.petStage() >= 3, own = !!P.bike;
+        d.querySelector('#fHint').textContent = '마을에서 멀리 갈 때나 🗺️ 지도에서 고른 곳으로 갈 때 자전거를 타고 빨리 가요';
+        d.querySelector('#fList').innerHTML = '<div class="fgrid"><button class="fcard' + (grown ? '' : ' lock') + '" data-bike><img src="img/w/it-bike.png" alt=""><b>분홍 자전거</b>' + (own ? '<small>가지고 있어요 ✔</small>' : grown ? '<small class="price"><img src="img/coin.png" alt="">1500</small>' : '<small>' + esc(P.petName) + '가 다 자라면 탈 수 있어요 (Lv.10)</small>') + '</button></div>';
+        d.querySelector('#fList').onclick = function (e) {
+          if (!e.target.closest('[data-bike]') || own) return;
+          if (!grown) { M.toast(esc(P.petName) + '가 다 자라야 탈 수 있어요. 먹이를 주고 레슨을 해서 키워 주세요'); return; }
+          M.confirm('🚲 분홍 자전거', '<img class="inl" src="img/coin.png" alt="">1500코인에 살까요? 마을에서 멀리 갈 때 자전거를 타요.', '사기', function () {
+            if (!M.spend('coins', 1500)) { M.toast('코인이 모자라요'); return; }
+            P.bike = true; M.save(); M.sfx('win'); M.toast('🚲 자전거를 샀어요! 멀리 갈 때 자동으로 타요'); paintOther();
+          });
+        };
+        return;
+      }
       d.querySelector('#fList').onclick = null;
       if (tab === 'wall') {
         d.querySelector('#fHint').textContent = '방 전체의 벽지와 바닥을 바꿔요';

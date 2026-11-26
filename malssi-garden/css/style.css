@@ -1321,3 +1321,27 @@ ruby { ruby-position: over; } rt { font-size: .45em; font-weight: 600; color: va
 .mmme { font-size: 20px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); } .mmp.me { z-index: 2; }
 .dim.mapsheet .sheet { max-height: 92vh; overflow-y: auto; }
 .floors { display: flex; gap: 6px; padding: 4px 0 6px; overflow-x: auto; } .floors button { flex: none; padding: 6px 12px; border-radius: 14px; background: #f6f3f8; font-weight: 700; font-size: .85rem; } .floors button.on { background: var(--fg); color: #fff; }
+
+/* 곤충 배틀 */
+.bbattle { position: fixed; inset: 0; z-index: 26; display: flex; flex-direction: column; background: linear-gradient(#bfe7ff 0%, #d9f2c7 45%, #9fd27a 100%); }
+.bbtop { display: flex; align-items: center; gap: 10px; padding: 10px 12px; font-weight: 800; } .bbtop span:nth-child(2) { flex: 1; }
+.bbfield { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 6px 14px; min-height: 0; }
+.bbside { display: flex; align-items: center; gap: 10px; position: relative; } .bbside.op { justify-content: flex-end; } .bbside.me { justify-content: flex-start; }
+.bbimg { width: min(34vw, 150px); height: min(34vw, 150px); object-fit: contain; filter: drop-shadow(0 8px 6px rgba(0,0,0,.25)); }
+.bbside.op .bbimg { transform: scaleX(-1); } .bbcoach { width: 56px; height: 56px; object-fit: contain; position: absolute; left: 0; bottom: -6px; opacity: .95; }
+.bbinfo { background: rgba(255,255,255,.92); border-radius: 14px; padding: 8px 10px; min-width: 150px; box-shadow: var(--sh); }
+.bbinfo b { display: block; } .bbinfo small { color: var(--sub); }
+.bbhp { height: 10px; background: #eadfe3; border-radius: 6px; overflow: hidden; margin-top: 4px; } .bbhp i { display: block; height: 100%; background: linear-gradient(90deg, #4cd08a, #a3e36b); transition: width .5s; }
+.bbmsg { text-align: center; background: rgba(255,255,255,.85); border-radius: 14px; padding: 10px; margin: 8px 0; font-size: .92rem; min-height: 54px; }
+.bbmsg .crit { color: #ff5a3c; font-weight: 900; }
+.bbpow { position: relative; height: 18px; margin: 0 16px 8px; border-radius: 10px; background: linear-gradient(90deg, #ffd5d5, #fff3b0 40%, #ffe066 50%, #fff3b0 60%, #ffd5d5); border: 2px solid #fff; }
+.bbpow i { position: absolute; top: -4px; width: 6px; height: 22px; border-radius: 3px; background: #4b3a2a; transform: translateX(-50%); }
+.bbstar { position: absolute; left: 50%; top: -18px; transform: translateX(-50%); color: #e0a100; font-size: .9rem; }
+.bbmoves { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px 14px; }
+.bbmove { background: #fff; border: 3px solid var(--line); border-radius: 16px; box-shadow: 0 4px 0 var(--line); padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 96px; }
+.bbmove.fav { border-color: #ffcf4a; box-shadow: 0 4px 0 #ffcf4a; } .bbmove .bbem { font-size: 1.8rem; } .bbmove b { font-size: 1rem; } .bbmove small { font-size: .68rem; color: var(--sub); }
+.bbimg.atk { animation: bbatk .45s; } .bbimg.hit { animation: bbhit .45s; }
+@keyframes bbatk { 50% { transform: translateY(-14px) scale(1.08); } }
+@keyframes bbhit { 20%, 60% { transform: translateX(-8px); filter: brightness(2); } 40%, 80% { transform: translateX(8px); } }
+.bbside.op .bbimg.atk { animation: bbatko .45s; } @keyframes bbatko { 50% { transform: scaleX(-1) translateY(14px) scale(1.08); } }
+.bbend .tbig { font-size: 2.6rem; } .bbbug { width: 40px; height: 40px; object-fit: contain; } .bbopp.lock { opacity: .5; }

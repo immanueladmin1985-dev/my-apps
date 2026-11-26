@@ -235,13 +235,15 @@
         return;
       }
       var ks = Object.keys(g.bag).filter(function (k) { return g.bag[k] > 0 && ITEMS[k] && (tab === 'all' || ITEMS[k].cat === tab); });
-      d.querySelector('#gbList').innerHTML = ks.length ? ks.map(function (k) { var it = ITEMS[k]; var ra = M.rarity(it.price); return '<button class="gbi r' + ra.n + '" data-gi="' + k + '"><img src="' + it.img + '" alt=""><b>' + it.ko + '</b><small class="rs">' + ra.stars + '</small><i>' + g.bag[k] + '</i></button>'; }).join('') : '<p class="hint center">아직 비어 있어요. 마을에서 나무를 흔들거나 바닥을 살펴보세요!</p>';
+      var arena = tab === 'bug' && M.bugArena ? '<button class="btn primary wide" data-arena style="grid-column:1/-1">🪲 곤충 배틀장 가기</button>' : '';
+      d.querySelector('#gbList').innerHTML = ks.length ? ks.map(function (k) { var it = ITEMS[k]; var ra = M.rarity(it.price); return '<button class="gbi r' + ra.n + '" data-gi="' + k + '"><img src="' + it.img + '" alt=""><b>' + it.ko + '</b><small class="rs">' + ra.stars + '</small><i>' + g.bag[k] + '</i></button>'; }).join('') + arena : arena + '<p class="hint center">아직 비어 있어요. 마을에서 나무를 흔들거나 바닥을 살펴보세요!</p>';
     }
     paint();
     d.addEventListener('click', function (e) {
       if (e.target.closest('[data-luck]')) { if (M.luckBuy()) paint(); return; }
       var c = e.target.closest('[data-gc]'); if (c) { tab = c.dataset.gc; paint(); return; }
       if (e.target.closest('[data-gbait]')) { M.baitSheet(null, paint); return; }
+      if (e.target.closest('[data-arena]')) { d.close(); M.bugArena(); return; }
       var fbn = e.target.closest('[data-gf]');
       if (fbn) { var f = (M.FISH || []).filter(function (x) { return x.id === fbn.dataset.gf; })[0], cnt = M.P.fishBag[f.id];
         var fs = M.modal('<div class="center"><img class="gbig" src="img/w/fish-' + f.id + '.png" alt=""><h3>' + f.ko + '</h3><p>' + cnt + '마리 · 하나에 <img class="inl" src="img/coin.png" alt="">' + f.price + '</p><p class="hint">요리 재료나 낚시 미끼로도 써요</p></div><div class="row2"><button class="btn" data-s1>1마리 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div><button class="btn ghost wide" data-close>닫기</button>');

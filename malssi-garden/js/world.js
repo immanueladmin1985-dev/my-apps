@@ -237,8 +237,8 @@
   }
   function stepActor(a, dt) {
     if (a.t < 1) {
-      a.t = Math.min(1, a.t + dt / (a.kind === 'npc' ? STEP * 1.8 : STEP));
-      if (a.t >= 1) { a.x = a.tx; a.y = a.ty; if (a === me) { var w = Wst(); w.x = a.x; w.y = a.y; w.d = a.d; if (M.Family && M.Family.myPos) M.Family.myPos(a.x, a.y, a.d); } }
+      a.t = Math.min(1, a.t + dt / (a.kind === 'npc' ? STEP * 1.8 : a.riding ? STEP / 2.6 : STEP));
+      if (a.t >= 1) { a.x = a.tx; a.y = a.ty; if (a === me) { var w = Wst(); w.x = a.x; w.y = a.y; w.d = a.d; if (M.Family && M.Family.myPos) M.Family.myPos(a.x, a.y, a.d, a.riding && a.path.length > 0); } }
       return;
     }
     if (a.path.length) {
@@ -249,6 +249,7 @@
       a.px = a.x; a.py = a.y; a.tx = n[0]; a.ty = n[1]; a.t = 0;
       return;
     }
+    if (a === me) a.riding = false;
     if (a === me && a.onArrive) { var f = a.onArrive; a.onArrive = null; f(); }
   }
   // 주민이 혼잣말을 한다 (배우는 말 + 뜻). 누르면 다가가서 이야기한다
@@ -415,7 +416,7 @@
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T - 3, T * 0.34, T * 0.13, 0, 0, 7); ctx.fill();
     var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
     var stg = a.kind === 'mate' ? (a.stage || 1) : M.petStage(), coon = (a.kind === 'mate' && a.av === 'raccoon') || (a.kind === 'me' && M.visiting);
-    var name = coon ? 'ch-raccoon-' + view : a.kind === 'me' || a.kind === 'mate' ? 'ch-rabbit' + stg + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
+    var name = a.riding ? 'ch-rabbit3-bike-' + view + (walking ? step + 1 : 1) : coon ? 'ch-raccoon-' + view : a.kind === 'me' || a.kind === 'mate' ? 'ch-rabbit' + stg + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
     var r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, CH_H);
     if (!r) {   // 그 방향 그림을 아직 불러오는 중이면, 이미 불러온 다른 모습으로 그린다 (예전 상반신 그림은 쓰지 않는다)
       var alts = a.kind === 'me' || a.kind === 'mate' ? ['ch-rabbit' + stg + '-' + view + '1', 'ch-rabbit' + stg + '-front1'] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
@@ -525,7 +526,7 @@
   // 지도 축소판: 누른 곳으로 바로 간다
   function minimap() {
     var vw = Math.min(window.innerWidth - 40, 420), sc = vw / (W * T), vh = H * T * sc;
-    var d = M.modal('<h3>🗺️ 마을 지도</h3><p class="hint">가고 싶은 곳을 누르면 바로 가요</p><div class="mmwrap" style="height:' + Math.round(vh) + 'px"><canvas id="mmC"></canvas><div id="mmL"></div></div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'mapsheet' });
+    var d = M.modal('<h3>🗺️ 마을 지도</h3><p class="hint">가고 싶은 곳을 누르면 그쪽으로 가요' + (canRide() ? ' 🚲' : '') + '</p><div class="mmwrap" style="height:' + Math.round(vh) + 'px"><canvas id="mmC"></canvas><div id="mmL"></div></div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'mapsheet' });
     var c = d.querySelector('#mmC'), dpr = Math.min(2, window.devicePixelRatio || 1); c.width = vw * dpr; c.height = vh * dpr; c.style.width = vw + 'px'; c.style.height = vh + 'px';
     var g = c.getContext('2d'); g.scale(dpr, dpr); g.drawImage(ground, 0, 0, ground.width, ground.height, 0, 0, vw, vh);
     OBJ.forEach(function (o) { if (o.kind === 'tree' || o.kind === 'ftree') { g.fillStyle = o.kind === 'ftree' ? '#e8774a' : '#3f8f4a'; g.beginPath(); g.arc(o.x * T * sc, (o.y - 0.6) * T * sc, Math.max(2, T * sc * 0.6), 0, 7); g.fill(); } });
@@ -540,11 +541,12 @@
       var r = c.getBoundingClientRect(), tx = Math.floor((e.clientX - r.left) / sc / T), ty = Math.floor((e.clientY - r.top) / sc / T), best = null;
       for (var rad = 0; rad < 8 && !best; rad++) for (var yy = ty - rad; yy <= ty + rad; yy++) for (var xx = tx - rad; xx <= tx + rad; xx++) { if (!best && walkable(xx, yy) && G[yy * W + xx] !== 2 && !occupied(xx, yy, me)) best = [xx, yy]; }
       if (!best) return;
-      d.close(); me.x = me.px = me.tx = best[0]; me.y = me.py = me.ty = best[1]; me.path = []; me.t = 1; freeCam = null; camEase = false;
-      var w = Wst(); w.x = me.x; w.y = me.y; if (M.Family && M.Family.myPos) M.Family.myPos(me.x, me.y, me.d);
+      d.close(); freeCam = null; camEase = true; goTo(best[0], best[1]);
+      if (me.path.length) { if (canRide()) me.riding = true; else if (me.path.length > 15) M.toast('🚲 자전거가 있으면 빨리 갈 수 있어요 (잡화점)'); }
       M.sfx && M.sfx('pop'); tapMark = { x: best[0], y: best[1], t: performance.now() };
     });
   }
+  function canRide() { return !!M.P.bike && M.petStage() >= 3 && !M.visiting; }
   function onTap(e) {
     if (Date.now() - panned < 250) return;   // 시야를 옮긴 직후의 손 뗌은 누르기가 아니다
     var r = cv.getBoundingClientRect(), wx = e.clientX - r.left + cam.x, wy = e.clientY - r.top + cam.y;
@@ -605,7 +607,7 @@
     var start = me.t < 1 ? [me.tx, me.ty] : [me.x, me.y];
     var p = findPath(start[0], start[1], x, y, me);
     if (!p) { M.toast('거기까지는 갈 수 없어요'); return; }
-    me.path = p; me.goal = [x, y]; me.onArrive = then || null;
+    me.path = p; me.goal = [x, y]; me.onArrive = then || null; me.riding = canRide() && p.length >= 12;
     if (!p.length && me.t >= 1 && then) { me.onArrive = null; then(); }
   }
   function goNear(x, y, then) {
@@ -655,7 +657,7 @@
       if (!built) build();
       if (!mate || Math.abs(mate.x - m.x) + Math.abs(mate.y - m.y) > 30) { mate = mkActor(m.x, m.y, 'mate', 'mate'); }
       else { var p = findPath(mate.t < 1 ? mate.tx : mate.x, mate.t < 1 ? mate.ty : mate.y, m.x, m.y, mate); if (p) mate.path = p; else { mate.x = mate.px = mate.tx = m.x; mate.y = mate.py = mate.ty = m.y; mate.path = []; } }
-      mate.stage = m.stage; mate.name = m.name; mate.av = m.av || ''; if (!mate.path.length) mate.d = m.d || mate.d;
+      mate.stage = m.stage; mate.name = m.name; mate.av = m.av || ''; mate.riding = !!m.rd; if (!mate.path.length) mate.d = m.d || mate.d;
     },
     emote: function (who, t, k) { var a = who === 'me' ? me : mate; if (!a) return; a.say = { t: t, k: k || '' }; a.sayUntil = performance.now() + 4000; },
     mate: function () { return mate && { x: mate.x, y: mate.y, tx: mate.tx, ty: mate.ty, name: mate.name, say: mate.say }; },

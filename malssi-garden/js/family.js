@@ -121,7 +121,7 @@
     mateOffs.push(FX.on('family/presence/' + F.mateUid, function (v) {
       var fresh = v && v.place === 'village' && FX.now() - (v.at || 0) < 120000;
       if (fresh && F.role === 'husband' && !M.visiting) fresh = false;   // 남편 폰은 아내 마을에 들어갔을 때만 아내가 보인다
-      if (M.World && M.World.setMate) M.World.setMate(fresh ? { x: v.x, y: v.y, d: v.d, stage: v.stage || 1, av: v.av || '', name: v.av === 'raccoon' ? M.Family.mateName() + ' 너구리' : M.Family.mateName() } : null);
+      if (M.World && M.World.setMate) M.World.setMate(fresh ? { x: v.x, y: v.y, d: v.d, stage: v.stage || 1, av: v.av || '', rd: v.rd, name: v.av === 'raccoon' ? M.Family.mateName() + ' 너구리' : M.Family.mateName() } : null);
       lastMateP = v;
     }));
     var lastEmote = 0;
@@ -167,12 +167,13 @@
 
   // ---------- 마을에서 만나기 ----------
   var posT = 0, lastPos = '', inVillage = false, beatT = 0;
-  M.Family.myPos = function (x, y, d) {
+  M.Family.myPos = function (x, y, d, rd) {
     if (!F.ready) return;
     inVillage = true;
     var k = x + ',' + y + ',' + d, now = FX.now(); if (k === lastPos && now - posT < 25000) return;
+    if (rd && now - posT < 250) return;   // 자전거로 달릴 때는 너무 자주 보내지 않는다
     lastPos = k; posT = now;
-    FX.set('family/presence/' + F.uid, { x: x, y: y, d: d || 'down', stage: M.petStage ? M.petStage() : 1, place: M.visiting ? 'village' : (F.role === 'husband' ? 'own' : 'village'), av: M.visiting ? 'raccoon' : '', at: now });
+    FX.set('family/presence/' + F.uid, { x: x, y: y, d: d || 'down', stage: M.petStage ? M.petStage() : 1, place: M.visiting ? 'village' : (F.role === 'husband' ? 'own' : 'village'), av: M.visiting ? 'raccoon' : '', rd: !!rd, at: now });
     clearTimeout(beatT); beatT = setTimeout(function () { if (inVillage) { lastPos = ''; M.Family.myPos(x, y, d); } }, 30000);
   };
   M.Family.leaveVillage = function () {
