@@ -1,4 +1,4 @@
-const CACHE = 'malssi-garden-v86';
+const CACHE = 'malssi-garden-v87';
 const CORE = [
   './',
   './index.html',
@@ -35,6 +35,7 @@ const CORE = [
   './js/season.js',
   './js/stickers.js',
   './js/extras.js',
+  './js/events.js',
   './vendor/firebase/firebase-app-compat.js',
   './vendor/firebase/firebase-auth-compat.js',
   './vendor/firebase/firebase-database-compat.js',

@@ -187,7 +187,9 @@
   M.luckLeft = function () { var g = S(); return Math.max(0, (g.luckAt || 0) + LUCK_MS - Date.now()); };
   M.luckOn = function () { return M.luckLeft() > 0 || (M.buffOn && M.buffOn('luck')) || (M.weather && M.weather() === 'rainbow'); };
   M.luckBuy = function () {
-    if (!M.spend('coins', LUCK_PRICE)) { M.toast('코인이 모자라요'); return false; }
+    var free = (M.P.luckTix || 0) > 0;
+    if (free) M.P.luckTix--;
+    else if (!M.spend('coins', LUCK_PRICE)) { M.toast('코인이 모자라요'); return false; }
     var g = S(); g.luckAt = Date.now(); g.luckSeed = Date.now() % 100000 + 1; M.save(); M.sfx('win');
     M.toast('✨ 행운의 향수! 30분 동안 곤충과 물건이 두 배로 나와요'); return true;
   };
@@ -231,7 +233,7 @@
     var d = M.modal('<h3>🧺 가방</h3><div id="gbLuck"></div><div class="fcats" id="gbCats"></div><div class="gbag" id="gbList"></div><p class="hint">누르면 팔 수 있어요. 나뭇가지·통나무·돌·점토·금광석은 집 넓히기 재료예요.</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' });
     function paint() {
       var ll = M.luckLeft();
-      d.querySelector('#gbLuck').innerHTML = ll ? '<p class="luckon">✨ 행운의 향수 남은 시간 ' + Math.ceil(ll / 60000) + '분</p>' : '<button class="btn wide" data-luck><img class="inl" src="img/w/it-perfume.png" alt=""> 행운의 향수 <small>30분 동안 곤충·물건 두 배</small> <img class="inl" src="img/coin.png" alt="">' + LUCK_PRICE + '</button>';
+      d.querySelector('#gbLuck').innerHTML = ll ? '<p class="luckon">✨ 행운의 향수 남은 시간 ' + Math.ceil(ll / 60000) + '분</p>' : '<button class="btn wide" data-luck><img class="inl" src="img/w/it-perfume.png" alt=""> 행운의 향수 <small>30분 동안 곤충·물건 두 배</small> ' + (M.P.luckTix ? '<b class="free">공부 선물 ' + M.P.luckTix + '개</b>' : '<img class="inl" src="img/coin.png" alt="">' + LUCK_PRICE) + '</button>';
       d.querySelector('#gbCats').innerHTML = '<button data-gc="all" class="' + (tab === 'all' ? 'on' : '') + '">전체</button>' + Object.keys(CATS).concat(['fish', 'bait']).map(function (c) { return '<button data-gc="' + c + '" class="' + (tab === c ? 'on' : '') + '">' + (CATS[c] || (c === 'fish' ? '🐟 물고기' : '🪱 미끼')) + '</button>'; }).join('');
       if (tab === 'fish' || tab === 'bait') {
         var fb = M.P.fishBag || {}, bt = M.P.bait || {};
@@ -251,7 +253,7 @@
       if (e.target.closest('[data-arena]')) { d.close(); M.bugArena(); return; }
       var fbn = e.target.closest('[data-gf]');
       if (fbn) { var f = (M.FISH || []).filter(function (x) { return x.id === fbn.dataset.gf; })[0], cnt = M.P.fishBag[f.id];
-        var fs = M.modal('<div class="center"><img class="gbig" src="img/w/fish-' + f.id + '.png" alt=""><h3>' + f.ko + '</h3><p>' + cnt + '마리 · 하나에 <img class="inl" src="img/coin.png" alt="">' + f.price + '</p><p class="hint">요리 재료나 낚시 미끼로도 써요</p></div><div class="row2"><button class="btn" data-s1>1마리 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div>' + (M.Family && M.Family.canGift && M.Family.canGift() ? '<button class="btn wide" data-gsend>💌 ' + esc(M.Family.mateName()) + '에게 한 마리 보내기</button>' : '') + '' + (M.Family && M.Family.canGift && M.Family.canGift() ? '<button class="btn wide" data-gsend>💌 ' + esc(M.Family.mateName()) + '에게 하나 보내기</button>' : '') + '<button class="btn ghost wide" data-close>닫기</button>');
+        var fs = M.modal('<div class="center"><img class="gbig" src="img/w/fish-' + f.id + '.png" alt=""><h3>' + f.ko + '</h3><p>' + cnt + '마리 · 하나에 <img class="inl" src="img/coin.png" alt="">' + f.price + '</p><p class="hint">요리 재료나 낚시 미끼로도 써요</p></div><div class="row2"><button class="btn" data-s1>1마리 팔기</button><button class="btn primary" data-sa>모두 팔기</button></div>' + (M.Family && M.Family.canGift && M.Family.canGift() ? '<button class="btn wide" data-gsend>💌 ' + esc(M.Family.mateName()) + '에게 한 마리 보내기</button>' : '') + '<button class="btn ghost wide" data-close>닫기</button>');
         fs.addEventListener('click', function (e2) { if (e2.target.closest('[data-gsend]')) { if (M.Family.sendGift({ k: 'fish', id: f.id })) { fs.close(); paint(); } return; } var m = e2.target.closest('[data-s1]') ? 1 : e2.target.closest('[data-sa]') ? M.P.fishBag[f.id] : 0; if (!m) return; M.P.fishBag[f.id] -= m; M.give({ coins: f.price * m }); M.sfx('coin'); M.save(); fs.close(); paint(); });
         return; }
       var b = e.target.closest('[data-gi]'); if (!b) return;

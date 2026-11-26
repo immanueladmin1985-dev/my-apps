@@ -82,7 +82,7 @@
     var placed = Object.keys(P.room.placed).map(function (id) { return FURN.filter(function (f) { return f.id === id; })[0]; }).filter(Boolean);
     placed.sort(function (a, b) { return P.room.placed[a.id].y - P.room.placed[b.id].y; });
     var h = '<div class="home">' + (fl > 1 ? '<div class="floors">' + FLOORS.slice(1, fl + 1).map(function (n, i) { return '<button data-fl="' + (i + 1) + '" class="' + (cur === i + 1 ? 'on' : '') + '">' + n + '</button>'; }).join('') + '</div>' : '') +
-      '<div class="room' + (editing ? ' editing' : '') + '" id="room">' + roomLayers() +
+      '<div class="room' + (editing ? ' editing' : '') + '" id="room">' + roomLayers() + (editing ? '' : '<button class="roomcam" data-rcam aria-label="사진 찍기">📷</button>') +
       placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false">' + showcase(f.id) + '</div>'; }).join('') +
       (M.potsRoomHtml && cur === 1 ? M.potsRoomHtml() : '') +
       '<div class="pet' + (editing ? ' movable' : '') + '" id="pet" style="z-index:' + Math.round((P.pet.pos || { y: 92 }).y) + ';' + (P.pet.pos ? 'left:' + P.pet.pos.x + '%;top:' + P.pet.pos.y + '%;bottom:auto' : '') + '"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +

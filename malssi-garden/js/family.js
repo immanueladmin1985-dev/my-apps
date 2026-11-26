@@ -118,6 +118,7 @@
     if (watching === F.mateUid) return; watching = F.mateUid;
     mateOffs.forEach(function (f) { f(); }); mateOffs = [];
     if (!F.mateUid) return;
+    mateOffs.push(FX.on('family/cup/' + F.mateUid, function (v) { F.mateCup = v || null; }));
     mateOffs.push(FX.on('family/online/' + F.mateUid, function (v) { F.mateOnline = !!v && FX.now() - v < 36 * 3600 * 1000; }));
     mateOffs.push(FX.on('family/presence/' + F.mateUid, function (v) {
       var fresh = v && v.place === 'village' && FX.now() - (v.at || 0) < 120000;
@@ -164,10 +165,36 @@
     M.toast('💌 ' + M.j(info.name, '을', '를') + ' ' + M.Family.mateName() + '에게 보냈어요'); M.fxFloat('fx-hearts', 110); M.sfx && M.sfx('pop');
     return true;
   };
+  // 사진 보내기: 작게 줄인 JPEG 를 받은 편지함에 넣는다
+  M.Family.sendPhoto = function (url, cap) {
+    if (!M.Family.canGift()) return false;
+    shrink(url, 640).then(function (small) {
+      FX.push('family/inbox/' + F.mateUid, { k: 'photo', u: small, c: String(cap || '').slice(0, 60), from: F.name || '', at: FX.now() })
+        .then(function () { M.toast('💌 사진을 ' + M.Family.mateName() + '에게 보냈어요'); M.fxFloat('fx-hearts', 110); M.sfx && M.sfx('pop'); })
+        .catch(function (e) { M.toast(explain(e)); });
+    });
+    return true;
+  };
+  function shrink(url, maxW) {
+    return new Promise(function (ok) {
+      var im = new Image(); im.onload = function () { var s = Math.min(1, maxW / im.naturalWidth), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * s); c.height = Math.round(im.naturalHeight * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', 0.75)); };
+      im.onerror = function () { ok(url); }; im.src = url;
+    });
+  }
+  // 주말 대회 기록: 서로의 기록을 보고 겨룬다
+  M.Family.pushCup = function (c) { if (F.ready) FX.set('family/cup/' + F.uid, c).catch(function () {}); };
+  M.Family.mateCup = function () { return F.mateCup || null; };
   function onInbox(v) {
     if (!v) return;
     Object.keys(v).forEach(function (id) {
-      var g = v[id], info = g && giftInfo(g); FX.remove('family/inbox/' + F.uid + '/' + id); if (!info) return;
+      var g = v[id];
+      if (g && g.k === 'photo' && typeof g.u === 'string' && g.u.indexOf('data:image/') === 0) {
+        FX.remove('family/inbox/' + F.uid + '/' + id);
+        if (M.photoAdd) M.photoAdd(g.u, g.c || '');
+        M.modal('<h3>💌 ' + esc(M.j(M.Family.mateName(), '이', '가')) + ' 보낸 사진</h3><img class="photo" src="' + g.u + '" alt=""><p class="hint center">' + esc(g.c || '') + '</p><p class="hint center">사진첩에 넣었어요</p><button class="btn primary wide" data-close>고마워요</button>', { cls: 'bagsheet' });
+        return;
+      }
+      var info = g && giftInfo(g); FX.remove('family/inbox/' + F.uid + '/' + id); if (!info) return;
       var P = M.P;
       if (g.k === 'item') { P.gather = P.gather || { bag: {}, dex: {} }; P.gather.bag[g.id] = (P.gather.bag[g.id] || 0) + 1; P.gather.dex[g.id] = (P.gather.dex[g.id] || 0) + 1; }
       else if (g.k === 'fish') { P.fishBag = P.fishBag || {}; P.fishBag[g.id] = (P.fishBag[g.id] || 0) + 1; }

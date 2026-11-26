@@ -470,6 +470,11 @@
     M.logDay({ l: 1, xp: 10 + stars * 2, w: o.water });
     var grew = M.markStudy();
     M.give(o);
+    // 공부가 마을 놀이로 이어지게: 하루 처음 세 번은 낚시 미끼, 오늘 목표를 채우면 행운의 향수를 선물한다
+    var perk = [];
+    if (before < 3) { var bt = P.bait = P.bait || { worm: 3, fat: 0, gold: 0, use: 'worm' }; if (before === 2) { bt.fat = (bt.fat || 0) + 1; perk.push('<img class="inl" src="img/w/it-worm-fat.png" alt="">통통 지렁이 +1'); } else { bt.worm = (bt.worm || 0) + 2; perk.push('<img class="inl" src="img/w/it-worm.png" alt="">지렁이 미끼 +2'); } }
+    var goalNow = before < P.set.goal && before + 1 >= P.set.goal;
+    if (goalNow) { P.luckTix = (P.luckTix || 0) + 1; perk.push('<img class="inl" src="img/w/it-perfume.png" alt="">행운의 향수 +1'); }
     M.quest('lesson', 1);
     if (S.mistakes === 0) M.quest('perfect', 1);
     if (S.listenOK) M.quest('listen', S.listenOK);
@@ -491,6 +496,7 @@
       (bonus ? '<p class="hint">' + esc(M.j(P.petName, '이', '')) + ' 보너스로 물방울 +' + bonus + '</p>' : '') +
       (grew ? '<p class="streakMsg">🔥 연속 ' + P.streak + '일째 공부했어요!</p>' : '') +
       (goalHit ? '<p class="streakMsg">🎯 오늘 목표를 달성했어요!</p>' : '') +
+      (perk.length ? '<p class="perk">🏡 마을 선물: ' + perk.join(' · ') + '</p>' : '') +
       '</div>';
     var nextSt = st ? window.LANGS[lang].stages[st.idx + 1] : null;
     foot(nextSt ? '<div class="row2 fin"><button class="btn" id="lDone">지도로</button><button class="btn primary" id="lGo">다음 단계 ▶<br><small>' + esc(nextSt.title) + '</small></button></div>'

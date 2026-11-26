@@ -19,7 +19,7 @@
 
   // ---------- 지도 만들기 ----------
   // 바닥: 0 풀, 1 길, 2 물, 3 모래, 4 다리, 5 돌바닥(광장)
-  var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false, PATCH = [], LOTOBJ = [], groundRes = -1;
+  var G = [], SOLID = [], OBJ = [], DOORS = {}, built = false, PATCH = [], LOTOBJ = [], groundRes = -1, groundWx = null, PAVE = [];
   // 정원 가게(id 'shop')는 집 옆 뒷마당 텃밭으로 그린다 (yard)
   var BUILD = [
     { id: 'museum', name: '박물관', x: 4, y: 5, w: 5, h: 3, color: '#c9d6e8', roof: '#7d8fb3', em: '🏛️' },
@@ -72,6 +72,11 @@
       LOTOBJ[k] = lot;
       OBJ.push({ kind: 'lot', lot: lot, y: lot.y + 3 });
     });
+    // 길 재료: 박물관 길과 광장으로 들어오는 큰길은 벽돌, 땅굴 가는 길은 디딤돌, 바닷가 길은 나무 판자
+    function pave(x, y, kind) { if (G[y * W + x] === 1) PAVE[y * W + x] = kind; }
+    for (y = 3; y <= 13; y++) { pave(21, y, 'brick'); pave(22, y, 'brick'); }
+    BUILD.forEach(function (b) { var kind = b.id === 'museum' ? 'brick' : b.id === 'den' ? 'stone' : null; if (!kind) return; for (y = b.door.y; y < H && G[y * W + b.door.x] === 1 && y !== 12; y++) pave(b.door.x, y, kind); });
+    for (y = SAND_Y; y < SEA_Y; y++) for (x = 0; x < W; x++) pave(x, y, 'wood');
     // 게시판·선착장·다리
     solid(BOARD.x, BOARD.y); solid(BOARD.x + 1, BOARD.y); OBJ.push({ kind: 'board', x: BOARD.x, y: BOARD.y + 1 }); DOORS[BOARD.x + ',' + (BOARD.y + 1)] = { type: 'place', id: 'board' };
     DOORS[PIER.x + ',' + PIER.y] = { type: 'place', id: 'pier' };
@@ -173,8 +178,8 @@
       g.quadraticCurveTo(x0, y0 + h, x0, y0 + h - (d || l ? 0 : rad)); g.lineTo(x0, y0 + (u || l ? 0 : rad));
       g.quadraticCurveTo(x0, y0, x0 + (u || l ? 0 : rad), y0); g.fill();
     }
-    function blob(type, fill, edge, inset) {
-      function same(a, b) { if (a < 0 || b < 0 || a >= W || b >= H) return type.indexOf(G[Math.max(0, Math.min(H - 1, b)) * W + Math.max(0, Math.min(W - 1, a))]) >= 0; return type.indexOf(G[b * W + a]) >= 0; }
+    function blob(type, fill, edge, inset, pred) {
+      function same(a, b) { if (pred) return a >= 0 && b >= 0 && a < W && b < H && pred(b * W + a); if (a < 0 || b < 0 || a >= W || b >= H) return type.indexOf(G[Math.max(0, Math.min(H - 1, b)) * W + Math.max(0, Math.min(W - 1, a))]) >= 0; return type.indexOf(G[b * W + a]) >= 0; }
       [0, 1].forEach(function (pass) {   // 테두리를 먼저 다 그리고, 안쪽을 나중에 칠해서 칸 사이 줄이 안 보이게
         for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
           if (!same(x, y)) continue;
@@ -222,6 +227,13 @@
     blob([1], P('pa-gravel', P('path', '#ead1a0')), '#d2b07a', 3);
     hidden.forEach(function (i) { G[i] = 1; });
     blob([5], P('plaza', '#e4dccd'), '#c9b99c', 2);
+    blob(null, P('pa-brick', '#d9774f'), '#a9573a', 3, function (i) { return PAVE[i] === 'brick'; });
+    blob(null, P('pa-wood', '#c99a5b'), '#8a5a2b', 3, function (i) { return PAVE[i] === 'wood'; });
+    // 디딤돌: 길 대신 돌 무늬를 가장자리만 녹여서 풀밭 위에 얹는다
+    PAVE.forEach(function (k, i) { if (k === 'stone') { var px = i % W, py = (i - px) / W; g.save(); g.fillStyle = P('lawn', '#96d06e'); g.fillRect(px * T - 4, py * T - 1, T + 8, T + 2); g.restore(); soft('pa-stone', (px + 0.5) * T, (py + 0.5) * T, T * 0.95, T * 0.8, 0, 1); } });
+    // 비 오는 동안에는 풀밭 곳곳에 물웅덩이가 생긴다
+    groundWx = M.weather ? M.weather() : 'clear';
+    if (groundWx === 'rain') { var rw = rnd(57); for (var pd = 0; pd < 40; pd++) { var wx = 2 + Math.floor(rw() * (W - 4)), wy = 3 + Math.floor(rw() * (RIVER_Y - 5)); if (G[wy * W + wx] !== 0 || SOLID[wy * W + wx]) continue; soft('se-puddle', (wx + 0.5) * T, (wy + 0.5) * T, T * 0.62, T * 0.55, 0, 1); } }
     ground = c;
   }
 
@@ -492,6 +504,7 @@
         r = sprite('h-' + c.id, l.x + 1.5, l.y + 3.15, 3.5, false, 3.4);
         if (!r) { house(l.x, l.y, 3, 3, HOUSE_COL[c.id] || '#fff', '#c46b6b'); r = { top: l.y * T }; }
         label(c.name + (M.V.hearts(c.id) ? ' ♥' + M.V.hearts(c.id) : ''), (l.x + 1.5) * T, r.top + 2);
+        if (M.isBday && M.isBday(c.id)) { sprite('dish-strawcake', l.x + 0.15, l.y + 3.2, 0, false, 0.95); emoji('🎈', (l.x + 2.85) * T, r.top + 24 + Math.sin(performance.now() / 600) * 4, 20); }
         if (M.residentAsleep(c.id)) emoji('💤', (l.x + 2.6) * T, r.top + 18 + Math.sin(performance.now() / 500) * 3, 18);
       } else if (l.k === M.V.residents().length && M.V.nextMover()) {
         r = sprite('b-lot', l.x + 1.5, l.y + 3.1, 3.4, false, 2.6);
@@ -576,7 +589,7 @@
     if (bg) {
       bg.held = true; var gx = Math.round(bg.x - 0.5), gy = Math.round(bg.y);
       var near = nearestWalkable(gx, gy) || [gx, gy];
-      goTo(near[0], near[1], function () { bugs = bugs.filter(function (b) { return b !== bg; }); M.fxFloat('fx-netbug', 110); M.gatherGot(bg.id); });
+      goTo(near[0], near[1], function () { bugs = bugs.filter(function (b) { return b !== bg; }); M.fxFloat('fx-netbug', 110); M.gatherGot(bg.id); if (M.cupBug) M.cupBug(bg.id); });
       return true;
     }
     // 오늘 놓인 물건
@@ -724,7 +737,7 @@
   // ---------- 붙이기 ----------
   M.World = {
     mount: function (root) {
-      build(); if (ground && M.V && groundRes !== M.V.residents().length) ground = null;
+      build(); if (ground && M.V && (groundRes !== M.V.residents().length || (M.weather && (groundWx === 'rain') !== (M.weather() === 'rain')))) ground = null;
       if (!ground) { if (!tilesReady) { loadTiles(function () { tilesReady = true; ground = null; drawGround(); }); } drawGround(); }
       var w = Wst();
       if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 22; me.y = me.py = me.ty = 24; } }
@@ -744,8 +757,10 @@
       mounted = root; lastT = 0;
       if (!raf) raf = requestAnimationFrame(draw);
       if (M.moveInCheck) M.moveInCheck();
+      if (M.villageSide) M.villageSide(cv.parentNode);
       if (M.Family && M.Family.myPos) M.Family.myPos(me.x, me.y, me.d);
     },
+    goToResident: function (id) { var k = M.V.residents().map(function (c) { return c.id; }).indexOf(id), lot = LOTOBJ[k]; if (!lot) return; goTo(lot.door.x, lot.door.y, function () { M.V.resident(id); }); },
     announce: function () { if (me && mounted && cv && cv.isConnected && M.Family && M.Family.myPos) M.Family.myPos(me.x, me.y, me.d); },
     // 자동 점검용
     state: function () { return { me: me && { x: me.x, y: me.y, moving: me.t < 1 || me.path.length > 0 }, npcs: npcs.map(function (n) { return { id: n.id, x: n.x, y: n.y }; }) }; },

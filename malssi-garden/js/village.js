@@ -124,12 +124,25 @@
       if (e.target.closest('[data-quests]')) { d.close(); M.openQuests(); }
     });
   }
+  // 마을 도움말: 주제별로 나눠서 보여 준다
+  function villageHelp() {
+    var pn = esc(M.j(M.P.petName, '이가', '가')), sec = function (t, items) { return '<h4 class="hsec">' + t + '</h4><ul class="unl">' + items.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'; };
+    M.modal('<h3>🏡 마을 도움말</h3><div class="helpbody">' +
+      sec('🚶 다니기', ['지도를 누르면 ' + pn + ' 걸어가요. 손가락으로 끌면 화면을 옮겨 봐요.', '🗺️ <b>지도</b>에서 가고 싶은 곳을 바로 고를 수 있어요.', '🚲 <b>자전거</b>(잡화점, 다 자란 뒤)가 있으면 먼 길은 자동으로 타고 가요.']) +
+      sec('🐻 주민', ['❗가 뜬 주민 집에 가면 <b>부탁</b>(미니게임)을 들어줄 수 있어요.', '💬 하루 한 번 <b>이야기하기</b>, 🍎 열매·🍲 요리 <b>선물</b>로 친해져요. 좋아하는 맛을 주면 ♥가 더 올라요.', '🎂 주민마다 <b>생일</b>이 있어요. 생일인 주민 집에는 케이크가 놓이고, 찾아가서 축하하면 ♥가 한 칸 올라요.', '정원 가게 레벨이 오르면 새 주민이 <b>이사</b> 와요. 밤에는 주민들이 집에 들어가 자요.']) +
+      sec('🧺 모으기', ['🌳 <b>나무</b>를 흔들면 열매·나뭇가지·통나무가 떨어져요. 🪨 <b>바위</b>는 하루 3번 두드려요.', '바닥의 버섯·꽃, 모래사장의 조개, 별 모양 <b>파는 곳</b>(화석)은 매일 새로 생겨요.', '🦋 날아다니는 <b>곤충</b>을 눌러 잡아요. 시간대마다 나오는 곤충이 달라요.', '🎣 낚시터에서 <b>낚시</b>를 해요. 비 오는 날에는 귀한 물고기가 잘 물어요.', '✨ <b>행운의 향수</b>(가방)를 쓰면 30분 동안 곤충과 물건이 두 배로 나와요. 오늘 공부 목표를 채우면 하나 받아요.']) +
+      sec('🍳 요리와 배틀', ['모은 재료로 집에서 <b>요리</b>하고, 먹으면 잠깐 힘이 나는 효과(버프)가 붙어요.', '🪲 잡은 곤충으로 <b>곤충 배틀</b>을 해요. 이기면 곤충이 강해져요.']) +
+      sec('🏆 행사', ['주말에는 <b>대회</b>가 열려요. 토요일은 가장 큰 물고기를 겨루는 낚시 대회, 일요일은 곤충 점수를 모으는 곤충 대회예요. 다음 날 상을 받아요.', '달마다 <b>계절 장식</b>이 놓이고, 누르면 계절 인사를 배워요. 맑은 밤에는 별똥별이 지나가요.', '⭐ 정해진 일을 해내면 <b>스티커</b>를 모아요.']) +
+      sec('📷 사진과 가족', ['오른쪽 위 📷 단추로 마을을, 집에서는 방 왼쪽 위 📷 단추로 방을 찍어요. 사진첩에 모으거나 기기에 저장해요.', '💕 <b>가족 연결</b>(설정)을 하면 서로의 토끼가 마을에 보이고, 선물·사진을 보내고, 같이 놀이를 할 수 있어요.']) +
+      sec('📖 공부와 이어지기', ['레슨을 하면 하루 처음 세 번은 <b>낚시 미끼</b>를 받고, 오늘 목표를 채우면 <b>행운의 향수</b>를 받아요.']) +
+      '</div><button class="btn primary wide" data-close>닫기</button>', { cls: 'bagsheet' });
+  }
   function resImg(c) { var s = M.custImg(c.id); return s ? '<img src="' + s + '" alt="">' : c.em; }
   function residentSheet(id) {
     if (M.visiting) { M.toast('🦝 방문 중에는 주민과 놀 수 없어요. 장터를 열거나 ' + M.Family.mateName() + '에게 인사해 보세요'); return; }
     if (M.residentAsleep && M.residentAsleep(id)) { var cz = M.custOf(id); M.toast('💤 ' + M.j(cz.name, '은', '는') + ' 쿨쿨 자고 있어요. 아침 6시쯤 일어나요'); return; }
     var c = M.custOf(id), m = M.miniFor(id), h = hearts(id), mq = M.miniAvail(id);
-    var d = M.modal('<div class="mintro"><img class="mface" src="' + M.custImg(id, true) + '" alt=""><div class="msay"><b>' + esc(c.name) + ' <span class="hearts">' + '♥'.repeat(h) + '♡'.repeat(5 - h) + '</span></b><p>' + esc(greet(c)) + '</p></div></div>' + (M.tasteLine ? M.tasteLine(id) : '') +
+    var d = M.modal('<div class="mintro"><img class="mface" src="' + M.custImg(id, true) + '" alt=""><div class="msay"><b>' + esc(c.name) + ' <span class="hearts">' + '♥'.repeat(h) + '♡'.repeat(5 - h) + '</span></b><p>' + esc(greet(c)) + '</p></div></div>' + (M.tasteLine ? M.tasteLine(id) : '') + (M.bdayLine ? M.bdayLine(id) : '') +
       (m ? '<button class="btn ' + (mq ? 'primary' : '') + ' wide" data-play>' + m.icon + ' ' + esc(m.name) + (m.open ? (mq ? ' · 오늘의 부탁!' : ' · 연습하기') : ' · ♥' + m.heart + '에 열려요') + '</button>' : '') +
       (M.dishGiftable && M.dishGiftable(id) ? '<button class="btn wide" data-dishg>🍲 요리 선물하기 <small>· 좋아하는 맛이면 ♥♥♥</small></button>' : '') + (M.potGiftable && M.potGiftable(id) ? '<button class="btn wide" data-gift>🎁 열매 선물하기 <small>· 친밀도 ♥</small></button>' : '') + '<button class="btn ' + (talkedToday(id) ? '' : 'primary') + ' wide" data-talk>💬 이야기하기' + (talkedToday(id) ? ' <small>(오늘 이미 이야기했어요)</small>' : ' <small>· 친밀도 ♥</small>') + '</button><button class="btn ghost wide" data-close>나가기</button>');
     d.addEventListener('click', function (e) {
@@ -137,6 +150,7 @@
       if (e.target.closest('[data-talk]')) { d.close(); talk(id); }
       if (e.target.closest('[data-gift]')) { d.close(); M.potGiftSheet(id); }
       if (e.target.closest('[data-dishg]')) { d.close(); M.dishGiftSheet(id); }
+      if (e.target.closest('[data-bday]')) { d.close(); M.bdayCelebrate(id); }
     });
   }
   function greet(c) {
@@ -150,7 +164,7 @@
     if (t.closest('#vBack')) { M.inVillage = false; M.render(); return; }
     if (t.closest('#vBag')) { M.gatherBag(); return; }
     if (t.closest('#vHome')) { M.Family.visit(false); return; }
-    if (t.closest('#vHelp')) { M.modal('<h3>🏡 마을</h3><ul class="unl"><li>지도를 누르면 ' + esc(M.j(M.P.petName, '이가', '가')) + ' 걸어가요.</li><li>건물을 누르면 걸어가서 들어가요. <b>정원 가게</b>에서 밭을 가꾸고 손님 의뢰를 채워요.</li><li>❗가 뜬 주민 집에 가면 <b>부탁</b>을 들어줄 수 있어요.</li><li>가게 레벨이 오르면 새 주민이 <b>이사</b> 와요.</li><li><b>나무</b>를 누르면 흔들어서 열매·나뭇가지·통나무가 떨어져요. 열매 나무는 6시간마다 다시 열려요.</li><li><b>바위</b>는 하루 3번 두드려 돌·점토·광석을 캐요.</li><li>바닥의 버섯·꽃, 모래사장의 조개, 별 모양 <b>파는 곳</b>(화석)은 매일 새로 생겨요.</li><li>날아다니는 <b>곤충</b>을 눌러 잡아요. 시간대마다 달라요.</li><li>모은 것은 <b>🧺 가방</b>에서 팔고, 재료로 <b>집을 넓혀요</b>.</li></ul><button class="btn primary wide" data-close>닫기</button>'); return; }
+    if (t.closest('#vHelp')) { villageHelp(); return; }
     var w = t.closest('#vWorld'); if (!w) return;
     var pl = t.closest('[data-place]'), rs = t.closest('[data-res]'), lot = t.closest('[data-lot]');
     var tgt = pl || rs || lot;

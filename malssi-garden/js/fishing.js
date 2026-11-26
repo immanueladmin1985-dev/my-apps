@@ -142,12 +142,13 @@
     var el = $('fishing'); if (!el) return;
     function show(bonus) {
       size = Math.round(size * (bonus ? 1.2 : 1));
+      var cupMsg = M.cupFish ? M.cupFish(f, size) : '';
       var rec = d[f.id] || { n: 0, max: 0 }; rec.n++; var best = size > rec.max; rec.max = Math.max(rec.max, size); d[f.id] = rec;
       var price = Math.round(f.price * (0.7 + 0.6 * (size - f.size[0]) / (f.size[1] - f.size[0] || 1)));
       M.save(); M.quest && M.quest('fish', 1);
       el.innerHTML = '<div class="fcatch"><div class="fbig"><img class="fsplash" src="img/w/fx-splash.png" alt="">' + fimg(f) + '</div><h3>' + f.ko + (first ? ' <span class="newtag">처음!</span>' : '') + '</h3><p class="rar r' + M.rarity(f.price, f.r).n + '">' + M.rarity(f.price, f.r).stars + ' ' + M.rarity(f.price, f.r).name + '</p>' +
         '<button class="fname lang-' + lang + '" data-fsay="' + esc(nm.t) + '">🔊 <b>' + esc(nm.t) + '</b>' + (nm.r ? '<small>' + esc(nm.r) + '</small>' : '') + '</button>' +
-        '<p>' + size + 'cm' + (best && !first ? ' · 최고 기록!' : '') + (bonus ? ' · 이름 맞힘 보너스 +20%' : '') + '</p>' +
+        '<p>' + size + 'cm' + (best && !first ? ' · 최고 기록!' : '') + (bonus ? ' · 이름 맞힘 보너스 +20%' : '') + '</p>' + (cupMsg ? '<p class="cupmsg">' + cupMsg + '</p>' : '') +
         '<div class="row2"><button class="btn" id="fRel">놓아주기</button><button class="btn primary" id="fSell">팔기 <img class="inl" src="img/coin.png" alt="">' + price + '</button></div>' +
         '<button class="btn wide" id="fKeep">🧺 가방에 넣기</button><button class="btn wide" id="fAgain">한 번 더 ' + bIcon(cur ? cur.bait : 'worm') + '</button><button class="btn ghost wide" id="fQuit">그만하기</button><p class="hint">박물관 물고기 도감에 기록했어요</p></div>';
       M.say(nm.t, lang);
