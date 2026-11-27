@@ -1,4 +1,10 @@
-const CACHE = 'malssi-garden-v116';
+// 오프라인 저장 (말씨정원)
+// 코드(html·css·js)와 그림을 서로 다른 저장소에 둔다.
+// - 코드를 고치면 CODE 버전만 올린다. 그림은 다시 받지 않는다.
+// - 그림을 추가·교체하면 IMG 버전을 올리고 IMGS 목록에도 넣는다. (같은 이름의 그림을 바꿨을 때는 반드시 올린다)
+const CODE = 'malssi-code-v117';
+const IMG = 'malssi-img-v1';
+const KEEP = [CODE, IMG];
 const CORE = [
   './',
   './index.html',
@@ -60,6 +66,36 @@ const CORE = [
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
+  './sfx/arcade/drop.mp3',
+  './sfx/arcade/error.mp3',
+  './sfx/arcade/level-up.mp3',
+  './sfx/arcade/press.mp3',
+  './sfx/arcade/reward.mp3',
+  './sfx/arcade/snap.mp3',
+  './sfx/arcade/success.mp3',
+  './sfx/glass/drop.mp3',
+  './sfx/glass/error.mp3',
+  './sfx/glass/level-up.mp3',
+  './sfx/glass/press.mp3',
+  './sfx/glass/reward.mp3',
+  './sfx/glass/snap.mp3',
+  './sfx/glass/success.mp3',
+  './sfx/rubber/drop.mp3',
+  './sfx/rubber/error.mp3',
+  './sfx/rubber/level-up.mp3',
+  './sfx/rubber/press.mp3',
+  './sfx/rubber/reward.mp3',
+  './sfx/rubber/snap.mp3',
+  './sfx/rubber/success.mp3',
+  './sfx/soft/drop.mp3',
+  './sfx/soft/error.mp3',
+  './sfx/soft/level-up.mp3',
+  './sfx/soft/press.mp3',
+  './sfx/soft/reward.mp3',
+  './sfx/soft/snap.mp3',
+  './sfx/soft/success.mp3'
+];
+const IMGS = [
   './img/dress-apron.png',
   './img/wear-apron.png',
   './img/dress-raincoat.png',
@@ -257,34 +293,6 @@ const CORE = [
   './img/rare-gseed.png',
   './img/rare-rainbow.png',
   './img/stall.png',
-  './sfx/arcade/drop.mp3',
-  './sfx/arcade/error.mp3',
-  './sfx/arcade/level-up.mp3',
-  './sfx/arcade/press.mp3',
-  './sfx/arcade/reward.mp3',
-  './sfx/arcade/snap.mp3',
-  './sfx/arcade/success.mp3',
-  './sfx/glass/drop.mp3',
-  './sfx/glass/error.mp3',
-  './sfx/glass/level-up.mp3',
-  './sfx/glass/press.mp3',
-  './sfx/glass/reward.mp3',
-  './sfx/glass/snap.mp3',
-  './sfx/glass/success.mp3',
-  './sfx/rubber/drop.mp3',
-  './sfx/rubber/error.mp3',
-  './sfx/rubber/level-up.mp3',
-  './sfx/rubber/press.mp3',
-  './sfx/rubber/reward.mp3',
-  './sfx/rubber/snap.mp3',
-  './sfx/rubber/success.mp3',
-  './sfx/soft/drop.mp3',
-  './sfx/soft/error.mp3',
-  './sfx/soft/level-up.mp3',
-  './sfx/soft/press.mp3',
-  './sfx/soft/reward.mp3',
-  './sfx/soft/snap.mp3',
-  './sfx/soft/success.mp3',
   './img/furn-dx-applecrate.png',
   './img/furn-dx-barrel.png',
   './img/furn-dx-flowercart.png',
@@ -1229,15 +1237,29 @@ const CORE = [
   './img/waterbarrel.png',
   './img/workbench.png'
 ];
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('install', e => {
+  e.waitUntil(Promise.all([
+    caches.open(CODE).then(c => c.addAll(CORE)),
+    // 그림은 이미 받은 것은 건너뛰고, 없는 것만 받는다 (하나가 실패해도 설치는 계속한다)
+    caches.open(IMG).then(c => Promise.all(IMGS.map(u => c.match(u).then(hit => hit || c.add(u).catch(() => {})))))
+  ]).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => KEEP.indexOf(k) < 0).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+});
+const isAsset = p => /\/img\/|\/vendor\/fonts\/.*\.(woff2?|ttf|otf)$/.test(p);
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  // 인터넷이 되면 새 파일을, 안 되면 저장해 둔 파일을 쓴다
+  if (isAsset(url.pathname)) {
+    // 그림·글꼴: 저장해 둔 것을 먼저 쓰고, 없을 때만 받아서 저장한다
+    e.respondWith(caches.open(IMG).then(c => c.match(req).then(hit => hit || fetch(req).then(r => { if (r && r.ok) c.put(req, r.clone()); return r; }))));
+    return;
+  }
+  // 코드: 인터넷이 되면 새 파일을, 안 되면 저장해 둔 파일을 쓴다
   e.respondWith(fetch(req).then(r => {
-    if (r && r.ok) { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req.mode === 'navigate' ? './index.html' : req, cp)); }
+    if (r && r.ok) { const cp = r.clone(); caches.open(CODE).then(c => c.put(req.mode === 'navigate' ? './index.html' : req, cp)); }
     return r;
   }).catch(() => caches.match(req.mode === 'navigate' ? './index.html' : req).then(r => r || caches.match('./'))));
 });
