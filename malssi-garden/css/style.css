@@ -2076,3 +2076,29 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .qpw input { position: absolute; left: 8px; top: 10px; } .qpw.on { border-color: #ff8fab; background: #fff3f6; }
 .qpw b { font-size: 1rem; } .qpw small { color: var(--sub); font-size: .75rem; }
 .qmsg { font-weight: 800; color: #e0567a; }
+
+/* ---------- 태블릿 가로: 미니게임은 놀이판(왼쪽)과 문제·보기(오른쪽)로 나눈다 ---------- */
+@media (min-width: 900px) and (orientation: landscape) {
+  .mgame .mhead, .mgame .mtime { max-width: 1160px; width: calc(100% - 28px); margin-left: auto; margin-right: auto; }
+  .mgame .mbody { max-width: 1160px; width: 100%; margin: 0 auto; }
+  .gspicy, .gshell, .gcloze, .gsleep, .gseeds, .gbamboo, .griddle, .gparade, .gbazaar, .gcafe { display: grid; grid-template-columns: 1.3fr 1fr; column-gap: 24px; row-gap: 10px; align-content: center; grid-auto-rows: min-content; }
+  .gkitchen, .gsea, .gforest, .gtreebox, .gnuts, .gbstage, .groad, .gcards, .gstall, .gcounter { grid-column: 1; grid-row: 1 / span 8; min-height: 62vh; max-height: none; align-self: stretch; }
+  .griddle .grstage { grid-column: 2; } .griddle .gcards { align-items: center; } .griddle .gcard { max-width: 210px; }
+  .gcafe .gcounter { flex-direction: column; justify-content: center; align-items: center; } .gcafe .gcounter .gnpc.gcat { height: 220px; } .gcafe .gbub.order { margin: 10px 0 0; }
+  .gbazaar .gstall { flex-direction: column; justify-content: center; align-items: center; } .gbazaar .gstall .gnpc.gcamel { height: 260px; } .gbazaar .gstall .gbub { margin: 10px 0 0; }
+  .gchef .gnpc { height: 300px; } .gpotbox .gpotimg { width: 320px; } .gpotbox .gpotimg.f3 { width: 360px; }
+  .gpeps, .gropts, .gsopts { align-self: center; }
+  .gacorn, .gsong { max-width: 760px; width: 100%; margin: 0 auto; }
+  /* 읽기: 글(왼쪽)과 문제(오른쪽) */
+  .lbody:has(> .rdfold) { display: grid; grid-template-columns: 1.15fr 1fr; column-gap: 28px; align-content: start; }
+  .lbody:has(> .rdfold) > .rdfold { grid-column: 1; grid-row: 1 / span 4; } .lbody:has(> .rdfold) > .rdfold summary { pointer-events: none; }
+  .lbody:has(> .rdfold) > .qcard, .lbody:has(> .rdfold) > .opts { grid-column: 2; }
+  .lbody:has(> .rdfold) > .opts { grid-template-columns: 1fr; margin-top: 0; }
+  .lbody > .rdcard { max-width: 760px; margin: 0 auto; width: 100%; } .rdcard .rds { font-size: 1.35rem; }
+}
+@media (min-width: 900px) and (orientation: landscape) {
+  .gcafe .gcounter .gbub.order, .gbazaar .gstall .gbub { width: 86%; flex: none; margin-right: 0; }
+  .gcafe .gcounter .gguest { position: static; height: 90px; }
+  .gtreebox .gnpcbtn .gnpc.gkoala { height: 260px; }
+  .lbody:has(> .rdfold) > .qcard.rdq { min-height: 0; }
+}

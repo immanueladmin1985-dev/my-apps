@@ -197,7 +197,7 @@
     var d = M.modal('<div class="talkhead"><span class="tface">' + face + '</span><div><b>' + esc(M.j(c.name, '과', '와')) + ' 이야기</b><small>' + esc(sc.title) + '</small></div></div><div class="chat lang-' + lang + '" id="tChat"></div><div id="tOpts" class="copts"></div><button class="btn ghost wide" data-close>그만하기</button>');
     var chat = d.querySelector('#tChat'), opts = d.querySelector('#tOpts');
     function bubble(t, k, me, r) {
-      var b = document.createElement('button'); b.className = 'cb ' + (me ? 'me' : 'you'); b.dataset.say = t; b.dataset.who = me ? 'B' : 'A';
+      var b = document.createElement('button'); b.className = 'cb ' + (me ? 'me' : 'you'); b.dataset.say = t; b.dataset.who = me ? 'B' : 'c:' + id;
       b.innerHTML = '<b>' + M.fz(t, lang) + '</b>' + (r ? '<span class="dr">' + esc(r) + '</span>' : '') + '<small>' + esc(k) + '</small>';
       chat.appendChild(b); chat.scrollTop = chat.scrollHeight;
     }
@@ -205,7 +205,7 @@
       if (!d.isConnected) return;
       if (i >= sc.dlg.length) { wordQuiz(); return; }
       var line = sc.dlg[i], x = sc.xf.filter(function (q) { return q.di === i && q.aw === 'B'; })[0];
-      if (line.who === 'A') { bubble(line.t, line.k, false, line.r); i++; M.sayThen(line.t, lang, 'A', step); return; }
+      if (line.who === 'A') { bubble(line.t, line.k, false, line.r); i++; M.sayThen(line.t, lang, 'c:' + id, step); return; }
       if (!x) { bubble(line.t, line.k, true, line.r); i++; M.sayThen(line.t, lang, 'B', step); return; }
       total++;
       var right = [x.a].concat((x.alts || []).map(function (a) { return a.t; }));

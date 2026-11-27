@@ -425,8 +425,13 @@
     return exact.length ? exact : voices.filter(function (x) { return x.lang && x.lang.slice(0, 2) === pre; });
   }
   function genderOf(v) { var n = (v.name + ' ' + (v.voiceURI || '')).toLowerCase(); return /female|woman|女|kyoko|haruka|ayumi|nanami|samantha|zira|ting-ting|tingting|huihui|xiaoxiao|yuna|sora|-x-[a-z]*f|#female/.test(n) ? 'f' : /male|man|男|otoya|ichiro|keita|daniel|david|alex|yunyang|kangkang|-x-[a-z]*m|#male/.test(n) ? 'm' : ''; }
+  // 주민 목소리: 몸집에 따라 높낮이를 다르게 (작은 동물은 높게, 큰 동물은 낮게)
+  var CUST_PITCH = { chick: 1.45, hamster: 1.4, squirrel: 1.35, duck: 1.3, cat: 1.2, owl: 0.9, sheep: 1.15, otter: 1.15, fox: 1.1, hedgehog: 1.25, penguin: 1.25, deer: 1.15, dog: 1.1, koala: 0.95, monkey: 1.2, panda: 0.85, camel: 0.85, bear: 0.75, lion: 0.7, elephant: 0.65 };
+  function hashS(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 9973; return h; }
   function voiceFor(code, who) {
     var vs = langVoices(code); if (!who || vs.length < 2) return vs[0];
+    if (who === 'N') return vs[2] || vs[0];   // 이야기 읽어 주는 목소리
+    if (who.indexOf('c:') === 0) return vs[hashS(who) % vs.length];
     var want = who === 'A' ? 'f' : 'm', hit = vs.filter(function (v) { return genderOf(v) === want; })[0];
     if (hit) return hit;
     var local = vs.filter(function (v) { return v.localService; }); if (local.length >= 2) vs = local;
@@ -447,9 +452,12 @@
       if (!keep) speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.lang = code; u.rate = slow ? 0.55 : (M.P.set.rate || 0.9);
-      var v = voiceFor(code, who);
+      var v = voiceFor(code, who || M.voiceWho);
       if (v) u.voice = v;
-      if (who) { var g2 = v && genderOf(v), vs2 = langVoices(code); u.pitch = who === 'A' ? (g2 === 'f' || vs2.length > 1 ? 1.12 : 1.3) : (g2 === 'm' || vs2.length > 1 ? 0.9 : 0.72); }
+      if (!who && M.voiceWho) who = M.voiceWho;   // 미니게임 중에는 그 주민 목소리로
+      if (who && who.indexOf('c:') === 0) u.pitch = CUST_PITCH[who.slice(2)] || 1;
+      else if (who === 'N') u.pitch = 1;
+      else if (who) { var g2 = v && genderOf(v), vs2 = langVoices(code); u.pitch = who === 'A' ? (g2 === 'f' || vs2.length > 1 ? 1.12 : 1.3) : (g2 === 'm' || vs2.length > 1 ? 0.9 : 0.72); }
       speechSynthesis.speak(u); return u;
     } catch (e) {}
   };

@@ -57,7 +57,7 @@
   // 읽기 글: 문장마다 눌러서 듣고, 뜻은 눌러서 펼친다
   function readHtml(st, open) {
     return '<div class="rdcard lang-' + st.lang + '"><h3>' + esc(st.title) + '</h3>' + st.lines.map(function (l) {
-      return '<p class="rdl"><button class="rds" data-say="' + esc(l.t) + '">' + M.fz(l.t, st.lang) + (l.r ? '<span class="dr">' + esc(l.r) + '</span>' : '') + '</button><small class="rdk' + (open ? '' : ' hid') + '">' + esc(l.k) + '</small></p>';
+      return '<p class="rdl"><button class="rds" data-who="N" data-say="' + esc(l.t) + '">' + M.fz(l.t, st.lang) + (l.r ? '<span class="dr">' + esc(l.r) + '</span>' : '') + '</button><small class="rdk' + (open ? '' : ' hid') + '">' + esc(l.k) + '</small></p>';
     }).join('') + (open ? '' : '<button class="say mini rdshow" data-rdk="1">뜻 보기</button>') + '</div>';
   }
   function xformQ(x, lang) {
@@ -349,7 +349,7 @@
     if (mt && !mt.classList.contains('gone')) { matchTap(q, mt); return; }
     var pp = t.closest('[data-pairplay]');
     if (pp) { var w2 = q.pair.map(function (x) { return x.say; }); if (pp.dataset.pairplay === 'slow') { M.say(w2[0], S.lang, true); setTimeout(function () { M.say(w2[1], S.lang, true); }, 1400); } else M.sayList(w2.concat(w2), S.lang); return; }
-    if (t.closest('[data-readall]')) { M.sayList(q.stage.lines.map(function (d) { return d.t; }), S.lang); return; }
+    if (t.closest('[data-readall]')) { M.sayList(q.stage.lines.map(function (d) { return d.t; }), S.lang, q.stage.lines.map(function () { return 'N'; })); return; }
     if (t.closest('[data-rdk]')) { var rc = t.closest('.rdcard'); Array.prototype.forEach.call(rc.querySelectorAll('.rdk'), function (k) { k.classList.toggle('hid'); }); return; }
     if (t.closest('[data-sayall]')) { M.sayList(q.stage.dlg.map(function (d) { return d.t; }), S.lang, q.stage.dlg.map(function (d) { return d.who; })); return; }
     var sayB = t.closest('[data-say]');

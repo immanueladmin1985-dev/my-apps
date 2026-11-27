@@ -95,13 +95,13 @@
     var el = $('mini'); if (!el) { el = document.createElement('div'); el.id = 'mini'; el.className = 'mgame'; document.body.appendChild(el); }
     el.innerHTML = '<div class="mhead"><button class="ib" id="mQuit" aria-label="그만하기">✕</button><span class="mgt">' + m.icon + ' ' + esc(m.name) + '</span><span class="mscore" id="mScore">0점</span></div><div class="mtime"><i id="mTime"></i></div><div class="mbody" id="mBody"></div>';
     el.classList.remove('hidden'); document.body.classList.add('in-mini');
-    cur = { m: m, score: 0, alive: true, timers: [] };
+    cur = { m: m, score: 0, alive: true, timers: [] }; M.voiceWho = 'c:' + m.cust;
     $('mQuit').onclick = function () { M.confirm('그만할까요?', '지금까지 한 것은 보상이 없어요.', '그만하기', function () { stop(); }); };
     GAMES[m.id](cur);
   }
   function stop() {
     if (cur) { cur.alive = false; cur.timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); if (cur.raf) cancelAnimationFrame(cur.raf); }
-    cur = null; var el = $('mini'); if (el) { el.classList.add('hidden'); el.innerHTML = ''; } document.body.classList.remove('in-mini');
+    cur = null; M.voiceWho = null; var el = $('mini'); if (el) { el.classList.add('hidden'); el.innerHTML = ''; } document.body.classList.remove('in-mini');
     if (pendingExp && M.petExp) { var e = pendingExp; pendingExp = 0; setTimeout(function () { M.petExp(e); }, 300); }
     if ($('gardenView') && !$('gardenView').hidden) M.render();
   }
