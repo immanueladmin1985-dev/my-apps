@@ -1927,3 +1927,22 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 @media (min-width: 900px) { .gotter .gnpc { height: 170px; } .gclam { width: 92px; } .groad { height: 260px; } .gmarch img { height: 130px; } .gforest { padding-left: 130px; } .gdeer { height: 130px; } }
 .gpot { width: 96px; height: 92px; } .gpot::before { width: 92px; height: 50px; border-radius: 6px 6px 34px 34px; box-shadow: inset 0 6px 0 rgba(255,255,255,.25); }
 .groad { flex: 1 1 auto; min-height: 200px; max-height: 340px; height: auto; }
+
+/* ====== 미니게임 셋째 묶음 ====== */
+/* 고슴도치: 도착할 집 */
+.gdest { --near: 0; position: absolute; left: 50%; top: 6px; margin-left: -40px; width: 80px; display: flex; flex-direction: column; align-items: center; transform: scale(calc(.6 + var(--near) * .6)); transform-origin: top center; transition: transform .4s; z-index: 1; pointer-events: none; }
+.gdest img { width: 70px; } .gdest small { background: #fff; border-radius: 8px; padding: 0 6px; font-weight: 800; font-size: .7rem; }
+/* 코알라 */
+.gsleep { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.gtreebox { position: relative; flex: 1; min-height: 230px; border-radius: 22px; background: linear-gradient(#e2f0ff, #eef8e6); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 10px; }
+.gkoala { height: 120px; transform: rotate(-8deg); } .gkoala.mumble { animation: gsing .9s ease; }
+.gzz { position: absolute; left: 58%; top: 20%; font-weight: 800; color: #8aa0c8; font-size: 1.3rem; line-height: .9; animation: gfloat 2s ease-in-out infinite; }
+.gbub.dream { position: absolute; top: 10px; left: 10px; right: 10px; } .gbub.dream em { display: block; font-style: normal; margin-top: 4px; font-weight: 800; color: var(--mint-d); }
+.gsopts { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.gsopts.piles, .gseeds .gsopts { grid-template-columns: 1fr 1fr; }
+/* 햄찌 */
+.gseeds { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.gcheek { display: flex; align-items: center; gap: 10px; } .gcheek .gbub { flex: 1; } .gcheek .wtag::before { display: none; }
+.gnuts { flex: 1; min-height: 150px; border-radius: 22px; background: #fff5e2; display: grid; place-items: center; padding: 10px; }
+.gpile { display: inline-flex; flex-wrap: wrap; justify-content: center; max-width: 220px; font-size: 1.9rem; line-height: 1.1; }
+.gsopts.piles .gpile { font-size: 1.1rem; max-width: 120px; }
