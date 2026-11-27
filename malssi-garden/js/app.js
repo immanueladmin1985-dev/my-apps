@@ -75,7 +75,7 @@
     var D = M.dailyState(), today = (P.log[M.today()] || {}).l || 0;
     var goalPct = Math.min(100, Math.round(today / P.set.goal * 100));
     var ready = M.questReady();
-    var due = M.dueItems(P.lang).length, wrongN = M.wrongItems(P.lang).length;
+    var dueAll = M.dueItems(P.lang).length, revLeft = M.reviewLeft(), due = Math.min(dueAll, revLeft), revDone = dueAll > 0 && revLeft === 0, wrongN = M.wrongItems(P.lang).length;
     // 수준별 탭: 기초 / N5 / N4 처럼 나눈다. 고른 탭이 없으면 지금 배우는 단계가 있는 탭
     var levels = []; L.units.forEach(function (u) { var lv = u.level || 'base'; if (levels.indexOf(lv) < 0) levels.push(lv); });
     var lvOf = function (s) { return L.units[s.unit].level || 'base'; };
@@ -86,11 +86,11 @@
       '<div class="mleft">' +
       // 오늘 카드: 오늘 목표·연속 기록·이어서 하기를 한 장에 모은다
       '<div class="todaycard"><img class="tscene" src="img/bg-map-' + P.lang + '.png" alt="">' +
-      '<button class="tgoal" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><span class="tgt"><b>' + (today >= P.set.goal ? '오늘 목표 달성! 🎉' : '오늘 목표 ' + P.set.goal + '판') + '</b><small>🔥 ' + (P.streak || 0) + '일 연속 공부 중</small>' + (due ? '<small>🔁 복습할 낱말 ' + due + '개</small>' : '') + '</span></button>' +
+      '<button class="tgoal" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><span class="tgt"><b>' + (today >= P.set.goal ? '오늘 목표 달성! 🎉' : '오늘 목표 ' + P.set.goal + '판') + '</b><small>🔥 ' + (P.streak || 0) + '일 연속 공부 중</small>' + (due ? '<small>🔁 오늘 복습 ' + due + '개 남음</small>' : revDone ? '<small>✔ 오늘 복습 끝</small>' : '') + '</span></button>' +
       '<div class="tchips"><button class="tchip" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '">퀘스트</button><button class="tchip" id="dWords"><span>📒</span>단어장</button></div>' +
       contBtn(L, prog, cur) + '</div>' +
       '<div class="acts">' +
-      '<button class="act" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="ae">🔁</span><b>복습</b><small>' + (due ? due + '개 때가 됐어요' : '잊기 전에 다시') + '</small></button>' +
+      '<button class="act" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="ae">🔁</span><b>복습</b><small>' + (revDone ? '오늘 복습 끝 ✔' : due ? '오늘 ' + due + '개' + (dueAll > due ? ' (쌓인 ' + dueAll + ')' : '') : '잊기 전에 다시') + '</small></button>' +
       '<button class="act" id="dWrong"' + (wrongN ? '' : ' disabled') + '>' + (wrongN ? '<i class="dot">' + wrongN + '</i>' : '') + '<span class="ae">✏️</span><b>틀린 것</b><small>' + (wrongN ? wrongN + '개 다시 풀기' : '틀린 낱말이 없어요') + '</small></button>' +
       '<button class="act" id="dGame"' + (M.missedItems(P.lang).length >= 3 ? '' : ' disabled') + '><span class="ae">🎯</span><b>복습 놀이</b><small>자주 틀린 낱말로</small></button>' +
       '<button class="act" id="dReport"><span class="ae">📊</span><b>리포트</b><small>이번 주 공부</small></button>' +
@@ -98,7 +98,13 @@
       '<div class="lvtabs">' + levels.map(function (lv) {
         var us = L.stages.filter(function (s) { return lvOf(s) === lv; }), dn = us.filter(function (s) { return prog[s.id]; }).length;
         return '<button data-lv="' + esc(lv) + '" class="' + (lv === tab ? 'on' : '') + '"><b>' + esc((lv === 'CO' && P.lang === 'en' ? 'A2 회화' : LVNAME[lv]) || lv) + '</b><small>' + dn + '/' + us.length + '</small></button>';
-      }).join('') + '</div><div class="path">';
+      }).join('') + '</div>' + (function () {
+        // 아직 닿지 않은 수준: 레벨 테스트로 앞 단계를 건너뛸 수 있다
+        if (gr({ lang: P.lang, unit: L.units.findIndex(function (u) { return (u.level || 'base') === tab; }) })) return '';
+        var first = L.stages.findIndex(function (s) { return lvOf(s) === tab; });
+        if (first < 0 || first <= cur) return '';
+        return '<button class="lvtest" data-lvtest="' + esc(tab) + '"><b>🚀 ' + esc(LVNAME[tab] || tab) + '부터 시작하고 싶다면?</b><small>레벨 테스트 15문제 · 12개 이상 맞히면 앞 단계를 건너뛰어요</small></button>';
+      })() + '<div class="path">';
     var n = 0;
     L.units.forEach(function (u, ui) {
       if ((u.level || 'base') !== tab) return;   // 고른 수준의 단원만 보여 준다
@@ -449,6 +455,7 @@
     var ub = t.closest('[data-unit]'); if (ub) { P.ui.open = P.ui.open || {}; P.ui.open[ub.dataset.unit] = !P.ui.open[ub.dataset.unit]; M.save(); M.render(); return; }
     if (t.closest('#dCont')) { var L0 = window.LANGS[P.lang], pr0 = P.prog[P.lang], c0 = firstOpen(L0, pr0, false); var tg = contTarget(L0, pr0, c0); if (tg) M.startLesson(P.lang, tg); return; }
     if (t.closest('#dQuest') || t.closest('#dGoal')) { quests(); return; }
+    var lt = t.closest('[data-lvtest]'); if (lt) { M.levelTest(P.lang, lt.dataset.lvtest, function () { mapScrolled = false; renderMap($('learnView')); }); return; }
     if (t.closest('#dReview')) { if (M.learnedCount(P.lang) >= 4) M.startLesson(P.lang, null); return; }
     if (t.closest('#dGame')) { M.reviewGame(); return; }
     if (t.closest('#dReport')) { M.openReport(); return; }

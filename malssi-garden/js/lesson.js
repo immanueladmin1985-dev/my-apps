@@ -505,7 +505,7 @@
     if (S.listenOK) M.quest('listen', S.listenOK);
     if (S.speakOK) M.quest('speak', S.speakOK);
     M.quest('combo', S.best);
-    if (S.review) M.quest('review', 1);
+    if (S.review) { M.quest('review', 1); if (!M.wrongMode) M.reviewDone(S.qs.filter(function (q) { return q.item && !q.again; }).length); }
     M.save();
     var goalHit = before < P.set.goal && before + 1 >= P.set.goal;
     var acc = Math.round(S.correct / Math.max(1, S.correct + S.mistakes) * 100);

@@ -355,6 +355,11 @@
     if (lang) return M.learnedItems(lang).length;
     return M.learnedItems('ja').length + M.learnedItems('en').length + M.learnedItems('zh').length;
   };
+  // 하루 복습 상한: 복습할 낱말이 많이 쌓여도 하루 30개까지만 권한다 (더 하고 싶으면 계속할 수 있다)
+  M.REVIEW_CAP = 30;
+  M.reviewUsed = function () { var r = M.P.rev || {}; return r.d === M.today() ? r.n : 0; };
+  M.reviewLeft = function () { return Math.max(0, M.REVIEW_CAP - M.reviewUsed()); };
+  M.reviewDone = function (n) { var r = M.P.rev = M.P.rev || {}; if (r.d !== M.today()) { r.d = M.today(); r.n = 0; } r.n += n; };
   M.dueItems = function (lang) {
     var now = Date.now();
     return M.learnedItems(lang).filter(function (it) { var s = M.P.srs[M.itemKey(it)]; return !s || s[1] <= now; });
