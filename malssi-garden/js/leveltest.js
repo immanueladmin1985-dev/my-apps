@@ -3,7 +3,7 @@
 (function () {
   var M = window.M, esc = M.esc, N = 15, PASS = 12;
   function lvOf(L, s) { return L.units[s.unit].level || 'base'; }
-  var SIDE = { GR: 1, CV: 1, CO: 1, RD: 1 };
+  var SIDE = { GR: 1, CV: 1, CO: 1, RD: 1, PR: 1 };
   M.levelTest = function (lang, lv, after) {
     var L = window.LANGS[lang], prog = M.P.prog[lang];
     var first = L.stages.findIndex(function (s) { return lvOf(L, s) === lv; });
