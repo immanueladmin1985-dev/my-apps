@@ -47,7 +47,8 @@
     if (!cands.length) { M.toast('문장을 조금 더 배우면 일기를 쓸 수 있어요'); return; }
     if (todayPage()) { M.toast('오늘 일기는 이미 썼어요. 일기장에서 볼 수 있어요'); M.diaryBook(); return; }
     var st = { wx: null, sn: null, stamps: [] };
-    var d = M.modal('<h3>📔 오늘의 그림일기</h3><div id="dyBody"></div>', { cls: 'bagsheet dysheet' });
+    var desk = M.isNinja && M.isNinja() ? 'img/w/ch-' + M.look().ch + '-desk' : '';   // 닌자는 책상에 앉아 일기를 쓴다
+    var d = M.modal('<h3>📔 오늘의 그림일기' + (desk ? '<img class="dydesk" id="dyDesk" src="' + desk + '.png" alt="">' : '') + '</h3><div id="dyBody"></div>', { cls: 'bagsheet dysheet' });
     var body = d.querySelector('#dyBody');
     function step1() {
       body.innerHTML = '<p class="dyq">1. 오늘 날씨는 어땠나요?</p><div class="dywx">' + WX.map(function (w) { return '<button data-wx="' + w.id + '"><span>' + w.e + '</span><b class="lang-' + lang + '">' + esc(w[lang]) + '</b><small>' + w.ko + '</small></button>'; }).join('') + '</div><button class="btn ghost wide" data-close>다음에 쓸게요</button>';
@@ -96,6 +97,7 @@
         var page = { d: M.today(), lang: lang, wx: st.wx, t: st.sn.t, k: st.sn.k, say: st.sn.say || st.sn.t, st: st.stamps.slice() };
         var L = list(); L.push(page); if (L.length > 120) L.splice(0, L.length - 120);
         M.give({ water: 10, coins: 20 }); M.save();
+        if (desk && $('dyDesk')) $('dyDesk').src = desk + 'happy.png';
         body.innerHTML = '<p class="dyq center">🎉 일기 한 쪽을 완성했어요! <small>물방울 +10 · 코인 +20</small></p>' + pageHtml(page) + '<button class="btn primary wide" id="dyBook">📔 일기장 보기</button><button class="btn ghost wide" data-close>닫기</button>';
         if (M.render) M.render();
         return;

@@ -300,8 +300,8 @@
   M.houseLv = function () { if (M.visiting && M.visitData && M.visitData.house) return M.visitData.house; return (M.P.house && M.P.house.lv) || 1; };
   M.houseInfo = function () { return HOUSE[M.houseLv()]; };
   // 집 겉모습: 토끼 집(분홍 지붕) 또는 당근 집, 단계마다 그림이 다르다
-  M.homeImg = function (lv) { var st = (M.visiting && M.visitData && M.visitData.hstyle) || (M.P.house && M.P.house.style) || 'bunny'; return 'home-' + st + '-' + Math.max(1, Math.min(5, lv || M.houseLv())); };
-  function styleRow() { var cur = (M.P.house && M.P.house.style) || 'bunny', lv = M.houseLv(); return '<h4>🏠 집 모양</h4><div class="row2">' + [['bunny', '토끼 집'], ['carrot', '당근 집']].map(function (x) { return '<button class="hstyle' + (cur === x[0] ? ' on' : '') + '" data-hst="' + x[0] + '"><img src="img/w/home-' + x[0] + '-' + lv + '.png" alt=""><small>' + x[1] + '</small></button>'; }).join('') + '</div>'; }
+  M.homeImg = function (lv) { var st = (M.visiting && M.visitData && M.visitData.hstyle) || (M.P.house && M.P.house.style) || 'bunny'; return 'home-' + st + '-' + Math.max(1, Math.min(st === 'dojo' ? 4 : 5, lv || M.houseLv())); };   // 닌자 도장 그림은 4단계까지 (5단계는 4단계 그림)
+  function styleRow() { var cur = (M.P.house && M.P.house.style) || 'bunny', lv = M.houseLv(); return '<h4>🏠 집 모양</h4><div class="row2 hst3">' + [['bunny', '토끼 집'], ['carrot', '당근 집'], ['dojo', '닌자 도장']].map(function (x) { return '<button class="hstyle' + (cur === x[0] ? ' on' : '') + '" data-hst="' + x[0] + '"><img src="img/w/home-' + x[0] + '-' + (x[0] === 'dojo' ? Math.min(4, lv) : lv) + '.png" alt=""><small>' + x[1] + '</small></button>'; }).join('') + '</div>'; }
   function styleClick(d) { return function (e) { var b = e.target.closest('[data-hst]'); if (!b) return; M.P.house = M.P.house || { lv: 1 }; M.P.house.style = b.dataset.hst; M.save(); d.close(); M.houseSheet(); }; }
   M.houseSheet = function () {
     var lv = M.houseLv(), nx = HOUSE[lv + 1], g = S();

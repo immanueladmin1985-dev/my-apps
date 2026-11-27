@@ -1,10 +1,12 @@
 // 오프라인 저장 (말씨정원)
 // 코드(html·css·js)와 그림을 서로 다른 저장소에 둔다.
 // - 코드를 고치면 CODE 버전만 올린다. 그림은 다시 받지 않는다.
-// - 그림을 추가·교체하면 IMG 버전을 올리고 IMGS 목록에도 넣는다. (같은 이름의 그림을 바꿨을 때는 반드시 올린다)
-const CODE = 'malssi-code-v121';
-const IMG = 'malssi-img-v1';
+// - 그림을 추가하면 IMGS 목록에 넣고 IMG 버전을 올린다. 이미 받은 그림은 예전 저장소에서 옮겨 담아 다시 받지 않는다.
+// - 같은 이름의 그림을 새 그림으로 바꿨다면 FRESH 에도 넣는다.
+const CODE = 'malssi-code-v122';
+const IMG = 'malssi-img-v2';
 const KEEP = [CODE, IMG];
+const FRESH = [];   // 같은 이름으로 그림을 바꿨을 때만 여기에 넣는다 (IMG 버전을 올리면 새로 받는다)
 const CORE = [
   './',
   './index.html',
@@ -1237,13 +1239,112 @@ const IMGS = [
   './img/water.png',
   './img/waterbag.png',
   './img/waterbarrel.png',
-  './img/workbench.png'
+  './img/workbench.png',
+  './img/furn-nj-bamboo.png',
+  './img/furn-nj-banner.png',
+  './img/furn-nj-bannerstand.png',
+  './img/furn-nj-bed.png',
+  './img/furn-nj-bonsai.png',
+  './img/furn-nj-bookcase.png',
+  './img/furn-nj-cauldron.png',
+  './img/furn-nj-cherry.png',
+  './img/furn-nj-chest.png',
+  './img/furn-nj-chest2.png',
+  './img/furn-nj-chime.png',
+  './img/furn-nj-cushion.png',
+  './img/furn-nj-cushion2.png',
+  './img/furn-nj-dragon.png',
+  './img/furn-nj-drum.png',
+  './img/furn-nj-helmet.png',
+  './img/furn-nj-katana.png',
+  './img/furn-nj-knot.png',
+  './img/furn-nj-lampstand.png',
+  './img/furn-nj-lantern.png',
+  './img/furn-nj-lantern2.png',
+  './img/furn-nj-luckycat.png',
+  './img/furn-nj-orb.png',
+  './img/furn-nj-pagoda.png',
+  './img/furn-nj-painting.png',
+  './img/furn-nj-pine.png',
+  './img/furn-nj-plant.png',
+  './img/furn-nj-screen.png',
+  './img/furn-nj-screen2.png',
+  './img/furn-nj-scroll.png',
+  './img/furn-nj-scrollrack.png',
+  './img/furn-nj-shelf.png',
+  './img/furn-nj-stonelamp.png',
+  './img/furn-nj-sword.png',
+  './img/furn-nj-teatable.png',
+  './img/w/ch-njfire-back.png',
+  './img/w/ch-njfire-desk.png',
+  './img/w/ch-njfire-deskhappy.png',
+  './img/w/ch-njfire-front.png',
+  './img/w/ch-njfire-happy.png',
+  './img/w/ch-njfire-side.png',
+  './img/w/ch-njice-back.png',
+  './img/w/ch-njice-desk.png',
+  './img/w/ch-njice-deskhappy.png',
+  './img/w/ch-njice-front.png',
+  './img/w/ch-njice-happy.png',
+  './img/w/ch-njice-side.png',
+  './img/w/ch-njleaf-back.png',
+  './img/w/ch-njleaf-desk.png',
+  './img/w/ch-njleaf-deskhappy.png',
+  './img/w/ch-njleaf-front.png',
+  './img/w/ch-njleaf-happy.png',
+  './img/w/ch-njleaf-side.png',
+  './img/w/ch-njshadow-back.png',
+  './img/w/ch-njshadow-desk.png',
+  './img/w/ch-njshadow-deskhappy.png',
+  './img/w/ch-njshadow-front.png',
+  './img/w/ch-njshadow-happy.png',
+  './img/w/ch-njshadow-side.png',
+  './img/w/home-dojo-1.png',
+  './img/w/home-dojo-2.png',
+  './img/w/home-dojo-3.png',
+  './img/w/home-dojo-4.png',
+  './img/w/rd-dragon-back.png',
+  './img/w/rd-dragon-front.png',
+  './img/w/rd-dragon-njfire-back.png',
+  './img/w/rd-dragon-njfire-front.png',
+  './img/w/rd-dragon-njfire-side.png',
+  './img/w/rd-dragon-njice-back.png',
+  './img/w/rd-dragon-njice-front.png',
+  './img/w/rd-dragon-njice-side.png',
+  './img/w/rd-dragon-njleaf-back.png',
+  './img/w/rd-dragon-njleaf-front.png',
+  './img/w/rd-dragon-njleaf-side.png',
+  './img/w/rd-dragon-njshadow-back.png',
+  './img/w/rd-dragon-njshadow-front.png',
+  './img/w/rd-dragon-njshadow-side.png',
+  './img/w/rd-dragon-side.png',
+  './img/w/rd-jet-back.png',
+  './img/w/rd-jet-front.png',
+  './img/w/rd-jet-side.png',
+  './img/w/rd-kart-back.png',
+  './img/w/rd-kart-front.png',
+  './img/w/rd-kart-njfire-back.png',
+  './img/w/rd-kart-njfire-front.png',
+  './img/w/rd-kart-njfire-side.png',
+  './img/w/rd-kart-njice-back.png',
+  './img/w/rd-kart-njice-front.png',
+  './img/w/rd-kart-njice-side.png',
+  './img/w/rd-kart-njleaf-back.png',
+  './img/w/rd-kart-njleaf-front.png',
+  './img/w/rd-kart-njleaf-side.png',
+  './img/w/rd-kart-njshadow-back.png',
+  './img/w/rd-kart-njshadow-front.png',
+  './img/w/rd-kart-njshadow-side.png',
+  './img/w/rd-kart-side.png',
+  './img/w/rd-ship-back.png',
+  './img/w/rd-ship-front.png',
+  './img/w/rd-ship-side.png'
 ];
 self.addEventListener('install', e => {
   e.waitUntil(Promise.all([
     caches.open(CODE).then(c => c.addAll(CORE)),
-    // 그림은 이미 받은 것은 건너뛰고, 없는 것만 받는다 (하나가 실패해도 설치는 계속한다)
-    caches.open(IMG).then(c => Promise.all(IMGS.map(u => c.match(u).then(hit => hit || c.add(u).catch(() => {})))))
+    // 그림은 이미 받은 것은 건너뛰고(예전 그림 저장소에 있으면 옮겨 담는다), 없는 것만 받는다. 하나가 실패해도 설치는 계속한다
+    caches.open(IMG).then(c => Promise.all(IMGS.map(u => c.match(u).then(hit => (hit && FRESH.indexOf(u) < 0 ? hit : (FRESH.indexOf(u) >= 0 ? c.add(u) : caches.match(u).then(old => old ? c.put(u, old) : c.add(u)))).catch(() => {})))))
   ]).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {

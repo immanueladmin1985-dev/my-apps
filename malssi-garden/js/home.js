@@ -20,12 +20,23 @@
     ['kitchen', '🍳', '부엌 조리대', 380, 'f', 32], ['fridge', '🧊', '당근 냉장고', 300, 'f', 18], ['dining', '🍽️', '2인 식탁', 320, 'f', 32], ['coffee', '☕', '커피 머신', 160, 'f', 14],
     ['cakestand', '🧁', '컵케이크 진열대', 150, 'f', 14], ['cattower', '🐾', '캣타워', 200, 'f', 18], ['hutch', '🏠', '토끼 집', 300, 'f', 24], ['guitar', '🎸', '기타', 150, 'f', 13],
     ['plush', '🧸', '인형 더미', 180, 'f', 20], ['fishbowl', '🐟', '작은 어항', 120, 'f', 15], ['aquarium', '🐠', '큰 수족관', 450, 'f', 30], ['bugcase', '🪲', '곤충 채집 상자', 300, 'f', 23], ['bugframe', '🦋', '곤충 표본 액자', 200, 'w', 17], ['stars', '⭐', '별 가랜드', 80, 'w', 30], ['painting', '🖼️', '집 그림 액자', 120, 'w', 16],
-    ['pl-monstera', '🪴', '몬스테라', 90, 'f', 14], ['pl-cactus', '🪴', '선인장', 40, 'f', 14], ['pl-succulent', '🪴', '다육이', 40, 'f', 14], ['pl-lavender', '🪴', '라벤더', 60, 'f', 14], ['pl-hydrangea', '🪴', '수국', 80, 'f', 14], ['pl-lily', '🪴', '백합', 70, 'f', 14], ['pl-tulip', '🪴', '튤립 화분', 50, 'f', 14], ['pl-pearls', '🪴', '구슬 덩굴', 70, 'f', 14], ['pl-fern', '🪴', '고사리', 50, 'f', 14], ['pl-ivy', '🪴', '아이비', 60, 'f', 14], ['pl-calla', '🪴', '칼라', 70, 'f', 14], ['pl-poinsettia', '🪴', '포인세티아', 80, 'f', 14], ['pl-morningglory', '🪴', '나팔꽃', 60, 'f', 14], ['pl-carnation', '🪴', '카네이션', 60, 'f', 14], ['pl-clover', '🪴', '클로버', 40, 'f', 14], ['pl-aloe', '🪴', '알로에', 40, 'f', 14], ['dx-topiary', '🪴', '동글 나무', 90, 'f', 16], ['dx-barrel', '🪴', '나무통', 50, 'f', 16], ['dx-applecrate', '🪴', '사과 상자', 60, 'f', 16], ['dx-flowercart', '🪴', '꽃 수레', 150, 'f', 16], ['dx-tulipbox', '🪴', '튤립 상자', 80, 'f', 16]
+    ['pl-monstera', '🪴', '몬스테라', 90, 'f', 14], ['pl-cactus', '🪴', '선인장', 40, 'f', 14], ['pl-succulent', '🪴', '다육이', 40, 'f', 14], ['pl-lavender', '🪴', '라벤더', 60, 'f', 14], ['pl-hydrangea', '🪴', '수국', 80, 'f', 14], ['pl-lily', '🪴', '백합', 70, 'f', 14], ['pl-tulip', '🪴', '튤립 화분', 50, 'f', 14], ['pl-pearls', '🪴', '구슬 덩굴', 70, 'f', 14], ['pl-fern', '🪴', '고사리', 50, 'f', 14], ['pl-ivy', '🪴', '아이비', 60, 'f', 14], ['pl-calla', '🪴', '칼라', 70, 'f', 14], ['pl-poinsettia', '🪴', '포인세티아', 80, 'f', 14], ['pl-morningglory', '🪴', '나팔꽃', 60, 'f', 14], ['pl-carnation', '🪴', '카네이션', 60, 'f', 14], ['pl-clover', '🪴', '클로버', 40, 'f', 14], ['pl-aloe', '🪴', '알로에', 40, 'f', 14], ['dx-topiary', '🪴', '동글 나무', 90, 'f', 16], ['dx-barrel', '🪴', '나무통', 50, 'f', 16], ['dx-applecrate', '🪴', '사과 상자', 60, 'f', 16], ['dx-flowercart', '🪴', '꽃 수레', 150, 'f', 16], ['dx-tulipbox', '🪴', '튤립 상자', 80, 'f', 16],
+    // 닌자 도장 소품 (아이 모드에서 먼저 보인다)
+    ['nj-bed', '🛏️', '용 침대', 220, 'f', 30], ['nj-shelf', '🗄️', '닌자 진열장', 180, 'f', 20], ['nj-banner', '🎏', '용 족자', 80, 'w', 11], ['nj-lampstand', '🏮', '등불 기둥', 90, 'f', 11],
+    ['nj-bonsai', '🌳', '분재 화분', 90, 'f', 14], ['nj-chest', '🧰', '용 보물 상자', 160, 'f', 18], ['nj-screen', '🌸', '벚꽃 병풍', 150, 'f', 24], ['nj-teatable', '🍵', '찻상', 120, 'f', 22],
+    ['nj-cushion', '🟥', '용 방석', 50, 'f', 13], ['nj-chime', '🎐', '풍경', 50, 'w', 7], ['nj-lantern', '🏮', '용 등', 70, 'w', 9], ['nj-bannerstand', '🎌', '깃발 받침', 90, 'f', 12],
+    ['nj-katana', '⚔️', '칼 거치대', 160, 'f', 18], ['nj-pine', '🌲', '소나무 분재', 110, 'f', 15], ['nj-luckycat', '🐱', '복고양이', 120, 'f', 11], ['nj-bookcase', '📚', '두루마리 책장', 140, 'f', 18],
+    ['nj-chest2', '🧰', '작은 보물 상자', 110, 'f', 15], ['nj-screen2', '🌸', '접이 병풍', 130, 'f', 22], ['nj-drum', '🥁', '큰 북', 170, 'f', 15], ['nj-stonelamp', '🏯', '석등', 130, 'f', 12],
+    ['nj-cushion2', '🟥', '작은 방석', 40, 'f', 12], ['nj-plant', '🪴', '용 화분', 60, 'f', 12], ['nj-scroll', '🏔️', '산수화 족자', 90, 'w', 11], ['nj-cauldron', '🍲', '가마솥', 140, 'f', 13],
+    ['nj-scrollrack', '📜', '두루마리 선반', 150, 'f', 18], ['nj-helmet', '🥷', '닌자 두건 장식', 120, 'f', 11], ['nj-orb', '🔮', '금빛 구슬', 200, 'f', 10], ['nj-pagoda', '🏯', '탑 모형', 180, 'f', 15],
+    ['nj-lantern2', '🏮', '네모 등불', 80, 'f', 11], ['nj-dragon', '🐉', '용 조각상', 250, 'f', 15], ['nj-cherry', '🌸', '벚꽃 꽃병', 80, 'f', 11], ['nj-painting', '🌅', '노을 그림', 120, 'w', 17],
+    ['nj-knot', '🧧', '매듭 장식', 50, 'w', 7], ['nj-sword', '🗡️', '칼 장식', 130, 'f', 18], ['nj-bamboo', '🎋', '대나무 화분', 70, 'f', 11]
   ].map(function (a) { return { id: a[0], e: a[1], name: a[2], price: a[3], wall: a[4] === 'w', rug: a[4] === 'r', size: a[5] }; });
-  var FCAT = { plants: ['🪴 화분', 'pl-monstera,pl-cactus,pl-succulent,pl-lavender,pl-hydrangea,pl-lily,pl-tulip,pl-pearls,pl-fern,pl-ivy,pl-calla,pl-poinsettia,pl-morningglory,pl-carnation,pl-clover,pl-aloe'], living: ['🛋️ 거실', 'sofa,armchair,table,sidetable,teatable,tv,fireplace,books,lamp,piano'], bed: ['🛏️ 침실', 'bed,wardrobe,dresser,mirror,desk,chair,cushion'],
+  var FCAT = { ninja: ['🥷 닌자', 'nj-bed,nj-shelf,nj-bookcase,nj-chest,nj-chest2,nj-teatable,nj-screen,nj-screen2,nj-drum,nj-katana,nj-sword,nj-scrollrack,nj-dragon,nj-pagoda,nj-orb,nj-helmet,nj-luckycat,nj-cauldron,nj-lampstand,nj-stonelamp,nj-lantern2,nj-bannerstand,nj-bonsai,nj-pine,nj-plant,nj-bamboo,nj-cherry,nj-cushion,nj-cushion2,nj-banner,nj-scroll,nj-painting,nj-lantern,nj-chime,nj-knot'], plants: ['🪴 화분', 'pl-monstera,pl-cactus,pl-succulent,pl-lavender,pl-hydrangea,pl-lily,pl-tulip,pl-pearls,pl-fern,pl-ivy,pl-calla,pl-poinsettia,pl-morningglory,pl-carnation,pl-clover,pl-aloe'], living: ['🛋️ 거실', 'sofa,armchair,table,sidetable,teatable,tv,fireplace,books,lamp,piano'], bed: ['🛏️ 침실', 'bed,wardrobe,dresser,mirror,desk,chair,cushion'],
     kitchen: ['🍳 부엌', 'kitchen,fridge,dining,coffee,cakestand,tea'], deco: ['🌷 장식', 'fishbowl,aquarium,bugcase,bugframe,plant,sakura,tulips,hangplant,fish,toys,plush,guitar,petbed,cattower,hutch,dx-topiary,dx-barrel,dx-applecrate,dx-flowercart,dx-tulipbox'],
     wall: ['🖼️ 벽', 'window,clock,frame,shelf,lights,stars,painting'], rug: ['🧶 깔개', 'rug,rug2,floorcush'] };
   var fcat = 'living';
+  M.kidMode = function () { return !!(M.P && M.P.kid); };
   var WALLS = [{ id: 0, name: '기본 (아이보리)', price: 0, src: 'img/bg-room.jpg' }, { id: 1, name: '분홍 줄무늬', price: 300, src: 'img/wall-1.jpg' }, { id: 2, name: '민트 물방울', price: 300, src: 'img/wall-2.jpg' },
     { id: 3, name: '꽃무늬·분홍 카펫', price: 400, src: 'img/wall-3.jpg' }, { id: 4, name: '밤하늘 별빛', price: 500, src: 'img/wall-4.jpg' }];
   WALLS.forEach(function (w) { var b = w.src.replace('.jpg', ''); w.wl = b + '-w.webp'; w.fl = b + '-f.webp'; });
@@ -71,7 +82,29 @@
     ch = ch || M.look().ch; st = st || M.avStage();
     return ch.indexOf('rabbit') === 0 ? 'ch-rabbit' + st + '-' + view + (frame || 1) : 'ch-' + ch + '-' + view;
   };
-  M.LOOKS = ['rabbit', 'rabbit1', 'rabbit2', 'rabbit3', 'dog', 'cat', 'bear', 'panda', 'fox', 'penguin', 'lion', 'monkey', 'elephant', 'koala', 'hamster', 'squirrel', 'chick', 'duck', 'owl', 'otter', 'deer', 'sheep', 'hedgehog', 'camel', 'mole'];
+  // 탈것: 자전거(큰 토끼만), 카트·용(닌자는 올라탄 모습), 제트기·하늘배(떠서 날아간다)
+  M.RIDES = [
+    { id: 'bike', name: '분홍 자전거', price: 1500, img: 'img/w/it-bike.png', e: '🚲' },
+    { id: 'kart', name: '닌자 카트', price: 1200, img: 'img/w/rd-kart-side.png', e: '🏎️', size: 1.1 },
+    { id: 'dragon', name: '불꽃 용', price: 2500, img: 'img/w/rd-dragon-side.png', e: '🐉', size: 1.3 },
+    { id: 'jet', name: '하늘 제트기', price: 2000, img: 'img/w/rd-jet-side.png', e: '✈️', size: 0.9, fly: 1 },
+    { id: 'ship', name: '용 하늘배', price: 3000, img: 'img/w/rd-ship-side.png', e: '⛵', size: 1.15, fly: 1 }
+  ];
+  M.rideInfo = function (id) { return M.RIDES.filter(function (r) { return r.id === id; })[0] || null; };
+  M.rideOwned = function (id) { return id === 'bike' ? !!M.P.bike : !!(M.P.rides && M.P.rides[id]); };
+  M.rideUsable = function (id) { return M.rideOwned(id) && (id !== 'bike' || (M.isRabbit() && M.avStage() >= 3)); };
+  // 지금 탈 탈것: 고른 것이 탈 수 있으면 그것, 아니면 탈 수 있는 첫 탈것
+  M.rideNow = function () { if (M.P.ride && M.rideUsable(M.P.ride)) return M.P.ride; var r = M.RIDES.filter(function (x) { return M.rideUsable(x.id); })[0]; return r ? r.id : null; };
+  // 마을에서 타고 가는 그림 이름
+  M.rideName = function (rid, view, frame, ch) {
+    rid = rid || 'bike'; ch = ch || M.look().ch;
+    if (rid === 'bike') return 'ch-rabbit3-bike-' + view + (frame || 1);
+    if ((rid === 'kart' || rid === 'dragon') && M.isNinja(ch)) return 'rd-' + rid + '-' + ch + '-' + view;
+    return 'rd-' + rid + '-' + view;
+  };
+  M.NINJAS = ['njfire', 'njice', 'njleaf', 'njshadow'];
+  M.isNinja = function (ch) { return M.NINJAS.indexOf(ch || M.look().ch) >= 0; };
+  M.LOOKS = ['rabbit', 'rabbit1', 'rabbit2', 'rabbit3', 'njfire', 'njice', 'njleaf', 'njshadow', 'dog', 'cat', 'bear', 'panda', 'fox', 'penguin', 'lion', 'monkey', 'elephant', 'koala', 'hamster', 'squirrel', 'chick', 'duck', 'owl', 'otter', 'deer', 'sheep', 'hedgehog', 'camel', 'mole'];
   function needExp(lv) { return 15 + lv * 10; }
   // bare: 옷을 입지 않은 모습 (자랐을 때 보여 주는 그림 등)
   M.petImg = function (face, bare) {
@@ -245,6 +278,7 @@
   }
   M.furnShop = function (t) { furnShop(t); };
   function furnShop(startTab) {
+    if (M.kidMode() && !furnShop.kidSet) { fcat = 'ninja'; furnShop.kidSet = true; }   // 아이 모드는 닌자 소품부터 보여 준다
     var P = M.P;
     var tab = startTab || 'furn';
     var d = M.modal('<h3>🛋️ 꾸미기 상점</h3><div class="tabs"><button data-st="furn">가구</button><button data-st="wall">벽지·바닥</button><button data-st="acc">👗 옷장</button><button data-st="seed">씨앗·비료</button><button data-st="ride">🚲 탈것</button></div><p class="hint" id="fHint"></p><div class="list" id="fList"></div><button class="btn ghost wide" data-close>닫기</button>', { onClose: rerender });
@@ -253,15 +287,24 @@
       var R = P.room, ow = R.walls || {}, oa = P.pet.accs || {};
       if (tab === 'seed') { M.seedTab(d.querySelector('#fList'), d.querySelector('#fHint')); return; }
       if (tab === 'ride') {
-        var grown = M.isRabbit() && M.avStage() >= 3, own = !!P.bike;
-        d.querySelector('#fHint').textContent = '마을에서 멀리 갈 때나 🗺️ 지도에서 고른 곳으로 갈 때 자전거를 타고 빨리 가요';
-        d.querySelector('#fList').innerHTML = '<div class="fgrid"><button class="fcard' + (grown ? '' : ' lock') + '" data-bike><img src="img/w/it-bike.png" alt=""><b>분홍 자전거</b>' + (own ? '<small>가지고 있어요 ✔</small>' : grown ? '<small class="price"><img src="img/coin.png" alt="">1500</small>' : '<small>' + esc(P.petName) + '가 다 자라면 탈 수 있어요 (Lv.10)</small>') + '</button></div>';
+        var big = M.isRabbit() && M.avStage() >= 3, now = M.rideNow();
+        d.querySelector('#fHint').textContent = '마을에서 멀리 갈 때나 🗺️ 지도에서 고른 곳으로 갈 때 탈것을 타고 빨리 가요. 가진 탈것을 누르면 그걸 타요';
+        var order = M.kidMode() ? ['kart', 'dragon', 'jet', 'ship', 'bike'] : ['bike', 'kart', 'dragon', 'jet', 'ship'];
+        d.querySelector('#fList').innerHTML = '<div class="fgrid rides">' + order.map(function (id) {
+          var r = M.rideInfo(id), own = M.rideOwned(id), lock = id === 'bike' && !big;
+          var sub = own ? (now === id ? '<small class="rnow">타는 중 ✔</small>' : lock ? '<small>큰 토끼만 탈 수 있어요</small>' : '<small>가지고 있어요 · 눌러서 타기</small>')
+            : lock ? '<small>큰 토끼만 탈 수 있어요 (자라는 토끼 Lv.10)</small>' : '<small class="price"><img src="img/coin.png" alt="">' + M.fmt(r.price) + '</small>';
+          return '<button class="fcard' + (lock ? ' lock' : '') + (now === id ? ' on' : '') + '" data-ride="' + id + '"><img src="' + r.img + '" alt=""><b>' + r.name + '</b>' + sub + '</button>';
+        }).join('') + '</div>';
         d.querySelector('#fList').onclick = function (e) {
-          if (!e.target.closest('[data-bike]') || own) return;
-          if (!grown) { M.toast(esc(P.petName) + '가 다 자라야 탈 수 있어요. 먹이를 주고 레슨을 해서 키워 주세요'); return; }
-          M.confirm('🚲 분홍 자전거', '<img class="inl" src="img/coin.png" alt="">1500코인에 살까요? 마을에서 멀리 갈 때 자전거를 타요.', '사기', function () {
-            if (!M.spend('coins', 1500)) { M.toast('코인이 모자라요'); return; }
-            P.bike = true; M.save(); M.sfx('win'); M.toast('🚲 자전거를 샀어요! 멀리 갈 때 자동으로 타요'); paintOther();
+          var b = e.target.closest('[data-ride]'); if (!b) return;
+          var id = b.dataset.ride, r = M.rideInfo(id), own = M.rideOwned(id);
+          if (id === 'bike' && !big) { M.toast('자전거는 다 자란 큰 토끼만 탈 수 있어요'); return; }
+          if (own) { P.ride = id; M.save(); M.sfx('tap'); M.toast(r.e + ' 이제 ' + M.j(r.name, '을', '를') + ' 타요'); paintOther(); return; }
+          M.confirm(r.e + ' ' + r.name, '<img class="inl" src="' + r.img + '" alt="" style="width:120px;height:auto"><br><img class="inl" src="img/coin.png" alt="">' + M.fmt(r.price) + '코인에 살까요? 마을에서 멀리 갈 때 타요.', '사기', function () {
+            if (!M.spend('coins', r.price)) { M.toast('코인이 모자라요'); return; }
+            if (id === 'bike') P.bike = true; else { P.rides = P.rides || {}; P.rides[id] = 1; }
+            P.ride = id; M.save(); M.sfx('win'); M.toast(r.e + ' ' + M.j(r.name, '을', '를') + ' 샀어요! 멀리 갈 때 자동으로 타요'); paintOther();
           });
         };
         return;
@@ -297,7 +340,7 @@
     var paint = function () {
       tabs();
       if (tab !== 'furn') { paintOther(); return; }
-      d.querySelector('#fHint').innerHTML = '<span class="fcats">' + Object.keys(FCAT).map(function (k) { return '<button data-fc="' + k + '" class="' + (k === fcat ? 'on' : '') + '">' + FCAT[k][0] + '</button>'; }).join('') + '</span>';
+      d.querySelector('#fHint').innerHTML = '<span class="fcats">' + Object.keys(FCAT).filter(function (k) { return k !== 'ninja'; }).reduce(function (o, k) { o.push(k); return o; }, M.kidMode() ? ['ninja'] : []).concat(M.kidMode() ? [] : ['ninja']).map(function (k) { return '<button data-fc="' + k + '" class="' + (k === fcat ? 'on' : '') + '">' + FCAT[k][0] + '</button>'; }).join('') + '</span>';
       var ids = FCAT[fcat][1].split(',');
       d.querySelector('#fList').innerHTML = '<div class="fgrid">' + FURN.filter(function (f) { return ids.indexOf(f.id) >= 0; }).map(function (f) {
         var own = P.room.owned[f.id], on = !!P.room.placed[f.id];

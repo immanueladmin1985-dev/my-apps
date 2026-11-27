@@ -269,9 +269,9 @@
       }).join('') + '</div><button class="btn primary wide big" data-next>다음</button>';
     } else if (introStep === 2) {
       var lk = introData.look || 'rabbit';
-      h += '<img class="ilogo" src="' + M.lookImg(lk) + '" alt=""><h2>함께할 친구를 골라 주세요</h2><p class="hint">🌱 자라는 토끼는 레벨이 오르면 모습이 바뀌어요. 다른 친구는 레벨만 올라요.</p>' + M.lookGrid(lk) +
+      h += '<h2>누가 배우나요?</h2><div class="whochips wcfirst">' + [['아내', '남편'], ['아들', '아빠'], ['딸', '아빠'], ['아들', '엄마'], ['딸', '엄마']].map(function (w) { var on = (introData.who || '아내|남편') === w.join('|'); return '<button data-iwho="' + w.join('|') + '" class="' + (on ? 'on' : '') + '">' + w[0] + ' · ' + w[1] + '</button>'; }).join('') + '</div><p class="hint">앞이 배우는 사람, 뒤가 선물을 확인하는 사람이에요. 아들·딸을 고르면 🧒 아이 모드(닌자 캐릭터·도장 집·탈것, 아이용 선물)로 시작해요. 설정에서 바꿀 수 있어요.</p>' +
+        '<img class="ilogo" src="' + M.lookImg(lk) + '" alt=""><h3>함께할 친구를 골라 주세요</h3><p class="hint">🌱 자라는 토끼는 레벨이 오르면 모습이 바뀌어요. 다른 친구는 레벨만 올라요.</p>' + M.lookGrid(lk) +
         '<h3>친구 이름</h3><input class="iname" id="iName" maxlength="8" value="' + esc(introData.name) + '">' +
-        '<h3>누가 배우나요?</h3><div class="whochips wcfirst">' + [['아내', '남편'], ['아들', '아빠'], ['딸', '아빠'], ['아들', '엄마'], ['딸', '엄마']].map(function (w) { var on = (introData.who || '아내|남편') === w.join('|'); return '<button data-iwho="' + w.join('|') + '" class="' + (on ? 'on' : '') + '">' + w[0] + ' · ' + w[1] + '</button>'; }).join('') + '</div><p class="hint">앞이 배우는 사람, 뒤가 선물을 확인하는 사람이에요. 설정에서 직접 쓸 수도 있어요.</p>' +
         '<h3>하루 목표</h3><div class="goals">' + [[1, '가볍게'], [2, '보통'], [3, '열심히'], [5, '아주 열심히']].map(function (g) {
           return '<button class="' + (introData.goal === g[0] ? 'on' : '') + '" data-goal="' + g[0] + '"><b>' + g[0] + '판</b><small>' + g[1] + '</small></button>';
         }).join('') + '</div><p class="hint">레슨 한 판은 3~5분 걸려요.</p><button class="btn primary wide big" data-next>시작!</button>';
@@ -283,14 +283,19 @@
   $('intro').addEventListener('click', function (e) {
     var t = e.target;
     var il = t.closest('[data-il]'); if (il) { introData.lang = il.dataset.il; M.say(window.LANGS[il.dataset.il].hello, il.dataset.il); intro(); return; }
-    var lkb = t.closest('[data-look]'); if (lkb) { introData.name = ($('iName') || {}).value || introData.name; introData.look = lkb.dataset.look; intro(); return; }
-    var iw = t.closest('[data-iwho]'); if (iw) { introData.name = ($('iName') || {}).value || introData.name; introData.who = iw.dataset.iwho; intro(); return; }
+    var lkb = t.closest('[data-look]'); if (lkb) { introData.name = ($('iName') || {}).value || introData.name; introData.look = lkb.dataset.look; introData.picked = true; intro(); return; }
+    var iw = t.closest('[data-iwho]');
+    if (iw) {   // 아들·딸이 배우면 아이 모드를 켜고, 아직 친구를 안 골랐으면 닌자를 먼저 골라 둔다
+      introData.name = ($('iName') || {}).value || introData.name; introData.who = iw.dataset.iwho;
+      var kid = /^(아들|딸)\|/.test(introData.who); P.kid = kid; if (kid && !introData.picked) introData.look = 'njfire'; if (!kid && !introData.picked) introData.look = 'rabbit';
+      intro(); return;
+    }
     var g = t.closest('[data-goal]'); if (g) { introData.name = ($('iName') || {}).value || introData.name; introData.goal = +g.dataset.goal; intro(); return; }
     if (t.closest('[data-next]')) {
       if (introStep === 2) {
         P.petName = (($('iName') || {}).value || '').trim() || '말랑이';
         P.lang = introData.lang; P.set.goal = introData.goal; P.started = true;
-        P.look = { ch: introData.look || 'rabbit', grow: (introData.look || 'rabbit') === 'rabbit' }; var iwv = (introData.who || '아내|남편').split('|'); M.setWho(iwv[0], iwv[1]);
+        P.look = { ch: introData.look || 'rabbit', grow: (introData.look || 'rabbit') === 'rabbit' }; var iwv = (introData.who || '아내|남편').split('|'); M.setWho(iwv[0], iwv[1]); M.setKid(/^(아들|딸)$/.test(iwv[0]));
         $('view').insertBefore($('banner'), $('view').firstChild);
         M.save(); M.render();
         M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy') + '" alt=""><h3>' + esc(M.j(P.petName, '과', '와')) + ' 함께 시작해요!</h3><p>첫 레슨을 끝내면 물방울을 받아요.<br>물방울로 정원에 씨앗을 뿌려 보세요 🌱</p><button class="btn primary wide" data-close>좋아요</button></div>');

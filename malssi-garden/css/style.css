@@ -2355,3 +2355,8 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .lk.on { border-color: var(--mint); background: var(--mint-l); transform: scale(1.04); }
 .iwrap .lkgrid { max-width: 520px; margin-left: auto; margin-right: auto; max-height: 260px; }
 .lkgrid { flex: none; } .dim .lkgrid { max-height: none; overflow: visible; }
+.row2.hst3 { grid-template-columns: repeat(3, 1fr); }
+.dysheet h3 { position: relative; }
+.dydesk { position: absolute; right: 0; top: -18px; height: 64px; width: auto; }
+.fgrid.rides .fcard > img { aspect-ratio: auto; height: 70px; object-fit: contain; }
+.fgrid.rides .rnow { color: var(--mint-d); }
