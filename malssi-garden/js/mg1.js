@@ -170,13 +170,13 @@
   ];
   var REPLY = { ja: ['かしこまりました。', '알겠습니다(주문 받을 때).'], en: ['Sure, coming right up!', '네, 바로 준비할게요!'], zh: ['好的，马上来！', '네, 바로 나와요!'] };
   function orderText(lang, o) {
-    var it = o.m, n = o.n, t = o.t;
-    if (lang === 'ja') return (t ? (t === 'hot' ? 'ホット' : 'アイス') : '') + it.ja + 'を' + ['ひとつ', 'ふたつ', 'みっつ'][n - 1] + (o.v ? 'おねがいします。' : 'ください。');
-    if (lang === 'zh') return (o.v ? '请给我' : '我要') + ['一', '两', '三'][n - 1] + it.zm + (t ? (t === 'hot' ? '热' : '冰') : '') + it.zh + '。';
-    var w = (t ? (t === 'hot' ? 'hot ' : 'iced ') : '') + it.en[n > 1 ? 1 : 0], num = ['one', 'two', 'three'][n - 1];
+    var it = o.m, n = o.n, t = o.t, sz = o.s ? { s: 0, m: 1, l: 2 }[o.s] : -1;
+    if (lang === 'ja') return (sz >= 0 ? ['S', 'M', 'L'][sz] + 'サイズの' : '') + (t ? (t === 'hot' ? 'ホット' : 'アイス') : '') + it.ja + 'を' + ['ひとつ', 'ふたつ', 'みっつ'][n - 1] + (o.v ? 'おねがいします。' : 'ください。');
+    if (lang === 'zh') return (o.v ? '请给我' : '我要') + ['一', '两', '三'][n - 1] + (sz >= 0 ? ['小', '中', '大'][sz] : '') + it.zm + (t ? (t === 'hot' ? '热' : '冰') : '') + it.zh + '。';
+    var w = (sz >= 0 ? ['small ', 'medium ', 'large '][sz] : '') + (t ? (t === 'hot' ? 'hot ' : 'iced ') : '') + it.en[n > 1 ? 1 : 0], num = ['one', 'two', 'three'][n - 1];
     return o.v ? 'Can I have ' + num + ' ' + w + ', please?' : num.charAt(0).toUpperCase() + num.slice(1) + ' ' + w + ', please.';
   }
-  function orderKo(o) { return (o.t ? (o.t === 'hot' ? '따뜻한 ' : '차가운 ') : '') + o.m.ko + ' ' + o.n + (o.m.zm === '杯' ? '잔' : '개') + ' 주세요'; }
+  function orderKo(o) { return (o.s ? { s: '작은 ', m: '보통 ', l: '큰 ' }[o.s] : '') + (o.t ? (o.t === 'hot' ? '따뜻한 ' : '차가운 ') : '') + o.m.ko + ' ' + o.n + (o.m.zm === '杯' ? '잔' : '개') + ' 주세요'; }
   G.cafe = function (g) {
     var lang = M.P.lang, n = 0, total = 6;
     var guests = (M.V ? M.V.residents().map(function (c) { return c.id; }) : []).filter(function (id) { return id !== 'cat'; });
@@ -185,11 +185,12 @@
       if (!alive(g)) return;
       if (n >= total) { X.finish(g, total * 20); return; }
       n++;
-      var m = M.pick(MENU), o = { m: m, n: 1 + Math.floor(Math.random() * 3), t: m.hot ? M.pick(['hot', 'iced']) : '', v: Math.random() < 0.4 };
-      var text = orderText(lang, o), guest = guests[(n * 5 + Math.floor(Math.random() * 3)) % guests.length], pick = { n: 0, t: '', m: '' }, tries = 0;
+      var m = M.pick(MENU), o = { m: m, n: 1 + Math.floor(Math.random() * 3), t: m.hot ? M.pick(['hot', 'iced']) : '', v: Math.random() < 0.4, s: n >= 3 && m.zm === '杯' && Math.random() < 0.75 ? M.pick(['s', 'm', 'l']) : '' };   // 셋째 손님부터는 컵 크기도 말한다
+      var text = orderText(lang, o), guest = guests[(n * 5 + Math.floor(Math.random() * 3)) % guests.length], pick = { n: 0, t: '', m: '', s: '' }, tries = 0;
       $('mBody').innerHTML = '<div class="gcafe"><div class="gcounter"><img class="gnpc gcat" id="cN" src="' + WI + 'mg4-cat-order.png" alt=""><img class="gguest" src="' + sprite(guest) + '" alt=""><button class="gbub order lang-' + lang + '" id="cQ"><small>손님 ' + n + ' / ' + total + ' · 눌러서 다시 듣기</small><b>' + esc(text) + '</b><em id="cK"></em></button></div>' +
         '<div class="gpad"><img class="gpadtop" src="' + WI + 'mg3-order-pad.png" alt=""><div class="gprow"><span>개수</span>' + [1, 2, 3].map(function (k) { return '<button data-n="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
         '<div class="gprow"><span>온도</span><button data-t="hot"><img src="' + WI + 'mg3-steam.png" alt="">따뜻하게</button><button data-t="iced"><img src="' + WI + 'mg3-ice.png" alt="">차갑게</button><button data-t="">그대로</button></div>' +
+        (n >= 3 ? '<div class="gprow cups"><span>크기</span>' + [['s', '작게'], ['m', '보통'], ['l', '크게']].map(function (c) { return '<button data-s="' + c[0] + '"><img src="' + WI + 'mg3-cup-' + c[0] + '.png" alt="">' + c[1] + '</button>'; }).join('') + '<button data-s="" class="on">말 안 함</button></div>' : '') +
         '<div class="gprow menu"><span>메뉴</span>' + MENU.map(function (x) { return '<button data-m="' + x.id + '"><img src="' + WI + (x.img || 'mg3-menu-' + x.id) + '.png" alt=""><small>' + x.ko + '</small></button>'; }).join('') + '</div>' +
         '<button class="btn primary wide" id="cGo">주문 완료</button></div></div>';
       var say = function () { M.say(text, lang, false, false, 'A'); };
@@ -197,23 +198,25 @@
       var pad = document.querySelector('.gpad');
       pad.onclick = function (e) {
         var b = e.target.closest('button'); if (!b || b.id === 'cGo') return;
-        var key = b.dataset.n != null ? 'n' : b.dataset.t != null ? 't' : 'm';
-        pick[key] = key === 'n' ? +b.dataset.n : key === 't' ? b.dataset.t : b.dataset.m;
+        var key = b.dataset.n != null ? 'n' : b.dataset.t != null ? 't' : b.dataset.s != null ? 's' : 'm';
+        pick[key] = key === 'n' ? +b.dataset.n : b.dataset[key];
         Array.prototype.forEach.call(b.parentNode.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
         M.sfx('tap');
       };
       $('cGo').onclick = function () {
         if (!alive(g)) return;
-        var okN = pick.n === o.n, okT = pick.t === o.t, okM = pick.m === m.id;
-        if (okN && okT && okM) {
-          X.setScore(g, g.score + Math.max(8, 20 - tries * 6)); M.sfx('ok'); X.fxAt($('cGo'), 'coffee'); var cn = $('cN'); if (cn) { cn.src = WI + 'mg4-cat-tray.png'; react(cn, true); } var mb = document.querySelector('.gpad [data-m].on img'); if (mb) X.fly(mb, mb.src, document.querySelector('.gguest'), { size: 52, ms: 600, spin: 0, end: 0.8 });
+        var okN = pick.n === o.n, okT = pick.t === o.t, okM = pick.m === m.id, okS = pick.s === o.s;
+        if (okN && okT && okM && okS) {
+          X.setScore(g, g.score + Math.max(8, 20 - tries * 6)); M.sfx('ok'); X.fxAt($('cGo'), 'coffee'); var cn = $('cN'), mb = document.querySelector('.gpad [data-m].on img'), cup = document.querySelector('.gpad [data-s].on img');
+          if (cn) { cn.src = WI + 'mg3-cat-barista.png'; react(cn, true); }   // 바리스타 모습으로 만들고, 쟁반에 담아 내간다
+          setTimeout(function () { if (!alive(g)) return; if (cn) cn.src = WI + 'mg4-cat-tray.png'; var from = cn || mb; if (mb) X.fly(from, cup ? cup.src : mb.src, document.querySelector('.gguest'), { size: cup ? 46 + { s: 0, m: 8, l: 16 }[o.s] : 52, ms: 600, spin: 0, end: 0.8 }); }, 450);
           $('cK').textContent = '= ' + orderKo(o);
           var r = REPLY[lang] || REPLY.en;
           $('cGo').outerHTML = '<button class="greply lang-' + lang + '" id="cR">🐱 <b>' + esc(r[0]) + '</b><small>' + esc(r[1]) + '</small></button>';
           M.sayThen ? M.sayThen(r[0], lang, 'B', function () { setTimeout(round, 500); }) : setTimeout(round, 1600);
         } else {
           tries++; M.sfx('bad'); X.setScore(g, g.score - 3);
-          [['n', okN], ['t', okT], ['m', okM]].forEach(function (z) { if (!z[1]) { var row = pad.querySelector('[data-' + z[0] + ']').parentNode; row.classList.remove('bad'); void row.offsetWidth; row.classList.add('bad'); } });
+          [['n', okN], ['t', okT], ['m', okM], ['s', okS]].forEach(function (z) { if (!z[1]) { var row = pad.querySelector('[data-' + z[0] + ']').parentNode; row.classList.remove('bad'); void row.offsetWidth; row.classList.add('bad'); } });
           if (tries >= 2) { $('cK').textContent = '= ' + orderKo(o); }
         }
       };

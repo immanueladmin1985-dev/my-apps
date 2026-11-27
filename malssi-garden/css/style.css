@@ -2223,3 +2223,8 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .wklv { display: flex; gap: 2px; } .wklv i { width: 8px; height: 8px; border-radius: 50%; background: #e6e0ea; } .wklv i.on { background: var(--mint); }
 .wkok { flex: none; font-size: .78rem; font-weight: 800; padding: 6px 8px; border-radius: 10px; background: #f6f3f8; color: var(--sub); }
 @media (min-width: 700px) { .wklist { display: grid; grid-template-columns: 1fr 1fr; } }
+/* 카페: 컵 크기 */
+.gprow.cups button { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: .78rem; padding: 4px 2px; }
+.gprow.cups button img { height: 30px; width: auto; }
+.gprow.cups [data-s="s"] img { height: 22px; } .gprow.cups [data-s="l"] img { height: 36px; }
+.gprow.cups [data-s=""] { font-size: .72rem; }
