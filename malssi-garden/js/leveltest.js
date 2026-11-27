@@ -14,7 +14,7 @@
     // 앞쪽·뒤쪽 단계가 고르게 나오도록 구간을 나눠 고른다
     var qs = [], step = pool.length / N;
     for (var i = 0; i < N && i * step < pool.length; i++) qs.push(pool[Math.floor(i * step + Math.random() * step)] || pool[Math.floor(i * step)]);
-    var lvName = { N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', HSK3: 'HSK 3급', A1: '생활 영어' }[lv] || lv;
+    var lvName = { N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', HSK3: 'HSK 3급', A1: '생활 영어', A2: '생활 영어 2' }[lv] || lv;
     var d = M.modal('<div class="lt" id="ltBox"></div>', { cls: 'full', sticky: true }), box = d.querySelector('#ltBox'), k = 0, ok = 0;
     function intro() {
       box.innerHTML = '<h3>🚀 레벨 테스트</h3><p><b>' + esc(lvName) + '</b>부터 시작하려면 앞의 <b>' + skip.length + '단계</b>를 건너뛰어야 해요.</p><p class="hint">그 단계들의 낱말로 ' + N + '문제를 내요. ' + PASS + '개 이상 맞히면 건너뛰고, 그 낱말들은 이미 아는 낱말로 복습 일정에 들어가요.</p><button class="btn primary wide" data-lgo>시작하기</button><button class="btn ghost wide" data-close>그만두기</button>';
