@@ -2120,3 +2120,12 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .ggift.given img { opacity: 0; } .ggift.miss { opacity: .4; }
 .wsb.chip.xm { background: #fff1f1; border-color: #f3c1c1; }
 .gxtree { height: 52%; left: 4px; opacity: .9; } .gsnow .gnpc { height: min(30vh, 200px); }
+/* 특별 전시실 */
+.hall { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; }
+.hrow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 16px; background: #fff; border: 2px solid var(--line); }
+.hrow.full { background: #fffaf0; border-color: #ffc94d; }
+.htro { width: 44px; height: 44px; object-fit: contain; } .hrow:not(.full) .htro { filter: grayscale(.8); opacity: .6; }
+.hin { flex: 1; min-width: 0; } .hin b { font-size: .95rem; } .hin small { color: var(--sub); font-size: .75rem; }
+.hbar { height: 8px; border-radius: 4px; background: #eee; overflow: hidden; margin: 3px 0; } .hbar i { display: block; height: 100%; background: linear-gradient(90deg, #ffb02e, #4cc79a); }
+.hdone { font-weight: 800; color: #c58a00; font-size: .85rem; }
+.hallbtn .nbadge { position: static; display: inline-grid; }

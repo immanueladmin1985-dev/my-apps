@@ -231,3 +231,37 @@
     });
   };
 })();
+// ========== 박물관 특별 전시실: 도감을 반쯤·전부 채우면 상과 전시 트로피 ==========
+(function () {
+  var M = window.M, esc = M.esc;
+  var HALL = [['fish', '🐟 물고기'], ['bug', '🦋 곤충'], ['fossil', '🦴 화석'], ['sea', '🐚 바다'], ['forest', '🌲 꽃·숲·열매'], ['mineral', '💎 광물·보석']];
+  function prog(cat) {
+    if (cat === 'fish') { var d = M.P.fishDex || {}, F = M.FISH || []; return [F.filter(function (f) { return d[f.id]; }).length, F.length]; }
+    var I = (M.GATHER && M.GATHER.ITEMS) || {}, dex = (M.P.gather && M.P.gather.dex) || {}, cs = cat === 'forest' ? ['fruit', 'forest'] : [cat];
+    var ks = Object.keys(I).filter(function (k) { return cs.indexOf(I[k].cat) >= 0; });
+    return [ks.filter(function (k) { return dex[k]; }).length, ks.length];
+  }
+  M.museumHall = function () {
+    var h = M.P.hall = M.P.hall || {};
+    var d = M.modal('<h3>🏆 특별 전시실</h3><p class="hint">도감을 절반 채우면 작은 상, 전부 채우면 큰 상과 전시 트로피를 받아요</p><div class="hall" id="hallL"></div><button class="btn ghost wide" data-close>나가기</button>', { cls: 'bagsheet' });
+    function paint() {
+      d.querySelector('#hallL').innerHTML = HALL.map(function (c) {
+        var p = prog(c[0]), st = h[c[0]] || {}, full = p[1] && p[0] >= p[1], half = p[1] && p[0] >= Math.ceil(p[1] / 2);
+        var btn = full && !st.full ? '<button class="btn primary" data-hall="full" data-c="' + c[0] + '">🏆 전시 열기</button>' : half && !st.half ? '<button class="btn" data-hall="half" data-c="' + c[0] + '">🎁 절반 상</button>' : '';
+        return '<div class="hrow' + (st.full ? ' full' : '') + '"><img class="htro" src="img/w/' + (st.full ? 'bb-trophy' : 'st-trophy') + '.png" alt=""><div class="hin"><b>' + c[1] + ' 도감</b><div class="hbar"><i style="width:' + (p[1] ? Math.round(p[0] / p[1] * 100) : 0) + '%"></i></div><small>' + p[0] + ' / ' + p[1] + (st.full ? ' · 🏆 전시 중' : '') + '</small></div>' + btn + '</div>';
+      }).join('');
+    }
+    paint();
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hall]'); if (!b) return;
+      var c = b.dataset.c, kind = b.dataset.hall, st = h[c] = h[c] || {};
+      if (st[kind]) return;
+      st[kind] = M.today(); if (kind === 'full') st.half = st.half || M.today();
+      var o = kind === 'full' ? { coins: 500, fp: 15 } : { coins: 100, water: 20 };
+      M.give(o); M.save(); M.sfx('win');
+      M.fxPop({ bg: 'fx-burst', img: 'img/w/' + (kind === 'full' ? 'bb-trophy' : 'st-trophy') + '.png', title: kind === 'full' ? '🏆 특별 전시가 열렸어요!' : '🎁 도감 절반 달성!', sub: M.rewardHtml(o), ms: 3000 });
+      paint();
+    });
+  };
+  M.hallReady = function () { var h = M.P.hall || {}; return HALL.some(function (c) { var p = prog(c[0]), st = h[c[0]] || {}; return (p[1] && p[0] >= p[1] && !st.full) || (p[1] && p[0] >= Math.ceil(p[1] / 2) && !st.half); }); };
+})();
