@@ -2198,3 +2198,14 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
   .gducks .gnpc.gduck { height: 150px; } .gkid { height: 60px; } .glily2 .gword { font-size: 2.3rem; }
   .gbspot { width: 120px; } .gban { width: 70px; } .gbw { font-size: 1.1rem; } .gmonk { height: 150px !important; } .gbkt { width: 130px; }
 }
+/* 회화 말하기: 내 차례 말풍선에 하고 싶은 말(뜻)을 보여 준다 */
+.chat .cb.talkme { animation: none; letter-spacing: 0; color: inherit; font-weight: 700; border: 2px dashed var(--mint); background: #f3fbf7; }
+.chat .cb.talkme small { color: var(--mint-d); }
+.chat .cb.talkme b.ko { font-size: 1rem; }
+.talkhint { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px dashed #b9e6cf; font-weight: 800; font-size: 1.05rem; }
+.talkhint.hid { display: none; }
+
+.chat .cb { height: auto; justify-content: flex-start; align-items: stretch; font-size: inherit; }
+.chat .cb.talkme { min-width: 50%; }
+.speak .talkshow { margin-top: 8px; min-height: 38px; padding: 4px 14px; font-size: .9rem; }
+@media (min-width: 900px) and (orientation: landscape) { .lbody .chat { max-height: 52svh; } }

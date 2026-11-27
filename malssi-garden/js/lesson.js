@@ -97,6 +97,11 @@
       var mine = stage.xf.filter(function (x) { return stage.dlg[x.di].who === 'B'; }), other = stage.xf.filter(function (x) { return stage.dlg[x.di].who !== 'B'; });
       mine.forEach(function (x) { var q = xformQ(x, lang); q.sub = x.pk; q.pr = x.pr; q.chat = stage.dlg.slice(0, x.di).map(function (d, i) { return { i: i, t: d.t, k: d.k, r: d.r, me: d.who === 'B' }; }); qs.push(q); });
       other.concat(M.shuffle(mine).slice(0, Math.max(0, 3 - other.length))).forEach(function (x) { var q = xformQ(x, lang); q.audio = x.p; qs.push(q); });
+      // 말로 대답하기: 마이크가 되면 내 대사 두 개를 직접 소리 내어 말한다 (정답 대사나 다른 맞는 대사 어느 쪽이든 인정)
+      if (canSpeak && !stage.nospeak) M.shuffle(mine).slice(0, 2).forEach(function (x) {
+        var it = { t: x.item.t, say: x.item.say || x.item.t, k: x.item.k, r: x.item.r || '', lang: lang, alt: (x.alts || []).map(function (a) { return a.t; }) };
+        qs.push({ type: 'speak', item: it, talk: true, chat: stage.dlg.slice(0, x.di).map(function (d, i) { return { i: i, t: d.t, k: d.k, r: d.r, me: d.who === 'B' }; }) });
+      });
       return qs;
     }
     if (stage && stage.ear === 2) {
@@ -283,6 +288,12 @@
       h += '<div class="qcard ko small"><div class="fk">' + esc(q.sent.k) + '</div></div>';
       h += '<div class="slots lang-' + S.lang + '" id="bSlots"></div><div class="tiles lang-' + S.lang + '" id="bTiles">' + q.tiles.map(function (t) { return '<button class="tile" data-id="' + t.id + '">' + M.fz(t.w, S.lang) + '</button>'; }).join('') + '</div>';
       q.chosen = [];
+    } else if (q.type === 'speak' && q.talk) {
+      // 회화 말하기: 앞 대화를 채팅으로 보여 주고, 내 대사는 뜻만 보여 준다 (힌트를 누르면 문장이 보인다)
+      h = '<div class="qt">말로 대답해 보세요 <small class="sub">내 차례예요 🎤</small></div><div class="chat lang-' + it.lang + '" id="chatBox">' + q.chat.slice(-4).map(function (d) { return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '" data-who="' + (d.me ? 'B' : 'A') + '"><b>' + M.fz(d.t, it.lang) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') +
+        '<div class="cb me wait talkme"><small>하고 싶은 말</small><b class="ko">' + esc(it.k) + '</b><span class="talkhint hid" id="talkHint">' + M.fz(it.t, it.lang) + (it.r ? '<span class="dr">' + esc(it.r) + '</span>' : '') + '</span></div></div>' +
+        '<div class="speak"><button class="mic" id="mic">🎤</button><div class="heard" id="heard">마이크를 누르고 대답해 보세요</div><button class="btn ghost talkshow" id="talkShow">💡 문장 보기</button></div>';
+      q.fails = q.fails || 0;
     } else if (q.type === 'speak') {
       h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + (jaKanji(it) ? rubyW(it) : esc(it.t)) + '</div>' + (it.r && !jaKanji(it) ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div><div class="fk sm">' + esc(it.k) + '</div>' + sayBtn(it.say) + '</div>';
       h += '<div class="speak"><button class="mic" id="mic">🎤</button><div class="heard" id="heard">마이크를 누르고 말해 보세요</div></div>';
@@ -300,7 +311,9 @@
     else if (q.type === 'speak') foot('<button class="btn ghost wide" id="sSkip">지금은 말할 수 없어요</button>');
     else foot('');
     if (q.type === 'steach') setTimeout(function () { if (S && S.qs[S.i] === q) M.say(q.sent.say, S.lang); }, M.fast ? 0 : 250);
-    var auto = q.type === 'teach' || q.type === 'listen' || (M.P.set.autoAudio && (q.type === 'meaning' || q.type === 'speak'));
+    var auto = !q.talk && (q.type === 'teach' || q.type === 'listen' || (M.P.set.autoAudio && (q.type === 'meaning' || q.type === 'speak')));
+    if ($('talkShow')) $('talkShow').onclick = function () { var th = $('talkHint'); if (th) th.classList.remove('hid'); this.remove(); q.hinted = true; M.say(it.say, it.lang, false, false, 'B'); };
+    if (q.talk && q.chat.length) { var lastYou = q.chat[q.chat.length - 1]; if (!lastYou.me) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(lastYou.t, S.lang, false, false, 'A'); }, M.fast ? 0 : 250); }
     var convSay = q.type === 'xform' && (q.audio || q.sub != null) ? (q.audio || q.p) : null;   // 회화: 상대 말을 읽어 준다
     if (convSay) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(convSay, S.lang, false, false, q.pw); }, M.fast ? 0 : 250);
     else if (auto) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(it.say, S.lang); }, M.fast ? 0 : 250);
@@ -459,6 +472,7 @@
       if (!S || S.qs[S.i] !== q) return;
       if (!res.length) { heard.textContent = '소리가 들리지 않았어요. 다시 눌러 보세요'; return; }
       var bm = M.bestMatch(res, targets, S.lang), score = bm.s;
+      if (q.talk && $('talkHint')) $('talkHint').classList.remove('hid');
       heard.innerHTML = '들린 말: <b>' + esc(bm.h) + '</b>' + (score < 0.98 ? '<div class="sdiff lang-' + S.lang + '">' + speakDiff(bm.t, bm.h, S.lang) + '</div>' : '');
       var lr = S.lang === 'en' ? lrTip(bm.t, bm.h) : '';
       if (lr) heard.innerHTML += '<small class="sdtip lrtip">' + lr + '</small>';
