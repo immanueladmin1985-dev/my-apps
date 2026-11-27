@@ -726,6 +726,28 @@ body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:max(10px,
 .fs-main .kv{width:100%;max-width:380px;margin-top:0}
 .fs-tip{min-height:2.6em;font-weight:700;color:var(--ink-2);max-width:30em}
 .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.bdg i{position:relative;display:block;width:76px;height:76px}
+.bdg i img{width:100%;height:100%;display:block;filter:grayscale(1) opacity(.38)}
+.bdg.on i img{filter:none}
+.bdg i em{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-3)}
+.bdg i em svg{width:16px;height:16px}
+.bdgpop{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:92;display:flex;align-items:center;gap:12px;width:max-content;max-width:min(92vw,440px);padding:10px 16px 10px 10px;border-radius:20px;background:var(--surface);border:1.5px solid var(--bamboo);box-shadow:0 12px 30px rgba(40,25,10,.25);animation:bdgIn .45s cubic-bezier(.2,.9,.3,1.3)}
+.bdgpop img{width:72px;height:72px;flex:none}
+.bdgpop small{display:block;font-size:.72rem;font-weight:700;color:var(--peony)}
+.bdgpop b{display:block;font-size:1.05rem}
+.bdgpop span{display:block;font-size:.8rem;color:var(--ink-2);line-height:1.35}
+@keyframes bdgIn{from{opacity:0;transform:translate(-50%,-16px) scale(.9)}}
+.empty-art{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:8px 6px;color:var(--ink-2);font-size:.86rem}
+.empty-art img{width:min(150px,40vw);height:auto}
+.mg-art{display:block;width:min(200px,60%);height:auto;margin:0 auto 8px}
+.guide-art{display:block;width:min(260px,80%);height:auto;margin:0 auto 6px}
+.ban-art{width:72px;height:auto;flex:none;margin-top:0}
+.rb-art{width:44px;height:auto;flex:none;align-self:center}
+.cheer-art{display:block;width:min(200px,55vw);height:auto;margin:-6px auto 2px}
+.ob-art.ob-sm{width:min(150px,40vw)}
+body.focusmode .micgate .mg-art{width:min(130px,40%);margin-bottom:4px}
+.ob .micgate .mg-art{display:none}
+@media (orientation:landscape) and (max-height:600px){.micgate .mg-art{width:auto;height:min(110px,24vh);margin-bottom:2px}.guide-art{width:auto;height:min(150px,34vh)}.cheer-art{width:auto;height:min(110px,24vh)}}
 .bdg{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:10px 8px;border-radius:14px;border:1px dashed var(--line);color:var(--ink-3)}
 .bdg i svg{width:26px;height:26px}.bdg b{font-size:.92rem}.bdg span{font-size:.72rem;line-height:1.3}
 .bdg.on{border:1px solid var(--bamboo);background:var(--peony-soft);color:var(--ink)}.bdg.on i{color:var(--bamboo-dark)}
@@ -1094,6 +1116,7 @@ const pipIcon = (n, color) => { // 단계 표시용 작은 팬플룻 (관 개수
 
 /* ================= 파스텔 색·팬플룻 그림 ================= */
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const f = c => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k)); return '#' + [f(r), f(g), f(b)].map(v => clamp(v, 0, 255).toString(16).padStart(2, '0')).join(''); }
+function emptyHTML(img, txt) { return `<div class="empty-art"><img src="art/${img}.webp" alt="" decoding="async" loading="lazy"><span>${txt}</span></div>`; }
 function fluteArt() { return '<img class="fart" src="art-flute.webp" alt="" decoding="async">'; } // 팬플룻 그림 (둥근 수채화)
 
 /* ================= 저장 ================= */
@@ -1199,7 +1222,7 @@ function openOutside() {
 /* 설정이 저장되지 않을 수 있는 환경 안내 (홈·마이크 허용 창·설정에 같이 씀) */
 function envWarnHTML(compact) {
   const app = inAppName();
-  if (app) return `<div class="banner" style="margin:0 0 12px;text-align:left">${ICONS.warn}<div class="grow"><b>${esc(app)} 안에서 열려 있어요</b><span class="small">이 화면은 크롬과 저장 공간이 따로라서 고른 마이크·감도 같은 설정과 마이크 허용이 남지 않을 수 있어요.${compact ? '' : ' 크롬(아이폰은 Safari)으로 열어 홈 화면에 설치해 쓰세요.'}</span><div class="row wrap mt" style="gap:6px"><button type="button" class="btn sm primary" data-envopen="1">${/iP(hone|ad|od)/.test(navigator.userAgent) ? 'Safari로 여는 방법' : '크롬으로 열기'}</button></div></div></div>`;
+  if (app) return `<div class="banner" style="margin:0 0 12px;text-align:left">${compact ? ICONS.warn : '<img class="ban-art" src="art/guide-browser.webp" alt="">'}<div class="grow"><b>${esc(app)} 안에서 열려 있어요</b><span class="small">이 화면은 크롬과 저장 공간이 따로라서 고른 마이크·감도 같은 설정과 마이크 허용이 남지 않을 수 있어요.${compact ? '' : ' 크롬(아이폰은 Safari)으로 열어 홈 화면에 설치해 쓰세요.'}</span><div class="row wrap mt" style="gap:6px"><button type="button" class="btn sm primary" data-envopen="1">${/iP(hone|ad|od)/.test(navigator.userAgent) ? 'Safari로 여는 방법' : '크롬으로 열기'}</button></div></div></div>`;
   if (!STORE_OK) return `<div class="banner" style="margin:0 0 12px;text-align:left">${ICONS.warn}<div class="grow"><b>이 브라우저는 설정을 저장하지 못해요</b><span class="small">시크릿(비공개) 창이거나 저장이 막혀 있어요. 일반 창이나 홈 화면에 설치한 앱으로 열어야 마이크·감도 설정이 남아요.</span></div></div>`;
   return '';
 }
@@ -1389,7 +1412,8 @@ function resultSheet(title, html, actions, onAct) {
   const others = actions.filter(a => a !== prim);
   const closeAct = actions.find(a => a.id === 'ok' || a.id === 'close');
   const bar = document.createElement('div'); bar.id = 'rbar'; bar.className = 'rbar'; bar.setAttribute('role', 'status');
-  bar.innerHTML = `<div class="rb-t"><b>${esc(title)}</b>${stars ? `<span class="rb-st">${esc(stars)}</span>` : ''}${score ? `<span class="rb-sc">${esc(score)}</span>` : ''}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
+  const done = !/멈췄/.test(title);
+  bar.innerHTML = `${done ? '<img class="rb-art" src="art/cheer.webp" alt="">' : ''}<div class="rb-t"><b>${esc(title)}</b>${stars ? `<span class="rb-st">${esc(stars)}</span>` : ''}${score ? `<span class="rb-sc">${esc(score)}</span>` : ''}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
     <div class="rb-a"><button type="button" class="btn sm ghost" data-r="more">자세히</button>${others.filter(a => a !== closeAct).map(a => `<button type="button" class="btn sm" data-r="${a.id}">${a.label}</button>`).join('')}${prim !== closeAct ? `<button type="button" class="btn sm primary" data-r="${prim.id}">${prim.label}</button>` : ''}<button type="button" class="rb-x" data-r="x" aria-label="결과 닫기">${ICONS.x}</button></div>`;
   document.body.appendChild(bar);
   bar.addEventListener('click', e => {
@@ -1400,7 +1424,7 @@ function resultSheet(title, html, actions, onAct) {
   return bar;
 }
 function resultFull(title, html, actions, onAct) {
-  const sh = openSheet(`<h3>${esc(title)}</h3>${html}<div class="row mt2">${actions.map(a => `<button class="btn grow ${a.primary ? 'primary' : ''}" data-act="${a.id}">${a.label}</button>`).join('')}</div>`);
+  const sh = openSheet(`${/멈췄/.test(title) ? '' : '<img class="cheer-art" src="art/cheer.webp" alt="">'}<h3>${esc(title)}</h3>${html}<div class="row mt2">${actions.map(a => `<button class="btn grow ${a.primary ? 'primary' : ''}" data-act="${a.id}">${a.label}</button>`).join('')}</div>`);
   sh.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!b) return; const id = b.dataset.act; sheetDone(() => onAct && onAct(id)); });
   return sh;
 }
@@ -2131,7 +2155,7 @@ function gateHTML(st) {
     <ol class="steps"><li>주소창 왼쪽의 <span class="kbd">${ICONS.sliders.replace('<svg', '<svg style="width:16px;height:16px"')} 아이콘</span>을 누르세요</li><li><b>권한</b>(또는 사이트 설정)을 누르세요</li><li><b>마이크</b>를 <b>허용</b>으로 바꾸세요</li></ol>
     <p class="small">주소창이 안 보이면 ‘자세한 방법’에서 다른 순서를 확인해 주세요.</p>
     <div class="row mt2"><button class="btn grow" data-mg="guide" data-tab="chrome">자세한 방법</button><button class="btn primary grow" data-mg="retry">다시 확인</button></div></div>`;
-  if (st === 'dismissed') return `<div class="card">${ic(1, 'mic')}<h3>허용 창이 닫혔어요</h3>
+  if (st === 'dismissed') return `<div class="card"><img class="mg-art" src="art/guide-mic.webp" alt=""><h3>허용 창이 닫혔어요</h3>
     <p>아래 버튼을 다시 누르면 허용 창이 다시 떠요. 창이 뜨면 <b>‘방문하는 동안 허용’</b>(또는 ‘허용’, 폰이 묻는 창은 ‘앱 사용 중에만 허용’)을 눌러 주세요. ‘이번만 허용’을 누르면 다음에 또 물어요.</p>
     <button class="btn primary big wide mt2" data-mg="ask">${ICONS.mic} 마이크 허용하기</button>
     <button class="btn ghost wide mt" data-mg="guide" data-tab="chrome">허용 창이 안 떠요</button></div>`;
@@ -2140,7 +2164,7 @@ function gateHTML(st) {
   if (st === 'error') return `<div class="card">${ic(1, 'warn')}<h3>마이크 연결에 실패했어요</h3><p>${esc(Mic.detail || '잠시 후 다시 시도해 주세요.')}</p><div class="row mt2"><button class="btn grow" data-mg="reload">새로고침</button><button class="btn primary grow" data-mg="retry">다시 시도</button></div></div>`;
   // prompt
   const again = S().micEverOk && !isIOS();
-  return `<div class="card">${envWarnHTML(true)}${ic(0, 'mic')}<h3>${again ? '마이크 허용을 다시 물어요' : '마이크를 허용해 주세요'}</h3>
+  return `<div class="card">${envWarnHTML(true)}${again ? '<img class="mg-art" src="art/guide-mic.webp" alt="">' : `<img class="mg-art" src="art/ob-mic.webp" alt="">`}<h3>${again ? '마이크 허용을 다시 물어요' : '마이크를 허용해 주세요'}</h3>
     ${again ? `<p>지난번에 <b>‘이번만 허용’</b>을 누르셨거나 크롬이 허용을 잊었어요. 허용 창이 뜨면 <b>‘방문하는 동안 허용’</b>(또는 ‘허용’)을 눌러 주세요. 그래야 다음에 다시 묻지 않고, 고른 마이크도 그대로 써요.</p>` : `<p>부시는 소리를 듣고 음정이 맞는지 알려 드리려면 마이크가 꼭 필요해요. 소리는 폰 안에서만 분석하고 어디에도 보내지 않아요.</p>${isIOS() ? '' : `<p class="small">허용 창에서 <b>‘이번만 허용’</b>보다 <b>‘방문하는 동안 허용’</b>(또는 ‘허용’)을 눌러야 다음에 다시 묻지 않아요.</p>`}`}
     <button class="btn primary big wide mt2" data-mg="ask">${ICONS.mic} 마이크 허용하기</button></div>`;
 }
@@ -2869,18 +2893,18 @@ defScreen('onboard', {
           <div class="tipbox mt2">처음 한 번만 악기 종류를 고르고 마이크를 허용하면 바로 시작할 수 있어요. 1분이면 충분해요.</div></div>`;
         setDock(`<button class="btn primary big wide" id="obNext">시작하기</button>`).querySelector('#obNext').onclick = () => { step = 1; render(); };
       } else if (step === 1) {
-        el.innerHTML = `<div class="ob">${dots()}<h2>어떤 팬플룻을 갖고 계세요?</h2><p class="lead">잘 모르시면 첫 번째를 고르세요. 나중에 설정에서 바꿀 수 있어요.</p>
+        el.innerHTML = `<div class="ob"><div class="ob-art ob-sm"><img class="fart" src="art/ob-flute.webp" alt=""></div>${dots()}<h2>어떤 팬플룻을 갖고 계세요?</h2><p class="lead">잘 모르시면 첫 번째를 고르세요. 나중에 설정에서 바꿀 수 있어요.</p>
           <div id="obOpts">${presets.map((p, i) => `<button class="opt ${i === pick ? 'on' : ''}" data-i="${i}"><span class="li-ic" style="background:var(--s2);color:var(--s2i)">${ICONS.pipes}</span><span class="grow"><span class="t">${p.t}</span><br><span class="d">${p.d}</span></span></button>`).join('')}</div></div>`;
         $('#obOpts', el).addEventListener('click', e => { const b = e.target.closest('.opt'); if (!b) return; pick = +b.dataset.i; $$('.opt', el).forEach(o => o.classList.toggle('on', o === b)); });
         setDock(`<button class="btn big" id="obBack">이전</button><button class="btn primary big" style="flex:1" id="obNext">다음</button>`);
         $('#obBack').onclick = () => { step = 0; render(); };
         $('#obNext').onclick = () => { S().flute = Object.assign({}, presets[pick].f); refreshPipes(); saveDB(); step = 2; render(); };
       } else if (step === 2) {
-        el.innerHTML = `<div class="ob">${dots()}<h2>마이크를 연결할게요</h2><p class="lead">음정을 들으려면 마이크가 꼭 필요해요.</p><div id="obMic"></div><div id="obOk"></div></div>`;
+        el.innerHTML = `<div class="ob"><div class="ob-art ob-sm"><img class="fart" src="art/ob-mic.webp" alt=""></div>${dots()}<h2>마이크를 연결할게요</h2><p class="lead">음정을 들으려면 마이크가 꼭 필요해요.</p><div id="obMic"></div><div id="obOk"></div></div>`;
         setDock(`<button class="btn ghost" id="obSkip">마이크 없이 둘러보기</button>`).querySelector('#obSkip').onclick = finishOb;
         unMic = withMic($('#obMic', el), () => { unMic = null; step = 3; render(); });
       } else if (step === 3) {
-        el.innerHTML = `<div class="ob">${dots()}<h2>주변 소리를 잠깐 들어 볼게요</h2>
+        el.innerHTML = `<div class="ob"><div class="ob-art ob-sm"><img class="fart" src="art/ob-noise.webp" alt=""></div>${dots()}<h2>주변 소리를 잠깐 들어 볼게요</h2>
           <p class="lead" id="obMsg">3초 동안 조용히 계셔 주세요. 주변 소음에 맞춰 마이크 감도를 맞춥니다.</p>
           <div class="level"><i id="obLv"></i></div>
           <div class="card flat mt2 center hidden" id="obTry"><div class="small muted">이제 가장 편한 관을 한 번 불어 보세요</div><div class="t-note" style="margin:8px 0 0;font-size:3.6rem" id="obNote">…</div><div class="small muted" id="obSub">&nbsp;</div></div></div>`;
@@ -3134,10 +3158,10 @@ defScreen('micguide', {
         <p class="mt"><b>모든 사이트에 한 번에 정하려면</b></p>
         <ol class="steps"><li>아이폰 ${K('설정')} 앱 → ${K('앱')} → ${K('Safari')}로 들어가세요.</li><li>아래쪽 ${K('마이크')}를 눌러 ${K('허용')}을 고르세요.</li></ol>
         <div class="tipbox">홈 화면에 추가한 앱은 처음 열 때 한 번씩 물을 수 있어요. 그때 ‘허용’을 누르면 그동안은 다시 묻지 않아요. 고른 마이크와 감도 같은 설정은 이 기기에 그대로 저장돼요.</div>`,
-      again: `<p>마이크 허용이나 고른 마이크가 다음에 열 때 사라진다면, 크롬이 허용을 ‘이번 한 번’으로만 기억하고 있는 경우가 많아요.</p>
+      again: `<img class="guide-art" src="art/guide-mic.webp" alt=""><p>마이크 허용이나 고른 마이크가 다음에 열 때 사라진다면, 크롬이 허용을 ‘이번 한 번’으로만 기억하고 있는 경우가 많아요.</p>
         <ol class="steps"><li>허용 창이 뜨면 ${K('이번만 허용')}이 아니라 ${K('방문하는 동안 허용')}(또는 ${K('허용')})을 누르세요.</li><li>이미 ‘이번만’으로 되어 있다면 크롬 오른쪽 위 ${K('', 'dots')} → ${K('설정')} → ${K('사이트 설정')} → ${K('마이크')}에서 이 사이트를 ${K('허용')}으로 바꾸세요.</li><li>설정 → 마이크의 ${K('입력 마이크')}에서 쓸 마이크를 다시 한 번 고르세요. 이름으로 기억해 두었다가 다음에도 찾아 써요.</li></ol>
         <div class="tipbox">카카오톡·네이버 앱 안에서 열었거나 시크릿 창이면 설정이 남지 않아요. 크롬으로 열어 홈 화면에 설치해 쓰세요. 삼성 인터넷과 크롬은 설정을 따로 저장해요.</div>`,
-      inapp: `<p>카카오톡·네이버·인스타그램 같은 앱 안에서 링크를 열면, 그 앱 안의 브라우저로 열려요. 이 브라우저는 크롬과 저장 공간이 따로라서 고른 마이크·감도 설정과 마이크 허용이 남지 않거나, 크롬에서 정한 설정이 보이지 않아요.</p>
+      inapp: `<img class="guide-art" src="art/guide-browser.webp" alt=""><p>카카오톡·네이버·인스타그램 같은 앱 안에서 링크를 열면, 그 앱 안의 브라우저로 열려요. 이 브라우저는 크롬과 저장 공간이 따로라서 고른 마이크·감도 설정과 마이크 허용이 남지 않거나, 크롬에서 정한 설정이 보이지 않아요.</p>
         <ol class="steps"><li>아래 버튼을 눌러 크롬(아이폰은 Safari)으로 여세요. 카카오톡이면 오른쪽 아래 ${K('⋯')} → ${K('다른 브라우저로 열기')}로도 열 수 있어요.</li><li>크롬에서 ${K('', 'dots')} → ${K('홈 화면에 추가')}(또는 ${K('앱 설치')})로 설치하세요.</li><li>앞으로는 홈 화면 아이콘으로 여세요.</li></ol>
         <button type="button" class="btn primary wide mt" data-envopen="1">${isIOS() ? 'Safari로 여는 방법' : '크롬으로 열기'}</button>`,
       ear: `<p>이어폰을 끼고 반주나 박자 소리를 들으며 연습할 때 알아 두면 좋은 점이에요.</p>
@@ -4279,7 +4303,14 @@ let badgeQ = [], badgeT = 0;
 function award(id) {
   if (DB.badges[id]) return; const b = BADGES.find(x => x[0] === id); if (!b) return;
   DB.badges[id] = Date.now(); saveDB(); badgeQ.push(b);
-  clearTimeout(badgeT); badgeT = setTimeout(function show() { const x = badgeQ.shift(); if (!x) return; chime(true); toast(`배지를 받았어요: ${x[1]}. ${x[2]}`, 3800); if (badgeQ.length) badgeT = setTimeout(show, 4000); }, 900);
+  clearTimeout(badgeT); badgeT = setTimeout(function show() { const x = badgeQ.shift(); if (!x) return; chime(true); badgePop(x); if (badgeQ.length) badgeT = setTimeout(show, 4000); }, 900);
+}
+/* 배지를 받으면 그림과 함께 잠깐 띄움 (누르면 닫힘) */
+function badgePop(x) {
+  const old = $('#bdgPop'); if (old) old.remove();
+  const p = document.createElement('div'); p.id = 'bdgPop'; p.className = 'bdgpop'; p.setAttribute('role', 'status');
+  p.innerHTML = `<img src="badges/${x[0]}.webp" alt=""><div><small>배지를 받았어요</small><b>${esc(x[1])}</b><span>${esc(x[2])}</span></div>`;
+  p.onclick = () => p.remove(); document.body.appendChild(p); setTimeout(() => p.remove(), 3800);
 }
 function checkBadges() {
   try {
@@ -4293,7 +4324,7 @@ function checkBadges() {
 }
 function badgesHTML() {
   const n = BADGES.filter(b => DB.badges[b[0]]).length;
-  return `<div class="row between"><b>${n} / ${BADGES.length}개</b><span class="tiny muted">연습하면서 하나씩 모아요</span></div><div class="badges mt">${BADGES.map(([id, t, d]) => { const on = !!DB.badges[id]; return `<div class="bdg${on ? ' on' : ''}" title="${esc(d)}"><i>${on ? ICONS.star : ICONS.lock}</i><b>${esc(t)}</b><span>${esc(d)}</span></div>`; }).join('')}</div>`;
+  return `<div class="row between"><b>${n} / ${BADGES.length}개</b><span class="tiny muted">연습하면서 하나씩 모아요</span></div><div class="badges mt">${BADGES.map(([id, t, d]) => { const on = !!DB.badges[id]; return `<div class="bdg${on ? ' on' : ''}" title="${esc(d)}"><i><img src="badges/${id}.webp" alt="" loading="lazy" decoding="async">${on ? '' : `<em>${ICONS.lock}</em>`}</i><b>${esc(t)}</b><span>${esc(d)}</span></div>`; }).join('')}</div>`;
 }
 
 /* ================= 오늘의 5분 코스 (롱톤 → 음계 → 쉬운 곡) ================= */
@@ -4380,7 +4411,7 @@ defScreen('songs', {
       el.innerHTML = `${mode ? `<div class="banner info" style="margin-top:0">${ICONS[mode === 'follow' ? 'follow' : 'roll']}<div class="grow"><b>${mode === 'follow' ? '곡 따라 불기' : '곡 박자대로 불기'}</b><span class="small">${mode === 'follow' ? '곡을 고르면 한 음씩, 맞을 때까지 기다려 드려요.' : '곡을 고르면 박자에 맞춰 불고 점수를 받아요.'}</span></div></div>` : ''}
         <div class="sg-search mt">${ICONS.search}<input type="search" id="sgQ" placeholder="곡 이름으로 찾기 (예: 아리랑)" value="${esc(q)}" aria-label="곡 이름으로 찾기">${q ? `<button type="button" id="sgQx" aria-label="찾기 지우기">${ICONS.x}</button>` : ''}</div>
         <div class="chips scroll mt" id="sgCat">${[['fav', '★ 즐겨찾기']].concat(SONG_CATS).map(([k, l]) => `<button class="chip ${k === cat ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div>
-        <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); const pn = pins.includes(s.id); return `<div class="song-w" data-t="${esc(normQ(s.t))}"><button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${cat === 'first' ? `${FIRST_ORDER.indexOf(s.id) + 1}. ` : ''}${esc(s.t)}${cat === 'first' ? (firstDone(s.id) ? ` <span class="fs-done">${ICONS.check}</span>` : !firstUnlocked(s.id) ? ` <span class="fs-lock">${ICONS.lock}</span>` : '') : ''}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button><button type="button" class="pin${pn ? ' on' : ''}" data-spin="${esc(s.id)}" aria-pressed="${pn}" aria-label="${esc(s.t)} 즐겨찾기">${ICONS.star}</button></div>`; }).join('') : `<div class="li"><span class="grow muted">${cat === 'mine' ? '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.' : cat === 'fav' ? '곡 오른쪽의 별표를 누르면 여기에 모여요.' : '곡이 없어요.'}</span></div>`}</div>
+        <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); const pn = pins.includes(s.id); return `<div class="song-w" data-t="${esc(normQ(s.t))}"><button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${cat === 'first' ? `${FIRST_ORDER.indexOf(s.id) + 1}. ` : ''}${esc(s.t)}${cat === 'first' ? (firstDone(s.id) ? ` <span class="fs-done">${ICONS.check}</span>` : !firstUnlocked(s.id) ? ` <span class="fs-lock">${ICONS.lock}</span>` : '') : ''}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button><button type="button" class="pin${pn ? ' on' : ''}" data-spin="${esc(s.id)}" aria-pressed="${pn}" aria-label="${esc(s.t)} 즐겨찾기">${ICONS.star}</button></div>`; }).join('') : `<div class="li" style="display:block">${cat === 'mine' ? emptyHTML('empty-song', '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.') : '<span class="grow muted">'}${cat === 'mine' ? '' : cat === 'fav' ? '곡 오른쪽의 별표를 누르면 여기에 모여요.</span>' : '곡이 없어요.</span>'}</div>`}</div>
         <p class="small muted center hidden" id="sgNone">찾는 곡이 없어요.</p>
         <div class="row mt"><button class="btn grow" id="sgNew">${ICONS.pen}계이름으로 내 곡 만들기</button><button class="btn grow" id="sgImp">${ICONS.music}악보 파일 불러오기</button></div>
         <p class="tiny muted mt">기본 곡은 저작권이 끝난 민요·찬송가·명곡·동요의 가락만 담았어요. 막대 개수는 난이도예요.</p>`;
@@ -5488,7 +5519,7 @@ defScreen('record', {
     async function paintList() {
       const box = $('#rcList', el); if (!box) return;
       let all = []; try { all = await RecDB.all(); } catch (e) { box.innerHTML = '<div class="card muted">이 폰에서는 녹음을 저장할 수 없어요.</div>'; return; }
-      if (!all.length) { box.innerHTML = '<div class="card muted small">아직 녹음이 없어요. 위의 버튼을 눌러 첫 녹음을 해 보세요.</div>'; return; }
+      if (!all.length) { box.innerHTML = `<div class="card">${emptyHTML('empty-rec', '아직 녹음이 없어요. 위의 버튼을 눌러 첫 녹음을 해 보세요.')}</div>`; return; }
       box.innerHTML = all.map(r => { const d = new Date(r.t); return `<div class="card" data-id="${r.id}" style="padding:10px 12px"><div class="row"><button class="icon-btn" data-a="play" aria-label="들어 보기" style="background:var(--surface-2)">${ICONS.play}</button><div class="grow"><b>${d.getMonth() + 1}월 ${d.getDate()}일 ${d.getHours() < 12 ? '오전' : '오후'} ${((d.getHours() + 11) % 12) + 1}:${pad2(d.getMinutes())}</b><div class="small muted">${fmtSec(r.dur)}</div></div><button class="icon-btn" data-a="dl" aria-label="파일로 저장">${ICONS.download}</button><button class="icon-btn" data-a="del" aria-label="지우기">${ICONS.trash}</button></div>
         <canvas class="trace" style="height:84px;margin-top:6px"></canvas></div>`; }).join('');
       all.forEach(r => { const c = $(`[data-id="${r.id}"] canvas`, box); if (c) drawRecGraph(c, r); });
@@ -5671,7 +5702,7 @@ defScreen('records', {
       </div><div class="blk"><div class="sec-title">최고 기록</div>
       <div class="list">${lb.length ? lb.map(x => `<div class="li"><span class="grow"><span class="t">롱톤 ${esc(nFull(x.m))}</span></span><b>${(+x.s).toFixed(1)}초</b></div>`).join('') : ''}${sb.map(x => `<div class="li"><span class="grow"><span class="t">${esc(x.s.t)}</span></span><span class="small">${x.b.follow ? `따라 불기 ${x.b.follow}%` : ''}${x.b.follow && x.b.play ? ' · ' : ''}${x.b.play ? `박자 ${x.b.play}점` : ''}</span></div>`).join('')}${!lb.length && !sb.length ? '<div class="li muted small">롱톤이나 곡 연습을 하면 여기에 최고 기록이 쌓여요.</div>' : ''}</div>
       </div><div class="blk"><div class="sec-title">최근 연습</div>
-      <div class="list">${recent.length ? recent.map(x => { const d = new Date(x.t); return `<div class="li"><span class="grow"><span class="t">${esc(FEAT[x.f] || x.f)}</span><br><span class="d">${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}${x.s ? ' · ' + esc(x.s) : ''}</span></span><span class="small muted">${Math.max(1, Math.round(x.sec / 60))}분</span></div>`; }).join('') : '<div class="li muted small">15초 넘게 연습한 기록이 여기에 쌓여요.</div>'}</div>
+      <div class="list">${recent.length ? recent.map(x => { const d = new Date(x.t); return `<div class="li"><span class="grow"><span class="t">${esc(FEAT[x.f] || x.f)}</span><br><span class="d">${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}${x.s ? ' · ' + esc(x.s) : ''}</span></span><span class="small muted">${Math.max(1, Math.round(x.sec / 60))}분</span></div>`; }).join('') : `<div class="li" style="display:block">${emptyHTML('empty-log', '15초 넘게 연습한 기록이 여기에 쌓여요.')}</div>`}</div>
       </div><div class="blk"><div class="sec-title">기록 보관</div>
       <div class="card"><p class="small muted" style="margin-top:0">기록은 이 폰의 크롬 안에 저장돼요. 폰을 바꾸거나 크롬 데이터를 지우기 전에 파일로 보관해 두세요. (녹음 파일은 녹음 화면에서 따로 저장해요)</p>
         <div class="row wrap"><button class="btn grow" id="rdExp">${ICONS.download}파일로 보관</button><button class="btn grow" id="rdImp">${ICONS.upload}보관 파일 불러오기</button></div>
@@ -5856,7 +5887,7 @@ defScreen('settings', {
       </div>
       </div></div>
       <p class="center mt2" style="font-family:var(--hand);font-size:1.9rem;margin-bottom:0;color:var(--peony)">Made by 장작&amp;난로</p>
-      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.12</p>`;
+      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.13</p>`;
       // 카테고리 탭: 제목으로 묶어 고른 탭의 칸만 보여 줌
       const paintTab = () => { $$('.blk', el).forEach(b => { const t = $('.sec-title', b).textContent.trim(); const k = (SET_TABS.find(x => x[2].includes(t)) || SET_TABS[0])[0]; b.classList.toggle('hidden', k !== tab); }); $$('#stTabs .chip', el).forEach(c => c.classList.toggle('on', c.dataset.st === tab)); };
       paintTab();
