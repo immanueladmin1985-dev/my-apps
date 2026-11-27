@@ -82,6 +82,53 @@
     }
   }
 
+  function toolList(full) {
+    return [{ id: 'hYard', e: '🌷', n: '정원', hot: M.gardenOrderReady && M.gardenOrderReady(), main: 1 }, { id: 'hFeed', e: '🥕', n: '먹이', hot: full < 30, main: 1 }, { id: 'hEdit', e: editing ? '✅' : '✏️', n: editing ? '완료' : '꾸미기', hot: editing, main: 1 }, { id: 'hCook', e: '🍳', n: '요리', main: 1 },
+      { id: 'hShop', e: '🛋️', n: '상점' }, { id: 'hPots', e: '🪴', n: '화분', hot: M.potAlert && M.potAlert() }, { id: 'hMail', e: '📮', n: '편지', hot: M.mailUnread && M.mailUnread(), badge: 1 }, { id: 'hHouse', e: '🔨', n: '집' }];
+  }
+  function toolBtn(b) { return '<button class="ht' + (b.hot ? ' hot' : '') + '" id="' + b.id + '"><span>' + b.e + '</span><small>' + b.n + '</small>' + (b.badge && b.hot ? '<i class="nbadge">' + b.hot + '</i>' : '') + '</button>'; }
+  // 방 확대·이동 (두 손가락으로 벌리기, 확대한 뒤 끌기). 꾸미기 중에는 원래 크기로 둔다
+  var Z = { s: 1, x: 0, y: 0 };
+  function zoomTf() { return editing || Z.s <= 1.01 ? '' : 'translate(' + Z.x + 'px,' + Z.y + 'px) scale(' + Z.s + ')'; }
+  function zoomCss() { var t = zoomTf(); return t ? 'transform:' + t : ''; }
+  function applyZoom() {
+    var r = $('room'), rin = $('rin'); if (!r || !rin) return;
+    var w = r.clientWidth, h = r.clientHeight;
+    Z.s = Math.max(1, Math.min(2.4, Z.s)); Z.x = Math.min(0, Math.max(w - w * Z.s, Z.x)); Z.y = Math.min(0, Math.max(h - h * Z.s, Z.y));
+    rin.style.transform = zoomTf();
+    var zb = r.querySelector('[data-rzoom]');
+    if (Z.s > 1.01 && !zb && !editing) { zb = document.createElement('button'); zb.className = 'roomzoom'; zb.dataset.rzoom = '1'; zb.textContent = '↺ 원래 크기'; r.appendChild(zb); }
+    if (Z.s <= 1.01 && zb) zb.remove();
+  }
+  var zp = {}, zg = null, zPanned = 0;
+  document.addEventListener('pointerdown', function (e) {
+    var r = e.target.closest && e.target.closest('#room'); if (!r || editing) return;
+    zp[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(zp), rr = r.getBoundingClientRect();
+    if (ids.length === 2) { var a = zp[ids[0]], b = zp[ids[1]]; zg = { d: Math.hypot(a.x - b.x, a.y - b.y), s: Z.s, x: Z.x, y: Z.y, cx: (a.x + b.x) / 2 - rr.left, cy: (a.y + b.y) / 2 - rr.top }; }
+    else if (ids.length === 1 && Z.s > 1.01) zg = { pan: 1, sx: e.clientX, sy: e.clientY, x: Z.x, y: Z.y, moved: false };
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!zp[e.pointerId] || !zg) return;
+    zp[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(zp);
+    if (!zg.pan && ids.length >= 2) {
+      var a = zp[ids[0]], b = zp[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y), ns = Math.max(1, Math.min(2.4, zg.s * d / (zg.d || 1)));
+      Z.x = zg.cx - (zg.cx - zg.x) * ns / zg.s; Z.y = zg.cy - (zg.cy - zg.y) * ns / zg.s; Z.s = ns; applyZoom(); zPanned = Date.now(); e.preventDefault();
+    } else if (zg.pan) {
+      var dx = e.clientX - zg.sx, dy = e.clientY - zg.sy;
+      if (zg.moved || Math.abs(dx) + Math.abs(dy) > 8) { zg.moved = true; Z.x = zg.x + dx; Z.y = zg.y + dy; applyZoom(); zPanned = Date.now(); }
+    }
+  }, { passive: false });
+  function zEnd(e) { delete zp[e.pointerId]; if (!Object.keys(zp).length) zg = null; else if (zg && !zg.pan) zg = null; }
+  document.addEventListener('pointerup', zEnd); document.addEventListener('pointercancel', zEnd);
+  // 확대·이동한 직후의 손 뗌은 누르기로 치지 않는다
+  document.addEventListener('click', function (e) { if (Date.now() - zPanned < 300 && e.target.closest && e.target.closest('#room')) { e.stopPropagation(); e.preventDefault(); } }, true);
+  document.addEventListener('wheel', function (e) {   // 컴퓨터: Ctrl+휠(트랙패드 벌리기)로 확대
+    var r = e.target.closest && e.target.closest('#room'); if (!r || editing || !e.ctrlKey) return;
+    e.preventDefault(); var rr = r.getBoundingClientRect(), cx = e.clientX - rr.left, cy = e.clientY - rr.top, ns = Math.max(1, Math.min(2.4, Z.s * (e.deltaY < 0 ? 1.1 : 0.9)));
+    Z.x = cx - (cx - Z.x) * ns / Z.s; Z.y = cy - (cy - Z.y) * ns / Z.s; Z.s = ns; applyZoom();
+  }, { passive: false });
   M.renderHome = function (root) {
     Object.keys(M.P.room.placed).forEach(function (id) {
       var f = FURN.filter(function (x) { return x.id === id; })[0], p = M.P.room.placed[id]; if (!f || !p) return;
@@ -95,19 +142,18 @@
     var placed = Object.keys(P.room.placed).map(function (id) { return FURN.filter(function (f) { return f.id === id; })[0]; }).filter(Boolean);
     placed.sort(function (a, b) { return P.room.placed[a.id].y - P.room.placed[b.id].y; });
     var h = '<div class="home">' + (fl > 1 ? '<div class="floors">' + FLOORS.slice(1, fl + 1).map(function (n, i) { return '<button data-fl="' + (i + 1) + '" class="' + (cur === i + 1 ? 'on' : '') + '">' + n + '</button>'; }).join('') + '</div>' : '') +
-      '<div class="room' + (editing ? ' editing' : '') + '" id="room">' + roomLayers() + (editing ? '' : '<button class="roomcam" data-rcam aria-label="사진 찍기">📷</button>') +
+      '<div class="room' + (editing ? ' editing' : '') + '" id="room"><div class="rin" id="rin" style="' + zoomCss() + '">' + roomLayers() +
       placed.map(function (f) { var pos = P.room.placed[f.id]; return '<div class="furn' + (f.wall ? ' onwall' : '') + (editing && fsel === f.id ? ' fsel' : '') + (pos.f ? ' flip' : '') + '" data-f="' + f.id + '" style="left:' + pos.x + '%;top:' + pos.y + '%;width:' + (f.size * (pos.s || 1)).toFixed(1) + '%;z-index:' + ((f.rug ? 1 : Math.round(pos.y)) + (pos.z || 0)) + '"><img src="img/furn-' + f.id + '.png" alt="' + esc(f.name) + '" draggable="false">' + showcase(f.id) + '</div>'; }).join('') +
       (M.potsRoomHtml && cur === 1 ? M.potsRoomHtml() : '') +
-      '<div class="pet' + (editing ? ' movable' : '') + '" id="pet" style="z-index:' + Math.round((P.pet.pos || { y: 92 }).y) + ';' + (P.pet.pos ? 'left:' + P.pet.pos.x + '%;top:' + P.pet.pos.y + '%;bottom:auto' : '') + '"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
+      '<div class="pet' + (editing ? ' movable' : '') + '" id="pet" style="z-index:' + Math.round((P.pet.pos || { y: 92 }).y) + ';' + (P.pet.pos ? 'left:' + P.pet.pos.x + '%;top:' + P.pet.pos.y + '%;bottom:auto' : '') + '"><div class="bubble" id="petSay">' + esc(line) + '</div><div class="pstat"><span class="ps' + (full < 30 ? ' low' : '') + '" title="배부름">🥕<i><i style="width:' + M.petFullPct() + '%"></i></i></span><span class="ps" title="친밀도">💗<i><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></i></span></div><div class="petfig"><img id="petImg" src="' + M.petImg(face) + '" alt="' + esc(P.petName) + '">' + accHtml(face) + '</div></div>' +
+      '</div>' + (editing ? '' : '<button class="roomcam" data-rcam aria-label="사진 찍기">📷</button>' + (Z.s > 1.01 ? '<button class="roomzoom" data-rzoom aria-label="원래 크기로">↺ 원래 크기</button>' : '')) +
       (editing ? '<div class="edithint">' + (fsel ? '아래 버튼으로 크기·방향·순서를 바꿔요' : '가구·화분·' + esc(P.petName) + '를 끌어서 옮겨요') + '</div>' : '') +
       '</div>' + (editing && fsel && P.room.placed[fsel] ? '<div class="ftools"><b>' + esc((FURN.filter(function (x) { return x.id === fsel; })[0] || {}).name || '') + '</b><button data-ft="small">－ 작게</button><button data-ft="big">＋ 크게</button><button data-ft="flip">↔ 뒤집기</button><button data-ft="front">⬆ 앞으로</button><button data-ft="back">⬇ 뒤로</button><button data-ft="store">📦 보관</button></div>' : '') +
       '<div class="hstat"><b>' + esc(P.petName) + ' <small>Lv.' + p.lv + '</small></b>' +
-      '<span class="hs" title="친밀도">💗<i class="mini-bar"><i style="width:' + Math.round(p.exp / needExp(p.lv) * 100) + '%"></i></i></span>' +
-      '<span class="hs' + (full < 30 ? ' low' : '') + '" title="배부름">🥕<i class="mini-bar full"><i style="width:' + M.petFullPct() + '%"></i></i></span>' +
-      '<span class="hs">💧+' + M.petBonus() + '%</span></div>' +
-      '<div class="htools">' + [['hYard', '🌷', '정원', M.gardenOrderReady && M.gardenOrderReady()], ['hFeed', '🥕', '먹이', full < 30], ['hEdit', editing ? '✅' : '✏️', editing ? '완료' : '꾸미기', editing], ['hShop', '🛋️', '상점'], ['hPots', '🪴', '화분', M.potAlert && M.potAlert()], ['hMail', '📮', '편지', M.mailUnread && M.mailUnread()], ['hCook', '🍳', '요리'], ['hHouse', '🔨', '집']].map(function (b) {
-        return '<button class="ht' + (b[3] ? ' hot' : '') + '" id="' + b[0] + '"><span>' + b[1] + '</span><small>' + b[2] + '</small>' + (b[0] === 'hMail' && b[3] ? '<i class="nbadge">' + b[3] + '</i>' : '') + '</button>';
-      }).join('') + '</div></div>';
+      '<span class="hs">💧 레슨 보너스 +' + M.petBonus() + '%</span></div>' +
+      // 자주 쓰는 4개는 늘 보이고, 나머지는 할 일이 있을 때만 앞으로 나온다 (그 밖에는 더보기)
+      '<div class="htools">' + toolList(full).filter(function (b) { return b.main || b.hot; }).map(toolBtn).join('') +
+      '<button class="ht" id="hMore"><span>⋯</span><small>더보기</small></button></div></div>';
     root.innerHTML = h;
   };
   function rerender() { var r = $('homeView'); if (r) M.renderHome(r); }
@@ -340,13 +386,19 @@
   });
 
   document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-rzoom]')) { Z = { s: 1, x: 0, y: 0 }; applyZoom(); return; }
+    if (e.target.closest('#hMore')) {
+      var md = M.modal('<h3>🏠 집에서 할 수 있는 것</h3><div class="hmore">' + toolList(M.petFull()).map(function (b) { return '<button class="ht' + (b.hot ? ' hot' : '') + '" data-hgo="' + b.id + '"><span>' + b.e + '</span><small>' + b.n + '</small>' + (b.badge && b.hot ? '<i class="nbadge">' + b.hot + '</i>' : '') + '</button>'; }).join('') + '</div><button class="btn ghost wide" data-close>닫기</button>');
+      md.addEventListener('click', function (ev) { var g = ev.target.closest('[data-hgo]'); if (!g) return; md.close(); var bt = document.createElement('button'); bt.id = g.dataset.hgo; bt.style.display = 'none'; document.body.appendChild(bt); bt.click(); bt.remove(); });
+      return;
+    }
     if (e.target.closest('#hFeed')) feedSheet();
     else if (e.target.closest('#hShop')) furnShop();
     else if (e.target.closest('#hHouse')) M.houseSheet();
     else if (e.target.closest('#hYard')) { M.inVillage = true; M.go('garden'); if (M.render) M.render(); }
     else if (e.target.closest('#hMail')) M.mailSheet();
     else if (e.target.closest('#hCook')) M.cookSheet();
-    else if (e.target.closest('#hEdit')) { editing = !editing; fsel = ''; rerender(); }
+    else if (e.target.closest('#hEdit')) { editing = !editing; fsel = ''; Z = { s: 1, x: 0, y: 0 }; rerender(); }
     else if (e.target.closest('#hPots')) { var pd = M.modal('<div class="potshelf">' + M.potsHtml() + '</div><button class="btn ghost wide" data-close>닫기</button>'); pd.querySelector('.potshelf').classList.add('insheet'); }
     else if (e.target.closest('[data-ft]') && fsel) {
       var a = e.target.closest('[data-ft]').dataset.ft, pos = M.P.room.placed[fsel], f = FURN.filter(function (x) { return x.id === fsel; })[0];
