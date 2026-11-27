@@ -3,7 +3,7 @@
 // - 코드를 고치면 CODE 버전만 올린다. 그림은 다시 받지 않는다.
 // - 그림을 추가하면 IMGS 목록에 넣고 IMG 버전을 올린다. 이미 받은 그림은 예전 저장소에서 옮겨 담아 다시 받지 않는다.
 // - 같은 이름의 그림을 새 그림으로 바꿨다면 FRESH 에도 넣는다.
-const CODE = 'malssi-code-v123';
+const CODE = 'malssi-code-v124';
 const IMG = 'malssi-img-v2';
 const KEEP = [CODE, IMG];
 const FRESH = [];   // 같은 이름으로 그림을 바꿨을 때만 여기에 넣는다 (IMG 버전을 올리면 새로 받는다)

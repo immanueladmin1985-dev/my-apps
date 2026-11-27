@@ -541,12 +541,20 @@
   M.marketSheet = function () {
     if (M.hmarket()) { hmarketSheet(); return; }
     var x = X(), lang = M.P.lang, day = M.today();
-    var pool = (M.FURN || []).filter(function (f) { return f.price >= 120 && !(M.P.room.owned || {})[f.id]; });
-    var seed = parseInt(day.replace(/\D/g, ''), 10), pick = [];
-    for (var i = 0; i < pool.length * 4 && pick.length < Math.min(4, pool.length); i++) { var f = pool[(seed * 7 + i * 5 + Math.floor(i / pool.length)) % pool.length]; if (pick.indexOf(f) < 0) pick.push(f); }
+    // 오늘 물건은 한 번 정하면 그대로 둔다 (사도 바뀌지 않는다). 코인을 내야 새 물건으로 바뀌고, 바꿀 때마다 값이 두 배가 된다 (날이 바뀌면 처음 값으로)
+    var ML = x.marketLine;
+    function newLine(n) {
+      var pool = (M.FURN || []).filter(function (f) { return f.price >= 120 && !(M.P.room.owned || {})[f.id] && !(ML && ML.ids.indexOf(f.id) >= 0 && n); });
+      if (pool.length < 4) pool = (M.FURN || []).filter(function (f) { return f.price >= 120 && !(M.P.room.owned || {})[f.id]; });
+      return M.shuffle(pool).slice(0, 4).map(function (f) { return f.id; });
+    }
+    if (!ML || ML.day !== day) ML = x.marketLine = { day: day, ids: newLine(0), sold: {}, rr: 0 };
+    var FB = {}; (M.FURN || []).forEach(function (f) { FB[f.id] = f; });
+    var pick = ML.ids.map(function (id) { return FB[id]; }).filter(Boolean), rrCost = 100 * Math.pow(2, ML.rr || 0);
     x.marketDisc = x.marketDisc && x.marketDisc.day === day ? x.marketDisc : { day: day, rate: 1 };
     var d = M.modal('<div class="mintro"><img class="mface" src="img/w/cust-raccoon.png" alt=""><div class="msay"><b>너구리 상인 너굴</b><p>어서 와요! 오늘만 파는 귀한 물건이에요. 퀴즈를 맞히면 30% 깎아 줄게요!</p></div></div>' +
-      '<div class="fgrid">' + pick.map(function (f) { var pr = Math.round(f.price * x.marketDisc.rate); return '<button class="fcard" data-mk="' + f.id + '"><img src="img/furn-' + f.id + '.png" alt=""><b>' + f.name + '</b><small class="price"><img src="img/coin.png" alt="">' + pr + '</small></button>'; }).join('') + '</div>' +
+      '<div class="fgrid">' + pick.map(function (f) { var pr = Math.round(f.price * x.marketDisc.rate), sold = ML.sold[f.id]; return '<button class="fcard' + (sold ? ' lock' : '') + '" data-mk="' + f.id + '"' + (sold ? ' disabled' : '') + '><img src="img/furn-' + f.id + '.png" alt=""><b>' + f.name + '</b>' + (sold ? '<small>팔렸어요 ✔</small>' : '<small class="price"><img src="img/coin.png" alt="">' + pr + '</small>') + '</button>'; }).join('') + '</div>' +
+      '<button class="btn wide" data-mrr>🔄 물건 새로 들여오기 <small>(<img class="inl" src="img/coin.png" alt="">' + M.fmt(rrCost) + ' · 바꿀 때마다 두 배)</small></button>' +
       (x.marketDisc.rate < 1 ? '<p class="hint center">🎉 오늘은 30% 할인 중!</p>' : '<button class="btn wide" data-mq>🧩 퀴즈 풀고 깎기</button>') + '<button class="btn ghost wide" data-close>나가기</button>');
     d.addEventListener('click', function (e) {
       if (e.target.closest('[data-mq]')) {
@@ -557,11 +565,18 @@
         q.addEventListener('click', function (e2) { var b = e2.target.closest('[data-k]'); if (!b) return; q.close(); if (b.dataset.k === t.k) { x.marketDisc.rate = 0.7; M.sfx('win'); M.toast('정답! 오늘은 30% 할인이에요'); } else { M.sfx('bad'); M.toast('아쉬워요! 뜻은 「' + t.k + '」'); x.marketDisc.tried = true; } M.save(); M.marketSheet(); });
         return;
       }
-      var b = e.target.closest('[data-mk]'); if (!b) return;
+      if (e.target.closest('[data-mrr]')) {
+        M.confirm('🔄 물건 새로 들여오기', '<img class="inl" src="img/coin.png" alt="">' + M.fmt(rrCost) + '코인을 내면 너굴이 새 물건 4개를 들여와요.<br>다음에 바꿀 때는 ' + M.fmt(rrCost * 2) + '코인이에요.', '바꾸기', function () {
+          if (!M.spend('coins', rrCost)) { M.toast('코인이 모자라요'); return; }
+          ML.ids = newLine(1); ML.sold = {}; ML.rr = (ML.rr || 0) + 1; M.save(); M.sfx('coin'); if (M.paintTop) M.paintTop(); d.close(); M.marketSheet();
+        });
+        return;
+      }
+      var b = e.target.closest('[data-mk]'); if (!b || b.disabled) return;
       var f = pick.filter(function (z) { return z.id === b.dataset.mk; })[0], pr = Math.round(f.price * x.marketDisc.rate);
       M.confirm(f.name, '<img class="inl" src="img/coin.png" alt="">' + pr + '코인에 살까요? 우리 집 방에 놓여요.', '사기', function () {
         if (!M.spend('coins', pr)) { M.toast('코인이 모자라요'); return; }
-        M.P.room.owned[f.id] = true; M.P.room.placed[f.id] = { x: 50, y: f.wall ? 30 : 70 }; M.save(); M.sfx('coin'); d.close(); M.toast(f.name + '을(를) 샀어요! 방에 놓았어요');
+        M.P.room.owned[f.id] = true; M.P.room.placed[f.id] = { x: 50, y: f.wall ? 30 : 70 }; ML.sold[f.id] = 1; M.save(); M.sfx('coin'); d.close(); M.marketSheet(); M.toast(f.name + '을(를) 샀어요! 방에 놓았어요');
       });
     });
   };
