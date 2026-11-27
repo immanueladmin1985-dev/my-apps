@@ -138,6 +138,7 @@
       var n = (s.coupons || []).filter(function (c) { return c.status === 'wait'; }).length + (s.requests || []).length;
       if (n > (L.seen || 0) && !(view && view.isConnected)) M.toast('💌 ' + M.j(M.Family.mateName(), '이', '가') + ' 새 쿠폰이나 선물 신청을 보냈어요 (설정 › 원격 관리)');
       M.Family.waiting = n; L.seen = Math.min(L.seen || 0, n); store();
+      if (s.quizRes && s.quizRes.at && s.quizRes.at !== L.quizSeen) { var first = L.quizSeen === undefined; L.quizSeen = s.quizRes.at; store(); if (!first) M.toast('💌 ' + M.j(M.Family.mateName(), '이', '가') + ' 부부 퀴즈를 풀었어요: ' + s.quizRes.ok + ' / ' + s.quizRes.n); }
       // 일요일(또는 그 뒤 처음)에 한 번 주간 리포트를 보여 준다
       var dow = M.now().getDay(), wk = s.report && s.report.week;
       if (s.report && wk && L.repWeek !== wk && (dow === 0 || dow === 6) && !document.querySelector('.dim')) {
@@ -364,7 +365,10 @@
       owned: Object.keys((P.room && P.room.owned) || {}),
       inv: { item: (P.gather && P.gather.bag) || {}, seed: (P.pots && P.pots.seeds) || {}, pan: P.pantry || {}, bait: P.bait || {} },
       hmarket: M.hmarket ? M.hmarket() : null,
-      report: M.weekReport ? M.weekReport() : null
+      report: M.weekReport ? M.weekReport() : null,
+      // 부부 퀴즈: 남편이 고를 낱말 후보(최근에 배운 것과 자주 틀린 것), 지난 퀴즈 결과
+      qpool: (function () { try { var ms = M.missedItems(P.lang, 10), ls = M.learnedItems(P.lang).filter(function (it) { return it.k && !it.kana; }).slice(-40); return ms.concat(ls.filter(function (x) { return ms.indexOf(x) < 0; })).slice(0, 40).map(function (it) { return { t: it.t, k: it.k, r: it.r || '' }; }); } catch (e) { return []; } })(),
+      qlang: P.lang, quizRes: P.quizRes || null, quizWait: !!(P.quizIn && !P.quizIn.done)
     };
   }
   var giftWait = [];
@@ -398,6 +402,9 @@
       M.hmarketOpen(c);
     } else if (c.t === 'marketClose' && M.hmarketOpen) {
       M.hmarketOpen(null);
+    } else if (c.t === 'quiz' && Array.isArray(c.words)) {
+      var ws = c.words.slice(0, 10).filter(function (w) { return w && typeof w.t === 'string' && typeof w.k === 'string'; }).map(function (w) { return { t: w.t.slice(0, 40), k: w.k.slice(0, 60), r: String(w.r || '').slice(0, 60) }; });
+      if (ws.length >= 3) { P.quizIn = { lang: ['ja', 'en', 'zh'].indexOf(c.lang) >= 0 ? c.lang : P.lang, words: ws, msg: String(c.msg || '').slice(0, 60), at: c.at || Date.now() }; if (M.coupleQuizNotice) setTimeout(M.coupleQuizNotice, 800); }
     } else if (c.t === 'settings') {
       P.admin.rate = num(c.rate, 1, 1000, P.admin.rate || 10); P.admin.weekBonus = num(c.weekBonus, 0, 1000, P.admin.weekBonus || 0);
     }
@@ -419,7 +426,7 @@
     if (view && view.isConnected) return;
     var tab = 'coupon', S = null, pend = {}, edits = null, base = [], mkState = { cat: 'item', lack: true, q: '', pick: {}, msg: '오늘만 특별가! 너굴너굴~' };
     var d = view = M.modal('<div class="admin"><h3>💌 원격 관리</h3><p class="rsub hint center">불러오는 중…</p><div class="tabs">' +
-      [['coupon', '쿠폰 승인'], ['req', '신청 선물'], ['market', '🦝 장터'], ['reward', '선물 관리'], ['praise', '칭찬 선물'], ['stats', '공부 현황'], ['etc', '설정']].map(function (t) { return '<button data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
+      [['coupon', '쿠폰 승인'], ['req', '신청 선물'], ['market', '🦝 장터'], ['quiz', '💌 부부 퀴즈'], ['reward', '선물 관리'], ['praise', '칭찬 선물'], ['stats', '공부 현황'], ['etc', '설정']].map(function (t) { return '<button data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
       '</div><div class="abody"></div><button class="btn ghost wide" data-close>닫기</button></div>', { cls: 'full', onClose: function () { offs.forEach(function (f) { f(); }); view = null; } });
     var body = d.querySelector('.abody'), sub = d.querySelector('.rsub');
     var pendList = function () { return Object.keys(pend).map(function (k) { return pend[k]; }); };
@@ -450,6 +457,15 @@
         return '<p class="hint">하루에 레슨 5판 정도 하면 꽃 포인트를 대략 25~35점 모아요.</p>' + list.map(function (r) {
           return '<div class="aedit" data-rid="' + esc(r.id) + '"><input class="ae" value="' + esc(r.e) + '" maxlength="4" aria-label="그림"><input class="an" value="' + esc(r.name) + '" maxlength="30" aria-label="이름"><input class="ap" type="number" inputmode="numeric" min="1" value="' + r.price + '" aria-label="가격"><button class="btn ghost" data-x="rdel" data-id="' + esc(r.id) + '">🗑</button></div>';
         }).join('') + '<div class="row2"><button class="btn" data-x="radd">+ 선물 추가</button><button class="btn primary" data-x="rsave">저장해서 보내기</button></div>';
+      },
+      quiz: function () {
+        var pool = S.qpool || [], res = S.quizRes, qs = mkState.qpick = mkState.qpick || {};
+        var h = '<p>아내가 최근에 배운 낱말과 자주 틀리는 낱말이에요. <b>3~10개</b>를 골라 퀴즈로 보내면, 아내 폰에서 풀고 결과가 여기로 와요.</p>';
+        if (res) h += '<div class="hmcur"><b>지난 퀴즈 결과: ' + res.ok + ' / ' + res.n + '</b><small>' + fmtDate(res.at) + (res.wrong && res.wrong.length ? ' · 틀린 낱말: ' + res.wrong.map(esc).join(', ') : ' · 모두 맞혔어요! 🎉') + '</small></div>';
+        if (S.quizWait) h += '<p class="hint">보낸 퀴즈를 아직 풀지 않았어요.</p>';
+        if (!pool.length) return h + '<p class="hint center">아직 배운 낱말이 없어요.</p>';
+        h += '<div class="qpool">' + pool.map(function (w, i) { return '<label class="qpw' + (qs[i] ? ' on' : '') + '"><input type="checkbox" data-qp="' + i + '"' + (qs[i] ? ' checked' : '') + '><b class="lang-' + (S.qlang || 'ja') + '">' + esc(w.t) + '</b><small>' + esc(w.k) + '</small></label>'; }).join('') + '</div>';
+        return h + '<label class="fld">한마디<input id="qMsg" maxlength="60" value="' + esc(mkState.qmsg || '이번 주 공부한 거 확인해 볼까? 화이팅!') + '"></label><button class="btn primary wide" data-x="quiz">퀴즈 보내기 (' + Object.keys(qs).filter(function (k) { return qs[k]; }).length + '개)</button>';
       },
       praise: function () {
         return '<p>칭찬과 함께 꽃 포인트를 보내 보세요. 아내 폰에서 앱을 열면 선물 상자가 열려요.</p>' +
@@ -541,6 +557,7 @@
     d.addEventListener('click', function (e) {
       var t = e.target.closest('[data-tab]'); if (t) { collect(); mkCollect(); tab = t.dataset.tab; if (tab === 'reward' && S) { edits = JSON.parse(JSON.stringify(S.rewards)); base = S.rewards.map(function (r) { return r.id; }); } paint(); return; }
       var mc = e.target.closest('[data-mc]'); if (mc) { mkCollect(); mkState.cat = mc.dataset.mc; body.innerHTML = T.market(); return; }
+      var qp = e.target.closest('[data-qp]'); if (qp) { var qq = mkState.qpick = mkState.qpick || {}, cnt = Object.keys(qq).filter(function (k) { return qq[k]; }).length; if (qp.checked && cnt >= 10) { qp.checked = false; M.toast('10개까지 고를 수 있어요'); return; } qq[qp.dataset.qp] = qp.checked; var mi = body.querySelector('#qMsg'); if (mi) mkState.qmsg = mi.value; body.innerHTML = T.quiz(); return; }
       if (e.target.id === 'hmLack') { mkCollect(); mkState.lack = e.target.checked; body.innerHTML = T.market(); return; }
       var b = e.target.closest('[data-x]'); if (!b || !S) return;
       var x = b.dataset.x, id = b.dataset.id, cmd = null, ok = '';
@@ -559,6 +576,11 @@
         if (!sell.length && !buy.length) { M.toast('팔 물건이나 사 줄 물건을 하나 이상 골라 주세요'); return; }
         var days = parseInt(body.querySelector('#hmDays').value, 10) || 1, end = new Date(); end.setHours(23, 59, 0, 0); end.setDate(end.getDate() + days - 1);
         cmd = { t: 'market', sell: sell, buy: buy, until: end.getTime(), msg: mkState.msg.slice(0, 50) }; ok = '🦝 장터를 열었어요'; mkState.pick = {};
+      }
+      else if (x === 'quiz') {
+        var pk = mkState.qpick || {}, words = (S.qpool || []).filter(function (w, i) { return pk[i]; });
+        if (words.length < 3) { M.toast('낱말을 3개 이상 골라 주세요'); return; }
+        cmd = { t: 'quiz', lang: S.qlang, words: words, msg: (body.querySelector('#qMsg').value || '').trim().slice(0, 60) }; ok = '💌 퀴즈를 보냈어요'; mkState.qpick = {}; S.quizWait = true;
       }
       else if (x === 'mclose') { cmd = { t: 'marketClose' }; ok = '장터를 닫았어요'; }
       else if (x === 'saveW') { cmd = { t: 'settings', rate: parseInt(body.querySelector('#wRate').value, 10) || 10, weekBonus: parseInt(body.querySelector('#wBonus').value, 10) || 0 }; S.rate = cmd.rate; S.weekBonus = cmd.weekBonus; ok = '설정을 보냈어요'; }

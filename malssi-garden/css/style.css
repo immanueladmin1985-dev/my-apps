@@ -2070,3 +2070,9 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .lttop small { font-size: .9rem; color: var(--sub); font-weight: 600; }
 .ltopts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; } .ltopts .opt { min-height: 64px; }
 .ltopts .opt.right { border-color: #3fb886; background: #e7f8ef; } .ltopts .opt.wrong { border-color: var(--red); background: #ffeeee; }
+/* 부부 퀴즈 */
+.qpool { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; max-height: 46vh; overflow-y: auto; }
+.qpw { display: flex; flex-direction: column; padding: 6px 8px 6px 30px; border-radius: 12px; border: 2px solid var(--line); background: #fff; position: relative; }
+.qpw input { position: absolute; left: 8px; top: 10px; } .qpw.on { border-color: #ff8fab; background: #fff3f6; }
+.qpw b { font-size: 1rem; } .qpw small { color: var(--sub); font-size: .75rem; }
+.qmsg { font-weight: 800; color: #e0567a; }
