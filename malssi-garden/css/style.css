@@ -2105,9 +2105,6 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .lt-tag { margin-left: 6px; font-size: .7rem; background: #fff3d6; border-radius: 8px; padding: 1px 6px; color: #b07a2a; }
 .ldhole { display: inline-block; min-width: 3em; border-bottom: 3px solid #e0a35b; text-align: center; margin: 0 2px; color: #b06a1a; } .ldhole.on { background: #fff3d6; border-radius: 6px 6px 0 0; }
 .ldtiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 12px; }
-.lt-tag { margin-left: 6px; font-size: .7rem; background: #fff3d6; border-radius: 8px; padding: 1px 6px; color: #b07a2a; }
-.ldhole { display: inline-block; min-width: 3em; border-bottom: 3px solid #e0a35b; text-align: center; margin: 0 2px; color: #b06a1a; } .ldhole.on { background: #fff3d6; border-radius: 6px 6px 0 0; }
-.ldtiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 12px; }
 /* 크리스마스 선물 배달 */
 .gxmas { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .gsnow { position: relative; flex: 1; min-height: 240px; border-radius: 22px; background: radial-gradient(circle at 20% 30%, #fff 0 2px, transparent 3px) 0 0 / 40px 40px, radial-gradient(circle at 70% 60%, #fff 0 2px, transparent 3px) 0 0 / 56px 56px, linear-gradient(#cfe3ff, #eef6ff 70%, #fff); display: flex; align-items: flex-end; justify-content: center; gap: 6px; padding: 10px; overflow: hidden; }
@@ -2129,3 +2126,75 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .hbar { height: 8px; border-radius: 4px; background: #eee; overflow: hidden; margin: 3px 0; } .hbar i { display: block; height: 100%; background: linear-gradient(90deg, #ffb02e, #4cc79a); }
 .hdone { font-weight: 800; color: #c58a00; font-size: .85rem; }
 .hallbtn .nbadge { position: static; display: inline-grid; }
+
+/* ---------- 미니게임 넷째 묶음: 공원·연못·바나나 나무·칠판·낚시 양동이 ---------- */
+.gpark, .gpond, .gbtree { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.gfield2 { position: relative; flex: 1; min-height: 330px; border-radius: 20px; overflow: hidden; background: linear-gradient(#bfe8ff 0 26%, #9ad86d 26%, #6fbf4a 100%); box-shadow: inset 0 -10px 0 rgba(0,0,0,.06); }
+.gfield2::before { content: ''; position: absolute; left: -10%; right: -10%; top: 22%; height: 12%; background: radial-gradient(circle at 10% 100%, #5fae3e 0 30%, transparent 31%), radial-gradient(circle at 35% 100%, #64b443 0 34%, transparent 35%), radial-gradient(circle at 65% 100%, #5fae3e 0 30%, transparent 31%), radial-gradient(circle at 90% 100%, #64b443 0 34%, transparent 35%); }
+.gtgt { position: absolute; transform: translateX(-50%); width: 120px; display: flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 0; transition: opacity .3s; }
+.gtgt img { width: calc(96px * var(--s)); transform-origin: 50% 100%; filter: drop-shadow(0 4px 3px rgba(0,0,0,.15)); }
+.gtsign { margin-top: -4px; background: linear-gradient(#fff8ea, #f3e0b8); border: 3px solid #b98a52; box-shadow: 0 3px 0 #9c7240; border-radius: 12px; padding: 4px 10px; font-size: 1.05rem; font-weight: 800; color: #4b3a2a; max-width: 128px; word-break: keep-all; line-height: 1.2; }
+.gtsign i { font-style: normal; display: block; font-size: 1.3rem; }
+.gtgt.miss { opacity: .35; animation: gnope .45s; } .gtgt.ok .gtsign { background: #d8f5e6; border-color: #3fb886; box-shadow: 0 3px 0 #2e9a6c; }
+.gtgt.ok img { animation: ghop .5s .35s; }
+.gdog { position: absolute; left: 50%; bottom: 3%; width: 92px; transform: translateX(-50%) scale(var(--ds, 1)); transition: left .55s ease-in-out, bottom .55s ease-in-out, transform .55s; z-index: 2; }
+.gdog > img:first-child { width: 100%; display: block; filter: drop-shadow(0 4px 3px rgba(0,0,0,.18)); }
+.gdog.flip > img:first-child { transform: scaleX(-1); }
+.gdog.run > img:first-child, .gdog.back > img:first-child { animation: hop .25s ease-in-out infinite; }
+.gdball { position: absolute; width: 28px; right: -6px; bottom: 6px; }
+.gdog.flip .gdball { right: auto; left: -6px; }
+.gbcol { order: -1; } .gbcol .gbub b { font-size: 1.4rem; }
+.gpcol, .gecol, .gbcol { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.gpcol .gbub em, .gbub em { display: block; font-style: normal; font-size: 1.3rem; font-weight: 800; margin-top: 2px; min-height: 0; }
+.gpond .gwater { position: relative; flex: 1; min-height: 300px; border-radius: 22px; overflow: hidden; background: linear-gradient(#cdeeff 0 7%, #8fd6ee 7%, #5ab4e0 60%, #3d9bd0 100%); }
+.glily2 { position: absolute; left: 50%; top: 10%; width: min(78%, 300px); transform: translateX(-50%); animation: gbob 3.2s ease-in-out infinite; }
+.glily2 > img { width: 100%; display: block; }
+.glily2 .gword { position: absolute; inset: 8% 10% 22%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.7rem; font-weight: 800; color: #24492b; text-shadow: 0 0 6px #fff, 0 0 3px #fff; line-height: 1.2; text-align: center; }
+.glily2 .gword small { font-size: .9rem; color: #2d5a35; }
+.gducks { position: absolute; left: 6%; bottom: 6%; display: flex; align-items: flex-end; gap: 2px; max-width: 92%; flex-wrap: wrap-reverse; animation: gswim 4s ease-in-out infinite; }
+.gducks .gnpcbtn { background: none; border: 0; padding: 0; }
+.gducks .gnpc.gduck { height: 104px; }
+.gkid { height: 44px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
+.gkid.new { animation: gpopin .5s ease; }
+.grip { position: absolute; left: 50%; top: 32%; width: 40px; height: 16px; border: 3px solid rgba(255,255,255,.8); border-radius: 50%; transform: translate(-50%, -50%); animation: grip 1.3s ease-out forwards; pointer-events: none; }
+.glopts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.glopt { position: relative; background: none; border: 0; padding: 0; min-height: 86px; display: grid; place-items: center; }
+.glopt img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.glopt span { position: relative; font-weight: 800; font-size: 1.05rem; color: #24492b; text-shadow: 0 0 5px #fff, 0 0 3px #fff; padding: 0 6px 10px; line-height: 1.15; }
+.glopt.miss { opacity: .3; animation: gnope .45s; } .glopt.ok img { filter: drop-shadow(0 0 8px #fff36b); }
+.gtreebig { position: relative; flex: 1; min-height: 360px; border-radius: 22px; overflow: hidden; background: linear-gradient(#cdeeff 0 70%, #9ad86d 70%); }
+.gtrunk { position: absolute; left: 44%; width: 12%; top: 50%; bottom: 8%; background: linear-gradient(90deg, #8a5a2b, #b07a42 50%, #8a5a2b); border-radius: 12px 12px 4px 4px; }
+.gcanopy { position: absolute; left: 3%; right: 3%; top: 6%; height: 62%; border-radius: 48% 48% 44% 44%; background: radial-gradient(circle at 20% 30%, #8fdc66 0 18%, transparent 19%), radial-gradient(circle at 70% 25%, #8fdc66 0 16%, transparent 17%), radial-gradient(circle at 50% 70%, #79c955 0 22%, transparent 23%), #5fb544; box-shadow: inset 0 -12px 0 rgba(0,0,0,.08), 0 6px 0 rgba(0,0,0,.06); }
+.gbspot { position: absolute; transform: translate(-50%, 0); width: 92px; height: 110px; background: none; border: 0; padding: 0; display: flex; flex-direction: column; align-items: center; z-index: 1; }
+.gstem { width: 4px; height: 10px; background: #6b4a22; border-radius: 2px; }
+.gban { width: 54px; transform-origin: 50% 0; transform: translateY(-50px) scale(.4); opacity: 0; transition: transform .3s ease-out, opacity .3s; }
+.gbw { margin-top: -6px; background: rgba(255,255,255,.95); border-radius: 10px; padding: 2px 8px; font-weight: 800; font-size: .95rem; white-space: nowrap; box-shadow: 0 2px 0 rgba(0,0,0,.12); opacity: 0; transition: opacity .3s; }
+.gbspot.up .gban { transform: none; opacity: 1; animation: gswing 1.4s ease-in-out .3s infinite; } .gbspot.up .gbw { opacity: 1; }
+.gbspot.shake { animation: gnope .4s; }
+.gmonk { position: absolute; right: 2%; bottom: 8%; height: 100px !important; z-index: 2; }
+.gbkt { position: absolute; left: 4%; bottom: 4%; width: 92px; z-index: 2; }
+.gbkt img { width: 100%; display: block; }
+.gbkt b { position: absolute; right: -4px; top: -4px; background: #ffd34d; border: 2px solid #c79a12; border-radius: 12px; padding: 0 7px; font-size: .9rem; }
+.gchalk { position: fixed; z-index: 80; pointer-events: none; font-size: 1.6rem; font-weight: 800; color: #fff; text-shadow: 0 0 4px rgba(255,255,255,.6); transform: translate(-50%, -50%); }
+.dslot.chalkin { animation: gchalkin .35s ease .2s both; }
+.gfbucket { position: absolute; right: 10px; top: 6px; background: rgba(255,255,255,.92); border-radius: 14px; padding: 2px 10px; font-weight: 800; font-size: .85rem; z-index: 3; box-shadow: 0 2px 0 rgba(0,0,0,.1); }
+.gfbucket b { font-size: 1.1rem; margin: 0 2px; color: #2a7bb0; }
+.gfbucket.hop, .dowl.hop, .ppg.hop, #nBk.hop { animation: ghop .5s ease; }
+@keyframes gbob { 50% { transform: translateX(-50%) translateY(-6px) rotate(-1deg); } }
+@keyframes gswim { 50% { transform: translateX(14px); } }
+@keyframes gpopin { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
+@keyframes grip { to { width: 260px; height: 90px; opacity: 0; } }
+@keyframes gswing { 50% { transform: rotate(6deg); } }
+@keyframes gchalkin { from { opacity: 0; transform: scale(1.5); } to { opacity: 1; transform: none; } }
+@media (orientation: landscape) and (max-height: 560px) {
+  .gfield2, .gpond .gwater, .gtreebig { min-height: 240px; }
+  .gpark, .gpond, .gbtree { display: grid; grid-template-columns: 1.4fr 1fr; column-gap: 12px; } .gbcol { order: 0; }
+}
+@media (min-width: 900px) and (orientation: landscape) {
+  .gpark, .gpond, .gbtree { display: grid; grid-template-columns: 1.3fr 1fr; column-gap: 24px; align-content: center; }
+  .gfield2, .gpond .gwater, .gtreebig { min-height: 62vh; }
+  .gpcol, .gecol, .gbcol { justify-content: center; } .gbcol { order: 0; }
+  .gdog { width: 130px; } .gtgt img { width: calc(130px * var(--s)); } .gtsign { font-size: 1.25rem; max-width: 170px; } .gtgt { width: 170px; }
+  .gducks .gnpc.gduck { height: 150px; } .gkid { height: 60px; } .glily2 .gword { font-size: 2.3rem; }
+  .gbspot { width: 120px; } .gban { width: 70px; } .gbw { font-size: 1.1rem; } .gmonk { height: 150px !important; } .gbkt { width: 130px; }
+}
