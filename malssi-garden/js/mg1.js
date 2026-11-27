@@ -12,6 +12,7 @@
     el.classList.remove('hop', 'nope'); void el.offsetWidth; el.classList.add(ok ? 'hop' : 'nope');
     if (cust && ok) { el.src = sprite(cust, 'happy'); clearTimeout(el._t); el._t = setTimeout(function () { el.src = sprite(cust, 'front'); }, 800); }
   }
+  function swap(el, src, back, ms) { if (!el) return; el.src = src; clearTimeout(el._s); el._s = setTimeout(function () { if (el.isConnected) el.src = back; }, ms || 800); }
   function tagHtml(it) { return '<span class="wtag">' + X.wordHtml(it) + '</span>'; }
   function noWords(n) { return X.need(X.words(n), n); }
 
@@ -19,7 +20,7 @@
   // 나뭇가지 위 다람이가 뜻을 말하며 이름표 달린 도토리를 떨어뜨린다. 바구니를 옮겨 맞는 도토리만 받는다
   G.acorn = function (g) {
     var pool = X.words(16); if (!X.need(pool, 4)) return;
-    $('mBody').innerHTML = '<div class="gacorn"><div class="gbranch"><img class="gnpc" id="aN" src="' + sprite('squirrel') + '" alt=""><div class="gbub" id="aQ"></div></div>' +
+    $('mBody').innerHTML = '<div class="gacorn"><div class="gbranch"><img class="gbranchimg" src="' + WI + 'mg3-branch.png" alt=""><img class="gnpc" id="aN" src="' + WI + 'mg3-squirrel-throw.png" alt=""><div class="gbub" id="aQ"></div></div>' +
       '<div class="gfield" id="aF"><div class="glanes"><button data-l="0"></button><button data-l="1"></button><button data-l="2"></button></div><img class="gbasket" id="aB" src="' + WI + 'mg2-basket.png" alt=""></div><p class="ghint">칸을 누르거나 끌어서 바구니를 옮겨요</p></div>';
     var field = $('aF'), bk = $('aB'), npc = $('aN'), lane = 1, drops = [], target = null, n = 0, speed = 0.16, last = 0;
     function place() { bk.style.left = (lane * 33.333 + 16.666) + '%'; }
@@ -49,7 +50,7 @@
         o.y += speed * dt; o.el.style.transform = 'translate(-50%,' + (o.y * h) + 'px)';
         if (o.y >= 0.74 && o.y < 0.86 && o.lane === lane) {   // 바구니에 들어갔다
           o.done = true; o.el.classList.add('caught');
-          if (o.it === target) { X.setScore(g, g.score + 10); M.sfx('ok'); M.say(o.it.say, o.it.lang); react(npc, true, 'squirrel'); X.fxAt(bk, 'sparkle'); speed = Math.min(0.3, speed + 0.012); setTimeout(round, 500); }
+          if (o.it === target) { X.setScore(g, g.score + 10); M.sfx('ok'); M.say(o.it.say, o.it.lang); react(npc, true); swap(npc, sprite('squirrel', 'happy'), WI + 'mg3-squirrel-throw.png'); X.fxAt(bk, 'sparkle'); speed = Math.min(0.3, speed + 0.012); setTimeout(round, 500); }
           else { X.setScore(g, g.score - 3); M.sfx('bad'); react(npc, false); }
         } else if (o.y > 1.02) { o.done = true; o.el.classList.add('gone'); if (o.it === target) { react(npc, false); setTimeout(round, 300); } }
       });
@@ -64,9 +65,9 @@
     var pool = X.words(16); if (!X.need(pool, 4)) return;
     var tts = M.ttsOK ? M.ttsOK() : true, n = 0, target = null, t0 = 0, colors = ['pink', 'mint', 'sky', 'lemon'];
     $('mBody').innerHTML = '<div class="gsong"><div class="gstaff" id="sS">' + '<i></i>'.repeat(10) + '</div><div class="gballoons" id="sB"></div>' +
-      '<div class="gstagebox"><div class="gbub sing" id="sQ"></div><button class="gnpcbtn" id="sP" aria-label="다시 듣기"><img class="gnpc" id="sN" src="' + sprite('chick') + '" alt=""></button><img class="gstage" src="' + WI + 'mg2-stage.png" alt=""></div></div>';
+      '<div class="gstagebox"><div class="gbub sing" id="sQ"></div><button class="gnpcbtn" id="sP" aria-label="다시 듣기"><img class="gnpc" id="sN" src="' + sprite('chick') + '" alt=""></button><img class="gcurtain" src="' + WI + 'mg3-stage-curtain.png" alt=""></div></div>';
     var npc = $('sN');
-    function sing() { if (!target) return; if (tts) M.say(target.say, target.lang); npc.classList.remove('sing'); void npc.offsetWidth; npc.classList.add('sing'); }
+    function sing() { if (!target) return; if (tts) M.say(target.say, target.lang); npc.classList.remove('sing'); void npc.offsetWidth; npc.classList.add('sing'); swap(npc, WI + 'mg3-chick-sing.png', sprite('chick'), 1200); }
     $('sP').onclick = sing;
     function round() {
       if (!alive(g)) return;
@@ -100,7 +101,7 @@
       var sn = list[n++], got = 0, miss = 0, lang = sn.lang;
       var tiles = M.shuffle(sn.w.map(function (w, i) { return { w: w, i: i }; }));
       $('mBody').innerHTML = '<div class="gbamboo"><div class="gbq"><small>' + n + ' / ' + list.length + '</small><b>' + esc(sn.k) + '</b></div>' +
-        '<div class="gbstage"><div class="gtower lang-' + lang + '" id="bT"><img class="gleaf" id="bL" src="' + WI + 'mg2-bamboo.png" alt=""></div><img class="gnpc gpanda" id="bN" src="' + sprite('panda') + '" alt=""></div>' +
+        '<div class="gbstage"><div class="gtower lang-' + lang + '" id="bT"><img class="gleaf" id="bL" src="' + WI + 'mg3-bamboo-leaf.png" alt=""></div><img class="gnpc gpanda" id="bN" src="' + sprite('panda') + '" alt=""></div>' +
         '<div class="gbtiles lang-' + lang + '">' + tiles.map(function (t) { return '<button class="gtile" data-i="' + t.i + '">' + esc(t.w) + '</button>'; }).join('') + '</div></div>';
       var npc = $('bN'), tower = $('bT');
       Array.prototype.forEach.call(document.querySelectorAll('.gtile'), function (b) {
@@ -111,7 +112,7 @@
             b.disabled = true; b.classList.add('used');
             var seg = document.createElement('div'); seg.className = 'gseg'; seg.innerHTML = '<span>' + esc(sn.w[got]) + '</span>';
             tower.insertBefore(seg, $('bL')); got++; M.sfx('pop');
-            if (got === sn.w.length) { tower.classList.add('full'); X.setScore(g, g.score + Math.max(6, 20 - miss * 4)); M.say(sn.say, lang); M.sfx('ok'); react(npc, true, 'panda'); npc.classList.add('eat'); setTimeout(round, 1500); }
+            if (got === sn.w.length) { tower.classList.add('full'); X.setScore(g, g.score + Math.max(6, 20 - miss * 4)); M.say(sn.say, lang); M.sfx('ok'); react(npc, true); npc.src = WI + 'mg3-panda-eat.png'; npc.classList.add('eat'); setTimeout(round, 1500); }
           } else { miss++; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); tower.classList.remove('wobble'); void tower.offsetWidth; tower.classList.add('wobble'); M.sfx('bad'); react(npc, false); }
         };
       });
@@ -134,8 +135,8 @@
         { k: 'pic', ico: '🖼️', name: target.e ? '그림' : '첫 글자', html: target.e ? '<span class="gpic">' + target.e + '</span>' : '<span class="gfirst lang-' + target.lang + '">' + esc(Array.from(target.t)[0]) + '…</span>', ok: true },
         { k: 'mean', ico: '📖', name: '뜻', html: '<b class="gmean">' + esc(target.k) + '</b>', ok: true }
       ].filter(function (c) { return c.ok; });
-      $('mBody').innerHTML = '<div class="griddle"><div class="grstage"><img class="gnpc" id="rN" src="' + sprite('fox') + '" alt=""><img class="gstage" src="' + WI + 'mg2-stage.png" alt=""><div class="gbub" id="rQ"><small>수수께끼 ' + n + ' / 8' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>카드를 적게 뒤집을수록 점수가 커요!</div></div>' +
-        '<div class="gcards">' + cards.map(function (c, i) { return '<button class="gcard" data-c="' + i + '"><span class="gback"><img src="' + WI + 'mg2-qcard.png" alt=""><small>' + c.ico + ' ' + c.name + '</small></span><span class="gfront">' + c.html + '</span></button>'; }).join('') + '</div>' +
+      $('mBody').innerHTML = '<div class="griddle"><div class="grstage"><img class="gnpc" id="rN" src="' + WI + 'mg3-fox-magic.png" alt=""><img class="gstage" src="' + WI + 'mg2-stage.png" alt=""><div class="gbub" id="rQ"><small>수수께끼 ' + n + ' / 8' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>카드를 적게 뒤집을수록 점수가 커요!</div></div>' +
+        '<div class="gcards">' + cards.map(function (c, i) { return '<button class="gcard" data-c="' + i + '"><span class="gback"><img src="' + WI + 'mg3-card-back.png" alt=""><small>' + c.ico + ' ' + c.name + '</small></span><span class="gfront">' + c.html + '</span></button>'; }).join('') + '</div>' +
         '<div class="gropts">' + four.map(function (it, i) { return '<button class="gtile big" data-i="' + i + '">' + X.wordHtml(it) + '</button>'; }).join('') + '</div></div>';
       var npc = $('rN');
       function flip(b) { if (b.classList.contains('open')) { var c0 = cards[+b.dataset.c]; if (c0.on) c0.on(); return; } b.classList.add('open'); opened++; var c = cards[+b.dataset.c]; if (c.on) c.on(); M.sfx('tap'); }
@@ -146,7 +147,7 @@
           if (!alive(g) || b.disabled) return;
           var it = four[+b.dataset.i];
           if (it === target) {
-            combo++; X.setScore(g, g.score + [0, 15, 10, 6][Math.min(3, opened)] + Math.min(6, combo)); b.classList.add('ok'); X.fxAt(b, 'sparkle'); M.sfx('ok'); M.say(it.say, it.lang); react(npc, true, 'fox');
+            combo++; X.setScore(g, g.score + [0, 15, 10, 6][Math.min(3, opened)] + Math.min(6, combo)); b.classList.add('ok'); X.fxAt(b, 'sparkle'); M.sfx('ok'); M.say(it.say, it.lang); react(npc, true);
             Array.prototype.forEach.call(document.querySelectorAll('.gcard'), function (c) { c.classList.add('open'); });
             setTimeout(round, 1100);
           } else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); react(npc, false); var shut = document.querySelector('.gcard:not(.open)'); if (shut) flip(shut); }
@@ -164,7 +165,7 @@
     { id: 'tea', e: '🍵', ko: '녹차', hot: 1, ja: 'りょくちゃ', en: ['green tea', 'green teas'], zh: '绿茶', zm: '杯' },
     { id: 'juice', e: '🧃', ko: '오렌지 주스', ja: 'オレンジジュース', en: ['orange juice', 'orange juices'], zh: '橙汁', zm: '杯' },
     { id: 'cake', e: '🍰', ko: '케이크', ja: 'ケーキ', en: ['piece of cake', 'pieces of cake'], zh: '蛋糕', zm: '块' },
-    { id: 'cookie', e: '🍪', ko: '쿠키', ja: 'クッキー', en: ['cookie', 'cookies'], zh: '饼干', zm: '块' }
+    { id: 'cookie', e: '🍪', ko: '쿠키', img: 'dish-seedcookie', ja: 'クッキー', en: ['cookie', 'cookies'], zh: '饼干', zm: '块' }
   ];
   var REPLY = { ja: ['かしこまりました。', '알겠습니다(주문 받을 때).'], en: ['Sure, coming right up!', '네, 바로 준비할게요!'], zh: ['好的，马上来！', '네, 바로 나와요!'] };
   function orderText(lang, o) {
@@ -186,9 +187,9 @@
       var m = M.pick(MENU), o = { m: m, n: 1 + Math.floor(Math.random() * 3), t: m.hot ? M.pick(['hot', 'iced']) : '', v: Math.random() < 0.4 };
       var text = orderText(lang, o), guest = guests[(n * 5 + Math.floor(Math.random() * 3)) % guests.length], pick = { n: 0, t: '', m: '' }, tries = 0;
       $('mBody').innerHTML = '<div class="gcafe"><div class="gcounter"><img class="gcafeimg" id="cN" src="img/mg-cafe.png" alt=""><img class="gguest" src="' + sprite(guest) + '" alt=""><button class="gbub order lang-' + lang + '" id="cQ"><small>손님 ' + n + ' / ' + total + ' · 눌러서 다시 듣기</small><b>' + esc(text) + '</b><em id="cK"></em></button></div>' +
-        '<div class="gpad"><div class="gprow"><span>개수</span>' + [1, 2, 3].map(function (k) { return '<button data-n="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
-        '<div class="gprow"><span>온도</span><button data-t="hot">🔥 따뜻하게</button><button data-t="iced">🧊 차갑게</button><button data-t="">그대로</button></div>' +
-        '<div class="gprow menu"><span>메뉴</span>' + MENU.map(function (x) { return '<button data-m="' + x.id + '"><i>' + x.e + '</i><small>' + x.ko + '</small></button>'; }).join('') + '</div>' +
+        '<div class="gpad"><img class="gpadtop" src="' + WI + 'mg3-order-pad.png" alt=""><div class="gprow"><span>개수</span>' + [1, 2, 3].map(function (k) { return '<button data-n="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
+        '<div class="gprow"><span>온도</span><button data-t="hot"><img src="' + WI + 'mg3-steam.png" alt="">따뜻하게</button><button data-t="iced"><img src="' + WI + 'mg3-ice.png" alt="">차갑게</button><button data-t="">그대로</button></div>' +
+        '<div class="gprow menu"><span>메뉴</span>' + MENU.map(function (x) { return '<button data-m="' + x.id + '"><img src="' + WI + (x.img || 'mg3-menu-' + x.id) + '.png" alt=""><small>' + x.ko + '</small></button>'; }).join('') + '</div>' +
         '<button class="btn primary wide" id="cGo">주문 완료</button></div></div>';
       var say = function () { M.say(text, lang, false, false, 'A'); };
       setTimeout(function () { if (alive(g)) say(); }, 300); $('cQ').onclick = say;
@@ -226,7 +227,7 @@
     oldYarn(g);
     var body = $('mBody'); if (!body || !body.querySelector('.yarn')) return;
     var top = document.createElement('div'); top.className = 'gknit';
-    top.innerHTML = '<img class="gnpc" id="yN" src="' + sprite('sheep') + '" alt=""><div class="gscarf"><img src="' + WI + 'mg2-scarf.png" alt="" id="yScarf" style="clip-path:inset(0 100% 0 0)"></div>';
+    top.innerHTML = '<img class="gnpc" id="yN" src="' + WI + 'mg3-sheep-knit.png" alt=""><div class="gscarf"><img src="' + WI + 'mg3-scarf-stripe.png" alt="" id="yScarf" style="clip-path:inset(0 100% 0 0)"></div>';
     body.insertBefore(top, body.firstChild);
     var links = 0;
     var mo = new MutationObserver(function () {
@@ -234,7 +235,7 @@
       var done = document.querySelectorAll('.yl.done').length, boardN = 0, t = document.querySelector('.mhead2');
       if (t) { var mm = /(\d) \/ 3판/.exec(t.textContent); if (mm) boardN = +mm[1] - 1; }
       var now = boardN * 5 + done;
-      if (now > links) { links = now; react($('yN'), true, 'sheep'); }
+      if (now > links) { links = now; react($('yN'), true); }
       var sc = $('yScarf'); if (sc) sc.style.clipPath = 'inset(0 ' + Math.max(0, 100 - links / 15 * 100) + '% 0 0)';
       if (!document.querySelector('.gknit') && body.querySelector('.yarn')) body.insertBefore(top, body.firstChild);
     });

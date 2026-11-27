@@ -406,15 +406,15 @@
   // 털실 잇기: 왼쪽 낱말과 오른쪽 뜻을 털실로 잇는다 (5쌍 × 3판)
   GAMES.yarn = function (g) {
     var pool = words(15); if (pool.length < 5) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
-    var board = 0, colors = ['#ff8fab', '#7ec8f0', '#ffd166', '#9ad77c', '#c49bff'], YC = ['blue', 'pink', 'yellow'];
+    var board = 0, colors = ['#ff8fab', '#7ec8f0', '#ffd166', '#9ad77c', '#c49bff'], YC = ['blue', 'red', 'yellow'];
     function round() {
       if (!g.alive || !$('mBody')) return;
       if (board >= 3 || board * 5 >= pool.length) { $('mBody').innerHTML = '<div class="scarfdone"><img class="" src="img/w/mg2-scarf.png" alt=""><img class="scconf" src="img/w/mg2-confetti.png" alt=""><b>목도리 완성!</b></div>'; M.sfx('win'); setTimeout(function () { finish(g, 3 * 5 * 6); }, 1200); return; }
       var set = pool.slice(board * 5, board * 5 + 5); board++;
       var right = M.shuffle(set.slice()), sel = null, joined = 0, miss = 0;
       $('mBody').innerHTML = '<p class="hint center mhead2"><img class="mhi" src="img/w/mg2-yarn.png" alt=""> ' + board + ' / 3판 · 낱말을 누르고 뜻을 눌러요</p><div class="yarn" id="yB"><svg class="ysvg" id="yS"></svg><div class="ycol">' +
-        set.map(function (it, i) { return '<button class="yl" data-i="' + i + '">' + wordHtml(it) + '<img class="knot" src="img/mg-yarn-' + YC[i % 3] + '.png" alt=""></button>'; }).join('') + '</div><div class="ycol">' +
-        right.map(function (it, i) { return '<button class="yr" data-i="' + set.indexOf(it) + '"><img class="knot" src="img/mg-yarn-' + YC[(i + 1) % 3] + '.png" alt="">' + esc(it.k) + '</button>'; }).join('') + '</div></div>';
+        set.map(function (it, i) { return '<button class="yl" data-i="' + i + '">' + wordHtml(it) + '<img class="knot" src="img/w/mg3-yarn-' + YC[i % 3] + '.png" alt=""></button>'; }).join('') + '</div><div class="ycol">' +
+        right.map(function (it, i) { return '<button class="yr" data-i="' + set.indexOf(it) + '"><img class="knot" src="img/w/mg3-yarn-' + YC[(i + 1) % 3] + '.png" alt="">' + esc(it.k) + '</button>'; }).join('') + '</div></div>';
       var box = $('yB'), svg = $('yS');
       function line(a, b, col) {
         var r = box.getBoundingClientRect(), p = a.querySelector('.knot').getBoundingClientRect(), q = b.querySelector('.knot').getBoundingClientRect();
