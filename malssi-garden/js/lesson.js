@@ -265,7 +265,7 @@
       var rs = q.stage;
       h = '<div class="qt"><span class="newtag">글을 읽어 봐요</span> <button class="say mini" data-readall="1">▶ 전체 듣기</button></div>' + readHtml(rs, true);
     } else if (q.type === 'rule' && !q.stage.xf && !q.stage.conv) {
-      h = '<div class="qt"><span class="newtag">알아 두기</span></div><div class="rule kidtip lang-' + q.stage.lang + '"><h3>' + esc(q.stage.title) + '</h3><p>💡 ' + esc(q.stage.tip || '') + '</p></div>';
+      h = '<div class="qt"><span class="newtag">알아 두기</span></div><div class="rule kidtip lang-' + q.stage.lang + '"><h3>' + esc(q.stage.title) + '</h3>' + (q.stage.std ? '<p class="kstd">📘 교과서 연결 ' + esc(q.stage.std) + '</p>' : '') + '<p>💡 ' + esc(q.stage.tip || '') + '</p></div>';
     } else if (q.type === 'rule') {
       var g = q.stage;
       h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
@@ -326,6 +326,7 @@
     else if (q.type === 'speak') foot('<button class="btn ghost wide" id="sSkip">지금은 말할 수 없어요</button>');
     else foot('');
     if (q.type === 'steach') setTimeout(function () { if (S && S.qs[S.i] === q) M.say(q.sent.say, S.lang); }, M.fast ? 0 : 250);
+    if (q.type === 'rule' && q.stage.tip && M.P.kid) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(q.stage.tip, 'kor'); }, M.fast ? 0 : 300);   // 아이 모드: 알아 두기를 소리 내어 읽어 준다
     var auto = !q.talk && (q.type === 'teach' || q.type === 'listen' || (M.P.set.autoAudio && (q.type === 'meaning' || q.type === 'speak')));
     if ($('talkShow')) $('talkShow').onclick = function () { var th = $('talkHint'); if (th) th.classList.remove('hid'); this.remove(); q.hinted = true; M.say(it.say, it.lang, false, false, 'B'); };
     if (q.talk && q.chat.length) { var lastYou = q.chat[q.chat.length - 1]; if (!lastYou.me) setTimeout(function () { if (S && S.qs[S.i] === q) M.say(lastYou.t, S.lang, false, false, 'A'); }, M.fast ? 0 : 250); }

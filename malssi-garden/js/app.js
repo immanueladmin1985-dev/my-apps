@@ -67,7 +67,7 @@
   // ---------- 배우기 지도 ----------
   var SHIFT = [0, 1, 0, -1];
   // 문법 단원(GR)은 단어 단계와 따로 진행한다 (단어를 다 끝내지 않아도 시작할 수 있다)
-  function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV' || lv === 'CO' || lv === 'RD' || lv === 'PR' || lv === 'K1' || lv === 'K2' || lv === 'K3'; }   // 아이 과목은 수준마다 따로 시작할 수 있다
+  function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV' || lv === 'CO' || lv === 'RD' || lv === 'PR' || /^K\d$/.test(lv); }   // 아이 과목은 수준마다 따로 시작할 수 있다
   function firstOpen(L, prog, wantGr) { var i = L.stages.findIndex(function (s) { return !prog[s.id] && gr(s) === wantGr; }); return i < 0 ? L.stages.length : i; }
   var LVNAME = { PR: '발음', RD: '읽기', CO: '첫걸음', CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', HSK3: 'HSK 3급', A1: '생활 영어', A2: '생활 영어 2' };
   function renderMap(root) {
@@ -90,11 +90,11 @@
       '<button class="tgoal" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><span class="tgt"><b>' + (today >= P.set.goal ? '오늘 목표 달성! 🎉' : '오늘 목표 ' + P.set.goal + '판') + '</b><small>🔥 ' + (P.streak || 0) + '일 연속 공부 중</small>' + (due ? '<small>🔁 오늘 복습 ' + due + '개 남음</small>' : revDone ? '<small>✔ 오늘 복습 끝</small>' : '') + '</span></button>' +
       '<div class="tchips"><button class="tchip" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '">퀘스트</button><button class="tchip" id="dWords"><span>📒</span>단어장</button><button class="tchip" id="dDiary">' + (M.diaryReady && M.diaryReady() ? '<i class="dot">!</i>' : '') + '<span>📔</span>일기</button></div>' +
       contBtn(L, prog, cur) + '</div>' +
-      '<div class="acts">' +
+      '<div class="acts' + (L.kid ? ' kid2' : '') + '">' +
       '<button class="act" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="ae">🔁</span><b>복습</b><small>' + (revDone ? '오늘 복습 끝 ✔' : due ? '오늘 ' + due + '개' + (dueAll > due ? ' (쌓인 ' + dueAll + ')' : '') : '잊기 전에 다시') + '</small></button>' +
       '<button class="act" id="dWrong"' + (wrongN ? '' : ' disabled') + '>' + (wrongN ? '<i class="dot">' + wrongN + '</i>' : '') + '<span class="ae">✏️</span><b>틀린 것</b><small>' + (wrongN ? wrongN + '개 다시 풀기' : '틀린 낱말이 없어요') + '</small></button>' +
-      (function () { var wk = M.missedItems(P.lang, 30).length; return '<button class="act" id="dGame"' + (wk ? '' : ' disabled') + '><span class="ae">📓</span><b>약점 공책</b><small>' + (wk ? '헷갈리는 낱말 ' + wk + '개' : '아직 없어요') + '</small></button>'; })() +
-      '<button class="act" id="dReport"><span class="ae">📊</span><b>리포트</b><small>이번 주 공부</small></button>' +
+      (L.kid ? '' : (function () { var wk = M.missedItems(P.lang, 30).length; return '<button class="act" id="dGame"' + (wk ? '' : ' disabled') + '><span class="ae">📓</span><b>약점 공책</b><small>' + (wk ? '헷갈리는 낱말 ' + wk + '개' : '아직 없어요') + '</small></button>'; })()) +
+      (L.kid ? '' : '<button class="act" id="dReport"><span class="ae">📊</span><b>리포트</b><small>이번 주 공부</small></button>') +   // 아이 모드: 리포트·약점 공책은 아빠(엄마) 폰에서 본다
       '</div></div><div class="mright">' +
       '<div class="lvtabs">' + levels.map(function (lv) {
         var us = L.stages.filter(function (s) { return lvOf(s) === lv; }), dn = us.filter(function (s) { return prog[s.id]; }).length;

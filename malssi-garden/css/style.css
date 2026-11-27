@@ -2367,3 +2367,7 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .theme-kor .unit { background: linear-gradient(90deg, #f2a33a, #f7c060); }
 .theme-ken .unit { background: linear-gradient(90deg, #8f7cf0, #ad9cff); }
 .rule.kidtip p { font-size: 1.15rem; line-height: 1.6; word-break: keep-all; }
+.kstd { display: inline-block; font-size: .78rem !important; font-weight: 800; color: #3d6fb8; background: #eaf2ff; border-radius: 10px; padding: 2px 8px; margin: 0 0 6px; }
+.acts.kid2 { grid-template-columns: 1fr 1fr !important; }
+.acts.kid2 .act { min-height: 84px; }
+.acts.kid2 .act .ae { font-size: 2rem; }

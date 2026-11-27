@@ -26,6 +26,8 @@
     if (!on && M.KID_LANGS.indexOf(P.lang) >= 0) P.lang = P.adultLang || 'ja';
     if (on) {
       P.house = P.house || { lv: 1 }; if (!P.house.style || P.house.style === 'bunny') P.house.style = 'dojo';
+      P.set = P.set || {}; if (!P.set.fontSize || P.set.fontSize === 'm') { P.set.fontSize = 'l'; if (M.applyFonts) M.applyFonts(); }   // 아이는 글씨를 크게
+      P.set.autoAudio = true;   // 문제를 자동으로 읽어 준다
       var names = (P.rewards || []).map(function (r) { return r.name; });
       if (names.length && names.every(function (n) { return ADULT_R.indexOf(n) >= 0; })) P.rewards = KID_R.map(function (r, i) { return { id: 'k' + (i + 1), e: r[0], name: r[1], price: r[2] }; });
     }
