@@ -54,6 +54,12 @@
     if (lang !== 'ja' && !stage.kana) c = c.concat(stage.sents.map(function (s) { return { t: s.t, say: s.say, r: '', k: s.k, alt: [], lang: lang, sid: s.sid, sent: true }; }));
     return c;
   }
+  // 읽기 글: 문장마다 눌러서 듣고, 뜻은 눌러서 펼친다
+  function readHtml(st, open) {
+    return '<div class="rdcard lang-' + st.lang + '"><h3>' + esc(st.title) + '</h3>' + st.lines.map(function (l) {
+      return '<p class="rdl"><button class="rds" data-say="' + esc(l.t) + '">' + M.fz(l.t, st.lang) + (l.r ? '<span class="dr">' + esc(l.r) + '</span>' : '') + '</button><small class="rdk' + (open ? '' : ' hid') + '">' + esc(l.k) + '</small></p>';
+    }).join('') + (open ? '' : '<button class="say mini rdshow" data-rdk="1">뜻 보기</button>') + '</div>';
+  }
   function xformQ(x, lang) {
     var alts = (x.alts || []).map(function (a) { return { t: a.t, say: a.t, k: a.k, r: a.r, lang: lang, ok: true }; });
     var opts = [x.item].concat(alts, x.w.slice(0, 3 - alts.length).map(function (w) { return { t: w, say: w, k: '', lang: lang }; }));
@@ -73,6 +79,15 @@
   M.buildLesson = function (lang, stage) {
     var qs = [];
     var canSpeak = M.P.set.speak && M.speechOK();
+    if (stage && stage.read) {
+      // 읽기: 글 카드 → 내용 문제 (글은 문제 위에 접어서 다시 볼 수 있다)
+      qs.push({ type: 'readcard', stage: stage });
+      stage.rq.forEach(function (r) {
+        var item = { t: r.a, k: '', lang: 'ko', say: '', sid: stage.id, sent: true };
+        qs.push({ type: 'xform', read: stage.id, item: item, p: r.q, opts: M.shuffle([item].concat(r.w.map(function (w) { return { t: w, k: '', lang: 'ko', say: '' }; }))) });
+      });
+      return qs;
+    }
     if (stage && stage.conv) {
       // 회화: 대화 카드 → 알맞은 대답 고르기 → 듣고 대답 고르기
       qs.push({ type: 'dialog', stage: stage });
@@ -228,12 +243,16 @@
       h = '<div class="qt"><span class="newtag">대화를 들어 봐요</span> <button class="say mini" data-sayall="1">▶ 전체 듣기</button></div><div class="dlg lang-' + dg.lang + '"><h3>' + esc(dg.title) + '</h3><p class="dlgme">오른쪽 초록 말풍선이 내 역할이에요. 잘 듣고 내 대사를 익혀 두세요</p>' +
         dg.dlg.map(function (d, i) { return '<button class="dl ' + (d.who === 'A' ? 'a' : 'b') + '" data-say="' + esc(d.t) + '" data-who="' + d.who + '" data-dl="' + i + '"><b>' + M.fz(d.t, dg.lang) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>' +
           d.alts.map(function (a) { return '<button class="dl b alt" data-say="' + esc(a.t) + '" data-who="' + d.who + '"><em>또는</em><b>' + M.fz(a.t, dg.lang) + '</b>' + (a.r ? '<span class="dr">' + esc(a.r) + '</span>' : '') + '<small>' + esc(a.k) + '</small></button>'; }).join(''); }).join('') + '</div>';
+    } else if (q.type === 'readcard') {
+      var rs = q.stage;
+      h = '<div class="qt"><span class="newtag">글을 읽어 봐요</span> <button class="say mini" data-readall="1">▶ 전체 듣기</button></div>' + readHtml(rs, true);
     } else if (q.type === 'rule') {
       var g = q.stage;
       h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
         (g.conv ? '' : '<div class="rex">') + (g.conv ? [] : g.xf).slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + M.fz(x.p, g.lang) + '</span><b>' + M.fz(x.item.t, g.lang) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + (g.conv ? '' : '</div>') + '</div>';
     } else if (q.type === 'xform') {
-      if (q.audio) h = '<div class="qt">잘 듣고 알맞은 대답을 골라 보세요</div><div class="qcard listen">' + sayBtn(q.audio, true) + '</div>';
+      if (q.read) { var rst = window.LANGS[S.lang].stages.filter(function (x) { return x.id === q.read; })[0]; h = '<details class="rdfold" open><summary>📖 글 (눌러서 접기)</summary>' + readHtml(rst, false) + '</details><div class="qcard ko small rdq"><div class="fk">' + esc(q.p) + '</div></div>'; }
+      else if (q.audio) h = '<div class="qt">잘 듣고 알맞은 대답을 골라 보세요</div><div class="qcard listen">' + sayBtn(q.audio, true) + '</div>';
       else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { d = (S.alt && S.alt[d.i]) || d; return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '" data-who="' + (d.me ? 'B' : 'A') + '"><b>' + M.fz(d.t, q.item.lang) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';
       else if (q.sub != null) h = '<div class="qt">알맞은 대답을 골라 보세요</div><div class="qcard"><div class="face lang-' + q.item.lang + '"><div class="ft lg">' + M.fz(q.p, q.item.lang) + '</div>' + (q.pr ? '<div class="fr">' + esc(q.pr) + '</div>' : '') + '</div><div class="fk sm">' + esc(q.sub) + '</div>' + sayBtn(q.p) + '</div>';
       else h += '<div class="qcard ko"><div class="fk lang-' + q.item.lang + '">' + M.fz(q.p, q.item.lang) + '</div><div class="fk sm">' + esc(q.item.k) + '</div></div>';
@@ -275,7 +294,7 @@
       if (long) o.classList.add('one');
     });
     var cbx = $('chatBox'); if (cbx) cbx.scrollTop = cbx.scrollHeight;
-    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog' || q.type === 'pairteach') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
+    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog' || q.type === 'pairteach' || q.type === 'readcard') foot('<button class="btn primary wide" id="tNext">알겠어요</button>');
     else if (q.opts) foot('<button class="btn primary wide" id="oCheck" disabled>확인</button>');
     else if (q.type === 'build') foot('<button class="btn primary wide" id="bCheck" disabled>확인</button>');
     else if (q.type === 'speak') foot('<button class="btn ghost wide" id="sSkip">지금은 말할 수 없어요</button>');
@@ -324,12 +343,14 @@
     if (!S) return;
     var t = e.target;
     if (t.closest('#lNext')) { next(); return; }
-    if (t.closest('#tNext')) { var tq = S.qs[S.i]; S.done++; if (tq.type === 'rule' || tq.type === 'dialog') { next(); return; } if (tq.pair) { tq.pair.forEach(function (x) { M.srsHit(x, true); }); next(); return; } if (tq.item) M.srsHit(tq.item, true); else M.P.srs[sentKey(tq.sent)] = [1, Date.now()]; next(); return; }
+    if (t.closest('#tNext')) { var tq = S.qs[S.i]; S.done++; if (tq.type === 'rule' || tq.type === 'dialog' || tq.type === 'readcard') { next(); return; } if (tq.pair) { tq.pair.forEach(function (x) { M.srsHit(x, true); }); next(); return; } if (tq.item) M.srsHit(tq.item, true); else M.P.srs[sentKey(tq.sent)] = [1, Date.now()]; next(); return; }
     var q = S.qs[S.i];
     var mt = t.closest('.mt');
     if (mt && !mt.classList.contains('gone')) { matchTap(q, mt); return; }
     var pp = t.closest('[data-pairplay]');
     if (pp) { var w2 = q.pair.map(function (x) { return x.say; }); if (pp.dataset.pairplay === 'slow') { M.say(w2[0], S.lang, true); setTimeout(function () { M.say(w2[1], S.lang, true); }, 1400); } else M.sayList(w2.concat(w2), S.lang); return; }
+    if (t.closest('[data-readall]')) { M.sayList(q.stage.lines.map(function (d) { return d.t; }), S.lang); return; }
+    if (t.closest('[data-rdk]')) { var rc = t.closest('.rdcard'); Array.prototype.forEach.call(rc.querySelectorAll('.rdk'), function (k) { k.classList.toggle('hid'); }); return; }
     if (t.closest('[data-sayall]')) { M.sayList(q.stage.dlg.map(function (d) { return d.t; }), S.lang, q.stage.dlg.map(function (d) { return d.who; })); return; }
     var sayB = t.closest('[data-say]');
     if (sayB) { M.say(sayB.dataset.say, S.lang, !!sayB.dataset.slow, false, sayB.dataset.who || (q.pw && q.audio && sayB.dataset.say === q.audio ? q.pw : q.pw && sayB.dataset.say === q.p ? q.pw : undefined)); return; }
@@ -350,6 +371,7 @@
       var others = q.opts.filter(function (oo) { return (oo.t === q.item.t || oo.ok) && oo !== (ok ? o : q.item); });
       if (q.di != null) { S.alt = S.alt || {}; S.alt[q.di] = ok ? { t: o.t, k: o.k || q.item.k, r: o.r || '', me: true } : null; }   // 고른 대답대로 다음 대화를 보여 준다
       var shown = ok ? (o.ok ? o : q.item) : q.item;
+      if (q.read) { judge(ok, q, '정답: <b>' + esc(q.item.t) + '</b>'); return; }
       judge(ok, q, answerInfo(shown) + (others.length ? '<br><small>' + (ok ? '이렇게도 말할 수 있어요' : '이것도 정답') + ': <b class="lang-' + S.lang + '">' + esc(others[0].t) + '</b> = ' + esc(others[0].k) + '</small>' : ''), shown.say);
       return;
     }
@@ -534,7 +556,7 @@
     if (!S) return 'none';
     var q = S.qs[S.i];
     if (S.answered) { $('lNext').click(); return 'next'; }
-    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog' || q.type === 'pairteach') { $('tNext').click(); return q.type; }
+    if (q.type === 'teach' || q.type === 'steach' || q.type === 'rule' || q.type === 'dialog' || q.type === 'pairteach' || q.type === 'readcard') { $('tNext').click(); return q.type; }
     if (q.type === 'meaning' || q.type === 'target' || q.type === 'listen' || q.type === 'xform') {
       var idx = q.opts.findIndex(function (o) { return wrong ? o.t !== q.item.t : o.t === q.item.t; });
       if (idx < 0) idx = q.opts.findIndex(function (o) { return o.t === q.item.t; });

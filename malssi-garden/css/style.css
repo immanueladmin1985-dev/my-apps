@@ -2003,3 +2003,14 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .gchef .gnpc { height: 140px; } .gpotimg { width: 140px; } .gpotimg.f2 { width: 156px; } .gpotimg.f3 { width: 172px; }
 .gcounter .gnpc.gcat { height: 130px; }
 .gtray { aspect-ratio: auto; } .gtsum { color: #fff; text-shadow: 0 2px 0 #6b4a10; }
+/* 읽기 */
+.rdcard { background: #fffdf6; border: 2px solid #eadcbf; border-radius: 18px; padding: 12px 14px; text-align: left; }
+.rdcard h3 { margin: 0 0 8px; color: var(--mint-d); font-size: 1rem; }
+.rdl { margin: 0 0 8px; } .rds { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 2px 0; font-size: 1.15rem; font-weight: 700; line-height: 1.6; color: var(--fg); }
+.rds .dr { display: block; font-size: .72rem; color: var(--sub); font-weight: 500; line-height: 1.2; }
+.rdk { display: block; color: var(--sub); font-size: .82rem; } .rdk.hid { display: none; }
+.rdfold { margin-bottom: 10px; } .rdfold summary { cursor: pointer; font-weight: 800; color: #8a5a22; padding: 6px 0; } .rdfold .rdcard .rds { font-size: 1rem; }
+.rdq .fk { font-size: 1.15rem; }
+.lbody:has(> .qcard + .opts) > .qcard.rdq, .lbody > .qcard.rdq { flex: none; min-height: 0; max-height: none; padding: 18px 14px; }
+.lvtabs button { min-width: 60px; flex: 1 0 auto; }
+.rdshow { width: auto !important; height: auto !important; border-radius: 12px !important; padding: 4px 12px !important; font-size: .8rem !important; white-space: nowrap; }

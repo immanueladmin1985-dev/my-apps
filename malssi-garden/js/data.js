@@ -892,12 +892,18 @@ window.parseLangs = function () {
           s.dlg.forEach(function (d, i) { if (i > 0 && !d.nr && d.who !== s.dlg[i - 1].who) { xs.push(s.dlg[i - 1].t + '|' + d.t + '|-,-,-|' + d.k); s.dli.push(i); } });   // 앞 말에 진짜로 대답하는 줄만
           s.xf = xs.join('\n');
         }
+        if (s.text) {   // 읽기 단계: "문장|뜻|읽기" 줄들과 내용 문제 "질문|정답|오답,오답"
+          s.read = true;
+          s.lines = s.text.trim().split('\n').map(function (line) { var f = line.split('|'); return { t: f[0], k: f[1] || '', r: f[2] || '' }; });
+          s.rq = s.q.trim().split('\n').map(function (line) { var f = line.split('|'); return { q: f[0], a: f[1], w: f[2].split(',') }; });
+          s.items = s.items || '';
+        }
         if (s.xf) {   // 문법 단계: "바꾸기 전 → 형태|정답|오답,오답,오답|뜻"
           s.gram = true;
           s.xf = s.xf.trim().split('\n').map(function (line) { var f = line.split('|'); return { p: f[0], a: f[1], w: f[2].split(','), k: f[3] || '' }; });
           s.items = s.xf.map(function (x) { return x.a + '||' + x.k + '|||' + x.a; }).join('\n');
         }
-        s.items = s.items.trim().split('\n').map(function (line) {
+        s.items = s.items.trim().split('\n').filter(Boolean).map(function (line) {
           var f = line.split('|');
           return { t: f[0], r: f[1] || '', k: f[2] || '', e: f[3] || '', alt: f[4] ? f[4].split(',') : [], say: f[5] || f[0], lang: code, sid: s.id, kana: !!s.kana };
         });
