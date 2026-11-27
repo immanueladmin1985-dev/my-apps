@@ -74,7 +74,7 @@
       Array.prototype.forEach.call(document.querySelectorAll('.gseeds .gtile'), function (b) {
         b.onclick = function () {
           if (!alive(g) || b.disabled) return;
-          if (+b.dataset.v === k) { combo++; X.setScore(g, g.score + 10 + Math.min(4, combo)); b.classList.add('ok'); M.sfx('ok'); M.say(it.say, lang); react(npc, true); setTimeout(round, 900); }
+          if (+b.dataset.v === k) { combo++; X.setScore(g, g.score + 10 + Math.min(4, combo)); b.classList.add('ok'); M.sfx('ok'); M.say(it.say, lang); X.fly(document.querySelector('.gnuts .gpile') || b, WI + 'mg4-peanut-pile.png', npc, { size: 70, ms: 550, spin: 40, end: 0.4, done: function () { react(npc, true); } }); setTimeout(round, 1000); }
           else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); react(npc, false); }
         };
       });

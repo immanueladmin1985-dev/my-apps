@@ -709,6 +709,16 @@
   };
   M.MINIS = MINIS;
   // 다른 파일(놀이 묶음)에서 놀이를 새로 만들 때 쓰는 도구
-  M.MG = { GAMES: GAMES, words: words, wordHtml: wordHtml, setScore: setScore, timeBar: timeBar, finish: finish, fxAt: fxAt, need: need, esc: esc, sentences: sentences };
+  // 그림 하나가 from 자리에서 to 자리로 포물선을 그리며 날아간다 (고추가 솥에, 동전이 쟁반에)
+  function fly(from, src, to, opt) {
+    opt = opt || {}; if (!from || !to) { if (opt.done) opt.done(); return; }
+    var a = from.getBoundingClientRect(), b = to.getBoundingClientRect(), sz = opt.size || 56, el = document.createElement('img');
+    el.className = 'mgfly'; el.src = src; el.style.width = sz + 'px'; el.style.left = (a.left + a.width / 2 - sz / 2) + 'px'; el.style.top = (a.top + a.height / 2 - sz / 2) + 'px';
+    document.body.appendChild(el);
+    var dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height * (opt.dyk == null ? 0.4 : opt.dyk) - (a.top + a.height / 2), ms = opt.ms || 600;
+    if (el.animate) el.animate([{ transform: 'translate(0,0) scale(1) rotate(0)' }, { transform: 'translate(' + dx * 0.5 + 'px,' + (Math.min(dy, 0) - 90) + 'px) scale(1.1) rotate(' + (opt.spin || 180) + 'deg)', offset: 0.5 }, { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + (opt.end || 0.6) + ') rotate(' + (opt.spin || 180) * 2 + 'deg)' }], { duration: ms, easing: 'ease-in' });
+    setTimeout(function () { el.remove(); if (opt.done) opt.done(); }, ms - 20);
+  }
+  M.MG = { GAMES: GAMES, fly: fly, words: words, wordHtml: wordHtml, setScore: setScore, timeBar: timeBar, finish: finish, fxAt: fxAt, need: need, esc: esc, sentences: sentences };
   M.miniTest = function (id) { var m = byId(id); start(m); return cur; };   // 자동 점검용
 })();

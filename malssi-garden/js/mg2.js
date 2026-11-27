@@ -63,7 +63,8 @@
         b.onclick = function () {
           if (!alive(g) || b.disabled) return;
           if (opts[+b.dataset.i] === ans) {
-            X.setScore(g, g.score + (tries ? 8 : 20)); b.classList.add('planted'); var hole = $('cB'); hole.innerHTML = '<i>' + esc(ans) + '</i>'; hole.classList.remove('hole'); hole.classList.add('fill');
+            X.setScore(g, g.score + (tries ? 8 : 20)); b.classList.add('planted'); var hole = $('cB');
+            X.fly(b.querySelector('img'), WI + 'mg2-mush.png', hole, { size: 50, ms: 500, spin: 0, end: 0.5, done: function () { if (!hole.isConnected) return; hole.innerHTML = '<i>' + esc(ans) + '</i>'; hole.classList.remove('hole'); hole.classList.add('fill'); } });
             M.sfx('ok'); M.say(sn.say, lang); npc.classList.add('walk'); setTimeout(round, 1700);
           } else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); react(npc, false); }
         };
@@ -83,9 +84,9 @@
       n++; var four = M.shuffle(pool).slice(0, 4), target = four[0], limit = Math.max(2.4, 6 - (lvl - 1) * 0.4); four = M.shuffle(four);
       var fire = lvl >= 7 ? 3 : lvl >= 4 ? 2 : 1;
       $('mBody').innerHTML = '<div class="gspicy"><div class="gkitchen"><div class="glv"><span>' + hearts(lives) + '</span><span class="gpep">' + ('<img src="' + WI + 'mg2-pepper.png" alt="">').repeat(Math.min(6, lvl)) + (lvl > 6 ? '<b>+' + (lvl - 6) + '</b>' : '') + '</span></div>' +
-        '<div class="gchef"><img class="gnpc" id="sN" src="' + WI + 'mg4-lion-chef.png" alt=""><img class="gpotimg f' + fire + '" src="' + WI + 'mg4-pot-fire.png" alt=""></div>' +
-        '<div class="gbub"><small>이 재료의 뜻은?</small><span class="wtag">' + X.wordHtml(target) + '</span></div></div>' +
-        '<div class="sbar gfuse"><i id="sBar"></i></div><div class="gropts">' + four.map(function (it, i) { return '<button class="gtile big" data-i="' + i + '"><b>' + esc(it.k) + '</b></button>'; }).join('') + '</div></div>';
+        '<div class="gbub gorder"><small>레오의 주문 · 이 뜻의 고추를 솥에 넣어 줘!</small><span class="wtag">' + X.wordHtml(target) + '</span></div>' +
+        '<div class="gchef"><img class="gnpc" id="sN" src="' + WI + 'mg4-lion-chef.png" alt=""><div class="gpotbox" id="sPot"><img class="gpotimg f' + fire + '" src="' + WI + 'mg4-pot-fire.png" alt=""></div></div></div>' +
+        '<div class="sbar gfuse"><i id="sBar"></i></div><div class="gpeps">' + four.map(function (it, i) { return '<button class="gpepb" data-i="' + i + '"><img src="' + WI + 'mg2-pepper.png" alt=""><b>' + esc(it.k) + '</b></button>'; }).join('') + '</div></div>';
       M.say(target.say, target.lang);
       var npc = $('sN'), t0 = Date.now(), bar = $('sBar'), done = false;
       clearInterval(qt); qt = setInterval(function () {
@@ -93,11 +94,16 @@
         var left = limit - (Date.now() - t0) / 1000; if (bar) bar.style.width = Math.max(0, left / limit * 100) + '%';
         if (left <= 0) { done = true; clearInterval(qt); lives--; lvl = Math.max(1, lvl - 1); M.sfx('bad'); react(npc, false); M.toast('⏰ 앗, 늦었어요! 「' + target.k + '」'); setTimeout(round, 900); }
       }, 50); g.timers.push(qt);
-      Array.prototype.forEach.call(document.querySelectorAll('.gspicy .gropts .gtile'), function (b) {
+      Array.prototype.forEach.call(document.querySelectorAll('.gspicy .gpepb'), function (b) {
         b.onclick = function () {
           if (!alive(g) || done) return; done = true; clearInterval(qt);
-          if (four[+b.dataset.i] === target) { X.setScore(g, g.score + 5 + lvl * 3); lvl++; b.classList.add('ok'); M.sfx('ok'); react(npc, true); setTimeout(round, 500); }
-          else { lives--; lvl = Math.max(1, lvl - 1); b.classList.add('miss'); M.sfx('bad'); react(npc, false); M.toast('「' + target.t + '」 = ' + target.k); setTimeout(round, 1100); }
+          var ok = four[+b.dataset.i] === target, pot = $('sPot');
+          b.classList.add('thrown');
+          X.fly(b.querySelector('img'), WI + 'mg2-pepper.png', pot, { size: 54, ms: 550, dyk: 0.25, done: function () {
+            if (!alive(g)) return;
+            if (ok) { X.setScore(g, g.score + 5 + lvl * 3); lvl++; M.sfx('ok'); pot.classList.remove('boil'); void pot.offsetWidth; pot.classList.add('boil'); react(npc, true); setTimeout(round, 600); }
+            else { lives--; lvl = Math.max(1, lvl - 1); M.sfx('bad'); pot.classList.remove('smoke'); void pot.offsetWidth; pot.classList.add('smoke'); react(npc, false); b.classList.add('miss'); var r = document.querySelectorAll('.gpepb')[four.indexOf(target)]; if (r) r.classList.add('right'); M.toast('「' + target.t + '」 = ' + target.k); setTimeout(round, 1300); }
+          } });
         };
       });
     }
@@ -126,7 +132,7 @@
       $('zQ').onclick = say;
       var hist = [];
       function paint() { var s = tray[100] * 100 + tray[10] * 10 + tray[1]; $('zS').textContent = s; $('zC').innerHTML = hist.map(function (c) { return '<i class="c' + c + '"><img src="' + WI + 'mg4-coin-' + { 100: 'gold', 10: 'silver', 1: 'copper' }[c] + '.png" alt=""><b>' + c + '</b></i>'; }).join(''); }
-      Array.prototype.forEach.call(document.querySelectorAll('.gcoinb'), function (b) { b.onclick = function () { var c = +b.dataset.c; if (tray[c] >= 9) return; tray[c]++; hist.push(c); M.sfx('coin'); paint(); }; });
+      Array.prototype.forEach.call(document.querySelectorAll('.gcoinb'), function (b) { b.onclick = function () { var c = +b.dataset.c; if (tray[c] >= 9) return; tray[c]++; hist.push(c); M.sfx('coin'); X.fly(b.querySelector('img'), b.querySelector('img').src, $('zT'), { size: 44, ms: 380, spin: 360, end: 0.7, dyk: 0.5, done: paint }); }; });
       $('zU').onclick = function () { var c = hist.pop(); if (c) { tray[c]--; paint(); } };
       $('zGo').onclick = function () {
         if (!alive(g)) return;

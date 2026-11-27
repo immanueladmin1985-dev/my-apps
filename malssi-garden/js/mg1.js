@@ -102,7 +102,7 @@
       var tiles = M.shuffle(sn.w.map(function (w, i) { return { w: w, i: i }; }));
       $('mBody').innerHTML = '<div class="gbamboo"><div class="gbq"><small>' + n + ' / ' + list.length + '</small><b>' + esc(sn.k) + '</b></div>' +
         '<div class="gbstage"><div class="gtower lang-' + lang + '" id="bT"><img class="gleaf" id="bL" src="' + WI + 'mg3-bamboo-leaf.png" alt=""></div><img class="gnpc gpanda" id="bN" src="' + sprite('panda') + '" alt=""></div>' +
-        '<div class="gbtiles lang-' + lang + '">' + tiles.map(function (t) { return '<button class="gtile" data-i="' + t.i + '">' + esc(t.w) + '</button>'; }).join('') + '</div></div>';
+        '<div class="gbtiles lang-' + lang + '">' + tiles.map(function (t) { return '<button class="gtile gbseg" data-i="' + t.i + '"><span>' + esc(t.w) + '</span></button>'; }).join('') + '</div></div>';
       var npc = $('bN'), tower = $('bT');
       Array.prototype.forEach.call(document.querySelectorAll('.gtile'), function (b) {
         b.onclick = function () {
@@ -111,7 +111,8 @@
           if (idx === got || sn.w[idx] === sn.w[got]) {
             b.disabled = true; b.classList.add('used');
             var seg = document.createElement('div'); seg.className = 'gseg'; seg.innerHTML = '<span>' + esc(sn.w[got]) + '</span>';
-            tower.insertBefore(seg, $('bL')); got++; M.sfx('pop');
+            seg.style.visibility = 'hidden'; tower.insertBefore(seg, $('bL')); got++; M.sfx('pop');
+            X.fly(b, WI + 'mg3-bamboo-seg.png', seg, { size: 120, ms: 420, spin: 0, end: 1, dyk: 0.5, done: function () { seg.style.visibility = ''; } });
             if (got === sn.w.length) { tower.classList.add('full'); X.setScore(g, g.score + Math.max(6, 20 - miss * 4)); M.say(sn.say, lang); M.sfx('ok'); react(npc, true); npc.src = WI + 'mg3-panda-eat.png'; npc.classList.add('eat'); setTimeout(round, 1500); }
           } else { miss++; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); tower.classList.remove('wobble'); void tower.offsetWidth; tower.classList.add('wobble'); M.sfx('bad'); react(npc, false); }
         };
@@ -136,7 +137,7 @@
         { k: 'mean', ico: '📖', name: '뜻', html: '<b class="gmean">' + esc(target.k) + '</b>', ok: true }
       ].filter(function (c) { return c.ok; });
       $('mBody').innerHTML = '<div class="griddle"><div class="grstage"><img class="gnpc" id="rN" src="' + WI + 'mg3-fox-magic.png" alt=""><img class="gstage" src="' + WI + 'mg2-stage.png" alt=""><div class="gbub" id="rQ"><small>수수께끼 ' + n + ' / 8' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>카드를 적게 뒤집을수록 점수가 커요!</div></div>' +
-        '<div class="gcards">' + cards.map(function (c, i) { return '<button class="gcard" data-c="' + i + '"><span class="gback"><img src="' + WI + 'mg3-card-back.png" alt=""><small>' + c.ico + ' ' + c.name + '</small></span><span class="gfront">' + c.html + '</span></button>'; }).join('') + '</div>' +
+        '<div class="gcards">' + cards.map(function (c, i) { return '<button class="gcard" data-c="' + i + '"><span class="gback"><small>' + c.ico + ' ' + c.name + '</small></span><span class="gfront">' + c.html + '</span></button>'; }).join('') + '</div>' +
         '<div class="gropts">' + four.map(function (it, i) { return '<button class="gtile big" data-i="' + i + '">' + X.wordHtml(it) + '</button>'; }).join('') + '</div></div>';
       var npc = $('rN');
       function flip(b) { if (b.classList.contains('open')) { var c0 = cards[+b.dataset.c]; if (c0.on) c0.on(); return; } b.classList.add('open'); opened++; var c = cards[+b.dataset.c]; if (c.on) c.on(); M.sfx('tap'); }
@@ -205,7 +206,7 @@
         if (!alive(g)) return;
         var okN = pick.n === o.n, okT = pick.t === o.t, okM = pick.m === m.id;
         if (okN && okT && okM) {
-          X.setScore(g, g.score + Math.max(8, 20 - tries * 6)); M.sfx('ok'); X.fxAt($('cGo'), 'coffee'); var cn = $('cN'); if (cn) { cn.src = WI + 'mg4-cat-tray.png'; react(cn, true); }
+          X.setScore(g, g.score + Math.max(8, 20 - tries * 6)); M.sfx('ok'); X.fxAt($('cGo'), 'coffee'); var cn = $('cN'); if (cn) { cn.src = WI + 'mg4-cat-tray.png'; react(cn, true); } var mb = document.querySelector('.gpad [data-m].on img'); if (mb) X.fly(mb, mb.src, document.querySelector('.gguest'), { size: 52, ms: 600, spin: 0, end: 0.8 });
           $('cK').textContent = '= ' + orderKo(o);
           var r = REPLY[lang] || REPLY.en;
           $('cGo').outerHTML = '<button class="greply lang-' + lang + '" id="cR">🐱 <b>' + esc(r[0]) + '</b><small>' + esc(r[1]) + '</small></button>';

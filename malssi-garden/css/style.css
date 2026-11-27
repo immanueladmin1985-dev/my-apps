@@ -2014,3 +2014,38 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .lbody:has(> .qcard + .opts) > .qcard.rdq, .lbody > .qcard.rdq { flex: none; min-height: 0; max-height: none; padding: 18px 14px; }
 .lvtabs button { min-width: 60px; flex: 1 0 auto; }
 .rdshow { width: auto !important; height: auto !important; border-radius: 12px !important; padding: 4px 12px !important; font-size: .8rem !important; white-space: nowrap; }
+
+.mgfly { position: fixed; z-index: 9000; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(0,0,0,.25)); }
+/* 여우 카드: 받은 카드 그림 자체를 카드로 쓴다 */
+.griddle .gcards { display: flex; justify-content: center; gap: 10px; flex: 1 1 auto; min-height: 0; max-height: none; align-items: center; }
+.griddle .gcard { height: auto; flex: 0 1 30%; max-width: 150px; aspect-ratio: 166 / 196; }
+.griddle .gcard > span { border-radius: 10px; }
+.griddle .gback { background: url(../img/w/mg3-card-back.png) center / 100% 100% no-repeat; border: 0; justify-content: flex-end; padding-bottom: 12%; }
+.griddle .gback small { background: rgba(255,255,255,.92); border-radius: 10px; padding: 2px 8px; font-size: .75rem; }
+.griddle .gfront { background: #fffaf2; border: 5px solid #e2574c; box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 5px #f6c3bd; border-radius: 12px; }
+.griddle .gcard.open .gfront { animation: none; }
+.griddle .gpic { font-size: 3.4rem; }
+/* 레오: 크게, 고추를 솥에 */
+.gkitchen { justify-content: flex-start; gap: 6px; min-height: 0; }
+.gkitchen .gorder { align-self: stretch; } .gorder .wtag { margin-top: 4px; } .gorder .wtag::before { display: none; } .gorder .wtag b { font-size: 1.5rem; }
+.gchef { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 0; min-height: 0; }
+.gchef .gnpc { height: min(30vh, 210px); margin-right: -16px; position: relative; z-index: 1; }
+.gpotbox { position: relative; } .gpotbox .gpotimg { width: min(46vw, 230px); display: block; }
+.gpotbox .gpotimg.f2 { width: min(50vw, 250px); } .gpotbox .gpotimg.f3 { width: min(54vw, 270px); }
+.gpotbox.boil::after { content: '♨ ♨'; position: absolute; left: 50%; top: -10px; transform: translateX(-50%); font-size: 1.6rem; color: #ff8a3d; animation: gfloat .8s ease-out; }
+.gpotbox.smoke::after { content: '💨'; position: absolute; left: 50%; top: -20px; transform: translateX(-50%); font-size: 2rem; animation: gfloat .9s ease-out; }
+.gpotbox.boil .gpotimg { animation: gnope .5s; }
+.gpeps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.gpepb { position: relative; display: flex; align-items: center; gap: 6px; padding: 6px 10px 6px 4px; border-radius: 18px; background: #fff7ee; border: 3px solid #f2b28a; box-shadow: 0 4px 0 #e39062; min-height: 62px; }
+.gpepb img { width: 46px; height: 46px; object-fit: contain; flex: none; transform: rotate(-20deg); transition: opacity .2s; }
+.gpepb b { flex: 1; text-align: left; font-size: 1rem; color: #6b3a1a; word-break: keep-all; line-height: 1.2; }
+.gpepb.thrown img { opacity: 0; } .gpepb.miss { opacity: .45; } .gpepb.right { border-color: #3fb886; background: #e7f8ef; }
+@media (min-width: 900px) { .gchef .gnpc { height: 260px; } .gpotbox .gpotimg { width: 300px; } .gpotbox .gpotimg.f3 { width: 340px; } }
+/* 판다: 대나무 마디 그림 단추 */
+.gtile.gbseg { background: url(../img/w/mg3-bamboo-seg.png) center / 100% 100% no-repeat; border: 0; box-shadow: none; padding: 12px 22px 14px; min-width: 96px; }
+.gtile.gbseg span { background: rgba(255,255,255,.88); border-radius: 8px; padding: 0 6px; color: #2f4a1f; }
+.gseg { background-image: url(../img/w/mg3-bamboo-seg.png); }
+.gseg span { background: rgba(255,255,255,.85); border-radius: 8px; padding: 0 6px; }
+.grstage > .gnpc { height: 112px; }
+.griddle .gcard { max-width: 170px; }
+.gbstage .gpanda { height: min(22vh, 160px); }
