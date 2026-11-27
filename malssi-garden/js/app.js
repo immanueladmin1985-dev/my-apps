@@ -164,19 +164,42 @@
     });
   }
   function wordBook() {
-    var L = window.LANGS[P.lang], now = Date.now();
-    var ss = L.stages.filter(function (s) { return P.prog[P.lang][s.id]; });
-    var h = '<h3>📒 ' + L.flag + ' ' + L.name + ' 단어장</h3><p class="hint">누르면 발음을 들려줘요. 점은 얼마나 잘 외웠는지 보여 줘요.</p><div class="wbook">';
-    if (!ss.length) h += '<p class="hint center">첫 단계를 끝내면 단어가 여기에 모여요.</p>';
-    ss.forEach(function (s) {
-      h += '<h4>' + esc(s.title) + '</h4><div class="wbsec">' + s.items.map(function (it) {
-        var r = P.srs[M.itemKey(it)] || [0, 0], lv = Math.min(5, r[0]);
-        var long = String(it.t).length > (it.lang === 'en' ? 14 : 6) || String(it.k).length > 12;
-        return '<button class="wrow' + (long ? ' long' : '') + ' lang-' + it.lang + '" data-say="' + esc(it.t) + '"><span class="wt">' + esc(it.t) + '</span><span class="wr">' + esc(it.r) + '</span><span class="wk">' + (it.e ? it.e + ' ' : '') + esc(it.k) + '</span><span class="wl">' + '●●●●●'.slice(0, lv) + '<i>' + '●●●●●'.slice(lv) + '</i></span></button>';
-      }).join('') + '</div>';
+    var L = window.LANGS[P.lang], lang = P.lang;
+    var ss = L.stages.filter(function (s) { return P.prog[lang][s.id]; });
+    var fav = P.fav = P.fav || {}, st = { q: '', mode: 'all' };
+    var all = []; ss.forEach(function (s) { s.items.forEach(function (it) { all.push({ s: s, it: it, key: M.itemKey(it) }); }); });
+    var norm = function (x) { return String(x || '').toLowerCase().replace(/[\s·.,!?~()（）]/g, ''); };
+    function row(x) {
+      var it = x.it, r = P.srs[x.key] || [0, 0], lv = Math.min(5, r[0]);
+      var long = String(it.t).length > (it.lang === 'en' ? 14 : 6) || String(it.k).length > 12;
+      return '<div class="wcell' + (long ? ' long' : '') + '"><button class="wrow lang-' + it.lang + '" data-say="' + esc(it.t) + '"><span class="wt">' + esc(it.t) + '</span><span class="wr">' + esc(it.r) + '</span><span class="wk">' + (it.e ? it.e + ' ' : '') + esc(it.k) + '</span><span class="wl">' + '●●●●●'.slice(0, lv) + '<i>' + '●●●●●'.slice(lv) + '</i></span></button>' +
+        '<button class="wfav' + (fav[x.key] ? ' on' : '') + '" data-star="' + esc(x.key) + '" aria-label="즐겨찾기">' + (fav[x.key] ? '★' : '☆') + '</button></div>';
+    }
+    function list() {
+      var q = norm(st.q);
+      var shown = all.filter(function (x) {
+        if (st.mode === 'fav' && !fav[x.key]) return false;
+        if (st.mode === 'weak') { var r = P.srs[x.key] || [0]; if (!((r[2] > 0 && r[0] < 4) || !r[0])) return false; }   // 틀린 적 있고 아직 덜 외웠거나, 한 번도 맞히지 못한 낱말
+        return !q || norm(x.it.t).indexOf(q) >= 0 || norm(x.it.r).indexOf(q) >= 0 || norm(x.it.k).indexOf(q) >= 0;
+      });
+      if (!all.length) return '<p class="hint center">첫 단계를 끝내면 단어가 여기에 모여요.</p>';
+      if (!shown.length) return '<p class="hint center">' + (st.mode === 'fav' && !q ? '☆를 눌러 즐겨찾기한 낱말이 여기에 모여요.' : '찾는 낱말이 없어요.') + '</p>';
+      var h = '<p class="hint wbcount">' + shown.length + '개' + (st.mode === 'fav' && shown.length >= 3 ? ' · <button class="favplay" data-favplay>🎮 즐겨찾기 낱말로 놀이</button>' : '') + '</p>', cur = null, buf = [];
+      function flush() { if (cur) h += '<h4>' + esc(cur.title) + '</h4><div class="wbsec">' + buf.join('') + '</div>'; buf = []; }
+      shown.forEach(function (x) { if (x.s !== cur) { flush(); cur = x.s; } buf.push(row(x)); });
+      flush(); return h;
+    }
+    var d = M.modal('<h3>📒 ' + L.flag + ' ' + L.name + ' 단어장</h3><div class="wbtools"><input id="wbQ" type="search" placeholder="🔍 찾기 (외국어·읽기·뜻)" autocomplete="off"><div class="wbmodes"><button data-wbm="all" class="on">전체</button><button data-wbm="fav">⭐ 즐겨찾기</button><button data-wbm="weak">✏️ 잘 못 외운 것</button></div></div>' +
+      '<p class="hint">누르면 발음을 들려줘요. 점은 얼마나 잘 외웠는지 보여 줘요.</p><div class="wbook" id="wbList">' + list() + '</div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'full' });
+    var paint = function () { var el = d.querySelector('#wbList'); if (el) el.innerHTML = list(); };
+    d.querySelector('#wbQ').addEventListener('input', function () { st.q = this.value; paint(); });
+    d.addEventListener('click', function (e) {
+      var sb = e.target.closest('[data-star]');
+      if (sb) { var k = sb.dataset.star; if (fav[k]) delete fav[k]; else fav[k] = 1; M.save(); sb.classList.toggle('on', !!fav[k]); sb.textContent = fav[k] ? '★' : '☆'; if (st.mode === 'fav') paint(); return; }
+      var mb = e.target.closest('[data-wbm]'); if (mb) { st.mode = mb.dataset.wbm; Array.prototype.forEach.call(d.querySelectorAll('[data-wbm]'), function (x) { x.classList.toggle('on', x === mb); }); paint(); return; }
+      if (e.target.closest('[data-favplay]')) { var items = all.filter(function (x) { return fav[x.key]; }).map(function (x) { return x.it; }); d.close(); if (M.weakPlay) M.weakPlay(items, '⭐ 즐겨찾기 낱말이 먼저 나와요'); return; }
+      var c = e.target.closest('[data-say]'); if (c) M.say(c.dataset.say, lang);
     });
-    var d = M.modal(h + '</div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'full' });
-    d.addEventListener('click', function (e) { var c = e.target.closest('[data-say]'); if (c) M.say(c.dataset.say, P.lang); });
   }
 
   // ---------- 주간 리포트 ----------

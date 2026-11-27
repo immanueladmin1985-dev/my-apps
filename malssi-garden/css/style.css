@@ -2327,3 +2327,17 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .dyreply .dyh { flex: none; width: 42px; height: 42px; border-radius: 50%; background: #fff; border: 2px solid var(--line); font-size: 1.2rem; }
 .dyreply .dyh.on { border-color: #ff8fb1; background: #fff0f5; }
 .dyreply .btn { flex: none; min-height: 42px; padding: 4px 12px; }
+/* 단어장: 찾기·즐겨찾기 */
+.wbtools { position: sticky; top: -2px; z-index: 2; background: var(--bg, #fff); padding: 4px 0 6px; }
+.wbtools input { width: 100%; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--line); font-size: 1rem; }
+.wbmodes { display: flex; gap: 6px; margin-top: 6px; }
+.wbmodes button { flex: 1; padding: 7px 4px; border-radius: 12px; background: #f6f3f8; font-weight: 800; font-size: .85rem; }
+.wbmodes button.on { background: var(--mint); color: #fff; }
+.wbcount { margin: 6px 0 0; }
+.wcell { position: relative; display: block; min-width: 0; }
+.wcell > .wrow { display: grid; width: 100%; height: 100%; padding-bottom: 16px; grid-template-columns: 1fr; grid-template-areas: "l" "t" "r" "k"; }
+.wcell.long > .wrow { grid-template-columns: 1fr auto; grid-template-areas: "t l" "r r" "k k"; }
+.wbcount .favplay { margin-left: 6px; padding: 3px 10px; border-radius: 10px; background: var(--mint-l); color: var(--mint-d); font-weight: 800; font-size: .8rem; }
+.wcell.long { grid-column: 1 / -1; }
+.wfav { position: absolute; bottom: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; background: none; border: 0; font-size: 1.05rem; color: #c9bfd2; line-height: 1; }
+.wfav.on { color: #f5b301; }

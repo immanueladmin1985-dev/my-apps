@@ -4,6 +4,13 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   // 낱말로 하는 놀이 중에서 고른다 (약점 낱말이 먼저 나온다)
   var GAMES = ['fetch', 'banana', 'fish', 'shell', 'spicy', 'memory', 'dict'];
+  // 고른 낱말이 먼저 나오는 낱말 놀이를 하나 연다 (약점 공책·단어장 즐겨찾기에서 쓴다)
+  M.weakPlay = function (items, msg) {
+    var X = M.MG; if (!X || !X.byId) return;
+    var id = M.pick(GAMES.filter(function (g) { return X.byId(g); })), m = X.byId(id);
+    M.toast(m.icon + ' ' + m.name + ': ' + msg);
+    X.start(m, { focus: items });
+  };
   M.weakBook = function () {
     var lang = M.P.lang, list = M.missedItems(lang, 30), HAN = /[一-鿿]/;
     if (!list.length) { M.toast('자주 틀린 낱말이 아직 없어요. 아주 잘하고 있어요! 👏'); return; }
@@ -27,12 +34,7 @@
         M.sfx && M.sfx('ok'); return;
       }
       if (e.target.closest('[data-wkrv]')) { d.close(); M.reviewGame(); return; }
-      if (e.target.closest('[data-wkplay]')) {
-        var X = M.MG; if (!X || !X.byId) return;
-        var id = M.pick(GAMES.filter(function (g) { return X.byId(g); })), m = X.byId(id);
-        d.close(); M.toast('📓 ' + m.icon + ' ' + m.name + ': 약점 낱말이 먼저 나와요');
-        X.start(m, { focus: M.missedItems(lang, 30) });
-      }
+      if (e.target.closest('[data-wkplay]')) { d.close(); M.weakPlay(M.missedItems(lang, 30), '📓 약점 낱말이 먼저 나와요'); }
     });
   };
 })();
