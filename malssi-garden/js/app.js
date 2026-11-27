@@ -56,7 +56,8 @@
     var set = function (t, v) { var b = document.querySelector('#nav [data-tab="' + t + '"] .badge'); if (b) { b.textContent = v || ''; b.classList.toggle('hidden', !v); } };
     var g = P.garden, golden = false, free = 0;
     for (var i = 0; i < g.open; i++) { var it = g.cells[i]; if (it && it.l === 5) golden = true; if (!it) free++; }
-    set('learn', M.questReady() || '');
+    set('learn', '');
+    var qb = document.querySelector('#navQuest .badge'); if (qb) { var qr = M.questReady(); qb.textContent = qr || ''; qb.classList.toggle('hidden', !qr); }
     set('garden', M.gardenOrderReady && M.gardenOrderReady() ? '📦' : (P.water >= 25 && free ? '💧' : ''));
     set('home', M.petFull() < 30 ? '!' : (M.potAlert && M.potAlert()) || '');
     set('shop', P.rewards.some(function (r) { return P.fp >= r.price; }) ? '🎁' : '');
@@ -82,16 +83,18 @@
     var tab = P.ui.lv[P.lang]; if (levels.indexOf(tab) < 0) tab = cur < L.stages.length ? lvOf(L.stages[cur]) : levels[levels.length - 1];
     var h = '<div class="map theme-' + P.lang + '">' +
       '<div class="langbar">' + ['ja', 'en', 'zh'].map(function (c) { var X = window.LANGS[c]; return '<button data-lang="' + c + '" class="' + (c === P.lang ? 'on' : '') + '">' + X.flag + ' ' + X.name + '</button>'; }).join('') + '</div>' +
-      '<img class="scene" src="img/bg-map-' + P.lang + '.png" alt="">' +
-      '<div class="dash">' +
-      '<button class="dcard" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><small>오늘 목표</small></button>' +
-      '<button class="dcard" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '"><small>퀘스트</small></button>' +
-      '<button class="dcard" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="de">🔁</span><small>복습' + (due ? ' ' + due : '') + '</small></button>' +
-      '<button class="dcard" id="dWrong"' + (wrongN ? '' : ' disabled') + '>' + (wrongN ? '<i class="dot">' + wrongN + '</i>' : '') + '<span class="de">✏️</span><small>틀린 것</small></button>' +
-      '<button class="dcard" id="dWords"><span class="de">📒</span><small>단어장</small></button>' +
-      '<button class="dcard" id="dGame"' + (M.missedItems(P.lang).length >= 3 ? '' : ' disabled') + '><span class="de">🎯</span><small>복습 놀이</small></button>' +
-      '<button class="dcard" id="dReport"><span class="de">📊</span><small>리포트</small></button>' +
-      '</div>' + contBtn(L, prog, cur) +
+      '<div class="mleft">' +
+      // 오늘 카드: 오늘 목표·연속 기록·이어서 하기를 한 장에 모은다
+      '<div class="todaycard"><img class="tscene" src="img/bg-map-' + P.lang + '.png" alt="">' +
+      '<button class="tgoal" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><span class="tgt"><b>' + (today >= P.set.goal ? '오늘 목표 달성! 🎉' : '오늘 목표 ' + P.set.goal + '판') + '</b><small>🔥 ' + (P.streak || 0) + '일 연속 공부 중</small>' + (due ? '<small>🔁 복습할 낱말 ' + due + '개</small>' : '') + '</span></button>' +
+      '<div class="tchips"><button class="tchip" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '">퀘스트</button><button class="tchip" id="dWords"><span>📒</span>단어장</button></div>' +
+      contBtn(L, prog, cur) + '</div>' +
+      '<div class="acts">' +
+      '<button class="act" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="ae">🔁</span><b>복습</b><small>' + (due ? due + '개 때가 됐어요' : '잊기 전에 다시') + '</small></button>' +
+      '<button class="act" id="dWrong"' + (wrongN ? '' : ' disabled') + '>' + (wrongN ? '<i class="dot">' + wrongN + '</i>' : '') + '<span class="ae">✏️</span><b>틀린 것</b><small>' + (wrongN ? wrongN + '개 다시 풀기' : '틀린 낱말이 없어요') + '</small></button>' +
+      '<button class="act" id="dGame"' + (M.missedItems(P.lang).length >= 3 ? '' : ' disabled') + '><span class="ae">🎯</span><b>복습 놀이</b><small>자주 틀린 낱말로</small></button>' +
+      '<button class="act" id="dReport"><span class="ae">📊</span><b>리포트</b><small>이번 주 공부</small></button>' +
+      '</div></div><div class="mright">' +
       '<div class="lvtabs">' + levels.map(function (lv) {
         var us = L.stages.filter(function (s) { return lvOf(s) === lv; }), dn = us.filter(function (s) { return prog[s.id]; }).length;
         return '<button data-lv="' + esc(lv) + '" class="' + (lv === tab ? 'on' : '') + '"><b>' + esc(LVNAME[lv] || lv) + '</b><small>' + dn + '/' + us.length + '</small></button>';
@@ -120,7 +123,7 @@
       });
     });
     h += '</div>' + (cur >= L.stages.length ? '<div class="card center">🎉 ' + L.name + ' 초급을 모두 끝냈어요! 복습으로 실력을 다져 보세요.<br><small>다음 단계 내용은 곧 추가될 예정이에요.</small></div>' : '') +
-      '<button class="btn ghost wide inst-btn" id="hInst">📲 홈 화면에 설치하기</button></div>';
+      '<button class="btn ghost wide inst-btn" id="hInst">📲 홈 화면에 설치하기</button></div></div>';
     root.innerHTML = h;
     if (!mapScrolled) {
       mapScrolled = true;
@@ -437,6 +440,7 @@
     var t = e.target;
     var hp = t.closest('[data-help]'); if (hp) { M.help(hp.dataset.help); return; }
     var nb = t.closest('#nav [data-tab]'); if (nb) { M.sfx('tap'); M.go(nb.dataset.tab); return; }
+    if (t.closest('#navQuest')) { M.sfx('tap'); quests(); return; }
     if (t.closest('#bSet')) { settings(); return; }
     if (t.closest('#tStreakBox')) { quests(); return; }
     if (!t.closest('#learnView')) return;

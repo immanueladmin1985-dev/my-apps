@@ -633,26 +633,58 @@
   // ---------- 누르기 ----------
   var tapMark = null;
   // 지도 축소판: 누른 곳으로 바로 간다
+  // 마을 지도: 장소마다 둥근 섬 위에 건물을 올리고, 주민은 얼굴 표지로 보여 준다 (실제 위치 그대로)
   function minimap() {
-    var vw = Math.min(window.innerWidth - 40, 420), sc = vw / (W * T), vh = H * T * sc;
-    var d = M.modal('<h3>🗺️ 마을 지도</h3><p class="hint">가고 싶은 곳을 누르면 그쪽으로 가요' + (canRide() ? ' 🚲' : '') + '</p><div class="mmwrap" style="height:' + Math.round(vh) + 'px"><canvas id="mmC"></canvas><div id="mmL"></div></div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'mapsheet' });
+    var vw = Math.min(window.innerWidth - 44, window.innerWidth >= 900 ? 560 : 420, Math.max(260, (window.innerHeight - 190) * W / H)), sc = vw / (W * T), vh = H * T * sc;   // 화면 높이에도 맞춘다
+    var d = M.modal('<h3>🗺️ 마을 지도</h3><p class="hint">섬이나 주민 얼굴을 누르면 그곳으로 가요' + (canRide() ? ' 🚲' : '') + '</p><div class="mmwrap isl" style="height:' + Math.round(vh) + 'px"><canvas id="mmC"></canvas><div id="mmL"></div></div><button class="btn ghost wide" data-close>닫기</button>', { cls: 'mapsheet' });
     var c = d.querySelector('#mmC'), dpr = Math.min(2, window.devicePixelRatio || 1); c.width = vw * dpr; c.height = vh * dpr; c.style.width = vw + 'px'; c.style.height = vh + 'px';
-    var g = c.getContext('2d'); g.scale(dpr, dpr); g.drawImage(ground, 0, 0, ground.width, ground.height, 0, 0, vw, vh);
-    OBJ.forEach(function (o) { if (o.kind === 'tree' || o.kind === 'ftree') { g.fillStyle = o.kind === 'ftree' ? '#e8774a' : '#3f8f4a'; g.beginPath(); g.arc(o.x * T * sc, (o.y - 0.6) * T * sc, Math.max(2, T * sc * 0.6), 0, 7); g.fill(); } });
-    var L = d.querySelector('#mmL'), pin = function (x, y, html, cls) { return '<div class="mmp ' + (cls || '') + '" style="left:' + (x * T * sc) + 'px;top:' + (y * T * sc) + 'px">' + html + '</div>'; }, h = '';
-    BUILD.forEach(function (b) { h += pin(b.x + b.w / 2, b.y + b.h / 2, '<span class="mmb">' + b.em + '<small>' + b.name + '</small></span>'); });
-    h += pin(PIER.x + 0.5, PIER.y, '<span class="mmb">🎣<small>낚시터</small></span>') + pin(BOARD.x + 1, BOARD.y, '<span class="mmb">📋<small>게시판</small></span>');
-    var rs = M.V.residents(); LOTS.forEach(function (l, k) { var c2 = rs[k]; if (c2) h += pin(l[0] + 1.5, l[1] + 1.5, '<img src="' + M.custImg(c2.id) + '" alt=""><small>' + c2.name + '</small>', 'face'); });
-    h += pin(me.x + 0.5, me.y + 0.5, '<span class="mmme">' + (M.visiting ? '🦝' : '🐰') + '</span>', 'me');
-    if (mate) h += pin(mate.x + 0.5, mate.y + 0.5, '<span class="mmme">' + (mate.av === 'raccoon' ? '🦝' : '💕') + '</span>', 'me');
+    var g = c.getContext('2d'); g.scale(dpr, dpr);
+    // 바탕: 납작한 파스텔 땅, 옅은 칸 줄, 물(강·바다)과 모래, 길
+    var u = T * sc, x, y;
+    g.fillStyle = '#f4e6c8'; g.fillRect(0, 0, vw, vh);
+    g.strokeStyle = 'rgba(160,130,80,.12)'; g.lineWidth = 1;
+    for (x = 0; x <= W; x += 3) { g.beginPath(); g.moveTo(x * u, 0); g.lineTo(x * u, vh); g.stroke(); }
+    for (y = 0; y <= H; y += 3) { g.beginPath(); g.moveTo(0, y * u); g.lineTo(vw, y * u); g.stroke(); }
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
+      var v = G[y * W + x];
+      if (v === 1 || v === 5) { g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(x * u, y * u, u + 0.5, u + 0.5); }
+      else if (v === 3) { g.fillStyle = '#fbe9c9'; g.fillRect(x * u, y * u, u + 0.5, u + 0.5); }
+      else if (v === 2 || v === 4) { g.fillStyle = v === 4 ? '#d8b98c' : '#bfe6d6'; g.fillRect(x * u, y * u, u + 0.5, u + 0.5); }
+    }
+    g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.5;   // 물결
+    for (y = RIVER_Y; y < H; y += 2) for (x = 1; x < W; x += 5) { if (G[y * W + x] !== 2) continue; g.beginPath(); g.moveTo(x * u, y * u + u / 2); g.quadraticCurveTo((x + 0.5) * u, y * u, (x + 1) * u, y * u + u / 2); g.quadraticCurveTo((x + 1.5) * u, y * u + u, (x + 2) * u, y * u + u / 2); g.stroke(); }
+    OBJ.forEach(function (o) { if (o.kind !== 'tree' && o.kind !== 'ftree') return; var cx = o.x * u, cy = (o.y - 0.4) * u, r = Math.max(3, u * 0.7); g.fillStyle = o.kind === 'ftree' ? '#f0a27a' : o.pine ? '#9fd3b4' : '#b5ddb0'; g.beginPath(); g.moveTo(cx, cy - r * 1.3); g.lineTo(cx + r, cy + r * 0.6); g.lineTo(cx - r, cy + r * 0.6); g.closePath(); g.fill(); });
+    // 섬과 표지
+    var L = d.querySelector('#mmL'), h = '', rs = M.V.residents();
+    var at = function (tx, ty) { return 'left:' + (tx * u) + 'px;top:' + (ty * u) + 'px'; };
+    var tag = function (t) { return t ? '<i class="itag">' + t + '</i>' : ''; };
+    var spots = BUILD.map(function (b) {
+      var src = b.id === 'home' ? homeSprite(M.houseLv ? M.houseLv() : 1) : 'b-' + b.id, t = '';
+      if (b.id === 'shop' && M.gardenOrderReady && M.gardenOrderReady()) t = '📦';
+      return { x: b.x + b.w / 2, y: b.y + b.h, src: src, name: b.id === 'home' && M.visiting && M.visitData ? M.visitData.pet + '네 집' : ({ shop: '뒷마당', gift: '선물 교환' }[b.id] || b.name), tag: t, door: b.door };
+    });
+    spots.push({ x: BOARD.x + 1, y: BOARD.y + 1, src: 'b-board', name: '게시판', tag: M.V.boardNews() ? '❗' : '', door: { x: BOARD.x, y: BOARD.y + 1 } });
+    spots.push({ x: PIER.x + 1, y: SAND_Y + 3, src: 'b-pier', name: '낚시터', tag: M.cupNow && M.cupNow() === 'fish' ? '🏆' : '', door: { x: PIER.x, y: PIER.y } });
+    spots.forEach(function (sp, k) { h += '<button class="isle" data-sp="' + k + '" style="' + at(sp.x, sp.y) + '"><span class="ibase"></span><img src="' + WI + sp.src + '.png" alt="">' + tag(sp.tag) + '<small>' + M.esc(sp.name) + '</small></button>'; });
+    LOTS.forEach(function (l, k) {
+      var c2 = rs[k]; if (!c2) return;
+      var ask = M.miniAvail && M.miniAvail(c2.id), bd = M.isBday && M.isBday(c2.id);
+      h += '<button class="ipin' + (ask || bd ? ' hot' : '') + '" data-lot="' + k + '" style="' + at(l[0] + 1.5, l[1] + 1.6) + '"><img src="' + M.custImg(c2.id) + '" alt="">' + tag(bd ? '🎂' : ask ? '❗' : '') + '<small>' + M.esc(c2.name) + '</small></button>';
+    });
+    h += '<div class="imme" style="' + at(me.x + 0.5, me.y + 0.5) + '">' + (M.visiting ? '🦝' : '🐰') + '</div>';
+    if (mate) h += '<div class="imme" style="' + at(mate.x + 0.5, mate.y + 0.5) + '">' + (mate.av === 'raccoon' ? '🦝' : '💕') + '</div>';
     L.innerHTML = h;
+    function go(x2, y2, then) {
+      d.close(); freeCam = null; camEase = true; goTo(x2, y2, then);
+      if (me.path.length) { if (canRide()) me.riding = true; else if (me.path.length > 15) M.toast('🚲 자전거가 있으면 빨리 갈 수 있어요 (잡화점)'); }
+      M.sfx && M.sfx('pop'); tapMark = { x: x2, y: y2, t: performance.now() };
+    }
     d.querySelector('.mmwrap').addEventListener('click', function (e) {
+      var sb = e.target.closest('[data-sp]'); if (sb) { var sp = spots[+sb.dataset.sp]; go(sp.door.x, sp.door.y); return; }
+      var lb = e.target.closest('[data-lot]'); if (lb) { var lot = LOTOBJ[+lb.dataset.lot], rid = rs[+lb.dataset.lot].id; go(lot.door.x, lot.door.y, function () { M.V.resident(rid); }); return; }
       var r = c.getBoundingClientRect(), tx = Math.floor((e.clientX - r.left) / sc / T), ty = Math.floor((e.clientY - r.top) / sc / T), best = null;
       for (var rad = 0; rad < 8 && !best; rad++) for (var yy = ty - rad; yy <= ty + rad; yy++) for (var xx = tx - rad; xx <= tx + rad; xx++) { if (!best && walkable(xx, yy) && G[yy * W + xx] !== 2 && !occupied(xx, yy, me)) best = [xx, yy]; }
-      if (!best) return;
-      d.close(); freeCam = null; camEase = true; goTo(best[0], best[1]);
-      if (me.path.length) { if (canRide()) me.riding = true; else if (me.path.length > 15) M.toast('🚲 자전거가 있으면 빨리 갈 수 있어요 (잡화점)'); }
-      M.sfx && M.sfx('pop'); tapMark = { x: best[0], y: best[1], t: performance.now() };
+      if (best) go(best[0], best[1]);
     });
   }
   function canRide() { return !!M.P.bike && M.petStage() >= 3 && !M.visiting; }

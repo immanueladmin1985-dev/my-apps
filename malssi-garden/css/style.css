@@ -1629,3 +1629,91 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
   .dim .sheet { border-radius: 26px; margin-bottom: 4vh; }
 }
 .bagsheet .list > .wearnow, .bagsheet .list > h4, .bagsheet .list > p { grid-column: 1 / -1; }
+
+/* ---------- 배우기 첫 화면: 오늘 카드 + 큰 단추 4개 ---------- */
+.todaycard { position: relative; margin-top: 10px; background: linear-gradient(160deg, #ffffff 0%, #f1fbf5 100%); border-radius: 22px; box-shadow: var(--sh); padding: 14px 14px 12px; overflow: hidden; }
+.todaycard .tscene { position: absolute; right: -14px; top: -10px; width: 46%; max-width: 230px; opacity: .95; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(0,0,0,.1)); }
+.tgoal { position: relative; display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; text-align: left; max-width: 60%; }
+.tgoal .ring { width: 58px; height: 58px; flex: none; } .tgoal .ring span { width: 44px; height: 44px; font-size: .9rem; }
+.tgt b { display: block; font-size: 1.05rem; } .tgt small { display: block; color: var(--sub); font-size: .8rem; margin-top: 2px; }
+.tchips { position: relative; display: flex; gap: 6px; margin: 10px 0 0; }
+.tchip { position: relative; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px 5px 6px; border-radius: 14px; background: #fff; border: 2px solid var(--line); font-weight: 800; font-size: .8rem; }
+.tchip img { width: 24px; height: 24px; } .tchip span { font-size: 1.1rem; line-height: 24px; }
+.todaycard .btn.cont { position: relative; margin-top: 12px; min-height: 58px; font-size: 1.05rem; }
+.acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 4px; }
+.act { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 10px 4px 8px; background: #fff; border-radius: 18px; box-shadow: var(--sh); border: 0; }
+.act .ae { font-size: 1.9rem; line-height: 1.15; } .act b { font-size: .88rem; } .act small { font-size: .66rem; color: var(--sub); line-height: 1.2; text-align: center; }
+.act:disabled { opacity: .5; }
+@media (max-width: 360px) { .act small { display: none; } }
+/* 태블릿 가로: 왼쪽은 오늘 카드, 오른쪽은 단원 목록 */
+@media (min-width: 900px) and (orientation: landscape) {
+  .view > section#learnView { max-width: 1120px; }
+  #learnView .map { display: grid; grid-template-columns: minmax(340px, 420px) 1fr; column-gap: 24px; align-items: start; }
+  #learnView .map > .langbar { grid-column: 1 / -1; }
+  #learnView .mleft { position: sticky; top: 8px; }
+  #learnView .acts { grid-template-columns: 1fr 1fr; }
+  #learnView .act { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 12px; text-align: left; flex-wrap: wrap; }
+  #learnView .act .ae { font-size: 1.7rem; } #learnView .act small { text-align: left; flex-basis: 100%; padding-left: 0; }
+  #learnView .lvtabs { margin-top: 10px; }
+}
+.tchip .dot { top: -8px; right: -8px; }
+.tgt small { white-space: nowrap; }
+.tgt b, .tgt small { text-shadow: 0 0 4px #fff, 0 0 2px #fff; }
+@media (max-width: 380px) { .todaycard .tscene { width: 40%; } }
+
+/* ---------- 레슨: 보기는 엄지가 닿는 아래쪽에, 태블릿 가로에서는 문제와 보기를 좌우로 ---------- */
+.lbody { display: flex; flex-direction: column; }
+.lbody > .opts, .lbody > .speak, .lbody > .match, .lbody > .tiles { flex: none; }
+.lbody:has(> .qcard + .opts) > .opts { margin-top: auto; margin-bottom: 8px; }
+.lbody:has(> .qcard + .opts) > .qcard { flex: 1 1 auto; max-height: 46vh; }
+@media (min-width: 900px) and (orientation: landscape) {
+  .lhead, .lfoot > * { max-width: 1040px; }
+  .lbody { max-width: 1040px; }
+  .lbody:has(> .qcard + .opts) { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; column-gap: 28px; align-content: start; }
+  .lbody:has(> .qcard + .opts) > .qt { grid-column: 1 / -1; }
+  .lbody:has(> .qcard + .opts) > .qcard { grid-column: 1; min-height: 260px; max-height: none; margin: 0; }
+  .lbody:has(> .qcard + .opts) > .opts { grid-column: 2; grid-template-columns: 1fr; grid-auto-rows: minmax(64px, auto); margin: 0; align-content: center; }
+  .lbody:has(> .qcard + .opts) > .opts.xf { grid-template-columns: 1fr; }
+}
+.lbody:has(> .qcard + .opts) > .qcard.ko .fk:not(.sm) { font-size: 1.7rem; font-weight: 800; }
+@media (min-width: 900px) and (orientation: landscape) {
+  .lbody .opt { font-size: 1.2rem; } .lbody .opt .oe { font-size: 1.6rem; }
+  .lbody .qt { font-size: 1.25rem; }
+  .lbody .face .ft { font-size: 3.4rem; }
+  .lbody .tile { font-size: 1.4rem; padding: 10px 16px; }
+}
+
+/* ---------- 하단 메뉴: 가운데 마을 단추를 크게 ---------- */
+.nav { grid-template-columns: repeat(5, 1fr); }
+.nav button { font-size: .72rem; }
+@media not ((orientation: landscape) and (max-height: 560px)) {
+  .nav { overflow: visible; position: relative; }
+  .nav .navc { margin-top: -26px; }
+  .nav .navc .ni { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(180deg, #6fd8a8, #3fb886); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(40,140,90,.35); font-size: 1.9rem; filter: none; opacity: 1; margin-bottom: 1px; }
+  .nav .navc.on { background: none; }
+  .nav .navc.on .ni { background: linear-gradient(180deg, #ffd36e, #f4a93a); box-shadow: 0 4px 12px rgba(200,130,30,.35); }
+  .nav .navc .badge { top: -2px; right: calc(50% - 40px); }
+}
+@media (orientation: landscape) and (max-height: 560px) { .nav { grid-template-columns: 1fr; } }
+
+/* ---------- 마을 지도: 섬 모형 ---------- */
+.mapsheet .sheet { max-width: 620px; }
+.mmwrap.isl { overflow: visible; border-radius: 18px; }
+.mmwrap.isl canvas { border-radius: 18px; display: block; }
+.isle, .ipin { position: absolute; transform: translate(-50%, -100%); background: none; border: 0; padding: 0; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+.isle img { position: relative; width: 58px; height: 46px; object-fit: contain; margin-bottom: -10px; z-index: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.18)); }
+.isle .ibase { position: absolute; bottom: 12px; width: 66px; height: 24px; border-radius: 50%; background: radial-gradient(ellipse at 50% 40%, #a8dc8c 0 55%, #86c46c 56% 100%); box-shadow: 0 5px 0 #b98d5a, 0 7px 6px rgba(0,0,0,.18); }
+.isle small, .ipin small { position: relative; z-index: 2; margin-top: 12px; font-size: 10px; font-weight: 800; color: #4b3a2a; background: #fff; border-radius: 8px; padding: 1px 5px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.ipin { transform: translate(-50%, -50%); }
+.ipin img { width: 34px; height: 34px; object-fit: contain; border-radius: 50%; background: #fff; border: 3px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,.25); }
+.ipin small { margin-top: 1px; font-size: 9px; }
+.ipin.hot img { border-color: #ffb02e; width: 40px; height: 40px; animation: ihot 1.4s ease-in-out infinite; }
+@keyframes ihot { 50% { transform: translateY(-3px); } }
+.itag { position: absolute; top: -6px; right: -8px; z-index: 3; font-style: normal; font-size: 14px; background: #fff; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.isle .itag { top: -4px; right: 2px; }
+.imme { position: absolute; transform: translate(-50%, -50%); font-size: 22px; z-index: 4; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+@media (min-width: 900px) { .isle img { width: 76px; height: 60px; } .isle .ibase { width: 84px; height: 30px; } .ipin img { width: 40px; height: 40px; } }
+.wfaces { position: absolute; left: 10px; top: 52px; z-index: 5; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.wface { pointer-events: auto; position: relative; width: 50px; height: 50px; border-radius: 50%; padding: 0; background: #fff; border: 3px solid #ffb02e; box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+.wface img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.wface i { position: absolute; right: -6px; top: -6px; font-style: normal; font-size: 13px; width: 22px; height: 22px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.25); }

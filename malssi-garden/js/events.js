@@ -92,13 +92,17 @@
 
   // ========== 마을 화면 옆 단추 (사진·대회·생일) ==========
   M.villageSide = function (host) {
-    if (!host || M.visiting) { var old = host && host.querySelector('.wside'); if (old) old.remove(); return; }
+    if (!host || M.visiting) { if (host) Array.prototype.forEach.call(host.querySelectorAll('.wside,.wfaces'), function (x) { x.remove(); }); return; }
     settle();
     var ev = evToday(), bd = M.bdayToday().filter(function (c) { return !celebrated(c.id); });
     var box = host.querySelector('.wside'); if (!box) { box = document.createElement('div'); box.className = 'wside'; host.appendChild(box); }
     box.innerHTML = '<button class="wsb" data-wphoto aria-label="사진 찍기">📷</button>' +
       (ev ? '<button class="wsb chip" data-wcup><img src="img/w/bb-trophy.png" alt=""><span>' + (ev === 'fish' ? '낚시 대회' : '곤충 대회') + '</span></button>' : '') +
       (bd.length ? '<button class="wsb chip bd" data-wbd="' + bd[0].id + '"><img src="img/w/dish-strawcake.png" alt=""><span>' + esc(bd[0].name) + ' 생일</span></button>' : '');
+    // 왼쪽 세로 줄: 부탁이 있거나 생일인 주민 얼굴 (누르면 그 집으로 간다)
+    var fl = host.querySelector('.wfaces'); if (!fl) { fl = document.createElement('div'); fl.className = 'wfaces'; host.appendChild(fl); }
+    var hot = M.V.residents().filter(function (c) { return (M.miniAvail && M.miniAvail(c.id)) || (M.isBday(c.id) && !celebrated(c.id)); }).slice(0, 5);
+    fl.innerHTML = hot.map(function (c) { var bdc = M.isBday(c.id) && !celebrated(c.id); return '<button class="wface" data-wbd="' + c.id + '" aria-label="' + esc(c.name) + '"><img src="' + M.custImg(c.id) + '" alt=""><i>' + (bdc ? '🎂' : '❗') + '</i></button>'; }).join('');
     var bdKeyDay = 'bd' + M.today();
     M.P.ui = M.P.ui || {};
     if (bd.length && M.P.ui.bdToast !== bdKeyDay) { M.P.ui.bdToast = bdKeyDay; M.save(); setTimeout(function () { M.toast('🎂 오늘은 ' + M.j(bd[0].name, '의', '의') + ' 생일이에요! 집에 찾아가 축하해 주세요'); }, 1200); }
