@@ -8,7 +8,9 @@
   M.xmasStart = function () { if (!M.xmasOn()) { M.toast('12월에 열리는 놀이예요'); return; } X.start(XM); };
   X.SCENES.xmas = [WI + 'ev-tree.png', WI + 'ev-gift.png', '마을 모두에게 선물을 전했어요! 메리 크리스마스!'];
   X.GAMES.xmas = function (g) {
-    var pool = X.words(16, function (it) { return !!it.e && !/[다요]\s*$|니다|세요|\?/.test(it.k) && it.t.length <= 8; });   // 물건 낱말만 (인사말 제외) if (pool.length < 4) pool = X.words(16); if (!X.need(pool, 4)) return;
+    var pool = X.words(16, function (it) { return !!it.e && !/[다요]\s*$|니다|세요|\?/.test(it.k) && it.t.length <= 8; });   // 물건 낱말만 (인사말 제외)
+    if (pool.length < 4) pool = X.words(16);
+    if (!X.need(pool, 4)) return;
     var rs = (M.V ? M.V.residents() : []).map(function (c) { return c.id; }); if (rs.length < 3) rs = ['bear', 'squirrel', 'chick', 'panda', 'fox'];
     var n = 0, total = 8;
     function round() {

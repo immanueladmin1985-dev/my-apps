@@ -2253,3 +2253,65 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .dytext { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; background: repeating-linear-gradient(transparent 0 30px, #f1e4cc 30px 31px); padding: 2px 4px; border: 0; }
 .dytext span { font-size: 1rem; } .dytext b { font-size: 1.15rem; } .dytext small { color: var(--sub); font-size: .8rem; }
 @media (min-width: 700px) { .dybook { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; } }
+/* ---------- 계절 행사: 연날리기 · 꽃놀이 · 불꽃놀이 ---------- */
+.gkitewrap, .gbloom, .gfire { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.gsky { position: relative; flex: 1; min-height: 300px; border-radius: 22px; overflow: hidden; background: linear-gradient(#7cc8ff, #cdeeff 70%, #e9f7d8 70%, #bfe39a); }
+.gcloud { position: absolute; width: 90px; height: 30px; background: #fff; border-radius: 30px; opacity: .9; animation: gdrift 14s linear infinite; }
+.gcloud::before { content: ''; position: absolute; left: 18px; top: -16px; width: 44px; height: 36px; background: #fff; border-radius: 50%; }
+.gcloud.c1 { top: 12%; left: -20%; } .gcloud.c2 { top: 34%; left: -40%; animation-delay: -7s; transform: scale(.7); }
+.gkite { position: absolute; left: 58%; width: 74px; transform: translateX(-50%) rotate(-8deg); transition: bottom .7s ease-out; animation: gsway 2.4s ease-in-out infinite; z-index: 1; }
+.gkite.nope { animation: gnope .45s; }
+.gline { position: absolute; left: 30%; bottom: 0; width: 2px; background: rgba(90,70,40,.5); transform-origin: bottom; transform: rotate(28deg); transition: height .7s ease-out; }
+.gkboy { position: absolute; left: 14%; bottom: 3%; height: 90px; z-index: 2; }
+.gkcol, .gbcol2 { display: flex; flex-direction: column; gap: 8px; }
+.gkcol .gbub, .gcherry .gbub { border: 0; } .gkcol .gbub .wtag { font-size: 1.4rem; }
+.gpouches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.gpouch { position: relative; min-height: 104px; background: none; border: 0; padding: 0; display: grid; place-items: end center; }
+.gpouch img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.gpouch b { position: relative; margin-bottom: 16%; background: rgba(255,255,255,.92); border-radius: 10px; padding: 2px 6px; font-size: .92rem; word-break: keep-all; line-height: 1.15; }
+.gpouch.miss { opacity: .35; animation: gnope .45s; } .gpouch.ok b { background: #d8f5e6; }
+@keyframes gdrift { to { transform: translateX(160vw); } }
+@keyframes gsway { 50% { transform: translateX(-50%) rotate(6deg); } }
+.gcherry { position: relative; flex: 1; min-height: 300px; border-radius: 22px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6%;
+  background: radial-gradient(circle at 20% 22%, #ffc7d9 0 16%, transparent 17%), radial-gradient(circle at 48% 14%, #ffb3cb 0 18%, transparent 19%), radial-gradient(circle at 78% 24%, #ffc7d9 0 16%, transparent 17%), linear-gradient(#fff3f7 0 55%, #c9eaa6 55%); }
+.gcherry .gbub { position: absolute; top: 10px; left: 10px; right: 10px; }
+.gpose { height: min(24vh, 150px); position: relative; z-index: 1; }
+.gpetal { position: absolute; top: -10px; width: 12px; height: 9px; background: #ff9fbd; border-radius: 60% 0 60% 0; animation: gfall 6s linear infinite; }
+.gpetal.p1 { left: 10%; } .gpetal.p2 { left: 32%; animation-delay: -2s; } .gpetal.p3 { left: 55%; animation-delay: -4s; } .gpetal.p4 { left: 74%; animation-delay: -1s; } .gpetal.p5 { left: 90%; animation-delay: -3s; }
+@keyframes gfall { to { transform: translate(-40px, 360px) rotate(360deg); } }
+.gflash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 3; } .gflash.on { animation: gflash .5s ease-out; }
+@keyframes gflash { 0% { opacity: .95; } 100% { opacity: 0; } }
+.gframes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gframe { min-height: 70px; border-radius: 6px; background: #fff; border: 8px solid #f6e2c3; box-shadow: 0 3px 0 #e0c49a; font-weight: 800; font-size: 1rem; word-break: keep-all; padding: 4px; }
+.gframe i { font-style: normal; display: block; font-size: 1.4rem; }
+.gframe.miss { opacity: .35; animation: gnope .45s; } .gframe.ok { border-color: #ffc7d9; }
+.galbum { display: flex; gap: 6px; overflow-x: auto; min-height: 76px; padding: 6px; border-radius: 14px; background: #fff7ef; border: 2px dashed #f0d0a8; }
+.galbum span { flex: none; width: 58px; background: #fff; padding: 3px 3px 2px; box-shadow: 0 2px 4px rgba(0,0,0,.12); display: flex; flex-direction: column; align-items: center; transform: rotate(-3deg); }
+.galbum span:nth-child(even) { transform: rotate(3deg); } .galbum span.new { animation: gpopin .4s; }
+.galbum img { width: 100%; height: 46px; object-fit: contain; background: #ffe9f0; } .galbum small { font-size: .62rem; font-weight: 800; white-space: nowrap; overflow: hidden; max-width: 100%; }
+.gnight { position: relative; flex: 1; min-height: 420px; border-radius: 22px; overflow: hidden; background: linear-gradient(#141a3c, #2b2f6b 70%, #3b3a6e); }
+.gstar { position: absolute; width: 3px; height: 3px; background: #fff; border-radius: 50%; animation: gtwinkle 2s ease-in-out infinite; }
+.gstar.s1 { left: 12%; top: 20%; } .gstar.s2 { left: 70%; top: 12%; animation-delay: -.6s; } .gstar.s3 { left: 40%; top: 30%; animation-delay: -1.2s; } .gstar.s4 { left: 88%; top: 40%; animation-delay: -.3s; }
+@keyframes gtwinkle { 50% { opacity: .2; } }
+.gwant { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,.95); border-radius: 16px; padding: 6px 16px; text-align: center; z-index: 3; white-space: nowrap; }
+.gwant small { display: block; color: var(--sub); font-size: .72rem; font-weight: 800; } .gwant b { font-size: 1.25rem; }
+.gfox { position: absolute; right: 4%; bottom: 2%; height: 84px; z-index: 2; }
+.grocket { position: absolute; bottom: -60px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,.95); border: 0; border-radius: 14px; padding: 4px 10px; z-index: 2; animation: grise 4s linear forwards; box-shadow: 0 0 12px rgba(255,220,120,.6); }
+.grocket .gtail { position: absolute; top: 100%; left: 50%; width: 4px; height: 40px; margin-left: -2px; background: linear-gradient(#ffd34d, transparent); }
+.grocket.fizz { opacity: .35; animation-play-state: paused; } .grocket.fade { opacity: 0; transition: opacity .3s; }
+@keyframes grise { to { bottom: 78%; } }
+.gboom { position: absolute; width: 0; height: 0; z-index: 2; pointer-events: none; }
+.gboom i { position: absolute; width: 8px; height: 8px; margin: -4px; border-radius: 50%; transform: rotate(var(--a)) translateY(0); animation: gboom 1s ease-out forwards; }
+@keyframes gboom { to { transform: rotate(var(--a)) translateY(-80px); opacity: 0; } }
+@media (orientation: landscape) and (max-height: 560px) {
+  .gsky, .gcherry, .gnight { min-height: 240px; }
+  .gkitewrap, .gbloom { display: grid; grid-template-columns: 1.3fr 1fr; column-gap: 12px; }
+}
+@media (min-width: 900px) and (orientation: landscape) {
+  .gkitewrap, .gbloom { display: grid; grid-template-columns: 1.3fr 1fr; column-gap: 24px; align-content: center; }
+  .gsky, .gcherry, .gnight { min-height: 62vh; } .gkcol, .gbcol2 { justify-content: center; }
+  .gkite { width: 110px; } .gkboy { height: 140px; } .gpose { height: 220px; } .gpouch { min-height: 150px; } .gframe { min-height: 100px; font-size: 1.2rem; }
+  .gfire { max-width: 900px; width: 100%; margin: 0 auto; }
+}
+.wsb.chip.fest span { white-space: nowrap; }
+.gline { display: none; }

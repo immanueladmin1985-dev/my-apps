@@ -98,6 +98,7 @@
     var box = host.querySelector('.wside'); if (!box) { box = document.createElement('div'); box.className = 'wside'; host.appendChild(box); }
     box.innerHTML = '<button class="wsb" data-wphoto aria-label="사진 찍기">📷</button>' +
       (M.xmasOn && M.xmasOn() ? '<button class="wsb chip xm" data-wxmas><img src="img/w/ev-gift.png" alt=""><span>선물 배달' + (M.xmasDone() ? ' ✔' : '') + '</span></button>' : '') +
+      (M.festChip ? M.festChip() : '') +
       (ev ? '<button class="wsb chip" data-wcup><img src="img/w/bb-trophy.png" alt=""><span>' + (ev === 'fish' ? '낚시 대회' : '곤충 대회') + '</span></button>' : '') +
       (bd.length ? '<button class="wsb chip bd" data-wbd="' + bd[0].id + '"><img src="img/w/dish-strawcake.png" alt=""><span>' + esc(bd[0].name) + ' 생일</span></button>' : '');
     // 왼쪽 세로 줄: 부탁이 있거나 생일인 주민 얼굴 (누르면 그 집으로 간다)
