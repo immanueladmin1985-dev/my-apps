@@ -105,18 +105,20 @@
     if (pendingExp && M.petExp) { var e = pendingExp; pendingExp = 0; setTimeout(function () { M.petExp(e); }, 300); }
     if ($('gardenView') && !$('gardenView').hidden) M.render();
   }
+  // 놀이 창이 어떤 이유로든 사라졌으면 남은 타이머를 모두 끈다
+  setInterval(function () { if (cur && cur.alive && !$('mBody')) { cur.alive = false; cur.timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); if (cur.raf) cancelAnimationFrame(cur.raf); cur = null; document.body.classList.remove('in-mini'); } }, 1000);
   function setScore(g, n) { g.score = Math.max(0, n); var s = $('mScore'); if (s) s.textContent = g.score + '점'; }
   function timeBar(g, total, onEnd) {
     g.left = total; var t0 = Date.now(), bar = $('mTime');
     var iv = setInterval(function () {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       g.left -= 0.1; if (bar) bar.style.width = Math.max(0, g.left / total * 100) + '%';
       if (g.left <= 0) { clearInterval(iv); onEnd(); }
     }, 100);
     g.timers.push(iv);
   }
   function finish(g, maxScore) {
-    if (!g.alive) return; g.alive = false;
+    if (!g.alive || !$('mBody')) return; g.alive = false;
     var m = g.m, st = state(), first = !st.done[m.id], c = M.custOf(m.cust);
     var ratio = Math.min(1, g.score / maxScore), stars = ratio >= 0.8 ? 3 : ratio >= 0.45 ? 2 : g.score > 0 ? 1 : 0;
     var coins = Math.round((10 + 30 * ratio) * (first ? 2 : 1)), water = first ? 10 + stars * 5 : 0;
@@ -147,7 +149,7 @@
     $('mBody').innerHTML = '<div class="aq" id="aQ"></div><div class="afield" id="aF"></div><img class="abasket" src="img/w/mg2-basket.png" alt="">';
     var field = $('aF'), speed = 0.11, drops = [], target = null, last = 0, missed = 0;   // speed: 1초에 내려오는 거리(밭 높이의 비율)
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       field.innerHTML = ''; drops = [];
       var four = M.shuffle(pool).slice(0, 4); target = four[0];
       $('aQ').innerHTML = (target.e ? '<span class="ae">' + target.e + '</span>' : '') + '<b>' + esc(target.k) + '</b>';
@@ -156,14 +158,14 @@
         b.style.left = (i * 24.5) + '%'; field.appendChild(b);
         var o = { el: b, it: it, y: -0.12 - Math.random() * 0.18 }; drops.push(o);
         b.onclick = function () {
-          if (!g.alive) return;
+          if (!g.alive || !$('mBody')) return;
           if (it === target) { setScore(g, g.score + 1); M.sfx('ok'); M.say(it.say, it.lang); b.classList.add('got'); fxAt(b, 'sparkle'); speed = Math.min(0.2, speed + 0.006); setTimeout(round, 450); }
           else { M.sfx('bad'); b.classList.add('miss'); g.left = Math.max(0, g.left - 3); }
         };
       });
     }
     function tick(now) {   // 걸린 시간만큼 내려간다 (화면 새로 고침이 빠른 폰에서도 같은 빠르기)
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       var dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
       var h = field.clientHeight, fallen = 0;
       drops.forEach(function (o) { if (o.el.classList.contains('got')) return; o.y += speed * dt; o.el.style.transform = 'translateY(' + (o.y * h) + 'px)'; if (o.y > 1) fallen++; });
@@ -179,7 +181,7 @@
     $('mBody').innerHTML = '<div class="sq"><button class="say big" id="sPlay">🔊</button><small>다시 듣기</small></div><div class="balloons" id="sB"></div>';
     $('sPlay').onclick = function () { if (target) M.say(target.say, target.lang); };
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= 10) { finish(g, 120); return; }
       n++; var four = M.shuffle(pool).slice(0, 4); target = four[0]; t0 = Date.now();
       var colors = ['pink', 'mint', 'sky', 'lemon'];
@@ -229,7 +231,7 @@
     var n = 0, combo = 0;
     $('mBody').innerHTML = '<div class="aq" id="rQ"></div><div class="road"><div class="rsigns" id="rS"></div><div class="rpath"><img class="rhog" id="rH" src="img/mg-hog.png" alt=""></div><div class="rprog" id="rP"></div></div>';
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= 12) { finish(g, 150); return; }
       n++; $('rP').textContent = n + ' / 12';
       var two = M.shuffle(pool).slice(0, 2), target = two[0], pair = M.shuffle(two.slice());
@@ -257,7 +259,7 @@
     var list = sentences(5); if (list.length < 2) { $('mBody').innerHTML = '<p class="center">문장을 조금 더 배우고 와 주세요!</p>'; return; }
     var n = 0;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= list.length) { finish(g, list.length * 20); return; }
       var sn = list[n++], got = 0, miss = 0, lang = sn.lang;
       var tiles = sn.w.map(function (w, i) { return { w: w, i: i }; });
@@ -283,7 +285,7 @@
     var pool = words(12, function (it) { return !!it.e; }); if (pool.length < 4) { $('mBody').innerHTML = '<p class="center">그림이 있는 낱말을 조금 더 배우고 와 주세요!</p>'; return; }
     var n = 0, combo = 0;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= 10) { finish(g, 150); return; }
       n++; var four = M.shuffle(pool).slice(0, 4), target = four[0], rev = n % 3 === 0;
       four = M.shuffle(four);
@@ -309,7 +311,7 @@
     var list = pool.slice(0, 6), n = 0;
     function chars(it) { var t = lang === 'ja' && it.r && HAN.test(it.t) ? it.r.split(' · ')[0] : it.t; return Array.from(t.replace(/[\s~～]/g, '')); }
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= list.length) { finish(g, list.length * 15); return; }
       var it = list[n++], ans = chars(it), picked = [], miss = 0;
       var decoy = []; M.shuffle(pool).forEach(function (o) { if (o !== it) chars(o).forEach(function (c) { if (decoy.length < 3 && ans.indexOf(c) < 0 && decoy.indexOf(c) < 0) decoy.push(c); }); });
@@ -341,7 +343,7 @@
     $('fPlay').onclick = function () { if (target) M.say(target.say, target.lang); };
     var pond = $('fI'), lanes = [0.42, 0.58, 0.74, 0.9];
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= 10) { finish(g, 130); return; }
       n++; $('fN').textContent = n + ' / 10';
       fishes.forEach(function (f) { f.el.remove(); }); fishes = [];
@@ -362,7 +364,7 @@
     }
     var last = performance.now();
     function tick(t) {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       var dt = Math.min(50, t - last) / 1000; last = t;
       fishes.forEach(function (f) {
         if (f.el.classList.contains('caught')) return;
@@ -382,7 +384,7 @@
     if (list.length < 3) { $('mBody').innerHTML = '<p class="center">회화를 조금 더 배우고 와 주세요!</p>'; return; }
     var guests = ['🐰', '🐻', '🦊', '🐼', '🐨', '🐹', '🐸', '🦁'], n = 0;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= list.length) { finish(g, list.length * 20); return; }
       var x = list[n++], opts = M.shuffle([x.a].concat((x.alts || []).map(function (a) { return a.t; }), x.w.slice(0, 3 - (x.alts || []).length))), t0 = Date.now(), tries = 0;
       var right = function (o) { return o === x.a || (x.alts || []).some(function (a) { return a.t === o; }); };
@@ -406,7 +408,7 @@
     var pool = words(15); if (pool.length < 5) { $('mBody').innerHTML = '<p class="center">낱말을 조금 더 배우고 와 주세요!</p>'; return; }
     var board = 0, colors = ['#ff8fab', '#7ec8f0', '#ffd166', '#9ad77c', '#c49bff'], YC = ['blue', 'pink', 'yellow'];
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (board >= 3 || board * 5 >= pool.length) { $('mBody').innerHTML = '<div class="scarfdone"><img class="" src="img/w/mg2-scarf.png" alt=""><img class="scconf" src="img/w/mg2-confetti.png" alt=""><b>목도리 완성!</b></div>'; M.sfx('win'); setTimeout(function () { finish(g, 3 * 5 * 6); }, 1200); return; }
       var set = pool.slice(board * 5, board * 5 + 5); board++;
       var right = M.shuffle(set.slice()), sel = null, joined = 0, miss = 0;
@@ -422,7 +424,7 @@
         el.setAttribute('stroke', col); el.setAttribute('class', 'ythread'); svg.appendChild(el);
       }
       box.onclick = function (e) {
-        if (!g.alive) return;
+        if (!g.alive || !$('mBody')) return;
         var b = e.target.closest('.yl, .yr'); if (!b || b.classList.contains('done')) return;
         if (b.classList.contains('yl')) { if (sel) sel.classList.remove('on'); sel = b; b.classList.add('on'); M.say(set[+b.dataset.i].say, set[+b.dataset.i].lang); return; }
         if (!sel) { M.toast('왼쪽 낱말을 먼저 눌러요'); return; }
@@ -446,7 +448,7 @@
     var pool = words(14); if (!need(pool, 3)) return;
     var n = 0, combo = 0, target = null;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= 10) { finish(g, 150); return; }
       n++; var three = M.shuffle(pool).slice(0, 3); target = three[0]; three = M.shuffle(three);
       $('mBody').innerHTML = headHtml(g, '<small>' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small><p>바둑이가 뭐라고 외쳤을까요?</p><button class="btn" id="fPlay">🔊 다시 듣기</button>') +
@@ -454,7 +456,7 @@
       $('fPlay').onclick = function () { M.say(target.say, target.lang); };
       setTimeout(function () { if (g.alive) M.say(target.say, target.lang); }, 300);
       bindOpts('.fspot', function (b) {
-        if (!g.alive) return;
+        if (!g.alive || !$('mBody')) return;
         var it = three[+b.dataset.i];
         if (it === target) {
           combo++; setScore(g, g.score + 10 + Math.min(5, combo)); M.sfx('ok'); b.classList.add('ok');
@@ -472,14 +474,14 @@
     var pool = words(16); if (!need(pool, 4)) return;
     var cnt = 0, combo = 0;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       var it = M.pick(pool), right = Math.random() < 0.5, other = M.pick(pool.filter(function (x) { return x !== it && x.k !== it.k; })), shown = right ? it : other;
       cnt++;
       $('mBody').innerHTML = headHtml(g, '<small>' + cnt + '번째 조개' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>') +
         '<div class="oshell"><img class="oshimg" src="img/w/mg2-shell.png" alt=""><div class="ow">' + wordHtml(it) + '</div><div class="oeq">=</div><div class="ok2">' + esc(shown.k) + '</div></div>' +
         '<div class="oxbtns"><button class="oxb o" data-a="1"><img class="oxi" src="img/w/mg2-o.png" alt=""><small>맞아요</small></button><button class="oxb x" data-a="0"><img class="oxi" src="img/w/mg2-x.png" alt=""><small>아니에요</small></button></div><p class="hint center" id="oMsg"></p>';
       bindOpts('.oxb', function (b) {
-        if (!g.alive) return;
+        if (!g.alive || !$('mBody')) return;
         var ok = (b.dataset.a === '1') === right;
         Array.prototype.forEach.call(document.querySelectorAll('.oxb'), function (x) { x.disabled = true; });
         if (ok) { combo++; setScore(g, g.score + 5 + Math.min(3, Math.floor(combo / 3))); M.sfx('ok'); b.classList.add('ok'); var osi = document.querySelector('.oshimg'); if (osi) osi.src = 'img/w/mg2-shellopen.png'; M.say(it.say, it.lang); setTimeout(round, 650); }
@@ -495,7 +497,7 @@
     var allW = []; list.concat(sentences(12)).forEach(function (x) { x.w.forEach(function (w) { if (allW.indexOf(w) < 0) allW.push(w); }); });
     var n = 0;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= list.length) { finish(g, list.length * 20); return; }
       var sn = list[n++], lang = sn.lang, sp = lang === 'en' ? ' ' : '';
       var idxs = sn.w.map(function (w, i) { return i; }).filter(function (i) { return !/^[\s.,!?。、？！]+$/.test(sn.w[i]); });
@@ -506,7 +508,7 @@
         '<div class="csent lang-' + lang + '">' + sn.w.map(function (w, i) { return i === bi ? '<span class="cblank" id="cB">？</span>' : esc(w); }).join(sp) + '</div>' +
         '<div class="ropts c3">' + opts.map(function (w, i) { return '<button class="ropt cmush" data-i="' + i + '"><img class="cm" src="img/w/mg2-mush.png" alt=""><b class="lang-' + lang + '">' + esc(w) + '</b></button>'; }).join('') + '</div>';
       bindOpts('.cmush', function (b) {
-        if (!g.alive) return;
+        if (!g.alive || !$('mBody')) return;
         if (opts[+b.dataset.i] === ans) { setScore(g, g.score + (tries ? 8 : 20)); b.classList.add('ok'); $('cB').textContent = ans; $('cB').classList.add('fill'); M.sfx('ok'); M.say(sn.say, lang); setTimeout(round, 1500); }
         else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
       });
@@ -519,7 +521,7 @@
     var pool = words(10, function (it) { return it.t.length <= 10; }); if (!need(pool, 3)) return;
     var mic = M.speechOK() && M.P.set.speak !== false, n = 0, list = pool.slice(0, 8);
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= list.length) { finish(g, list.length * 15); return; }
       var it = list[n++], fails = 0;
       var say = function () { M.say(it.say, it.lang); };
@@ -539,7 +541,7 @@
             var bm = M.bestMatch(res, targets, it.lang);
             if (bm.s >= 0.42) { setScore(g, g.score + Math.round(8 + bm.s * 7)); M.sfx('ok'); $('eMsg').innerHTML = '꽥! 잘했어요 · 들린 말: <b>' + esc(bm.h) + '</b>'; setTimeout(round, 1200); }
             else { fails++; M.sfx('bad'); $('eMsg').innerHTML = '들린 말: <b>' + esc(bm.h) + '</b> · 한 번 더!'; if (fails >= 2) $('eSkip').classList.remove('hidden'); }
-          }).catch(function () { if (!g.alive) return; mic = false; M.toast('마이크를 쓸 수 없어서 듣고 고르기로 바꿨어요'); n--; round(); });
+          }).catch(function () { if (!g.alive || !$('mBody')) return; mic = false; M.toast('마이크를 쓸 수 없어서 듣고 고르기로 바꿨어요'); n--; round(); });
         };
       } else {
         var three = M.shuffle([it].concat(M.shuffle(pool.filter(function (x) { return x !== it; })).slice(0, 2)));
@@ -548,7 +550,7 @@
         setTimeout(function () { if (g.alive) say(); }, 300);
         $('eHear').onclick = say;
         bindOpts('.eopt', function (b) {
-          if (!g.alive) return;
+          if (!g.alive || !$('mBody')) return;
           if (three[+b.dataset.i] === it) { setScore(g, g.score + (fails ? 6 : 15)); b.classList.add('ok'); M.sfx('ok'); setTimeout(round, 700); }
           else { fails++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
         });
@@ -562,7 +564,7 @@
     var pool = words(16); if (!need(pool, 4)) return;
     var lives = 3, lvl = 1, n = 0, qt = null;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (lives <= 0 || n >= 20) { finish(g, 220); return; }
       n++; var four = M.shuffle(pool).slice(0, 4), target = four[0], limit = Math.max(2.4, 6 - (lvl - 1) * 0.4); four = M.shuffle(four);
       $('mBody').innerHTML = headHtml(g, '<small>' + '<img class="mh" src="img/w/mg2-heart.png" alt="">'.repeat(lives) + '<img class="mh off" src="img/w/mg2-heart.png" alt="">'.repeat(3 - lives) + ' · 매운맛 <img class="mfire" src="img/w/mg2-fire' + (lvl >= 7 ? 3 : lvl >= 4 ? 2 : 1) + '.png" alt=""> ' + '<img class="mh" src="img/w/mg2-pepper.png" alt="">'.repeat(Math.min(5, lvl)) + (lvl > 5 ? '+' + (lvl - 5) : '') + '</small><div class="rword">' + wordHtml(target) + '</div>') +
@@ -588,7 +590,7 @@
     var lang = M.P.lang, n = 0, combo = 0;
     var unit = function (v) { return lang === 'ja' ? v + '円' : lang === 'zh' ? v + '块钱' : v + ' dollars'; };
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (n >= 10) { finish(g, 140); return; }
       n++;
       var max = n <= 3 ? 10 : n <= 6 ? 99 : 999, v = 1 + Math.floor(Math.random() * max);
@@ -601,7 +603,7 @@
         '<div class="ropts">' + opts.map(function (x, i) { return '<button class="ropt coin" data-i="' + i + '"><img class="mcoin" src="img/w/mg2-coin.png" alt=""><b>' + x + '</b></button>'; }).join('') + '</div><p class="center hint" id="bMsg"></p>';
       $('bPlay').onclick = say; setTimeout(function () { if (g.alive) say(); }, 300);
       bindOpts('.coin', function (b) {
-        if (!g.alive) return;
+        if (!g.alive || !$('mBody')) return;
         if (opts[+b.dataset.i] === v) { combo++; setScore(g, g.score + 10 + Math.min(4, combo)); b.classList.add('ok'); M.sfx('coin'); $('bMsg').innerHTML = '딸랑! <b class="lang-' + lang + '">' + esc(unit(v)) + '</b>'; setTimeout(round, 1000); }
         else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); say(); }
       });
@@ -614,14 +616,14 @@
     var pool = words(16); if (!need(pool, 6)) return;
     var len = 2, lives = 3, rounds = 0;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (lives <= 0 || rounds >= 7) { finish(g, 150); return; }
       rounds++;
       var seq = M.shuffle(pool).slice(0, len), extra = M.shuffle(pool.filter(function (x) { return seq.indexOf(x) < 0; })).slice(0, 2), k = 0;
       $('mBody').innerHTML = headHtml(g, '<small>' + '<img class="mh" src="img/w/mg2-heart.png" alt="">'.repeat(lives) + '<img class="mh off" src="img/w/mg2-heart.png" alt="">'.repeat(3 - lives) + ' · ' + len + '개 행진 <img class="mh" src="img/w/mg2-flag.png" alt=""></small><p id="pTip">잘 보고 순서를 기억해요</p>') + '<div class="pshow" id="pShow"></div><div class="ropts p3" id="pOpts"></div><div class="pgot" id="pGot"></div>';
       var show = $('pShow');
       (function next() {
-        if (!g.alive) return;
+        if (!g.alive || !$('mBody')) return;
         if (k >= seq.length) { show.innerHTML = '<span class="pel"><img src="img/w/ch-elephant-front.png" alt=""><img class="pq" src="img/w/mg2-qcard.png" alt=""></span>'; ask(); return; }
         var it = seq[k++]; show.innerHTML = '<span class="pel"><img src="img/w/ch-elephant-happy.png" alt=""></span><div class="pw">' + wordHtml(it) + '<small>' + esc(it.k) + '</small></div>'; M.say(it.say, it.lang);
         g.timers.push(setTimeout(next, 1500));
@@ -631,7 +633,7 @@
         var opts = M.shuffle(seq.concat(extra)), got = 0;
         $('pOpts').innerHTML = opts.map(function (it, i) { return '<button class="ropt popt" data-i="' + i + '">' + wordHtml(it) + '</button>'; }).join('');
         bindOpts('.popt', function (b) {
-          if (!g.alive) return;
+          if (!g.alive || !$('mBody')) return;
           var it = opts[+b.dataset.i];
           if (it === seq[got]) { got++; b.disabled = true; b.classList.add('ok'); M.sfx('pop'); $('pGot').innerHTML += '<span>' + got + '. ' + esc(it.t) + '</span>';
             if (got === seq.length) { setScore(g, g.score + len * 6); M.sfx('ok'); len = Math.min(6, len + 1); setTimeout(round, 900); } }
@@ -650,14 +652,14 @@
     $('mBody').innerHTML = headHtml(g, '<p><img class="mhi" src="img/w/mg2-bananas.png" alt=""> 이 뜻의 바나나를 따요!</p><div class="ntarget" id="nT"></div>') + '<div class="ngrid" id="nG">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return '<button class="nhole" data-h="' + i + '"><span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span></button>'; }).join('') + '</div>';
     newTarget();
     function pop() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       var free = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(function (i) { return !up[i]; }); if (!free.length) return;
       var h = M.pick(free), it = Math.random() < 0.4 ? target : M.pick(pool), b = document.querySelector('[data-h="' + h + '"]');
       up[h] = it; b.innerHTML = '<span class="nban"><img class="nbi" src="img/w/mg2-banana.png" alt=""></span><span class="nw">' + wordHtml(it) + '</span>'; b.classList.add('up');
       g.timers.push(setTimeout(function () { if (up[h] === it) { delete up[h]; b.classList.remove('up'); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span>'; } }, speed));
     }
     $('nG').onclick = function (e) {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       var b = e.target.closest('.nhole'); if (!b) return; var h = +b.dataset.h, it = up[h]; if (!it) return;
       delete up[h]; b.classList.remove('up');
       if (it === target || it.k === target.k) { setScore(g, g.score + 5); M.sfx('ok'); M.say(it.say, it.lang); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-sparkle.png" alt=""></span>'; hits++; speed = Math.max(1000, speed - 40); if (hits >= 3) newTarget(); }
@@ -679,7 +681,7 @@
   GAMES.review = function (g) {
     var lang = M.P.lang, queue = M.missedItems(lang, 10).slice(), all = M.learnedItems(lang).filter(function (it) { return it.k; }), retry = {}, n = 0, total = queue.length, okN = 0;
     function round() {
-      if (!g.alive) return;
+      if (!g.alive || !$('mBody')) return;
       if (!queue.length) { finish(g, total * 12); return; }
       var it = queue.shift(); n++;
       var opts = M.shuffle([it].concat(M.shuffle(all.filter(function (x) { return x.k !== it.k; })).slice(0, 3)));
@@ -688,7 +690,7 @@
         '<div class="ropts">' + opts.map(function (o, i) { return '<button class="ropt rvo" data-i="' + i + '"><b>' + esc(o.k) + '</b></button>'; }).join('') + '</div><p class="hint center" id="rvMsg"></p>';
       var say = function () { M.say(it.say || it.t, it.lang || lang); }; $('rvSay').onclick = say; setTimeout(function () { if (g.alive) say(); }, 250);
       bindOpts('.rvo', function (b) {
-        if (!g.alive) return; var o = opts[+b.dataset.i];
+        if (!g.alive || !$('mBody')) return; var o = opts[+b.dataset.i];
         Array.prototype.forEach.call(document.querySelectorAll('.rvo'), function (x) { x.disabled = true; });
         if (o === it) {
           okN++; setScore(g, g.score + (retry[it.t] ? 6 : 12)); b.classList.add('ok'); fxAt(b, 'sparkle'); M.sfx('ok');

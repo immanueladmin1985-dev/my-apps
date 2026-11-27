@@ -27,6 +27,8 @@
     var add = function (list) { M.shuffle(list).forEach(function (x) { if (out.length < 4 && !seen[x[field]] && taught(x)) { seen[x[field]] = 1; out.push(x); } }); };
     add(st.items);
     add(pool(it.lang, it.kana).filter(function (x) { var s2 = stageOf(x); return s2 && s2.idx <= st.idx; }));
+    // 처음 몇 단계는 배운 낱말이 적어서 보기가 2개뿐일 수 있다. 같은 단계의 아직 안 배운 낱말로 3개까지 채운다
+    if (out.length < 3) M.shuffle(st.items).forEach(function (x) { if (out.length < 3 && !seen[x[field]]) { seen[x[field]] = 1; out.push(x); } });
     return M.shuffle(out);
   }
   function pickQ(it, type) {

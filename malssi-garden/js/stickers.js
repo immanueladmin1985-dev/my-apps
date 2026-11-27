@@ -38,7 +38,11 @@
   M.STICKERS = LIST;
   var busy = false;
   M.stickerCheck = function () {
-    if (busy || !P() || !P().started) return; busy = true;
+    if (busy || !P() || !P().started) return;
+    // 레슨·놀이 중에는 문제를 가리지 않게 끝난 뒤에 확인한다 (레슨 결과 화면은 괜찮다)
+    var bc = document.body.classList;
+    if ((bc.contains('in-lesson') && !document.querySelector('#lBody .result')) || bc.contains('in-mini')) { clearTimeout(t); t = setTimeout(M.stickerCheck, 3000); return; }
+    busy = true;
     var s = P().stickers = P().stickers || {}, got = [];
     try { LIST.forEach(function (x) { if (!s[x[0]] && x[3]()) { s[x[0]] = M.today(); got.push(x); } }); } catch (e) {}
     busy = false;
