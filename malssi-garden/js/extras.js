@@ -17,10 +17,12 @@
     if (sents.length < 3) window.LANGS[lang].stages.filter(function (s) { return !s.kana; }).slice(0, 10).forEach(function (s) { (s.sents || []).forEach(function (t) { sents.push(t); }); });
     if (sents.length < 3) return;
     var n = Math.random() < 0.5 ? 1 : 2;
-    M.shuffle(rs).slice(0, n).forEach(function (c) {
+    M.shuffle(rs).slice(0, n).forEach(function (c, ci) {
       var s = M.pick(sents), wrong = M.shuffle(sents.filter(function (o) { return o.k !== s.k; })).slice(0, 2).map(function (o) { return o.k; });
       var gift = M.pick([['coins', 30], ['coins', 50], ['water', 20], ['item', 'apple'], ['item', 'flowers'], ['item', 'pebble'], ['item', 'clover']]);
-      x.mail.push({ from: c.id, t: s.t, say: s.say, k: s.k, wrong: wrong, gift: gift, read: false });
+      // 두 번째 편지(또는 가끔 첫 편지)는 듣고 빈칸을 채우는 받아쓰기 편지
+      var dict = (ci === 1 || Math.random() < 0.35) && s.w && s.w.filter(function (w) { return !/^[\s.,!?。、？！]+$/.test(w); }).length >= 3;
+      x.mail.push({ from: c.id, t: s.t, say: s.say, k: s.k, wrong: wrong, gift: gift, read: false, mode: dict ? 'dict' : '', w: dict ? s.w : null, others: dict ? M.shuffle(sents.filter(function (o) { return o !== s; })).slice(0, 4).reduce(function (a, o) { return a.concat(o.w || []); }, []).slice(0, 12) : null });
     });
     x.mail = x.mail.slice(-12); M.save();
   }
@@ -29,11 +31,46 @@
     makeMail(); var x = X(), lang = M.P.lang;
     var d = M.modal('<div class="center"><img class="mbx" src="img/w/mail-box.png" alt=""></div><h3>📮 우체통</h3>' + (x.mail.length ? '<div class="list">' + x.mail.slice().reverse().map(function (m, ri) {
       var i = x.mail.length - 1 - ri, c = M.custOf(m.from);
-      return '<button class="litem" data-mail="' + i + '"><span class="le"><img src="img/w/mail-' + (m.read ? 'open' : 'closed') + '.png" alt=""></span><span class="ln">' + esc(c.name) + '의 편지<small>' + (m.read ? '읽음' : '✉️ 새 편지!') + '</small></span><span class="lp' + (m.read ? ' own' : '') + '">' + (m.read ? '다시 보기' : '열기') + '</span></button>';
+      return '<button class="litem" data-mail="' + i + '"><span class="le"><img src="img/w/mail-' + (m.read ? 'open' : 'closed') + '.png" alt=""></span><span class="ln">' + esc(c.name) + '의 ' + (m.mode === 'dict' ? '받아쓰기 편지 ✍️' : '편지') + '<small>' + (m.read ? '읽음' : '✉️ 새 편지!') + '</small></span><span class="lp' + (m.read ? ' own' : '') + '">' + (m.read ? '다시 보기' : '열기') + '</span></button>';
     }).join('') + '</div>' : '<p class="hint center">아직 편지가 없어요. 내일 아침에 다시 확인해 보세요!</p>') + '<button class="btn ghost wide" data-close>닫기</button>');
     d.addEventListener('click', function (e) { var b = e.target.closest('[data-mail]'); if (!b) return; d.close(); readMail(+b.dataset.mail); });
   };
+  // 받아쓰기 편지: 문장을 듣고 빠진 낱말을 차례로 채운다
+  function dictMail(i) {
+    var x = X(), m = x.mail[i], c = M.custOf(m.from), lang = M.P.lang, o = OPEN[lang] || OPEN.en, cl = CLOSE[lang] || CLOSE.en, sep = lang === 'en' ? ' ' : '';
+    var PUNC = /^[\s.,!?。、？！]+$/, idx = m.w.map(function (w, j) { return j; }).filter(function (j) { return !PUNC.test(m.w[j]); });
+    var holes = M.shuffle(idx).slice(0, m.w.length >= 5 ? 2 : 1).sort(function (a, b) { return a - b; });
+    var ans = holes.map(function (j) { return m.w[j]; }), decoy = M.shuffle((m.others || []).filter(function (w) { return ans.indexOf(w) < 0 && !PUNC.test(w); })).filter(function (w, j, a) { return a.indexOf(w) === j; }).slice(0, 3);
+    var tiles = M.shuffle(ans.concat(decoy)), filled = [];
+    var d = M.modal('<div class="letter"><img class="lt-env" src="img/w/mail-open.png" alt=""><div class="lt-from"><img src="' + M.custImg(m.from) + '" alt=""><b>' + esc(c.name) + '</b><small class="lt-tag">✍️ 받아쓰기 편지</small></div>' +
+      '<p class="lt-body lang-' + lang + '">' + esc(o[0]) + '<br><span class="lt-line" id="ldS"></span><br>' + esc(cl[0]) + '</p></div>' +
+      '<div class="center"><button class="btn" data-ldsay>🔊 편지 듣기</button> <button class="btn ghost" data-ldslow>🐢 천천히</button></div>' +
+      '<p class="hint center">편지를 듣고 빈칸에 들어갈 낱말을 차례로 눌러요</p><div class="ldtiles lang-' + lang + '">' + tiles.map(function (t, j) { return '<button class="tile" data-ld="' + j + '">' + M.fz(t, lang) + '</button>'; }).join('') + '</div>' +
+      '<div class="row2"><button class="btn ghost" data-ldundo>↩ 하나 빼기</button><button class="btn primary" data-ldgo>답장 보내기</button></div>');
+    function paint() {
+      var k = 0; d.querySelector('#ldS').innerHTML = m.w.map(function (w, j) { if (holes.indexOf(j) < 0) return M.fz(w, lang); var f = filled[k++]; return '<span class="ldhole' + (f != null ? ' on' : '') + '">' + (f != null ? M.fz(tiles[f], lang) : '　') + '</span>'; }).join(sep);
+      Array.prototype.forEach.call(d.querySelectorAll('[data-ld]'), function (b) { b.disabled = filled.indexOf(+b.dataset.ld) >= 0; });
+    }
+    paint(); setTimeout(function () { M.say(m.say, lang, false, false, 'c:' + m.from); }, 300);
+    d.addEventListener('click', function (e) {
+      if (e.target.closest('[data-ldsay]')) { M.say(m.say, lang, false, false, 'c:' + m.from); return; }
+      if (e.target.closest('[data-ldslow]')) { M.say(m.say, lang, true, false, 'c:' + m.from); return; }
+      if (e.target.closest('[data-ldundo]')) { filled.pop(); paint(); return; }
+      var t = e.target.closest('[data-ld]'); if (t && filled.length < holes.length) { filled.push(+t.dataset.ld); M.sfx('tap'); paint(); return; }
+      if (e.target.closest('[data-ldgo]')) {
+        if (filled.length < holes.length) { M.toast('빈칸을 모두 채워 주세요'); return; }
+        var ok = filled.every(function (f, k) { return tiles[f] === ans[k]; });
+        m.read = true; M.save(); d.close();
+        if (ok) {
+          if (m.gift[0] === 'item') M.gatherGot(m.gift[1]); else { var g = {}; g[m.gift[0]] = m.gift[1]; M.give(g); }
+          M.gardenFriendUp(m.from); M.sfx('win');
+          M.modal('<div class="center"><img class="mface" src="' + M.custImg(m.from, true) + '" alt=""><h3>답장을 잘 보냈어요!</h3><p class="lang-' + lang + '"><b>' + M.fz(m.t, lang) + '</b></p><p>' + esc(m.k) + '</p><p class="hint">' + esc(c.name) + '이(가) 선물을 보냈어요</p><button class="btn primary wide" data-close>고마워요</button></div>');
+        } else { M.sfx('bad'); M.modal('<div class="center"><h3>아쉬워요</h3><p class="lang-' + lang + '"><b>' + M.fz(m.t, lang) + '</b></p><p>' + esc(m.k) + '</p><button class="btn primary wide" data-close>알겠어요</button></div>'); }
+      }
+    });
+  }
   function readMail(i) {
+    if (X().mail[i].mode === 'dict' && !X().mail[i].read) { dictMail(i); return; }
     var x = X(), m = x.mail[i], c = M.custOf(m.from), lang = M.P.lang, o = OPEN[lang] || OPEN.en, cl = CLOSE[lang] || CLOSE.en;
     var opts = M.shuffle([m.k].concat(m.wrong));
     var d = M.modal('<div class="letter"><img class="lt-env" src="img/w/mail-open.png" alt=""><div class="lt-from"><img src="' + M.custImg(m.from) + '" alt=""><b>' + esc(c.name) + '</b></div>' +

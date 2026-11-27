@@ -160,7 +160,7 @@
       (stars && ln ? '<button class="sline" data-say="' + esc(ln[0]) + '" data-lang="' + M.P.lang + '">🔊 <b class="lang-' + M.P.lang + '">' + esc(ln[0]) + '</b> = ' + esc(ln[1]) + '</button>' : '') + '</div></div>' +
       (stars === 3 ? '<img class="mrtrophy" src="img/w/mg2-stars.png" alt="">' : '') + '<div class="mstars">' + '<img class="mst" src="img/w/mg2-sparkle.png" alt="">'.repeat(stars) + '<img class="mst off" src="img/w/mg2-sparkle.png" alt="">'.repeat(3 - stars) + '</div><p class="center"><b>' + g.score + '점</b>' + (g.score > best ? ' · 최고 기록!' : '') + '</p>' +
       '<div class="center">' + M.rewardHtml({ coins: coins, water: water }) + '</div>' +
-      (first && stars ? '<p class="hint center">' + esc(c.name) + '의 친밀도가 올랐어요 ♥</p>' : first ? '<p class="hint center">별을 하나 이상 받으면 오늘 부탁을 들어준 거예요</p>' : '') +
+      (first && stars && !m.solo ? '<p class="hint center">' + esc(c.name) + '의 친밀도가 올랐어요 ♥</p>' : first ? '<p class="hint center">별을 하나 이상 받으면 오늘 부탁을 들어준 거예요</p>' : '') +
       '<button class="btn primary wide" id="mAgain">한 번 더</button><button class="btn ghost wide" id="mClose">가게로 돌아가기</button>';
     $('mAgain').onclick = function () { start(m); };
     $('mClose').onclick = function () { stop(); if (first && stars && !m.solo) M.gardenFriendUp(m.cust); };
@@ -748,6 +748,6 @@
     if (el.animate) el.animate([{ transform: 'translate(0,0) scale(1) rotate(0)' }, { transform: 'translate(' + dx * 0.5 + 'px,' + (Math.min(dy, 0) - 90) + 'px) scale(1.1) rotate(' + (opt.spin || 180) + 'deg)', offset: 0.5 }, { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + (opt.end || 0.6) + ') rotate(' + (opt.spin || 180) * 2 + 'deg)' }], { duration: ms, easing: 'ease-in' });
     setTimeout(function () { el.remove(); if (opt.done) opt.done(); }, ms - 20);
   }
-  M.MG = { GAMES: GAMES, fly: fly, words: words, wordHtml: wordHtml, setScore: setScore, timeBar: timeBar, finish: finish, fxAt: fxAt, need: need, esc: esc, sentences: sentences };
+  M.MG = { GAMES: GAMES, fly: fly, start: function (m) { start(m); }, SCENES: SCENES, words: words, wordHtml: wordHtml, setScore: setScore, timeBar: timeBar, finish: finish, fxAt: fxAt, need: need, esc: esc, sentences: sentences };
   M.miniTest = function (id) { var m = byId(id); start(m); return cur; };   // 자동 점검용
 })();

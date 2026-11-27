@@ -2102,3 +2102,21 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
   .gtreebox .gnpcbtn .gnpc.gkoala { height: 260px; }
   .lbody:has(> .rdfold) > .qcard.rdq { min-height: 0; }
 }
+.lt-tag { margin-left: 6px; font-size: .7rem; background: #fff3d6; border-radius: 8px; padding: 1px 6px; color: #b07a2a; }
+.ldhole { display: inline-block; min-width: 3em; border-bottom: 3px solid #e0a35b; text-align: center; margin: 0 2px; color: #b06a1a; } .ldhole.on { background: #fff3d6; border-radius: 6px 6px 0 0; }
+.ldtiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 12px; }
+.lt-tag { margin-left: 6px; font-size: .7rem; background: #fff3d6; border-radius: 8px; padding: 1px 6px; color: #b07a2a; }
+.ldhole { display: inline-block; min-width: 3em; border-bottom: 3px solid #e0a35b; text-align: center; margin: 0 2px; color: #b06a1a; } .ldhole.on { background: #fff3d6; border-radius: 6px 6px 0 0; }
+.ldtiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 12px; }
+/* 크리스마스 선물 배달 */
+.gxmas { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.gsnow { position: relative; flex: 1; min-height: 240px; border-radius: 22px; background: radial-gradient(circle at 20% 30%, #fff 0 2px, transparent 3px) 0 0 / 40px 40px, radial-gradient(circle at 70% 60%, #fff 0 2px, transparent 3px) 0 0 / 56px 56px, linear-gradient(#cfe3ff, #eef6ff 70%, #fff); display: flex; align-items: flex-end; justify-content: center; gap: 6px; padding: 10px; overflow: hidden; }
+.gxtree { position: absolute; left: 8px; bottom: 6px; height: 70%; opacity: .95; }
+.gsnow .gnpc { height: min(26vh, 170px); position: relative; z-index: 1; }
+.gsnow .gbub { position: absolute; top: 10px; left: 10px; right: 10px; border: 0; } .gsnow .gbub .wtag::before { display: none; }
+.ggifts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ggift { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border-radius: 16px; background: #fff; border: 3px solid #f3c1c1; box-shadow: 0 4px 0 #e59a9a; min-height: 64px; }
+.ggift img { width: 48px; height: 48px; object-fit: contain; } .ggift b { flex: 1; text-align: left; font-size: 1rem; word-break: keep-all; }
+.ggift.given img { opacity: 0; } .ggift.miss { opacity: .4; }
+.wsb.chip.xm { background: #fff1f1; border-color: #f3c1c1; }
+.gxtree { height: 52%; left: 4px; opacity: .9; } .gsnow .gnpc { height: min(30vh, 200px); }

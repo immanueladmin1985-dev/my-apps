@@ -1,4 +1,4 @@
-const CACHE = 'malssi-garden-v107';
+const CACHE = 'malssi-garden-v108';
 const CORE = [
   './',
   './index.html',
@@ -33,6 +33,7 @@ const CORE = [
   './js/mg1.js',
   './js/mg2.js',
   './js/mg3.js',
+  './js/xmas.js',
   './js/village.js',
   './js/world.js',
   './js/fishing.js',
