@@ -68,7 +68,7 @@
   // 문법 단원(GR)은 단어 단계와 따로 진행한다 (단어를 다 끝내지 않아도 시작할 수 있다)
   function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV' || lv === 'CO'; }
   function firstOpen(L, prog, wantGr) { var i = L.stages.findIndex(function (s) { return !prog[s.id] && gr(s) === wantGr; }); return i < 0 ? L.stages.length : i; }
-  var LVNAME = { CO: '첫걸음 회화', CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
+  var LVNAME = { CO: '첫걸음', CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
   function renderMap(root) {
     var L = window.LANGS[P.lang], prog = P.prog[P.lang];
     var cur = firstOpen(L, prog, false);
@@ -97,7 +97,7 @@
       '</div></div><div class="mright">' +
       '<div class="lvtabs">' + levels.map(function (lv) {
         var us = L.stages.filter(function (s) { return lvOf(s) === lv; }), dn = us.filter(function (s) { return prog[s.id]; }).length;
-        return '<button data-lv="' + esc(lv) + '" class="' + (lv === tab ? 'on' : '') + '"><b>' + esc(LVNAME[lv] || lv) + '</b><small>' + dn + '/' + us.length + '</small></button>';
+        return '<button data-lv="' + esc(lv) + '" class="' + (lv === tab ? 'on' : '') + '"><b>' + esc((lv === 'CO' && P.lang === 'en' ? 'A2 회화' : LVNAME[lv]) || lv) + '</b><small>' + dn + '/' + us.length + '</small></button>';
       }).join('') + '</div><div class="path">';
     var n = 0;
     L.units.forEach(function (u, ui) {
