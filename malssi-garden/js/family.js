@@ -143,7 +143,7 @@
       var dow = M.now().getDay(), wk = s.report && s.report.week;
       if (s.report && wk && L.repWeek !== wk && (dow === 0 || dow === 6) && !document.querySelector('.dim')) {
         L.repWeek = wk; store();
-        setTimeout(function () { M.modal('<h3>📊 ' + esc(M.Family.mateName()) + '의 이번 주 공부</h3>' + M.reportHtml(s.report, M.Family.mateName()) + '<p class="hint">칭찬 선물은 설정 › 원격 관리 › 칭찬 선물에서 보낼 수 있어요</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' }); }, 1500);
+        setTimeout(function () { var d2 = M.modal('<h3>📊 ' + esc(M.Family.mateName()) + '의 이번 주 공부</h3>' + M.reportHtml(s.report, M.Family.mateName()) + '<button class="btn primary wide" data-repquiz>💌 이번 주 낱말로 부부 퀴즈 내기</button><p class="hint">칭찬 선물은 설정 › 원격 관리 › 칭찬 선물에서 보낼 수 있어요</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' }); var rq = d2.querySelector('[data-repquiz]'); if (rq) rq.onclick = function () { d2.close(); M.Family.adminPanel({ tab: 'quiz', missQuiz: true }); }; }, 1500);
       }
     }));
   }
@@ -368,6 +368,7 @@
       report: M.weekReport ? M.weekReport() : null,
       // 부부 퀴즈: 남편이 고를 낱말 후보(최근에 배운 것과 자주 틀린 것), 지난 퀴즈 결과
       qpool: (function () { try { var ms = M.missedItems(P.lang, 10), ls = M.learnedItems(P.lang).filter(function (it) { return it.k && !it.kana; }).slice(-40); return ms.concat(ls.filter(function (x) { return ms.indexOf(x) < 0; })).slice(0, 40).map(function (it) { return { t: it.t, k: it.k, r: it.r || '' }; }); } catch (e) { return []; } })(),
+      qmiss: (function () { try { return Math.min(10, M.missedItems(P.lang, 10).length); } catch (e) { return 0; } })(),
       qlang: P.lang, quizRes: P.quizRes || null, quizWait: !!(P.quizIn && !P.quizIn.done)
     };
   }
@@ -421,10 +422,11 @@
 
   var view = null;   // 열린 관리 창
   function fmtDate(t) { var d = new Date(t || 0); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
-  M.Family.adminPanel = function () {
+  M.Family.adminPanel = function (opt) {
+    opt = opt || {};
     if (!F.mateUid || F.role !== 'husband') return M.Family.sheet();
     if (view && view.isConnected) return;
-    var tab = 'coupon', S = null, pend = {}, edits = null, base = [], mkState = { cat: 'item', lack: true, q: '', pick: {}, msg: '오늘만 특별가! 너굴너굴~' };
+    var tab = opt.tab || 'coupon', S = null, pend = {}, edits = null, base = [], mkState = { cat: 'item', lack: true, q: '', pick: {}, msg: '오늘만 특별가! 너굴너굴~' };
     var d = view = M.modal('<div class="admin"><h3>💌 원격 관리</h3><p class="rsub hint center">불러오는 중…</p><div class="tabs">' +
       [['coupon', '쿠폰 승인'], ['req', '신청 선물'], ['market', '🦝 장터'], ['quiz', '💌 부부 퀴즈'], ['reward', '선물 관리'], ['praise', '칭찬 선물'], ['stats', '공부 현황'], ['etc', '설정']].map(function (t) { return '<button data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
       '</div><div class="abody"></div><button class="btn ghost wide" data-close>닫기</button></div>', { cls: 'full', onClose: function () { offs.forEach(function (f) { f(); }); view = null; } });
@@ -460,11 +462,11 @@
       },
       quiz: function () {
         var pool = S.qpool || [], res = S.quizRes, qs = mkState.qpick = mkState.qpick || {};
-        var h = '<p>아내가 최근에 배운 낱말과 자주 틀리는 낱말이에요. <b>3~10개</b>를 골라 퀴즈로 보내면, 아내 폰에서 풀고 결과가 여기로 와요.</p>';
+        var h = '<p>아내가 최근에 배운 낱말과 자주 틀리는 낱말(✏️)이에요. <b>3~10개</b>를 골라 퀴즈로 보내면, 아내 폰에서 풀고 결과가 여기로 와요.</p>';
         if (res) h += '<div class="hmcur"><b>지난 퀴즈 결과: ' + res.ok + ' / ' + res.n + '</b><small>' + fmtDate(res.at) + (res.wrong && res.wrong.length ? ' · 틀린 낱말: ' + res.wrong.map(esc).join(', ') : ' · 모두 맞혔어요! 🎉') + '</small></div>';
         if (S.quizWait) h += '<p class="hint">보낸 퀴즈를 아직 풀지 않았어요.</p>';
         if (!pool.length) return h + '<p class="hint center">아직 배운 낱말이 없어요.</p>';
-        h += '<div class="qpool">' + pool.map(function (w, i) { return '<label class="qpw' + (qs[i] ? ' on' : '') + '"><input type="checkbox" data-qp="' + i + '"' + (qs[i] ? ' checked' : '') + '><b class="lang-' + (S.qlang || 'ja') + '">' + esc(w.t) + '</b><small>' + esc(w.k) + '</small></label>'; }).join('') + '</div>';
+        h += '<div class="qpool">' + pool.map(function (w, i) { return '<label class="qpw' + (qs[i] ? ' on' : '') + '"><input type="checkbox" data-qp="' + i + '"' + (qs[i] ? ' checked' : '') + '><b class="lang-' + (S.qlang || 'ja') + '">' + esc(w.t) + '</b><small>' + (i < (S.qmiss || 0) ? '✏️ ' : '') + esc(w.k) + '</small></label>'; }).join('') + '</div>';
         return h + '<label class="fld">한마디<input id="qMsg" maxlength="60" value="' + esc(mkState.qmsg || '이번 주 공부한 거 확인해 볼까? 화이팅!') + '"></label><button class="btn primary wide" data-x="quiz">퀴즈 보내기 (' + Object.keys(qs).filter(function (k) { return qs[k]; }).length + '개)</button>';
       },
       praise: function () {
@@ -478,7 +480,7 @@
         return '<div class="astats"><div><b>' + S.streak + '일</b><small>연속 공부</small></div><div><b>' + S.best + '일</b><small>최고 기록</small></div><div><b>' + S.week + '/7</b><small>이번 주</small></div><div><b>' + S.lessons + '판</b><small>전체 레슨</small></div></div>' +
           '<h4>최근 2주 레슨 수</h4><div class="chart">' + S.days.map(function (x) { return '<div class="cb"><i style="height:' + Math.round(x.l / mx * 100) + '%"></i><span>' + (x.l || '') + '</span><small>' + (+String(x.d).slice(8)) + '</small></div>'; }).join('') + '</div>' +
           '<h4>익힌 단어</h4><div class="astats">' + ['ja', 'en', 'zh'].map(function (c) { var L = window.LANGS[c]; return '<div><b>' + ((S.learned || {})[c] || 0) + '개</b><small>' + L.flag + ' ' + L.name + '</small></div>'; }).join('') + '</div>' +
-          '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>' + (S.report && M.reportHtml ? '<h4>📊 이번 주 리포트</h4>' + M.reportHtml(S.report, M.Family.mateName()) : '');
+          '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>' + (S.report && M.reportHtml ? '<h4>📊 이번 주 리포트</h4>' + M.reportHtml(S.report, M.Family.mateName()) + '<button class="btn primary wide" data-qfromrep>💌 이 낱말로 부부 퀴즈 내기</button>' : '');
       },
       market: function () {
         var hm = S.hmarket, inv = S.inv || {}, I = (M.GATHER && M.GATHER.ITEMS) || {}, mk = mkState;
@@ -532,6 +534,11 @@
         r.e = row.querySelector('.ae').value.trim() || '🎁'; r.name = row.querySelector('.an').value.trim() || '선물'; r.price = Math.max(1, parseInt(row.querySelector('.ap').value, 10) || 1);
       });
     }
+    function pickMissed() {
+      var want = Math.min((S.qpool || []).length, Math.max(5, Math.min(10, S.qmiss || 0))); mkState.qpick = {};
+      for (var qi = 0; qi < want; qi++) mkState.qpick[qi] = true;
+      mkState.qmsg = '이번 주에 헷갈렸던 낱말이야. 다시 맞혀 볼까?';
+    }
     function paint() {
       Array.prototype.forEach.call(d.querySelectorAll('[data-tab]'), function (b) {
         var n = b.dataset.tab === 'coupon' ? S && S.coupons.filter(function (c) { return c.status === 'wait' && !isPend('give', c.id) && !isPend('cancel', c.id); }).length : b.dataset.tab === 'req' ? S && S.requests.filter(function (q) { return !isPend('qok', q.id) && !isPend('qno', q.id); }).length : 0;
@@ -547,7 +554,9 @@
     var offs = [
       FX.on('family/state/' + F.mateUid, function (v) {
         if (!v) { sub.textContent = '아내 폰에서 아직 정보를 보내지 않았어요. 아내 폰에서 앱을 한 번 열어 주세요.'; return; }
-        S = v; S.coupons = S.coupons || []; S.requests = S.requests || []; S.rewards = S.rewards || []; S.days = S.days || [];
+        var firstSnap = !S;
+        S = v; S.coupons = S.coupons || [];
+        if (firstSnap && opt.missQuiz && !S.quizWait && S.qpool) pickMissed();   // 리포트에서 왔으면 자주 틀린 낱말(모자라면 최근 낱말)을 미리 골라 둔다 S.requests = S.requests || []; S.rewards = S.rewards || []; S.days = S.days || [];
         L.seen = S.coupons.filter(function (c) { return c.status === 'wait'; }).length + S.requests.length; store();
         paint();
       }),
@@ -555,6 +564,7 @@
     ];
     d.addEventListener('change', function (e) { if (e.target.id === 'hmQ') { mkCollect(); body.innerHTML = T.market(); } });
     d.addEventListener('click', function (e) {
+      if (e.target.closest('[data-qfromrep]')) { collect(); mkCollect(); if (S.quizWait) M.toast('보낸 퀴즈를 아직 풀지 않았어요'); else pickMissed(); tab = 'quiz'; paint(); return; }
       var t = e.target.closest('[data-tab]'); if (t) { collect(); mkCollect(); tab = t.dataset.tab; if (tab === 'reward' && S) { edits = JSON.parse(JSON.stringify(S.rewards)); base = S.rewards.map(function (r) { return r.id; }); } paint(); return; }
       var mc = e.target.closest('[data-mc]'); if (mc) { mkCollect(); mkState.cat = mc.dataset.mc; body.innerHTML = T.market(); return; }
       var qp = e.target.closest('[data-qp]'); if (qp) { var qq = mkState.qpick = mkState.qpick || {}, cnt = Object.keys(qq).filter(function (k) { return qq[k]; }).length; if (qp.checked && cnt >= 10) { qp.checked = false; M.toast('10개까지 고를 수 있어요'); return; } qq[qp.dataset.qp] = qp.checked; var mi = body.querySelector('#qMsg'); if (mi) mkState.qmsg = mi.value; body.innerHTML = T.quiz(); return; }
