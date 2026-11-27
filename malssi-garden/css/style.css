@@ -2315,3 +2315,15 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 }
 .wsb.chip.fest span { white-space: nowrap; }
 .gline { display: none; }
+.dyrp { margin-top: 6px; padding: 6px 10px; border-radius: 12px; background: #fff0f5; color: #c2456f; font-weight: 800; font-size: .9rem; }
+.dyreply { display: flex; gap: 6px; align-items: center; margin: -2px 0 12px; }
+.dyreply input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--line); }
+.dyreply .dyh { flex: none; width: 42px; height: 42px; border-radius: 50%; background: #fff; border: 2px solid var(--line); font-size: 1.2rem; }
+.dyreply .dyh.on { border-color: #ff8fb1; background: #fff0f5; }
+.dyreply .btn { flex: none; min-height: 42px; padding: 4px 12px; }
+.dyrp { margin-top: 6px; padding: 6px 10px; border-radius: 12px; background: #fff0f5; color: #c2456f; font-weight: 800; font-size: .9rem; }
+.dyreply { display: flex; gap: 6px; align-items: center; margin: -2px 0 12px; }
+.dyreply input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--line); }
+.dyreply .dyh { flex: none; width: 42px; height: 42px; border-radius: 50%; background: #fff; border: 2px solid var(--line); font-size: 1.2rem; }
+.dyreply .dyh.on { border-color: #ff8fb1; background: #fff0f5; }
+.dyreply .btn { flex: none; min-height: 42px; padding: 4px 12px; }
