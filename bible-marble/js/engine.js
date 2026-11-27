@@ -43,10 +43,15 @@ const N=()=>G.board.tiles.length;
 const roundLimit=()=>Math.min(G.cfg.rounds>0?G.cfg.rounds:Infinity,G.lastRound||Infinity);
 const spots=()=>G.board.tiles.map((t,i)=>t.t==='spot'?i:-1).filter(i=>i>=0);
 const upCost=i=>r10(T(i).price*.5);
+/* "파산까지"는 돈이 계속 쌓여 끝나지 않을 수 있어서, 31라운드부터 라운드마다 통행료가 10%씩 오릅니다 */
+const BOOST_FROM=30;
+function tollBoostIn(g){return g&&g.cfg&&!(g.cfg.rounds>0)&&g.round>BOOST_FROM?1+(g.round-BOOST_FROM)*.1:1}
+const boostTxt=b=>'×'+(Math.round(b*10)/10);
 function hasGroup(pid,g){return G.board.tiles.every((t,i)=>t.t!=='city'||t.g!==g||(G.own[i]&&G.own[i].o===pid))}
 function tollOf(i){const t=T(i),o=G.own[i];if(!o)return 0;
-  if(t.t==='spot'){const s=spots();return s.length>1&&s.every(j=>G.own[j]&&G.own[j].o===o.o)?150:50}
-  let v=r10(t.price*MULT[o.l]);if(G.cfg.monopoly&&hasGroup(o.o,t.g))v*=2;return v}
+  const b=tollBoostIn(G);
+  if(t.t==='spot'){const s=spots();return r10((s.length>1&&s.every(j=>G.own[j]&&G.own[j].o===o.o)?150:50)*b)}
+  let v=r10(t.price*MULT[o.l]);if(G.cfg.monopoly&&hasGroup(o.o,t.g))v*=2;return b>1?r10(v*b):v}
 function worth(p){let v=p.money;for(const[i,o]of Object.entries(G.own))if(o.o===p.id)v+=T(+i).price+(T(+i).t==='city'?o.l*upCost(+i):0);return v}
 function landsOf(p){return Object.entries(G.own).filter(([,o])=>o.o===p.id).map(([i])=>+i).sort((a,b)=>a-b)}
 const aiReserve=()=>150+Math.min(250,G.round*12);
@@ -181,7 +186,10 @@ function resumeGame(save){abortFlow();G=migrateGame(save.G);J.turns=save.J&&save
   UI.enterGame();gameLoop()}
 
 /* ---------- 차례 진행 ---------- */
-function nextPlayer(){const n=G.players.length;for(let k=0;k<n;k++){G.turn=(G.turn+1)%n;if(G.turn===0)G.round++;if(!G.players[G.turn].out)return}}
+function nextPlayer(){const n=G.players.length;for(let k=0;k<n;k++){G.turn=(G.turn+1)%n;if(G.turn===0){G.round++;boostNotice()}if(!G.players[G.turn].out)return}}
+function boostNotice(){const b=tollBoostIn(G);if(b<=1)return;
+  if(G.round===BOOST_FROM+1){log(`📈 ${G.round}라운드부터 라운드마다 통행료가 10%씩 올라요`);toast(`📈 이제부터 라운드마다 통행료가 10%씩 올라요!`,4000);sfx('card')}
+  else if((G.round-BOOST_FROM)%10===0){log(`📈 통행료 ${boostTxt(b)}`);toast(`📈 통행료가 ${boostTxt(b)}가 됐어요`,3000)}}
 async function gameLoop(){
   const id=RUN;
   try{

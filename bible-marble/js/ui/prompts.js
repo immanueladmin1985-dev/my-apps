@@ -101,15 +101,15 @@ function showRoll(spec,act){const p=pOf(spec),box=$('#cAct');
 document.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&$('#rollBtn')&&!$('#iov')&&!$('#eov')&&document.activeElement?.tagName!=='INPUT'){e.preventDefault();$('#rollBtn').click()}});
 
 /* ---------- 땅 사기 · 건물 · 방주 · 광야 ---------- */
-function tollTable(g,i,curL){const t=g.board.tiles[i];
-  if(t.t==='spot')return `<table class="ttab"><tr${curL===0?' class="cur"':''}><td>명소 1곳</td><td>통행료 50</td></tr><tr${curL===1?' class="cur"':''}><td>명소 모두</td><td>통행료 150</td></tr></table>`;
-  return `<table class="ttab">${LV.map((n,l)=>`<tr${l===curL?' class="cur"':''}><td>${BLD[l]} ${n}${l?` <span class="muted">(짓는 값 ${r10(t.price*.5)})</span>`:''}</td><td>통행료 ${r10(t.price*MULT[l])}</td></tr>`).join('')}</table>${g.cfg.monopoly?'<p class="ref">같은 색 땅을 모두 가지면 통행료 2배</p>':''}`}
+function tollTable(g,i,curL){const t=g.board.tiles[i],b=tollBoostIn(g),bx=v=>b>1?r10(v*b):v,bn=b>1?`<p class="ref">📈 오래 이어진 게임이라 통행료가 ${boostTxt(b)}로 올랐어요 (표에 반영)</p>`:'';
+  if(t.t==='spot')return `<table class="ttab"><tr${curL===0?' class="cur"':''}><td>명소 1곳</td><td>통행료 ${bx(50)}</td></tr><tr${curL===1?' class="cur"':''}><td>명소 모두</td><td>통행료 ${bx(150)}</td></tr></table>${bn}`;
+  return `<table class="ttab">${LV.map((n,l)=>`<tr${l===curL?' class="cur"':''}><td>${BLD[l]} ${n}${l?` <span class="muted">(짓는 값 ${r10(t.price*.5)})</span>`:''}</td><td>통행료 ${bx(r10(t.price*MULT[l]))}</td></tr>`).join('')}</table>${g.cfg.monopoly?'<p class="ref">같은 색 땅을 모두 가지면 통행료 2배</p>':''}${bn}`}
 function showChoice(spec){const g=VG(),p=pOf(spec);let o;
   if(spec.kind==='buy'){const t=g.board.tiles[spec.tile];
     o={pic:t.pic,tone:spec.tone,kick:`${t.t==='city'?esc(g.board.groups[t.g]):'명소'} · ${esc(p.name)}의 차례`,title:`${REUL(t.name)} 살까요?`,
       body:`<p>${esc(t.note||'')}</p>${refHTML(t.ref)}${tollTable(g,spec.tile,0)}<p>땅값 <b>${fmt(t.price)}</b> · 사고 나면 <b>${fmt(p.money-t.price)}</b> 달란트가 남아요.</p>`,
       btns:[[`🚩 ${fmt(t.price)} 달란트로 사기`,true,'main'],['사지 않고 지나가기',false]]}}
-  else if(spec.kind==='upgrade'){const t=g.board.tiles[spec.tile],o2=g.own[spec.tile],c=r10(t.price*.5),next=r10(t.price*MULT[o2.l+1])*(g.cfg.monopoly&&hasGroupIn(g,p.id,t.g)?2:1);
+  else if(spec.kind==='upgrade'){const t=g.board.tiles[spec.tile],o2=g.own[spec.tile],c=r10(t.price*.5),next=(b=>b>1?r10(r10(t.price*MULT[o2.l+1])*(g.cfg.monopoly&&hasGroupIn(g,p.id,t.g)?2:1)*b):r10(t.price*MULT[o2.l+1])*(g.cfg.monopoly&&hasGroupIn(g,p.id,t.g)?2:1))(tollBoostIn(g));
     o={pic:BLD[o2.l+1],tone:spec.tone,kick:`${esc(t.name)} · 내 땅`,title:`${t.name}에 ${REUL(LV[o2.l+1])} 지을까요?`,
       body:`<p>통행료가 <b>${fmt(tollOfIn(g,spec.tile))}</b>에서 <b>${fmt(next)}</b>${batchim(String(next))?'으로':'로'} 올라요.</p>${tollTable(g,spec.tile,o2.l)}`,
       btns:[[`${BLD[o2.l+1]} ${fmt(c)} 달란트로 짓기`,true,'main'],['다음에 짓기',false]]}}
@@ -226,6 +226,8 @@ UI.renderQuiz=function(Q,spec,act){
 /* ---------- 게임 결과 ---------- */
 function showEnd(spec,act){const g=VG(),rank=g.players.slice().sort((a,b)=>(a.out-b.out)||worthIn(g,b)-worthIn(g,a)),w=rank[0],cel=PREF.celebrate!==false;
   UI.setMsg(`🏆 <b>${esc(w.name)}</b> 승리!`);
+  /* 마지막 차례에 오간 금액 숫자가 결과 창 위에 남지 않게 지웁니다 */
+  document.querySelectorAll('.bigamt,.coinfx').forEach(e=>e.remove());
   const why=g.endReason==='last'||g.players.filter(p=>!p.out).length<=1?'한 명만 남았어요':g.endReason==='time'?'정한 시간이 끝났어요':'정한 라운드가 끝났어요';
   const {box}=openLayer('prompt',`<div class="mtop"><span class="sp"></span>${undoBtn()}</div>${cel?podiumHTML(g,rank):'<div class="bigpic">🏆</div>'}<div class="kick">${why}</div><h3>${esc(IGA(w.name))} 이겼어요!</h3>
     <div class="mbody"><ol class="rank">${rank.map((p,k)=>`<li><span class="no">${['🥇','🥈','🥉'][k]||k+1}</span><span class="tok" style="--pc:${p.col}">${tokIn(p.tok)}</span><span class="who">${esc(p.name)}<small>${p.out?'파산':`현금 ${fmt(p.money)} · 땅 ${Object.values(g.own).filter(o=>o.o===p.id).length}곳${g.st&&g.st[p.id]?` · 퀴즈 ${g.st[p.id].ok}개`:''}`}</small></span><span class="amt">${p.out?'-':fmt(worthIn(g,p))}</span></li>`).join('')}</ol>
@@ -297,7 +299,7 @@ function rulesHTML(){const g=VG();const groups=(g?g.board.groups:DEFAULT_BOARDS[
   <li>잘못 눌렀다면 게임판 가운데의 <b>↩️</b> 버튼으로 바로 전 선택으로 돌아가요(한 번 더 확인해요). 주사위 값과 문제는 그대로예요. 여럿이 하는 플레이어 모드에서는 공평하게 하려고 쓰지 않아요.</li>
   <li>돈이 모자라면 <b>어느 땅을 팔지</b> 골라요. 땅은 건물과 함께 통째로, 들인 돈의 반값에 팔아요. 다 팔아도 모자라면 파산해요.</li>
   <li>객관식을 틀리면 나머지 모두가 <b>동시에</b> 답하고, 맞힌 사람끼리 상금을 나눠요(설정에서 끌 수 있어요).</li>
-  <li>정해진 라운드(또는 정한 시간)가 끝나면 <b>총자산</b>(현금 + 땅값 + 건물값)이 가장 많은 사람이 이겨요. "파산까지"를 고르면 한 명만 남을 때까지 해요.</li></ol>
+  <li>정해진 라운드(또는 정한 시간)가 끝나면 <b>총자산</b>(현금 + 땅값 + 건물값)이 가장 많은 사람이 이겨요. "파산까지"를 고르면 한 명만 남을 때까지 해요. 이때 31라운드부터는 라운드마다 통행료가 10%씩 올라서 언젠가는 승부가 나요.</li></ol>
   <p><b>✨ 추가 기능</b> (설정 → 추가 기능에서 켜고 꺼요)</p>
   <ul><li>🃏 <b>성경 인물 카드</b>: 퀴즈·암송 미션을 맞히거나 헌금함 칸에 가면 받아요. 다윗(통행료 면제)·모세(광야 탈출)·에스더(원하는 칸)·요셉(200 받기)·엘리야(헌금함 절반)·룻(모두에게서 30씩)을 한 번씩 쓸 수 있고, 여섯 명을 모으면 ${fmt(CHAR_SET_BONUS)} 달란트!</li>
   <li>🤝 <b>땅 거래</b>: 내 차례에 주사위를 굴리기 전에 다른 사람에게 땅·달란트를 바꾸자고 제안해요.</li>
