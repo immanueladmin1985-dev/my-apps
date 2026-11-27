@@ -117,6 +117,34 @@
     }, 100);
     g.timers.push(iv);
   }
+  // 놀이마다 끝 장면: 주인공 그림 + 소품 + 한 줄 연출 (별을 하나 이상 받았을 때)
+  var W2 = 'img/w/';
+  var SCENES = {
+    acorn: [W2 + 'mg3-squirrel-throw.png', W2 + 'mg2-basket.png', '도토리 바구니가 가득 찼어요!'],
+    song: [W2 + 'mg3-chick-sing.png', W2 + 'mg3-stage-curtain.png', '삐약이의 노래가 끝까지 울려 퍼졌어요!', 1],
+    memory: [W2 + 'ch-bear-happy.png', W2 + 'mg2-honey.png', '꿀단지 정리 끝! 곰돌이가 꿀을 한 입 맛봤어요.'],
+    road: ['img/mg-hog.png', '', '차가 식기 전에 도착했어요!'],
+    bamboo: [W2 + 'mg3-panda-eat.png', W2 + 'mg3-bamboo-leaf.png', '판다가 대나무 잎을 냠냠 먹어요.'],
+    riddle: [W2 + 'mg3-fox-magic.png', W2 + 'mg3-card-back.png', '여우가 마술 카드를 짠 하고 펼쳤어요!'],
+    dict: ['img/mg-owl-board.png', '', '받아쓰기 백 점! 칠판에 꽃 도장을 받았어요.'],
+    fish: ['img/mg-penguin-fish.png', '', '펭펭의 양동이가 물고기로 가득해요!', 1],
+    cafe: [W2 + 'mg4-cat-tray.png', W2 + 'mg3-menu-latte.png', '오늘 카페 장사 대성공이에요!'],
+    yarn: [W2 + 'mg3-sheep-knit.png', W2 + 'mg3-scarf-stripe.png', '줄무늬 목도리가 완성됐어요!'],
+    fetch: [W2 + 'ch-dog-happy.png', W2 + 'mg2-ball.png', '바둑이가 꼬리를 신나게 흔들어요!'],
+    shell: [W2 + 'mg4-otter-rock.png', W2 + 'mg2-shellopen.png', '조개 파티가 열렸어요!'],
+    cloze: [W2 + 'ch-deer-happy.png', W2 + 'mg2-mush.png', '숲길 쪽지가 다 채워졌어요!'],
+    echo: [W2 + 'ch-duck-happy.png', W2 + 'mg2-lily.png', '연못 친구들이 다 알아들었대요!'],
+    spicy: [W2 + 'mg4-lion-chef.png', W2 + 'mg4-pot-fire.png', '레오의 매운 수프가 완성됐어요!', 1],
+    bazaar: [W2 + 'mg4-camel-stall.png', W2 + 'mg4-coin-gold.png', '장사가 아주 잘 됐어요!'],
+    parade: [W2 + 'mg4-elephant-flag.png', '', '깃발 행진이 멋지게 끝났어요!'],
+    banana: [W2 + 'ch-monkey-happy.png', W2 + 'mg2-bananas.png', '바나나가 산더미예요!'],
+    sleep: [W2 + 'mg4-koala-sleep.png', '', '코알라가 꿈 내용을 다 기억해 냈어요.'],
+    seeds: [W2 + 'mg4-hamster-cheek.png', W2 + 'mg4-peanut-pile.png', '햄찌 볼주머니가 빵빵해졌어요!']
+  };
+  function sceneHtml(m) {
+    var sc = SCENES[m.id]; if (!sc) return '';
+    return '<div class="mscene' + (sc[3] ? ' wide' : '') + '"><img class="msc-main" src="' + sc[0] + '" alt="">' + (sc[1] ? '<img class="msc-prop" src="' + sc[1] + '" alt="">' : '') + '<p>' + sc[2] + '</p></div>';
+  }
   function finish(g, maxScore) {
     if (!g.alive || !$('mBody')) return; g.alive = false;
     var m = g.m, st = state(), first = !st.done[m.id], c = M.custOf(m.cust);
@@ -128,7 +156,7 @@
     M.save(); M.sfx(stars ? 'win' : 'bad');
     var lines = (window.STORY_LINES || {})[M.P.lang] || [], ln = lines[0];
     var el = $('mBody'); if (!el) return;
-    el.innerHTML = (stars ? '<img class="mconf" src="img/w/mg2-confetti.png" alt="">' : '') + '<div class="mres"><span class="mrface"><img class="mrstage" src="img/w/mg2-stage.png" alt="">' + custFace(m, stars > 0) + '</span><div class="msay"><b>' + esc(c.name) + '</b><p>' + esc(stars ? m.thanks : '괜찮아요, 다음에 또 부탁할게요!') + '</p>' +
+    el.innerHTML = (stars ? '<img class="mconf" src="img/w/mg2-confetti.png" alt="">' + sceneHtml(m) : '') + '<div class="mres"><span class="mrface"><img class="mrstage" src="img/w/mg2-stage.png" alt="">' + custFace(m, stars > 0) + '</span><div class="msay"><b>' + esc(c.name) + '</b><p>' + esc(stars ? m.thanks : '괜찮아요, 다음에 또 부탁할게요!') + '</p>' +
       (stars && ln ? '<button class="sline" data-say="' + esc(ln[0]) + '" data-lang="' + M.P.lang + '">🔊 <b class="lang-' + M.P.lang + '">' + esc(ln[0]) + '</b> = ' + esc(ln[1]) + '</button>' : '') + '</div></div>' +
       (stars === 3 ? '<img class="mrtrophy" src="img/w/mg2-stars.png" alt="">' : '') + '<div class="mstars">' + '<img class="mst" src="img/w/mg2-sparkle.png" alt="">'.repeat(stars) + '<img class="mst off" src="img/w/mg2-sparkle.png" alt="">'.repeat(3 - stars) + '</div><p class="center"><b>' + g.score + '점</b>' + (g.score > best ? ' · 최고 기록!' : '') + '</p>' +
       '<div class="center">' + M.rewardHtml({ coins: coins, water: water }) + '</div>' +
@@ -356,7 +384,7 @@
         fishes.push(f);
         el.onclick = function () {
           if (!g.alive || el.classList.contains('miss')) return;
-          if (it === target) { setScore(g, g.score + 10 + Math.round(speed * 2)); el.classList.add('caught'); fxAt(el, 'sparkle'); M.sfx('ok'); speed = Math.min(2.2, speed + 0.1); setTimeout(round, 500); }
+          if (it === target) { setScore(g, g.score + 10 + Math.round(speed * 2)); el.classList.add('caught'); fly(el.querySelector('.fimg'), el.querySelector('.fimg').src, document.querySelector('.ppg'), { size: 70, ms: 600, spin: 30, end: 0.4, dyk: 0.6 }); M.sfx('ok'); speed = Math.min(2.2, speed + 0.1); setTimeout(round, 500); }
           else { el.classList.add('miss'); M.sfx('bad'); setScore(g, g.score - 3); }
         };
       });
@@ -460,7 +488,8 @@
         var it = three[+b.dataset.i];
         if (it === target) {
           combo++; setScore(g, g.score + 10 + Math.min(5, combo)); M.sfx('ok'); b.classList.add('ok');
-          var dog = $('fDog'); if (dog) { var r = b.getBoundingClientRect(), r0 = dog.getBoundingClientRect(); dog.style.transform = 'translate(' + (r.left + r.width / 2 - r0.left - r0.width / 2) + 'px,' + (r.top - r0.top) + 'px)'; }
+          var dog = $('fDog'), db = document.querySelector('.fdball'); if (db) { fly(db, 'img/w/mg2-ball.png', b.querySelector('.fball') || b, { size: 34, ms: 450, spin: 540, end: 1 }); db.style.visibility = 'hidden'; }
+          if (dog) { var r = b.getBoundingClientRect(), r0 = dog.getBoundingClientRect(); dog.style.transform = 'translate(' + (r.left + r.width / 2 - r0.left - r0.width / 2) + 'px,' + (r.top - r0.top) + 'px)'; }
           setTimeout(function () { if (g.alive) { var w = document.createElement('p'); w.className = 'center fword'; w.innerHTML = wordHtml(target); $('mBody').appendChild(w); } }, 250);
           setTimeout(round, 1100);
         } else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); }
@@ -649,7 +678,7 @@
     var pool = words(14); if (!need(pool, 4)) return;
     var target = null, hits = 0, up = {}, speed = 1700;
     function newTarget() { target = M.pick(pool); hits = 0; $('nT').innerHTML = (target.e ? target.e + ' ' : '') + '<b>' + esc(target.k) + '</b>'; }
-    $('mBody').innerHTML = headHtml(g, '<p><img class="mhi" src="img/w/mg2-bananas.png" alt=""> 이 뜻의 바나나를 따요!</p><div class="ntarget" id="nT"></div>') + '<div class="ngrid" id="nG">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return '<button class="nhole" data-h="' + i + '"><span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span></button>'; }).join('') + '</div>';
+    $('mBody').innerHTML = headHtml(g, '<p>이 뜻의 바나나를 따요!</p><div class="ntarget" id="nT"></div>') + '<img class="nbasket" id="nBk" src="img/w/mg2-bananas.png" alt="">' + '<div class="ngrid" id="nG">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return '<button class="nhole" data-h="' + i + '"><span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span></button>'; }).join('') + '</div>';
     newTarget();
     function pop() {
       if (!g.alive || !$('mBody')) return;
@@ -662,7 +691,7 @@
       if (!g.alive || !$('mBody')) return;
       var b = e.target.closest('.nhole'); if (!b) return; var h = +b.dataset.h, it = up[h]; if (!it) return;
       delete up[h]; b.classList.remove('up');
-      if (it === target || it.k === target.k) { setScore(g, g.score + 5); M.sfx('ok'); M.say(it.say, it.lang); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-sparkle.png" alt=""></span>'; hits++; speed = Math.max(1000, speed - 40); if (hits >= 3) newTarget(); }
+      if (it === target || it.k === target.k) { setScore(g, g.score + 5); M.sfx('ok'); M.say(it.say, it.lang); fly(b, 'img/w/mg2-banana.png', $('nBk'), { size: 54, ms: 500, spin: 200, end: 0.5, done: function () { var bk = $('nBk'); if (bk) { bk.classList.remove('nbhop'); void bk.offsetWidth; bk.classList.add('nbhop'); } } }); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-sparkle.png" alt=""></span>'; hits++; speed = Math.max(1000, speed - 40); if (hits >= 3) newTarget(); }
       else { setScore(g, g.score - 3); M.sfx('bad'); b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-pop.png" alt=""></span>'; }
       setTimeout(function () { if (!up[h]) b.innerHTML = '<span class="nleaf"><img class="nb" src="img/w/mg2-bush.png" alt=""></span>'; }, 400);
     };

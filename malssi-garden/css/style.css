@@ -2049,3 +2049,16 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .grstage > .gnpc { height: 112px; }
 .griddle .gcard { max-width: 170px; }
 .gbstage .gpanda { height: min(22vh, 160px); }
+
+.nbasket { display: block; width: 84px; margin: -6px auto 4px; } .nbasket.nbhop { animation: ghop .45s; }
+/* 놀이 끝 장면 */
+.mscene { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 4px; flex-wrap: wrap; margin: 8px 0 6px; padding: 14px 10px 8px; border-radius: 22px; background: radial-gradient(ellipse at 50% 80%, #fff7dc, #eaf7ef 70%); }
+.msc-main { height: min(24vh, 170px); max-width: 60%; object-fit: contain; animation: ghop .8s ease 2; }
+.msc-prop { height: min(14vh, 100px); max-width: 36%; object-fit: contain; animation: fxpop .6s .2s both; }
+.mscene.wide .msc-main { height: min(26vh, 190px); max-width: 80%; }
+.mscene p { flex-basis: 100%; text-align: center; margin: 6px 0 0; font-weight: 800; color: #6b4e3d; }
+.mscene ~ .mres .mrface { display: none; }
+.mscene ~ .mrtrophy { display: none; }
+.mscene ~ .mstars .mst { width: 40px; height: 40px; }
+.mgame .mbody:has(.mres) { overflow-y: auto; }
+.mscene { margin-top: 2px; } .msc-main { height: min(20vh, 160px); }

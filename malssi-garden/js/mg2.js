@@ -203,7 +203,7 @@
       if (!alive(g) || !document.querySelector('.pots')) { mo.disconnect(); return; }
       if (!list.some(function (r) { return r.target.classList && r.target.classList.contains('pot'); })) return;
       var d = document.querySelectorAll('.pot.done').length / 2, two = document.querySelectorAll('.pot.open:not(.done)').length === 2;
-      if (d > done) { done = d; react($('mN'), true, 'bear'); $('mQ').textContent = ['냠냠, 꿀 냄새!', '좋아요, 그 짝이에요!', '역시 친구는 꿀단지 박사예요!'][done % 3]; }
+      if (d > done) { done = d; var lp = document.querySelectorAll('.pot.done'); X.fly(lp[lp.length - 1], WI + 'mg2-honey.png', $('mN'), { size: 46, ms: 550, spin: 0, end: 0.5 }); react($('mN'), true, 'bear'); $('mQ').textContent = ['냠냠, 꿀 냄새!', '좋아요, 그 짝이에요!', '역시 친구는 꿀단지 박사예요!'][done % 3]; }
       else if (two && !wasTwo) { react($('mN'), false); $('mQ').textContent = '음… 그 둘은 짝이 아니에요'; }
       wasTwo = two;
     });
