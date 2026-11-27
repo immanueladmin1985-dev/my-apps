@@ -73,7 +73,9 @@
     var learned = M.learnedItems(lang).filter(good), nonKana = learned.filter(function (it) { return !it.kana; });
     var src = nonKana.length >= n ? nonKana : learned;
     if (src.length < n) { var extra = []; L.stages.forEach(function (st) { if (!st.kana && !st.gram && extra.length < n * 3) extra = extra.concat(st.items.filter(good)); }); src = src.concat(extra); }
-    M.shuffle(src).forEach(function (it) { if (out.length < n && !seen[it.k] && !seen[it.t]) { seen[it.k] = seen[it.t] = 1; out.push(it); } });
+    // 약점 공책에서 시작한 놀이: 자주 틀린 낱말을 먼저 넣고, 모자라면 배운 낱말로 채운다
+    var focus = cur && cur.focus ? M.shuffle(cur.focus.filter(good)) : [];
+    focus.concat(M.shuffle(src)).forEach(function (it) { if (out.length < n && !seen[it.k] && !seen[it.t]) { seen[it.k] = seen[it.t] = 1; out.push(it); } });
     return out;
   }
   function wordHtml(it) { var n = it.t.length, sz = it.lang === 'en' ? (n <= 5 ? 'w1' : n <= 9 ? 'w2' : 'w3') : (n <= 3 ? 'w1' : n <= 5 ? 'w2' : 'w3'); return '<b class="' + sz + ' lang-' + it.lang + '">' + esc(it.t) + '</b>' + (it.lang === 'ja' && it.r && HAN.test(it.t) ? '<small>' + esc(it.r) + '</small>' : it.lang === 'zh' && it.r && !it.kana ? '<small>' + esc(it.r.split(' · ')[0]) + '</small>' : ''); }
@@ -90,12 +92,12 @@
       '<button class="btn primary wide" id="mGo">도와줄게요!</button><button class="btn ghost wide" data-close>다음에</button>');
     d.querySelector('#mGo').onclick = function () { d.close(); start(m); };
   };
-  function start(m) {
+  function start(m, opt) {
     if (cur) { cur.alive = false; cur.timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); if (cur.raf) cancelAnimationFrame(cur.raf); }   // 하던 놀이는 멈춘다
     var el = $('mini'); if (!el) { el = document.createElement('div'); el.id = 'mini'; el.className = 'mgame'; document.body.appendChild(el); }
     el.innerHTML = '<div class="mhead"><button class="ib" id="mQuit" aria-label="그만하기">✕</button><span class="mgt">' + m.icon + ' ' + esc(m.name) + '</span><span class="mscore" id="mScore">0점</span></div><div class="mtime"><i id="mTime"></i></div><div class="mbody" id="mBody"></div>';
     el.classList.remove('hidden'); document.body.classList.add('in-mini');
-    cur = { m: m, score: 0, alive: true, timers: [] }; M.voiceWho = 'c:' + m.cust;
+    cur = { m: m, score: 0, alive: true, timers: [], focus: opt && opt.focus }; M.voiceWho = 'c:' + m.cust;
     $('mQuit').onclick = function () { M.confirm('그만할까요?', '지금까지 한 것은 보상이 없어요.', '그만하기', function () { stop(); }); };
     GAMES[m.id](cur);
   }
@@ -748,6 +750,6 @@
     if (el.animate) el.animate([{ transform: 'translate(0,0) scale(1) rotate(0)' }, { transform: 'translate(' + dx * 0.5 + 'px,' + (Math.min(dy, 0) - 90) + 'px) scale(1.1) rotate(' + (opt.spin || 180) + 'deg)', offset: 0.5 }, { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + (opt.end || 0.6) + ') rotate(' + (opt.spin || 180) * 2 + 'deg)' }], { duration: ms, easing: 'ease-in' });
     setTimeout(function () { el.remove(); if (opt.done) opt.done(); }, ms - 20);
   }
-  M.MG = { GAMES: GAMES, fly: fly, start: function (m) { start(m); }, SCENES: SCENES, words: words, wordHtml: wordHtml, setScore: setScore, timeBar: timeBar, finish: finish, fxAt: fxAt, need: need, esc: esc, sentences: sentences };
+  M.MG = { GAMES: GAMES, fly: fly, start: function (m, opt) { start(m, opt); }, byId: byId, SCENES: SCENES, words: words, wordHtml: wordHtml, setScore: setScore, timeBar: timeBar, finish: finish, fxAt: fxAt, need: need, esc: esc, sentences: sentences };
   M.miniTest = function (id) { var m = byId(id); start(m); return cur; };   // 자동 점검용
 })();

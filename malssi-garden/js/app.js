@@ -92,7 +92,7 @@
       '<div class="acts">' +
       '<button class="act" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="ae">🔁</span><b>복습</b><small>' + (revDone ? '오늘 복습 끝 ✔' : due ? '오늘 ' + due + '개' + (dueAll > due ? ' (쌓인 ' + dueAll + ')' : '') : '잊기 전에 다시') + '</small></button>' +
       '<button class="act" id="dWrong"' + (wrongN ? '' : ' disabled') + '>' + (wrongN ? '<i class="dot">' + wrongN + '</i>' : '') + '<span class="ae">✏️</span><b>틀린 것</b><small>' + (wrongN ? wrongN + '개 다시 풀기' : '틀린 낱말이 없어요') + '</small></button>' +
-      '<button class="act" id="dGame"' + (M.missedItems(P.lang).length >= 3 ? '' : ' disabled') + '><span class="ae">🎯</span><b>복습 놀이</b><small>자주 틀린 낱말로</small></button>' +
+      (function () { var wk = M.missedItems(P.lang, 30).length; return '<button class="act" id="dGame"' + (wk ? '' : ' disabled') + '><span class="ae">📓</span><b>약점 공책</b><small>' + (wk ? '헷갈리는 낱말 ' + wk + '개' : '아직 없어요') + '</small></button>'; })() +
       '<button class="act" id="dReport"><span class="ae">📊</span><b>리포트</b><small>이번 주 공부</small></button>' +
       '</div></div><div class="mright">' +
       '<div class="lvtabs">' + levels.map(function (lv) {
@@ -457,7 +457,7 @@
     if (t.closest('#dQuest') || t.closest('#dGoal')) { quests(); return; }
     var lt = t.closest('[data-lvtest]'); if (lt) { M.levelTest(P.lang, lt.dataset.lvtest, function () { mapScrolled = false; renderMap($('learnView')); }); return; }
     if (t.closest('#dReview')) { if (M.learnedCount(P.lang) >= 4) M.startLesson(P.lang, null); return; }
-    if (t.closest('#dGame')) { M.reviewGame(); return; }
+    if (t.closest('#dGame')) { M.weakBook(); return; }
     if (t.closest('#dReport')) { M.openReport(); return; }
     if (t.closest('#dWrong')) { if (M.wrongItems(P.lang).length) M.startLesson(P.lang, null, true); return; }
     var lvb = t.closest('[data-lv]'); if (lvb) { P.ui.lv = P.ui.lv || {}; P.ui.lv[P.lang] = lvb.dataset.lv; M.save(); mapScrolled = false; M.render(); return; }

@@ -2209,3 +2209,17 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .chat .cb.talkme { min-width: 50%; }
 .speak .talkshow { margin-top: 8px; min-height: 38px; padding: 4px 14px; font-size: .9rem; }
 @media (min-width: 900px) and (orientation: landscape) { .lbody .chat { max-height: 52svh; } }
+/* 약점 공책 */
+.wkbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 10px; }
+.wkbtns .btn { min-height: 48px; }
+.wklist { display: flex; flex-direction: column; gap: 6px; }
+.wkrow { display: flex; align-items: center; gap: 8px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 6px 8px; transition: opacity .3s, transform .3s; }
+.wkrow.gone { opacity: 0; transform: translateX(40px); }
+.wksay { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--mint-l); font-size: 1.1rem; }
+.wkw { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.wkw b { font-size: 1.15rem; } .wkw small { color: var(--mint-d); font-size: .78rem; } .wkw em { font-style: normal; font-size: .85rem; color: var(--sub); word-break: keep-all; }
+.wkn { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.wkmiss { font-size: .72rem; font-weight: 800; color: #d4547a; background: #ffe7ee; border-radius: 8px; padding: 1px 6px; }
+.wklv { display: flex; gap: 2px; } .wklv i { width: 8px; height: 8px; border-radius: 50%; background: #e6e0ea; } .wklv i.on { background: var(--mint); }
+.wkok { flex: none; font-size: .78rem; font-weight: 800; padding: 6px 8px; border-radius: 10px; background: #f6f3f8; color: var(--sub); }
+@media (min-width: 700px) { .wklist { display: grid; grid-template-columns: 1fr 1fr; } }
