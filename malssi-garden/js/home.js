@@ -84,7 +84,7 @@
 
   function toolList(full) {
     return [{ id: 'hYard', e: '🌷', n: '정원', hot: M.gardenOrderReady && M.gardenOrderReady(), main: 1 }, { id: 'hFeed', e: '🥕', n: '먹이', hot: full < 30, main: 1 }, { id: 'hEdit', e: editing ? '✅' : '✏️', n: editing ? '완료' : '꾸미기', hot: editing, main: 1 }, { id: 'hCook', e: '🍳', n: '요리', main: 1 },
-      { id: 'hShop', e: '🛋️', n: '상점' }, { id: 'hPots', e: '🪴', n: '화분', hot: M.potAlert && M.potAlert() }, { id: 'hMail', e: '📮', n: '편지', hot: M.mailUnread && M.mailUnread(), badge: 1 }, { id: 'hHouse', e: '🔨', n: '집' }];
+      { id: 'hShop', e: '🛋️', n: '상점' }, { id: 'hPots', e: '🪴', n: '화분', hot: M.potAlert && M.potAlert() }, { id: 'hMail', e: '📮', n: '편지', hot: M.mailUnread && M.mailUnread(), badge: 1 }, { id: 'hHouse', e: '🔨', n: '집' }, { id: 'hDiary', e: '📔', n: '그림일기', hot: M.diaryReady && M.diaryReady() }];
   }
   function toolBtn(b) { return '<button class="ht' + (b.hot ? ' hot' : '') + '" id="' + b.id + '"><span>' + b.e + '</span><small>' + b.n + '</small>' + (b.badge && b.hot ? '<i class="nbadge">' + b.hot + '</i>' : '') + '</button>'; }
   // 방 확대·이동 (두 손가락으로 벌리기, 확대한 뒤 끌기). 꾸미기 중에는 원래 크기로 둔다
@@ -397,6 +397,7 @@
     else if (e.target.closest('#hHouse')) M.houseSheet();
     else if (e.target.closest('#hYard')) { M.inVillage = true; M.go('garden'); if (M.render) M.render(); }
     else if (e.target.closest('#hMail')) M.mailSheet();
+    else if (e.target.closest('#hDiary')) M.diaryBook();
     else if (e.target.closest('#hCook')) M.cookSheet();
     else if (e.target.closest('#hEdit')) { editing = !editing; fsel = ''; Z = { s: 1, x: 0, y: 0 }; rerender(); }
     else if (e.target.closest('#hPots')) { var pd = M.modal('<div class="potshelf">' + M.potsHtml() + '</div><button class="btn ghost wide" data-close>닫기</button>'); pd.querySelector('.potshelf').classList.add('insheet'); }

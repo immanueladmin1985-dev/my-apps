@@ -87,7 +87,7 @@
       // 오늘 카드: 오늘 목표·연속 기록·이어서 하기를 한 장에 모은다
       '<div class="todaycard"><img class="tscene" src="img/bg-map-' + P.lang + '.png" alt="">' +
       '<button class="tgoal" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><span class="tgt"><b>' + (today >= P.set.goal ? '오늘 목표 달성! 🎉' : '오늘 목표 ' + P.set.goal + '판') + '</b><small>🔥 ' + (P.streak || 0) + '일 연속 공부 중</small>' + (due ? '<small>🔁 오늘 복습 ' + due + '개 남음</small>' : revDone ? '<small>✔ 오늘 복습 끝</small>' : '') + '</span></button>' +
-      '<div class="tchips"><button class="tchip" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '">퀘스트</button><button class="tchip" id="dWords"><span>📒</span>단어장</button></div>' +
+      '<div class="tchips"><button class="tchip" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '">퀘스트</button><button class="tchip" id="dWords"><span>📒</span>단어장</button><button class="tchip" id="dDiary">' + (M.diaryReady && M.diaryReady() ? '<i class="dot">!</i>' : '') + '<span>📔</span>일기</button></div>' +
       contBtn(L, prog, cur) + '</div>' +
       '<div class="acts">' +
       '<button class="act" id="dReview"' + (M.learnedCount(P.lang) < 4 ? ' disabled' : '') + '><span class="ae">🔁</span><b>복습</b><small>' + (revDone ? '오늘 복습 끝 ✔' : due ? '오늘 ' + due + '개' + (dueAll > due ? ' (쌓인 ' + dueAll + ')' : '') : '잊기 전에 다시') + '</small></button>' +
@@ -462,6 +462,7 @@
     if (t.closest('#dWrong')) { if (M.wrongItems(P.lang).length) M.startLesson(P.lang, null, true); return; }
     var lvb = t.closest('[data-lv]'); if (lvb) { P.ui.lv = P.ui.lv || {}; P.ui.lv[P.lang] = lvb.dataset.lv; M.save(); mapScrolled = false; M.render(); return; }
     if (t.closest('#dWords')) { wordBook(); return; }
+    if (t.closest('#dDiary')) { if (M.diaryReady && M.diaryReady()) M.diaryWrite(); else M.diaryBook(); return; }
     if (t.closest('#hInst')) installSheet();
   });
 

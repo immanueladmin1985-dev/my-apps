@@ -2228,3 +2228,28 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .gprow.cups button img { height: 30px; width: auto; }
 .gprow.cups [data-s="s"] img { height: 22px; } .gprow.cups [data-s="l"] img { height: 36px; }
 .gprow.cups [data-s=""] { font-size: .72rem; }
+/* 그림일기 */
+.dyq { font-weight: 800; margin: 6px 0 10px; } .dyq small { display: block; color: var(--sub); font-weight: 700; }
+.dywx { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+.dywx button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 2px; border-radius: 16px; background: #fff; border: 2px solid var(--line); }
+.dywx span { font-size: 2rem; } .dywx b { font-size: 1rem; } .dywx small { color: var(--sub); font-size: .75rem; }
+.dycands { display: flex; flex-direction: column; gap: 8px; }
+.dycands button { padding: 14px 12px; border-radius: 16px; background: #fffaf0; border: 2px solid #f0d8a8; text-align: left; font-size: 1.05rem; }
+.dykhint { background: #fffaf0; border-radius: 12px; padding: 8px 12px; font-weight: 800; margin-bottom: 8px; }
+.dyslots { min-height: 56px; padding: 10px; border-radius: 14px; border: 2px dashed #e0c49a; background: repeating-linear-gradient(#fffdf7 0 26px, #f1e4cc 26px 27px); font-size: 1.25rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.dyslots em { color: #c9b08a; font-size: .85rem; font-style: normal; font-weight: 600; }
+.dyslots.ok { border-color: var(--mint); background: #effaf4; }
+.dytiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 12px 0; }
+.dytiles .tile.used { opacity: .3; }
+.dyrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dystamps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 12px; }
+.dystamps button { font-size: 1.7rem; padding: 6px 0; border-radius: 14px; background: #fff; border: 2px solid var(--line); }
+.dystamps button.on { border-color: #ff8fb1; background: #fff0f5; transform: scale(1.06); }
+.dypage { background: #fffdf7; border: 2px solid #ecd9b6; border-radius: 18px; padding: 10px 12px; margin: 8px 0; box-shadow: 0 3px 0 #ecd9b6; }
+.dyhead { display: flex; align-items: center; gap: 8px; font-size: .9rem; border-bottom: 2px dashed #ecd9b6; padding-bottom: 6px; }
+.dyhead span { margin-left: auto; font-weight: 700; }
+.dyart { position: relative; height: 96px; margin: 8px 0; border-radius: 12px; background: linear-gradient(#e9f7ff, #fdfbf3); display: flex; align-items: center; justify-content: center; gap: 18px; }
+.dyst { font-size: 3rem; filter: drop-shadow(0 3px 2px rgba(0,0,0,.12)); } .dyst.s1 { transform: rotate(8deg); } .dyst.s0 { transform: rotate(-6deg); }
+.dytext { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; background: repeating-linear-gradient(transparent 0 30px, #f1e4cc 30px 31px); padding: 2px 4px; border: 0; }
+.dytext span { font-size: 1rem; } .dytext b { font-size: 1.15rem; } .dytext small { color: var(--sub); font-size: .8rem; }
+@media (min-width: 700px) { .dybook { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; } }
