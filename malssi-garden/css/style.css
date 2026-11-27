@@ -2362,3 +2362,8 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .fgrid.rides .rnow { color: var(--mint-d); }
 /* 캐릭터 그림이 정사각형 칸에서 늘어나지 않게 (닌자·동물처럼 세로로 긴 그림) */
 .pet #petImg, .bigpet, .ilogo, .wnfig img, .bbcoach, .hsimg, .fxmain { object-fit: contain; }
+/* 아이 과목 색 */
+.theme-math .unit { background: linear-gradient(90deg, #2fb98a, #5ad2a8); }
+.theme-kor .unit { background: linear-gradient(90deg, #f2a33a, #f7c060); }
+.theme-ken .unit { background: linear-gradient(90deg, #8f7cf0, #ad9cff); }
+.rule.kidtip p { font-size: 1.15rem; line-height: 1.6; word-break: keep-all; }

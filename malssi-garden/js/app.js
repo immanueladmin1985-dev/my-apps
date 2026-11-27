@@ -81,12 +81,12 @@
     var levels = []; L.units.forEach(function (u) { var lv = u.level || 'base'; if (levels.indexOf(lv) < 0) levels.push(lv); });
     var lvOf = function (s) { return L.units[s.unit].level || 'base'; };
     P.ui.lv = P.ui.lv || {};
-    var tab = P.ui.lv[P.lang]; if (levels.indexOf(tab) < 0) tab = cur < L.stages.length ? lvOf(L.stages[cur]) : levels[levels.length - 1];
+    var tab = P.ui.lv[P.lang]; if (levels.indexOf(tab) < 0) tab = L.kid ? levels[0] : cur < L.stages.length ? lvOf(L.stages[cur]) : levels[levels.length - 1];   // 아이 과목은 첫 수준부터
     var h = '<div class="map theme-' + P.lang + '">' +
       '<div class="langbar">' + M.langList().map(function (c) { var X = window.LANGS[c]; return '<button data-lang="' + c + '" class="' + (c === P.lang ? 'on' : '') + '">' + X.flag + ' ' + X.name + '</button>'; }).join('') + '</div>' +
       '<div class="mleft">' +
       // 오늘 카드: 오늘 목표·연속 기록·이어서 하기를 한 장에 모은다
-      '<div class="todaycard"><img class="tscene" src="img/bg-map-' + P.lang + '.png" alt="">' +
+      '<div class="todaycard"><img class="tscene" src="img/bg-map-' + (L.kid ? 'en' : P.lang) + '.png" alt="">' +
       '<button class="tgoal" id="dGoal"><div class="ring" style="--p:' + goalPct + '"><span>' + today + '/' + P.set.goal + '</span></div><span class="tgt"><b>' + (today >= P.set.goal ? '오늘 목표 달성! 🎉' : '오늘 목표 ' + P.set.goal + '판') + '</b><small>🔥 ' + (P.streak || 0) + '일 연속 공부 중</small>' + (due ? '<small>🔁 오늘 복습 ' + due + '개 남음</small>' : revDone ? '<small>✔ 오늘 복습 끝</small>' : '') + '</span></button>' +
       '<div class="tchips"><button class="tchip" id="dQuest">' + (ready ? '<i class="dot">' + ready + '</i>' : '') + '<img src="img/chest-closed.png" alt="" class="' + (ready ? 'wiggle' : '') + '">퀘스트</button><button class="tchip" id="dWords"><span>📒</span>단어장</button><button class="tchip" id="dDiary">' + (M.diaryReady && M.diaryReady() ? '<i class="dot">!</i>' : '') + '<span>📔</span>일기</button></div>' +
       contBtn(L, prog, cur) + '</div>' +
@@ -143,6 +143,7 @@
   function contTarget(L, prog, cur) {
     var last = (P.last || {})[P.lang], ls = last && L.stages.filter(function (x) { return x.id === last; })[0];
     if (ls && !prog[ls.id]) return ls;
+    if (L.kid) { var lt = (P.ui.lv || {})[P.lang]; var nx = L.stages.filter(function (x) { return !prog[x.id] && (!lt || (L.units[x.unit].level || 'base') === lt); })[0]; if (nx) return nx; }   // 아이 과목: 고른 수준에서 아직 안 한 첫 단계
     return cur < L.stages.length ? L.stages[cur] : null;
   }
   function contBtn(L, prog, cur) {

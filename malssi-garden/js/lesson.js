@@ -239,7 +239,8 @@
       }
     }
     var body = $('lBody');
-    var h = '<div class="qt">' + TITLES[q.type] + '</div>';
+    var kidT = { math: { meaning: '답을 골라 보세요', target: '이 답이 나오는 것을 골라 보세요', match: '문제와 답을 짝지어 보세요' }, kor: { meaning: '알맞은 것을 골라 보세요', target: '알맞은 낱말을 골라 보세요', listen: '잘 듣고 낱말을 골라 보세요' }, ken: { meaning: '뜻을 골라 보세요', target: '알맞은 영어를 골라 보세요' } }[S.lang] || {};
+    var h = '<div class="qt">' + (kidT[q.type] || TITLES[q.type]) + '</div>';
     var it = q.item;
     if (q.type === 'teach') {
       var tip = it.lang === 'ja' && it.kana && window.TIPS[it.t];
