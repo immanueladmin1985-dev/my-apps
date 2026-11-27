@@ -2360,3 +2360,5 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .dydesk { position: absolute; right: 0; top: -18px; height: 64px; width: auto; }
 .fgrid.rides .fcard > img { aspect-ratio: auto; height: 70px; object-fit: contain; }
 .fgrid.rides .rnow { color: var(--mint-d); }
+/* 캐릭터 그림이 정사각형 칸에서 늘어나지 않게 (닌자·동물처럼 세로로 긴 그림) */
+.pet #petImg, .bigpet, .ilogo, .wnfig img, .bbcoach, .hsimg, .fxmain { object-fit: contain; }
