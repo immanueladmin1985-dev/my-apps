@@ -523,11 +523,11 @@
     var bob = walking ? Math.abs(Math.sin(now / 80)) * 2.5 : 0;
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(X + T / 2, Y + T - 3, T * 0.34, T * 0.13, 0, 0, 7); ctx.fill();
     var view = a.d === 'up' ? 'back' : a.d === 'down' ? 'front' : 'side', flip = a.d === 'left';
-    var stg = a.kind === 'mate' ? (a.stage || 1) : M.petStage(), coon = (a.kind === 'mate' && a.av === 'raccoon') || (a.kind === 'me' && M.visiting);
-    var name = a.riding ? 'ch-rabbit3-bike-' + view + (walking ? step + 1 : 1) : coon ? 'ch-raccoon-' + view : a.kind === 'me' || a.kind === 'mate' ? 'ch-rabbit' + stg + '-' + view + (walking ? step + 1 : 1) : 'ch-' + a.id + '-' + view;
+    var stg = a.kind === 'mate' ? (a.stage || 1) : M.avStage(), mch = a.kind === 'mate' ? (a.ch || 'rabbit') : M.look().ch, coon = (a.kind === 'mate' && a.av === 'raccoon') || (a.kind === 'me' && M.visiting);
+    var name = a.riding ? 'ch-rabbit3-bike-' + view + (walking ? step + 1 : 1) : coon ? 'ch-raccoon-' + view : a.kind === 'me' || a.kind === 'mate' ? M.avName(view, walking ? step + 1 : 1, mch, stg) : 'ch-' + a.id + '-' + view;
     var hh = CH_H * sizeOf(a), r = sprite(name, p.x + 0.5, p.y + 1 - bob / T, 0, flip, hh);
     if (!r) {   // 그 방향 그림을 아직 불러오는 중이면, 이미 불러온 다른 모습으로 그린다 (예전 상반신 그림은 쓰지 않는다)
-      var alts = a.kind === 'me' || a.kind === 'mate' ? ['ch-rabbit' + stg + '-' + view + '1', 'ch-rabbit' + stg + '-front1'] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
+      var alts = a.kind === 'me' || a.kind === 'mate' ? [M.avName(view, 1, mch, stg), M.avName('front', 1, mch, stg)] : ['ch-' + a.id + '-front', 'ch-' + a.id + '-side'];
       for (var k = 0; k < alts.length && !r; k++) r = sprite(alts[k], p.x + 0.5, p.y + 1 - bob / T, 0, flip, hh);
     }
     if (a.kind === 'mate') label('💕 ' + (a.name || ''), X + T / 2, (r ? r.top : Y - T) - 2);
@@ -687,7 +687,7 @@
       if (best) go(best[0], best[1]);
     });
   }
-  function canRide() { return !!M.P.bike && M.petStage() >= 3 && !M.visiting; }
+  function canRide() { return !!M.P.bike && M.isRabbit() && M.avStage() >= 3 && !M.visiting; }
   function onTap(e) {
     if (Date.now() - panned < 250) return;   // 시야를 옮긴 직후의 손 뗌은 누르기가 아니다
     var r = cv.getBoundingClientRect(), wx = e.clientX - r.left + cam.x, wy = e.clientY - r.top + cam.y;
@@ -775,7 +775,7 @@
       if (!me) { me = mkActor(w.x, w.y, 'me'); me.d = w.d || 'down'; if (!walkable(me.x, me.y)) { me.x = me.px = me.tx = 22; me.y = me.py = me.ty = 24; } }
       syncNpcs();
       // 캐릭터 그림을 미리 불러 둔다 (걷는 방향이 바뀔 때 깜빡이지 않게)
-      ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + 'ch-rabbit' + M.petStage() + '-' + v + k + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
+      ['front', 'back', 'side'].forEach(function (v) { [1, 2].forEach(function (k) { img(WI + M.avName(v, k) + '.png'); }); npcs.forEach(function (n) { img(WI + 'ch-' + n.id + '-' + v + '.png'); }); });
       var rs = M.V.residents(), nm = M.V.nextMover();
       root.innerHTML = '<div class="village world"><div class="vbar">' + (M.visiting ? '<b>🦝 ' + M.esc(M.Family.mateName()) + '의 마을 방문 중</b><button class="vbag" id="vHome">🏠 돌아가기</button>' : '<b>🏡 ' + M.esc(M.P.petName) + '네 마을</b>') + (M.weatherInfo ? '<span class="vwx" title="' + M.weatherInfo().name + '">' + M.weatherInfo().em + '</span>' : '') + (function () { var bl = (M.buffList ? M.buffList() : []).map(function (b) { return '<i title="' + b.name + '">' + b.em + b.min + '</i>'; }); if (M.luckLeft && M.luckLeft()) bl.unshift('<i>✨' + Math.ceil(M.luckLeft() / 60000) + '</i>'); return bl.length ? '<span class="vbuffs">' + bl.join('') + '</span>' : ''; })() + '<small>주민 ' + rs.length + '명</small><button class="vbag" id="vMap">🗺️ 지도</button><button class="vbag" id="vBag">🧺 가방</button><button class="helpbtn" id="vHelp" aria-label="도움말">?</button></div><canvas id="wCanvas" class="wcanvas"></canvas></div>';
       cv = $('wCanvas'); ctx = cv.getContext('2d');
@@ -804,7 +804,7 @@
       if (!built) build();
       if (!mate || Math.abs(mate.x - m.x) + Math.abs(mate.y - m.y) > 30) { mate = mkActor(m.x, m.y, 'mate', 'mate'); }
       else { var p = findPath(mate.t < 1 ? mate.tx : mate.x, mate.t < 1 ? mate.ty : mate.y, m.x, m.y, mate); if (p) mate.path = p; else { mate.x = mate.px = mate.tx = m.x; mate.y = mate.py = mate.ty = m.y; mate.path = []; } }
-      mate.stage = m.stage; mate.name = m.name; mate.av = m.av || ''; mate.riding = !!m.rd; if (!mate.path.length) mate.d = m.d || mate.d;
+      mate.stage = m.stage; mate.ch = m.ch || 'rabbit'; mate.name = m.name; mate.av = m.av || ''; mate.riding = !!m.rd; if (!mate.path.length) mate.d = m.d || mate.d;
     },
     emote: function (who, t, k) { var a = who === 'me' ? me : mate; if (!a) return; a.say = { t: t, k: k || '' }; a.sayUntil = performance.now() + 4000; },
     mate: function () { return mate && { x: mate.x, y: mate.y, tx: mate.tx, ty: mate.ty, name: mate.name, say: mate.say }; },

@@ -56,7 +56,7 @@
   function P(sub) { return 'families/' + F.fid + '/' + sub; }
   M.Family.state = function () { return F; };
   M.Family.isHusband = function () { return F.ready && F.role === 'husband'; };
-  M.Family.mateName = function () { return F.mate ? F.mate.name || (F.mate.role === 'wife' ? '아내' : '남편') : ''; };
+  M.Family.mateName = function () { return F.mate ? (F.mate.name && ['아내', '남편'].indexOf(F.mate.name) < 0 ? F.mate.name : M.roleOf(F.mate.role)) : ''; };   // 기본 이름(아내·남편)은 지금 정한 호칭으로 보여 준다
   var offs = [];
   function stopAll() { offs.forEach(function (f) { try { f(); } catch (e) {} }); offs = []; }
 
@@ -71,7 +71,7 @@
     }).catch(function (e) { M.Family.lastErr = e; });
   }
   function newId(n, digits) { var a = new Uint8Array(n); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (x) { return digits ? String(x % 10) : ('0' + x.toString(36)).slice(-2); }).join(''); }
-  function roleName(r) { return r === 'wife' ? '아내' : '남편'; }
+  function roleName(r) { return M.roleOf(r); }
   // 가족 방 만들기: 역할을 고르면 핀 번호가 나온다. 상대 폰이 핀을 넣고 들어오면 끝
   function createFamily(role, after) {
     var fid = newId(12), pin = newId(6, true), me = { role: role, name: roleName(role), at: FX.now() };
@@ -123,7 +123,7 @@
     mateOffs.push(FX.on('family/presence/' + F.mateUid, function (v) {
       var fresh = v && v.place === 'village' && FX.now() - (v.at || 0) < 120000;
       if (fresh && F.role === 'husband' && !M.visiting) fresh = false;   // 남편 폰은 아내 마을에 들어갔을 때만 아내가 보인다
-      if (M.World && M.World.setMate) M.World.setMate(fresh ? { x: v.x, y: v.y, d: v.d, stage: v.stage || 1, av: v.av || '', rd: v.rd, name: v.av === 'raccoon' ? M.Family.mateName() + ' 너구리' : M.Family.mateName() } : null);
+      if (M.World && M.World.setMate) M.World.setMate(fresh ? { x: v.x, y: v.y, d: v.d, stage: v.stage || 1, ch: typeof v.ch === 'string' && /^[a-z0-9]{2,12}$/.test(v.ch) ? v.ch : 'rabbit', av: v.av || '', rd: v.rd, name: v.av === 'raccoon' ? M.Family.mateName() + ' 너구리' : M.Family.mateName() } : null);
       lastMateP = v;
     }));
     var lastEmote = 0;
@@ -135,17 +135,19 @@
     }));
     if (F.role === 'husband') mateOffs.push(FX.on('family/state/' + F.mateUid, function (s) {
       if (!s) return;
+      // 배우는 사람 폰에서 정한 호칭을 이 폰도 따른다
+      if (s.who && typeof s.who.L === 'string' && typeof s.who.A === 'string' && (s.who.L !== M.who('L') || s.who.A !== M.who('A'))) M.setWho(s.who.L, s.who.A);
       var n = (s.coupons || []).filter(function (c) { return c.status === 'wait'; }).length + (s.requests || []).length;
       if (n > (L.seen || 0) && !(view && view.isConnected)) M.toast('💌 ' + M.j(M.Family.mateName(), '이', '가') + ' 새 쿠폰이나 선물 신청을 보냈어요 (설정 › 원격 관리)');
       M.Family.waiting = n; L.seen = Math.min(L.seen || 0, n); store();
       var lastDy = s.diary && s.diary.length ? s.diary[s.diary.length - 1].d : '';
       if (lastDy && lastDy !== L.dySeen) { var firstDy = L.dySeen === undefined; L.dySeen = lastDy; store(); if (!firstDy) M.toast('📔 ' + M.j(M.Family.mateName(), '이', '가') + ' 그림일기를 썼어요 (원격 관리 › 일기)'); }
-      if (s.quizRes && s.quizRes.at && s.quizRes.at !== L.quizSeen) { var first = L.quizSeen === undefined; L.quizSeen = s.quizRes.at; store(); if (!first) M.toast('💌 ' + M.j(M.Family.mateName(), '이', '가') + ' 부부 퀴즈를 풀었어요: ' + s.quizRes.ok + ' / ' + s.quizRes.n); }
+      if (s.quizRes && s.quizRes.at && s.quizRes.at !== L.quizSeen) { var first = L.quizSeen === undefined; L.quizSeen = s.quizRes.at; store(); if (!first) M.toast('💌 ' + M.j(M.Family.mateName(), '이', '가') + ' ' + M.quizWord() + ' 퀴즈를 풀었어요: ' + s.quizRes.ok + ' / ' + s.quizRes.n); }
       // 일요일(또는 그 뒤 처음)에 한 번 주간 리포트를 보여 준다
       var dow = M.now().getDay(), wk = s.report && s.report.week;
       if (s.report && wk && L.repWeek !== wk && (dow === 0 || dow === 6) && !document.querySelector('.dim')) {
         L.repWeek = wk; store();
-        setTimeout(function () { var d2 = M.modal('<h3>📊 ' + esc(M.Family.mateName()) + '의 이번 주 공부</h3>' + M.reportHtml(s.report, M.Family.mateName()) + '<button class="btn primary wide" data-repquiz>💌 이번 주 낱말로 부부 퀴즈 내기</button><p class="hint">칭찬 선물은 설정 › 원격 관리 › 칭찬 선물에서 보낼 수 있어요</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' }); var rq = d2.querySelector('[data-repquiz]'); if (rq) rq.onclick = function () { d2.close(); M.Family.adminPanel({ tab: 'quiz', missQuiz: true }); }; }, 1500);
+        setTimeout(function () { var d2 = M.modal('<h3>📊 ' + esc(M.Family.mateName()) + '의 이번 주 공부</h3>' + M.reportHtml(s.report, M.Family.mateName()) + '<button class="btn primary wide" data-repquiz>💌 이번 주 낱말로 ' + M.quizWord() + ' 퀴즈 내기</button><p class="hint">칭찬 선물은 설정 › 원격 관리 › 칭찬 선물에서 보낼 수 있어요</p><button class="btn ghost wide" data-close>닫기</button>', { cls: 'bagsheet' }); var rq = d2.querySelector('[data-repquiz]'); if (rq) rq.onclick = function () { d2.close(); M.Family.adminPanel({ tab: 'quiz', missQuiz: true }); }; }, 1500);
       }
     }));
   }
@@ -241,7 +243,7 @@
     var k = x + ',' + y + ',' + d, now = FX.now(); if (k === lastPos && now - posT < 25000) return;
     if (rd && now - posT < 250) return;   // 자전거로 달릴 때는 너무 자주 보내지 않는다
     lastPos = k; posT = now;
-    FX.set('family/presence/' + F.uid, { x: x, y: y, d: d || 'down', stage: M.petStage ? M.petStage() : 1, place: M.visiting ? 'village' : (F.role === 'husband' ? 'own' : 'village'), av: M.visiting ? 'raccoon' : '', rd: !!rd, at: now });
+    FX.set('family/presence/' + F.uid, { x: x, y: y, d: d || 'down', stage: M.avStage ? M.avStage() : 1, ch: M.look ? M.look().ch : 'rabbit', place: M.visiting ? 'village' : (F.role === 'husband' ? 'own' : 'village'), av: M.visiting ? 'raccoon' : '', rd: !!rd, at: now });
     clearTimeout(beatT); beatT = setTimeout(function () { if (inVillage) { lastPos = ''; M.Family.myPos(x, y, d); } }, 30000);
   };
   M.Family.leaveVillage = function () {
@@ -274,12 +276,12 @@
   M.Family.sheet = function () {
     if (!FX) { M.modal('<h3>👨‍👩 가족 연결</h3><p>연결 도구를 불러오지 못했어요. 인터넷을 확인하고 앱을 다시 열어 주세요.</p><button class="btn ghost wide" data-close>닫기</button>'); return; }
     var nm = M.Family.mateName();
-    var body = !F.ready ? '<p>아내 폰과 남편 폰을 처음 한 번만 이어 주세요. 그다음부터는 앱을 열면 자동으로 이어져요.</p>' +
+    var body = !F.ready ? '<p>' + M.who('L') + ' 폰과 ' + M.who('A') + ' 폰을 처음 한 번만 이어 주세요. 그다음부터는 앱을 열면 자동으로 이어져요.</p>' +
         '<ol class="unl"><li>한쪽 폰에서 <b>가족 방 만들기</b>를 누르면 6자리 핀 번호가 나와요.</li><li>다른 폰에서 <b>핀 번호로 들어가기</b>를 누르고 그 번호를 넣으면 끝이에요.</li></ol>' +
-        '<button class="btn primary wide" data-f="mk-wife">👩 아내 폰으로 가족 방 만들기</button><button class="btn primary wide" data-f="mk-husband">👨 남편 폰으로 가족 방 만들기</button>' +
+        '<button class="btn primary wide" data-f="mk-wife">' + M.whoIcon('L') + ' ' + M.who('L') + ' 폰으로 가족 방 만들기 <small>(배우는 사람)</small></button><button class="btn primary wide" data-f="mk-husband">' + M.whoIcon('A') + ' ' + M.who('A') + ' 폰으로 가족 방 만들기 <small>(관리하는 사람)</small></button>' +
         '<button class="btn wide" data-f="join">🔢 핀 번호로 들어가기</button>'
-      : '<p>' + (F.role === 'wife' ? '👩 아내' : '👨 남편') + ' 폰으로 연결됐어요</p>' +
-        (F.mateUid ? '<p>' + (F.role === 'wife' ? '👨 ' : '👩 ') + esc(nm) + ' · ' + (F.mateOnline ? '🟢 접속 중' : '⚪ 쉬는 중') + '</p>' : '<p class="hint">상대 폰이 아직 들어오지 않았어요.</p><button class="btn wide" data-f="repin">🔢 새 핀 번호 받기</button>') +
+      : '<p>' + (F.role === 'wife' ? M.whoIcon('L') + ' ' + M.who('L') : M.whoIcon('A') + ' ' + M.who('A')) + ' 폰으로 연결됐어요</p>' +
+        (F.mateUid ? '<p>' + (F.role === 'wife' ? M.whoIcon('A') + ' ' : M.whoIcon('L') + ' ') + esc(nm) + ' · ' + (F.mateOnline ? '🟢 접속 중' : '⚪ 쉬는 중') + '</p>' : '<p class="hint">상대 폰이 아직 들어오지 않았어요.</p><button class="btn wide" data-f="repin">🔢 새 핀 번호 받기</button>') +
         (F.role === 'husband' && F.mateUid ? '<button class="btn primary wide" data-f="admin">💌 ' + esc(nm) + ' 원격 관리' + (M.Family.waiting ? ' 🔴' : '') + '</button><button class="btn primary wide" data-f="visit">' + (M.visiting ? '🏠 내 마을로 돌아가기' : '🦝 너구리로 ' + esc(nm) + ' 마을 가기') + '</button>' : '') +
         (F.mateUid ? '<button class="btn wide" data-f="quiz">⚡ 같이 놀기: 단어 빨리 맞히기</button><button class="btn wide" data-f="pairs">🃏 같이 놀기: 둘이서 짝 맞추기</button><button class="btn wide" data-f="bugs">🪲 같이 놀기: 곤충 배틀</button>' : '') +
         '<button class="btn ghost wide" data-f="leave">이 폰의 가족 연결 끊기</button>';
@@ -372,6 +374,7 @@
       qpool: (function () { try { var ms = M.missedItems(P.lang, 10), ls = M.learnedItems(P.lang).filter(function (it) { return it.k && !it.kana; }).slice(-40); return ms.concat(ls.filter(function (x) { return ms.indexOf(x) < 0; })).slice(0, 40).map(function (it) { return { t: it.t, k: it.k, r: it.r || '' }; }); } catch (e) { return []; } })(),
       qmiss: (function () { try { return Math.min(10, M.missedItems(P.lang, 10).length); } catch (e) { return 0; } })(),
       diary: (P.diary || []).slice(-14).map(function (d) { return { d: d.d, lang: d.lang, wx: d.wx, t: d.t, k: d.k, say: d.say, st: d.st || [], rp: d.rp || null }; }),
+      who: { L: M.who('L'), A: M.who('A') },
       qlang: P.lang, quizRes: P.quizRes || null, quizWait: !!(P.quizIn && !P.quizIn.done)
     };
   }
@@ -382,7 +385,7 @@
     var num = function (v, lo, hi, d) { v = parseInt(v, 10); return isNaN(v) ? d : Math.max(lo, Math.min(hi, v)); };
     if (c.t === 'give') {
       var cp = findBy(P.coupons, c.id); if (!cp || cp.status !== 'wait') return;
-      cp.status = 'done'; cp.doneAt = Date.now(); M.toast('🎁 남편이 "' + cp.name + '" 지급을 완료했어요');
+      cp.status = 'done'; cp.doneAt = Date.now(); M.toast('🎁 ' + M.whoJ('A', '이', '가') + ' "' + cp.name + '" 지급을 완료했어요');
     } else if (c.t === 'cancel') {
       var cc = findBy(P.coupons, c.id); if (!cc || cc.status !== 'wait') return;
       cc.status = 'cancel'; cc.doneAt = Date.now(); P.fp += cc.price; M.toast('"' + cc.name + '" 쿠폰이 취소되어 ' + cc.price + '점을 돌려받았어요');
@@ -401,7 +404,7 @@
         var old = findBy(P.rewards, r && r.id) || {};
         return { id: String((r && r.id) || 'r' + Date.now() + Math.random()).slice(0, 40), e: String((r && r.e) || '🎁').slice(0, 4), name: String((r && r.name) || '선물').slice(0, 30), price: num(r && r.price, 1, 1000000, 100), link: old.link, won: old.won };
       }).concat(extra);
-      M.toast('🎁 남편이 선물 목록을 바꿨어요');
+      M.toast('🎁 ' + M.whoJ('A', '이', '가') + ' 선물 목록을 바꿨어요');
     } else if (c.t === 'market' && M.hmarketOpen) {
       M.hmarketOpen(c);
     } else if (c.t === 'marketClose' && M.hmarketOpen) {
@@ -434,7 +437,7 @@
     if (view && view.isConnected) return;
     var tab = opt.tab || 'coupon', S = null, pend = {}, edits = null, base = [], mkState = { cat: 'item', lack: true, q: '', pick: {}, msg: '오늘만 특별가! 너굴너굴~' };
     var d = view = M.modal('<div class="admin"><h3>💌 원격 관리</h3><p class="rsub hint center">불러오는 중…</p><div class="tabs">' +
-      [['coupon', '쿠폰 승인'], ['req', '신청 선물'], ['market', '🦝 장터'], ['quiz', '💌 부부 퀴즈'], ['diary', '📔 일기'], ['reward', '선물 관리'], ['praise', '칭찬 선물'], ['stats', '공부 현황'], ['etc', '설정']].map(function (t) { return '<button data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
+      [['coupon', '쿠폰 승인'], ['req', '신청 선물'], ['market', '🦝 장터'], ['quiz', '💌 ' + M.quizWord() + ' 퀴즈'], ['diary', '📔 일기'], ['reward', '선물 관리'], ['praise', '칭찬 선물'], ['stats', '공부 현황'], ['etc', '설정']].map(function (t) { return '<button data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
       '</div><div class="abody"></div><button class="btn ghost wide" data-close>닫기</button></div>', { cls: 'full', onClose: function () { offs.forEach(function (f) { f(); }); view = null; } });
     var body = d.querySelector('.abody'), sub = d.querySelector('.rsub');
     var pendList = function () { return Object.keys(pend).map(function (k) { return pend[k]; }); };
@@ -468,7 +471,7 @@
       },
       quiz: function () {
         var pool = S.qpool || [], res = S.quizRes, qs = mkState.qpick = mkState.qpick || {};
-        var h = '<p>아내가 최근에 배운 낱말과 자주 틀리는 낱말(✏️)이에요. <b>3~10개</b>를 골라 퀴즈로 보내면, 아내 폰에서 풀고 결과가 여기로 와요.</p>';
+        var h = '<p>' + M.whoJ('L', '이', '가') + ' 최근에 배운 낱말과 자주 틀리는 낱말(✏️)이에요. <b>3~10개</b>를 골라 퀴즈로 보내면, ' + M.who('L') + ' 폰에서 풀고 결과가 여기로 와요.</p>';
         if (res) h += '<div class="hmcur"><b>지난 퀴즈 결과: ' + res.ok + ' / ' + res.n + '</b><small>' + fmtDate(res.at) + (res.wrong && res.wrong.length ? ' · 틀린 낱말: ' + res.wrong.map(esc).join(', ') : ' · 모두 맞혔어요! 🎉') + '</small></div>';
         if (S.quizWait) h += '<p class="hint">보낸 퀴즈를 아직 풀지 않았어요.</p>';
         if (!pool.length) return h + '<p class="hint center">아직 배운 낱말이 없어요.</p>';
@@ -478,13 +481,13 @@
       diary: function () {
         var ds = (S.diary || []).slice().reverse();
         if (!ds.length || !M.diaryPageHtml) return '<p class="hint center">아직 쓴 그림일기가 없어요. 레슨을 한 판 하면 일기를 쓸 수 있어요.</p>';
-        return '<p>아내가 쓴 그림일기예요. 문장을 누르면 읽어 주고, 하트나 짧은 답글을 보낼 수 있어요.</p>' + ds.map(function (d) {
+        return '<p>' + M.whoJ('L', '이', '가') + ' 쓴 그림일기예요. 문장을 누르면 읽어 주고, 하트나 짧은 답글을 보낼 수 있어요.</p>' + ds.map(function (d) {
           var rp = d.rp ? '<div class="dyrp">💌 보낸 답글: ' + (d.rp.h ? '❤️ ' : '') + esc(d.rp.m || '') + '</div>' : '';
           return M.diaryPageHtml(d) + (rp || '<div class="dyreply"><button class="dyh" data-dyh="' + esc(d.d) + '" aria-label="하트">🤍</button><input data-dym="' + esc(d.d) + '" maxlength="60" placeholder="답글 (예: 잘 썼어! / 上手だね!)"><button class="btn primary" data-x="dyrep" data-d="' + esc(d.d) + '">보내기</button></div>');
         }).join('');
       },
       praise: function () {
-        return '<p>칭찬과 함께 꽃 포인트를 보내 보세요. 아내 폰에서 앱을 열면 선물 상자가 열려요.</p>' +
+        return '<p>칭찬과 함께 꽃 포인트를 보내 보세요. ' + M.who('L') + ' 폰에서 앱을 열면 선물 상자가 열려요.</p>' +
           '<label class="fld">꽃 포인트<input id="gAmt" type="number" inputmode="numeric" min="1" max="5000" value="20"></label>' +
           '<label class="fld">한마디<input id="gMsg" maxlength="60" value="오늘도 공부하느라 수고했어요!"></label>' +
           '<button class="btn primary wide" data-x="gift">선물 보내기</button>';
@@ -494,7 +497,7 @@
         return '<div class="astats"><div><b>' + S.streak + '일</b><small>연속 공부</small></div><div><b>' + S.best + '일</b><small>최고 기록</small></div><div><b>' + S.week + '/7</b><small>이번 주</small></div><div><b>' + S.lessons + '판</b><small>전체 레슨</small></div></div>' +
           '<h4>최근 2주 레슨 수</h4><div class="chart">' + S.days.map(function (x) { return '<div class="cb"><i style="height:' + Math.round(x.l / mx * 100) + '%"></i><span>' + (x.l || '') + '</span><small>' + (+String(x.d).slice(8)) + '</small></div>'; }).join('') + '</div>' +
           '<h4>익힌 단어</h4><div class="astats">' + ['ja', 'en', 'zh'].map(function (c) { var L = window.LANGS[c]; return '<div><b>' + ((S.learned || {})[c] || 0) + '개</b><small>' + L.flag + ' ' + L.name + '</small></div>'; }).join('') + '</div>' +
-          '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>' + (S.report && M.reportHtml ? '<h4>📊 이번 주 리포트</h4>' + M.reportHtml(S.report, M.Family.mateName()) + '<button class="btn primary wide" data-qfromrep>💌 이 낱말로 부부 퀴즈 내기</button>' : '');
+          '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>' + (S.report && M.reportHtml ? '<h4>📊 이번 주 리포트</h4>' + M.reportHtml(S.report, M.Family.mateName()) + '<button class="btn primary wide" data-qfromrep>💌 이 낱말로 ' + M.quizWord() + ' 퀴즈 내기</button>' : '');
       },
       market: function () {
         var hm = S.hmarket, inv = S.inv || {}, I = (M.GATHER && M.GATHER.ITEMS) || {}, mk = mkState;
@@ -560,14 +563,14 @@
       });
       if (!S) return;
       var pl = pendList().length;
-      sub.innerHTML = esc(S.pet || '') + ' · 마지막 소식 ' + fmtDate(S.at) + (pl ? '<br>아내 폰에 반영을 기다리는 요청 ' + pl + '개 (앱이 열려 있으면 곧 반영돼요)' : '');
+      sub.innerHTML = esc(S.pet || '') + ' · 마지막 소식 ' + fmtDate(S.at) + (pl ? '<br>' + M.who('L') + ' 폰에 반영을 기다리는 요청 ' + pl + '개 (앱이 열려 있으면 곧 반영돼요)' : '');
       if ((tab === 'reward' || tab === 'market') && document.activeElement && body.contains(document.activeElement)) return;   // 고치는 중에는 다시 그리지 않는다
       if (tab === 'market') mkCollect();
       body.innerHTML = T[tab]();
     }
     var offs = [
       FX.on('family/state/' + F.mateUid, function (v) {
-        if (!v) { sub.textContent = '아내 폰에서 아직 정보를 보내지 않았어요. 아내 폰에서 앱을 한 번 열어 주세요.'; return; }
+        if (!v) { sub.textContent = M.who('L') + ' 폰에서 아직 정보를 보내지 않았어요. ' + M.who('L') + ' 폰에서 앱을 한 번 열어 주세요.'; return; }
         var firstSnap = !S;
         S = v; S.coupons = S.coupons || [];
         if (firstSnap && opt.missQuiz && !S.quizWait && S.qpool) pickMissed();   // 리포트에서 왔으면 자주 틀린 낱말(모자라면 최근 낱말)을 미리 골라 둔다 S.requests = S.requests || []; S.rewards = S.rewards || []; S.days = S.days || [];

@@ -38,7 +38,7 @@
     var dd = p.d.split('-');
     return '<div class="dypage"><div class="dyhead"><b>' + (+dd[1]) + '월 ' + (+dd[2]) + '일</b><span>' + w.e + ' ' + w.ko + '</span><small>' + (L.flag || '') + '</small></div>' +
       '<div class="dyart">' + (p.st || []).map(function (s, i) { return '<span class="dyst s' + i + '">' + s + '</span>'; }).join('') + '</div>' +
-      '<button class="dytext lang-' + p.lang + '" data-dysay="' + esc(wxLine(p.lang, w) + ' ' + p.say) + '" data-dylang="' + p.lang + '"><span>' + M.fz(wxLine(p.lang, w), p.lang) + '</span><b>' + M.fz(p.t, p.lang) + '</b><small>' + esc(w.ko + '. ' + p.k) + '</small></button>' + (p.rp && M.P.diary && M.P.diary.indexOf(p) >= 0 ? '<div class="dyrp">💌 ' + esc(M.Family && M.Family.mateName ? M.Family.mateName() : '남편') + ': ' + (p.rp.h ? '❤️ ' : '') + esc(p.rp.m || '') + '</div>' : '') + '</div>';
+      '<button class="dytext lang-' + p.lang + '" data-dysay="' + esc(wxLine(p.lang, w) + ' ' + p.say) + '" data-dylang="' + p.lang + '"><span>' + M.fz(wxLine(p.lang, w), p.lang) + '</span><b>' + M.fz(p.t, p.lang) + '</b><small>' + esc(w.ko + '. ' + p.k) + '</small></button>' + (p.rp && M.P.diary && M.P.diary.indexOf(p) >= 0 ? '<div class="dyrp">💌 ' + esc(M.Family && M.Family.mateName ? M.Family.mateName() : M.who('A')) + ': ' + (p.rp.h ? '❤️ ' : '') + esc(p.rp.m || '') + '</div>' : '') + '</div>';
   }
 
   M.diaryPageHtml = pageHtml;

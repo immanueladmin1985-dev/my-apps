@@ -316,7 +316,7 @@
       if (!M.spend('coins', nx.coins)) return;
       Object.keys(nx.need).forEach(function (k) { g.bag[k] -= nx.need[k]; });
       M.P.house = M.P.house || {}; M.P.house.lv = lv + 1; M.save(); d.close(); M.sfx('win');
-      M.modal('<div class="center"><div class="tbig">🏡✨</div><h3>' + nx.name + '이 됐어요!</h3><p>' + (nx.floors > 1 ? '토끼 집 위쪽의 층 단추로 <b>' + nx.floors + '층</b>까지 오가며 꾸밀 수 있어요. ' : '') + '화분을 ' + nx.pots + '개까지 놓을 수 있어요.</p><button class="btn primary wide" data-close>좋아요</button></div>', { onClose: function () { if (M.render) M.render(); } });
+      M.modal('<div class="center"><div class="tbig">🏡✨</div><h3>' + nx.name + '이 됐어요!</h3><p>' + (nx.floors > 1 ? '집 위쪽의 층 단추로 <b>' + nx.floors + '층</b>까지 오가며 꾸밀 수 있어요. ' : '') + '화분을 ' + nx.pots + '개까지 놓을 수 있어요.</p><button class="btn primary wide" data-close>좋아요</button></div>', { onClose: function () { if (M.render) M.render(); } });
     };
   };
 })();

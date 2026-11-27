@@ -134,7 +134,7 @@
   // 잡화점 "씨앗·비료" 탭
   M.seedTab = function (box, hint) {
     var s = S(), lv = M.gardenState ? M.gardenState().lv : 1;
-    hint.textContent = '씨앗을 사서 토끼 집 화분에 심어요. 물은 레슨으로 받은 물방울로 줘요';
+    hint.textContent = '씨앗을 사서 우리 집 화분에 심어요. 물은 레슨으로 받은 물방울로 줘요';
     box.innerHTML = '<div class="fgrid">' + Object.keys(SEEDS).map(function (k) {
       var sd = SEEDS[k], lock = lv < sd.lv;
       return '<button class="fcard' + (lock ? ' lock' : '') + '" data-buyseed="' + k + '"><span class="seedem">' + sd.fruit + '</span><b>' + sd.name + ' 씨앗</b><small>' + sd.hours + '시간</small>' +

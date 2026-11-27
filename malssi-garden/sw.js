@@ -2,7 +2,7 @@
 // 코드(html·css·js)와 그림을 서로 다른 저장소에 둔다.
 // - 코드를 고치면 CODE 버전만 올린다. 그림은 다시 받지 않는다.
 // - 그림을 추가·교체하면 IMG 버전을 올리고 IMGS 목록에도 넣는다. (같은 이름의 그림을 바꿨을 때는 반드시 올린다)
-const CODE = 'malssi-code-v120';
+const CODE = 'malssi-code-v121';
 const IMG = 'malssi-img-v1';
 const KEEP = [CODE, IMG];
 const CORE = [
@@ -32,6 +32,7 @@ const CORE = [
   './js/data-ear.js',
   './js/data-story.js',
   './js/core.js',
+  './js/roles.js',
   './js/lesson.js',
   './js/leveltest.js',
   './js/garden.js',

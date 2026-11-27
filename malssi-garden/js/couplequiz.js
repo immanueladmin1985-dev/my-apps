@@ -4,7 +4,7 @@
   M.coupleQuizNotice = function () {
     var q = M.P.quizIn; if (!q || q.done) return;
     var show = function () {
-      var name = M.Family && M.Family.mateName ? M.Family.mateName() : '남편';
+      var name = M.Family && M.Family.mateName ? M.Family.mateName() : M.who('A');
       var d = M.modal('<div class="center"><div class="tbig">💌</div><h3>' + esc(name) + '의 퀴즈가 도착했어요!</h3>' + (q.msg ? '<p class="qmsg">“' + esc(q.msg) + '”</p>' : '') + '<p class="hint">낱말 ' + q.words.length + '개 · 맞힌 만큼 꽃 포인트를 받아요</p><button class="btn primary wide" data-qgo>지금 풀기</button><button class="btn ghost wide" data-close>나중에</button></div>');
       d.querySelector('[data-qgo]').onclick = function () { d.close(); M.coupleQuiz(); };
     };
@@ -18,7 +18,7 @@
     function ask() {
       if (k >= words.length) return done();
       var w = words[k], others = M.shuffle(words.map(function (x) { return x.k; }).concat(extra).filter(function (x, i, a) { return x !== w.k && a.indexOf(x) === i; })).slice(0, 3), opts = M.shuffle([w.k].concat(others));
-      box.innerHTML = '<div class="ltbar"><i style="width:' + Math.round(k / words.length * 100) + '%"></i></div><p class="hint">💌 부부 퀴즈 ' + (k + 1) + ' / ' + words.length + '</p>' +
+      box.innerHTML = '<div class="ltbar"><i style="width:' + Math.round(k / words.length * 100) + '%"></i></div><p class="hint">💌 ' + M.quizWord() + ' 퀴즈 ' + (k + 1) + ' / ' + words.length + '</p>' +
         '<button class="lttop lang-' + lang + '" data-cqs>' + M.fz(w.t, lang) + (w.r && lang !== 'en' ? '<small>' + esc(w.r.split(' · ')[0]) + '</small>' : '') + '</button>' +
         '<div class="ltopts">' + opts.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + esc(o) + '</button>'; }).join('') + '</div>';
       box.dataset.ans = w.k;

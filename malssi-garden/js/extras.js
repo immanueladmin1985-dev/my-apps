@@ -515,12 +515,12 @@
     x.hmarket = { until: num(c.until, 0, Date.now() + 8 * 86400000), msg: String(c.msg || '').slice(0, 50), sold: 0, bought: 0,
       sell: (c.sell || []).slice(0, 120).map(function (s) { var k = HK[s.k] ? s.k : 'furn'; return { k: k, id: String(s.id), price: num(s.price, 1, 100000), n: k === 'furn' ? 1 : num(s.n, 1, 999) }; }).filter(function (s) { return hInfo(s.k, s.id); }),
       buy: (c.buy || []).slice(0, 60).filter(function (b) { return M.GATHER.ITEMS[b.id]; }).map(function (b) { return { id: String(b.id), price: num(b.price, 1, 100000), n: num(b.n, 1, 999) }; }) };
-    M.save(); M.toast('🦝 ' + ((M.Family && M.Family.mateName()) || '남편') + ' 너구리가 마을 광장에 특별 장터를 열었어요!');
+    M.save(); M.toast('🦝 ' + ((M.Family && M.Family.mateName()) || M.who('A')) + ' 너구리가 마을 광장에 특별 장터를 열었어요!');
   };
   M.marketToday = function () { var n = Math.floor(Date.now() / 86400000); return n % 3 === 0 || !!M.hmarket(); };
   function hmarketSheet() {
     var h = M.hmarket(); if (!h) return;
-    var who = (M.Family && M.Family.mateName()) || '남편', bag = (M.P.gather && M.P.gather.bag) || {}, I = M.GATHER.ITEMS;
+    var who = (M.Family && M.Family.mateName()) || M.who('A'), bag = (M.P.gather && M.P.gather.bag) || {}, I = M.GATHER.ITEMS;
     var d = M.modal('<div class="mintro"><img class="mface" src="img/w/cust-raccoon.png" alt=""><div class="msay"><b>🦝 ' + esc(who) + ' 너구리의 특별 장터</b><p>' + esc(h.msg || '어서 와요! 특별가예요~') + '</p></div></div><div id="hmBody"></div><button class="btn ghost wide" data-close>나가기</button>', { cls: 'bagsheet' });
     function paint() {
       var sell = h.sell.filter(function (s) { return s.n > 0 && !(s.k === 'furn' && (M.P.room.owned || {})[s.id]); }), buy = h.buy.filter(function (b) { return b.n > 0; });
@@ -559,7 +559,7 @@
       }
       var b = e.target.closest('[data-mk]'); if (!b) return;
       var f = pick.filter(function (z) { return z.id === b.dataset.mk; })[0], pr = Math.round(f.price * x.marketDisc.rate);
-      M.confirm(f.name, '<img class="inl" src="img/coin.png" alt="">' + pr + '코인에 살까요? 토끼 집 방에 놓여요.', '사기', function () {
+      M.confirm(f.name, '<img class="inl" src="img/coin.png" alt="">' + pr + '코인에 살까요? 우리 집 방에 놓여요.', '사기', function () {
         if (!M.spend('coins', pr)) { M.toast('코인이 모자라요'); return; }
         M.P.room.owned[f.id] = true; M.P.room.placed[f.id] = { x: 50, y: f.wall ? 30 : 70 }; M.save(); M.sfx('coin'); d.close(); M.toast(f.name + '을(를) 샀어요! 방에 놓았어요');
       });

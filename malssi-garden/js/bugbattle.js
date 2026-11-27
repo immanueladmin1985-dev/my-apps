@@ -70,7 +70,7 @@
       '<div class="bbstage"><span class="bbturn" id="bbTurn"></span><div class="bbring"><img class="bbarena" src="img/w/bb-arena.png" alt="">' +
       '<img class="bbimg me' + rf(myId) + '" id="bbM" src="' + item(myId).img + '" alt=""><img class="bbimg op' + rf(o.bug) + '" id="bbO" src="' + item(o.bug).img + '" alt="">' +
       '<img class="bbfx me" id="bbFxM" alt=""><img class="bbfx op" id="bbFxO" alt=""></div>' +
-      '<img class="bbcoach me" src="img/w/ch-rabbit' + (M.petStage ? M.petStage() : 1) + '-front1.png" alt=""><img class="bbcoach op" src="img/w/ch-' + o.cust + '-front.png" alt=""></div>' +
+      '<img class="bbcoach me" src="img/w/' + (M.avName ? M.avName('front', 1) : 'ch-rabbit1-front1') + '.png" alt=""><img class="bbcoach op" src="img/w/ch-' + o.cust + '-front.png" alt=""></div>' +
       '<div class="bbmsg" id="bbMsg">기술을 골라요! 막대가 ★일 때 누르면 세게 들어가요</div>' +
       '<div class="bbpow"><i id="bbPow"></i><span class="bbstar">★</span></div>' +
       '<div class="bbmoves">' + MOVES.map(function (m) { var n = mvName(m); return '<button class="bbmove' + (m.id === me.style ? ' fav' : '') + '" data-mv="' + m.id + '"><img class="bbic" src="img/w/bb-' + m.id + '.png" alt=""><b class="lang-' + M.P.lang + '">' + esc(n.t) + '</b>' + (n.r && n.r !== n.t ? '<small>' + esc(n.r) + '</small>' : '') + '<small>' + m.ko + (m.id === me.style ? ' · 특기' : '') + '</small></button>'; }).join('') + '</div>';

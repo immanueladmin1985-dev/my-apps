@@ -19,6 +19,7 @@
   M.render = function () {
     P = M.P;
     M.paintTop();
+    var np = document.getElementById('navPet'); if (np && M.look) np.textContent = M.isRabbit() ? '🐰' : M.lookEmoji(M.look().ch);   // 아래 메뉴 집 단추는 내 캐릭터 얼굴
     if (!P.started) { intro(); return; }
     $('intro').classList.add('hidden');
     $('app').classList.remove('hidden');
@@ -40,15 +41,15 @@
     tab = t; $('view').scrollTop = 0; M.render();
     var tipsOld = { garden: ['seenGarden', '🏪 정원 가게', '<b>① 생산기 누르기</b>: 밭에 있는 👝 씨앗 주머니, 🪵 도토리 바구니를 누르면 재료가 나와요(물방울 5). 꾹 누르면 계속 나와요.<br><b>② 합치기</b>: 같은 것끼리 끌어다 겹치면 한 단계 자라요.<br><b>③ 손님 의뢰</b>: 위에 온 손님이 원하는 것을 만들어 <b>주기</b>를 누르면 코인, <img class="inl" src="img/flower-point.png" alt="">꽃 포인트, 가게 경험치를 받아요.<br><br>가게 레벨이 오르면 새 생산기, 새 손님, 작업대가 열리고 밭도 넓힐 수 있어요.'],
       home: ['seenHome', '🏠 ' + esc(P.petName) + '의 집', '코인으로 먹이를 주면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 <b>물방울을 더</b> 받아요.<br><br>가구 상점에서 가구를 사서 방을 꾸며 보세요.'],
-      shop: ['seenShop', '🎁 상점', '<b>꽃 포인트</b>를 모아 남편이 등록한 <b>진짜 선물</b>로 바꿀 수 있어요. 바꾸면 쿠폰이 생기고, 남편이 확인하면 선물을 받아요.'] };
+      shop: ['seenShop', '🎁 상점', '<b>꽃 포인트</b>를 모아 ' + M.whoJ('A', '이', '가') + ' 등록한 <b>진짜 선물</b>로 바꿀 수 있어요. 바꾸면 쿠폰이 생기고, ' + M.whoJ('A', '이', '가') + ' 확인하면 선물을 받아요.'] };
   };
   // 도움말: 저절로 띄우지 않고, 화면 오른쪽 위 작은 ? 버튼을 눌렀을 때만 보여 준다
   M.help = function (t) {
     if (t === 'garden') { M.gardenHelp(); return; }
     var H = {
-      learn: ['📖 배우기', '<ul class="unl"><li>위 탭에서 <b>기초 / N5 / N4</b>처럼 수준을 고르면 그 단원만 보여요.</li><li><b>▶ 이어서 하기</b>는 마지막으로 하던 단계부터 시작해요.</li><li>끝낸 단계를 누르면 <b>다시 하기</b>를 할 수 있어요. 끝낸 단원은 눌러서 접고 펼쳐요.</li><li><b>✏️ 틀린 것</b>은 마지막에 틀린 낱말만 다시 풀어요. <b>🔁 복습</b>은 잊을 때가 된 낱말을 풀어요.</li><li>🎯 <b>복습 놀이</b>는 자주 틀린 낱말만 모아 뜻 고르기로 다시 풀어요. 맞히면 틀린 횟수가 줄어요.</li><li>📊 <b>리포트</b>에서 이번 주 공부한 날, 새로 배운 낱말, 자주 틀리는 낱말을 봐요. 가족을 연결하면 남편 폰에서도 볼 수 있어요.</li><li>레슨을 하면 <b>물방울</b>을 받아 정원에서 써요. 하루 처음 세 번은 마을에서 쓸 <b>낚시 미끼</b>도, 오늘 목표를 채우면 <b>행운의 향수</b>도 받아요.</li></ul>'],
+      learn: ['📖 배우기', '<ul class="unl"><li>위 탭에서 <b>기초 / N5 / N4</b>처럼 수준을 고르면 그 단원만 보여요.</li><li><b>▶ 이어서 하기</b>는 마지막으로 하던 단계부터 시작해요.</li><li>끝낸 단계를 누르면 <b>다시 하기</b>를 할 수 있어요. 끝낸 단원은 눌러서 접고 펼쳐요.</li><li><b>✏️ 틀린 것</b>은 마지막에 틀린 낱말만 다시 풀어요. <b>🔁 복습</b>은 잊을 때가 된 낱말을 풀어요.</li><li>🎯 <b>복습 놀이</b>는 자주 틀린 낱말만 모아 뜻 고르기로 다시 풀어요. 맞히면 틀린 횟수가 줄어요.</li><li>📊 <b>리포트</b>에서 이번 주 공부한 날, 새로 배운 낱말, 자주 틀리는 낱말을 봐요. 가족을 연결하면 ' + M.who('A') + ' 폰에서도 볼 수 있어요.</li><li>레슨을 하면 <b>물방울</b>을 받아 정원에서 써요. 하루 처음 세 번은 마을에서 쓸 <b>낚시 미끼</b>도, 오늘 목표를 채우면 <b>행운의 향수</b>도 받아요.</li></ul>'],
       home: ['🏠 ' + esc(P.petName) + '의 집', '<ul class="unl"><li>코인으로 <b>먹이</b>를 주면 ' + esc(M.j(P.petName, '이가', '가')) + ' 자라요. 레벨이 오를수록 레슨에서 물방울을 더 받아요.</li><li><b>꾸미기 상점</b>에서 가구·벽지를 사요. <b>👗 옷장</b>에서는 모자, 옷, 가방·도구, 장식을 사서 입혀요. 옷은 사기 전에 입은 모습을 미리 볼 수 있고, 모자와는 같이 쓰지 않아요.</li><li>방 왼쪽 위 📷 단추로 방 사진을 찍어요.</li><li><b>✏️ 꾸미기</b>를 누르면 가구를 끌어서 옮겨요.</li></ul>'],
-      shop: ['🎁 상점', '<ul class="unl"><li><b>꽃 포인트</b>를 모아 남편이 등록한 <b>진짜 선물</b>로 바꿔요. 바꾸면 쿠폰이 생기고, 남편이 확인하면 받아요.</li><li>갖고 싶은 물건은 <b>선물 신청</b>으로 이름·가격·링크를 보내요.</li><li>꽃 포인트는 정원 손님 의뢰, 퀘스트, 주간 목표에서 받아요.</li></ul>']
+      shop: ['🎁 상점', '<ul class="unl"><li><b>꽃 포인트</b>를 모아 ' + M.whoJ('A', '이', '가') + ' 등록한 <b>진짜 선물</b>로 바꿔요. 바꾸면 쿠폰이 생기고, ' + M.whoJ('A', '이', '가') + ' 확인하면 받아요.</li><li>갖고 싶은 물건은 <b>선물 신청</b>으로 이름·가격·링크를 보내요.</li><li>꽃 포인트는 정원 손님 의뢰, 퀘스트, 주간 목표에서 받아요.</li></ul>']
     }[t];
     if (H) M.modal('<h3>' + H[0] + '</h3>' + H[1] + '<button class="btn primary wide" data-close>닫기</button>');
   };
@@ -260,14 +261,17 @@
     var h = '<div class="banner-slot"></div>';
     if (introStep === 0) {
       h += '<img class="ilogo popin" src="img/pet-1-happy.png" alt=""><h1>말씨정원</h1><p>말을 배우면 씨앗이 자라요.<br>매일 조금씩 배우고, 정원을 키우고,<br><b>진짜 선물</b>로 바꿔 보세요!</p>' +
-        '<div class="ifeat"><span>📖 3분 레슨</span><span>🌱 머지 정원</span><span>🐰 토끼 키우기</span><span>🎁 선물 교환</span></div>' +
+        '<div class="ifeat"><span>📖 3분 레슨</span><span>🌱 머지 정원</span><span>🐾 친구 키우기</span><span>🎁 선물 교환</span></div>' +
         '<button class="btn primary wide big" data-next>시작하기</button>';
     } else if (introStep === 1) {
       h += '<h2>어떤 말부터 배울까요?</h2><p class="hint">언제든 바꿀 수 있고, 세 가지를 함께 배워도 돼요.</p><div class="ilangs">' + ['ja', 'en', 'zh'].map(function (c) {
         var L = window.LANGS[c]; return '<button class="ilang' + (introData.lang === c ? ' on' : '') + '" data-il="' + c + '"><span>' + L.flag + '</span><b>' + L.name + '</b><small>' + esc(L.hello) + '</small></button>';
       }).join('') + '</div><button class="btn primary wide big" data-next>다음</button>';
     } else if (introStep === 2) {
-      h += '<img class="ilogo" src="img/pet-1-normal.png" alt=""><h2>토끼 이름을 지어 주세요</h2><p class="hint">함께 공부하고 자라는 친구예요.</p><input class="iname" id="iName" maxlength="8" value="' + esc(introData.name) + '">' +
+      var lk = introData.look || 'rabbit';
+      h += '<img class="ilogo" src="' + M.lookImg(lk) + '" alt=""><h2>함께할 친구를 골라 주세요</h2><p class="hint">🌱 자라는 토끼는 레벨이 오르면 모습이 바뀌어요. 다른 친구는 레벨만 올라요.</p>' + M.lookGrid(lk) +
+        '<h3>친구 이름</h3><input class="iname" id="iName" maxlength="8" value="' + esc(introData.name) + '">' +
+        '<h3>누가 배우나요?</h3><div class="whochips wcfirst">' + [['아내', '남편'], ['아들', '아빠'], ['딸', '아빠'], ['아들', '엄마'], ['딸', '엄마']].map(function (w) { var on = (introData.who || '아내|남편') === w.join('|'); return '<button data-iwho="' + w.join('|') + '" class="' + (on ? 'on' : '') + '">' + w[0] + ' · ' + w[1] + '</button>'; }).join('') + '</div><p class="hint">앞이 배우는 사람, 뒤가 선물을 확인하는 사람이에요. 설정에서 직접 쓸 수도 있어요.</p>' +
         '<h3>하루 목표</h3><div class="goals">' + [[1, '가볍게'], [2, '보통'], [3, '열심히'], [5, '아주 열심히']].map(function (g) {
           return '<button class="' + (introData.goal === g[0] ? 'on' : '') + '" data-goal="' + g[0] + '"><b>' + g[0] + '판</b><small>' + g[1] + '</small></button>';
         }).join('') + '</div><p class="hint">레슨 한 판은 3~5분 걸려요.</p><button class="btn primary wide big" data-next>시작!</button>';
@@ -279,14 +283,17 @@
   $('intro').addEventListener('click', function (e) {
     var t = e.target;
     var il = t.closest('[data-il]'); if (il) { introData.lang = il.dataset.il; M.say(window.LANGS[il.dataset.il].hello, il.dataset.il); intro(); return; }
+    var lkb = t.closest('[data-look]'); if (lkb) { introData.name = ($('iName') || {}).value || introData.name; introData.look = lkb.dataset.look; intro(); return; }
+    var iw = t.closest('[data-iwho]'); if (iw) { introData.name = ($('iName') || {}).value || introData.name; introData.who = iw.dataset.iwho; intro(); return; }
     var g = t.closest('[data-goal]'); if (g) { introData.name = ($('iName') || {}).value || introData.name; introData.goal = +g.dataset.goal; intro(); return; }
     if (t.closest('[data-next]')) {
       if (introStep === 2) {
         P.petName = (($('iName') || {}).value || '').trim() || '말랑이';
         P.lang = introData.lang; P.set.goal = introData.goal; P.started = true;
+        P.look = { ch: introData.look || 'rabbit', grow: (introData.look || 'rabbit') === 'rabbit' }; var iwv = (introData.who || '아내|남편').split('|'); M.setWho(iwv[0], iwv[1]);
         $('view').insertBefore($('banner'), $('view').firstChild);
         M.save(); M.render();
-        M.modal('<div class="center"><img class="bigpet popin" src="img/pet-1-happy.png" alt=""><h3>' + esc(M.j(P.petName, '과', '와')) + ' 함께 시작해요!</h3><p>첫 레슨을 끝내면 물방울을 받아요.<br>물방울로 정원에 씨앗을 뿌려 보세요 🌱</p><button class="btn primary wide" data-close>좋아요</button></div>');
+        M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy') + '" alt=""><h3>' + esc(M.j(P.petName, '과', '와')) + ' 함께 시작해요!</h3><p>첫 레슨을 끝내면 물방울을 받아요.<br>물방울로 정원에 씨앗을 뿌려 보세요 🌱</p><button class="btn primary wide" data-close>좋아요</button></div>');
         dayCheck();
         return;
       }
@@ -310,7 +317,8 @@
       tg('speak', '따라 말하기 문제', M.speechOK() ? '마이크로 발음을 확인해요' : '이 브라우저는 음성 인식을 지원하지 않아요') +
       '<label class="sel"><span>발음 빠르기</span><select data-v="rate"><option value="0.7">느리게</option><option value="0.9">보통</option><option value="1.05">빠르게</option></select></label>' +
       '<label class="sel"><span>하루 목표</span><select data-v="goal"><option value="1">1판</option><option value="2">2판</option><option value="3">3판</option><option value="5">5판</option></select></label>' +
-      '<label class="sel"><span>토끼 이름</span><input data-name maxlength="8" value="' + esc(P.petName) + '"></label>' +
+      '<label class="sel"><span>캐릭터 이름</span><input data-name maxlength="8" value="' + esc(P.petName) + '"></label>' +
+      '<button class="btn wide" data-a="who">👨‍👦 가족 호칭과 캐릭터 <small>(' + esc(M.who('L')) + ' · ' + esc(M.who('A')) + ' · ' + esc(M.lookName(M.look().ch)) + ')</small></button>' +
       '<h4>글꼴</h4>' + fontSel('ui', 'fontUI', '화면 글꼴', '안녕하세요! 말씨정원 123') + fontSel('ja', 'fontJa', '일본어 글꼴', 'こんにちは 日本語 カタカナ', 'ja') + fontSel('zh', 'fontZh', '중국어 글꼴', '你好 学习 nǐ hǎo', 'zh') +
       '<label class="sel"><span>글자 크기</span><select data-fs>' + M.FONT_SIZES.map(function (x) { return '<option value="' + x[0] + '"' + (P.set.fontSize === x[0] ? ' selected' : '') + '>' + x[2] + '</option>'; }).join('') + '</select></label>' +
       '<h4>화면</h4>' + tg('autoFS', '자동 전체화면', '화면을 처음 누르면 전체화면으로 바꿔요') + tg('wake', '레슨 중 화면 켜 두기') +
@@ -320,7 +328,7 @@
       '<button class="btn wide" data-a="admin">🔒 관리자 메뉴</button>' +
       '<button class="btn wide" data-a="stk">🏅 스티커 앨범</button>' +
       '<button class="btn wide" data-a="family">👨‍👩 가족 연결' + (M.Family && M.Family.state().ready ? ' ✔' : '') + '</button>' +
-      (M.Family && M.Family.isHusband() ? '<button class="btn wide" data-a="remote">💌 원격 관리 (' + esc(M.Family.mateName() || '아내') + ' 폰)' + (M.Family.waiting ? ' 🔴' : '') + '</button>' : '') +
+      (M.Family && M.Family.isHusband() ? '<button class="btn wide" data-a="remote">💌 원격 관리 (' + esc(M.Family.mateName() || M.who('L')) + ' 폰)' + (M.Family.waiting ? ' 🔴' : '') + '</button>' : '') +
       '<button class="btn danger wide" data-a="reset">모든 기록 지우기</button>' +
       '<button class="btn primary wide" data-close>닫기</button>';
     var d = M.modal(h, { onClose: M.render });
@@ -342,6 +350,7 @@
       var a = b.dataset.a;
       if (a === 'fs') { d.close(); FS.toggle(); }
       else if (a === 'inst') { d.close(); installSheet(); }
+      else if (a === 'who') { d.close(); M.whoSheet(); }
       else if (a === 'export') exportBackup();
       else if (a === 'import') { d.close(); M.askPin('백업 불러오기', M.pickBackup); }
       else if (a === 'admin') { d.close(); M.openAdmin(); }
@@ -351,7 +360,7 @@
       else if (a === 'move') { d.close(); M.Family.transferSheet(); }
       else if (a === 'reset') {
         d.close();
-        var doReset = function () { M.confirm('모든 기록을 지울까요?', '배운 단계, 정원, 토끼, 꽃 포인트, 쿠폰이 모두 사라지고 되돌릴 수 없어요.', '모두 지우기', function () { M.reset(); location.reload(); }, true); };
+        var doReset = function () { M.confirm('모든 기록을 지울까요?', '배운 단계, 정원, 캐릭터, 꽃 포인트, 쿠폰이 모두 사라지고 되돌릴 수 없어요.', '모두 지우기', function () { M.reset(); location.reload(); }, true); };
         if (P.admin.pin) M.askPin('기록 지우기', doReset); else doReset();
       }
     });

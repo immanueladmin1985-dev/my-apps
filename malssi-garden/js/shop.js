@@ -13,7 +13,7 @@
     var h = '<div class="shop">' +
       '<div class="card fpcard"><img src="img/flower-point.png" alt=""><div><small>내 꽃 포인트</small><b>' + M.fmt(P.fp) + '</b></div></div>';
     if (wait.length) {
-      h += '<h3 class="sec">🎟️ 받을 선물 <small>남편에게 보여 주세요</small></h3>' + wait.map(function (c) {
+      h += '<h3 class="sec">🎟️ 받을 선물 <small>' + M.who('A') + '에게 보여 주세요</small></h3>' + wait.map(function (c) {
         return '<div class="coupon"><span class="ce">' + c.e + '</span><div><b>' + esc(c.name) + '</b><small>' + fmtDate(c.at) + ' 교환 · 지급 기다리는 중</small></div></div>';
       }).join('');
     }
@@ -22,11 +22,11 @@
       return '<div class="reward' + (ok ? ' ok' : '') + '"><span class="re">' + r.e + '</span><div class="rn"><b>' + esc(r.name) + '</b>' + (r.link ? ' <button class="lnk" data-link="' + esc(r.link) + '">🔗 보기</button>' : '') + (r.won ? ' <small class="won">' + M.fmt(r.won) + '원</small>' : '') +
         '<div class="mbar"><i style="width:' + pct + '%"></i></div><small>' + (ok ? '지금 바꿀 수 있어요!' : (r.price - P.fp) + '점 더 모으면 돼요') + '</small></div>' +
         '<button class="btn ' + (ok ? 'primary' : 'ghost') + '" data-redeem="' + r.id + '"><img src="img/flower-point.png" alt="">' + M.fmt(r.price) + '</button></div>';
-    }).join('') + (P.rewards.length ? '' : '<p class="hint">아직 등록된 선물이 없어요. 남편에게 등록을 부탁해 보세요.</p>') + '</div>';
+    }).join('') + (P.rewards.length ? '' : '<p class="hint">아직 등록된 선물이 없어요. ' + M.who('A') + '에게 등록을 부탁해 보세요.</p>') + '</div>';
     var reqs = (P.requests || []).filter(function (q) { return q.status === 'wait'; });
     h += '<button class="btn wide req-btn" id="sReq"><img src="img/giftcard.png" alt="">갖고 싶은 선물 신청하기</button>';
     if (reqs.length) h += '<div class="list reqs">' + reqs.map(function (q) {
-      return '<div class="hist">' + q.e + ' <b>' + esc(q.name) + '</b>' + (q.won ? ' · ' + M.fmt(q.won) + '원' : '') + (q.link ? ' <button class="lnk" data-link="' + esc(q.link) + '">🔗</button>' : '') + ' <small>남편 확인 기다리는 중</small></div>';
+      return '<div class="hist">' + q.e + ' <b>' + esc(q.name) + '</b>' + (q.won ? ' · ' + M.fmt(q.won) + '원' : '') + (q.link ? ' <button class="lnk" data-link="' + esc(q.link) + '">🔗</button>' : '') + ' <small>' + M.who('A') + ' 확인 기다리는 중</small></div>';
     }).join('') + '</div>';
     h += '<h3 class="sec">🛒 아이템</h3><div class="list">' + ITEMS.map(function (it) {
       return '<button class="litem" data-buy="' + it.id + '"><span class="le">' + it.e + '</span><span class="ln">' + it.name + (it.id === 'freeze' ? ' <small class="own">' + P.freeze + '개 있음</small>' : '') + '<small>' + it.desc + '</small></span><span class="lp"><img src="img/coin.png" alt="">' + it.price + '</span></button>';
@@ -43,11 +43,11 @@
   function redeem(id) {
     var P = M.P, r = P.rewards.filter(function (x) { return x.id === id; })[0]; if (!r) return;
     if (P.fp < r.price) { M.toast('꽃 포인트가 ' + (r.price - P.fp) + '점 부족해요. 황금 꽃을 키워 보세요 🌸'); return; }
-    M.confirm(r.e + ' ' + esc(r.name), '<img class="inl" src="img/flower-point.png" alt="">' + M.fmt(r.price) + '점으로 바꿀까요?<br>바꾼 뒤 남편에게 쿠폰을 보여 주면 선물을 받을 수 있어요.', '바꾸기', function () {
+    M.confirm(r.e + ' ' + esc(r.name), '<img class="inl" src="img/flower-point.png" alt="">' + M.fmt(r.price) + '점으로 바꿀까요?<br>바꾼 뒤 ' + M.who('A') + '에게 쿠폰을 보여 주면 선물을 받을 수 있어요.', '바꾸기', function () {
       if (!M.spend('fp', r.price)) return;
       P.coupons.push({ id: 'c' + Date.now(), rid: r.id, e: r.e, name: r.name, price: r.price, at: Date.now(), status: 'wait' });
       M.save(); M.sfx('win'); M.buzz([30, 40, 30]);
-      M.modal('<div class="center ticket"><div class="tbig">' + r.e + '</div><h3>' + esc(r.name) + '</h3><p>쿠폰이 생겼어요! 🎉<br>남편에게 이 화면을 보여 주세요.</p><p class="hint">남편이 관리자 메뉴에서 ‘지급 완료’를 누르면 끝나요.</p><button class="btn primary wide" data-close>확인</button></div>');
+      M.modal('<div class="center ticket"><div class="tbig">' + r.e + '</div><h3>' + esc(r.name) + '</h3><p>쿠폰이 생겼어요! 🎉<br>' + M.who('A') + '에게 이 화면을 보여 주세요.</p><p class="hint">' + M.whoJ('A', '이', '가') + ' 관리자 메뉴에서 ‘지급 완료’를 누르면 끝나요.</p><button class="btn primary wide" data-close>확인</button></div>');
       rerender();
     });
   }
@@ -64,7 +64,7 @@
   function safeLink(u) { u = String(u || '').trim(); return /^https?:\/\/[^\s<>"']+$/i.test(u) ? u : ''; }
   function requestSheet() {
     var rate = M.P.admin.rate || 10, pick = '🎁';
-    var d = M.modal('<h3>🙋 갖고 싶은 선물 신청</h3><p class="hint">남편이 확인하면 선물 목록에 올라가요. 가격을 적으면 필요한 꽃 포인트를 자동으로 계산해요.</p>' +
+    var d = M.modal('<h3>🙋 갖고 싶은 선물 신청</h3><p class="hint">' + M.whoJ('A', '이', '가') + ' 확인하면 선물 목록에 올라가요. 가격을 적으면 필요한 꽃 포인트를 자동으로 계산해요.</p>' +
       '<label class="fld">무엇을 갖고 싶어요?<input id="rqName" maxlength="40" placeholder="예: 핸드크림"></label>' +
       '<label class="fld">가격 (원, 몰라도 괜찮아요)<input id="rqWon" type="number" inputmode="numeric" min="0" placeholder="예: 12000"></label>' +
       '<label class="fld">상품 링크 (쿠팡 등, 선택)<input id="rqLink" inputmode="url" placeholder="https://"></label>' +
@@ -81,7 +81,7 @@
       if (raw && !link) { M.toast('링크는 https:// 로 시작하는 주소만 넣을 수 있어요'); return; }
       M.P.requests = M.P.requests || [];
       M.P.requests.push({ id: 'q' + Date.now(), name: name, won: Math.max(0, parseInt(d.querySelector('#rqWon').value, 10) || 0), link: link, e: pick, at: Date.now(), status: 'wait' });
-      M.save(); d.close(); M.sfx('pop'); M.toast('🙋 신청했어요! 남편이 확인하면 선물 목록에 올라가요'); rerender();
+      M.save(); d.close(); M.sfx('pop'); M.toast('🙋 신청했어요! ' + M.whoJ('A', '이', '가') + ' 확인하면 선물 목록에 올라가요'); rerender();
     });
   }
   function openLink(u) { u = safeLink(u); if (!u) return; try { window.open(u, '_blank', 'noopener'); } catch (e) {} }
@@ -90,13 +90,13 @@
   M.askPin = function (title, fn) {
     var P = M.P;
     if (!P.admin.pin) { makePin(fn); return; }
-    pinPad(title || '관리자 PIN', '남편이 정한 4자리 숫자를 넣어 주세요', function (v, d) {
+    pinPad(title || '관리자 PIN', '' + M.whoJ('A', '이', '가') + ' 정한 4자리 숫자를 넣어 주세요', function (v, d) {
       if (M.hashPin(v) === P.admin.pin) { d.close(); fn(); return true; }
       return false;
     });
   };
   function makePin(fn) {
-    pinPad('관리자 PIN 만들기', '남편만 아는 4자리 숫자를 정해 주세요.<br>선물 등록과 지급 승인에 써요.', function (v1, d1) {
+    pinPad('관리자 PIN 만들기', '' + M.who('A') + '만 아는 4자리 숫자를 정해 주세요.<br>선물 등록과 지급 승인에 써요.', function (v1, d1) {
       d1.close();
       pinPad('한 번 더 입력', '같은 숫자를 다시 넣어 주세요', function (v2, d2) {
         if (v1 !== v2) return false;
@@ -152,7 +152,7 @@
   var ADMIN = {
     req: function () {
       var P = M.P, rate = P.admin.rate || 10, list = (P.requests || []).filter(function (q) { return q.status === 'wait'; });
-      if (!list.length) return '<p class="hint center">아내가 신청한 선물이 없어요.</p>';
+      if (!list.length) return '<p class="hint center">' + M.whoJ('L', '이', '가') + ' 신청한 선물이 없어요.</p>';
       return '<p class="hint">포인트는 가격 ÷ ' + rate + '원으로 계산했어요. 고쳐서 승인할 수 있어요.</p>' + list.map(function (q) {
         return '<div class="acoupon req" data-qid="' + q.id + '"><span class="ce">' + q.e + '</span><div class="an"><b>' + esc(q.name) + '</b><small>' + (q.won ? M.fmt(q.won) + '원' : '가격 모름') + ' · ' + fmtDate(q.at) + (q.link ? ' · <button class="lnk" data-link="' + esc(q.link) + '">🔗 링크</button>' : '') + '</small>' +
           '<label class="ptl">필요 포인트 <input class="qpts" type="number" inputmode="numeric" min="1" value="' + Math.max(1, Math.round((q.won || 3000) / rate)) + '"></label></div>' +
@@ -197,7 +197,7 @@
         '<p class="hint">하루에 레슨 5판 정도 하면 꽃 포인트를 30점 안팎 모아요. 1점 = 10원이면 하루 300원어치예요.</p>' +
         '<label class="fld">주간 목표(주 5일 공부) 보너스 꽃 포인트<input id="wBonus" type="number" inputmode="numeric" min="0" max="1000" value="' + P.admin.weekBonus + '"></label>' +
         '<button class="btn wide" data-act="saveW">저장</button>' +
-        '<button class="btn wide" data-act="remote">👨‍👩 가족 연결 (남편 폰과 잇기)' + (M.Family && M.Family.state().ready ? ' ✔' : '') + '</button>' +
+        '<button class="btn wide" data-act="remote">👨‍👩 가족 연결 (' + M.who('A') + ' 폰과 잇기)' + (M.Family && M.Family.state().ready ? ' ✔' : '') + '</button>' +
         '<button class="btn wide" data-act="pin">PIN 바꾸기</button>' +
         '<button class="btn wide" data-act="import">백업 파일 불러오기</button>' +
         '<p class="hint">백업 파일을 불러오면 지금 기록이 그 파일 내용으로 바뀌어요.</p>';
@@ -257,7 +257,7 @@
   M.showGifts = function () {
     var g = M.P.gifts.shift(); if (!g) return;
     M.save();
-    var d = M.openChest({ fp: g.fp }, '💝 남편이 보낸 칭찬 선물');
+    var d = M.openChest({ fp: g.fp }, '💝 ' + M.whoJ('A', '이', '가') + ' 보낸 칭찬 선물');
     var p = document.createElement('p'); p.className = 'gmsg'; p.textContent = '“' + g.msg + '”';
     d.querySelector('h3').after(p);
     return d;

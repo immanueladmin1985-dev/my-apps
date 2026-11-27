@@ -62,22 +62,33 @@
   M.petFullPct = function () { return Math.min(100, Math.round(M.petFull() / FULL_MAX * 100));
   };
   M.petStage = function () { var l = M.P.pet.lv; return l >= 10 ? 3 : l >= 5 ? 2 : 1; };
+  // 내 캐릭터: P.look = { ch: 'rabbit'(자라는 토끼) | 'rabbit1'~'rabbit3'(크기 고정 토끼) | 주민 id, grow: 자라며 모습 바뀌기 }
+  M.look = function () { var l = M.P.look || {}; var ch = l.ch || 'rabbit'; return { ch: ch, grow: ch === 'rabbit' && l.grow !== false }; };
+  M.isRabbit = function () { return M.look().ch.indexOf('rabbit') === 0; };
+  M.avStage = function () { var l = M.look(); if (l.ch === 'rabbit') return l.grow ? M.petStage() : 1; var m = /^rabbit(\d)$/.exec(l.ch); return m ? +m[1] : 1; };
+  // 마을에서 걷는 그림 이름 (토끼는 걷는 두 장, 주민 모습은 방향마다 한 장)
+  M.avName = function (view, frame, ch, st) {
+    ch = ch || M.look().ch; st = st || M.avStage();
+    return ch.indexOf('rabbit') === 0 ? 'ch-rabbit' + st + '-' + view + (frame || 1) : 'ch-' + ch + '-' + view;
+  };
+  M.LOOKS = ['rabbit', 'rabbit1', 'rabbit2', 'rabbit3', 'dog', 'cat', 'bear', 'panda', 'fox', 'penguin', 'lion', 'monkey', 'elephant', 'koala', 'hamster', 'squirrel', 'chick', 'duck', 'owl', 'otter', 'deer', 'sheep', 'hedgehog', 'camel', 'mole'];
   function needExp(lv) { return 15 + lv * 10; }
   // bare: 옷을 입지 않은 모습 (자랐을 때 보여 주는 그림 등)
   M.petImg = function (face, bare) {
-    if (!bare && M.P.pet.wear && wearOf(M.P.pet.wear)) return 'img/dress-' + M.P.pet.wear + '.png';
     face = face || (M.petFull() < 30 ? 'sad' : 'normal');
-    return 'img/pet-' + M.petStage() + '-' + face + '.png';
+    if (!M.isRabbit()) return 'img/w/ch-' + M.look().ch + '-' + (face === 'happy' ? 'happy' : 'front') + '.png';   // 고른 주민 모습 (옷·자람 없음)
+    if (!bare && M.P.pet.wear && wearOf(M.P.pet.wear)) return 'img/dress-' + M.P.pet.wear + '.png';
+    return 'img/pet-' + M.avStage() + '-' + face + '.png';
   };
   M.petExp = function (n) { addExp(n); };
   function addExp(n) {
-    var p = M.P.pet, before = M.petStage(), up = false;
+    var p = M.P.pet, before = M.avStage(), up = false;
     p.exp += n;
     while (p.exp >= needExp(p.lv) && p.lv < 30) { p.exp -= needExp(p.lv); p.lv++; up = true; }
     M.save();
     if (up) {
       M.sfx('win');
-      var grown = M.petStage() !== before;
+      var grown = M.avStage() !== before;
       M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy', true) + '" alt=""><h3>' + (grown ? esc(M.j(M.P.petName, '이가', '가')) + ' 자랐어요!' : '레벨 업! Lv.' + p.lv) + '</h3><p>이제 레슨에서 물방울을 <b>' + M.petBonus() + '%</b> 더 받아요.</p><button class="btn primary wide" data-close>좋아요</button></div>');
     }
   }
@@ -217,13 +228,13 @@
   var EYES = { '1-normal': [39.5, 51.8, 23.8], '1-happy': [44, 40.5, 20.2], '1-sad': [39.6, 56, 23.7], '2-normal': [46.3, 48.5, 23.1], '2-happy': [44.8, 43.9, 21.9],
     '2-sad': [49.1, 49.3, 23.2], '3-normal': [44.1, 44.5, 21.1], '3-happy': [41.1, 39.4, 20.3], '3-sad': [51.6, 50.7, 18.6] };
   function accStyle(a, face) {
-    var st = M.petStage();
+    var st = M.avStage();
     if (a.eyes) { var e = EYES[st + '-' + (face || 'normal')] || EYES[st + '-normal']; return 'left:' + e[0] + '%;top:' + e[1] + '%;width:' + (e[2] * 2.1).toFixed(1) + '%'; }
     var dy = st === 1 ? 6 : st === 2 ? 3 : 0;   // 아기 토끼는 머리가 조금 낮다
     return 'left:' + a.x + '%;top:' + (a.y + dy) + '%;width:' + a.w + '%';
   }
   function accHtml(face) {
-    if (M.P.pet.wear) return '';
+    if (M.P.pet.wear || !M.isRabbit()) return '';
     var a = ACCS.filter(function (x) { return x.id === M.P.pet.acc; })[0]; if (!a) return '';
     return '<img class="acc" id="petAcc" src="img/acc-' + a.id + '.png" alt="" style="' + accStyle(a, face) + '">';
   }
@@ -242,7 +253,7 @@
       var R = P.room, ow = R.walls || {}, oa = P.pet.accs || {};
       if (tab === 'seed') { M.seedTab(d.querySelector('#fList'), d.querySelector('#fHint')); return; }
       if (tab === 'ride') {
-        var grown = M.petStage() >= 3, own = !!P.bike;
+        var grown = M.isRabbit() && M.avStage() >= 3, own = !!P.bike;
         d.querySelector('#fHint').textContent = '마을에서 멀리 갈 때나 🗺️ 지도에서 고른 곳으로 갈 때 자전거를 타고 빨리 가요';
         d.querySelector('#fList').innerHTML = '<div class="fgrid"><button class="fcard' + (grown ? '' : ' lock') + '" data-bike><img src="img/w/it-bike.png" alt=""><b>분홍 자전거</b>' + (own ? '<small>가지고 있어요 ✔</small>' : grown ? '<small class="price"><img src="img/coin.png" alt="">1500</small>' : '<small>' + esc(P.petName) + '가 다 자라면 탈 수 있어요 (Lv.10)</small>') + '</button></div>';
         d.querySelector('#fList').onclick = function (e) {
@@ -264,6 +275,9 @@
         }).join('') + '</div>' +
           '<h4>🎨 벽 색</h4><div class="tints">' + TINTS.map(function (t, i) { return '<button class="tint' + ((R.wallTint || 0) === i ? ' on' : '') + '" data-wt="' + i + '"><i style="background:' + t[2] + '"></i><small>' + t[1] + '</small></button>'; }).join('') + '</div>' +
           '<h4>🎨 바닥 색</h4><div class="tints">' + TINTS.map(function (t, i) { return '<button class="tint' + ((R.floorTint || 0) === i ? ' on' : '') + '" data-ft2="' + i + '"><i style="background:' + t[2] + '"></i><small>' + t[1] + '</small></button>'; }).join('') + '</div><p class="hint">색은 공짜로 몇 번이든 바꿀 수 있어요. 무늬는 위에서 골라요.</p>';
+      } else if (!M.isRabbit()) {   // 고른 캐릭터가 토끼가 아니면 옷장은 쉰다
+        d.querySelector('#fHint').textContent = '옷장 옷은 토끼 캐릭터에게만 맞아요. 설정 › 가족 호칭과 캐릭터에서 토끼를 고르면 입을 수 있어요';
+        d.querySelector('#fList').innerHTML = '<div class="center"><img src="' + M.petImg('happy') + '" alt="" style="width:120px"></div>';
       } else {
         var ow2 = P.pet.wears || {};
         d.querySelector('#fHint').innerHTML = '<span class="fcats">' + Object.keys(WCAT).map(function (k) { return '<button data-wc="' + k + '" class="' + (k === wcat ? 'on' : '') + '">' + WCAT[k] + '</button>'; }).join('') + '</span>';
