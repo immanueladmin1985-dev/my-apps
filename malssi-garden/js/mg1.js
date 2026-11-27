@@ -168,10 +168,11 @@
     { id: 'cake', e: '🍰', ko: '케이크', ja: 'ケーキ', en: ['piece of cake', 'pieces of cake'], zh: '蛋糕', zm: '块' },
     { id: 'cookie', e: '🍪', ko: '쿠키', img: 'dish-seedcookie', ja: 'クッキー', en: ['cookie', 'cookies'], zh: '饼干', zm: '块' }
   ];
-  var REPLY = { ja: ['かしこまりました。', '알겠습니다(주문 받을 때).'], en: ['Sure, coming right up!', '네, 바로 준비할게요!'], zh: ['好的，马上来！', '네, 바로 나와요!'] };
+  var REPLY = { kor: ['네, 바로 준비할게요!', ''], math: ['네, 바로 준비할게요!', ''], ja: ['かしこまりました。', '알겠습니다(주문 받을 때).'], en: ['Sure, coming right up!', '네, 바로 준비할게요!'], zh: ['好的，马上来！', '네, 바로 나와요!'] };
   function orderText(lang, o) {
     var it = o.m, n = o.n, t = o.t, sz = o.s ? { s: 0, m: 1, l: 2 }[o.s] : -1;
     if (lang === 'ja') return (sz >= 0 ? ['S', 'M', 'L'][sz] + 'サイズの' : '') + (t ? (t === 'hot' ? 'ホット' : 'アイス') : '') + it.ja + 'を' + ['ひとつ', 'ふたつ', 'みっつ'][n - 1] + (o.v ? 'おねがいします。' : 'ください。');
+    if (lang === 'kor' || lang === 'math') return (t ? (t === 'hot' ? '따뜻한 ' : '차가운 ') : '') + (sz >= 0 ? ['작은 ', '보통 ', '큰 '][sz] : '') + it.ko + ' ' + ['한', '두', '세'][n - 1] + (it.zm === '杯' ? ' 잔' : ' 개') + (o.v ? ' 부탁해요.' : ' 주세요.');
     if (lang === 'zh') return (o.v ? '请给我' : '我要') + ['一', '两', '三'][n - 1] + (sz >= 0 ? ['小', '中', '大'][sz] : '') + it.zm + (t ? (t === 'hot' ? '热' : '冰') : '') + it.zh + '。';
     var w = (sz >= 0 ? ['small ', 'medium ', 'large '][sz] : '') + (t ? (t === 'hot' ? 'hot ' : 'iced ') : '') + it.en[n > 1 ? 1 : 0], num = ['one', 'two', 'three'][n - 1];
     return o.v ? 'Can I have ' + num + ' ' + w + ', please?' : num.charAt(0).toUpperCase() + num.slice(1) + ' ' + w + ', please.';

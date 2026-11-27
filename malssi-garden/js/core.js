@@ -142,6 +142,7 @@
     var g = M.P.garden;
     if (!Array.isArray(g.cells)) g.cells = [];   // 밭 줄 수 맞추기는 garden.js 가 한다
     migrate(M.P); migrate3(M.P);
+    Object.keys(window.LANGS || {}).forEach(function (c) { if (!M.P.prog[c]) M.P.prog[c] = {}; });   // 새 과목(아이 모드 수학·국어·영어)도 기록 자리를 만든다
     if (M.applyFonts) M.applyFonts();
   };
   // 단계 번호가 바뀐 판(v1 → v2)의 진행 기록을 옮긴다

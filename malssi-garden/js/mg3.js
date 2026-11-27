@@ -55,7 +55,8 @@
     zh: [['一个', 'yí ge'], ['两个', 'liǎng ge'], ['三个', 'sān ge'], ['四个', 'sì ge'], ['五个', 'wǔ ge'], ['六个', 'liù ge'], ['七个', 'qī ge'], ['八个', 'bā ge'], ['九个', 'jiǔ ge'], ['十个', 'shí ge']],
     en: [['one peanut'], ['two peanuts'], ['three peanuts'], ['four peanuts'], ['five peanuts'], ['six peanuts'], ['seven peanuts'], ['eight peanuts'], ['nine peanuts'], ['ten peanuts']]
   };
-  function numItem(lang, k) { var x = NUM[lang][k - 1]; return { t: x[0], r: lang === 'zh' ? x[1] : '', k: k + '개', lang: lang, say: x[0] }; }
+  NUM.kor = NUM.math = ['한 개', '두 개', '세 개', '네 개', '다섯 개', '여섯 개', '일곱 개', '여덟 개', '아홉 개', '열 개'].map(function (w) { return [w]; }); NUM.ken = NUM.en;
+  function numItem(lang, k) { var x = (NUM[lang] || NUM.en)[k - 1]; return { t: x[0], r: lang === 'zh' ? x[1] : '', k: k + '개', lang: lang, say: x[0] }; }
   function pile(k) { return '<span class="gpile">' + ('<img src="' + WI + 'mg4-peanut.png" alt="">').repeat(k) + '</span>'; }
   G.seeds = function (g) {
     var lang = M.P.lang, n = 0, combo = 0;

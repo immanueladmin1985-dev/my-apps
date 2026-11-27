@@ -188,7 +188,7 @@
         '<h4>최근 2주 레슨 수</h4><div class="chart">' + ds.map(function (x) {
           return '<div class="cb"><i style="height:' + Math.round(x.l / mx * 100) + '%"></i><span>' + (x.l || '') + '</span><small>' + (+x.d.slice(8)) + '</small></div>';
         }).join('') + '</div>' +
-        '<h4>익힌 단어</h4><div class="astats">' + ['ja', 'en', 'zh'].map(function (c) { var L = window.LANGS[c]; return '<div><b>' + M.learnedCount(c) + '개</b><small>' + L.flag + ' ' + L.name + '</small></div>'; }).join('') + '</div>' +
+        '<h4>익힌 단어</h4><div class="astats">' + M.langList().map(function (c) { var L = window.LANGS[c]; return '<div><b>' + M.learnedCount(c) + '개</b><small>' + L.flag + ' ' + L.name + '</small></div>'; }).join('') + '</div>' +
         '<p class="hint">지금까지 받은 꽃 포인트 상황: 보유 ' + M.fmt(P.fp) + '점, 지급한 선물 ' + P.coupons.filter(function (c) { return c.status === 'done'; }).length + '개</p>';
     },
     etc: function () {

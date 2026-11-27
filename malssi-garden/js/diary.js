@@ -43,7 +43,7 @@
 
   M.diaryPageHtml = pageHtml;
   M.diaryWrite = function () {
-    var lang = M.P.lang, cands = candidates(lang);
+    var lang = M.P.lang === 'math' ? 'kor' : M.P.lang, cands = candidates(lang);   // 수학 시간에는 국어 문장으로 일기를 쓴다
     if (!cands.length) { M.toast('문장을 조금 더 배우면 일기를 쓸 수 있어요'); return; }
     if (todayPage()) { M.toast('오늘 일기는 이미 썼어요. 일기장에서 볼 수 있어요'); M.diaryBook(); return; }
     var st = { wx: null, sn: null, stamps: [] };

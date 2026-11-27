@@ -99,7 +99,8 @@
     el.classList.remove('hidden'); document.body.classList.add('in-mini');
     cur = { m: m, score: 0, alive: true, timers: [], focus: opt && opt.focus }; M.voiceWho = 'c:' + m.cust;
     $('mQuit').onclick = function () { M.confirm('그만할까요?', '지금까지 한 것은 보상이 없어요.', '그만하기', function () { stop(); }); };
-    GAMES[m.id](cur);
+    var ALT = M.P.lang === 'math' ? { song: 'memory', cloze: 'spicy', sleep: 'banana', bamboo: 'riddle', dict: 'fetch', echo: 'fish', cafe: 'shell' } : {};   // 수학은 문장·말하기·철자 대신 문제 풀이 놀이로
+    (GAMES[ALT[m.id]] || GAMES[m.id])(cur);
   }
   function stop() {
     if (cur) { cur.alive = false; cur.timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); if (cur.raf) cancelAnimationFrame(cur.raf); }
@@ -619,7 +620,7 @@
   // 시장 놀이: 값을 듣고 같은 숫자 동전을 고른다 (10번, 숫자가 점점 커진다)
   GAMES.bazaar = function (g) {
     var lang = M.P.lang, n = 0, combo = 0;
-    var unit = function (v) { return lang === 'ja' ? v + '円' : lang === 'zh' ? v + '块钱' : v + ' dollars'; };
+    var unit = function (v) { return lang === 'ja' ? v + '円' : lang === 'zh' ? v + '块钱' : (lang === 'kor' || lang === 'math') ? v + '원' : v + ' dollars'; };
     function round() {
       if (!g.alive || !$('mBody')) return;
       if (n >= 10) { finish(g, 140); return; }

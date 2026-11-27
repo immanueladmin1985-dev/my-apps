@@ -114,7 +114,7 @@
   // 손님이 값을 말하면 100·10·1 동전을 쟁반에 올려 값을 맞춘다
   G.bazaar = function (g) {
     var lang = M.P.lang, n = 0, combo = 0, tts = M.ttsOK ? M.ttsOK() : true;
-    var unit = function (v) { return lang === 'ja' ? v + '円' : lang === 'zh' ? v + '块钱' : v + ' dollars'; };
+    var unit = function (v) { return lang === 'ja' ? v + '円' : lang === 'zh' ? v + '块钱' : (lang === 'kor' || lang === 'math') ? v + '원' : v + ' dollars'; };
     var guests = ['bear', 'squirrel', 'chick', 'hedgehog', 'panda', 'fox', 'koala', 'hamster'];
     function round() {
       if (!alive(g)) return;

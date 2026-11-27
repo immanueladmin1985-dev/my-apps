@@ -24,11 +24,12 @@
   function options(it, field) {
     var seen = {}; seen[it[field]] = 1;
     var out = [it], st = stageOf(it);
-    var add = function (list) { M.shuffle(list).forEach(function (x) { if (out.length < 4 && !seen[x[field]] && taught(x)) { seen[x[field]] = 1; out.push(x); } }); };
+    var same = function (x) { return field === 't' && x.k === it.k; };   // 답이 같은 다른 문제(3+4, 5+2)는 보기에 넣지 않는다
+    var add = function (list) { M.shuffle(list).forEach(function (x) { if (out.length < 4 && !seen[x[field]] && !same(x) && taught(x)) { seen[x[field]] = 1; out.push(x); } }); };
     add(st.items);
     add(pool(it.lang, it.kana).filter(function (x) { var s2 = stageOf(x); return s2 && s2.idx <= st.idx; }));
     // 처음 몇 단계는 배운 낱말이 적어서 보기가 2개뿐일 수 있다. 같은 단계의 아직 안 배운 낱말로 3개까지 채운다
-    if (out.length < 3) M.shuffle(st.items).forEach(function (x) { if (out.length < 3 && !seen[x[field]]) { seen[x[field]] = 1; out.push(x); } });
+    if (out.length < 3) M.shuffle(st.items).forEach(function (x) { if (out.length < 3 && !seen[x[field]] && !same(x)) { seen[x[field]] = 1; out.push(x); } });
     return M.shuffle(out);
   }
   function pickQ(it, type) {
@@ -123,6 +124,17 @@
       M.shuffle(stage.sents).forEach(function (s) { var pr = sentPair(s, lang); qs = qs.concat(Array.isArray(pr) ? pr : [pr]); });
       return qs;
     }
+    if (stage && stage.drill) {
+      // 학습지(아이 수학): 알아 두기 카드 → 10문제 (대부분 답 고르기, 가끔 거꾸로) → 짝 맞추기
+      if (stage.tip) qs.push({ type: 'rule', stage: stage });
+      var di = M.shuffle(stage.items), ten = [];
+      while (ten.length < 10 && di.length) ten = ten.concat(M.shuffle(di));
+      ten.slice(0, 10).forEach(function (it, k) { qs.push(pickQ(it, k === 4 || k === 8 ? 'target' : 'meaning')); });
+      var dk = {}, mt = M.shuffle(stage.items).filter(function (x) { if (dk[x.k]) return false; dk[x.k] = 1; return true; }).slice(0, 5);
+      if (mt.length >= 4) qs.splice(Math.min(qs.length, 7), 0, { type: 'match', items: mt });
+      return qs;
+    }
+    if (stage && stage.tip && !stage.gram) qs.push({ type: 'rule', stage: stage });   // 아이 과목: 알아 두기 카드
     if (stage) {
       var items = M.shuffle(stage.items);
       var isNew = function (it) { return !M.P.srs[M.itemKey(it)]; };
@@ -251,6 +263,8 @@
     } else if (q.type === 'readcard') {
       var rs = q.stage;
       h = '<div class="qt"><span class="newtag">글을 읽어 봐요</span> <button class="say mini" data-readall="1">▶ 전체 듣기</button></div>' + readHtml(rs, true);
+    } else if (q.type === 'rule' && !q.stage.xf && !q.stage.conv) {
+      h = '<div class="qt"><span class="newtag">알아 두기</span></div><div class="rule kidtip lang-' + q.stage.lang + '"><h3>' + esc(q.stage.title) + '</h3><p>💡 ' + esc(q.stage.tip || '') + '</p></div>';
     } else if (q.type === 'rule') {
       var g = q.stage;
       h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
@@ -269,7 +283,7 @@
         '<button class="tt sm" data-say="' + esc(sn.say) + '">' + M.fz(sn.t, sn.lang) + '</button>' +
         '<div class="gls">' + sn.w.map(function (w, wi) { var g = (sn.g && sn.g[wi]) || gloss(w, sn.lang); return '<button class="gl" data-say="' + esc(stg.kana && sn.lang === 'zh' ? '' : w) + '"><b>' + M.fz(w, sn.lang) + '</b><small>' + esc(g || '·') + '</small></button>'; }).join('') + '</div>' +
         '<div class="tsay">' + sayBtn(sn.say, true) + '</div>' +
-        (!stg.kana && window.ORDER_TIP ? '<div class="tip">💡 ' + esc(window.ORDER_TIP[sn.lang]) + '</div>' : '') + '</div>';
+        (!stg.kana && window.ORDER_TIP && window.ORDER_TIP[sn.lang] ? '<div class="tip">💡 ' + esc(window.ORDER_TIP[sn.lang]) + '</div>' : '') + '</div>';
     } else if (q.type === 'meaning') {
       h += '<div class="qcard"><div class="face lang-' + it.lang + '"><div class="ft' + sizeCls(it.t) + '">' + (jaKanji(it) ? rubyW(it) : esc(it.t)) + '</div>' + (it.r && !it.kana && !jaKanji(it) ? '<div class="fr">' + esc(it.r) + '</div>' : '') + '</div>' + sayBtn(it.say) + '</div>';
       h += '<div class="opts">' + q.opts.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + (o.e ? '<span class="oe">' + o.e + '</span>' : '') + '<span>' + esc(o.k) + '</span></button>'; }).join('') + '</div>';

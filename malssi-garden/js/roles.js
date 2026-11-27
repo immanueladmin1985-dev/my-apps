@@ -17,8 +17,13 @@
   var ADULT_R = ['어깨 안마 10분', '설거지 면제권', '커피 기프티콘', '케이크 쿠폰', '외식 한 번', '갖고 싶은 선물'];
   var KID_R = [['🍦', '아이스크림 하나', 100], ['🛝', '놀이터 30분 더', 200], ['📺', '만화 한 편 더', 300], ['🍪', '좋아하는 간식', 500], ['🎮', '게임 30분', 800], ['🧸', '장난감 고르기', 3000]];
   // 켜면: 집 모양을 닌자 도장으로, 선물 목록이 처음 그대로라면 아이용으로 바꾼다 (직접 고친 목록은 그대로 둔다)
+  M.KID_LANGS = ['math', 'kor', 'ken']; M.ADULT_LANGS = ['ja', 'en', 'zh'];
+  M.langList = function () { return M.P && M.P.kid ? M.KID_LANGS : M.ADULT_LANGS; };
   M.setKid = function (on) {
     var P = M.P; P.kid = !!on;
+    // 아이 모드는 수학·국어·영어, 끄면 원래 배우던 말로 돌아간다
+    if (on && M.KID_LANGS.indexOf(P.lang) < 0) { P.adultLang = P.lang; P.lang = 'math'; }
+    if (!on && M.KID_LANGS.indexOf(P.lang) >= 0) P.lang = P.adultLang || 'ja';
     if (on) {
       P.house = P.house || { lv: 1 }; if (!P.house.style || P.house.style === 'bunny') P.house.style = 'dojo';
       var names = (P.rewards || []).map(function (r) { return r.name; });

@@ -356,7 +356,7 @@
     var P = M.P, out = [], t = M.today();
     for (var i = 13; i >= 0; i--) { var dd = M.addDays(t, -i); out.push({ d: dd, l: (P.log[dd] || {}).l || 0 }); }
     var cp = function (c) { return { id: c.id, e: c.e, name: c.name, price: c.price, at: c.at, status: c.status, doneAt: c.doneAt || 0 }; };
-    var learned = {}; ['ja', 'en', 'zh'].forEach(function (c) { try { learned[c] = M.learnedCount(c); } catch (e) { learned[c] = 0; } });
+    var learned = {}; M.langList().forEach(function (c) { try { learned[c] = M.learnedCount(c); } catch (e) { learned[c] = 0; } });
     var W = {}; try { W = M.weekState(); } catch (e) {}
     return {
       pet: P.petName, fp: P.fp, coins: P.coins, streak: P.streak, best: P.best, lessons: (P.stats && P.stats.lessons) || 0, week: W.days || 0,
@@ -411,7 +411,7 @@
       M.hmarketOpen(null);
     } else if (c.t === 'quiz' && Array.isArray(c.words)) {
       var ws = c.words.slice(0, 10).filter(function (w) { return w && typeof w.t === 'string' && typeof w.k === 'string'; }).map(function (w) { return { t: w.t.slice(0, 40), k: w.k.slice(0, 60), r: String(w.r || '').slice(0, 60) }; });
-      if (ws.length >= 3) { P.quizIn = { lang: ['ja', 'en', 'zh'].indexOf(c.lang) >= 0 ? c.lang : P.lang, words: ws, msg: String(c.msg || '').slice(0, 60), at: c.at || Date.now() }; if (M.coupleQuizNotice) setTimeout(M.coupleQuizNotice, 800); }
+      if (ws.length >= 3) { P.quizIn = { lang: window.LANGS[c.lang] ? c.lang : P.lang, words: ws, msg: String(c.msg || '').slice(0, 60), at: c.at || Date.now() }; if (M.coupleQuizNotice) setTimeout(M.coupleQuizNotice, 800); }
     } else if (c.t === 'dyreply' && typeof c.d === 'string') {   // 남편이 그림일기에 단 하트·답글
       var pg = (P.diary || []).filter(function (d) { return d.d === c.d; })[0];
       if (pg) { pg.rp = { h: !!c.h, m: String(c.m || '').slice(0, 60), at: c.at || Date.now() }; M.toast('💌 ' + M.j(M.Family.mateName(), '이', '가') + ' 그림일기에 ' + (pg.rp.m ? '답글을 달았어요' : '하트를 보냈어요')); }
@@ -496,7 +496,7 @@
         var mx = Math.max(1, Math.max.apply(null, S.days.map(function (x) { return x.l; })));
         return '<div class="astats"><div><b>' + S.streak + '일</b><small>연속 공부</small></div><div><b>' + S.best + '일</b><small>최고 기록</small></div><div><b>' + S.week + '/7</b><small>이번 주</small></div><div><b>' + S.lessons + '판</b><small>전체 레슨</small></div></div>' +
           '<h4>최근 2주 레슨 수</h4><div class="chart">' + S.days.map(function (x) { return '<div class="cb"><i style="height:' + Math.round(x.l / mx * 100) + '%"></i><span>' + (x.l || '') + '</span><small>' + (+String(x.d).slice(8)) + '</small></div>'; }).join('') + '</div>' +
-          '<h4>익힌 단어</h4><div class="astats">' + ['ja', 'en', 'zh'].map(function (c) { var L = window.LANGS[c]; return '<div><b>' + ((S.learned || {})[c] || 0) + '개</b><small>' + L.flag + ' ' + L.name + '</small></div>'; }).join('') + '</div>' +
+          '<h4>익힌 단어</h4><div class="astats">' + Object.keys(S.learned || { ja: 0, en: 0, zh: 0 }).filter(function (c) { return window.LANGS[c]; }).map(function (c) { var L = window.LANGS[c]; return '<div><b>' + ((S.learned || {})[c] || 0) + '개</b><small>' + L.flag + ' ' + L.name + '</small></div>'; }).join('') + '</div>' +
           '<p class="hint">보유 꽃 포인트 ' + M.fmt(S.fp) + '점 · 코인 ' + M.fmt(S.coins) + '</p>' + (S.report && M.reportHtml ? '<h4>📊 이번 주 리포트</h4>' + M.reportHtml(S.report, M.Family.mateName()) + '<button class="btn primary wide" data-qfromrep>💌 이 낱말로 ' + M.quizWord() + ' 퀴즈 내기</button>' : '');
       },
       market: function () {

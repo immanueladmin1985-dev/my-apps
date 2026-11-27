@@ -67,7 +67,7 @@
   // ---------- 배우기 지도 ----------
   var SHIFT = [0, 1, 0, -1];
   // 문법 단원(GR)은 단어 단계와 따로 진행한다 (단어를 다 끝내지 않아도 시작할 수 있다)
-  function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV' || lv === 'CO' || lv === 'RD' || lv === 'PR'; }
+  function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV' || lv === 'CO' || lv === 'RD' || lv === 'PR' || lv === 'K1' || lv === 'K2' || lv === 'K3'; }   // 아이 과목은 수준마다 따로 시작할 수 있다
   function firstOpen(L, prog, wantGr) { var i = L.stages.findIndex(function (s) { return !prog[s.id] && gr(s) === wantGr; }); return i < 0 ? L.stages.length : i; }
   var LVNAME = { PR: '발음', RD: '읽기', CO: '첫걸음', CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', HSK3: 'HSK 3급', A1: '생활 영어', A2: '생활 영어 2' };
   function renderMap(root) {
@@ -83,7 +83,7 @@
     P.ui.lv = P.ui.lv || {};
     var tab = P.ui.lv[P.lang]; if (levels.indexOf(tab) < 0) tab = cur < L.stages.length ? lvOf(L.stages[cur]) : levels[levels.length - 1];
     var h = '<div class="map theme-' + P.lang + '">' +
-      '<div class="langbar">' + ['ja', 'en', 'zh'].map(function (c) { var X = window.LANGS[c]; return '<button data-lang="' + c + '" class="' + (c === P.lang ? 'on' : '') + '">' + X.flag + ' ' + X.name + '</button>'; }).join('') + '</div>' +
+      '<div class="langbar">' + M.langList().map(function (c) { var X = window.LANGS[c]; return '<button data-lang="' + c + '" class="' + (c === P.lang ? 'on' : '') + '">' + X.flag + ' ' + X.name + '</button>'; }).join('') + '</div>' +
       '<div class="mleft">' +
       // 오늘 카드: 오늘 목표·연속 기록·이어서 하기를 한 장에 모은다
       '<div class="todaycard"><img class="tscene" src="img/bg-map-' + P.lang + '.png" alt="">' +
@@ -98,13 +98,13 @@
       '</div></div><div class="mright">' +
       '<div class="lvtabs">' + levels.map(function (lv) {
         var us = L.stages.filter(function (s) { return lvOf(s) === lv; }), dn = us.filter(function (s) { return prog[s.id]; }).length;
-        return '<button data-lv="' + esc(lv) + '" class="' + (lv === tab ? 'on' : '') + '"><b>' + esc((lv === 'CO' && P.lang === 'en' ? 'A2 회화' : LVNAME[lv]) || lv) + '</b><small>' + dn + '/' + us.length + '</small></button>';
+        return '<button data-lv="' + esc(lv) + '" class="' + (lv === tab ? 'on' : '') + '"><b>' + esc((L.lvname && L.lvname[lv]) || (lv === 'CO' && P.lang === 'en' ? 'A2 회화' : LVNAME[lv]) || lv) + '</b><small>' + dn + '/' + us.length + '</small></button>';
       }).join('') + '</div>' + (function () {
         // 아직 닿지 않은 수준: 레벨 테스트로 앞 단계를 건너뛸 수 있다
         if (gr({ lang: P.lang, unit: L.units.findIndex(function (u) { return (u.level || 'base') === tab; }) })) return '';
         var first = L.stages.findIndex(function (s) { return lvOf(s) === tab; });
         if (first < 0 || first <= cur) return '';
-        return '<button class="lvtest" data-lvtest="' + esc(tab) + '"><b>🚀 ' + esc(LVNAME[tab] || tab) + '부터 시작하고 싶다면?</b><small>레벨 테스트 15문제 · 12개 이상 맞히면 앞 단계를 건너뛰어요</small></button>';
+        return '<button class="lvtest" data-lvtest="' + esc(tab) + '"><b>🚀 ' + esc((L.lvname && L.lvname[tab]) || LVNAME[tab] || tab) + '부터 시작하고 싶다면?</b><small>레벨 테스트 15문제 · 12개 이상 맞히면 앞 단계를 건너뛰어요</small></button>';
       })() + '<div class="path">';
     var n = 0;
     L.units.forEach(function (u, ui) {
@@ -117,10 +117,10 @@
       h += '<button class="unit' + (udone ? ' udone' : '') + '"' + (udone ? ' data-unit="' + ukey + '"' : '') + '><b>' + (udone ? '✔ ' : '') + unum + '단원 · ' + esc(u.title) + '</b><small>★ ' + got + '/' + us.length * 3 + (udone ? (open ? ' ▲' : ' ▼') : '') + '</small></button>';
       if (!open) { n += us.length; return; }
       us.forEach(function (s) {
-        var cT = (tab === 'GR' || tab === 'CV' || tab === 'CO' || tab === 'RD' || tab === 'PR') ? L.stages.findIndex(function (x) { return !prog[x.id] && lvOf(x) === tab; }) : cur; if (cT < 0) cT = L.stages.length;
+        var cT = (tab === 'GR' || tab === 'CV' || tab === 'CO' || tab === 'RD' || tab === 'PR' || /^K\d$/.test(tab)) ? L.stages.findIndex(function (x) { return !prog[x.id] && lvOf(x) === tab; }) : cur; if (cT < 0) cT = L.stages.length;
         var st = prog[s.id] || 0, state = st ? 'done' : (s.idx === cT ? 'cur' : (s.idx < cT ? 'done' : 'lock'));
         var x = SHIFT[n % 4] * 62; n++;
-        var DECO = { ja: ['🌸', '🗻', '🍡', '⛩️'], en: ['🎈', '🏰', '🌷', '☕'], zh: ['🎋', '🏮', '🐼', '🥟'] }[P.lang];
+        var DECO = { ja: ['🌸', '🗻', '🍡', '⛩️'], en: ['🎈', '🏰', '🌷', '☕'], zh: ['🎋', '🏮', '🐼', '🥟'], math: ['➕', '🔢', '✖️', '📐'], kor: ['📖', '✏️', 'ㄱ', '🌱'], ken: ['🔤', '🍎', '⭐', '🎈'] }[P.lang] || ['⭐', '🌸', '🎈', '🌱'];
         var deco = n % 3 === 1 ? '<span class="deco" style="' + (x > 0 ? 'left:-' : x < 0 ? 'right:-' : (n % 2 ? 'left:-' : 'right:-')) + '95px">' + DECO[(n >> 1) % 4] + '</span>' : '';
         h += '<div class="nodewrap" style="transform:translateX(' + x + 'px)">' + deco +
           (state === 'cur' ? '<img class="mpet" src="' + M.petImg('happy') + '" alt=""><span class="go">시작!</span>' : '') +
@@ -295,7 +295,7 @@
       if (introStep === 2) {
         P.petName = (($('iName') || {}).value || '').trim() || '말랑이';
         P.lang = introData.lang; P.set.goal = introData.goal; P.started = true;
-        P.look = { ch: introData.look || 'rabbit', grow: (introData.look || 'rabbit') === 'rabbit' }; var iwv = (introData.who || '아내|남편').split('|'); M.setWho(iwv[0], iwv[1]); M.setKid(/^(아들|딸)$/.test(iwv[0]));
+        P.look = { ch: introData.look || 'rabbit', grow: (introData.look || 'rabbit') === 'rabbit' }; var iwv = (introData.who || '아내|남편').split('|'); M.setWho(iwv[0], iwv[1]); M.setKid(/^(아들|딸)$/.test(iwv[0])); if (P.kid) P.lang = 'math';
         $('view').insertBefore($('banner'), $('view').firstChild);
         M.save(); M.render();
         M.modal('<div class="center"><img class="bigpet popin" src="' + M.petImg('happy') + '" alt=""><h3>' + esc(M.j(P.petName, '과', '와')) + ' 함께 시작해요!</h3><p>첫 레슨을 끝내면 물방울을 받아요.<br>물방울로 정원에 씨앗을 뿌려 보세요 🌱</p><button class="btn primary wide" data-close>좋아요</button></div>');

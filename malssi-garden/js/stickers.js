@@ -5,7 +5,7 @@
   function dex() { return (P().gather && P().gather.dex) || {}; }
   function catN(cat, f) { var I = M.GATHER.ITEMS, d = dex(); return Object.keys(d).filter(function (k) { return I[k] && I[k].cat === cat && (!f || f(I[k])); }).length; }
   function fishN() { return Object.keys(P().fishDex || {}).length; }
-  function stars() { var n = 0; ['ja', 'en', 'zh'].forEach(function (l) { var pr = (P().prog || {})[l] || {}; Object.keys(pr).forEach(function (k) { n += +pr[k] || 0; }); }); return n; }
+  function stars() { var n = 0; Object.keys(window.LANGS).forEach(function (l) { var pr = (P().prog || {})[l] || {}; Object.keys(pr).forEach(function (k) { n += +pr[k] || 0; }); }); return n; }
   function convN() { var l = P().lang, pr = (P().prog || {})[l] || {}; return window.LANGS[l].stages.filter(function (s) { return s.conv && pr[s.id]; }).length; }
   function maxFriend() { var f = (P().garden && P().garden.friends) || {}; return Math.max.apply(null, [0].concat(Object.keys(f).map(function (k) { return f[k]; }))); }
   var LIST = [
