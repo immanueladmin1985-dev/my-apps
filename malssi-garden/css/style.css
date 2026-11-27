@@ -1966,3 +1966,40 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .ono { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; padding: 8px 12px; border-radius: 14px; background: #fff6e2; border: 2px dashed #e8c88f; }
 .ono span { font-size: .72rem; font-weight: 800; color: #b07a2a; background: #fff; border-radius: 8px; padding: 1px 6px; }
 .ono b { font-size: 1.3rem; } .ono small { color: var(--sub); }
+
+/* ====== 받은 그림 넣기 (둘째·셋째 묶음) ====== */
+.gotter .gnpc { height: 150px; } .gclam { opacity: 0; } .gclam.crack, .gclam.toss { opacity: 1; }
+.gclam.crack { left: 72%; top: 70%; }
+.gsignq { position: relative; display: flex; justify-content: center; }
+.gsignq img { width: 260px; max-width: 90%; height: 120px; object-fit: fill; }
+.gsignq > div { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); width: min(220px, 76%); height: 46%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.gsignq small { font-size: .7rem; color: #7a5a34; font-weight: 800; } .gsignq b { font-size: 1rem; color: #4b3a2a; line-height: 1.2; word-break: keep-all; }
+.gforest { background: url(../img/w/mg4-path.png) center / 160px auto, linear-gradient(#e8f6df, #c9e8b4); }
+.gstone { background: url(../img/w/mg4-stone.png) center / 100% 100% no-repeat; box-shadow: none; border-radius: 0; padding: 12px 16px 14px; min-width: 64px; text-align: center; }
+.gstone.hole { position: relative; background: none; box-shadow: none; padding: 0; width: 80px; height: 58px; }
+.gstone.hole img { width: 100%; height: 100%; object-fit: contain; } .gstone.hole i { position: absolute; inset: 0; display: grid; place-items: center; font-style: normal; color: #fff; font-weight: 800; padding-top: 8px; }
+.gstone.fill { background: url(../img/w/mg4-stone.png) center / 100% 100% no-repeat; box-shadow: none; } .gstone.fill i { font-style: normal; color: #c2185b; }
+.gchef { align-items: flex-end; } .gchef .gnpc { height: 120px; }
+.gpotimg { width: 110px; } .gpotimg.f2 { width: 124px; filter: saturate(1.2); } .gpotimg.f3 { width: 138px; filter: saturate(1.4); animation: gnope .8s ease-in-out infinite; }
+.gstall { padding: 6px; } .gcamel { height: 130px; }
+.gcoinb img { width: 54px; height: 54px; object-fit: contain; }
+.gtcoins i { width: auto; height: auto; background: none; border: 0; position: relative; display: inline-grid; place-items: center; }
+.gtcoins i img { width: 32px; height: 32px; } .gtcoins i.c100 img { width: 38px; height: 38px; } .gtcoins i.c1 img { width: 26px; height: 26px; }
+.gtcoins i b { position: absolute; font-size: .62rem; color: #4b3a2a; }
+.gtray { background: url(../img/w/mg4-coin-tray.png) center / 100% 100% no-repeat; border: 0; min-height: 90px; padding: 12px 26px; }
+.gmarch { flex-direction: row; } .gmarch img { height: 130px; }
+.gflagtxt { position: absolute; left: 3%; top: 4%; width: 42%; height: 24%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.05; }
+.gflagtxt b { font-size: 1rem; } .gflagtxt b.w3 { font-size: .75rem; } .gflagtxt small { font-size: .55rem; }
+.gwait { height: 120px; }
+.gkoala { height: 150px; transform: none; }
+.gpile img { width: 30px; height: 30px; object-fit: contain; margin: -2px; } .gsopts.piles .gpile img { width: 20px; height: 20px; }
+.gnuts .gpile { max-width: 240px; } .gnuts .gpile img { width: 44px; height: 44px; }
+.gcat { height: 110px; } .gcounter .gguest { left: 30%; }
+@media (min-width: 900px) { .gmarch img { height: 170px; } .gflagtxt b { font-size: 1.3rem; } .gotter .gnpc { height: 200px; } }
+.gforest { background: linear-gradient(rgba(232,246,223,.55), rgba(201,232,180,.55)), url(../img/w/mg4-path.png) center / cover no-repeat; }
+.gtreebox .gnpcbtn .gnpc.gkoala { height: 170px; }
+.gcheek .gnpc { height: 120px; }
+.gstall .gnpc.gcamel { height: 140px; }
+.gchef .gnpc { height: 140px; } .gpotimg { width: 140px; } .gpotimg.f2 { width: 156px; } .gpotimg.f3 { width: 172px; }
+.gcounter .gnpc.gcat { height: 130px; }
+.gtray { aspect-ratio: auto; } .gtsum { color: #fff; text-shadow: 0 2px 0 #6b4a10; }

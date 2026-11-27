@@ -29,7 +29,7 @@
       if (n >= list.length) { X.finish(g, list.length * 15); return; }
       var sn = list[n++], tries = 0;
       var opts = M.shuffle([sn.k].concat(M.shuffle(others.filter(function (x) { return x.k !== sn.k; }).map(function (x) { return x.k; })).slice(0, 2)));
-      $('mBody').innerHTML = '<div class="gsleep"><div class="gtreebox"><button class="gnpcbtn" id="kP" aria-label="다시 듣기"><img class="gnpc gkoala" id="kN" src="' + sprite('koala') + '" alt=""></button><span class="gzz">z<br>Z</span>' +
+      $('mBody').innerHTML = '<div class="gsleep"><div class="gtreebox"><button class="gnpcbtn" id="kP" aria-label="다시 듣기"><img class="gnpc gkoala" id="kN" src="' + WI + 'mg4-koala-sleep.png" alt=""></button><span class="gzz">z<br>Z</span>' +
         '<div class="gbub dream"><small>잠꼬대 ' + n + ' / ' + list.length + ' · 코알라를 누르면 다시 들려요</small>' + (tts ? '<b>💭 쿨… 쿨…</b>' : '<b class="lang-' + sn.lang + '">' + esc(sn.w.join(sn.lang === 'en' ? ' ' : '')) + '</b>') + '<em id="kT"></em></div></div>' +
         '<div class="gsopts">' + opts.map(function (o, i) { return '<button class="gtile big" data-i="' + i + '"><b>' + esc(o) + '</b></button>'; }).join('') + '</div></div>';
       var npc = $('kN'), say = function () { M.say(sn.say, sn.lang); npc.classList.remove('mumble'); void npc.offsetWidth; npc.classList.add('mumble'); };
@@ -38,7 +38,7 @@
         b.onclick = function () {
           if (!alive(g) || b.disabled) return;
           if (opts[+b.dataset.i] === sn.k) {
-            X.setScore(g, g.score + (tries ? 7 : 15)); b.classList.add('ok'); M.sfx('ok'); react(npc, true, 'koala');
+            X.setScore(g, g.score + (tries ? 7 : 15)); b.classList.add('ok'); M.sfx('ok'); react(npc, true);
             $('kT').innerHTML = '<span class="lang-' + sn.lang + '">' + esc(sn.w.join(sn.lang === 'en' ? ' ' : '')) + '</span>';
             setTimeout(round, 1600);
           } else { tries++; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); if (tts) say(); }
@@ -56,7 +56,7 @@
     en: [['one peanut'], ['two peanuts'], ['three peanuts'], ['four peanuts'], ['five peanuts'], ['six peanuts'], ['seven peanuts'], ['eight peanuts'], ['nine peanuts'], ['ten peanuts']]
   };
   function numItem(lang, k) { var x = NUM[lang][k - 1]; return { t: x[0], r: lang === 'zh' ? x[1] : '', k: k + '개', lang: lang, say: x[0] }; }
-  function pile(k) { return '<span class="gpile">' + '🥜'.repeat(k) + '</span>'; }
+  function pile(k) { return '<span class="gpile">' + ('<img src="' + WI + 'mg4-peanut.png" alt="">').repeat(k) + '</span>'; }
   G.seeds = function (g) {
     var lang = M.P.lang, n = 0, combo = 0;
     function round() {
@@ -66,7 +66,7 @@
       var c = [k]; while (c.length < 4) { var d = Math.max(1, Math.min(10, k + M.pick([-2, -1, 1, 2, 3, -3]))); if (c.indexOf(d) < 0) c.push(d); }
       c = M.shuffle(c);
       var it = numItem(lang, k);
-      $('mBody').innerHTML = '<div class="gseeds"><div class="gcheek"><img class="gnpc" id="hN" src="' + sprite('hamster') + '" alt=""><div class="gbub"><small>' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>' + (rev ? '<span class="wtag">' + X.wordHtml(it) + '</span><br>이만큼 골라 줘요!' : '땅콩이 몇 개일까요?') + '</div></div>' +
+      $('mBody').innerHTML = '<div class="gseeds"><div class="gcheek"><img class="gnpc" id="hN" src="' + WI + 'mg4-hamster-cheek.png" alt=""><div class="gbub"><small>' + n + ' / 10' + (combo > 1 ? ' · 🔥' + combo + '연속' : '') + '</small>' + (rev ? '<span class="wtag">' + X.wordHtml(it) + '</span><br>이만큼 골라 줘요!' : '땅콩이 몇 개일까요?') + '</div></div>' +
         (rev ? '' : '<div class="gnuts">' + pile(k) + '</div>') +
         '<div class="gsopts' + (rev ? ' piles' : '') + '">' + c.map(function (v, i) { return '<button class="gtile big" data-v="' + v + '">' + (rev ? pile(v) : X.wordHtml(numItem(lang, v))) + '</button>'; }).join('') + '</div></div>';
       var npc = $('hN');
@@ -74,7 +74,7 @@
       Array.prototype.forEach.call(document.querySelectorAll('.gseeds .gtile'), function (b) {
         b.onclick = function () {
           if (!alive(g) || b.disabled) return;
-          if (+b.dataset.v === k) { combo++; X.setScore(g, g.score + 10 + Math.min(4, combo)); b.classList.add('ok'); M.sfx('ok'); M.say(it.say, lang); react(npc, true, 'hamster'); setTimeout(round, 900); }
+          if (+b.dataset.v === k) { combo++; X.setScore(g, g.score + 10 + Math.min(4, combo)); b.classList.add('ok'); M.sfx('ok'); M.say(it.say, lang); react(npc, true); setTimeout(round, 900); }
           else { combo = 0; b.disabled = true; b.classList.add('miss'); M.sfx('bad'); react(npc, false); }
         };
       });

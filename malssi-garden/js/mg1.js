@@ -186,7 +186,7 @@
       n++;
       var m = M.pick(MENU), o = { m: m, n: 1 + Math.floor(Math.random() * 3), t: m.hot ? M.pick(['hot', 'iced']) : '', v: Math.random() < 0.4 };
       var text = orderText(lang, o), guest = guests[(n * 5 + Math.floor(Math.random() * 3)) % guests.length], pick = { n: 0, t: '', m: '' }, tries = 0;
-      $('mBody').innerHTML = '<div class="gcafe"><div class="gcounter"><img class="gcafeimg" id="cN" src="img/mg-cafe.png" alt=""><img class="gguest" src="' + sprite(guest) + '" alt=""><button class="gbub order lang-' + lang + '" id="cQ"><small>손님 ' + n + ' / ' + total + ' · 눌러서 다시 듣기</small><b>' + esc(text) + '</b><em id="cK"></em></button></div>' +
+      $('mBody').innerHTML = '<div class="gcafe"><div class="gcounter"><img class="gnpc gcat" id="cN" src="' + WI + 'mg4-cat-order.png" alt=""><img class="gguest" src="' + sprite(guest) + '" alt=""><button class="gbub order lang-' + lang + '" id="cQ"><small>손님 ' + n + ' / ' + total + ' · 눌러서 다시 듣기</small><b>' + esc(text) + '</b><em id="cK"></em></button></div>' +
         '<div class="gpad"><img class="gpadtop" src="' + WI + 'mg3-order-pad.png" alt=""><div class="gprow"><span>개수</span>' + [1, 2, 3].map(function (k) { return '<button data-n="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
         '<div class="gprow"><span>온도</span><button data-t="hot"><img src="' + WI + 'mg3-steam.png" alt="">따뜻하게</button><button data-t="iced"><img src="' + WI + 'mg3-ice.png" alt="">차갑게</button><button data-t="">그대로</button></div>' +
         '<div class="gprow menu"><span>메뉴</span>' + MENU.map(function (x) { return '<button data-m="' + x.id + '"><img src="' + WI + (x.img || 'mg3-menu-' + x.id) + '.png" alt=""><small>' + x.ko + '</small></button>'; }).join('') + '</div>' +
@@ -205,7 +205,7 @@
         if (!alive(g)) return;
         var okN = pick.n === o.n, okT = pick.t === o.t, okM = pick.m === m.id;
         if (okN && okT && okM) {
-          X.setScore(g, g.score + Math.max(8, 20 - tries * 6)); M.sfx('ok'); X.fxAt($('cGo'), 'coffee');
+          X.setScore(g, g.score + Math.max(8, 20 - tries * 6)); M.sfx('ok'); X.fxAt($('cGo'), 'coffee'); var cn = $('cN'); if (cn) { cn.src = WI + 'mg4-cat-tray.png'; react(cn, true); }
           $('cK').textContent = '= ' + orderKo(o);
           var r = REPLY[lang] || REPLY.en;
           $('cGo').outerHTML = '<button class="greply lang-' + lang + '" id="cR">🐱 <b>' + esc(r[0]) + '</b><small>' + esc(r[1]) + '</small></button>';
