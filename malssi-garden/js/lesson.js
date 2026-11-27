@@ -76,6 +76,7 @@
     if (stage && stage.conv) {
       // 회화: 대화 카드 → 알맞은 대답 고르기 → 듣고 대답 고르기
       qs.push({ type: 'dialog', stage: stage });
+      if (stage.rule) qs.push({ type: 'rule', stage: stage });   // 첫걸음 회화: 대화 다음에 학습 포인트
       // 역할극: 앞 대화가 채팅처럼 쌓이고, 내 차례에 알맞은 대사를 고른다
       // 나는 늘 B 역할을 맡는다(문제마다 역할이 바뀌면 헷갈리므로). A 쪽 대답은 듣고 고르기로 낸다
       var mine = stage.xf.filter(function (x) { return stage.dlg[x.di].who === 'B'; }), other = stage.xf.filter(function (x) { return stage.dlg[x.di].who !== 'B'; });
@@ -230,7 +231,7 @@
     } else if (q.type === 'rule') {
       var g = q.stage;
       h = '<div class="qt"><span class="newtag">문법을 배워요</span></div><div class="rule lang-' + g.lang + '"><h3>' + esc(g.title) + '</h3>' + g.rule +
-        '<div class="rex">' + g.xf.slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + M.fz(x.p, g.lang) + '</span><b>' + M.fz(x.item.t, g.lang) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + '</div></div>';
+        (g.conv ? '' : '<div class="rex">') + (g.conv ? [] : g.xf).slice(0, 3).map(function (x) { return '<button class="rx" data-say="' + esc(x.item.say) + '"><span>' + M.fz(x.p, g.lang) + '</span><b>' + M.fz(x.item.t, g.lang) + '</b><small>' + esc(x.item.k) + '</small></button>'; }).join('') + (g.conv ? '' : '</div>') + '</div>';
     } else if (q.type === 'xform') {
       if (q.audio) h = '<div class="qt">잘 듣고 알맞은 대답을 골라 보세요</div><div class="qcard listen">' + sayBtn(q.audio, true) + '</div>';
       else if (q.chat) h = '<div class="qt">대화를 이어 가 보세요 <small class="sub">내 차례예요</small></div><div class="chat lang-' + q.item.lang + '" id="chatBox">' + q.chat.map(function (d) { d = (S.alt && S.alt[d.i]) || d; return '<button class="cb ' + (d.me ? 'me' : 'you') + '" data-say="' + esc(d.t) + '" data-who="' + (d.me ? 'B' : 'A') + '"><b>' + M.fz(d.t, q.item.lang) + '</b>' + (d.r ? '<span class="dr">' + esc(d.r) + '</span>' : '') + '<small>' + esc(d.k) + '</small></button>'; }).join('') + '<div class="cb me wait">…</div></div>';

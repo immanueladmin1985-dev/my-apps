@@ -66,9 +66,9 @@
   // ---------- 배우기 지도 ----------
   var SHIFT = [0, 1, 0, -1];
   // 문법 단원(GR)은 단어 단계와 따로 진행한다 (단어를 다 끝내지 않아도 시작할 수 있다)
-  function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV'; }
+  function gr(s) { var lv = window.LANGS[s.lang].units[s.unit].level || ''; return lv === 'GR' || lv === 'CV' || lv === 'CO'; }
   function firstOpen(L, prog, wantGr) { var i = L.stages.findIndex(function (s) { return !prog[s.id] && gr(s) === wantGr; }); return i < 0 ? L.stages.length : i; }
-  var LVNAME = { CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
+  var LVNAME = { CO: '첫걸음 회화', CV: '회화', GR: '문법', base: '기초', N5: 'JLPT N5', N4: 'JLPT N4', N3: 'JLPT N3', HSK1: 'HSK 1급', HSK2: 'HSK 2급', A1: '생활 영어' };
   function renderMap(root) {
     var L = window.LANGS[P.lang], prog = P.prog[P.lang];
     var cur = firstOpen(L, prog, false);
@@ -110,7 +110,7 @@
       h += '<button class="unit' + (udone ? ' udone' : '') + '"' + (udone ? ' data-unit="' + ukey + '"' : '') + '><b>' + (udone ? '✔ ' : '') + unum + '단원 · ' + esc(u.title) + '</b><small>★ ' + got + '/' + us.length * 3 + (udone ? (open ? ' ▲' : ' ▼') : '') + '</small></button>';
       if (!open) { n += us.length; return; }
       us.forEach(function (s) {
-        var cT = (tab === 'GR' || tab === 'CV') ? L.stages.findIndex(function (x) { return !prog[x.id] && lvOf(x) === tab; }) : cur; if (cT < 0) cT = L.stages.length;
+        var cT = (tab === 'GR' || tab === 'CV' || tab === 'CO') ? L.stages.findIndex(function (x) { return !prog[x.id] && lvOf(x) === tab; }) : cur; if (cT < 0) cT = L.stages.length;
         var st = prog[s.id] || 0, state = st ? 'done' : (s.idx === cT ? 'cur' : (s.idx < cT ? 'done' : 'lock'));
         var x = SHIFT[n % 4] * 62; n++;
         var DECO = { ja: ['🌸', '🗻', '🍡', '⛩️'], en: ['🎈', '🏰', '🌷', '☕'], zh: ['🎋', '🏮', '🐼', '🥟'] }[P.lang];

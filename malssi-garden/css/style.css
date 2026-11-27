@@ -1962,3 +1962,7 @@ img.photo { display: block; width: 100%; border-radius: 10px; box-shadow: 0 4px 
 .gstagebox .gnpcbtn { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); }
 .gstagebox .gnpcbtn .gnpc { height: 92px; }
 .gstagebox .gbub { bottom: calc(100% - 6px); }
+/* 첫걸음 회화: 의성어·의태어 상자 */
+.ono { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; padding: 8px 12px; border-radius: 14px; background: #fff6e2; border: 2px dashed #e8c88f; }
+.ono span { font-size: .72rem; font-weight: 800; color: #b07a2a; background: #fff; border-radius: 8px; padding: 1px 6px; }
+.ono b { font-size: 1.3rem; } .ono small { color: var(--sub); }
