@@ -56,6 +56,10 @@
   function P(sub) { return 'families/' + F.fid + '/' + sub; }
   M.Family.state = function () { return F; };
   M.Family.isHusband = function () { return F.ready && F.role === 'husband'; };
+  // 관리자 모드 설정 (이 폰에만 저장): 앱을 열면 관리 화면부터, 마지막에 본 탭
+  M.Family.pref = function (k, v) { if (v === undefined) return L[k]; L[k] = v; store(); };
+  // 가족 연결이 끝날 때까지 기다렸다가 부른다 (최대 12초)
+  M.Family.whenReady = function (cb) { var t0 = Date.now(); (function wait() { if ((F.ready && (F.role !== 'husband' || F.mateUid)) || Date.now() - t0 > 12000) cb(); else setTimeout(wait, 300); })(); };
   M.Family.mateName = function () { return F.mate ? (F.mate.name && ['아내', '남편'].indexOf(F.mate.name) < 0 ? F.mate.name : M.roleOf(F.mate.role)) : ''; };   // 기본 이름(아내·남편)은 지금 정한 호칭으로 보여 준다
   var offs = [];
   function stopAll() { offs.forEach(function (f) { try { f(); } catch (e) {} }); offs = []; }
@@ -435,10 +439,10 @@
     opt = opt || {};
     if (!F.mateUid || F.role !== 'husband') return M.Family.sheet();
     if (view && view.isConnected) return;
-    var tab = opt.tab || 'coupon', S = null, pend = {}, edits = null, base = [], mkState = { cat: 'item', lack: true, q: '', pick: {}, msg: '오늘만 특별가! 너굴너굴~' };
-    var d = view = M.modal('<div class="admin"><h3>💌 원격 관리</h3><p class="rsub hint center">불러오는 중…</p><div class="tabs">' +
+    var tab = opt.tab || L.admTab || 'coupon', S = null, pend = {}, edits = null, base = [], mkState = { cat: 'item', lack: true, q: '', pick: {}, msg: '오늘만 특별가! 너굴너굴~' };
+    var d = view = M.modal('<div class="admin"><div class="ahead"><h3>💌 관리자 모드 <small>' + esc(M.Family.mateName()) + '</small></h3><button class="btn ahome" data-close>' + (M.adminOnly ? '✕ 닫기' : '🎮 게임으로') + '</button></div><p class="rsub hint">불러오는 중…</p><div class="tabs atabs">' +
       [['coupon', '쿠폰 승인'], ['req', '신청 선물'], ['market', '🦝 장터'], ['quiz', '💌 ' + M.quizWord() + ' 퀴즈'], ['diary', '📔 일기'], ['reward', '선물 관리'], ['praise', '칭찬 선물'], ['stats', '공부 현황'], ['etc', '설정']].map(function (t) { return '<button data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
-      '</div><div class="abody"></div><button class="btn ghost wide" data-close>닫기</button></div>', { cls: 'full', onClose: function () { offs.forEach(function (f) { f(); }); view = null; } });
+      '</div><div class="abody"></div></div>', { cls: 'adminpage', sticky: true, onClose: function () { offs.forEach(function (f) { f(); }); view = null; if (M.adminOnly && M.adminHome) M.adminHome(); } });
     var body = d.querySelector('.abody'), sub = d.querySelector('.rsub');
     var pendList = function () { return Object.keys(pend).map(function (k) { return pend[k]; }); };
     var isPend = function (t, id) { return pendList().some(function (c) { return c.t === t && c.id === id; }); };
@@ -573,7 +577,9 @@
         if (!v) { sub.textContent = M.who('L') + ' 폰에서 아직 정보를 보내지 않았어요. ' + M.who('L') + ' 폰에서 앱을 한 번 열어 주세요.'; return; }
         var firstSnap = !S;
         S = v; S.coupons = S.coupons || [];
-        if (firstSnap && opt.missQuiz && !S.quizWait && S.qpool) pickMissed();   // 리포트에서 왔으면 자주 틀린 낱말(모자라면 최근 낱말)을 미리 골라 둔다 S.requests = S.requests || []; S.rewards = S.rewards || []; S.days = S.days || [];
+        // 리포트에서 왔으면 자주 틀린 낱말(모자라면 최근 낱말)을 미리 골라 둔다
+        if (firstSnap && opt.missQuiz && !S.quizWait && S.qpool) pickMissed();
+        S.requests = S.requests || []; S.rewards = S.rewards || []; S.days = S.days || [];
         L.seen = S.coupons.filter(function (c) { return c.status === 'wait'; }).length + S.requests.length; store();
         paint();
       }),
@@ -582,7 +588,7 @@
     d.addEventListener('change', function (e) { if (e.target.id === 'hmQ') { mkCollect(); body.innerHTML = T.market(); } });
     d.addEventListener('click', function (e) {
       if (e.target.closest('[data-qfromrep]')) { collect(); mkCollect(); if (S.quizWait) M.toast('보낸 퀴즈를 아직 풀지 않았어요'); else pickMissed(); tab = 'quiz'; paint(); return; }
-      var t = e.target.closest('[data-tab]'); if (t) { collect(); mkCollect(); tab = t.dataset.tab; if (tab === 'reward' && S) { edits = JSON.parse(JSON.stringify(S.rewards)); base = S.rewards.map(function (r) { return r.id; }); } paint(); return; }
+      var t = e.target.closest('[data-tab]'); if (t) { collect(); mkCollect(); tab = t.dataset.tab; L.admTab = tab; store(); body.scrollTop = 0; if (tab === 'reward' && S) { edits = JSON.parse(JSON.stringify(S.rewards)); base = S.rewards.map(function (r) { return r.id; }); } paint(); return; }
       var mc = e.target.closest('[data-mc]'); if (mc) { mkCollect(); mkState.cat = mc.dataset.mc; body.innerHTML = T.market(); return; }
       var dyh = e.target.closest('[data-dyh]'); if (dyh) { dyh.classList.toggle('on'); dyh.textContent = dyh.classList.contains('on') ? '❤️' : '🤍'; return; }
       var dys = e.target.closest('[data-dysay]'); if (dys) { M.say(dys.dataset.dysay, dys.dataset.dylang); return; }

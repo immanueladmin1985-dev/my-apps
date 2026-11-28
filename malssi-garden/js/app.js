@@ -334,7 +334,9 @@
       '<button class="btn wide" data-a="admin">🔒 관리자 메뉴</button>' +
       '<button class="btn wide" data-a="stk">🏅 스티커 앨범</button>' +
       '<button class="btn wide" data-a="family">👨‍👩 가족 연결' + (M.Family && M.Family.state().ready ? ' ✔' : '') + '</button>' +
-      (M.Family && M.Family.isHusband() ? '<button class="btn wide" data-a="remote">💌 원격 관리 (' + esc(M.Family.mateName() || M.who('L')) + ' 폰)' + (M.Family.waiting ? ' 🔴' : '') + '</button>' : '') +
+      (M.Family && M.Family.isHusband() ? '<button class="btn wide" data-a="remote">💌 원격 관리 (' + esc(M.Family.mateName() || M.who('L')) + ' 폰)' + (M.Family.waiting ? ' 🔴' : '') + '</button>' +
+        '<label class="tg"><span>앱을 열면 관리자 모드로 시작<small>게임은 위쪽 “🎮 게임으로” 단추로 들어가요</small></span><input type="checkbox" data-admstart' + (M.Family.pref('adminStart') ? ' checked' : '') + '><i></i></label>' +
+        '<button class="btn wide" data-a="admtab">🗂️ 관리자 모드를 새 창(탭)으로 열기</button>' : '') +
       '<button class="btn danger wide" data-a="reset">모든 기록 지우기</button>' +
       '<button class="btn primary wide" data-close>닫기</button>';
     var d = M.modal(h, { onClose: M.render });
@@ -346,6 +348,7 @@
       if (s) { P.set[s] = e.target.checked; if (s === 'autoFS' && P.set.autoFS) FS.userExit = false; }
       if (v) P.set[v] = parseFloat(e.target.value);
       if (e.target.dataset.name !== undefined) P.petName = e.target.value.trim() || '말랑이';
+      if (e.target.dataset.admstart !== undefined && M.Family) M.Family.pref('adminStart', e.target.checked);
       if (e.target.dataset.font) { P.set[e.target.dataset.font] = e.target.value; M.applyFonts(); }
       if (e.target.dataset.fs !== undefined) { P.set.fontSize = e.target.value; M.applyFonts(); }
       if (e.target.dataset.sfx !== undefined) { P.set.sfx = e.target.value; M.save(); M.sfx('win'); setTimeout(function () { M.sfx('win'); }, 400); }   // 처음엔 불러오는 중이라 한 번 더 들려준다
@@ -361,6 +364,7 @@
       else if (a === 'import') { d.close(); M.askPin('백업 불러오기', M.pickBackup); }
       else if (a === 'admin') { d.close(); M.openAdmin(); }
       else if (a === 'remote') { d.close(); M.Family.adminPanel(); }
+      else if (a === 'admtab') { window.open(location.pathname + '?admin', '_blank'); }
       else if (a === 'family') { d.close(); M.Family.sheet(); }
       else if (a === 'stk') { d.close(); M.stickerAlbum(); }
       else if (a === 'move') { d.close(); M.Family.transferSheet(); }
@@ -549,9 +553,31 @@
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
   }
 
-  M.render();
-  dayCheck();
-  if (M.Family && M.Family.start) M.Family.start();
+  // ---------- 관리자 모드로 시작 ----------
+  // 주소에 ?admin (또는 #admin)이 있으면 게임은 열지 않고 관리 화면만 연다. 이 창에서는 게임 기록을 저장하지 않는다 (게임 창과 따로 써도 섞이지 않게)
+  M.adminOnly = /[?&#]admin\b/.test(location.search + location.hash);
+  M.adminHome = function () {
+    var el = $('adminHome'); if (!el) { el = document.createElement('div'); el.id = 'adminHome'; document.body.appendChild(el); }
+    var F = M.Family ? M.Family.state() : {}, ok = M.Family && M.Family.isHusband() && F.mateUid;
+    el.innerHTML = '<div class="ahwrap"><img src="icon-192.png" alt=""><h2>💌 관리자 모드</h2>' +
+      (!M.Family || !F.ready ? '<p class="hint">가족 연결을 확인하는 중이에요…</p>' : ok ? '<p>' + esc(M.Family.mateName()) + ' 폰의 쿠폰·선물·공부 현황을 관리해요.</p><button class="btn primary wide big" data-ah="open">관리 화면 열기</button>' :
+        '<p>관리자 모드는 <b>관리하는 사람 폰</b>으로 가족 연결을 한 뒤에 쓸 수 있어요.</p><button class="btn primary wide" data-ah="family">👨‍👩 가족 연결하기</button>') +
+      '<button class="btn wide" data-ah="game">🎮 게임 열기</button><p class="hint">관리자 모드에서는 게임 기록을 바꾸지 않아요. 게임은 다른 창에서 함께 열어 둬도 괜찮아요.</p></div>';
+    el.onclick = function (e) { var b = e.target.closest('[data-ah]'); if (!b) return; var k = b.dataset.ah; if (k === 'open') M.Family.adminPanel(); else if (k === 'family') M.Family.sheet(); else location.href = location.pathname; };
+  };
+  if (M.adminOnly) {
+    M.save = function () {};   // 이 창은 게임 기록을 덮어쓰지 않는다
+    document.body.classList.add('admin-only');
+    M.adminHome();
+    if (M.Family && M.Family.start) M.Family.start();
+    if (M.Family) M.Family.whenReady(function () { M.adminHome(); if (M.Family.isHusband() && M.Family.state().mateUid) M.Family.adminPanel(); });
+  } else {
+    M.render();
+    dayCheck();
+    if (M.Family && M.Family.start) M.Family.start();
+    // 설정에서 "앱을 열면 관리자 모드로 시작"을 켰으면 관리 화면부터 연다 (닫으면 게임)
+    if (M.Family && M.Family.pref('adminStart')) M.Family.whenReady(function () { if (M.Family.isHusband() && M.Family.state().mateUid) M.Family.adminPanel(); });
+  }
   // 자동 점검용
   window.__malssi = M;
 })();
