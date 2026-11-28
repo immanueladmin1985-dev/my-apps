@@ -197,9 +197,17 @@ func _build_room() -> void:
 	if Net.is_host():
 		var k := int(SaveManager.get_setting("kill_target", 15))
 		var diff: String = {"easy": "쉬움", "normal": "보통", "hard": "어려움"}.get(SaveManager.get_setting("difficulty", "normal"), "보통")
-		top.add_child(UiKit.label("목표 킬 %s · AI %s" % [str(k) if k > 0 else "무제한", diff], 18, UiKit.MUTED))
-	top.add_child(UiKit.label("밴 단계", 18, UiKit.MUTED))
-	if Net.is_host():
+		var rule := "목표 킬 %s · AI %s" % [str(k) if k > 0 else "무제한", diff]
+		if Net.game_type == "quick":
+			rule = "목표 %d킬 · AI %s" % [MatchConfig.QUICK_KILL_TARGET, diff]
+		elif Net.is_raid():
+			rule = "AI 아군 %s" % diff
+		top.add_child(UiKit.label(rule, 18, UiKit.MUTED))
+	if not Net.is_raid():
+		top.add_child(UiKit.label("밴 단계", 18, UiKit.MUTED))
+	if Net.is_raid():
+		pass  # 보스 레이드는 밴 단계가 없다.
+	elif Net.is_host():
 		var bt := UiKit.toggle("켬" if Net.ban_enabled else "끔", Vector2(90, 52))
 		bt.name = "BanToggle"
 		bt.button_pressed = Net.ban_enabled
@@ -215,6 +223,21 @@ func _build_room() -> void:
 	if Net.ban_turn >= 0:
 		_build_ban_phase()
 		return
+	# 게임 방식: 방장이 고르고, 참가자는 보기만 한다.
+	var grow := HBoxContainer.new()
+	grow.add_theme_constant_override("separation", 8)
+	body.add_child(grow)
+	grow.add_child(UiKit.label("게임 방식", 18, UiKit.MUTED))
+	for t in MatchConfig.GAME_TYPES:
+		var gb := UiKit.toggle(MatchConfig.GAME_TYPE_NAMES[t], Vector2(140, 42), 17)
+		gb.name = "GameType_" + t
+		gb.button_pressed = Net.game_type == t
+		gb.disabled = not Net.is_host()
+		gb.pressed.connect(Net.set_game_type.bind(t))
+		grow.add_child(gb)
+	var gdesc := {"normal": "3대3 대전입니다.", "quick": "6레벨·2500골드로 시작하고 5킬을 먼저 올리면 이깁니다.",
+		"raid": "사람은 모두 블루 팀에서 함께 고대 흑룡을 10분 안에 잡습니다. 밴 단계는 하지 않습니다."}
+	grow.add_child(UiKit.label(gdesc.get(Net.game_type, ""), 16, UiKit.ACCENT))
 	var teams := HBoxContainer.new()
 	teams.add_theme_constant_override("separation", 14)
 	body.add_child(teams)
@@ -226,6 +249,9 @@ func _build_room() -> void:
 		v.add_theme_constant_override("separation", 6)
 		p.add_child(v)
 		v.add_child(UiKit.label("%s 팀" % Enums.team_name(team), 20, Enums.team_color(team)))
+		if team == Enums.Team.RED and Net.is_raid():
+			v.add_child(UiKit.wrap_label("보스 레이드에는 레드 팀이 없습니다. 상대는 맵 가운데에 나타나는 고대 흑룡입니다.", 17, UiKit.MUTED))
+			continue
 		for i in 3:
 			v.add_child(_slot_row(i + (0 if team == Enums.Team.BLUE else 3)))
 
@@ -261,7 +287,7 @@ func _build_room() -> void:
 	var my_hero: String = Net.slots[mine].hero if Net.slots.has(mine) else ""
 	for id in DataRegistry.ids("heroes"):
 		var d := DataRegistry.hero(id)
-		var b := UiKit.toggle("", Vector2(142, 64), 16)
+		var b := UiKit.toggle("", Vector2(142, 56), 16)
 		b.name = "Hero_" + id
 		b.button_pressed = id == my_hero
 		b.disabled = used.has(id) or Net.bans.has(id)
@@ -286,9 +312,10 @@ func _add_bottom() -> void:
 	bottom.add_theme_constant_override("separation", 12)
 	body.add_child(bottom)
 	if Net.is_host():
-		bottom.add_child(UiKit.label("사람 %d명 · 빈자리 %d개는 AI · 관전 %d명" % [Net.slots.size(), 6 - Net.slots.size(), Net.spectators.size()], 18, UiKit.MUTED))
+		var seats := 3 if Net.is_raid() else 6
+		bottom.add_child(UiKit.label("사람 %d명 · 빈자리 %d개는 AI · 관전 %d명" % [Net.slots.size(), seats - Net.slots.size(), Net.spectators.size()], 18, UiKit.MUTED))
 		bottom.add_child(UiKit.spacer())
-		var need_bans: bool = Net.ban_enabled and not Net.bans_done
+		var need_bans: bool = Net.ban_enabled and not Net.bans_done and not Net.is_raid()
 		var start := UiKit.button("밴 단계 시작" if need_bans else "시작하기", Vector2(240, 62), 24)
 		start.name = "StartButton"
 		start.pressed.connect(Net.start_match)
@@ -300,7 +327,7 @@ func _add_bottom() -> void:
 func _slot_row(slot: int) -> Control:
 	var row := HBoxContainer.new()
 	row.name = "Slot%d" % slot
-	row.custom_minimum_size = Vector2(0, 50)
+	row.custom_minimum_size = Vector2(0, 44)
 	row.add_theme_constant_override("separation", 10)
 	if Net.slots.has(slot):
 		var e: Dictionary = Net.slots[slot]

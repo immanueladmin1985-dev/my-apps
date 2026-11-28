@@ -29,6 +29,8 @@ var slots: Dictionary = {}
 var spectators: Dictionary = {}
 ## 밴 단계: 켰는지(방장 설정), 금지한 영웅(순서대로), 지금 차례(-1 이면 금지 중이 아님), 끝났는지, 지금 차례의 남은 시간
 var ban_enabled := true
+## 방장이 고른 게임 방식: "normal", "quick", "raid"(보스 레이드 협동: 사람은 모두 블루, 레드는 비움)
+var game_type := "normal"
 var bans: Array = []
 var ban_turn := -1
 var bans_done := false
@@ -95,6 +97,8 @@ func _dev_auto() -> void:
 	if a.has("lan_host"):
 		my_name = "방장"
 		host()
+		if a.has("lan_game"):
+			set_game_type(str(a["lan_game"]))  # 개발용: --lan_game=raid|quick
 		var need := int(a["lan_host"])
 		while is_host() and slots.size() < need:
 			await get_tree().create_timer(0.2).timeout
@@ -138,6 +142,9 @@ func host(name_text := "") -> int:
 	slots = {0: {"peer": 1, "name": my_name, "hero": _default_hero()}}
 	_reset_room_extras()
 	ban_enabled = bool(SaveManager.get_setting("lan_bans", true))
+	game_type = str(SaveManager.get_setting("lan_game_type", "normal"))
+	if not MatchConfig.GAME_TYPES.has(game_type):
+		game_type = "normal"
 	_udp_send = PacketPeerUDP.new()
 	_udp_send.set_broadcast_enabled(true)
 	_udp_send.set_dest_address("255.255.255.255", DISCOVERY_PORT)
@@ -355,6 +362,8 @@ func _free_slot() -> int:
 		else:
 			red += 1
 	var order := [0, 1, 2, 3, 4, 5] if blue <= red else [3, 4, 5, 0, 1, 2]
+	if is_raid():
+		order = [0, 1, 2]
 	for s in order:
 		if not slots.has(s):
 			return s
@@ -415,7 +424,7 @@ func _set_hero(peer: int, hero_id: String) -> void:
 
 ## 자리 옮기기. 관전자가 빈자리를 고르면 그 자리에 앉는다. 밴 단계 중에는 못 옮긴다.
 func _move_slot(peer: int, slot: int) -> void:
-	if slot < 0 or slot > 5 or slots.has(slot) or ban_turn >= 0:
+	if slot < 0 or slot > 5 or slots.has(slot) or ban_turn >= 0 or (is_raid() and slot >= 3):
 		return
 	if spectators.has(peer):
 		var sp: Dictionary = spectators[peer]
@@ -476,7 +485,7 @@ func _extras() -> Dictionary:
 	var spec: Array = []
 	for p in spectators:
 		spec.append([int(p), str(spectators[p].name), str(spectators[p].get("hero", ""))])
-	return {"spec": spec, "ban_on": ban_enabled, "bans": bans.duplicate(), "turn": ban_turn, "left": ban_left, "done": bans_done}
+	return {"spec": spec, "ban_on": ban_enabled, "bans": bans.duplicate(), "turn": ban_turn, "left": ban_left, "done": bans_done, "gt": game_type}
 
 
 @rpc("authority", "reliable")
@@ -493,6 +502,7 @@ func _lobby_state(arr: Array, rname: String, extras: Dictionary = {}) -> void:
 	ban_turn = int(extras.get("turn", -1))
 	ban_left = float(extras.get("left", 0.0))
 	bans_done = bool(extras.get("done", false))
+	game_type = str(extras.get("gt", "normal"))
 	lobby_changed.emit()
 
 
@@ -502,6 +512,37 @@ func _reset_room_extras() -> void:
 	ban_turn = -1
 	bans_done = false
 	ban_left = 0.0
+
+
+## 방장: 게임 방식 바꾸기. 보스 레이드는 레드 자리를 닫고, 레드에 있던 사람을 블루 빈자리(없으면 관전)로 옮긴다.
+func set_game_type(t: String) -> void:
+	if not is_host() or ban_turn >= 0 or not MatchConfig.GAME_TYPES.has(t):
+		return
+	game_type = t
+	SaveManager.set_setting("lan_game_type", t)
+	if t == "raid":
+		for s in [3, 4, 5]:
+			if not slots.has(s):
+				continue
+			var e: Dictionary = slots[s]
+			slots.erase(s)
+			var to := -1
+			for b in [0, 1, 2]:
+				if not slots.has(b):
+					to = b
+					break
+			if to >= 0:
+				slots[to] = e
+				e.hero = _unique_hero(to, e.hero)
+			else:
+				spectators[int(e.peer)] = {"name": e.name, "hero": e.hero}
+		bans = []
+		bans_done = false
+	_broadcast_lobby()
+
+
+func is_raid() -> bool:
+	return game_type == "raid"
 
 
 # ---- 밴 단계 ----
@@ -633,7 +674,7 @@ func _slots_to_array() -> Array:
 func start_match() -> void:
 	if not is_host() or ban_turn >= 0:
 		return
-	if ban_enabled and not bans_done:
+	if ban_enabled and not bans_done and not is_raid():
 		_begin_bans()
 		return
 	var cfg := build_start_cfg()
@@ -660,8 +701,10 @@ func build_start_cfg() -> Dictionary:
 		"difficulty": SaveManager.get_setting("difficulty", "normal"),
 		"kill_target": int(SaveManager.get_setting("kill_target", 15)),
 		"map": GameManager.DEFAULT_MAP, "seed": randi() % 100000 + 1,
-		"humans": _slots_to_array(), "bans": bans.duplicate(),
+		"humans": _slots_to_array(), "bans": bans.duplicate(), "game_type": game_type,
 	}
+	if is_raid():
+		cfg.red = []
 	return cfg
 
 
@@ -679,6 +722,9 @@ func _start(cfg: Dictionary) -> void:
 	for e in cfg.humans:
 		c.net_humans[int(e[0])] = int(e[1])
 	c.bans = PackedStringArray(cfg.get("bans", []))
+	var gt := str(cfg.get("game_type", "normal"))
+	if gt != "normal":
+		c.apply_game_type(gt)
 	if GameManager.dev_args.has("lan_quit"):
 		print("LAN_START bans=%s blue=%s red=%s" % [",".join(c.bans), ",".join(c.blue_heroes), ",".join(c.red_heroes)])
 	var mine := my_slot()

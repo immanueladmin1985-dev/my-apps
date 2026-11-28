@@ -187,6 +187,7 @@ func test_lan_lobby_ban_screen() -> void:
 	var scr: Control = load(GameManager.LAN_SCENE).instantiate()
 	add_child(scr)
 	await frames(2)
+	SaveManager.set_setting("lan_game_type", "normal")  # 다른 시험이 남긴 게임 방식과 상관없이
 	if Net.host() != OK:
 		# 다른 시험이 포트를 쓰고 있으면 건너뛴다.
 		scr.queue_free()

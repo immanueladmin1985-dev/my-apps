@@ -498,6 +498,9 @@ func _process(delta: float) -> void:
 			if hero.attack.magazine > 0:
 				name_label.text += "  ·  " + ("재장전 중" if hero.attack.reloading else "탄창 %d/%d" % [hero.attack.ammo, hero.attack.magazine])
 	if _banner_left > 0.0:
+		# 대화 창이 열려 있으면 가리지 않게 처치 알림을 왼쪽으로 비켜 둔다.
+		banner_label.offset_left = (-400.0 - (chat_menu.size.x * 0.5 + 40.0)) if chat_menu != null and chat_menu.visible else -400.0
+		banner_label.offset_right = banner_label.offset_left + 800.0
 		_banner_left -= delta
 		banner_label.modulate.a = clampf(_banner_left / 0.5, 0.0, 1.0)
 		if _banner_left <= 0.0:

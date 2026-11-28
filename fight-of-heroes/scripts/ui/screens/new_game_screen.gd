@@ -97,6 +97,7 @@ func _ready() -> void:
 		b.add_child(badge)
 		var mb := UiKit.mastery_badge(ProgressMeta.mastery_level(h.id), 20.0)
 		mb.position = Vector2(32, 34)
+		mb.visible = ProgressMeta.mastery_points(h.id) > 0  # 아직 안 해 본 영웅은 메달을 숨긴다
 		b.add_child(mb)
 		b.text = h.display_name + "\n" + h.role
 		grid.add_child(b)

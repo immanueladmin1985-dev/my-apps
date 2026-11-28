@@ -236,8 +236,13 @@ func _on_reward(h, xp: float, gold: int) -> void:
 
 func _on_ended(winner: int, reason: String) -> void:
 	_send_snapshot()
+	# 참가자 폰의 결과 화면·업적이 방장과 같은 기록을 쓰도록 영웅마다 기록을 함께 보낸다.
+	var bm: BattleManager = battle.battle_manager
+	var stats: Array = []
+	for h: Hero in battle.hero_manager.heroes:
+		stats.append([bm.feat(h).duplicate(), roundi(bm.damage_to_heroes.get(h, 0.0)), roundi(bm.damage_total.get(h, 0.0)), h.gold])
 	for peer in _ready_peers_list():
-		_end_event.rpc_id(peer, winner, reason)
+		_end_event.rpc_id(peer, winner, reason, stats)
 
 
 func _on_peer_left(peer: int) -> void:
@@ -608,6 +613,17 @@ func _chat_event(team: int, who: String, idx: int, to_all: bool) -> void:
 
 
 @rpc("authority", "reliable")
-func _end_event(winner: int, reason: String) -> void:
-	if Net.is_client():
-		battle.battle_manager.finish(winner, reason)
+func _end_event(winner: int, reason: String, stats: Array = []) -> void:
+	if not Net.is_client():
+		return
+	var bm: BattleManager = battle.battle_manager
+	var heroes: Array = battle.hero_manager.heroes
+	for i in mini(heroes.size(), stats.size()):
+		var h: Hero = heroes[i]
+		var e: Array = stats[i]
+		bm.feats[h] = Dictionary(e[0])
+		bm.damage_to_heroes[h] = float(e[1])
+		bm.damage_total[h] = float(e[2])
+		if h != battle.player_hero:
+			h.gold = int(e[3])
+	bm.finish(winner, reason)
