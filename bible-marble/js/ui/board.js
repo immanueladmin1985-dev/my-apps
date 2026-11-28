@@ -13,7 +13,7 @@ const cellOf=i=>{if(i===0)return[9,9];if(i<8)return[9,9-i];if(i===8)return[9,1];
 const sideOf=i=>i%8===0?'corner':i<8?'sb':i<16?'sl':i<24?'st':'sr';
 /* 이 기기에서 볼 상태 (멀티플레이 참가자는 방장이 보낸 상태) */
 const VG=()=>Net.role==='client'?Net.G:G;
-const roundText=g=>g.cfg.rounds>0?`${Math.min(g.round,g.cfg.rounds)} / ${g.cfg.rounds}`:`${g.round} · 파산까지`;
+const roundText=g=>g.cfg.rounds>0?`${Math.min(g.round,g.cfg.rounds)} / ${g.cfg.rounds}`:`${g.round} · 파산까지${tollBoostIn(g)>1?` · 통행료 ${boostTxt(tollBoostIn(g))}`:''}`;
 /* 중계 모드 참가자 휴대폰: 게임판 대신 자기 상황판 중심 화면(대시보드)을 씁니다 */
 const isDash=()=>Net.role==='client'&&Net.kind==='player'&&Net.mode==='relay'&&Net.mySeat!=null;
 

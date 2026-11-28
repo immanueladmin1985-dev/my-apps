@@ -385,8 +385,8 @@ canvas.trace{width:100%;height:120px;display:block;border-radius:14px;background
 .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 14px}
 .sheet h3{font-family:var(--serif);font-size:1.4rem;margin-bottom:6px}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}}
-#toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);z-index:90;
-  background:var(--ink);color:var(--surface);padding:13px 20px;border-radius:16px;font-weight:700;max-width:88vw;text-align:center;opacity:0;pointer-events:none;transition:.25s}
+#toast{position:fixed;left:50%;width:max-content;bottom:calc(var(--nav-h) + 30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);z-index:90;
+  background:var(--ink);color:var(--surface);padding:13px 20px;border-radius:16px;font-weight:700;max-width:min(88vw,520px);text-align:center;opacity:0;pointer-events:none;transition:.25s}
 #toast.show{opacity:1;transform:translateX(-50%)}
 
 /* ---------- Mic gate ---------- */
@@ -463,12 +463,13 @@ canvas.trace{width:100%;height:120px;display:block;border-radius:14px;background
 .ed-durs button[disabled]{opacity:.35}
 .ed-dot{font-size:1.6rem;line-height:.8;height:25px;display:grid;place-items:center}
 .ed-keys{display:flex;gap:4px;align-items:stretch}
-.ed-sol{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;position:relative;padding-top:13px}
+.ed-sol{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;position:relative;padding-top:13px}
 .ed-sol button{min-height:48px;border-radius:12px;background:linear-gradient(90deg,#9A7642,#EBD8AC 30%,#CFAA6E 62%,#8E6B3A);color:#3A2812;font-weight:700;font-size:1.05rem;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);padding:0 2px;white-space:nowrap}
 .ed-sol button:active{transform:translateY(2px)}
 .ed-sol button[disabled]{opacity:.3}
 .ed-oname{position:absolute;left:0;right:0;top:-1px;text-align:center;font-size:.68rem;font-weight:700;color:var(--ink-3);line-height:1.2}
-.ed-oct{width:44px;flex:none;border-radius:12px;background:var(--surface);border:1.5px solid var(--line);font-size:1rem;color:var(--ink-2);margin-top:13px}
+.ed-octs{width:40px;flex:none;display:flex;flex-direction:column;gap:3px;margin-top:13px}
+.ed-oct{flex:1;min-height:22px;border-radius:10px;background:var(--surface);border:1.5px solid var(--line);font-size:.85rem;color:var(--ink-2)}
 .ed-oct[disabled]{opacity:.35}
 .ed-acts .btn[disabled]{opacity:.4}
 .stf-edit{cursor:crosshair}
@@ -688,6 +689,10 @@ body.focusmode #rtbar{position:fixed;right:calc(max(8px,env(safe-area-inset-righ
 .optbar span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .optbar b{color:var(--peony);white-space:nowrap}
 
+/* ---------- 새 버전 알림 ---------- */
+.updbar{position:fixed;left:50%;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:88;display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;border-radius:99px;background:var(--surface);border:1.5px solid var(--peony);box-shadow:0 8px 24px rgba(40,25,10,.2);font-weight:700;font-size:.88rem;white-space:nowrap}
+.updbar .rb-x{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
+.updbar .rb-x svg{width:18px;height:18px}
 /* ---------- 결과 줄 ---------- */
 .rbar{position:fixed;left:50%;top:calc(var(--hdr-h) + 8px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:45;width:min(640px,calc(100vw - 20px));display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:10px 10px 10px 16px;border-radius:18px;background:var(--surface);border:1.5px solid var(--peony);box-shadow:0 10px 30px rgba(40,25,10,.22);animation:rbIn .3s ease}
 @keyframes rbIn{from{opacity:0;transform:translate(-50%,-10px)}}
@@ -699,7 +704,7 @@ body.focusmode #rtbar{position:fixed;right:calc(max(8px,env(safe-area-inset-righ
 .rbar .rb-a{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .rbar .rb-x{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
 .rbar .rb-x svg{width:20px;height:20px}
-body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:calc(50% - 40px)}
+body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));transform:none;width:auto;right:var(--fbr,130px);max-width:none;animation:none}
 
 /* ---------- 소리 정보 줄 ---------- */
 .sinfo{display:grid;grid-template-columns:1.3fr 1fr 1.1fr .95fr .8fr;}.sinfo.noclr{grid-template-columns:1.3fr 1fr 1.1fr .8fr}.sinfo{gap:4px;font-variant-numeric:tabular-nums;min-height:44px}
@@ -721,6 +726,28 @@ body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:calc(50% 
 .fs-main .kv{width:100%;max-width:380px;margin-top:0}
 .fs-tip{min-height:2.6em;font-weight:700;color:var(--ink-2);max-width:30em}
 .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.bdg i{position:relative;display:block;width:76px;height:76px}
+.bdg i img{width:100%;height:100%;display:block;filter:grayscale(1) opacity(.38)}
+.bdg.on i img{filter:none}
+.bdg i em{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-3)}
+.bdg i em svg{width:16px;height:16px}
+.bdgpop{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:92;display:flex;align-items:center;gap:12px;width:max-content;max-width:min(92vw,440px);padding:10px 16px 10px 10px;border-radius:20px;background:var(--surface);border:1.5px solid var(--bamboo);box-shadow:0 12px 30px rgba(40,25,10,.25);animation:bdgIn .45s cubic-bezier(.2,.9,.3,1.3)}
+.bdgpop img{width:72px;height:72px;flex:none}
+.bdgpop small{display:block;font-size:.72rem;font-weight:700;color:var(--peony)}
+.bdgpop b{display:block;font-size:1.05rem}
+.bdgpop span{display:block;font-size:.8rem;color:var(--ink-2);line-height:1.35}
+@keyframes bdgIn{from{opacity:0;transform:translate(-50%,-16px) scale(.9)}}
+.empty-art{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:8px 6px;color:var(--ink-2);font-size:.86rem}
+.empty-art img{width:min(150px,40vw);height:auto}
+.mg-art{display:block;width:min(200px,60%);height:auto;margin:0 auto 8px}
+.guide-art{display:block;width:min(260px,80%);height:auto;margin:0 auto 6px}
+.ban-art{width:72px;height:auto;flex:none;margin-top:0}
+.rb-art{width:44px;height:auto;flex:none;align-self:center}
+.cheer-art{display:block;width:min(200px,55vw);height:auto;margin:-6px auto 2px}
+.ob-art.ob-sm{width:min(150px,40vw)}
+body.focusmode .micgate .mg-art{width:min(130px,40%);margin-bottom:4px}
+.ob .micgate .mg-art{display:none}
+@media (orientation:landscape) and (max-height:600px){.micgate .mg-art{width:auto;height:min(110px,24vh);margin-bottom:2px}.guide-art{width:auto;height:min(150px,34vh)}.cheer-art{width:auto;height:min(110px,24vh)}}
 .bdg{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:10px 8px;border-radius:14px;border:1px dashed var(--line);color:var(--ink-3)}
 .bdg i svg{width:26px;height:26px}.bdg b{font-size:.92rem}.bdg span{font-size:.72rem;line-height:1.3}
 .bdg.on{border:1px solid var(--bamboo);background:var(--peony-soft);color:var(--ink)}.bdg.on i{color:var(--bamboo-dark)}
@@ -733,9 +760,9 @@ body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:calc(50% 
 .bpm-big.tapnum{cursor:pointer;border-radius:18px;padding:2px 18px;position:relative}
 .bpm-big.tapnum:active{background:var(--surface-2)}
 .bpm-big.tapnum::after{content:'✎';position:absolute;right:-.05em;top:.15em;font-family:var(--sans);font-size:.28em;color:var(--ink-3);line-height:1}
-.favrow{display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;min-height:34px;padding:1px 0}
+.favrow{display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;min-height:40px;padding:1px 0}
 .favrow::-webkit-scrollbar{display:none}
-.favrow button,.favedit .fv{flex:none;min-height:32px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:.8rem;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.favrow button,.favedit .fv{flex:none;min-height:38px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:.8rem;font-weight:700;color:var(--ink-2);white-space:nowrap}
 .favrow .fv.on,.favedit .fv.on{border-color:var(--peony);color:var(--peony);background:var(--peony-soft)}
 .favrow .fv-add{display:inline-flex;align-items:center;gap:3px;color:var(--peony)}
 .favrow .fv-add svg{width:15px;height:15px}
@@ -886,7 +913,7 @@ body.focusmode .rbar{top:calc(6px + env(safe-area-inset-top,0px));left:calc(50% 
   .pf-mid>.dt-ph{flex:1 1 auto}
   .pf-mid>.dt-ph~.sinfo{display:none}
   .ed-pal{flex-direction:row}
-  .ed-pal>.ed-durs{flex:0 0 42%}
+  .ed-pal>.ed-durs{flex:0 0 48%}
   .ed-pal>.ed-keys{flex:1 1 auto}
   .ed-durs button{min-height:44px}
   .ed-sol button{min-height:40px}
@@ -1089,6 +1116,7 @@ const pipIcon = (n, color) => { // 단계 표시용 작은 팬플룻 (관 개수
 
 /* ================= 파스텔 색·팬플룻 그림 ================= */
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const f = c => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k)); return '#' + [f(r), f(g), f(b)].map(v => clamp(v, 0, 255).toString(16).padStart(2, '0')).join(''); }
+function emptyHTML(img, txt) { return `<div class="empty-art"><img src="art/${img}.webp" alt="" decoding="async" loading="lazy"><span>${txt}</span></div>`; }
 function fluteArt() { return '<img class="fart" src="art-flute.webp" alt="" decoding="async">'; } // 팬플룻 그림 (둥근 수채화)
 
 /* ================= 저장 ================= */
@@ -1149,7 +1177,8 @@ function syncDB() { // 저장소가 다른 창 때문에 바뀌었으면 이 창
 window.addEventListener('storage', e => { if (e.key === STORE_KEY) syncDB(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncDB(); });
 window.addEventListener('pageshow', () => syncDB());
-try { if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => { if (!p) navigator.storage.persist(); }).catch(() => { }); } catch (e) { }
+let PERSIST = null; // 저장소를 지우지 않게 해 달라는 요청이 받아들여졌는지 (모르면 null)
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => p ? true : navigator.storage.persist()).then(p => { PERSIST = !!p; }).catch(() => { }); } catch (e) { }
 function normalizeDB(d) {
   if (!isObj(d.settings)) d.settings = {};
   const s = d.settings; // 있는 객체를 그대로 두고 빠진 값만 채움 (화면이 들고 있는 참조가 끊기지 않게)
@@ -1170,8 +1199,40 @@ function normalizeDB(d) {
   d.prefs = d.prefs || {};
   return d;
 }
-function saveDB() { try { syncDB(); const raw = JSON.stringify(DB); localStorage.setItem(STORE_KEY, raw); lastRaw = raw; } catch (e) { } }
+let saveWarned = false;
+function saveDB() { try { syncDB(); const raw = JSON.stringify(DB); localStorage.setItem(STORE_KEY, raw); lastRaw = raw; } catch (e) { if (!saveWarned) { saveWarned = true; setTimeout(() => { try { toast(STORE_OK ? '저장 공간이 모자라 기록을 저장하지 못했어요. 기록 → 파일로 보관해 주세요' : '이 브라우저는 설정을 저장하지 못해요. 일반 창이나 홈 화면 앱으로 열어 주세요', 5000); } catch (e2) { } }, 0); } } }
 const S = () => DB.settings;
+/* 설정을 저장할 수 있는 곳인지: 시크릿 창이나 일부 앱 안 브라우저는 저장이 막히거나 앱을 닫으면 지워짐 */
+const STORE_OK = (() => { try { const k = '__pf_t'; localStorage.setItem(k, '1'); const v = localStorage.getItem(k); localStorage.removeItem(k); return v === '1'; } catch (e) { return false; } })();
+/* 카카오톡·네이버·인스타그램 같은 앱 안에서 열린 브라우저: 크롬과 저장 공간이 따로라서 설정·마이크 허용이 크롬에 남지 않음 */
+function inAppName() {
+  const u = navigator.userAgent || '';
+  if (/KAKAOTALK/i.test(u)) return '카카오톡'; if (/NAVER\(inapp/i.test(u)) return '네이버 앱'; if (/Instagram/i.test(u)) return '인스타그램';
+  if (/FBAN|FBAV|FB_IAB/i.test(u)) return '페이스북'; if (/\bLine\//i.test(u)) return '라인'; if (/BAND\//i.test(u)) return '밴드';
+  if (/DaumApps/i.test(u)) return '다음 앱'; if (/everytimeApp/i.test(u)) return '에브리타임'; if (/Android/i.test(u) && /; wv\)/.test(u)) return '다른 앱';
+  return '';
+}
+function openOutside() {
+  const url = location.href.split('#')[0], u = navigator.userAgent || '';
+  if (/KAKAOTALK/i.test(u)) { location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url); return; }
+  if (/Android/i.test(u)) { location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(url) + ';end'; return; }
+  const sh = openSheet(`<h3>Safari로 열어 주세요</h3><ol class="steps"><li>화면 오른쪽 아래(또는 위)의 <span class="kbd">⋯</span> 또는 <span class="kbd">공유 □↑</span> 버튼을 누르세요.</li><li><span class="kbd">Safari로 열기</span>(또는 ‘기본 브라우저로 열기’)를 누르세요.</li></ol><button class="btn primary wide mt2" data-x="1">알겠어요</button>`);
+  sh.addEventListener('click', e => { if (e.target.closest('[data-x]')) sheetDone(); });
+}
+/* 설정이 저장되지 않을 수 있는 환경 안내 (홈·마이크 허용 창·설정에 같이 씀) */
+function envWarnHTML(compact) {
+  const app = inAppName();
+  if (app) return `<div class="banner" style="margin:0 0 12px;text-align:left">${compact ? ICONS.warn : '<img class="ban-art" src="art/guide-browser.webp" alt="">'}<div class="grow"><b>${esc(app)} 안에서 열려 있어요</b><span class="small">이 화면은 크롬과 저장 공간이 따로라서 고른 마이크·감도 같은 설정과 마이크 허용이 남지 않을 수 있어요.${compact ? '' : ' 크롬(아이폰은 Safari)으로 열어 홈 화면에 설치해 쓰세요.'}</span><div class="row wrap mt" style="gap:6px"><button type="button" class="btn sm primary" data-envopen="1">${/iP(hone|ad|od)/.test(navigator.userAgent) ? 'Safari로 여는 방법' : '크롬으로 열기'}</button></div></div></div>`;
+  if (!STORE_OK) return `<div class="banner" style="margin:0 0 12px;text-align:left">${ICONS.warn}<div class="grow"><b>이 브라우저는 설정을 저장하지 못해요</b><span class="small">시크릿(비공개) 창이거나 저장이 막혀 있어요. 일반 창이나 홈 화면에 설치한 앱으로 열어야 마이크·감도 설정이 남아요.</span></div></div>`;
+  return '';
+}
+document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-envopen]')) openOutside(); });
+function storeWhereTxt() {
+  const u = navigator.userAgent || '', app = inAppName();
+  const br = app ? app + ' 안의 브라우저' : /SamsungBrowser/i.test(u) ? '삼성 인터넷' : /EdgA|Edg\//.test(u) ? '엣지' : /Whale/i.test(u) ? '웨일' : /CriOS|Chrome/i.test(u) ? '크롬' : /Safari/i.test(u) ? 'Safari' : '이 브라우저';
+  if (!STORE_OK) return `${br}: 저장이 막혀 있어 앱을 닫으면 설정이 지워져요.`;
+  return `이 기기의 ${br}${FS.standalone() ? '(홈 화면 앱)' : ''}에 저장돼요. 크롬·삼성 인터넷·카카오톡처럼 다른 앱에서 열면 설정을 따로 해야 해요.${PERSIST === false ? ' 폰 저장 공간이 부족하면 지워질 수 있으니 홈 화면에 설치해 쓰시면 더 안전해요.' : ''}`;
+}
 const pref = (k, def) => (DB.prefs[k] !== undefined ? DB.prefs[k] : def);
 const setPref = (k, v) => { DB.prefs[k] = v; saveDB(); };
 
@@ -1282,6 +1343,8 @@ function back() { if (sheetOpen) { history.back(); return; } if (stack.length > 
 window.addEventListener('popstate', () => {
   if (sheetOpen) { const after = sheetOpen.after; closeSheet(true); if (after) setTimeout(after, 0); return; }
   if (stack.length > 1) { leaveCurrent(); stack.pop(); show(); }
+  // 홈에서 연 화면 뒤에 아래 메뉴로 옮긴 경우 등, 기록이 남아 있으면 뒤로 가기로 홈에 돌아옴 (아무 일 없이 한 번 더 눌러야 하던 문제)
+  else if (stack.length === 1 && stack[0].id !== 'home') go('home');
 });
 function show() {
   const top = stack[stack.length - 1]; const def = SCREENS[top.id];
@@ -1319,13 +1382,14 @@ function setDock(html) {
 let toastT = 0;
 function toast(msg, ms = 2600) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
 function openSheet(html, onClose) {
+  const had = !!sheetOpen; // 창 위에 창을 열면 기록을 새로 쌓지 않고 바꿔 씀 (빈 뒤로 가기가 남지 않게)
   closeSheet(true);
   const bd = document.createElement('div'); bd.className = 'backdrop';
   const sh = document.createElement('div'); sh.className = 'sheet'; sh.setAttribute('role', 'dialog');
   sh.innerHTML = '<div class="grab"></div>' + html;
   document.body.append(bd, sh);
   sheetOpen = { bd, sh, onClose };
-  try { history.pushState({ sheet: 1 }, ''); } catch (e) { }
+  try { if (had) history.replaceState({ sheet: 1 }, ''); else history.pushState({ sheet: 1 }, ''); } catch (e) { }
   bd.addEventListener('click', () => history.back());
   return sh;
 }
@@ -1348,7 +1412,8 @@ function resultSheet(title, html, actions, onAct) {
   const others = actions.filter(a => a !== prim);
   const closeAct = actions.find(a => a.id === 'ok' || a.id === 'close');
   const bar = document.createElement('div'); bar.id = 'rbar'; bar.className = 'rbar'; bar.setAttribute('role', 'status');
-  bar.innerHTML = `<div class="rb-t"><b>${esc(title)}</b>${stars ? `<span class="rb-st">${esc(stars)}</span>` : ''}${score ? `<span class="rb-sc">${esc(score)}</span>` : ''}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
+  const done = !/멈췄/.test(title);
+  bar.innerHTML = `${done ? '<img class="rb-art" src="art/cheer.webp" alt="">' : ''}<div class="rb-t"><b>${esc(title)}</b>${stars ? `<span class="rb-st">${esc(stars)}</span>` : ''}${score ? `<span class="rb-sc">${esc(score)}</span>` : ''}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
     <div class="rb-a"><button type="button" class="btn sm ghost" data-r="more">자세히</button>${others.filter(a => a !== closeAct).map(a => `<button type="button" class="btn sm" data-r="${a.id}">${a.label}</button>`).join('')}${prim !== closeAct ? `<button type="button" class="btn sm primary" data-r="${prim.id}">${prim.label}</button>` : ''}<button type="button" class="rb-x" data-r="x" aria-label="결과 닫기">${ICONS.x}</button></div>`;
   document.body.appendChild(bar);
   bar.addEventListener('click', e => {
@@ -1359,7 +1424,7 @@ function resultSheet(title, html, actions, onAct) {
   return bar;
 }
 function resultFull(title, html, actions, onAct) {
-  const sh = openSheet(`<h3>${esc(title)}</h3>${html}<div class="row mt2">${actions.map(a => `<button class="btn grow ${a.primary ? 'primary' : ''}" data-act="${a.id}">${a.label}</button>`).join('')}</div>`);
+  const sh = openSheet(`${/멈췄/.test(title) ? '' : '<img class="cheer-art" src="art/cheer.webp" alt="">'}<h3>${esc(title)}</h3>${html}<div class="row mt2">${actions.map(a => `<button class="btn grow ${a.primary ? 'primary' : ''}" data-act="${a.id}">${a.label}</button>`).join('')}</div>`);
   sh.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!b) return; const id = b.dataset.act; sheetDone(() => onAct && onAct(id)); });
   return sh;
 }
@@ -1385,7 +1450,7 @@ function fitNow() {
   const side = land && !focus && !!d && !!bot && getComputedStyle(bot).display !== 'none';
   B.classList.toggle('dockside', side);
   if (d) B.style.setProperty('--dockw', Math.round(d.getBoundingClientRect().width) + 'px');
-  if (focus) { const fb = $('#fbar'); if (fb && fb.offsetWidth) B.style.setProperty('--fbarw', fb.offsetWidth + 'px'); const lefts = [$('#fbar'), $('#rtbar')].filter(x => x && x.offsetWidth).map(x => x.getBoundingClientRect().left); if (lefts.length) B.style.setProperty('--fbw', Math.max(60, Math.round(el.getBoundingClientRect().right - Math.min(...lefts) + 8)) + 'px'); }
+  if (focus) { const fb = $('#fbar'); if (fb && fb.offsetWidth) B.style.setProperty('--fbarw', fb.offsetWidth + 'px'); const lefts = [$('#fbar'), $('#rtbar')].filter(x => x && x.offsetWidth).map(x => x.getBoundingClientRect().left); if (lefts.length) B.style.setProperty('--fbr', Math.round(innerWidth - Math.min(...lefts) + 8) + 'px'); if (lefts.length) B.style.setProperty('--fbw', Math.max(60, Math.round(el.getBoundingClientRect().right - Math.min(...lefts) + 8)) + 'px'); }
   const nav = $('#nav'); const nh = nav.classList.contains('hidden') || land ? 0 : nav.getBoundingClientRect().height;
   const dh = d && !side && !focus ? d.getBoundingClientRect().height : 0;
   const bottom = side || focus ? 6 + safeBottom() : land ? 4 : 8;
@@ -1745,7 +1810,9 @@ const Mic = {
         if (tr) tr.onended = () => { this.teardown(); this.setState('ended'); };
         setTimeout(() => autoOut(), 300);
         this.zeroSince = performance.now(); this.hist = [];
+        if (!S().micEverOk) { S().micEverOk = Date.now(); saveDB(); }
         this.setState('on'); this.loop();
+        if (!this.subs.size) this.release(); // 허용 창을 기다리는 사이 화면을 나갔으면 마이크를 다시 놓음
         return true;
       } catch (e) { this.teardown(); this.setState('error', e.message || ''); return false; }
     })();
@@ -1790,7 +1857,7 @@ const Mic = {
     const rms = Math.sqrt(ss / b.length);
     const now = ctx.currentTime; const pnow = performance.now();
     // 마이크가 완전히 막혀 0만 들어오는지 확인
-    if (peak > 1e-6) this.zeroSince = pnow; else if (!this.silentWarned && pnow - this.zeroSince > 3000) { this.silentWarned = true; toast('마이크 소리가 전혀 들어오지 않아요. 화면 위에서 아래로 내려 빠른 설정의 ‘마이크 접근’이 켜져 있는지 확인해 주세요.', 6000); }
+    if (peak > 1e-6) this.zeroSince = pnow; else if (!this.silentWarned && this.subs.size && pnow - this.zeroSince > 3000) { this.silentWarned = true; toast('마이크 소리가 전혀 들어오지 않아요. 화면 위에서 아래로 내려 빠른 설정의 ‘마이크 접근’이 켜져 있는지 확인해 주세요.', 6000); }
     const gate = Math.max(S().noise * 2.2, 0.0022);
     let freq = 0, clarity = 0;
     const muted = now < synthMuteUntil;
@@ -2088,16 +2155,17 @@ function gateHTML(st) {
     <ol class="steps"><li>주소창 왼쪽의 <span class="kbd">${ICONS.sliders.replace('<svg', '<svg style="width:16px;height:16px"')} 아이콘</span>을 누르세요</li><li><b>권한</b>(또는 사이트 설정)을 누르세요</li><li><b>마이크</b>를 <b>허용</b>으로 바꾸세요</li></ol>
     <p class="small">주소창이 안 보이면 ‘자세한 방법’에서 다른 순서를 확인해 주세요.</p>
     <div class="row mt2"><button class="btn grow" data-mg="guide" data-tab="chrome">자세한 방법</button><button class="btn primary grow" data-mg="retry">다시 확인</button></div></div>`;
-  if (st === 'dismissed') return `<div class="card">${ic(1, 'mic')}<h3>허용 창이 닫혔어요</h3>
-    <p>아래 버튼을 다시 누르면 허용 창이 다시 떠요. 창이 뜨면 <b>‘허용’</b> 또는 <b>‘앱 사용 중에만 허용’</b>을 눌러 주세요.</p>
+  if (st === 'dismissed') return `<div class="card"><img class="mg-art" src="art/guide-mic.webp" alt=""><h3>허용 창이 닫혔어요</h3>
+    <p>아래 버튼을 다시 누르면 허용 창이 다시 떠요. 창이 뜨면 <b>‘방문하는 동안 허용’</b>(또는 ‘허용’, 폰이 묻는 창은 ‘앱 사용 중에만 허용’)을 눌러 주세요. ‘이번만 허용’을 누르면 다음에 또 물어요.</p>
     <button class="btn primary big wide mt2" data-mg="ask">${ICONS.mic} 마이크 허용하기</button>
     <button class="btn ghost wide mt" data-mg="guide" data-tab="chrome">허용 창이 안 떠요</button></div>`;
   if (st === 'nodevice') return `<div class="card">${ic(1, 'micOff')}<h3>마이크를 찾지 못했어요</h3><p>이어폰 마이크를 뺐다가 다시 꽂거나, 폰의 마이크 구멍이 막혀 있지 않은지 확인해 주세요.</p><button class="btn primary wide mt2" data-mg="retry">다시 시도</button></div>`;
   if (st === 'busy') return `<div class="card">${ic(1, 'micOff')}<h3>다른 앱이 마이크를 쓰고 있어요</h3><p>통화, 보이스톡, 녹음 앱 등을 끄고 다시 시도해 주세요.</p><div class="row mt2"><button class="btn grow" data-mg="reload">새로고침</button><button class="btn primary grow" data-mg="retry">다시 시도</button></div></div>`;
   if (st === 'error') return `<div class="card">${ic(1, 'warn')}<h3>마이크 연결에 실패했어요</h3><p>${esc(Mic.detail || '잠시 후 다시 시도해 주세요.')}</p><div class="row mt2"><button class="btn grow" data-mg="reload">새로고침</button><button class="btn primary grow" data-mg="retry">다시 시도</button></div></div>`;
   // prompt
-  return `<div class="card">${ic(0, 'mic')}<h3>마이크를 허용해 주세요</h3>
-    <p>부시는 소리를 듣고 음정이 맞는지 알려 드리려면 마이크가 꼭 필요해요. 소리는 폰 안에서만 분석하고 어디에도 보내지 않아요.</p>
+  const again = S().micEverOk && !isIOS();
+  return `<div class="card">${envWarnHTML(true)}${again ? '<img class="mg-art" src="art/guide-mic.webp" alt="">' : `<img class="mg-art" src="art/ob-mic.webp" alt="">`}<h3>${again ? '마이크 허용을 다시 물어요' : '마이크를 허용해 주세요'}</h3>
+    ${again ? `<p>지난번에 <b>‘이번만 허용’</b>을 누르셨거나 크롬이 허용을 잊었어요. 허용 창이 뜨면 <b>‘방문하는 동안 허용’</b>(또는 ‘허용’)을 눌러 주세요. 그래야 다음에 다시 묻지 않고, 고른 마이크도 그대로 써요.</p>` : `<p>부시는 소리를 듣고 음정이 맞는지 알려 드리려면 마이크가 꼭 필요해요. 소리는 폰 안에서만 분석하고 어디에도 보내지 않아요.</p>${isIOS() ? '' : `<p class="small">허용 창에서 <b>‘이번만 허용’</b>보다 <b>‘방문하는 동안 허용’</b>(또는 ‘허용’)을 눌러야 다음에 다시 묻지 않아요.</p>`}`}
     <button class="btn primary big wide mt2" data-mg="ask">${ICONS.mic} 마이크 허용하기</button></div>`;
 }
 
@@ -2747,9 +2815,13 @@ async function fillMicSel(sel) {
   // 장치 번호가 바뀌었어도 같은 이름의 마이크가 있으면 그것을 고른 것으로 봄
   if (cur && !L.some(d => d.deviceId === cur) && S().micLabel) { const hit = L.find(d => d.label === S().micLabel); if (hit) { cur = S().micDev = hit.deviceId; saveDB(); } }
   const known = L.some(d => d.deviceId === cur);
+  // 마이크를 아직 허용하지 않았으면(안드로이드 ‘이번만 허용’ 뒤 등) 폰이 마이크 이름·번호를 알려 주지 않아 목록이 비어 있음
+  const blind = !L.some(d => d.label);
   sel.innerHTML = `<option value="">자동 (폰이 정함)</option>` + L.map((d, i) => `<option value="${esc(d.deviceId)}" ${d.deviceId === cur ? 'selected' : ''}>${esc(d.label || `마이크 ${i + 1}`)}</option>`).join('')
-    + (cur && !known ? `<option value="${esc(cur)}" selected>${esc(S().micLabel || '고른 마이크')} (마이크를 켜면 확인해요)</option>` : '');
-  sel.onchange = async () => { const d = L.find(x => x.deviceId === sel.value); S().micDev = sel.value || null; S().micLabel = sel.value ? (d && d.label) || S().micLabel || '' : ''; saveDB(); const had = Mic.running() || Mic.subs.size; Mic.teardown(); if (had) await Mic.acquire(); toast('입력 마이크를 바꿨어요. 다음에 열어도 이 마이크를 써요'); };
+    + (cur && !known ? `<option value="${esc(cur)}" selected>${esc(S().micLabel || '고른 마이크')} (마이크를 켜면 확인해요)</option>` : '')
+    + (blind ? `<option value="__load">마이크 목록 불러오기…</option>` : '');
+  sel.onchange = async () => {
+    if (sel.value === '__load') { sel.value = cur; const ok = await Mic.acquire(); if (ok) { Mic.release(1500); await fillMicSel(sel); toast('마이크 목록을 불러왔어요. 쓸 마이크를 골라 주세요'); } else toast('마이크를 허용해야 목록이 보여요', 3000); return; } const d = L.find(x => x.deviceId === sel.value); S().micDev = sel.value || null; S().micLabel = sel.value ? (d && d.label) || S().micLabel || '' : ''; saveDB(); const had = Mic.running() || Mic.subs.size; Mic.teardown(); if (had) await Mic.acquire(); toast('입력 마이크를 바꿨어요. 다음에 열어도 이 마이크를 써요'); };
 }
 /* ================= 시작 화면 (리졸브 효과) ================= */
 function runSplash(after) {
@@ -2821,18 +2893,18 @@ defScreen('onboard', {
           <div class="tipbox mt2">처음 한 번만 악기 종류를 고르고 마이크를 허용하면 바로 시작할 수 있어요. 1분이면 충분해요.</div></div>`;
         setDock(`<button class="btn primary big wide" id="obNext">시작하기</button>`).querySelector('#obNext').onclick = () => { step = 1; render(); };
       } else if (step === 1) {
-        el.innerHTML = `<div class="ob">${dots()}<h2>어떤 팬플룻을 갖고 계세요?</h2><p class="lead">잘 모르시면 첫 번째를 고르세요. 나중에 설정에서 바꿀 수 있어요.</p>
+        el.innerHTML = `<div class="ob"><div class="ob-art ob-sm"><img class="fart" src="art/ob-flute.webp" alt=""></div>${dots()}<h2>어떤 팬플룻을 갖고 계세요?</h2><p class="lead">잘 모르시면 첫 번째를 고르세요. 나중에 설정에서 바꿀 수 있어요.</p>
           <div id="obOpts">${presets.map((p, i) => `<button class="opt ${i === pick ? 'on' : ''}" data-i="${i}"><span class="li-ic" style="background:var(--s2);color:var(--s2i)">${ICONS.pipes}</span><span class="grow"><span class="t">${p.t}</span><br><span class="d">${p.d}</span></span></button>`).join('')}</div></div>`;
         $('#obOpts', el).addEventListener('click', e => { const b = e.target.closest('.opt'); if (!b) return; pick = +b.dataset.i; $$('.opt', el).forEach(o => o.classList.toggle('on', o === b)); });
         setDock(`<button class="btn big" id="obBack">이전</button><button class="btn primary big" style="flex:1" id="obNext">다음</button>`);
         $('#obBack').onclick = () => { step = 0; render(); };
         $('#obNext').onclick = () => { S().flute = Object.assign({}, presets[pick].f); refreshPipes(); saveDB(); step = 2; render(); };
       } else if (step === 2) {
-        el.innerHTML = `<div class="ob">${dots()}<h2>마이크를 연결할게요</h2><p class="lead">음정을 들으려면 마이크가 꼭 필요해요.</p><div id="obMic"></div><div id="obOk"></div></div>`;
+        el.innerHTML = `<div class="ob"><div class="ob-art ob-sm"><img class="fart" src="art/ob-mic.webp" alt=""></div>${dots()}<h2>마이크를 연결할게요</h2><p class="lead">음정을 들으려면 마이크가 꼭 필요해요.</p><div id="obMic"></div><div id="obOk"></div></div>`;
         setDock(`<button class="btn ghost" id="obSkip">마이크 없이 둘러보기</button>`).querySelector('#obSkip').onclick = finishOb;
         unMic = withMic($('#obMic', el), () => { unMic = null; step = 3; render(); });
       } else if (step === 3) {
-        el.innerHTML = `<div class="ob">${dots()}<h2>주변 소리를 잠깐 들어 볼게요</h2>
+        el.innerHTML = `<div class="ob"><div class="ob-art ob-sm"><img class="fart" src="art/ob-noise.webp" alt=""></div>${dots()}<h2>주변 소리를 잠깐 들어 볼게요</h2>
           <p class="lead" id="obMsg">3초 동안 조용히 계셔 주세요. 주변 소음에 맞춰 마이크 감도를 맞춥니다.</p>
           <div class="level"><i id="obLv"></i></div>
           <div class="card flat mt2 center hidden" id="obTry"><div class="small muted">이제 가장 편한 관을 한 번 불어 보세요</div><div class="t-note" style="margin:8px 0 0;font-size:3.6rem" id="obNote">…</div><div class="small muted" id="obSub">&nbsp;</div></div></div>`;
@@ -2898,7 +2970,7 @@ defScreen('home', {
     const greet = h < 11 ? '좋은 아침이에요.<br>오늘도 고운 숨으로 시작해요' : h < 18 ? '반가워요.<br>오늘은 어떤 소리를 낼까요' : '편안한 저녁이에요.<br>천천히 한 곡 불어 볼까요';
     const sug = suggestToday();
     el.innerHTML = `
-      <div id="instBan"></div>
+      ${envWarnHTML(false)}<div id="instBan"></div>
       <section class="hero pic">
         <div class="greet">${greet}</div>
         <div class="row wrap" style="gap:8px"><button class="btn" id="sugBtn">${ICONS.play}${esc(sug.t)}</button><button class="btn" id="courseGo" style="background:var(--surface);color:var(--ink);border:1.5px solid var(--line)">${ICONS.stairs}오늘의 5분 코스</button>${featOn('routine') ? `<button class="btn" id="rtGo" style="background:var(--surface);color:var(--ink);border:1.5px solid var(--line)">${ICONS.stairs}${Routine.on ? '연습 순서 이어 하기' : '오늘의 연습 순서'}</button>` : ''}</div>
@@ -3075,9 +3147,10 @@ defScreen('tuner', {
 defScreen('micguide', {
   title: '마이크 문제 해결',
   render(el, p) {
-    const tabs = [['chrome', '크롬에서 막힘'], ['app', '앱으로 열었을 때'], ['phone', '폰 설정'], ['iphone', '아이폰·아이패드'], ['ear', '이어폰 쓸 때'], ['insecure', '파일로 열었을 때']];
-    if (isIOS()) tabs.unshift(tabs.splice(3, 1)[0]);
-    let cur = p.tab || (isIOS() ? 'iphone' : 'chrome');
+    const tabs = [['chrome', '크롬에서 막힘'], ['again', '매번 다시 물어요'], ['app', '앱으로 열었을 때'], ['phone', '폰 설정'], ['iphone', '아이폰·아이패드'], ['ear', '이어폰 쓸 때'], ['inapp', '카카오톡 등에서 열었을 때'], ['insecure', '파일로 열었을 때']];
+    if (isIOS()) tabs.unshift(tabs.splice(4, 1)[0]);
+    if (inAppName()) tabs.unshift(tabs.splice(tabs.findIndex(t => t[0] === 'inapp'), 1)[0]);
+    let cur = p.tab || (inAppName() ? 'inapp' : isIOS() ? 'iphone' : 'chrome');
     const K = (t, ic) => `<span class="kbd">${ic ? ICONS[ic].replace('<svg', '<svg style="width:16px;height:16px"') : ''}${t}</span>`;
     const content = {
       iphone: `<p>아이폰·아이패드는 웹 앱을 열 때마다 마이크 허용을 다시 묻는 경우가 많아요. 아래처럼 ‘허용’으로 정해 두면 덜 물어요.</p>
@@ -3085,6 +3158,12 @@ defScreen('micguide', {
         <p class="mt"><b>모든 사이트에 한 번에 정하려면</b></p>
         <ol class="steps"><li>아이폰 ${K('설정')} 앱 → ${K('앱')} → ${K('Safari')}로 들어가세요.</li><li>아래쪽 ${K('마이크')}를 눌러 ${K('허용')}을 고르세요.</li></ol>
         <div class="tipbox">홈 화면에 추가한 앱은 처음 열 때 한 번씩 물을 수 있어요. 그때 ‘허용’을 누르면 그동안은 다시 묻지 않아요. 고른 마이크와 감도 같은 설정은 이 기기에 그대로 저장돼요.</div>`,
+      again: `<img class="guide-art" src="art/guide-mic.webp" alt=""><p>마이크 허용이나 고른 마이크가 다음에 열 때 사라진다면, 크롬이 허용을 ‘이번 한 번’으로만 기억하고 있는 경우가 많아요.</p>
+        <ol class="steps"><li>허용 창이 뜨면 ${K('이번만 허용')}이 아니라 ${K('방문하는 동안 허용')}(또는 ${K('허용')})을 누르세요.</li><li>이미 ‘이번만’으로 되어 있다면 크롬 오른쪽 위 ${K('', 'dots')} → ${K('설정')} → ${K('사이트 설정')} → ${K('마이크')}에서 이 사이트를 ${K('허용')}으로 바꾸세요.</li><li>설정 → 마이크의 ${K('입력 마이크')}에서 쓸 마이크를 다시 한 번 고르세요. 이름으로 기억해 두었다가 다음에도 찾아 써요.</li></ol>
+        <div class="tipbox">카카오톡·네이버 앱 안에서 열었거나 시크릿 창이면 설정이 남지 않아요. 크롬으로 열어 홈 화면에 설치해 쓰세요. 삼성 인터넷과 크롬은 설정을 따로 저장해요.</div>`,
+      inapp: `<img class="guide-art" src="art/guide-browser.webp" alt=""><p>카카오톡·네이버·인스타그램 같은 앱 안에서 링크를 열면, 그 앱 안의 브라우저로 열려요. 이 브라우저는 크롬과 저장 공간이 따로라서 고른 마이크·감도 설정과 마이크 허용이 남지 않거나, 크롬에서 정한 설정이 보이지 않아요.</p>
+        <ol class="steps"><li>아래 버튼을 눌러 크롬(아이폰은 Safari)으로 여세요. 카카오톡이면 오른쪽 아래 ${K('⋯')} → ${K('다른 브라우저로 열기')}로도 열 수 있어요.</li><li>크롬에서 ${K('', 'dots')} → ${K('홈 화면에 추가')}(또는 ${K('앱 설치')})로 설치하세요.</li><li>앞으로는 홈 화면 아이콘으로 여세요.</li></ol>
+        <button type="button" class="btn primary wide mt" data-envopen="1">${isIOS() ? 'Safari로 여는 방법' : '크롬으로 열기'}</button>`,
       ear: `<p>이어폰을 끼고 반주나 박자 소리를 들으며 연습할 때 알아 두면 좋은 점이에요.</p>
         <ol class="steps"><li><b>유선 이어폰 마이크</b>는 통화용이라 팬플룻 소리를 작게 잡을 수 있어요. 소리가 잘 안 잡히면 설정의 ${K('입력 마이크')}에서 폰 마이크를 고르세요.</li><li><b>블루투스 이어폰</b>은 소리가 0.1~0.3초 늦게 들려요. 설정의 ${K('듣는 장치')}에서 블루투스 이어폰을 고르고 ‘불어서 재기’로 지연을 재 두세요.</li><li>폰에 따라 마이크를 바꾸면 소리가 폰 스피커로 나오기도 해요. 그럴 때는 마이크가 없는 유선 이어폰이 가장 확실해요.</li><li>반주 녹음은 꼭 이어폰으로 들어 주세요. 스피커로 들으면 반주가 녹음에 섞여요.</li></ol>`,
       chrome: `<p>크롬 브라우저 화면(위에 주소창이 보이는 상태)에서 마이크를 허용하는 방법이에요.</p>
@@ -3484,7 +3563,7 @@ defScreen('scale', {
       setDock(`<button class="btn big wide" id="scStop">${ICONS.stop}그만하기</button>`).querySelector('#scStop').onclick = () => way === 'wait' ? finish(true) : (run && run.stop());
       unMic = withMic($('#scGate', el), () => {
         if (way === 'wait') {
-          judge = new WaitJudge({ targets: seq.map(m => ({ m })), onHit: (i, c) => { results[i] = c; lane.mark(i, c === null ? 'miss' : Math.abs(c) <= S().tol ? 'ok' : 'mid'); ci = i + 1; if (ci < seq.length) focus(ci); fb.className = 'fb'; fb.textContent = ''; }, onDone: () => setTimeout(() => finish(false), 400), onWrong: (w, t) => { fb.className = 'fb ' + (w < t ? 'low' : 'high'); fb.textContent = w < t ? '더 높은 관이에요' : '더 낮은 관이에요'; } });
+          judge = new WaitJudge({ targets: seq.map(m => ({ m })), onHit: (i, c) => { results[i] = c; lane.mark(i, c === null ? 'miss' : Math.abs(c) <= S().tol ? 'ok' : 'mid'); ci = i + 1; if (ci < seq.length) focus(ci); fb.className = 'fb'; fb.textContent = ''; }, onDone: () => setTimeout(() => { if (el.isConnected) finish(false); }, 400), onWrong: (w, t) => { fb.className = 'fb ' + (w < t ? 'low' : 'high'); fb.textContent = w < t ? '더 높은 관이에요' : '더 낮은 관이에요'; } });
           unOn = Mic.onOnset(() => judge && judge.onset());
           unSub = Mic.sub(fr => { if (judge) judge.feed(fr); meterTo(meter, fr); pm.setLive(fr.voiced && PIPES.includes(fr.midi) ? fr.midi : null, fr.cents); lane.live(fr.voiced ? fr.midi : 0, fr.cents, fr.voiced ? fr.mf : 0); });
         } else {
@@ -4224,7 +4303,14 @@ let badgeQ = [], badgeT = 0;
 function award(id) {
   if (DB.badges[id]) return; const b = BADGES.find(x => x[0] === id); if (!b) return;
   DB.badges[id] = Date.now(); saveDB(); badgeQ.push(b);
-  clearTimeout(badgeT); badgeT = setTimeout(function show() { const x = badgeQ.shift(); if (!x) return; chime(true); toast(`배지를 받았어요: ${x[1]}. ${x[2]}`, 3800); if (badgeQ.length) badgeT = setTimeout(show, 4000); }, 900);
+  clearTimeout(badgeT); badgeT = setTimeout(function show() { const x = badgeQ.shift(); if (!x) return; chime(true); badgePop(x); if (badgeQ.length) badgeT = setTimeout(show, 4000); }, 900);
+}
+/* 배지를 받으면 그림과 함께 잠깐 띄움 (누르면 닫힘) */
+function badgePop(x) {
+  const old = $('#bdgPop'); if (old) old.remove();
+  const p = document.createElement('div'); p.id = 'bdgPop'; p.className = 'bdgpop'; p.setAttribute('role', 'status');
+  p.innerHTML = `<img src="badges/${x[0]}.webp" alt=""><div><small>배지를 받았어요</small><b>${esc(x[1])}</b><span>${esc(x[2])}</span></div>`;
+  p.onclick = () => p.remove(); document.body.appendChild(p); setTimeout(() => p.remove(), 3800);
 }
 function checkBadges() {
   try {
@@ -4238,7 +4324,7 @@ function checkBadges() {
 }
 function badgesHTML() {
   const n = BADGES.filter(b => DB.badges[b[0]]).length;
-  return `<div class="row between"><b>${n} / ${BADGES.length}개</b><span class="tiny muted">연습하면서 하나씩 모아요</span></div><div class="badges mt">${BADGES.map(([id, t, d]) => { const on = !!DB.badges[id]; return `<div class="bdg${on ? ' on' : ''}" title="${esc(d)}"><i>${on ? ICONS.star : ICONS.lock}</i><b>${esc(t)}</b><span>${esc(d)}</span></div>`; }).join('')}</div>`;
+  return `<div class="row between"><b>${n} / ${BADGES.length}개</b><span class="tiny muted">연습하면서 하나씩 모아요</span></div><div class="badges mt">${BADGES.map(([id, t, d]) => { const on = !!DB.badges[id]; return `<div class="bdg${on ? ' on' : ''}" title="${esc(d)}"><i><img src="badges/${id}.webp" alt="" loading="lazy" decoding="async">${on ? '' : `<em>${ICONS.lock}</em>`}</i><b>${esc(t)}</b><span>${esc(d)}</span></div>`; }).join('')}</div>`;
 }
 
 /* ================= 오늘의 5분 코스 (롱톤 → 음계 → 쉬운 곡) ================= */
@@ -4325,7 +4411,7 @@ defScreen('songs', {
       el.innerHTML = `${mode ? `<div class="banner info" style="margin-top:0">${ICONS[mode === 'follow' ? 'follow' : 'roll']}<div class="grow"><b>${mode === 'follow' ? '곡 따라 불기' : '곡 박자대로 불기'}</b><span class="small">${mode === 'follow' ? '곡을 고르면 한 음씩, 맞을 때까지 기다려 드려요.' : '곡을 고르면 박자에 맞춰 불고 점수를 받아요.'}</span></div></div>` : ''}
         <div class="sg-search mt">${ICONS.search}<input type="search" id="sgQ" placeholder="곡 이름으로 찾기 (예: 아리랑)" value="${esc(q)}" aria-label="곡 이름으로 찾기">${q ? `<button type="button" id="sgQx" aria-label="찾기 지우기">${ICONS.x}</button>` : ''}</div>
         <div class="chips scroll mt" id="sgCat">${[['fav', '★ 즐겨찾기']].concat(SONG_CATS).map(([k, l]) => `<button class="chip ${k === cat ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div>
-        <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); const pn = pins.includes(s.id); return `<div class="song-w" data-t="${esc(normQ(s.t))}"><button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${cat === 'first' ? `${FIRST_ORDER.indexOf(s.id) + 1}. ` : ''}${esc(s.t)}${cat === 'first' ? (firstDone(s.id) ? ` <span class="fs-done">${ICONS.check}</span>` : !firstUnlocked(s.id) ? ` <span class="fs-lock">${ICONS.lock}</span>` : '') : ''}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button><button type="button" class="pin${pn ? ' on' : ''}" data-spin="${esc(s.id)}" aria-pressed="${pn}" aria-label="${esc(s.t)} 즐겨찾기">${ICONS.star}</button></div>`; }).join('') : `<div class="li"><span class="grow muted">${cat === 'mine' ? '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.' : cat === 'fav' ? '곡 오른쪽의 별표를 누르면 여기에 모여요.' : '곡이 없어요.'}</span></div>`}</div>
+        <div class="list mt grid2" id="sgList">${list.length ? list.map(s => { const lv = songLevel(s); const b = DB.songBest[s.id] || {}; const meta = songMeta(s); const pn = pins.includes(s.id); return `<div class="song-w" data-t="${esc(normQ(s.t))}"><button class="song" data-id="${esc(s.id)}"><span class="grow"><span class="ttl">${cat === 'first' ? `${FIRST_ORDER.indexOf(s.id) + 1}. ` : ''}${esc(s.t)}${cat === 'first' ? (firstDone(s.id) ? ` <span class="fs-done">${ICONS.check}</span>` : !firstUnlocked(s.id) ? ` <span class="fs-lock">${ICONS.lock}</span>` : '') : ''}</span><br><span class="meta"><span class="tag">${CAT_NAME[s.c] || ''}</span>${meta ? esc(meta) : `빠르기 ${s.bpm}`}${b.follow ? ` · 따라 불기 ${b.follow}%` : ''}${b.play ? ` · 박자 ${b.play}점` : ''}</span></span><span class="lv" aria-label="난이도 ${lv}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv ? 'on' : ''}"></i>`).join('')}</span></button><button type="button" class="pin${pn ? ' on' : ''}" data-spin="${esc(s.id)}" aria-pressed="${pn}" aria-label="${esc(s.t)} 즐겨찾기">${ICONS.star}</button></div>`; }).join('') : `<div class="li" style="display:block">${cat === 'mine' ? emptyHTML('empty-song', '아직 만든 곡이 없어요. 아래 버튼으로 첫 곡을 만들어 보세요.') : '<span class="grow muted">'}${cat === 'mine' ? '' : cat === 'fav' ? '곡 오른쪽의 별표를 누르면 여기에 모여요.</span>' : '곡이 없어요.</span>'}</div>`}</div>
         <p class="small muted center hidden" id="sgNone">찾는 곡이 없어요.</p>
         <div class="row mt"><button class="btn grow" id="sgNew">${ICONS.pen}계이름으로 내 곡 만들기</button><button class="btn grow" id="sgImp">${ICONS.music}악보 파일 불러오기</button></div>
         <p class="tiny muted mt">기본 곡은 저작권이 끝난 민요·찬송가·명곡·동요의 가락만 담았어요. 막대 개수는 난이도예요.</p>`;
@@ -4442,7 +4528,7 @@ defScreen('follow', {
       }
       function startJudge(from = 0) {
         lane.clearMarks();
-        judge = new WaitJudge({ targets: notes.map(n => n.rest ? { rest: true } : { m: n.m }), onHit: (i, c) => { res[i] = c; lane.mark(i, c === null ? 'miss' : Math.abs(c) <= S().tol ? 'ok' : 'mid'); fb.className = 'fb'; fb.textContent = ''; if (judge && judge.i < notes.length) focus(judge.i); }, onDone: () => setTimeout(finish, 400), onWrong: (w, t) => { fb.className = 'fb ' + (w < t ? 'low' : 'high'); fb.textContent = w < t ? '더 높은 관이에요' : '더 낮은 관이에요'; } });
+        judge = new WaitJudge({ targets: notes.map(n => n.rest ? { rest: true } : { m: n.m }), onHit: (i, c) => { res[i] = c; lane.mark(i, c === null ? 'miss' : Math.abs(c) <= S().tol ? 'ok' : 'mid'); fb.className = 'fb'; fb.textContent = ''; if (judge && judge.i < notes.length) focus(judge.i); }, onDone: () => setTimeout(() => { if (el.isConnected) finish(); }, 400), onWrong: (w, t) => { fb.className = 'fb ' + (w < t ? 'low' : 'high'); fb.textContent = w < t ? '더 높은 관이에요' : '더 낮은 관이에요'; } });
         if (from) judge.reset(from);
         t0 = performance.now(); focus(judge.i, false); setTodo(el, 'fw', '빛나는 음표를 불어요. 맞으면 다음 음으로 넘어가요');
       }
@@ -4613,7 +4699,7 @@ defScreen('editor', {
     el.innerHTML = `<div class="pf-main fx" id="edLane"></div>
       <div class="pf-mid ed-pal">
         <div class="ed-durs" id="edD">${ED_DURS.map(([v, l]) => `<button type="button" data-d="${v}" aria-label="${l}">${durIcon(v)}<small>${l === '온음표' ? '온' : l}</small></button>`).join('')}<button type="button" data-dot="1" aria-label="점 붙이기"><span class="ed-dot">•</span><small>점</small></button><button type="button" data-rest="1" aria-label="쉼표 넣기">${REST_ICON}<small>쉼표</small></button></div>
-        <div class="ed-keys"><button type="button" class="ed-oct" data-o="-1" aria-label="옥타브 내리기">▼</button><div class="ed-sol" id="edK"></div><button type="button" class="ed-oct" data-o="1" aria-label="옥타브 올리기">▲</button></div>
+        <div class="ed-keys"><div class="ed-sol" id="edK"></div><div class="ed-octs"><button type="button" class="ed-oct" data-o="1" aria-label="옥타브 올리기">▲</button><button type="button" class="ed-oct" data-o="-1" aria-label="옥타브 내리기">▼</button></div></div>
       </div>
       <div class="pf-bot"><div class="ibtns ed-acts"><button class="btn" id="edPrev">${ICONS.back}앞</button><button class="btn" id="edNext">${ICONS.chev}뒤</button><button class="btn" id="edDel">${ICONS.x}지우기</button><button class="btn" id="edUndo">${ICONS.refresh}되돌리기</button><button class="btn" id="edArt">${ICONS.staccato}악상</button><button class="btn" id="edPlay">${ICONS.play}듣기</button></div></div>`;
     const laneHost = $('#edLane', el), keysEl = $('#edK', el);
@@ -4742,7 +4828,7 @@ defScreen('legato', {
         unMic = withMic($('#lgGate', el), () => {
           judge = new WaitJudge({ targets: notes.map(n => n.rest ? { rest: true } : { m: n.m }), holdMs: 200,
             onHit: (i, c) => { if (!st.started) { st.started = true; st.t0 = performance.now(); } st.lastHit = i; if (c !== null && Math.abs(c) <= S().tol + 5) st.ok++; lane.mark(i, c === null ? 'miss' : Math.abs(c) <= S().tol ? 'ok' : 'mid'); if (judge && judge.i < N) { ci = judge.i; focus(ci); } paintKv(); },
-            onDone: () => setTimeout(() => done(Math.round(st.ok / st.real * 100), false), 300),
+            onDone: () => setTimeout(() => { if (el.isConnected) done(Math.round(st.ok / st.real * 100), false); }, 300),
             onWrong: (w, tt) => { fb.className = 'fb ' + (w < tt ? 'low' : 'high'); fb.textContent = w < tt ? '더 높은 관이에요' : '더 낮은 관이에요'; } });
           unOn = Mic.onOnset(() => judge && judge.onset());
           unSub = Mic.sub(fr => { if (judge) judge.feed(fr); const active = st.started && judge && judge.i < N && st.lastHit >= 0 && plan.gOf[st.lastHit] === plan.gOf[judge.i]; gapTrack(fr, active); liveUpd(fr); lane.live(fr.voiced ? fr.midi : 0, fr.cents, fr.voiced ? fr.mf : 0); });
@@ -5433,7 +5519,7 @@ defScreen('record', {
     async function paintList() {
       const box = $('#rcList', el); if (!box) return;
       let all = []; try { all = await RecDB.all(); } catch (e) { box.innerHTML = '<div class="card muted">이 폰에서는 녹음을 저장할 수 없어요.</div>'; return; }
-      if (!all.length) { box.innerHTML = '<div class="card muted small">아직 녹음이 없어요. 위의 버튼을 눌러 첫 녹음을 해 보세요.</div>'; return; }
+      if (!all.length) { box.innerHTML = `<div class="card">${emptyHTML('empty-rec', '아직 녹음이 없어요. 위의 버튼을 눌러 첫 녹음을 해 보세요.')}</div>`; return; }
       box.innerHTML = all.map(r => { const d = new Date(r.t); return `<div class="card" data-id="${r.id}" style="padding:10px 12px"><div class="row"><button class="icon-btn" data-a="play" aria-label="들어 보기" style="background:var(--surface-2)">${ICONS.play}</button><div class="grow"><b>${d.getMonth() + 1}월 ${d.getDate()}일 ${d.getHours() < 12 ? '오전' : '오후'} ${((d.getHours() + 11) % 12) + 1}:${pad2(d.getMinutes())}</b><div class="small muted">${fmtSec(r.dur)}</div></div><button class="icon-btn" data-a="dl" aria-label="파일로 저장">${ICONS.download}</button><button class="icon-btn" data-a="del" aria-label="지우기">${ICONS.trash}</button></div>
         <canvas class="trace" style="height:84px;margin-top:6px"></canvas></div>`; }).join('');
       all.forEach(r => { const c = $(`[data-id="${r.id}"] canvas`, box); if (c) drawRecGraph(c, r); });
@@ -5616,14 +5702,14 @@ defScreen('records', {
       </div><div class="blk"><div class="sec-title">최고 기록</div>
       <div class="list">${lb.length ? lb.map(x => `<div class="li"><span class="grow"><span class="t">롱톤 ${esc(nFull(x.m))}</span></span><b>${(+x.s).toFixed(1)}초</b></div>`).join('') : ''}${sb.map(x => `<div class="li"><span class="grow"><span class="t">${esc(x.s.t)}</span></span><span class="small">${x.b.follow ? `따라 불기 ${x.b.follow}%` : ''}${x.b.follow && x.b.play ? ' · ' : ''}${x.b.play ? `박자 ${x.b.play}점` : ''}</span></div>`).join('')}${!lb.length && !sb.length ? '<div class="li muted small">롱톤이나 곡 연습을 하면 여기에 최고 기록이 쌓여요.</div>' : ''}</div>
       </div><div class="blk"><div class="sec-title">최근 연습</div>
-      <div class="list">${recent.length ? recent.map(x => { const d = new Date(x.t); return `<div class="li"><span class="grow"><span class="t">${esc(FEAT[x.f] || x.f)}</span><br><span class="d">${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}${x.s ? ' · ' + esc(x.s) : ''}</span></span><span class="small muted">${Math.max(1, Math.round(x.sec / 60))}분</span></div>`; }).join('') : '<div class="li muted small">15초 넘게 연습한 기록이 여기에 쌓여요.</div>'}</div>
+      <div class="list">${recent.length ? recent.map(x => { const d = new Date(x.t); return `<div class="li"><span class="grow"><span class="t">${esc(FEAT[x.f] || x.f)}</span><br><span class="d">${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}${x.s ? ' · ' + esc(x.s) : ''}</span></span><span class="small muted">${Math.max(1, Math.round(x.sec / 60))}분</span></div>`; }).join('') : `<div class="li" style="display:block">${emptyHTML('empty-log', '15초 넘게 연습한 기록이 여기에 쌓여요.')}</div>`}</div>
       </div><div class="blk"><div class="sec-title">기록 보관</div>
       <div class="card"><p class="small muted" style="margin-top:0">기록은 이 폰의 크롬 안에 저장돼요. 폰을 바꾸거나 크롬 데이터를 지우기 전에 파일로 보관해 두세요. (녹음 파일은 녹음 화면에서 따로 저장해요)</p>
         <div class="row wrap"><button class="btn grow" id="rdExp">${ICONS.download}파일로 보관</button><button class="btn grow" id="rdImp">${ICONS.upload}보관 파일 불러오기</button></div>
         <input type="file" id="rdFile" accept=".json,application/json" class="hidden"><button class="btn ghost wide mt" id="rdClr">연습 기록만 지우기</button></div></div></div>`;
     $('#rdExp', el).onclick = () => { const blob = new Blob([JSON.stringify({ app: 'nanjang_panflute', v: 1, at: new Date().toISOString(), db: DB })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `팬플룻교실_기록_${dayKey()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('보관 파일을 내려받았어요'); };
     $('#rdImp', el).onclick = () => $('#rdFile', el).click();
-    $('#rdFile', el).onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const o = JSON.parse(await f.text()); if (!o || o.app !== 'nanjang_panflute' || !o.db) throw new Error(); if (!(await confirmSheet('지금 기록을 보관 파일 내용으로 바꿀까요?', '바꾸기'))) return; DB = normalizeDB(o.db); saveDB(); applyTheme(); refreshPipes(); toast('기록을 불러왔어요'); go('records'); } catch (err) { toast('이 앱의 보관 파일이 아니에요'); } };
+    $('#rdFile', el).onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const o = JSON.parse(await f.text()); if (!o || o.app !== 'nanjang_panflute' || !o.db) throw new Error(); if (!(await confirmSheet('지금 기록을 보관 파일 내용으로 바꿀까요?', '바꾸기'))) return; const keepMic = { micDev: S().micDev, micLabel: S().micLabel }; DB = normalizeDB(o.db); Object.assign(DB.settings, keepMic); saveDB(); applyTheme(); refreshPipes(); toast('기록을 불러왔어요'); go('records'); } catch (err) { toast('이 앱의 보관 파일이 아니에요'); } };
     const paintCal = () => { const c = $('#cal', el); if (!c) return; const r = calendarHTML(cy, cm); c.innerHTML = r.html; $('#calT', el).textContent = `${cy}년 ${cm + 1}월`; $('#calS', el).textContent = `연습한 날 ${r.any}일 · 목표를 채운 날 ${r.done}일 (✓)`; };
     if ($('#cal', el)) { paintCal(); $('#calP', el).onclick = () => { cm--; if (cm < 0) { cm = 11; cy--; } paintCal(); }; $('#calN', el).onclick = () => { cm++; if (cm > 11) { cm = 0; cy++; } paintCal(); }; }
     $('#rdClr', el).onclick = async () => { if (await confirmSheet('연습 시간·최고 기록·음정 습관을 모두 지울까요? (설정과 내 곡은 남아요)', '지우기', true)) { DB.sessions = []; DB.longBest = {}; DB.habit = {}; DB.songBest = {}; saveDB(); go('records'); toast('연습 기록을 지웠어요'); } };
@@ -5666,7 +5752,7 @@ const Routine = {
   L() { return this.list || routineList(); },
   itemOf(st) { return st && st.id ? st : st ? itemByKey(st.k) : null; },
   start() { this.on = true; this.i = 0; this.begin(); },
-  begin() { const L = this.L(); if (this.i >= L.length) { this.finish(); return; } const it = this.itemOf(L[this.i]); this.t0 = Date.now(); this.rang = false; go(it.id, it.p || {}); clearInterval(this.timer); this.timer = setInterval(() => this.tick(), 1000); this.paint(); },
+  begin() { const L = this.L(); if (this.i >= L.length) { this.finish(); return; } const it = this.itemOf(L[this.i]); this.t0 = Date.now(); this.rang = false; go(it.id, it.p || {}, this.i > 0 && stack.length > 1 ? { replace: true } : {}); clearInterval(this.timer); this.timer = setInterval(() => this.tick(), 1000); this.paint(); },
   left() { const st = this.L()[this.i]; return st ? st.m * 60 - (Date.now() - this.t0) / 1000 : 0; },
   tick() { if (!this.on) return; if (this.left() <= 0 && !this.rang) { this.rang = true; chime(true); const nx = this.L()[this.i + 1]; toast(nx ? `${this.L()[this.i].m}분이 지났어요. 다음은 ‘${this.itemOf(nx).t}’예요. 위의 ‘다음’을 누르면 넘어가요` : '마지막 연습 시간이 다 됐어요. 수고하셨어요!', 4500); } this.paint(); },
   next() { this.i++; this.begin(); },
@@ -5680,7 +5766,10 @@ const Routine = {
     const top = stack[stack.length - 1], it = this.itemOf(st), here = top && top.id === it.id;
     const lf = this.left(), mm = Math.max(0, Math.ceil(lf));
     b.className = this.rang ? 'due' : '';
-    b.innerHTML = `<span class="rt-n">${this.i + 1}/${L.length}</span><span class="rt-t">${here ? (lf > 0 ? `${Math.floor(mm / 60)}:${pad2(mm % 60)}` : '시간 됐어요') : esc(it.t)}</span>${here ? '' : `<button type="button" data-rt="go">돌아가기</button>`}<button type="button" data-rt="next">${this.i + 1 < L.length ? '다음 ▶' : '끝내기'}</button><button type="button" data-rt="stop" aria-label="연습 순서 그만하기">×</button>`;
+    const tt = here ? (lf > 0 ? `${Math.floor(mm / 60)}:${pad2(mm % 60)}` : '시간 됐어요') : it.t;
+    const key = `${this.i}/${L.length}/${here}`; // 1초마다 시간 글자만 바꿈 (버튼을 다시 만들면 누르는 중에 사라져 눌리지 않음)
+    if (b._k !== key) { b._k = key; b.innerHTML = `<span class="rt-n">${this.i + 1}/${L.length}</span><span class="rt-t"></span>${here ? '' : `<button type="button" data-rt="go">돌아가기</button>`}<button type="button" data-rt="next">${this.i + 1 < L.length ? '다음 ▶' : '끝내기'}</button><button type="button" data-rt="stop" aria-label="연습 순서 그만하기">×</button>`; }
+    const te = $('.rt-t', b); if (te.textContent !== tt) te.textContent = tt;
   }
 };
 function routineSheet(after) {
@@ -5777,7 +5866,9 @@ defScreen('settings', {
       <div class="card stack" id="stOut"></div>
       </div><div class="blk"><div class="sec-title">마이크</div>
       <div class="list">
+        ${envWarnHTML(true) ? `<div class="li" style="display:block">${envWarnHTML(true)}</div>` : ''}
         <div class="li"><span class="grow"><span class="t">마이크 상태</span></span><span class="status-pill" id="stMic"><i></i>확인 중</span></div>
+        <div class="li" style="display:block"><span class="t">설정이 저장되는 곳</span><div class="d" id="stWhere">${esc(storeWhereTxt())}</div></div>
         <button class="li" data-go="micguide"><span class="grow"><span class="t">마이크 문제 해결</span><br><span class="d">허용 창이 안 뜨거나 막혔을 때</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
         <button class="li" data-go="noise"><span class="grow"><span class="t">주변 소음 다시 재기</span><br><span class="d">지금 값: ${noiseTxt()}</span></span>${ICONS.chev.replace('<svg', '<svg class="chev"')}</button>
         <div class="li" style="display:block"><span class="t">마이크 감도</span><div class="row mt" style="gap:8px"><span class="tiny muted">둔하게</span><input type="range" min="0" max="100" step="1" value="${sensOf(s.noise)}" id="stSens"><span class="tiny muted">예민하게</span></div><div class="tiny muted">작은 소리도 잘 못 알아들으면 예민하게, 주변 소리까지 음으로 잡히면 둔하게 옮겨 보세요. 이 값은 이 폰에 저장돼요.</div></div>
@@ -5796,7 +5887,7 @@ defScreen('settings', {
       </div>
       </div></div>
       <p class="center mt2" style="font-family:var(--hand);font-size:1.9rem;margin-bottom:0;color:var(--peony)">Made by 장작&amp;난로</p>
-      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.10</p>`;
+      <p class="center tiny muted" style="margin-top:0">난장이의 팬플룻 교실 1.13</p>`;
       // 카테고리 탭: 제목으로 묶어 고른 탭의 칸만 보여 줌
       const paintTab = () => { $$('.blk', el).forEach(b => { const t = $('.sec-title', b).textContent.trim(); const k = (SET_TABS.find(x => x[2].includes(t)) || SET_TABS[0])[0]; b.classList.toggle('hidden', k !== tab); }); $$('#stTabs .chip', el).forEach(c => c.classList.toggle('on', c.dataset.st === tab)); };
       paintTab();
@@ -5833,7 +5924,7 @@ defScreen('settings', {
       if (mk) mk.onclick = async () => {
         if (mtest) { mtest(); return; }
         const ok = await Mic.acquire(); if (!ok) { toast('마이크를 쓸 수 없어요. 마이크 문제 해결을 봐 주세요', 3500); return; }
-        mk.textContent = '확인 끝내기';
+        mk.textContent = '확인 끝내기'; fillMicSel($('[data-micsel]', el));
         const un = Mic.sub(fr => { if (!document.body.contains(mk)) { if (mtest) mtest(); return; } lv.style.width = Math.min(100, Math.sqrt(fr.rms) * 260) + '%'; mkT.textContent = `${fr.voiced ? '들리는 음: ' + nFull(fr.midi) : '소리를 기다려요'} · 지금 마이크: ${Mic.label || '기본'}`; });
         mtest = () => { un(); Mic.release(300); mtest = null; if (document.body.contains(mk)) { mk.textContent = '마이크 확인'; lv.style.width = '0'; mkT.textContent = '마이크 확인을 누르고 팬플룻을 불어 보세요'; } };
       };
@@ -5885,7 +5976,18 @@ function initShell() {
 applyTheme();
 initShell();
 runSplash(() => go(S().onboarded ? 'home' : 'onboard'));
-if ('serviceWorker' in navigator && location.protocol === 'https:') { window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { })); }
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  // 인터넷이 느려 저장해 둔 화면을 먼저 띄운 뒤 새 버전을 받았으면 알려 줌 (연습 중에는 저절로 새로 고치지 않음)
+  navigator.serviceWorker.onmessage = e => { if (e.data && e.data.type === 'pf-update') showUpdBar(); };
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+}
+function showUpdBar() {
+  if ($('#updBar')) return;
+  const b = document.createElement('div'); b.id = 'updBar'; b.className = 'updbar'; b.setAttribute('role', 'status');
+  b.innerHTML = `<span>새 버전을 받았어요</span><button type="button" class="btn sm primary" data-u="go">지금 바꾸기</button><button type="button" class="rb-x" data-u="x" aria-label="닫기">${ICONS.x}</button>`;
+  b.onclick = e => { const x = e.target.closest('[data-u]'); if (!x) return; if (x.dataset.u === 'go') location.reload(); else b.remove(); };
+  document.body.appendChild(b);
+}
 
 </script>
 </body>
